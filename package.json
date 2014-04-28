@@ -1,0 +1,31 @@
+{
+  "name": "bcoin",
+  "version": "0.0.0",
+  "description": "Bitcoin bike-shed",
+  "main": "lib/bcoin.js",
+  "scripts": {
+    "test": "mocha --reporter spec test/*-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:indutny/bcoin"
+  },
+  "keywords": [
+    "bitcoin",
+    "bcoin"
+  ],
+  "author": "Fedor Indutny <fedor@indutny.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indutny/bcoin/issues"
+  },
+  "homepage": "https://github.com/indutny/bcoin",
+  "dependencies": {
+    "bn.js": "^0.1.7",
+    "elliptic": "^0.6.0",
+    "hash.js": "^0.2.0"
+  },
+  "devDependencies": {
+    "mocha": "^1.18.2"
+  }
+}
