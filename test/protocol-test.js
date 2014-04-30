@@ -9,15 +9,23 @@ describe('Protocol', function() {
     framer = bcoin.protocol.framer();
   });
 
-  it('should encode/decode version packet', function(cb) {
-    var ver = framer.version();
-    parser.once('packet', function(packet) {
-      assert.equal(packet.cmd, 'version');
-      assert.equal(packet.payload.v, 70002);
-      assert.equal(packet.payload.relay, false);
-
-      cb();
+  function packetTest(command, payload, test) {
+    it('should encode/decode ' + command, function(cb) {
+      var ver = framer[command]();
+      parser.once('packet', function(packet) {
+        assert.equal(packet.cmd, command);
+        test(packet.payload);
+        cb();
+      });
+      parser.feed(ver);
     });
-    parser.execute(ver);
+  }
+
+  packetTest('version', {}, function(payload) {
+    assert.equal(payload.v, 70002);
+    assert.equal(payload.relay, false);
+  });
+
+  packetTest('verack', {}, function(payload) {
   });
 });
