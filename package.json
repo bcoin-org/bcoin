@@ -26,6 +26,7 @@
     "hash.js": "^0.2.0"
   },
   "devDependencies": {
+    "browserify": "^3.44.2",
     "mocha": "^1.18.2"
   }
 }
