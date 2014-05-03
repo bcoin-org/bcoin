@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/indutny/bcoin",
   "dependencies": {
+    "async": "^0.8.0",
     "bn.js": "^0.2.0",
     "elliptic": "^0.7.0",
     "hash.js": "^0.2.0"
