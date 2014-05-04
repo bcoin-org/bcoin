@@ -16,4 +16,22 @@ describe('Wallet', function() {
   it('should fail to validate invalid address', function() {
     assert(!bcoin.wallet.validateAddress('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
   });
+  it('should sign/verify TX', function() {
+    var w = bcoin.wallet();
+
+    // Input transcation
+    var src = bcoin.tx({
+      outputs: [{
+        value: 5460 * 2,
+        address: w.getAddress()
+      }]
+    });
+    assert(w.own(src));
+
+    var tx = bcoin.tx()
+      .input(src, 1)
+      .out(w.getAddress(), 5460);
+
+    w.sign(tx);
+  });
 });
