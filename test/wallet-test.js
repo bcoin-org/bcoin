@@ -29,9 +29,10 @@ describe('Wallet', function() {
     assert(w.own(src));
 
     var tx = bcoin.tx()
-      .input(src, 1)
+      .input(src, 0)
       .out(w.getAddress(), 5460);
 
     w.sign(tx);
+    assert(tx.validate());
   });
 });
