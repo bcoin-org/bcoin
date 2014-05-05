@@ -16,6 +16,7 @@ describe('Wallet', function() {
   it('should fail to validate invalid address', function() {
     assert(!bcoin.wallet.validateAddress('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
   });
+
   it('should sign/verify TX', function() {
     var w = bcoin.wallet();
 
@@ -33,6 +34,6 @@ describe('Wallet', function() {
       .out(w.getAddress(), 5460);
 
     w.sign(tx);
-    assert(tx.validate());
+    assert(tx.verify());
   });
 });

@@ -4,17 +4,53 @@ var bcoin = require('../');
 
 describe('TX', function() {
   var parser = bcoin.protocol.parser();
+  var raw = '010000000125393c67cd4f581456dd0805fa8e9db3abdf90dbe1d4b53e28' +
+            '6490f35d22b6f2010000006b483045022100f4fa5ced20d2dbd2f905809d' +
+            '79ebe34e03496ef2a48a04d0a9a1db436a211dd202203243d086398feb4a' +
+            'c21b3b79884079036cd5f3707ba153b383eabefa656512dd0121022ebabe' +
+            'fede28804b331608d8ef11e1d65b5a920720db8a644f046d156b3a73c0ff' +
+            'ffffff0254150000000000001976a9140740345f114e1a1f37ac1cc442b4' +
+            '32b91628237e88ace7d27b00000000001976a91495ad422bb5911c2c9fe6' +
+            'ce4f82a13c85f03d9b2e88ac00000000';
+  var inp = '01000000052fa236559f51f343f0905ea627a955f421a198541d928798b8' +
+            '186980273942ec010000006b483045022100ae27626778eba264d56883f5' +
+            'edc1a49897bf209e98f21c870a55d13bec916e1802204b66f4e3235143d1' +
+            '1aef327d9454754cd1f28807c3bf9996c107900df9d19ea60121022ebabe' +
+            'fede28804b331608d8ef11e1d65b5a920720db8a644f046d156b3a73c0ff' +
+            'ffffffe2136f72e4a25e300137b98b402cda91db5c6db6373ba81c722ae1' +
+            'a85315b591000000006b483045022100f84293ea9bfb6d150f3a72d8b5ce' +
+            'b294a77b31442bf9d4ab2058f046a9b65a9f022075935dc0a6a628df26eb' +
+            'b7215634fd33b65f4da105665595028837680b87ea360121039708df1967' +
+            '09c5041dc9a26457a0cfa303076329f389687bdc9709d5862fd664ffffff' +
+            'fff6e67655a42a2f955ec8610940c983042516c32298e57684b3c29fcade' +
+            '7e637a000000006a47304402203bbfb53c3011d742f3f942db18a44d8c3d' +
+            'd111990ee7cc42959383dd7a3e8e8d02207f0f5ed3e165d9db81ac69d36c' +
+            '60a1a4a482f22cb0048dafefa5e704e84dd18e0121039708df196709c504' +
+            '1dc9a26457a0cfa303076329f389687bdc9709d5862fd664ffffffff9a02' +
+            'e72123a149570c11696d3c798593785e95b8a3c3fc49ae1d07d809d94d5a' +
+            '000000006b483045022100ad0e6f5f73221aa4eda9ad82c7074882298bcf' +
+            '668f34ae81126df0213b2961850220020ba23622d75fb8f95199063b804f' +
+            '62ba103545af4e16b5be0b6dc0cb51aac60121039708df196709c5041dc9' +
+            'a26457a0cfa303076329f389687bdc9709d5862fd664ffffffffd7db5a38' +
+            '72589ca8aa3cd5ebb0f22dbb3956f8d691e15dc010fe1093c045c3de0000' +
+            '00006b48304502210082b91a67da1f02dcb0d00e63b67f10af8ba9639b16' +
+            '5f9ff974862a9d4900e27c022069e4a58f591eb3fc7d7d0b176d64d59e90' +
+            'aef0c601b3c84382abad92f6973e630121039708df196709c5041dc9a264' +
+            '57a0cfa303076329f389687bdc9709d5862fd664ffffffff025415000000' +
+            '0000001976a9140740345f114e1a1f37ac1cc442b432b91628237e88ac4b' +
+            '0f7c00000000001976a91495ad422bb5911c2c9fe6ce4f82a13c85f03d9b' +
+            '2e88ac00000000';
 
   it('should decode/encode with parser/framer', function() {
-    var raw = '010000000125393c67cd4f581456dd0805fa8e9db3abdf90dbe1d4b53e28' +
-              '6490f35d22b6f2010000006b483045022100f4fa5ced20d2dbd2f905809d' +
-              '79ebe34e03496ef2a48a04d0a9a1db436a211dd202203243d086398feb4a' +
-              'c21b3b79884079036cd5f3707ba153b383eabefa656512dd0121022ebabe' +
-              'fede28804b331608d8ef11e1d65b5a920720db8a644f046d156b3a73c0ff' +
-              'ffffff0254150000000000001976a9140740345f114e1a1f37ac1cc442b4' +
-              '32b91628237e88ace7d27b00000000001976a91495ad422bb5911c2c9fe6' +
-              'ce4f82a13c85f03d9b2e88ac00000000';
     var tx = bcoin.tx(parser.parseTx(bcoin.utils.toArray(raw, 'hex')));
     assert.equal(bcoin.utils.toHex(tx.render()), raw);
+  });
+
+  it('should be verifiable', function() {
+    var tx = bcoin.tx(parser.parseTx(bcoin.utils.toArray(raw, 'hex')));
+    tx.inputs[0].out.tx =
+        bcoin.tx(parser.parseTx(bcoin.utils.toArray(inp, 'hex')));
+
+    assert(tx.verify());
   });
 });
