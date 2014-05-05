@@ -22,4 +22,12 @@ describe('Script', function() {
     var dst = bcoin.script.encode(decoded);
     assert.equal(bcoin.utils.toHex(dst), src);
   });
+
+  it('should encode/decode numbers', function() {
+    var script = [ [], [1], [2], [16] ];
+    var encoded = bcoin.script.encode(script);
+    assert.deepEqual(encoded, [ 0, 0x51, 0x52, 0x60 ]);
+    var decoded = bcoin.script.decode(encoded);
+    assert.deepEqual(decoded, script);
+  });
 });
