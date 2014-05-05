@@ -1,4 +1,5 @@
 var assert = require('assert');
+var bn = require('bn.js');
 var bcoin = require('../');
 
 describe('Wallet', function() {
@@ -25,9 +26,15 @@ describe('Wallet', function() {
       outputs: [{
         value: 5460 * 2,
         address: w.getAddress()
+      }, {
+        value: 5460 * 2,
+        address: w.getAddress() + 'x'
       }]
     });
     assert(w.own(src));
+    assert.equal(w.own(src).reduce(function(acc, out) {
+      return acc.iadd(out.value);
+    }, new bn(0)).toString(10), 5460 * 2);
 
     var tx = bcoin.tx()
       .input(src, 0)
