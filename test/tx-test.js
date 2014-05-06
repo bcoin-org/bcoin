@@ -48,7 +48,7 @@ describe('TX', function() {
 
   it('should be verifiable', function() {
     var tx = bcoin.tx(parser.parseTx(bcoin.utils.toArray(raw, 'hex')));
-    tx.inputTx(0, bcoin.tx(parser.parseTx(bcoin.utils.toArray(inp, 'hex'))));
+    tx.input(bcoin.tx(parser.parseTx(bcoin.utils.toArray(inp, 'hex'))), 0);
 
     assert(tx.verify());
   });
