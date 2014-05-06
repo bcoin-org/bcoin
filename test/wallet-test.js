@@ -43,4 +43,31 @@ describe('Wallet', function() {
     w.sign(tx);
     assert(tx.verify());
   });
+
+  it('should multisign/verify TX', function() {
+    var w = bcoin.wallet();
+
+    // Input transcation
+    var src = bcoin.tx({
+      outputs: [{
+        value: 5460 * 2,
+        minSignatures: 1,
+        address: [ w.getPublicKey(), w.getPublicKey().concat(1) ]
+      }, {
+        value: 5460 * 2,
+        address: w.getAddress() + 'x'
+      }]
+    });
+    assert(w.own(src));
+    assert.equal(w.own(src).reduce(function(acc, out) {
+      return acc.iadd(out.value);
+    }, new bn(0)).toString(10), 5460 * 2);
+
+    var tx = bcoin.tx()
+      .input(src, 0)
+      .out(w.getAddress(), 5460);
+
+    w.sign(tx);
+    assert(tx.verify());
+  });
 });
