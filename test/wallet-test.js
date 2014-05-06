@@ -71,7 +71,7 @@ describe('Wallet', function() {
     assert(tx.verify());
   });
 
-  it('should have TX pool', function() {
+  it('should have TX pool and be serializable', function() {
     var w = bcoin.wallet();
 
     // Coinbase
@@ -93,5 +93,8 @@ describe('Wallet', function() {
     assert.equal(w.balance().toString(10), '47000');
     w.addTX(t3);
     assert.equal(w.balance().toString(10), '22000');
+
+    var w2 = bcoin.wallet().fromJSON(w.toJSON());
+    assert.equal(w2.balance().toString(10), '22000');
   });
 });
