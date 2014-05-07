@@ -15,8 +15,12 @@ var addrs = [
 ];
 
 var pool = bcoin.pool({
-  count: 16,
+  size: 32,
+  redundancy: 1,
+  parallel: 4000,
+  loadWindow: 750,
   createConnection: function() {
+    console.log('connecting...');
     return net.connect(8333, addrs[(Math.random() * addrs.length) | 0]);
   }
 });
@@ -27,7 +31,12 @@ var last = 0;
 pool.on('block', function(block) {
   if (block.ts <= last)
     return;
-  console.log('Got: ' + block.hash('hex') + ' ' + new Date(block.ts * 1000));
+  console.log('Got: %s from %s chain len %d act %d queue %d',
+              block.hash('hex'),
+              new Date(block.ts * 1000).toString(),
+              pool.chain.index.hashes.length,
+              pool.request.active,
+              pool.request.queue.length);
 });
 
 pool.once('full', finish);
