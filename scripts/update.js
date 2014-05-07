@@ -27,14 +27,12 @@ var pool = bcoin.pool({
 
 console.log('Updating bcoin preloaded chain...');
 
-var last = 0;
 pool.on('block', function(block) {
-  if (block.ts <= last)
-    return;
-  console.log('Got: %s from %s chain len %d act %d queue %d',
+  console.log('Got: %s from %s chain len %d orp %d act %d queue %d',
               block.hash('hex'),
               new Date(block.ts * 1000).toString(),
               pool.chain.index.hashes.length,
+              pool.chain.orphan.count,
               pool.request.active,
               pool.request.queue.length);
 });
