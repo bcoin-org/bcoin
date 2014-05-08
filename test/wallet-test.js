@@ -85,6 +85,13 @@ describe('Wallet', function() {
     var t4 = bcoin.tx().input(t2.hash(), 1)
                        .input(t3.hash(), 0)
                        .out(w, 22000);
+
+    // Just for debugging
+    t1.hint = 't1';
+    t2.hint = 't2';
+    t3.hint = 't3';
+    t4.hint = 't4';
+
     w.addTX(t4);
     assert.equal(w.balance().toString(10), '22000');
     w.addTX(t1);
