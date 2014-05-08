@@ -94,7 +94,7 @@ describe('Wallet', function() {
     w.addTX(t3);
     assert.equal(w.balance().toString(10), '22000');
 
-    var w2 = bcoin.wallet().fromJSON(w.toJSON());
+    var w2 = bcoin.wallet.fromJSON(w.toJSON());
     assert.equal(w2.balance().toString(10), '22000');
   });
 });
