@@ -67,7 +67,9 @@ describe('Wallet', function() {
       .input(src, 0)
       .out(w.getAddress(), 5460);
 
+    var maxSize = tx.maxSize();
     w.sign(tx);
+    assert(tx.render().length <= maxSize);
     assert(tx.verify());
   });
 
