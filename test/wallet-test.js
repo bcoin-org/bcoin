@@ -31,8 +31,8 @@ describe('Wallet', function() {
         address: w.getAddress() + 'x'
       }]
     });
-    assert(w.own(src));
-    assert.equal(w.own(src).reduce(function(acc, out) {
+    assert(w.ownOutput(src));
+    assert.equal(w.ownOutput(src).reduce(function(acc, out) {
       return acc.iadd(out.value);
     }, new bn(0)).toString(10), 5460 * 2);
 
@@ -58,8 +58,8 @@ describe('Wallet', function() {
         address: w.getAddress() + 'x'
       }]
     });
-    assert(w.own(src));
-    assert.equal(w.own(src).reduce(function(acc, out) {
+    assert(w.ownOutput(src));
+    assert.equal(w.ownOutput(src).reduce(function(acc, out) {
       return acc.iadd(out.value);
     }, new bn(0)).toString(10), 5460 * 2);
 
@@ -75,6 +75,7 @@ describe('Wallet', function() {
 
   it('should have TX pool and be serializable', function() {
     var w = bcoin.wallet();
+    var f = bcoin.wallet();
 
     // Coinbase
     var t1 = bcoin.tx().out(w, 50000).out(w, 1000);
@@ -86,13 +87,22 @@ describe('Wallet', function() {
                        .out(w, 23000);
     var t4 = bcoin.tx().input(t2.hash(), 1)
                        .input(t3.hash(), 0)
-                       .out(w, 22000);
+                       .out(w, 11000)
+                       .out(w, 11000);
+    var f1 = bcoin.tx().input(t4.hash(), 1)
+                       .out(f, 10000);
+    w.sign(t1);
+    w.sign(t2);
+    w.sign(t3);
+    w.sign(t4);
+    w.sign(f1);
 
     // Just for debugging
     t1.hint = 't1';
     t2.hint = 't2';
     t3.hint = 't3';
     t4.hint = 't4';
+    f1.hint = 'f1';
 
     w.addTX(t4);
     assert.equal(w.balance().toString(10), '22000');
@@ -102,8 +112,16 @@ describe('Wallet', function() {
     assert.equal(w.balance().toString(10), '47000');
     w.addTX(t3);
     assert.equal(w.balance().toString(10), '22000');
+    w.addTX(f1);
+    assert.equal(w.balance().toString(10), '11000');
+    assert(w.all().some(function(tx) {
+      return tx.hash('hex') === f1.hash('hex');
+    }));
 
     var w2 = bcoin.wallet.fromJSON(w.toJSON());
-    assert.equal(w2.balance().toString(10), '22000');
+    assert.equal(w2.balance().toString(10), '11000');
+    assert(w2.all().some(function(tx) {
+      return tx.hash('hex') === f1.hash('hex');
+    }));
   });
 });
