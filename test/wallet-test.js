@@ -79,24 +79,25 @@ describe('Wallet', function() {
 
     // Coinbase
     var t1 = bcoin.tx().out(w, 50000).out(w, 1000);
-    var t2 = bcoin.tx().input(t1.hash(), 0)
+    w.sign(t1);
+    var t2 = bcoin.tx().input(t1, 0)
                        .out(w, 24000)
                        .out(w, 24000);
-    var t3 = bcoin.tx().input(t1.hash(), 1)
-                       .input(t2.hash(), 0)
+    w.sign(t2);
+    var t3 = bcoin.tx().input(t1, 1)
+                       .input(t2, 0)
                        .out(w, 23000);
-    var t4 = bcoin.tx().input(t2.hash(), 1)
-                       .input(t3.hash(), 0)
+    w.sign(t3);
+    var t4 = bcoin.tx().input(t2, 1)
+                       .input(t3, 0)
                        .out(w, 11000)
                        .out(w, 11000);
-    var f1 = bcoin.tx().input(t4.hash(), 1)
-                       .out(f, 10000);
-    var fake = bcoin.tx().input(t1.hash(), 1);
-    w.sign(t1);
-    w.sign(t2);
-    w.sign(t3);
     w.sign(t4);
+    var f1 = bcoin.tx().input(t4, 1)
+                       .out(f, 10000);
     w.sign(f1);
+    var fake = bcoin.tx().input(t1, 1)
+                         .out(w, 500);
 
     // Just for debugging
     t1.hint = 't1';
@@ -104,10 +105,13 @@ describe('Wallet', function() {
     t3.hint = 't3';
     t4.hint = 't4';
     f1.hint = 'f1';
+    fake.hint = 'fake';
 
+    // Fake TX should temporarly change output
     w.addTX(fake);
+
     w.addTX(t4);
-    assert.equal(w.balance().toString(10), '22000');
+    assert.equal(w.balance().toString(10), '22500');
     w.addTX(t1);
     assert.equal(w.balance().toString(10), '73000');
     w.addTX(t2);
