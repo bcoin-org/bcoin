@@ -148,5 +148,11 @@ describe('Wallet', function() {
 
     assert.equal(t2.funds('in').toString(10), 16380);
     assert.equal(t2.funds('out').toString(10), 6380);
+
+    // Create new transaction
+    var t2 = bcoin.tx().out(w2, 15000);
+    assert.throws(function() {
+      w1.fill(t2);
+    });
   });
 });
