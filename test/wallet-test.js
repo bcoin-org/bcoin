@@ -130,4 +130,23 @@ describe('Wallet', function() {
       return tx.hash('hex') === f1.hash('hex');
     }));
   });
+
+  it('should fill tx with inputs', function() {
+    var w1 = bcoin.wallet();
+    var w2 = bcoin.wallet();
+
+    // Coinbase
+    var t1 = bcoin.tx().out(w1, 5460).out(w1, 5460).out(w1, 5460).out(w1, 5460);
+
+    // Fake TX should temporarly change output
+    w1.addTX(t1);
+
+    // Create new transaction
+    var t2 = bcoin.tx().out(w2, 5460);
+    w1.sign(t2);
+    w1.fill(t2);
+
+    assert.equal(t2.funds('in').toString(10), 16380);
+    assert.equal(t2.funds('out').toString(10), 6380);
+  });
 });
