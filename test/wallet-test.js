@@ -91,6 +91,7 @@ describe('Wallet', function() {
                        .out(w, 11000);
     var f1 = bcoin.tx().input(t4.hash(), 1)
                        .out(f, 10000);
+    var fake = bcoin.tx().input(t1.hash(), 1);
     w.sign(t1);
     w.sign(t2);
     w.sign(t3);
@@ -104,6 +105,7 @@ describe('Wallet', function() {
     t4.hint = 't4';
     f1.hint = 'f1';
 
+    w.addTX(fake);
     w.addTX(t4);
     assert.equal(w.balance().toString(10), '22000');
     w.addTX(t1);
