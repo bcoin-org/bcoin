@@ -143,8 +143,8 @@ describe('Wallet', function() {
 
     // Create new transaction
     var t2 = bcoin.tx().out(w2, 5460);
-    w1.sign(t2);
     w1.fill(t2);
+    assert(t2.verify());
 
     assert.equal(t2.funds('in').toString(10), 16380);
     assert.equal(t2.funds('out').toString(10), 6380);
