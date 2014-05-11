@@ -131,7 +131,7 @@ describe('Wallet', function() {
     }));
   });
 
-  it('should fill tx with inputs', function() {
+  it('should fill tx with inputs', function(cb) {
     var w1 = bcoin.wallet();
     var w2 = bcoin.wallet();
 
@@ -143,16 +143,21 @@ describe('Wallet', function() {
 
     // Create new transaction
     var t2 = bcoin.tx().out(w2, 5460);
-    w1.fill(t2);
-    assert(t2.verify());
+    w1.fill(t2, function(err) {
+      assert(!err);
+      assert(t2.verify());
 
-    assert.equal(t2.funds('in').toString(10), 16380);
-    assert.equal(t2.funds('out').toString(10), 6380);
+      assert.equal(t2.funds('in').toString(10), 16380);
+      assert.equal(t2.funds('out').toString(10), 6380);
 
-    // Create new transaction
-    var t2 = bcoin.tx().out(w2, 15000);
-    assert.throws(function() {
-      w1.fill(t2);
+      // Create new transaction
+      var t3 = bcoin.tx().out(w2, 15000);
+      w1.fill(t3, function(err) {
+        assert(err);
+        assert.equal(err.minBalance.toString(10), 25000);
+
+        cb();
+      });
     });
   });
 });
