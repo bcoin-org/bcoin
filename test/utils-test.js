@@ -1,4 +1,5 @@
 var assert = require('assert');
+var bn = require('bn.js');
 var bcoin = require('../');
 
 describe('Utils', function() {
@@ -17,5 +18,14 @@ describe('Utils', function() {
     );
     var target = bcoin.utils.bitsToTarget(bits);
     assert(bcoin.utils.testTarget(target, hash));
+  });
+
+  it('should convert satoshi to btc', function() {
+    var btc = bcoin.utils.toBTC(new bn(5460));
+    assert.equal(btc, '0.0000546');
+    var btc = bcoin.utils.toBTC(new bn(54678).mul(new bn(1000000)));
+    assert.equal(btc, '546.78');
+    var btc = bcoin.utils.toBTC(new bn(5460).mul(new bn(10000000)));
+    assert.equal(btc, '546');
   });
 });
