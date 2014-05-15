@@ -37,6 +37,12 @@ pool.on('block', function(block) {
               pool.request.queue.length);
 });
 
+pool.on('addr', function(data) {
+  if (data.port !== 8333) return;
+  console.log('Found new peer: %s', data.host);
+  addrs.push(data.address);
+});
+
 pool.once('full', finish);
 process.once('SIGINT', finish);
 
