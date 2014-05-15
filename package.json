@@ -1,6 +1,6 @@
 {
   "name": "bcoin",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Bitcoin bike-shed",
   "main": "lib/bcoin.js",
   "scripts": {
