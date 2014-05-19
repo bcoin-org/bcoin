@@ -1,5 +1,6 @@
 var assert = require('assert');
 var bcoin = require('../');
+var utils = bcoin.utils;
 
 describe('Protocol', function() {
   var parser;
@@ -49,19 +50,14 @@ describe('Protocol', function() {
       return +n;
     });
     addr._ipv6 = addr.ipv6;
-    addr.ipv6 = addr.ipv6.split(':').map(function(n) {
-      return [(parseInt(n, 16) >> 8) & 0xff, parseInt(n, 16) & 0xff];
-    }).reduce(function(out, val) {
-      return out.concat(val);
-    }, []);
+    addr.ipv6 = utils.toArray(addr.ipv6, 'hex');
     addr._ipv6 = '::' + addr._ipv6.split(':').slice(2).join(':');
   });
 
+
   packetTest('addr', peers, function(payload) {
-    if (parser.parseAddr) {
-      payload = parser.parseAddr(payload);
-    } else {
-      // XXX Legacy
+    // XXX Legacy
+    if (!parser.parseAddr) {
       var addrs = [];
       bcoin.peer.prototype._handleAddr.call({
         emit: function(_, obj) {
