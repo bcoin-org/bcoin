@@ -34,12 +34,14 @@ describe('Protocol', function() {
     {
       ipv6: '0000:0000:0000:0000:0000:0000:0000:ffff',
       ipv4: '127.0.0.1',
-      port: 8333
+      port: 8333,
+      ts: Date.now() / 1000 | 0
     },
     {
       ipv6:  '0000:0000:0000:0000:0000:7f00:0001:ffff',
       ipv4: '10.0.0.1',
-      port: 18333
+      port: 18333,
+      ts: Date.now() / 1000 | 0
     }
   ];
 
@@ -54,37 +56,18 @@ describe('Protocol', function() {
     addr._ipv6 = '::' + addr._ipv6.split(':').slice(2).join(':');
   });
 
-
   packetTest('addr', peers, function(payload) {
-    // XXX Legacy
-    if (!parser.parseAddr) {
-      var addrs = [];
-      bcoin.peer.prototype._handleAddr.call({
-        emit: function(_, obj) {
-          addrs.push(obj);
-        }
-      }, payload);
-      payload = addrs;
-      payload.forEach(function(addr) {
-        addr.date = addr.date.getTime() / 1000 | 0;
-        delete addr.address;
-        delete addr.host;
-        delete addr.host6;
-        addr.ipv6 = '::' + addr.ipv6;
-      });
-    }
-
     assert.equal(typeof payload.length, 'number');
     assert.equal(payload.length, 2);
 
-    assert.equal(typeof payload[0].date, 'number');
-    assert.equal(payload[0].network, 1);
+    assert.equal(typeof payload[0].ts, 'number');
+    assert.equal(payload[0].service, 1);
     assert.equal(payload[0].ipv6, peers[0]._ipv6);
     assert.equal(payload[0].ipv4, peers[0]._ipv4);
     assert.equal(payload[0].port, peers[0].port);
 
-    assert.equal(typeof payload[1].date, 'number');
-    assert.equal(payload[1].network, 1);
+    assert.equal(typeof payload[1].ts, 'number');
+    assert.equal(payload[1].service, 1);
     assert.equal(payload[1].ipv6, peers[1]._ipv6);
     assert.equal(payload[1].ipv4, peers[1]._ipv4);
     assert.equal(payload[1].port, peers[1].port);
