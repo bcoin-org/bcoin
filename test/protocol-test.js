@@ -25,6 +25,13 @@ describe('Protocol', function() {
   packetTest('version', {}, function(payload) {
     assert.equal(payload.v, 70002);
     assert.equal(payload.relay, false);
+    assert.equal(payload.height, 0);
+  });
+
+  packetTest('version', { relay: true, height: 10 }, function(payload) {
+    assert.equal(payload.v, 70002);
+    assert.equal(payload.relay, true);
+    assert.equal(payload.height, 10);
   });
 
   packetTest('verack', {}, function(payload) {
