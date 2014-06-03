@@ -184,13 +184,13 @@ The parsing of incoming packets.
 
 *TODO...*
 
-### Constants
+#### Constants
 
 Bitcoin constants, from the genesis block to magic number base58 prefixes.
 
 *TODO...*
 
-### Preload
+#### Preload
 
 ~3000 checkpoint blocks for the Chain to preload on instantiation.
 
