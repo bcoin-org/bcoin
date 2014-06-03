@@ -89,9 +89,124 @@ pool.on('tx', function(tx, peer) {
   console.log(block);
   console.log('Received transaction %s from %s.', hash, ip);
 });
+
+// Open our ecdsa private key (our bitcoin address is derived from this)
+// `priv` can be a hex string, a binary array, or a big number (bn.js)
+var wallet = new bcoin.wallet({
+  priv: fs.readFileSync(process.env.HOME + '/.bcoin/priv'),
+  storage: pool.storage
+});
+
+console.log('Opened our wallet with address: %s', wallet.getAddress());
+
+// Make sure we keep an eye on any transactions pertaining to us.
+pool.watch(wallet.getPublicKey());
+pool.watch(wallet.getHash());
+
+// Watch our balance update as we receive transactions.
+wallet.on('balance', function(balance) {
+  // Convert satoshis to BTC.
+  var btc = bcoin.utils.toBTC(balance);
+  console.log('Your wallet balance has been updated: %s', btc);
+});
 ```
 
 ## API Documentation
+
+### Objects
+
+#### Block
+
+A bitcoin merkle block or (satoshi) block in its abstract bcoin format.
+
+*TODO...*
+
+#### Bloom
+
+The bloom filter used for the `filterload` packets, but also used for efficient
+testing of existence in a collection in miscellaneous places.
+
+*TODO...*
+
+#### Chain
+
+The blockchain which keeps track of block height and order.
+
+*TODO...*
+
+#### Peer
+
+The peer object itself. The peer's socket resides here.
+
+*TODO...*
+
+#### Pool
+
+The pool of peers, also instantiates a Chain object.
+
+*TODO...*
+
+#### TX
+
+A transaction in its abstract bcoin format.
+
+*TODO...*
+
+#### TXPool
+
+A pool of transactions that stores transactions based on their inputs and
+outputs and whether they contain certain public keys. Used by Wallet to keep
+track of relevant transactions.
+
+*TODO...*
+
+#### Wallet
+
+An object which contains an ecdsa keypair and can calculate balance for that
+bitcoin address. This would be called an `account` in the traditional bitcoin
+client.
+
+*TODO...*
+
+### Protocol
+
+The low-level bitcoin protocol implementation.
+
+#### Framer
+
+The creation of outgoing packets.
+
+*TODO...*
+
+#### Parser
+
+The parsing of incoming packets.
+
+*TODO...*
+
+### Constants
+
+Bitcoin constants, from the genesis block to magic number base58 prefixes.
+
+*TODO...*
+
+### Preload
+
+~3000 checkpoint blocks for the Chain to preload on instantiation.
+
+*TODO...*
+
+### Other
+
+#### Script
+
+The bitcoin Script execution, for executing Script code in TX objects.
+
+*TODO...*
+
+#### Utils
+
+Miscellaneous utilities used all throughout bcoin.
 
 *TODO...*
 
