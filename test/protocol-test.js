@@ -3,6 +3,9 @@ var bcoin = require('../');
 var utils = bcoin.utils;
 
 describe('Protocol', function() {
+  var version = require('../package.json').version;
+  var agent = '/bcoin:' + version + '/';
+
   var parser;
   var framer;
   beforeEach(function() {
@@ -24,14 +27,16 @@ describe('Protocol', function() {
 
   packetTest('version', {}, function(payload) {
     assert.equal(payload.v, 70002);
-    assert.equal(payload.relay, false);
+    assert.equal(payload.agent, agent);
     assert.equal(payload.height, 0);
+    assert.equal(payload.relay, false);
   });
 
   packetTest('version', { relay: true, height: 10 }, function(payload) {
     assert.equal(payload.v, 70002);
-    assert.equal(payload.relay, true);
+    assert.equal(payload.agent, agent);
     assert.equal(payload.height, 10);
+    assert.equal(payload.relay, true);
   });
 
   packetTest('verack', {}, function(payload) {
