@@ -160,4 +160,67 @@ describe('Wallet', function() {
       });
     });
   });
+
+  it('should sign multiple inputs using different keys', function(cb) {
+    var w1 = bcoin.wallet();
+    var w2 = bcoin.wallet();
+    var to = bcoin.wallet();
+
+    // Coinbase
+    var t1 = bcoin.tx().out(w1, 5460).out(w1, 5460).out(w1, 5460).out(w1, 5460);
+    // Fake TX should temporarly change output
+    w1.addTX(t1);
+    // Coinbase
+    var t2 = bcoin.tx().out(w2, 5460).out(w2, 5460).out(w2, 5460).out(w2, 5460);
+    // Fake TX should temporarly change output
+    w2.addTX(t2);
+
+    // Create our tx with an output
+    var tx = bcoin.tx();
+    tx.out(to, 5460);
+
+    var cost = tx.funds('out');
+    var total = cost.add(new bn(w1.fee));
+
+    var unspent1 = w1.unspent();
+    var unspent2 = w2.unspent();
+
+    // Add dummy output (for `left`) to calculate maximum TX size
+    tx.out(w1, new bn(0));
+
+    // Add our unspent inputs to sign
+    tx.input(unspent1[0]);
+    tx.input(unspent1[1]);
+    tx.input(unspent2[0]);
+
+    var left = tx.funds('in').sub(total);
+    if (left.cmpn(w1.dust) < 0) {
+      tx.outputs[tx.outputs.length - 2].value.iadd(left);
+      left = new bn(0);
+    }
+    if (left.cmpn(0) === 0)
+      tx.outputs.pop();
+    else
+      tx.outputs[tx.outputs.length - 1].value = left;
+
+    // Sign transaction
+    assert.equal(w1.sign(tx), 2);
+    assert.equal(w2.sign(tx), 1);
+
+    // Verify
+    assert.equal(tx.verify(), true);
+
+    // Sign transaction using `inputs` and `off` params.
+    tx.inputs.length = 0;
+    tx.input(unspent1[1]);
+    tx.input(unspent1[2]);
+    tx.input(unspent2[1]);
+    assert.equal(w1.sign(tx, 'all', tx.inputs.slice(), 0), 2);
+    assert.equal(w2.sign(tx, 'all', tx.inputs.slice(2), 2), 1);
+
+    // Verify
+    assert.equal(tx.verify(), true);
+
+    cb();
+  });
 });
