@@ -13,11 +13,20 @@ compiling a binding to an ECDSA library is not even required for node.js).
 satoshi protocol, which will also optionally give the user the ability download
 the entire blockchain.
 
+## Prerequisites
+
+```
+$ npm install bcoin
+$ npm install levelup
+$ npm install leveldown
+```
+
 ## Example Usage
 
 ``` js
 var bcoin = require('bcoin');
 var net = require('net');
+var fs = require('fs');
 
 // Standard bitcoin seeds
 var seeds = [
@@ -86,14 +95,26 @@ pool.on('block', function(block, peer) {
 pool.on('tx', function(tx, peer) {
   var hash = bcoin.utils.revHex(tx.hash('hex'));
   var ip = peer.socket.remoteAddress;
-  console.log(block);
+  console.log(tx);
   console.log('Received transaction %s from %s.', hash, ip);
 });
 
 // Open our ecdsa private key (our bitcoin address is derived from this)
 // `priv` can be a hex string, a binary array, or a big number (bn.js)
+var privkeyfile = process.env.HOME + '/.bcoin/priv';
+if (!fs.existsSync(privkeyfile)) {
+  try {
+    var privkey = bcoin.wallet().getPrivateKey('base58');
+    fs.writeFileSync(privkeyfile, privkey);
+  }
+  catch(err) {
+    console.log('Error creating private key file: '+err);
+    return;
+  }
+}
+
 var wallet = new bcoin.wallet({
-  priv: fs.readFileSync(process.env.HOME + '/.bcoin/priv'),
+  priv: fs.readFileSync(privkeyfile),
   storage: pool.storage
 });
 
