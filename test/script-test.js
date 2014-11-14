@@ -25,9 +25,16 @@ describe('Script', function() {
 
   it('should encode/decode numbers', function() {
     var script = [ [], [1], [2], [16] ];
-    var encoded = bcoin.script.encode(script);
+    var encoded = bcoin.script.encode(script, false);
     assert.deepEqual(encoded, [ 0, 0x51, 0x52, 0x60 ]);
-    var decoded = bcoin.script.decode(encoded);
+    var decoded = bcoin.script.decode(encoded, false);
+    assert.deepEqual(decoded, script);
+
+    // Strict
+    var script = [ [], 'op1', 'op2', 'op16', [ 1 ] ];
+    var encoded = bcoin.script.encode(script, true);
+    assert.deepEqual(encoded, [ 0, 0x51, 0x52, 0x60, 0x1, 0x1 ]);
+    var decoded = bcoin.script.decode(encoded, true);
     assert.deepEqual(decoded, script);
   });
 });
