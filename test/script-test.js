@@ -24,7 +24,7 @@ describe('Script', function() {
   });
 
   it('should encode/decode numbers', function() {
-    var script = [ [], [1], [2], [16] ];
+    var script = [ [], 1, 2, 16 ];
     var encoded = bcoin.script.encode(script);
     assert.deepEqual(encoded, [ 0, 0x51, 0x52, 0x60 ]);
     var decoded = bcoin.script.decode(encoded);
