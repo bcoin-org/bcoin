@@ -5,22 +5,30 @@ var net = require('net');
 var path = require('path');
 var bcoin = require('../');
 
-var addrs = [
-  'seed.bitcoin.sipa.be',
-  'dnsseed.bluematt.me',
-  'dnsseed.bitcoin.dashjr.org',
-  'seed.bitcoinstats.com',
-  'seed.bitnodes.io',
-  'bitseed.xf2.org'
-];
+var addrs = {
+  main: [
+    'seed.bitcoin.sipa.be',
+    'dnsseed.bluematt.me',
+    'dnsseed.bitcoin.dashjr.org',
+    'seed.bitcoinstats.com',
+    'seed.bitnodes.io',
+    'bitseed.xf2.org'
+  ],
+  test: [
+    'testnet-seed.bitcoin.petertodd.org',
+    'testnet-seed.bluematt.me'
+  ]
+}
 
 var pool = bcoin.pool({
   size: 32,
   redundancy: 1,
   parallel: 4000,
   loadWindow: 750,
-  createConnection: function() {
+  createConnection: function(opts) {
     console.log('connecting...');
+    //var port = opts.test ? bcoin.constants.test.port : bcoin.constants.main.port
+    //var addrs = opts.test ? addrs.test : addrs.main
     return net.connect(8333, addrs[(Math.random() * addrs.length) | 0]);
   }
 });
@@ -38,7 +46,7 @@ pool.on('block', function(block) {
 });
 
 pool.on('addr', function(data) {
-  if (data.port !== 8333) return;
+  if (data.port !== bcoin.constants.main.port && data.port !== bcoin.constants.test.port) return;
   console.log('Found new peer: %s', data.host);
   addrs.push(data.address);
 });
