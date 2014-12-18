@@ -30,4 +30,11 @@ describe('Script', function() {
     var decoded = bcoin.script.decode(encoded);
     assert.deepEqual(decoded, script);
   });
+
+  it('should recognize a P2SH output', function () {
+    var hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87'
+    var encoded = bcoin.utils.toArray(hex, 'hex')
+    var decoded = bcoin.script.decode(encoded);
+    assert(bcoin.script.isScripthash(decoded))
+  })
 });
