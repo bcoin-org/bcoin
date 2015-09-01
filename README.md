@@ -28,7 +28,7 @@ var bcoin = require('bcoin');
 var net = require('net');
 var fs = require('fs');
 
-if (process.env.TEST){
+if (bcoin.protocol.constants.isTestnet){
     var addrs = [
         'testnet-seed.bitcoin.petertodd.org',
         'testnet-seed.bitcoin.schildbach.de'
@@ -140,10 +140,10 @@ wallet.on('balance', function(balance) {
 
 ## Testnet usage
 
-Use the environment variable `TEST` to connect to testnet.
+Set the environment variable `BCOIN_NETWORK` to 'test'.
 
 ```
-$ env TEST=1 node wallet.js
+$ env BCOIN_NETWORK=test node wallet.js
 ```
 
 ## API Documentation

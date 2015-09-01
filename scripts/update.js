@@ -5,7 +5,7 @@ var net = require('net');
 var path = require('path');
 var bcoin = require('../');
 
-if (process.env.TEST){
+if (bcoin.protocol.constants.isTestnet){
   var addrs = [
     'testnet-seed.bitcoin.petertodd.org',
     'testnet-seed.bitcoin.schildbach.de'
@@ -68,7 +68,7 @@ function finish() {
               'module.exports = ' +
               JSON.stringify(pool.chain.toJSON(), null, 2) + '\n';
   var file = path.resolve(__dirname, '..', 'lib', 'bcoin', 'protocol',
-      process.env.TEST ? 'preload-test.js' : 'preload.js');
+      bcoin.protocol.constants.isTestnet ? 'preload-test.js' : 'preload.js');
 
   require('fs').writeFileSync(file, chain);
   pool.destroy();
