@@ -28,15 +28,21 @@ var bcoin = require('bcoin');
 var net = require('net');
 var fs = require('fs');
 
-// Standard bitcoin seeds
-var seeds = [
-  'seed.bitcoin.sipa.be',
-  'dnsseed.bluematt.me',
-  'dnsseed.bitcoin.dashjr.org',
-  'seed.bitcoinstats.com',
-  'seed.bitnodes.io',
-  'bitseed.xf2.org'
-];
+if (bcoin.protocol.constants.isTestnet){
+    var addrs = [
+        'testnet-seed.bitcoin.petertodd.org',
+        'testnet-seed.bitcoin.schildbach.de'
+    ];
+} else {
+    var addrs = [
+      'seed.bitcoin.sipa.be',
+      'dnsseed.bluematt.me',
+      'dnsseed.bitcoin.dashjr.org',
+      'seed.bitcoinstats.com',
+      'seed.bitnodes.io',
+      'bitseed.xf2.org'
+    ];
+}
 
 var index = 0;
 var pool = new bcoin.pool({
@@ -45,14 +51,14 @@ var pool = new bcoin.pool({
   // This function must return a socket that supports the standard
   // node socket model: `write()`, `destroy()` `on('data')`, etc.
   createConnection: function() {
-    if (index >= seeds.length) {
+    if (index >= addrs.length) {
       index = 0;
     }
 
-    var addr = seeds[index++];
+    var addr = addrs[index++];
     var parts = addr.split(':');
     var host = parts[0];
-    var port = +parts[1] || 8333;
+    var port = +parts[1] || bcoin.protocol.constants.port;
     var socket = net.connect(port, host);
 
     socket.on('connect', function() {
@@ -72,9 +78,9 @@ var pool = new bcoin.pool({
 // Receive the address of another peer.
 pool.on('addr', function(data, peer) {
   var host = data.ipv4 + ':' + data.port;
-  if (!~seeds.indexOf(host)) {
+  if (!~addrs.indexOf(host)) {
     console.log('Found new peer: %s', host);
-    seeds.push(host);
+    addrs.push(host);
   }
 });
 
@@ -130,6 +136,14 @@ wallet.on('balance', function(balance) {
   var btc = bcoin.utils.toBTC(balance);
   console.log('Your wallet balance has been updated: %s', btc);
 });
+```
+
+## Testnet usage
+
+Set the environment variable `BCOIN_NETWORK` to 'test'.
+
+```
+$ env BCOIN_NETWORK=test node wallet.js
 ```
 
 ## API Documentation
