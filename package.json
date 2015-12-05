@@ -23,7 +23,7 @@
   "dependencies": {
     "async": "^0.8.0",
     "bn.js": "^0.10.0",
-    "elliptic": "^0.14.1",
+    "elliptic": "^3.0.3",
     "hash.js": "^0.2.0",
     "inherits": "^2.0.1"
   },
