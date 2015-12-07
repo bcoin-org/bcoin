@@ -52,7 +52,7 @@ describe('Wallet', function() {
       outputs: [{
         value: 5460 * 2,
         minSignatures: 1,
-        address: [ w.getPublicKey(), w.getPublicKey().concat(1) ]
+        keys: [ w.getPublicKey(), w.getPublicKey().concat(1) ]
       }, {
         value: 5460 * 2,
         address: w.getAddress() + 'x'
