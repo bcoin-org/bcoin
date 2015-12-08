@@ -2,6 +2,33 @@ var assert = require('assert');
 var bn = require('bn.js');
 var bcoin = require('../');
 
+function printScript(input) {
+  var scripts = [];
+  var script = input.script;
+  scripts.push(script);
+  var prev = input.out.tx.outputs[input.out.index].script;
+  scripts.push(prev);
+  if (bcoin.script.isScripthash(prev)) {
+    var redeem = bcoin.script.decode(input.script[input.script.length - 1]);
+    scripts.push(redeem);
+  }
+  scripts = scripts.map(function(script) {
+    return script.map(function(chunk) {
+      if (Array.isArray(chunk)) {
+        if (chunk.length === 0)
+          return [0];
+        return [bcoin.utils.toHex(chunk)];
+      }
+      if (typeof chunk === 'number')
+        return [chunk];
+      return chunk;
+    });
+  });
+  scripts.forEach(function(script) {
+    console.log(script);
+  });
+}
+
 describe('Wallet', function() {
   it('should generate new key and address', function() {
     var w = bcoin.wallet();
@@ -284,17 +311,19 @@ describe('Wallet', function() {
     // Create a tx requiring 2 signatures
     var send = bcoin.tx();
     send.output({ address: receive.getAddress(), value: 5460 });
+    assert(!send.verify());
     var result = w1.fill(send);
     assert(result);
+
+    // printScript(send.inputs[0]);
+
+    assert(!send.verify());
     w2.sign(send);
 
-    // XXX Still verifies for some reason.
-    // send.inputs[0].script[1] = [];
-    // send.inputs[0].script[2] = [];
     assert(send.verify());
 
-    // console.log(utx.outputs[0].script);
-    // console.log(send.inputs[0].script);
+    send.inputs[0].script[2] = [];
+    assert(!send.verify());
 
     cb();
   });
