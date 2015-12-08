@@ -289,12 +289,12 @@ describe('Wallet', function() {
     w2.sign(send);
 
     // XXX Still verifies for some reason.
-    send.inputs[0].script[1] = [];
+    // send.inputs[0].script[1] = [];
     // send.inputs[0].script[2] = [];
     assert(send.verify());
 
-    console.log(utx.outputs[0].script);
-    console.log(send.inputs[0].script);
+    // console.log(utx.outputs[0].script);
+    // console.log(send.inputs[0].script);
 
     cb();
   });
