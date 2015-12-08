@@ -225,4 +225,77 @@ describe('Wallet', function() {
 
     cb();
   });
+
+  it('should verify 2-of-3 p2sh tx', function(cb) {
+    // Generate 3 key pairs
+    var key1 = bcoin.ecdsa.genKeyPair();
+    var key2 = bcoin.ecdsa.genKeyPair();
+    var key3 = bcoin.ecdsa.genKeyPair();
+
+    // Grab the 3 pubkeys
+    var pub1 = key1.getPublic(true, 'array');
+    var pub2 = key2.getPublic(true, 'array');
+    var pub3 = key3.getPublic(true, 'array');
+
+    // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
+    var w1 = bcoin.wallet({
+      key: key1,
+      addressType: 'p2sh',
+      sharedKeys: [pub2, pub3],
+      m: 2,
+      n: 3
+    });
+    var w2 = bcoin.wallet({
+      key: key2,
+      addressType: 'p2sh',
+      sharedKeys: [pub1, pub3],
+      m: 2,
+      n: 3
+    });
+    var w3 = bcoin.wallet({
+      key: key3,
+      addressType: 'p2sh',
+      sharedKeys: [pub1, pub2],
+      m: 2,
+      n: 3
+      // multisig: {
+      //   type: 'p2sh',
+      //   keys: [pub1, pub2],
+      //   m: 2,
+      //   n: 3
+      // }
+    });
+    var receive = bcoin.wallet();
+
+    // Our p2sh address
+    var addr = w1.getAddress();
+    assert.equal(w1.getAddress(), addr);
+    assert.equal(w2.getAddress(), addr);
+    assert.equal(w3.getAddress(), addr);
+
+    // Add a shared unspent transaction to our wallets
+    var utx = bcoin.tx();
+    utx.output({ address: addr, value: 5460 * 10 });
+
+    w1.addTX(utx);
+    w2.addTX(utx);
+    w3.addTX(utx);
+
+    // Create a tx requiring 2 signatures
+    var send = bcoin.tx();
+    send.output({ address: receive.getAddress(), value: 5460 });
+    var result = w1.fill(send);
+    assert(result);
+    w2.sign(send);
+
+    // XXX Still verifies for some reason.
+    send.inputs[0].script[1] = [];
+    // send.inputs[0].script[2] = [];
+    assert(send.verify());
+
+    console.log(utx.outputs[0].script);
+    console.log(send.inputs[0].script);
+
+    cb();
+  });
 });
