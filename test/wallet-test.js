@@ -267,30 +267,30 @@ describe('Wallet', function() {
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
     var w1 = bcoin.wallet({
       key: key1,
-      addressType: 'p2sh',
-      sharedKeys: [pub2, pub3],
-      m: 2,
-      n: 3
+      multisig: {
+        type: 'p2sh',
+        keys: [pub2, pub3],
+        m: 2,
+        n: 3
+      }
     });
     var w2 = bcoin.wallet({
       key: key2,
-      addressType: 'p2sh',
-      sharedKeys: [pub1, pub3],
-      m: 2,
-      n: 3
+      multisig: {
+        type: 'p2sh',
+        keys: [pub1, pub3],
+        m: 2,
+        n: 3
+      }
     });
     var w3 = bcoin.wallet({
       key: key3,
-      addressType: 'p2sh',
-      sharedKeys: [pub1, pub2],
-      m: 2,
-      n: 3
-      // multisig: {
-      //   type: 'p2sh',
-      //   keys: [pub1, pub2],
-      //   m: 2,
-      //   n: 3
-      // }
+      multisig: {
+        type: 'p2sh',
+        keys: [pub1, pub2],
+        m: 2,
+        n: 3
+      }
     });
     var receive = bcoin.wallet();
 
