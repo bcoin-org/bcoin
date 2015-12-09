@@ -254,10 +254,19 @@ describe('Wallet', function() {
   });
 
   it('should verify 2-of-3 p2sh tx', function(cb) {
+    var hd = bcoin.hd.priv();
+    var hd1 = hd.derive(0);
+    var hd2 = hd.derive(1);
+    var hd3 = hd.derive(2);
+
     // Generate 3 key pairs
     var key1 = bcoin.ecdsa.genKeyPair();
     var key2 = bcoin.ecdsa.genKeyPair();
     var key3 = bcoin.ecdsa.genKeyPair();
+
+    // var key1 = hd1;
+    // var key2 = hd2;
+    // var key3 = hd3;
 
     // Grab the 3 pubkeys
     var pub1 = key1.getPublic(true, 'array');
