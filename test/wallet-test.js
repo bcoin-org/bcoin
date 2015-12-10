@@ -277,7 +277,7 @@ describe('Wallet', function() {
     var w1 = bcoin.wallet({
       key: key1,
       multisig: {
-        type: 'p2sh',
+        type: 'script',
         keys: [pub2, pub3],
         m: 2,
         n: 3
@@ -286,7 +286,7 @@ describe('Wallet', function() {
     var w2 = bcoin.wallet({
       key: key2,
       multisig: {
-        type: 'p2sh',
+        type: 'script',
         keys: [pub1, pub3],
         m: 2,
         n: 3
@@ -295,7 +295,7 @@ describe('Wallet', function() {
     var w3 = bcoin.wallet({
       key: key3,
       multisig: {
-        type: 'p2sh',
+        type: 'script',
         keys: [pub1, pub2],
         m: 2,
         n: 3
