@@ -177,7 +177,10 @@ describe('Wallet', function() {
       assert(t2.verify());
 
       assert.equal(t2.funds('in').toString(10), 16380);
-      assert.equal(t2.funds('out').toString(10), 6380);
+      // If change < dust and is added to outputs:
+      // assert.equal(t2.funds('out').toString(10), 6380);
+      // If change < dust and is added to fee:
+      assert.equal(t2.funds('out').toString(10), 5460);
 
       // Create new transaction
       var t3 = bcoin.tx().out(w2, 15000);
