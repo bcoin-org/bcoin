@@ -69,6 +69,16 @@ var pool = new bcoin.pool({
   })
 });
 
+// Log connection errors to any peer
+pool.on('error', function(err, peer) {
+  console.log(
+    'Connection failed to %s:%d: %s',
+    peer.addr.host,
+    peer.addr.port,
+    err
+  );
+});
+
 // Receive the address of another peer.
 pool.on('addr', function(data, peer) {
   var host = data.ipv4 + ':' + data.port;
