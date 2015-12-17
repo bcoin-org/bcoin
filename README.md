@@ -69,6 +69,10 @@ var pool = new bcoin.pool({
   })
 });
 
+pool.on('error', function(err) {
+  console.log('Error: %s', err.message);
+});
+
 // Receive the address of another peer.
 pool.on('addr', function(data, peer) {
   var host = data.ipv4 + ':' + data.port;
