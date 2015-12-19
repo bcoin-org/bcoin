@@ -9,10 +9,6 @@ synchronized balance and send and receive payments without keeping track of a
 BCoin is implemented in *pure* javascript, and is browserify-able (this means
 compiling a binding to an ECDSA library is not even required for node.js).
 
-**NOTE**: BCoin is also in the process of supporting the original (pre-bip37)
-satoshi protocol, which will also optionally give the user the ability download
-the entire blockchain.
-
 ## Prerequisites
 
 ```
