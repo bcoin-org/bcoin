@@ -23,9 +23,22 @@ describe('Utils', function() {
   it('should convert satoshi to btc', function() {
     var btc = bcoin.utils.toBTC(new bn(5460));
     assert.equal(btc, '0.0000546');
-    var btc = bcoin.utils.toBTC(new bn(54678).mul(new bn(1000000)));
+    btc = bcoin.utils.toBTC(new bn(54678).mul(new bn(1000000)));
     assert.equal(btc, '546.78');
-    var btc = bcoin.utils.toBTC(new bn(5460).mul(new bn(10000000)));
-    assert.equal(btc, '546');
+    btc = bcoin.utils.toBTC(new bn(5460).mul(new bn(10000000)));
+    assert.equal(btc, '546.0');
+    btc = bcoin.utils.toBTC(new bn(5460).mul(new bn(10000000)).toArray());
+    assert.equal(btc, '546.0');
+    btc = bcoin.utils.toBTC(new bn(5460).mul(new bn(10000000)).toString('hex'));
+    assert.equal(btc, '546.0');
+  });
+
+  it('should convert btc to satoshi', function() {
+    var btc = bcoin.utils.fromBTC('0.0000546');
+    assert(btc.cmp(new bn(5460)) === 0);
+    btc = bcoin.utils.fromBTC('546.78');
+    assert(btc.cmp(new bn(54678).mul(new bn(1000000))) === 0);
+    btc = bcoin.utils.fromBTC('546.0');
+    assert(btc.cmp(new bn(5460).mul(new bn(10000000))) === 0);
   });
 });
