@@ -72,16 +72,23 @@ describe('Wallet', function() {
   });
 
   it('should multisign/verify TX', function() {
-    var w = bcoin.wallet();
-    var k2 = bcoin.wallet().getPublicKey();
+    var w = bcoin.wallet({
+      multisig: {
+        type: 'multisig',
+        m: 1,
+        n: 2
+      }
+    });
+    var k2 = w.getPublicKey().concat(1);
+    w.addKey(k2);
+    assert.equal(w.getOwnAddress(), w.getFullAddress());
 
     // Input transcation
     var src = bcoin.tx({
       outputs: [{
         value: 5460 * 2,
         minSignatures: 1,
-        keys: [ w.getPublicKey(), w.getPublicKey().concat(1) ]
-        // keys: [ w.getPublicKey(), k2 ]
+        keys: [ w.getPublicKey(), k2 ]
       }, {
         value: 5460 * 2,
         address: w.getAddress() + 'x'
