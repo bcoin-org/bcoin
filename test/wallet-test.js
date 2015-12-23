@@ -212,7 +212,7 @@ describe('Wallet', function() {
     tx.out(to, 5460);
 
     var cost = tx.funds('out');
-    var total = cost.add(new bn(w1.fee));
+    var total = cost.add(new bn(bcoin.tx.fee));
 
     var unspent1 = w1.unspent();
     var unspent2 = w2.unspent();
@@ -226,7 +226,7 @@ describe('Wallet', function() {
     tx.input(unspent2[0]);
 
     var left = tx.funds('in').sub(total);
-    if (left.cmpn(w1.dust) < 0) {
+    if (left.cmpn(bcoin.tx.dust) < 0) {
       tx.outputs[tx.outputs.length - 2].value.iadd(left);
       left = new bn(0);
     }
