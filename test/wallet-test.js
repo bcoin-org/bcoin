@@ -336,6 +336,7 @@ describe('Wallet', function() {
 
     send.inputs[0].script[2] = [];
     assert(!send.verify());
+    assert.equal(send.getFee().toNumber(), 10000);
 
     cb();
   });
