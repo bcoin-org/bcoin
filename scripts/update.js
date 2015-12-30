@@ -5,14 +5,7 @@ var net = require('net');
 var path = require('path');
 var bcoin = require('../');
 
-var addrs = [
-  'seed.bitcoin.sipa.be',
-  'dnsseed.bluematt.me',
-  'dnsseed.bitcoin.dashjr.org',
-  'seed.bitcoinstats.com',
-  'seed.bitnodes.io',
-  'bitseed.xf2.org'
-];
+var addrs = bcoin.protocol.network.seeds.slice();
 
 var pool = bcoin.pool({
   size: 32,
@@ -24,6 +17,8 @@ var pool = bcoin.pool({
     return net.connect(8333, addrs[(Math.random() * addrs.length) | 0]);
   }
 });
+
+pool.on('error', function() {});
 
 console.log('Updating bcoin preloaded chain...');
 
