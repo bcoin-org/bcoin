@@ -8,7 +8,7 @@ var bcoin = require('../');
 var addrs = bcoin.protocol.network.seeds.slice();
 
 var pool = bcoin.pool({
-  size: 32,
+  size: 6,
   redundancy: 1,
   parallel: 4000,
   loadWindow: 750,
