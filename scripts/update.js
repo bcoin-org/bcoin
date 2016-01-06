@@ -12,7 +12,7 @@ var pool = bcoin.pool({
   redundancy: 1,
   parallel: 4000,
   loadWindow: 750,
-  createConnection: function() {
+  createConnection_: function() {
     console.log('connecting...');
     return net.connect(8333, addrs[(Math.random() * addrs.length) | 0]);
   }
