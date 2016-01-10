@@ -254,8 +254,8 @@ describe('Wallet', function() {
     tx.input(unspent1[1]);
     tx.input(unspent1[2]);
     tx.input(unspent2[1]);
-    assert.equal(w1.sign(tx, 'all', tx.inputs.slice(), 0), 2);
-    assert.equal(w2.sign(tx, 'all', tx.inputs.slice(2), 2), 1);
+    assert.equal(w1.sign(tx, 'all', tx.inputs.slice()), 2);
+    assert.equal(w2.sign(tx, 'all', tx.inputs.slice(2)), 1);
 
     // Verify
     assert.equal(tx.verify(), true);

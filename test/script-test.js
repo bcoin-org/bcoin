@@ -42,7 +42,7 @@ describe('Script', function() {
     var hex = '6a28590c080112220a1b353930632e6f7267282a5f5e294f7665726c6179404f7261636c65103b1a010c'
     var encoded = bcoin.utils.toArray(hex, 'hex')
     var decoded = bcoin.script.decode(encoded);
-    assert(bcoin.script.isColored(decoded))
+    assert(bcoin.script.isNulldata(decoded))
   })
 
   it('should handle if statements correctly', function () {
