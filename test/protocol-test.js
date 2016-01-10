@@ -15,7 +15,7 @@ describe('Protocol', function() {
 
   function packetTest(command, payload, test) {
     it('should encode/decode ' + command, function(cb) {
-      var ver = framer[command](payload);
+      var ver = new Buffer(framer[command](payload));
       parser.once('packet', function(packet) {
         assert.equal(packet.cmd, command);
         test(packet.payload);
