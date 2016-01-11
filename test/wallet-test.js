@@ -81,7 +81,7 @@ describe('Wallet', function() {
     });
     var k2 = w.getPublicKey().concat(1);
     w.addKey(k2);
-    assert.equal(w.getOwnAddress(), w.getFullAddress());
+    assert.equal(w.getKeyAddress(), w.getAddress());
 
     // Input transcation
     var src = bcoin.tx({
