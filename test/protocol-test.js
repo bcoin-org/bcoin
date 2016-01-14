@@ -45,13 +45,13 @@ describe('Protocol', function() {
   var peers = [
     {
       ipv6: '0000:0000:0000:0000:0000:ffff:0000:0000',
-      ipv4: '127.0.0.1',
+      ipv4: '0.0.0.0',
       port: 8333,
       ts: Date.now() / 1000 | 0
     },
     {
       ipv6:  '0000:0000:0000:0000:0000:ffff:7f00:0001',
-      ipv4: '10.0.0.1',
+      ipv4: '127.0.0.1',
       port: 18333,
       ts: Date.now() / 1000 | 0
     }
@@ -78,7 +78,7 @@ describe('Protocol', function() {
     assert.equal(payload[0].port, peers[0].port);
 
     assert.equal(typeof payload[1].ts, 'number');
-    assert.equal(payload[1].service, 1);
+    assert.equal(payload[1].services, 1);
     assert.equal(payload[1].ipv6, peers[1]._ipv6);
     assert.equal(payload[1].ipv4, peers[1]._ipv4);
     assert.equal(payload[1].port, peers[1].port);

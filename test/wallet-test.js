@@ -1,6 +1,7 @@
 var assert = require('assert');
 var bn = require('bn.js');
 var bcoin = require('../');
+var constants = bcoin.protocol.constants;
 
 function printScript(input) {
   var scripts = [];
@@ -219,7 +220,7 @@ describe('Wallet', function() {
     tx.out(to, 5460);
 
     var cost = tx.funds('out');
-    var total = cost.add(new bn(bcoin.tx.fee));
+    var total = cost.add(new bn(constants.tx.fee));
 
     var unspent1 = w1.unspent();
     var unspent2 = w2.unspent();
@@ -233,7 +234,7 @@ describe('Wallet', function() {
     tx.input(unspent2[0]);
 
     var left = tx.funds('in').sub(total);
-    if (left.cmpn(bcoin.tx.dust) < 0) {
+    if (left.cmpn(constants.tx.dust) < 0) {
       tx.outputs[tx.outputs.length - 2].value.iadd(left);
       left = new bn(0);
     }
