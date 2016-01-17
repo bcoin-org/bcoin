@@ -47,7 +47,7 @@ describe('Script', function() {
 
   it('should handle if statements correctly', function () {
     var inputScript = [1, 2];
-    var prevOutScript = [2, 'eq', 'if_', 3, 'else_', 4, 'endif', 5];
+    var prevOutScript = [2, 'equal', 'if', 3, 'else', 4, 'endif', 5];
     var stack = [];
     bcoin.script.execute(inputScript, stack);
     var res = bcoin.script.execute(prevOutScript, stack);
@@ -55,7 +55,7 @@ describe('Script', function() {
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
 
     var inputScript = [1, 2];
-    var prevOutScript = [9, 'eq', 'if_', 3, 'else_', 4, 'endif', 5];
+    var prevOutScript = [9, 'equal', 'if', 3, 'else', 4, 'endif', 5];
     var stack = [];
     bcoin.script.execute(inputScript, stack);
     var res = bcoin.script.execute(prevOutScript, stack);
@@ -63,7 +63,7 @@ describe('Script', function() {
     assert.deepEqual(stack.slice(), [[1], [4], [5]]);
 
     var inputScript = [1, 2];
-    var prevOutScript = [2, 'eq', 'if_', 3, 'endif', 5];
+    var prevOutScript = [2, 'equal', 'if', 3, 'endif', 5];
     var stack = [];
     bcoin.script.execute(inputScript, stack);
     var res = bcoin.script.execute(prevOutScript, stack);
@@ -71,7 +71,7 @@ describe('Script', function() {
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
 
     var inputScript = [1, 2];
-    var prevOutScript = [9, 'eq', 'if_', 3, 'endif', 5];
+    var prevOutScript = [9, 'equal', 'if', 3, 'endif', 5];
     var stack = [];
     bcoin.script.execute(inputScript, stack);
     var res = bcoin.script.execute(prevOutScript, stack);
@@ -79,7 +79,7 @@ describe('Script', function() {
     assert.deepEqual(stack.slice(), [[1], [5]]);
 
     var inputScript = [1, 2];
-    var prevOutScript = [9, 'eq', 'notif', 3, 'endif', 5];
+    var prevOutScript = [9, 'equal', 'notif', 3, 'endif', 5];
     var stack = [];
     bcoin.script.execute(inputScript, stack);
     var res = bcoin.script.execute(prevOutScript, stack);
