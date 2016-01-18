@@ -22,6 +22,10 @@ pool.on('error', function(err) {
   utils.print('Error: %s', err.message);
 });
 
+pool.on('debug', function() {
+  utils.print.apply(utils, arguments);
+});
+
 console.log('Updating bcoin preloaded chain...');
 
 pool.on('block', function(block) {
