@@ -4,6 +4,8 @@ var dns = require('dns');
 var net = require('net');
 var path = require('path');
 var bcoin = require('../');
+var utils = bcoin.utils;
+var assert = utils.assert;
 var network = bcoin.protocol.network;
 
 var pool = bcoin.pool({
@@ -14,7 +16,11 @@ var pool = bcoin.pool({
   fullNode: false
 });
 
-pool.on('error', function() {});
+pool.startSync();
+
+pool.on('error', function(err) {
+  utils.print('Error: %s', err.message);
+});
 
 console.log('Updating bcoin preloaded chain...');
 
@@ -27,8 +33,6 @@ pool.on('block', function(block) {
               pool.request.active,
               pool.request.queue.length);
 });
-
-pool.startSync();
 
 // pool.on('addr', function(data) {
 //   console.log('Found new peer: %s:%d', data.host, data.port);
