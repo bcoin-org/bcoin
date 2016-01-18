@@ -80,7 +80,8 @@ describe('Wallet', function() {
         n: 2
       }
     });
-    var k2 = w.getPublicKey().concat(1);
+    // var k2 = w.getPublicKey().concat(1);
+    var k2 = bcoin.ecdsa.genKeyPair().getPublic(true, 'array');
     w.addKey(k2);
     assert.equal(w.getKeyAddress(), w.getAddress());
 
