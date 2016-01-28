@@ -1236,17 +1236,17 @@ Usage: `bcoin.tx([options], [block])`
   transaction.
   - `options` can be in the form of:
 
-        {
-          value: [satoshis/big number],
-          script: [deserialized script],
-          address: [pubkey address or scripthash address],
-          keys: [array of keys],
-          m: [m value],
-          n: [n value],
-          flags: [nulldata],
-          scripthash: [true or false],
-          lock: [locktime for checklocktimeverify]
-        }
+            {
+              value: [satoshis/big number],
+              script: [deserialized script],
+              address: [pubkey address or scripthash address],
+              keys: [array of keys],
+              m: [m value],
+              n: [n value],
+              flags: [nulldata],
+              scripthash: [true or false],
+              lock: [locktime for checklocktimeverify]
+            }
 
 - __scriptOutput(index/output, options)__ - Compile an output script for the
   output based on the same options `output()` handles.
