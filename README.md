@@ -106,7 +106,7 @@ wallet.on('balance', function() {
 pool.startSync();
 ```
 
-## Creating and sending a transaction
+### Creating and sending a transaction
 
 ``` js
 var bcoin = require('bcoin');
@@ -202,7 +202,7 @@ pool.on('tx', function(ntx) {
 });
 ```
 
-## Multisig Transactions
+### Multisig Transactions
 
 Let's fabricate a 2-of-3 [escrow and dispute mediation][escrow] situation.
 
@@ -322,6 +322,192 @@ utils.assert(stx.verify())
 pool.broadcast(stx);
 ```
 
+### Scripts
+
+Bcoin has its own deserialized version of scripts to make them human-readable
+and human-writable. For example, a standard pay-to-pubkey script would look
+like:
+
+``` js
+tx.output({
+  value: new bn(100000),
+  script: [
+    'dup',
+    'hash160',
+    hash, // Byte Array
+    'equalverify',
+    'checksig'
+  ]
+});
+```
+
+Opcodes are in the form of their symbolic names, in lowercase, with the `OP_`
+prefixes removed. Pushdata ops are represented with Arrays.
+
+The above script could be redeemed with:
+
+``` js
+tx2.input({
+  out: { tx: tx, hash: tx.hash('hex'), index: 0 },
+  seq: 0xffffffff,
+  script: [
+    signature, // Byte Array
+    publicKey  // Byte Array
+  ]
+});
+```
+
+Executing a script by itself is also possible:
+
+``` js
+var stack = [];
+bcoin.script.execute([[1], 'dup'], stack);
+console.log(stack);
+
+Output:
+[[1], [1]]
+```
+
+#### Pushdata OPs
+
+Note that with bcoins deserialized script format, you do not get to decide
+pushdata on ops. Bcoin will always serialize to `minimaldata` format scripts in
+terms of `OP_PUSHDATA0-OP_PUSHDATA4`.
+
+`OP_0` is represented with an empty array (which is appropriate because this is
+what gets pushed onto the stack). While `OP_1-16` are actually represented with
+numbers. `OP_1NEGATE` is just '1negate'.
+
+So a script making use of all pushdata ops would look like:
+
+``` js
+script: [
+  [],                                // OP_0 / OP_FALSE
+  1,                                 // OP_1 / OP_TRUE
+  2, 3, 4, 5, 6, 7, 8, 9, 10,        // OP_2-10
+  11, 12, 13, 14, 15, 16,            // OP_11-16
+  '1negate',                         // OP_1NEGATE
+  new Array(0x4b)),                  // PUSHDATA0 (direct push)
+  new Array(0xff)),                  // PUSHDATA1
+  new Array(0xffff)),                // PUSHDATA2
+  new Array(0xffffffff))             // PUSHDATA4
+];
+```
+
+##### Custom Scripts
+
+Bcoin will allow you to use custom P2SH scripts, but it's up to you to
+redeem/sign it property.
+
+``` js
+var wallet = bcoin.wallet({
+  redeem: [
+    1,
+    '1add',
+    'equal'
+  ]
+});
+console.log(wallet.getScriptAddress());
+var tx1 = bcoin.tx().output(wallet.getScriptAddress(), new bn(100000));
+```
+
+Which would be redeemed with:
+
+``` js
+tx2.input({
+  out: { tx: tx1, hash: tx1.hash('hex'), index: 0 },
+  script: [
+    2,
+    // Redeem script:
+    wallet.getScript()
+  ]
+});
+```
+
+### Big Numbers
+
+Bitcoin deals with really big numbers on a regular basis. Javascript Numbers
+lose precision after 53 bits. It is absolutely necessary to use big numbers
+when dealing with satoshi values.
+
+``` js
+var bcoin = require('bcoin');
+var bn = bcoin.bn;
+
+...
+
+// Add an output with 100,000 satoshis as a value.
+tx.output(wallet.getKeyAddress(), new bn(100000));
+```
+
+To make this easier to deal with, bcoin has two helper functions: `utils.btc()`
+and `utils.satoshi()`.
+
+``` js
+// Convert a BTC string to Satoshis
+var value = utils.satoshi('1.123');
+console.log(value);
+// Convert back to a BTC string
+console.log(utils.btc(value));
+```
+
+Output:
+
+``` js
+<BN: 6b18fe0>
+1.123
+```
+
+Note that BTC strings are identified by having a decimal point. They _must_
+have a decimal point in order to be converted to satoshis by `utils.satoshi()`.
+
+This will work:
+
+``` js
+var value = utils.satoshi('1.0');
+```
+
+This will __not__ work:
+
+``` js
+var value = utils.satoshi('1');
+```
+
+### Endianness
+
+Everything in the bitcoin protocol is little-endian, including block hashes and
+txids. Bcoin doesn't try to change this at all. If you're outputing a tx hash,
+you will get the little-endian version.
+
+You will not be able to find this hash on a blockchain explorer:
+
+``` js
+console.log(tx.hash('hex'));
+```
+
+The byte order must be reversed:
+
+``` js
+console.log(utils.revHex(tx.hash('hex')));
+```
+
+To make this easier, both tx and block objects have a quick `rhash` property:
+
+``` js
+// Output BE hashes as hex string - you will
+// be able to find these on a blockchain explorer.
+console.log(tx.rhash);
+console.log(block.rhash);
+```
+
+### Arrays vs. Buffers
+
+Every piece of binary data in bcoin that is user-facing in bcoin is an Array of
+bytes. For example, `block.hash()` with no encoding passed in will return a
+byte array.  Bcoin does use Buffers behind the scenes to speed up parsing of
+blocks and transactions coming in through the network, but every piece of data
+a programmer using bcoin will deal with is going to be a byte array.
+
 ## API Documentation
 
 ### Objects
@@ -375,7 +561,8 @@ Subtype can be `block`, `merkleblock`, or `header`.
 - Inherits all from Object.
 - __hash([enc])__ - Hash the block headers, returns an array or a hex string
   (little-endian) if `enc='hex'`.
-- __abbr()__ - Return a binary array of serialized headers.
+- __abbr()__ - Return a byte array of serialized headers.
+- __render()__ - Return byte array of serialized block.
 - __verify()__ - Do preliminary validation of block. Checks proof-of-work,
   timestamp limit, merkle root, max block size, etc.
 - __verifyContext()__ - Do contextual block validation. Checks target, median
@@ -396,7 +583,7 @@ Subtype can be `block`, `merkleblock`, or `header`.
 - __getCoinbase()__ - Returns coinbase transaction.
 - __toJSON()__ - Return serialized block in bcoin json format.
 
-#### Static:
+##### Static:
 
 - __reward(height)__ - Calculate block reward based on a height.
 - __fromJSON(json)__ - Return `Block` object from serialized JSON block format.
@@ -480,10 +667,9 @@ Usage: `bcoin.chain([options])`
 - __toJSON()__ - Return serialized JSON form of chain.
 - __fromJSON(json)__ - Add serialized blocks to chain.
 
-#### Static:
+##### Static:
 
 - __reward(height)__ - Calculate block reward based on a height.
-- __fromJSON(json)__ - Return `Block` object from serialized JSON block format.
 
 #### ChainDB (from Object)
 
@@ -507,6 +693,7 @@ Usage: `bcoin.chaindb(chain, options)`
 
 - Inherits all from Object.
 - All options.
+__size__ - Size in bytes of the DB file.
 
 ##### Events:
 
@@ -515,9 +702,16 @@ Usage: `bcoin.chaindb(chain, options)`
 ##### Methods:
 
 - Inherits all from Object.
-- None.
+- __count()__ - Number of total records (different from chain height).
+- __get(height)__ - Get ChainBlock entry synchronously.
+- __getAsync(height, callback)__ - Get ChainBlock entry asynchronously (used
+  for initial blockchain load).
+- __save(entry, [callback])__ - Save ChainBlock entry asynchronously.
+- __saveSync(entry)__ - Save ChainBlock entry synchronously.
+- __has(height)__ - Returns true if ChainDB has a block at this height.
+- __getSize()__ - Get size in bytes of DB file.
 
-#### Static:
+##### Static:
 
 - Inherits all from Object.
 - None.
@@ -566,7 +760,7 @@ entire linked list.
 - __toJSON()__ - Return serialized ChainBlock in JSON format.
 - __toRaw()__ - Return serialized ChainBlock in binary ChainDB format.
 
-#### Static:
+##### Static:
 
 - Inherits all from Object.
 - __fromJSON(json)__ - Return ChainBlock from serialized JSON format.
@@ -576,6 +770,8 @@ entire linked list.
 
 Generate an HDSeed (potentially from a passed-in mnemonic) for HD key
 generation.
+
+Usage: `bcoin.hd.seed([options])`
 
 ##### Options:
 
@@ -601,7 +797,7 @@ generation.
 - Inherits all from Object.
 - __createSeed(passphrase)__ - Create pbkdf2 seed from options.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 - __create(options)__ - Create and generate seed.
@@ -649,7 +845,7 @@ Deserialized option data:
 - __derive(index/path, [hardened])__ - Returns a child key from `index` or
   `path`.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 - None.
@@ -719,7 +915,7 @@ which parse the script and grab the previous output data and cache it as
 - __getID()__ - Generate an ID string for the input. Used internally if no
   `address` is found.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 - __getData(input)__ - Parse input / previous output and grab all data used for
@@ -782,7 +978,7 @@ script and cache it as `_data`.
 - __getID()__ - Generate an ID string for the output. Used internally if no
   `address` is found.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 - __getData(output)__ - Parse output script and grab all data used for getters.
@@ -827,7 +1023,7 @@ Usage: `bcoin.miner([options])`
   Start over with a new block.
 - __addTX(tx)__ - Add a transaction to the block being mined.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 
@@ -859,6 +1055,7 @@ Usage: `bcoin.peer(pool, createConnection, options)`
 - __ts__ - Time in unix seconds of connection time.
 - __host__ - Hostname/IP string.
 - __port__ - Port.
+- __bloom__ - Reference to the bloom filter (SPV-only).
 
 ##### Events:
 
@@ -880,7 +1077,7 @@ Usage: `bcoin.peer(pool, createConnection, options)`
 - __loadHeaders(hashes, stop)__ - Send `getheaders`.
 - __loadBlocks(hashes, stop)__ - Send `getblocks`.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 
@@ -1028,7 +1225,7 @@ propogate data throughout the network.
 - __misbehaving(peer, dos)__ - Increase peer's banscore by `dos`.
 - __isMisbehaving(peer/host)__ - Whether peer is known for misbehaving.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 
@@ -1046,7 +1243,7 @@ Usage:
 
 - __decode(s)__ - Decode a raw script into bcoin's deserialized format (an
   array of strings and arrays).
-- __encode(s)__ - Encode a deserialized script to a raw binary array.
+- __encode(s)__ - Encode a deserialized script to a raw byte array.
 - __normalize(s)__ - Normalize a script by changing `0` into `[]`, `-1` into
   `'1negate'`, etc. Currently unused.
 - __verify(input, output, tx, index, flags)__ - Execute input and previous
@@ -1060,7 +1257,7 @@ Usage:
   private key. Appends `type` to the signature (the sighash type).
 - __execute(s, stack, tx, index, flags)__ - Execute a script. `stack` must be
   an array.
-- __bool(value)__ - Cast a binary array to bool. Mimics bitcoind's
+- __bool(value)__ - Cast a byte array to bool. Mimics bitcoind's
   `CastToBool()` function. Checks for negative zero.
 - __num(value, useNum, minimaldata)__ - Create a standard little-endian big
   number from `value`. Checks for `minimaldata` if true. Checks for negative
@@ -1151,7 +1348,7 @@ Usage: `bcoin.txPool(wallet)`
 - __toJSON()__ - Return TX pool in serialized JSON format.
 - __fromJSON()__ - Load TX pool from serialized JSON format.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 
@@ -1221,7 +1418,7 @@ Usage: `bcoin.tx([options], [block])`
   Signatures will be null dummies (empty signature slots) until `signInput()`
   is called. `pub` (the public key) and `redeem` (raw redeem script) should
   always be passed in if there is a pubkeyhash or scripthash output being
-  redeemed.
+  redeemed. Will not overwrite existing input scripts.
 - __signature(index/input, key, [type])__ - Create a signature for the desired
   input using `key` as the private key and `type` as the sighash type. Sighash
   type can be a number or a string (`all`, `single`, or `none`). Returns a DER
@@ -1314,7 +1511,7 @@ Usage: `bcoin.tx([options], [block])`
 - __toJSON()__ - Return serialized TX in bcoin JSON format.
 - __toRaw()__ - Returns serialized TX in standard bitcoin binary format.
 
-#### Static:
+##### Static:
 
 - Inherits all from Function.
 - __fromJSON(json)__ - Return TX from serialized JSON format.
@@ -1328,7 +1525,23 @@ Usage: `bcoin.wallet(options)`
 
 ##### Options:
 
-- TODO
+- __compressed__ - Whether to use compressed public keys (default: true).
+- __label__ - A string identifier for this wallet. Will be saved in JSON format.
+- __changeAddress__ - A change address for this wallet to use (warning: address re-use).
+- __key__ - Can be an instance of elliptic.KeyPair, bcoin.hd.priv, or bcoin.hd.pub.
+- __priv__ - Private key, can be an array of bytes.
+- __pub__ - Public key, can be an array of bytes.
+- __type__ - Output script type. Can be: `pubkey`, `pubkeyhash`, `multisig`, `scripthash`.
+- __subtype__ - Only applicable for `scripthash` types. Specify the type of
+  redeem script. Can be `pubkey`, `pubkeyhash`, or `multisig`.
+- __keys__ - An array of public keys (usually byte arrays) to use for a
+  multisig wallet.
+- __m__ - `m` value of wallet (number of required signatures).
+- __n__ - `n` value of wallet (number of keys).
+- __redeem__ - A script array containing a custom redeem script for
+  `scripthash`.
+- __hd__ - Make the wallet HD. Can be an object containing HDPrivateKey
+  options, or a boolean.
 
 ##### Properties:
 
@@ -1343,11 +1556,83 @@ Usage: `bcoin.wallet(options)`
 ##### Methods:
 
 - Inherits all from EventEmitter.
-- TODO
+- __addKey(key)__ - Add public key to wallet (multisig).
+- __removeKey(key)__ - Remove public key from wallet (multisig).
+- __derive(index)__ - Derive a new wallet at `index` (HD-only).
+- __getPrivateKey([enc])__ - Return private key as a byte array or whatever
+  encoding specified (`base58` or `hex`).
+- __getScript()__ - Get the _raw_ redeem script as a byte array.
+- __getScriptHash()__ - Return the hash of the redeem script as a byte array.
+- __getScriptAddress()__ - Return the address of the scripthash.
+- __getPublicKey([enc])__ - Return the public key in desired encoding (byte
+  array by default).
+- __getKeyHash([enc])__ - Return the hash of the public key.
+- __getKeyAddress()__ - Return the address of the public key.
+- __getHash([enc])__ - Return scripthash if a `scripthash` wallet, otherwise
+  return the public key hash.
+- __getAddress()__ - Return the scripthash address if a `scripthash` wallet,
+  otherwise return the address of the public key.
+- __ownOutput(tx, [index])__ - Check to see if output at `index` pertains to
+  this wallet. If `index` is not present, all outputs will be tested.
+- __ownInput(tx, [index])__ - Check to see if input at `index` pertains to
+  this wallet. If `index` is not present, all inputs will be tested.
+- __fillUnspent(tx, [changeAddress], [fee])__ - Fill tx with inputs necessary
+  for total output value. Uses `wallet.unspent()` as the unspent list.
+- __fillTX(tx)__ - "Fill" a transactions' inputs with references to its
+  previous outputs if available.
+- __scriptInputs(tx)__ - Compile necessary scripts for inputs (with OP_0 where
+  the signatures should be). Will not overwrite existing input scripts.
+- __signInputs(tx)__ - Sign all inputs possible in the TX. Finalize input
+  scripts if possible.
+- __sign(tx)__ - Equivalent to calling both `scriptInputs(tx)` and
+  `signInputs(tx)` in one go.
+- __fill(tx)__ - Attempt to `fillUnspent(tx)`. Return `null` if failed to reach
+  total output value. Return `tx` if successful.
+- __toAddress()__ - Return blockchain-explorer-like data in the format of:
 
-#### Static:
+                    {
+                      address: [address],
+                      hash160: [hash],
+                      received: [total received (big number)],
+                      sent: [total sent (big number)]
+                      balance: [total balance (big number)],
+                      txs: [array of txs]
+                    }
+
+- __toJSON([encrypt])__ - Return a serialized wallet in JSON format. `encrypt`
+  must be a callback which accepts and encrypts a string if you want the
+  private keys to be encrypted when serializing.
+
+##### Static:
 
 - Inherits all from Function.
+- __Wallet.toSecret(priv, compressed)__ - Convert a private key to a base58
+  string. Mimics the bitcoind CBitcoinSecret object for converting private keys
+  to and from base58 strings. The same format bitcoind uses for `dumpprivkey`
+  and `importprivkey`.
+- __Wallet.fromSecret(priv)__ - Convert a base58 private key string to a
+  private key. See above for more information.
+- __key2hash([key])__ - Return hash of a public key (byte array).
+- __hash2addr(hash, [prefix])__ - Return address of hash. `prefix` can be
+  `pubkey`, `pubkeyhash`, `multisig`, or `scripthash`. Only `scripthash`
+  actually has a different base58 prefix.
+- __addr2hash(address, [prefix])__ - Convert address back to a hash. Do
+  checksum verification (returns empty array if checksum fails). If `prefix` is
+  null, bcoin will detect the prefix.
+- __validateAddress(address, [prefix])__ - Return true if address is a valid
+  address for `prefix`. i.e. `bcoin.wallet.validateAddress('3L...',
+  'scripthash')`.
+- __fromJSON(json, [decrypt])__ - Return a wallet from a serialized JSON
+  wallet. `decrypt` must be a callback which can decrypt the private keys
+  encrypted by the `encrypt` callback (see `toJSON` above).
+
+#### bcoin.utils
+
+TODO
+
+#### Packet List
+
+TODO
 
 ## LICENSE
 
