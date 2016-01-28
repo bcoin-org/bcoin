@@ -669,7 +669,7 @@ Usage: `bcoin.chain([options])`
 
 ##### Static:
 
-- __reward(height)__ - Calculate block reward based on a height.
+- None.
 
 #### ChainDB (from Object)
 
