@@ -680,34 +680,34 @@ in the `script` or previous output. The Input object contains several getters
 which parse the script and grab the previous output data and cache it as
 `_data`.
 
-__type__ - Standard transaction type of previous output (`pubkey`,
-`pubkeyhash`, `multisig`, `scripthash`, or `nulldata`). `nulldata` will never
-be the type of an input as `nulldata` outputs can never be redeemed.
-__subtype__ - Only present on `scripthash` transactions. The "real" transaction
-type of the previous output. See list above.
-__signature__ - The first signature in the input script.
-__key__ - The first public key in the input script.
-__hash__ - The scripthash or the first public key hash in the input script (if
-only public keys / redeem scripts are present, they will be hashed).
-__address__ - Scripthash address, first public key address, or a generated ID
-if no addresses are found (useful for making a blockchain explorer).
-__signatures__ - Array containing all signatures in the input.
-__keys__ - Array containing all keys in the input/previous-output.
-__hashes__ - Array containing all public key hashes in input/previous-output
-(all keys will be hashed if there are no hashes present).
-__addresses__ - All hashes/keys as addresses.
-__redeem__ - The redeem script in its deserialized form.
-__scripthash__ - The hash of the redeem script.
-__scriptaddress__ - The p2sh address.
-__m__ - `m` value (required signatures).
-__n__ - `n` value (number of keys).
-__lock__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This will only
-grab the first value and not deal with OP_IF statements, etc).
-__flags__ - Coinbase flags if present.
-__text__ - Coinbase flags converted to UTF-8, if present.
-__output__ - Previous Output object.
-__value__ - Value (satoshis/big number) of the previous output.
-__tx__ - Reference to the previous output's parent transaction.
+- __type__ - Standard transaction type of previous output (`pubkey`,
+  `pubkeyhash`, `multisig`, `scripthash`, or `nulldata`). `nulldata` will never
+  be the type of an input as `nulldata` outputs can never be redeemed.
+- __subtype__ - Only present on `scripthash` transactions. The "real" transaction
+  type of the previous output. See list above.
+- __signature__ - The first signature in the input script.
+- __key__ - The first public key in the input script.
+- __hash__ - The scripthash or the first public key hash in the input script (if
+  only public keys / redeem scripts are present, they will be hashed).
+- __address__ - Scripthash address, first public key address, or a generated ID
+  if no addresses are found (useful for making a blockchain explorer).
+- __signatures__ - Array containing all signatures in the input.
+- __keys__ - Array containing all keys in the input/previous-output.
+- __hashes__ - Array containing all public key hashes in input/previous-output
+  (all keys will be hashed if there are no hashes present).
+- __addresses__ - All hashes/keys as addresses.
+- __redeem__ - The redeem script in its deserialized form.
+- __scripthash__ - The hash of the redeem script.
+- __scriptaddress__ - The p2sh address.
+- __m__ - `m` value (required signatures).
+- __n__ - `n` value (number of keys).
+- __lock__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This will only
+  grab the first value and not deal with OP_IF statements, etc).
+- __flags__ - Coinbase flags if present.
+- __text__ - Coinbase flags converted to UTF-8, if present.
+- __output__ - Previous Output object.
+- __value__ - Value (satoshis/big number) of the previous output.
+- __tx__ - Reference to the previous output's parent transaction.
 
 ##### Events:
 
@@ -747,30 +747,30 @@ TX outputs are primitive by themselves, containing most of their relevant data
 in the `script`. The Output object contains several getters which parse the
 script and cache it as `_data`.
 
-__type__ - Standard transaction type of output (`pubkey`, `pubkeyhash`,
-`multisig`, `scripthash`, or `nulldata`).
-__subtype__ - Only present on `scripthash` transactions. The "real" transaction
-type of the output.
-__signature__ - Null.
-__key__ - The first public key in the script.
-__hash__ - The scripthash or the first public key hash in the output script (if
-only public keys / redeem scripts are present, they will be hashed).
-__address__ - Scripthash address, first public key address, or a generated ID
-if no addresses are found (useful for making a blockchain explorer).
-__signatures__ - Empty array.
-__keys__ - Array containing all keys in the output script.
-__hashes__ - Array containing all public key hashes in output
-(all keys will be hashed if there are no hashes present).
-__addresses__ - All hashes/keys as addresses.
-__redeem__ - Null.
-__scripthash__ - The hash of the redeem script.
-__scriptaddress__ - The p2sh address.
-__m__ - `m` value (required signatures).
-__n__ - `n` value (number of keys).
-__lock__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This will only
-grab the first value and not deal with OP_IF statements, etc).
-__flags__ - `nulldata` data.
-__text__ - `nulldata` data converted to UTF-8.
+- __type__ - Standard transaction type of output (`pubkey`, `pubkeyhash`,
+  `multisig`, `scripthash`, or `nulldata`).
+- __subtype__ - Only present on `scripthash` transactions. The "real" transaction
+  type of the output.
+- __signature__ - Null.
+- __key__ - The first public key in the script.
+- __hash__ - The scripthash or the first public key hash in the output script (if
+  only public keys / redeem scripts are present, they will be hashed).
+- __address__ - Scripthash address, first public key address, or a generated ID
+  if no addresses are found (useful for making a blockchain explorer).
+- __signatures__ - Empty array.
+- __keys__ - Array containing all keys in the output script.
+- __hashes__ - Array containing all public key hashes in output
+  (all keys will be hashed if there are no hashes present).
+- __addresses__ - All hashes/keys as addresses.
+- __redeem__ - Null.
+- __scripthash__ - The hash of the redeem script.
+- __scriptaddress__ - The p2sh address.
+- __m__ - `m` value (required signatures).
+- __n__ - `n` value (number of keys).
+- __lock__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This will only
+  grab the first value and not deal with OP_IF statements, etc).
+- __flags__ - `nulldata` data.
+- __text__ - `nulldata` data converted to UTF-8.
 
 ##### Events:
 
