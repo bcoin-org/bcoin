@@ -693,7 +693,7 @@ Usage: `bcoin.chaindb(chain, options)`
 
 - Inherits all from Object.
 - All options.
-__size__ - Size in bytes of the DB file.
+- __size__ - Size in bytes of the DB file.
 
 ##### Events:
 
