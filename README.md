@@ -1235,17 +1235,19 @@ Usage: `bcoin.tx([options], [block])`
 - __output(options), output(output), output(address, value)__ - Add an output to the
   transaction.
   - `options` can be in the form of:
-            {
-              value: [satoshis/big number],
-              script: [deserialized script],
-              address: [pubkey address or scripthash address],
-              keys: [array of keys],
-              m: [m value],
-              n: [n value],
-              flags: [nulldata],
-              scripthash: [true or false],
-              lock: [locktime for checklocktimeverify]
-            }
+
+        {
+          value: [satoshis/big number],
+          script: [deserialized script],
+          address: [pubkey address or scripthash address],
+          keys: [array of keys],
+          m: [m value],
+          n: [n value],
+          flags: [nulldata],
+          scripthash: [true or false],
+          lock: [locktime for checklocktimeverify]
+        }
+
 - __scriptOutput(index/output, options)__ - Compile an output script for the
   output based on the same options `output()` handles.
 - __signatureHash(index/input, s, type)__ - Return the to-be-signed hash of the
@@ -1267,14 +1269,16 @@ Usage: `bcoin.tx([options], [block])`
   total value required for the transaction. A hard `fee` can be passed in
   (satoshis/big number) which will skip the fee calculation. Calculates the
   necessary change. Returns an object in the form of:
-            {
-              inputs: [array in inputs to add],
-              change: [change in satoshis (big number)],
-              cost: [total cost minus fee in satoshis (big number)],
-              fee: [fee for transaction in satoshis (big number)],
-              total: [total cost including fee in satoshis (big number)],
-              kb: [total kb for fee calculation]
-            }
+
+        {
+          inputs: [array in inputs to add],
+          change: [change in satoshis (big number)],
+          cost: [total cost minus fee in satoshis (big number)],
+          fee: [fee for transaction in satoshis (big number)],
+          total: [total cost including fee in satoshis (big number)],
+          kb: [total kb for fee calculation]
+        }
+
   `inputs` will be `null` if not enough funds were available.
   __NOTE:__ `getUnspent()` should only be called once all outputs have been added.
 - __fillUnspent(unspent, [changeAddress], [fee])__ - Calls `getUnspent()` and
