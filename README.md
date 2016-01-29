@@ -508,6 +508,77 @@ byte array.  Bcoin does use Buffers behind the scenes to speed up parsing of
 blocks and transactions coming in through the network, but every piece of data
 a programmer using bcoin will deal with is going to be a byte array.
 
+### Saving transactions to a wallet
+
+Most of the time, you won't need all transactions in the blockchain if you're
+only building a wallet. When a transaction comes in pertaining to your wallet,
+it's best to called `wallet.addTX(tx)` and save the wallet afterwards.
+
+``` js
+pool.on('watched', function(tx) {
+  wallet.addTX(tx);
+});
+
+pool.on('full', function() {
+  fs.writeFileSync(
+    process.env.HOME + '/wallet.json',
+    JSON.stringify(wallet.toJSON()));
+});
+```
+
+### Saving the blockchain
+
+At the moment, bcoin does not save any full blocks or make any assumptions
+about how the programmer wants to do it. It only saves the blockchain (block
+headers and chainwork). The programmer simply needs to hook into block events
+and save the blocks.
+
+``` js
+pool.on('block', function(block) {
+  // A simple key-value store:
+  db.save(block.hash('hex'), utils.toHex(block.render()), function(err) {
+    if (err)
+      return console.error(err.message);
+    console.log('Block %s saved.', block.rhash);
+    // Could also save transactions individually here for quick lookups
+  });
+});
+```
+
+#### Handling Blockchain Forks
+
+Bcoin handles blockchain forks like an SPV client. If it sees an alternate tip,
+it will reset to the last non-forked block and kill the current peer while
+emitting a `fork` event (see Pool events). It will repeat this process until
+the network eventually chooses the best chain.
+
+Bcoin essentially backs off and waits to see which fork wins. This means bcoin
+plays no part in protecting the network by helping choose the best chain
+according to the chainwork.
+
+Note that this may _still_ cause an issue with transactions that are already
+saved and considered confirmed. It's best to hook into the fork event and
+remove all confirmed transactions you may have saved in your database.
+
+``` js
+pool.on('fork', function(tip1, tip2) {
+  // Keep deleting everything until
+  // the fork is resolved:
+  db.get(tip1, function(err, block) {
+    block.txs.forEach(function(tx) {
+      db.remove(tx.hash('hex'));
+    });
+  });
+  db.get(tip2, function(err, block) {
+    block.txs.forEach(function(tx) {
+      db.remove(tx.hash('hex'));
+    });
+  });
+  db.remove(tip1);
+  db.remove(tip2);
+});
+```
+
 ## API Documentation
 
 ### Objects
