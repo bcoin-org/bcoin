@@ -1250,8 +1250,8 @@ Usage:
   output script and verify input. `index` is the index of the input being
   verified. `flags` is an object with boolean values. Keys can be of any of
   bitcoind's script flags in lowercase. i.e. `minimaldata`, `cleanstack`, etc.
-- __subscript(s, lastSep)__ - Return script from `lastSep` with codeseparators
-  removed.
+- __getSubscript(s, lastSep)__ - Return script from `lastSep` with
+  codeseparators removed.
 - __checksig(msg, sig, key)__ - Verify a signature against a hash and key.
 - __sign(msg, key, type)__ - Create a bitcoin ecdsa signature from `msg` and a
   private key. Appends `type` to the signature (the sighash type).
@@ -1266,11 +1266,11 @@ Usage:
 - __createMultisig(keys, m, n)__ - Compile a standard multisig script from
   array of keys and `m` and `n` value.
 - __createScripthash(s)__ - Compile a scripthash script from `s`.
-- __redeem(s)__ - Grab an deserialize redeem script from input script.
-- __standard(s)__ - Return standard output script type. `null` if unknown.
+- __getRedeem(s)__ - Grab an deserialize redeem script from input script.
+- __getType(s)__ - Return standard output script type. `unknown` if unknown.
 - __size(s)__ - Return script size in bytes.
 - __isLocktime(s)__ - Returns true if script is a checklocktimeverify script.
-- __lockTime(s)__ - Return locktime value pushed onto the stack if
+- __getLockTime(s)__ - Return locktime value pushed onto the stack if
   checklocktimeverify is used.
 - __getInputData(s, [prev])__ - Parse input and previous output scripts.
   Extract as much data as possible. Same format as `Input` getters.
@@ -1284,7 +1284,7 @@ Usage:
 - __isMultisig(s)__ - Returns true if script is multisig.
 - __isScripthash(s)__ - Returns true if script is pay-to-scripthash.
 - __isNulldata(s)__ - Returns true if script is nulldata.
-- __standardInput(s)__ - Same as `script.standard()`, but works on input
+- __getInputType(s)__ - Same as `script.getType()`, but works on input
   scripts.
 - __isPubkeyInput(s)__ - Returns true if script is pay-to-pubkey input script.
 - __isPubkeyhashInput(s)__ - Returns true if script is pay-to-pubkeyhash input
@@ -1292,8 +1292,8 @@ Usage:
 - __isMultisigInput(s)__ - Returns true if script is multisig input script.
 - __isScripthashInput(s)__ - Returns true if script is pay-to-scripthash input
   script.
-- __coinbase(s)__ - Extract as much data as possible from a coinbase script
-  including `height`, `extraNonce`, `flags`, and `text`.
+- __getCoinbaseData(s)__ - Extract as much data as possible from a coinbase
+  script including `height`, `extraNonce`, `flags`, and `text`.
 - __isHash(data)__ - Returns true if data is the length of a ripemd hash.
 - __isKey(data)__ - Returns true if data is the length of a public key.
 - __isSignature(data)__ - Returns true if data is the length of a signature.
@@ -1310,11 +1310,13 @@ Usage:
 - __isLowDER(sig)__ - Returns true if sig has a low S value.
 - __format(s)__ - Format script to make it more human-readable for output and
   debugging.
-- __pushOnly(s)__ - Returns true if script contains only push opcodes.
-- __sigops(s, [accurate])__ - Count number of sigops in script. Legacy counting
-  by default. Set `accurate` to true for accurate counting.
-- __sigopsScripthash(s)__ - Count sigops in scripthash input + redeem script.
-- __args(s)__ - Return number of expected "input args" for output script type.
+- __isPushOnly(s)__ - Returns true if script contains only push opcodes.
+- __getSigops(s, [accurate])__ - Count number of sigops in script. Legacy
+  counting by default. Set `accurate` to true for accurate counting.
+- __getScripthashSigops(s)__ - Count sigops in scripthash input + redeem
+  script.
+- __getArgs(s)__ - Return number of expected "input args" for output script
+  type.
 
 #### TXPool (from EventEmitter)
 
@@ -1495,7 +1497,7 @@ Usage: `bcoin.tx([options], [block])`
   txpool, or an object with txids as its keys and txs as its values.
 - __isFinal(height, ts)__ - Mimics the bitcoind `IsFinalTx()` function. Checks
   the locktime and input sequences. Returns true or false.
-- __sigops([scripthash], [accurate])__ - Count sigops in transaction. Set
+- __getSigops([scripthash], [accurate])__ - Count sigops in transaction. Set
   `scripthash=true` to count redeem script sigops. Set `accurate=true` for
   accurate counting instead of legacy counting.
 - __isStandard()__ - Mimics bitcoind's `IsStandardTx()` function.
@@ -1547,11 +1549,15 @@ Usage: `bcoin.wallet(options)`
 
 - Inherits all from EventEmitter.
 - All options.
-- TODO
 
 ##### Events:
 
-- TODO
+- __balance(balance)__ - Emitted when balance is updated. `balance` is in
+  satoshis (big number).
+- __tx(tx)__ - Emitted when a TX is added to the wallet's TXPool.
+- __load(ts)__ - Emitted when the TXPool is finished loading. `ts` is the
+  timestamp of the last transaction in the pool.
+- __error(err)__ - Emitted on error.
 
 ##### Methods:
 
@@ -1586,6 +1592,12 @@ Usage: `bcoin.wallet(options)`
   scripts if possible.
 - __sign(tx)__ - Equivalent to calling both `scriptInputs(tx)` and
   `signInputs(tx)` in one go.
+- __addTX(tx)__ - Add a transaction to the wallet's TXPool.
+- __all()__ - Returns all transactions from the TXPool.
+- __unspent()__ - Returns all TXes with unspent outputs from the TXPool.
+- __pending()__ - Returns all TXes in the TXPool that have yet to be included
+  in a block.
+- __balance()__ - Returns total balance of the TXPool.
 - __fill(tx)__ - Attempt to `fillUnspent(tx)`. Return `null` if failed to reach
   total output value. Return `tx` if successful.
 - __toAddress()__ - Return blockchain-explorer-like data in the format of:
@@ -1606,13 +1618,13 @@ Usage: `bcoin.wallet(options)`
 ##### Static:
 
 - Inherits all from Function.
-- __Wallet.toSecret(priv, compressed)__ - Convert a private key to a base58
+- __toSecret(priv, compressed)__ - Convert a private key to a base58
   string. Mimics the bitcoind CBitcoinSecret object for converting private keys
   to and from base58 strings. The same format bitcoind uses for `dumpprivkey`
   and `importprivkey`.
-- __Wallet.fromSecret(priv)__ - Convert a base58 private key string to a
+- __fromSecret(priv)__ - Convert a base58 private key string to a
   private key. See above for more information.
-- __key2hash([key])__ - Return hash of a public key (byte array).
+- __key2hash(key)__ - Return hash of a public key (byte array).
 - __hash2addr(hash, [prefix])__ - Return address of hash. `prefix` can be
   `pubkey`, `pubkeyhash`, `multisig`, or `scripthash`. Only `scripthash`
   actually has a different base58 prefix.
@@ -1628,7 +1640,42 @@ Usage: `bcoin.wallet(options)`
 
 #### bcoin.utils
 
-TODO
+- __toArray(msg, [enc])__ - Converts `msg` to an array. `msg` can be a string
+  where `enc` can be null (for converting ascii to a byte array) or `hex`.
+- __toBase58(arr)__ - Convert a byte array to base58.
+- __fromBase58(msg)__ - Convert a base58 string to a byte array.
+- __isBase58(msg)__ - Test `msg` to see if it is a base58 string.
+- __ripemd160(data, [enc])__ - RIPEMD160 hash function. Returns byte array.
+- __sha1(data, [enc])__ - SHA1 hash function. Returns byte array.
+- __ripesha(data, [enc])__ - SHA256+RIPEMD160 hash function. Returns byte array.
+- __checksum(data, [enc])__ - Create a checksum using a double SHA256.
+- __sha256(data, [enc])__ - SHA256 hash function. Returns byte array.
+- __dsha256(data, [enc])__ - Double SHA256 hash function. Returns byte array.
+- __writeAscii(dst, str, off)__ - Write an ascii string to a byte array.
+  Returns number of bytes written.
+- __readAscii(arr, off, len, printable)__ - Read ascii from a byte array. Set
+  `printable` to get only printable characters.
+- __ascii2array(str)__ - Convert ASCII string to byte array.
+- __array2ascii(arr)__ - Convert byte array to ASCII string.
+- __array2utf8(arr)__ - Convert byte array to UTF8 string.
+- __copy(src, dst, off, [force])__ - Copy data from `src` to `dst` at offset
+  `off`. Set `force` to increase `dst` size if necessary.
+- __stringify(arr)__ - Convert byte array to ASCII string.
+- __toHex(arr)__ - Convert byte array to hex string.
+- __binaryInsert(list, item, compare, [search])__ - Do a binary insert on
+  `list`. `compare` is a compare callback. Set `search` for just a binary
+  search.
+- __utils.isEqual(a, b)__ - Compare two byte arrays.
+- __utils.nextTick(callback)__ - `process.nextTick` or `setImmediate` if
+  available.
+- __utils.RequestCache__ - TODO.
+- __utils.asyncify(callback)__ - Ensure that a callback executes asynchronously
+  by wrapping it in a nextTick.
+- __utils.assert()__
+- __utils.assert.equal()__
+- __utils.btc()__ - Convert satoshis (big number) to BTC string.
+- __utils.satoshi()__ - Convert BTC string (must have a decimal point) to
+  satoshis (big number).
 
 #### Packet List
 
