@@ -1145,6 +1145,8 @@ Usage: `bcoin.peer(pool, createConnection, options)`
 - __updateWatch()__ - Resend `filterload` packet. Useful after adding data to
   the bloom filter (SPV-mode only).
 - __getData(items)__ - Request blocks or TXes.
+- __loadMempool()__ - Send `mempool`. Requests `inv` packet full of mempool
+  transactions from peer.
 - __loadHeaders(hashes, stop)__ - Send `getheaders`.
 - __loadBlocks(hashes, stop)__ - Send `getblocks`.
 
@@ -1272,6 +1274,7 @@ propogate data throughout the network.
 - __startSync()__ - Start downloading the blockchain.
 - __stopSync()__ - Pause the blockchain sync.
 - __isFull()__ - Whether the blockchain is full. Calls `chain.isFull()`.
+- __loadMempool()__ - Request mempool transactions from all peers.
 - __watch(id)__ - Add a piece of data to "watch" for to the bloom filter. Send
   updated `filterload` to peers (SPV-only).
 - __unwatch(id)__ - Stop watching for `id` (SPV-only).
