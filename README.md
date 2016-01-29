@@ -1285,11 +1285,14 @@ propogate data throughout the network.
   the blockchain to the timestamp of the last TX the wallet contains in its
   TXPool (SPV-only).
 - __removeWallet(wallet)__ - Remove wallet from watch list (SPV-only).
-- __search([id], range)__ - Search a timestamp range, watch for `id` (SPV-only).
+- __search([id], range)__ - Search a timestamp range, watch for `id`
+  (SPV-only). `range` is a timestamp range: `{ start: unixSeconds, end:
+  unixSeconds }`.
 - __getBlock(hash, callback)__ - Request block from peer.
 - __sendBlock(block)__ - Broadcast a block.
-- __getTX(txid, callback)__ - Attempt to search for a particular transaction
-  (SPV-only).
+- __getTX(txid, range, callback)__ - Attempt to search for a particular
+  transaction (SPV-only). `range` is a timestamp range: `{ start: unixSeconds,
+  end: unixSeconds }`.
 - __sendTX(tx)__ - Broadcast a transaction.
 - __broadcast(block/tx)__ - Broadcast block or TX.
 - __destroy()__ - Destroy pool and peers.
