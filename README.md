@@ -1572,6 +1572,7 @@ Usage: `bcoin.tx([options], [block])`
 - __fill(wallet/txpool/object)__ - Fills all the transaction's inputs with the
   appropriate previous outputs using the available transactions in a wallet,
   txpool, or an object with txids as its keys and txs as its values.
+- __isFull()__ - Returns true if the TX has all previous output references.
 - __isFinal(height, ts)__ - Mimics the bitcoind `IsFinalTx()` function. Checks
   the locktime and input sequences. Returns true or false.
 - __getSigops([scripthash], [accurate])__ - Count sigops in transaction. Set
