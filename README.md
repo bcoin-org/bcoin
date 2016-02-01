@@ -732,7 +732,7 @@ Usage: `bcoin.chain([options])`
   is one.
 - __getHeight(block/hash)__ - Return block height based on hash or block.
 - __getNextBlock(block/hash)__ - Return next block hash based on hash or block.
-- __size()__ - Number of blocks in the chain (different from height).
+- __getSize()__ - Number of blocks in the chain (different from height).
 - __height()__ - Return height of chain tip (`-1` if genesis block is not present).
 - __currentTarget()__ - Return the current target in compact form.
 - __target(last, [block])__ - Return the target (compact form) necessary for
@@ -1333,7 +1333,7 @@ Usage:
 - __createScripthash(s)__ - Compile a scripthash script from `s`.
 - __getRedeem(s)__ - Grab an deserialize redeem script from input script.
 - __getType(s)__ - Return standard output script type. `unknown` if unknown.
-- __size(s)__ - Return script size in bytes.
+- __getSize(s)__ - Return script size in bytes.
 - __isLocktime(s)__ - Returns true if script is a checklocktimeverify script.
 - __getLockTime(s)__ - Return locktime value pushed onto the stack if
   checklocktimeverify is used.
