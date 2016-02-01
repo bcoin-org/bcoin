@@ -181,25 +181,22 @@ describe('Wallet', function() {
 
     // Create new transaction
     var t2 = bcoin.tx().out(w2, 5460);
-    w1.fill(t2, function(err) {
-      assert(!err);
-      assert(t2.verify());
+    assert(w1.fill(t2));
+    w1.sign(t2);
+    assert(t2.verify());
 
-      assert.equal(t2.funds('in').toString(10), 16380);
-      // If change < dust and is added to outputs:
-      // assert.equal(t2.funds('out').toString(10), 6380);
-      // If change < dust and is added to fee:
-      assert.equal(t2.funds('out').toString(10), 5460);
+    assert.equal(t2.funds('in').toString(10), 16380);
+    // If change < dust and is added to outputs:
+    // assert.equal(t2.funds('out').toString(10), 6380);
+    // If change < dust and is added to fee:
+    assert.equal(t2.funds('out').toString(10), 5460);
 
-      // Create new transaction
-      var t3 = bcoin.tx().out(w2, 15000);
-      w1.fill(t3, function(err) {
-        assert(err);
-        assert.equal(err.minBalance.toString(10), 25000);
+    // Create new transaction
+    var t3 = bcoin.tx().out(w2, 15000);
+    assert(!w1.fill(t3));
+    assert.equal(t3.total.toString(10), 25000);
 
-        cb();
-      });
-    });
+    cb();
   });
 
   it('should sign multiple inputs using different keys', function(cb) {
@@ -335,6 +332,7 @@ describe('Wallet', function() {
     assert(!send.verify());
     var result = w1.fill(send);
     assert(result);
+    w1.sign(send);
 
     // printScript(send.inputs[0]);
 
