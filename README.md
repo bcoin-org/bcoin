@@ -99,7 +99,7 @@ pool.on('watched', function(tx, peer) {
 
 // Look for balance changes
 wallet.on('balance', function() {
-  utils.print('Wallet balance updated: %s', utils.btc(wallet.balance()));
+  utils.print('Wallet balance updated: %s', utils.btc(wallet.getBalance()));
 });
 
 // Start the getheaders sync
@@ -135,7 +135,7 @@ fs.writeFileSync(process.env.HOME + '/my-new-wallet.json',
 var tx = bcoin.tx();
 
 // Add an output, send some money to our new wallet
-tx.output({
+tx.addOutput({
   address: receiver.getAddress(),
   // Every satoshi value in bcoin is
   // a big number, so we can convert
@@ -148,8 +148,8 @@ tx.output({
 
 // Fill the transaction inputs with the
 // necessary unspents (hopefully we have them!).
-tx.fillUnspent(
-  wallet.unspent(),    // Our unspents to choose from
+tx.fill(
+  wallet.getUnspent(),    // Our unspents to choose from
   wallet.getAddress(), // Our change address (warning: address re-use)
   null                 // We could put a hard fee here, but lets let bcoin figure it out
 );
@@ -252,7 +252,7 @@ utils.assert(buyer.getScriptAddress() === mediator.getScriptAddress());
 utils.print('Created 2-of-3 wallet with address: %s', buyer.getScriptAddress());
 
 // Create a fake coinbase for buyer to use as his funds
-var coinbase = bcoin.tx().output(buyer.getKeyAddress(), utils.satoshi('50.0'));
+var coinbase = bcoin.tx().addOutput(buyer.getKeyAddress(), utils.satoshi('50.0'));
 buyer.addTX(coinbase);
 
 // Now let's create a tx as the buyer.
@@ -261,13 +261,14 @@ var btx = bcoin.tx();
 
 // Send 25 BTC to the shared wallet
 // to buy something from seller.
-btx.output({
+btx.addOutput({
   address: buyer.getScriptAddress(),
   value: utils.satoshi('25.0')
 });
 
 // Fill the unspents and sign
-buyer.fillUnspent(btx);
+if (!buyer.fill(btx))
+  throw new Error('Not enough funds');
 buyer.sign(btx);
 
 // Buyer sends his funds to the 2-of-3 wallet
@@ -280,7 +281,7 @@ seller.addTX(btx);
 var stx = bcoin.tx();
 
 // Seller wants to send the BTC to himself
-stx.output({
+stx.addOutput({
   address: seller.getKeyAddress(),
   value: utils.satoshi('25.0')
     // Subtract the fee
@@ -291,13 +292,13 @@ stx.output({
 
 // Give the mediator a little something,
 // since he's such a cool guy.
-stx.output({
+stx.addOutput({
   address: mediator.getKeyAddress(),
   value: utils.satoshi('1.0')
 });
 
 // Add the buyer's utxo as the input
-stx.input(btx, 0);
+stx.addInput(btx, 0);
 
 // Add _one_ signature to the tx
 seller.sign(stx);
@@ -329,7 +330,7 @@ and human-writable. For example, a standard pay-to-pubkey script would look
 like:
 
 ``` js
-tx.output({
+tx.addOutput({
   value: new bn(100000),
   script: [
     'dup',
@@ -347,9 +348,9 @@ prefixes removed. Pushdata ops are represented with Arrays.
 The above script could be redeemed with:
 
 ``` js
-tx2.input({
-  out: { tx: tx, hash: tx.hash('hex'), index: 0 },
-  seq: 0xffffffff,
+tx2.addInput({
+  prevout: { tx: tx, hash: tx.hash('hex'), index: 0 },
+  sequence: 0xffffffff,
   script: [
     signature, // Byte Array
     publicKey  // Byte Array
@@ -408,14 +409,14 @@ var wallet = bcoin.wallet({
   ]
 });
 console.log(wallet.getScriptAddress());
-var tx1 = bcoin.tx().output(wallet.getScriptAddress(), new bn(100000));
+var tx1 = bcoin.tx().addOutput(wallet.getScriptAddress(), new bn(100000));
 ```
 
 Which would be redeemed with:
 
 ``` js
-tx2.input({
-  out: { tx: tx1, hash: tx1.hash('hex'), index: 0 },
+tx2.addInput({
+  prevout: { tx: tx1, hash: tx1.hash('hex'), index: 0 },
   script: [
     2,
     // Redeem script:
@@ -437,7 +438,7 @@ var bn = bcoin.bn;
 ...
 
 // Add an output with 100,000 satoshis as a value.
-tx.output(wallet.getKeyAddress(), new bn(100000));
+tx.addOutput(wallet.getKeyAddress(), new bn(100000));
 ```
 
 To make this easier to deal with, bcoin has two helper functions: `utils.btc()`
@@ -642,6 +643,7 @@ Subtype can be `block`, `merkleblock`, or `header`.
   validation will fail.
 - __isGenesis()__ - Returns true if block is the genesis block of the network.
   before the reference node.
+- __getSize()__ - Return block size in bytes.
 - __getHeight()__ - Returns height in the blockchain. Returns `-1` if block is
   not present in the chain.
   node.
@@ -933,7 +935,7 @@ Usage: `bcoin.input([options])`
 - __out.hash__ - Previous output's txid as a hex string.
 - __out.index__ - Previous output's index.
 - __script__ - Array of opcodes.
-- __seq__ - Input's nSequence, `0xffffffff` by default.
+- __sequence__ - Input's nSequence, `0xffffffff` by default.
 
 ##### Properties:
 
@@ -968,8 +970,8 @@ which parse the script and grab the previous output data and cache it as
 - __scriptaddress__ - The p2sh address.
 - __m__ - `m` value (required signatures).
 - __n__ - `n` value (number of keys).
-- __lock__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This will only
-  grab the first value and not deal with OP_IF statements, etc).
+- __lockTime__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This
+  will only grab the first value and not deal with OP_IF statements, etc).
 - __flags__ - Coinbase flags if present.
 - __text__ - Coinbase flags converted to UTF-8, if present.
 - __output__ - Previous Output object.
@@ -1034,8 +1036,8 @@ script and cache it as `_data`.
 - __scriptaddress__ - The p2sh address.
 - __m__ - `m` value (required signatures).
 - __n__ - `n` value (number of keys).
-- __lock__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This will only
-  grab the first value and not deal with OP_IF statements, etc).
+- __lockTime__ - The OP_CHECKLOCKTIMEVERIFY locktime if present (NOTE: This
+  will only grab the first value and not deal with OP_IF statements, etc).
 - __flags__ - `nulldata` data.
 - __text__ - `nulldata` data converted to UTF-8.
 
@@ -1406,10 +1408,10 @@ Usage: `bcoin.txPool(wallet)`
 
 - Inherits all from EventEmitter.
 - __add(tx)__ - Add TX to the pool.
-- __all()__ - Return all TXes in the pool owned by wallet.
-- __unspent()__ - Return all TXes with unspent outputs, owned by wallet.
-- __pending()__ - Return all 0-confirmation transactions.
-- __balance()__ - Return total balance of TX pool.
+- __getAll()__ - Return all TXes in the pool owned by wallet.
+- __getUnspent()__ - Return all TXes with unspent outputs, owned by wallet.
+- __getPending()__ - Return all 0-confirmation transactions.
+- __getBalance()__ - Return total balance of TX pool.
 - __toJSON()__ - Return TX pool in serialized JSON format.
 - __fromJSON()__ - Load TX pool from serialized JSON format.
 
@@ -1427,9 +1429,9 @@ Usage: `bcoin.tx([options], [block])`
 ##### Options:
 
 - __version__ - Transaction version (default: 1).
-- __inputs__ - Array of input objects with `tx.input()` options.
-- __outputs__ - Array of output objects with `tx.output()` options.
-- __lock__ - nLockTime value.
+- __inputs__ - Array of input objects with `tx.addInput()` options.
+- __outputs__ - Array of output objects with `tx.addOutput()` options.
+- __lockTime__ - nLockTime value.
 - __ts__ - Timestamp (set by `block` if passed in arguments - spv-mode).
 - __block__ - Block hash (Set by `block` if passed in arguments - spv-mode).
 - __network__ - Should be `true` if TX came in from the network.
@@ -1468,34 +1470,35 @@ Usage: `bcoin.tx([options], [block])`
 - __render([force])__ - Serialize transaction. Returns raw byte array. Will
   return raw data passed in from the network if available. Set `force=true` to
   force serialization.
-- __size()__ - Return serializzed transaction size in bytes.
-- __input(options)__ - Add an input to the transaction. Options can be an Input
-  object (see above), in the form of an Input object (containing properties
-  `out.tx`, `out.hash`, `out.index`, `script`, and `seq`).
-  - `input()` can handle many different arguments in the forms of:
-    - `tx.input(tx, index)`
-    - `tx.input(txHash, index)`
-    - `tx.input(input)`
-    - `tx.input({ hash: hash, index: index })`
-    - `tx.input({ tx: tx, index: index })`
+- __getSize()__ - Return serializzed transaction size in bytes.
+- __addInput(options)__ - Add an input to the transaction. Options can be an
+  Input object (see above), in the form of an Input object (containing
+  properties `prevout.tx`, `prevout.hash`, `prevout.index`, `script`, and
+  `sequence`).
+  - `addInput()` can handle many different arguments in the forms of:
+    - `tx.addInput(tx, index)`
+    - `tx.addInput(txHash, index)`
+    - `tx.addInput(input)`
+    - `tx.addInput({ hash: hash, index: index })`
+    - `tx.addInput({ tx: tx, index: index })`
 - __scriptInput(index/input, pub, redeem)__ - Initialize the input scripts
   based on previous output script type. `n` signatures will be added.
   Signatures will be null dummies (empty signature slots) until `signInput()`
   is called. `pub` (the public key) and `redeem` (raw redeem script) should
   always be passed in if there is a pubkeyhash or scripthash output being
   redeemed. Will not overwrite existing input scripts.
-- __signature(index/input, key, [type])__ - Create a signature for the desired
-  input using `key` as the private key and `type` as the sighash type. Sighash
-  type can be a number or a string (`all`, `single`, or `none`). Returns a DER
-  signature byte array.
+- __createSignature(index/input, key, [type])__ - Create a signature for the
+  desired input using `key` as the private key and `type` as the sighash type.
+  Sighash type can be a number or a string (`all`, `single`, or `none`).
+  Returns a DER signature byte array.
 - __signInput(index/input, key, [type])__ - Sign the desired input and place
   the signature in an empty signature slot. Finalize the input script and
   reduce signature slots to `m` once the minimum amount of signatures has been
   reached.
 - __scriptSig(index/input, key, pub, redeem, type)__ - Execute `scriptInput`
   _and_ `signInput`.
-- __output(options), output(output), output(address, value)__ - Add an output to the
-  transaction.
+- __addOutput(options), addOutput(output), addOutput(address, value)__ - Add an
+  output to the transaction.
   - `options` can be in the form of:
 
                 {
@@ -1507,11 +1510,11 @@ Usage: `bcoin.tx([options], [block])`
                   n: [n value],
                   flags: [nulldata],
                   scripthash: [true or false],
-                  lock: [locktime for checklocktimeverify]
+                  lockTime: [locktime for checklocktimeverify]
                 }
 
 - __scriptOutput(index/output, options)__ - Compile an output script for the
-  output based on the same options `output()` handles.
+  output based on the same options `addOutput()` handles.
 - __signatureHash(index/input, s, type)__ - Return the to-be-signed hash of the
   transaction for the desired input. Must pass in previous output subscript as
   `s`, as well as the sighash type (number or string of `all`, `none`, or
@@ -1525,9 +1528,9 @@ Usage: `bcoin.tx([options], [block])`
 - __isCoinbase()__ - Returns true if TX is a coinbase.
 - __maxSize()__ - Estimate the size of the transaction in bytes (works before
   input scripts are compiled and signed). Useful for fee calculation.
-- __getUnspent(unspent, changeAddress, [fee])__ - Determine which unspents to
+- __getInputs(unspent, changeAddress, [fee])__ - Determine which unspents to
   use from `unspent` (an array of possible unspents, usually returned by
-  `wallet.unspent()`). Calculates the fee and chooses unspents based on the
+  `wallet.getUnspent()`). Calculates the fee and chooses unspents based on the
   total value required for the transaction. A hard `fee` can be passed in
   (satoshis/big number) which will skip the fee calculation. Calculates the
   necessary change. Returns an object in the form of:
@@ -1542,22 +1545,22 @@ Usage: `bcoin.tx([options], [block])`
         }
 
   `inputs` will be `null` if not enough funds were available.
-  __NOTE:__ `getUnspent()` should only be called once all outputs have been added.
-- __fillUnspent(unspent, [changeAddress], [fee])__ - Calls `getUnspent()` and
+  __NOTE:__ `getInputs()` should only be called once all outputs have been added.
+- __fill(unspent, [changeAddress], [fee])__ - Calls `getInputs()` and
   adds the created inputs to the transaction. Adds a change output if
-  necessary. Returns the same result value as `getUnspent()`. __NOTE:__ Should
+  necessary. Returns the same result value as `getInputs()`. __NOTE:__ Should
   only be called once all outputs have been added.
 - __getFee()__ - Returns the fee for transaction.
-- __funds(side)__ - Returns the total funds for a side of the transaction
-  `'in'` or `'out'`.
-- __setLockTime(lock)__ - Sets a locktime for the transaction. Will set the
+- __getFunds(side)__ - Returns the total funds for a side of the transaction
+  `'input'` or `'output'`.
+- __setLockTime(lockTime)__ - Sets a locktime for the transaction. Will set the
   nSequences accordingly.
 - __increaseFee(fee)__ - Increase fee to a hard fee. Opts transaction in for
   replace-by-fee. __NOTE:__ Transaction must be rescripted and resigned before
   broadcasting.
-- __fill(wallet/txpool/object)__ - Fills all the transaction's inputs with the
-  appropriate previous outputs using the available transactions in a wallet,
-  txpool, or an object with txids as its keys and txs as its values.
+- __fillPrevout(wallet/txpool/object)__ - Fills all the transaction's inputs
+  with the appropriate previous outputs using the available transactions in a
+  wallet, txpool, or an object with txids as its keys and txs as its values.
 - __isFull()__ - Returns true if the TX has all previous output references.
 - __isFinal(height, ts)__ - Mimics the bitcoind `IsFinalTx()` function. Checks
   the locktime and input sequences. Returns true or false.
@@ -1616,7 +1619,7 @@ Usage: `bcoin.wallet(options)`
 
 ##### Events:
 
-- __balance(balance)__ - Emitted when balance is updated. `balance` is in
+- __getBalance(balance)__ - Emitted when balance is updated. `balance` is in
   satoshis (big number).
 - __tx(tx)__ - Emitted when a TX is added to the wallet's TXPool.
 - __load(ts)__ - Emitted when the TXPool is finished loading. `ts` is the
@@ -1646,9 +1649,10 @@ Usage: `bcoin.wallet(options)`
   this wallet. If `index` is not present, all outputs will be tested.
 - __ownInput(tx, [index])__ - Check to see if input at `index` pertains to
   this wallet. If `index` is not present, all inputs will be tested.
-- __fillUnspent(tx, [changeAddress], [fee])__ - Fill tx with inputs necessary
-  for total output value. Uses `wallet.unspent()` as the unspent list.
-- __fillTX(tx)__ - "Fill" a transactions' inputs with references to its
+- __fill(tx, [changeAddress], [fee])__ - Fill tx with inputs necessary for
+  total output value. Uses `wallet.getUnspent()` as the unspent list. Returns true
+  if successfully filled necessary funds.
+- __fillPrevout(tx)__ - "Fill" a transactions' inputs with references to its
   previous outputs if available.
 - __scriptInputs(tx)__ - Compile necessary scripts for inputs (with OP_0 where
   the signatures should be). Will not overwrite existing input scripts.
@@ -1657,13 +1661,11 @@ Usage: `bcoin.wallet(options)`
 - __sign(tx)__ - Equivalent to calling both `scriptInputs(tx)` and
   `signInputs(tx)` in one go.
 - __addTX(tx)__ - Add a transaction to the wallet's TXPool.
-- __all()__ - Returns all transactions from the TXPool.
-- __unspent()__ - Returns all TXes with unspent outputs from the TXPool.
-- __pending()__ - Returns all TXes in the TXPool that have yet to be included
+- __getAll()__ - Returns all transactions from the TXPool.
+- __getUnspent()__ - Returns all TXes with unspent outputs from the TXPool.
+- __getPending()__ - Returns all TXes in the TXPool that have yet to be included
   in a block.
-- __balance()__ - Returns total balance of the TXPool.
-- __fill(tx)__ - Attempt to `fillUnspent(tx)`. Return `null` if failed to reach
-  total output value. Return `tx` if successful.
+- __getBalance()__ - Returns total balance of the TXPool.
 - __toAddress()__ - Return blockchain-explorer-like data in the format of:
 
                     {
