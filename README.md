@@ -387,10 +387,10 @@ script: [
   2, 3, 4, 5, 6, 7, 8, 9, 10,        // OP_2-10
   11, 12, 13, 14, 15, 16,            // OP_11-16
   '1negate',                         // OP_1NEGATE
-  new Array(0x4b)),                  // PUSHDATA0 (direct push)
-  new Array(0xff)),                  // PUSHDATA1
-  new Array(0xffff)),                // PUSHDATA2
-  new Array(0xffffffff))             // PUSHDATA4
+  new Array(0x4b),                   // PUSHDATA0 (direct push)
+  new Array(0xff),                   // PUSHDATA1
+  new Array(0xffff),                 // PUSHDATA2
+  new Array(0xffffffff)              // PUSHDATA4
 ];
 ```
 
@@ -724,7 +724,7 @@ Usage: `bcoin.chain([options])`
   minutes of present time.
 - __hashRange(startTime, endTime)__ - Return an array of block hashes between a
   range of time.
-- __locatorHashes(hash/height)__ - Return array of block locator hashes
+- __getLocator(hash/height)__ - Return array of block locator hashes
   starting from hash or height.
 - __getOrphanRoot(block/hash)__ - Find the orphan root based on `hash` if there
   is one.
@@ -1190,37 +1190,22 @@ propogate data throughout the network.
 - __headers__ - Force use of `getheaders` for blockchain download depending on
   boolean value.
 - __multiplePeers__ - Force downloading of blocks from multiple peers depending
-  on value (__NOTE:__ setting this to `true` for a `getblocks` sync is a very
-  bad idea).
+  on value (__NOTE:__ only works with a `getheaders` sync).
 - __relay__ - Relay value in `version` packet. See BIP-37 for details.
 - __createSocket(port, host)__ - Callback to create a socket. Must return a
   node-like socket.
 - __seeds__ - List of initial seeds (array of strings in the format of
   `{ipv4/host}:{port}` or `[{ipv6}]:port`). Port will be set to the default
   network port if not present.
+- __discoverPeers__ - If `false`, pay no attention to `addr` packets. Only
+  connect to default seeds or seeds passed in with `seeds`.
 - __size__ - Size of pool i.e. the number of peers to maintain connections
   with.
-- __parallel__ - Amount of block requests to allow in parallel (default: 2000).
-- __redundancy__ - Amount of redundant block requests to make to peers.
-  Anything over 1 adds a redundant request. (default: 1).
-- __backoffDelta__ - Delta used to calculate the next `backoff` time before
-  connecting to a new block peer after one has been destroyed (default: 500).
-- __backoffMax__ - Max backoff time that can be calculated (default: 5000).
 - __loadTimeout__ - The amount of time (ms) before killing the loader peer if
   an `inv` or `block` packet has not been received (default: 30000).
 - __loadInterval__ - The amount of time (ms) before attempting stall recovery
   on the loader peer (which sends another `getblocks`/`getheaders`) (default:
   5000).
-- __loadWindow__ - The amount of time to delay before scheduling `getdata`
-  requests (default: 250).
-- __rangeWindow__ - Disabled.
-- __lwm__ - Low watermark queue-length boundary to hit before more
-  `getheaders`/`getblocks` requests are attempted (default: 4000).
-- __hwm__ - High watermark queue-length boundary to cross before bcoin will
-  prevent any further `getheaders`/`getblocks` requests and wait until the low
-  watermark has been hit (default: 16000).
-- __maxRetries__ - amount of times to retry scheduled requests on peer before
-  destroying the peer (default: 42).
 - __requestTimeout__ - timeout before retrying a request (default: 10000).
 - __invTimeout__ - Amount of time before removing objects from the broadcasted
   `inv` list (default: 60000).
@@ -1299,7 +1284,7 @@ propogate data throughout the network.
 - __getPeer(host)__ - Get peer by host/ip+port.
 - __addSeed(host)__ - Add a seed to the seed list.
 - __removeSeed(host)__ - Remove a seed from the seed list.
-- __misbehaving(peer, dos)__ - Increase peer's banscore by `dos`.
+- __setMisbehavior(peer, dos)__ - Increase peer's banscore by `dos`.
 - __isMisbehaving(peer/host)__ - Whether peer is known for misbehaving.
 
 ##### Static:
@@ -1336,9 +1321,10 @@ Usage:
   an array.
 - __bool(value)__ - Cast a byte array to bool. Mimics bitcoind's
   `CastToBool()` function. Checks for negative zero.
-- __num(value, useNum, minimaldata)__ - Create a standard little-endian big
+- __num(value, [useNum], [minimaldata])__ - Create a standard little-endian big
   number from `value`. Checks for `minimaldata` if true. Checks for negative
-  zero, etc.  Mimics bitcoind's CScriptNum.
+  zero, etc.  Mimics bitcoind's CScriptNum. If `useNum` is `true`, attempt to
+  return a javascript Number.
 - __array(value)__ - Convert big number to script little endian byte array.
 - __createMultisig(keys, m, n)__ - Compile a standard multisig script from
   array of keys and `m` and `n` value.
@@ -1696,7 +1682,7 @@ Usage: `bcoin.wallet(options)`
 ##### Static:
 
 - Inherits all from Function.
-- __toSecret(priv, compressed)__ - Convert a private key to a base58
+- __toSecret(priv, [compressed])__ - Convert a private key to a base58
   string. Mimics the bitcoind CBitcoinSecret object for converting private keys
   to and from base58 strings. The same format bitcoind uses for `dumpprivkey`
   and `importprivkey`.
