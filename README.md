@@ -580,6 +580,26 @@ pool.on('fork', function(tip1, tip2) {
 });
 ```
 
+### Transaction Building
+
+Transaction building happens in 4 stages:
+
+1. __Outputs__: Adding of the outputs (where we want to send the coins).
+2. __Filling__: Filling of the unspent outputs as the inputs, calculation of
+   fee, and potential addition of a change address.
+3. __Scripting__: Compilation of the of the input scripts (minus the
+   signatures).  This will fill `n` empty signature slots (`OP_0`).
+   - __Potential recalculation of the fee__: Now that the redeem script is
+     available to the primitive TX object, it can likely calculate a lower fee.
+     Add value to the change address if the fee is lower than we thought.
+4. __Signing__: Signing of the inputs. If this is a multisig transaction, we
+   have to wait for other signers to sign it before it is finalized.
+   - __Finalization__: Once the final signer signs the transaction, empty
+     signature slots will be removed as they are no longer necessary.
+
+Once these steps are completed, the transaction should verify and is able to be
+broadcast to the pool.
+
 ## API Documentation
 
 ### Objects
