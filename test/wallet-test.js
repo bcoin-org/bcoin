@@ -286,6 +286,7 @@ describe('Wallet', function() {
         n: 3
       }
     });
+    w3 = bcoin.wallet.fromJSON(w3.toJSON());
 
     var receive = bcoin.wallet();
 
