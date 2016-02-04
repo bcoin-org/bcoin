@@ -74,11 +74,9 @@ describe('Wallet', function() {
 
   it('should multisign/verify TX', function() {
     var w = bcoin.wallet({
-      multisig: {
-        type: 'multisig',
-        m: 1,
-        n: 2
-      }
+      type: 'multisig',
+      m: 1,
+      n: 2
     });
     // var k2 = w.getPublicKey().concat(1);
     var k2 = bcoin.ecdsa.genKeyPair().getPublic(true, 'array');
@@ -265,37 +263,38 @@ describe('Wallet', function() {
   it('should verify 2-of-3 p2sh tx', function(cb) {
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
     var w1 = bcoin.wallet({
-      multisig: {
-        type: 'scripthash',
-        m: 2,
-        n: 3
-      }
+      hd: true,
+      type: 'scripthash',
+      subtype: 'multisig',
+      m: 2,
+      n: 3
     });
+
     var w2 = bcoin.wallet({
-      multisig: {
-        type: 'scripthash',
-        m: 2,
-        n: 3
-      }
+      hd: true,
+      type: 'scripthash',
+      subtype: 'multisig',
+      m: 2,
+      n: 3
     });
+
     var w3 = bcoin.wallet({
       hd: true,
-      multisig: {
-        type: 'scripthash',
-        m: 2,
-        n: 3
-      }
+      type: 'scripthash',
+      subtype: 'multisig',
+      m: 2,
+      n: 3
     });
-    w3 = bcoin.wallet.fromJSON(w3.toJSON());
+    // w3 = bcoin.wallet.fromJSON(w3.toJSON());
 
     var receive = bcoin.wallet();
 
-    w1.addKey(w2.getPublicKey());
-    w1.addKey(w3.getPublicKey());
-    w2.addKey(w1.getPublicKey());
-    w2.addKey(w3.getPublicKey());
-    w3.addKey(w1.getPublicKey());
-    w3.addKey(w2.getPublicKey());
+    w1.addKey(w2.purposeKey);
+    w1.addKey(w3.purposeKey);
+    w2.addKey(w1.purposeKey);
+    w2.addKey(w3.purposeKey);
+    w3.addKey(w1.purposeKey);
+    w3.addKey(w2.purposeKey);
 
     // Our p2sh address
     var addr = w1.getAddress();
