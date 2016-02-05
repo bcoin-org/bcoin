@@ -87,7 +87,7 @@ describe('Wallet', function() {
     var src = bcoin.tx({
       outputs: [{
         value: 5460 * 2,
-        minSignatures: 1,
+        m: 1,
         keys: [ w.getPublicKey(), k2 ]
       }, {
         value: 5460 * 2,
@@ -269,7 +269,7 @@ describe('Wallet', function() {
   it('should verify 2-of-3 p2sh tx', function(cb) {
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
     var w1 = bcoin.wallet({
-      hd: true,
+      derivation: 'bip44',
       type: 'scripthash',
       subtype: 'multisig',
       m: 2,
@@ -277,7 +277,7 @@ describe('Wallet', function() {
     });
 
     var w2 = bcoin.wallet({
-      hd: true,
+      derivation: 'bip44',
       type: 'scripthash',
       subtype: 'multisig',
       m: 2,
@@ -285,7 +285,7 @@ describe('Wallet', function() {
     });
 
     var w3 = bcoin.wallet({
-      hd: true,
+      derivation: 'bip44',
       type: 'scripthash',
       subtype: 'multisig',
       m: 2,
