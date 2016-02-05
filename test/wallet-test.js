@@ -115,25 +115,31 @@ describe('Wallet', function() {
 
     // Coinbase
     var t1 = bcoin.tx().out(w, 50000).out(w, 1000);
+    // balance: 51000
     w.sign(t1);
-    var t2 = bcoin.tx().input(t1, 0)
+    var t2 = bcoin.tx().input(t1, 0) // 50000
                        .out(w, 24000)
                        .out(w, 24000);
+    // balance: 49000
     w.sign(t2);
-    var t3 = bcoin.tx().input(t1, 1)
-                       .input(t2, 0)
+    var t3 = bcoin.tx().input(t1, 1) // 1000
+                       .input(t2, 0) // 24000
                        .out(w, 23000);
+    // balance: 47000
     w.sign(t3);
-    var t4 = bcoin.tx().input(t2, 1)
-                       .input(t3, 0)
+    var t4 = bcoin.tx().input(t2, 1) // 24000
+                       .input(t3, 0) // 23000
                        .out(w, 11000)
                        .out(w, 11000);
+    // balance: 22000
     w.sign(t4);
-    var f1 = bcoin.tx().input(t4, 1)
+    var f1 = bcoin.tx().input(t4, 1) // 11000
                        .out(f, 10000);
+    // balance: 11000
     w.sign(f1);
-    var fake = bcoin.tx().input(t1, 1)
+    var fake = bcoin.tx().input(t1, 1) // 1000 (already redeemed)
                          .out(w, 500);
+    // balance: 11000
 
     // Just for debugging
     t1.hint = 't1';

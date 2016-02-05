@@ -85,6 +85,11 @@ describe('HD', function() {
     master.hdpub._unbuild(master.hdpub.xpubkey);
   });
 
+  it('should deserialize and reserialize', function() {
+    var key = bcoin.hd.priv();
+    assert.equal(bcoin.hd.fromJSON(key.toJSON()).xprivkey, key.xprivkey);
+  });
+
   it('should create an hd seed', function() {
     var seed = new bcoin.hd.seed({
       // I have the same combination on my luggage:
