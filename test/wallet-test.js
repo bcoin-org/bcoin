@@ -35,15 +35,15 @@ describe('Wallet', function() {
     var w = bcoin.wallet();
     var addr = w.getAddress();
     assert(addr);
-    assert(bcoin.wallet.validateAddress(addr));
+    assert(bcoin.address.validate(addr));
   });
 
   it('should validate existing address', function() {
-    assert(bcoin.wallet.validateAddress('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
+    assert(bcoin.address.validate('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
   });
 
   it('should fail to validate invalid address', function() {
-    assert(!bcoin.wallet.validateAddress('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
+    assert(!bcoin.address.validate('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
   });
 
   it('should sign/verify TX', function() {
@@ -74,21 +74,20 @@ describe('Wallet', function() {
 
   it('should multisign/verify TX', function() {
     var w = bcoin.wallet({
+      derivation: 'bip44',
       type: 'multisig',
       m: 1,
       n: 2
     });
-    // var k2 = w.getPublicKey().concat(1);
-    var k2 = bcoin.ecdsa.genKeyPair().getPublic(true, 'array');
+    var k2 = bcoin.hd.priv().deriveAccount44(0).hdpub;
     w.addKey(k2);
-    // assert.equal(w.getKeyAddress(), w.getAddress());
 
     // Input transcation
     var src = bcoin.tx({
       outputs: [{
         value: 5460 * 2,
         m: 1,
-        keys: [ w.getPublicKey(), k2 ]
+        keys: [ w.getPublicKey(), k2.derive('m/0/0').publicKey ]
       }, {
         value: 5460 * 2,
         address: w.getAddress() + 'x'
