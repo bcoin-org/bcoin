@@ -3,33 +3,6 @@ var bn = require('bn.js');
 var bcoin = require('../');
 var constants = bcoin.protocol.constants;
 
-function printScript(input) {
-  var scripts = [];
-  var script = input.script;
-  scripts.push(script);
-  var prev = input.out.tx.outputs[input.out.index].script;
-  scripts.push(prev);
-  if (bcoin.script.isScripthash(prev)) {
-    var redeem = bcoin.script.decode(input.script[input.script.length - 1]);
-    scripts.push(redeem);
-  }
-  scripts = scripts.map(function(script) {
-    return script.map(function(chunk) {
-      if (Array.isArray(chunk)) {
-        if (chunk.length === 0)
-          return [0];
-        return [bcoin.utils.toHex(chunk)];
-      }
-      if (typeof chunk === 'number')
-        return [chunk];
-      return chunk;
-    });
-  });
-  scripts.forEach(function(script) {
-    console.log(script);
-  });
-}
-
 describe('Wallet', function() {
   it('should generate new key and address', function() {
     var w = bcoin.wallet();
@@ -321,7 +294,7 @@ describe('Wallet', function() {
     assert(result);
     w1.sign(send);
 
-    // printScript(send.inputs[0]);
+    // console.log(bcoin.script.format(send.inputs[0]));
 
     assert(!send.verify());
     w2.sign(send);
