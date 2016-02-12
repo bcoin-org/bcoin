@@ -170,7 +170,7 @@ describe('Wallet', function() {
     // Create new transaction
     var t3 = bcoin.tx().out(w2, 15000);
     assert(!w1.fill(t3));
-    assert.equal(t3.total.toString(10), 25000);
+    assert.equal(t3.requiredFunds.toString(10), 25000);
 
     cb();
   });
