@@ -282,15 +282,31 @@ describe('Wallet', function() {
     var utx = bcoin.tx();
     utx.output({ address: addr, value: 5460 * 10 });
 
+    // Simulate a confirmation
+    utx.ps = 0;
+    utx.ts = 1;
+    utx.height = 1;
+
+    assert.equal(w1.receiveDepth, 1);
+
     w1.addTX(utx);
     w2.addTX(utx);
     w3.addTX(utx);
+
+    assert.equal(w1.receiveDepth, 2);
+    assert.equal(w1.changeDepth, 1);
+
+    assert(w1.getAddress() !== addr);
+    addr = w1.getAddress();
+    assert.equal(w1.getAddress(), addr);
+    assert.equal(w2.getAddress(), addr);
+    assert.equal(w3.getAddress(), addr);
 
     // Create a tx requiring 2 signatures
     var send = bcoin.tx();
     send.output({ address: receive.getAddress(), value: 5460 });
     assert(!send.verify());
-    var result = w1.fill(send);
+    var result = w1.fill(send, { m: w1.m, n: w1.n });
     assert(result);
     w1.sign(send);
 
@@ -301,9 +317,40 @@ describe('Wallet', function() {
 
     assert(send.verify());
 
+    assert.equal(w1.changeDepth, 1);
+    var change = w1.changeAddress.getAddress();
+    assert.equal(w1.changeAddress.getAddress(), change);
+    assert.equal(w2.changeAddress.getAddress(), change);
+    assert.equal(w3.changeAddress.getAddress(), change);
+
+    // Simulate a confirmation
+    send.ps = 0;
+    send.ts = 1;
+    send.height = 1;
+
+    w1.addTX(send);
+    w2.addTX(send);
+    w3.addTX(send);
+
+    assert.equal(w1.receiveDepth, 2);
+    assert.equal(w1.changeDepth, 2);
+
+    assert(w1.getAddress() === addr);
+    assert(w1.changeAddress.getAddress() !== change);
+    change = w1.changeAddress.getAddress();
+    assert.equal(w1.changeAddress.getAddress(), change);
+    assert.equal(w2.changeAddress.getAddress(), change);
+    assert.equal(w3.changeAddress.getAddress(), change);
+
     send.inputs[0].script[2] = [];
-    assert(!send.verify());
+    assert(!send.verify(null, true));
     assert.equal(send.getFee().toNumber(), 10000);
+
+    w3 = bcoin.wallet.fromJSON(w3.toJSON());
+    assert.equal(w3.receiveDepth, 2);
+    assert.equal(w3.changeDepth, 2);
+    assert.equal(w3.getAddress(), addr);
+    assert.equal(w3.changeAddress.getAddress(), change);
 
     cb();
   });
