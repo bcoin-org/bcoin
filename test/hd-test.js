@@ -49,7 +49,7 @@ describe('HD', function() {
   });
 
   it('should derive(1) child from master public key', function() {
-    child2 = master.hdpub.derive(1);
+    child2 = master.hdPublicKey.derive(1);
     assert.equal(child2.xpubkey, child2_pub);
   });
 
@@ -82,7 +82,7 @@ describe('HD', function() {
   });
 
   it('should deserialize master public key', function() {
-    master.hdpub._unbuild(master.hdpub.xpubkey);
+    master.hdPublicKey._unbuild(master.hdPublicKey.xpubkey);
   });
 
   it('should deserialize and reserialize', function() {
