@@ -66,10 +66,13 @@ pool.on('error', function(err) {
   utils.print('Error: %s', err.message);
 });
 
-// Instantiate an HD wallet with a serialized xprivkey
+// Instantiate an HD wallet with a mnemonic
 var wallet = new bcoin.wallet({
-  hd: {
-    xkey: process.env.XPRIVKEY || process.argv[2]
+  type: 'pubkeyhash',
+  derivation: 'bip44',
+  accountIndex: 0,
+  master: {
+    mnemonic: process.env.BCOIN_MNEMONIC || process.argv[2]
   }
 });
 utils.print('Opened wallet with address: %s', wallet.getAddress());
@@ -148,11 +151,7 @@ tx.addOutput({
 
 // Fill the transaction inputs with the
 // necessary unspents (hopefully we have them!).
-tx.fill(
-  wallet.getUnspent(),    // Our unspents to choose from
-  wallet.getAddress(), // Our change address (warning: address re-use)
-  null                 // We could put a hard fee here, but lets let bcoin figure it out
-);
+wallet.fill(tx, { fee: null }); // We could put a hard fee here, but lets let bcoin figure it out
 
 // Sign the transaction and place
 // all signatures in necessary inputs
@@ -216,34 +215,34 @@ var pool = bcoin.pool({
 });
 
 var buyer = bcoin.wallet({
-  type: 'scripthash',
-  subtype: 'multisig',
+  type: 'multisig',
+  derivation: 'bip44',
   m: 2,
   n: 3
 });
 
 var seller = bcoin.wallet({
-  type: 'scripthash',
-  subtype: 'multisig',
+  type: 'multisig',
+  derivation: 'bip44',
   m: 2,
   n: 3
 });
 
 var mediator = bcoin.wallet({
-  type: 'scripthash',
-  subtype: 'multisig',
+  type: 'multisig',
+  derivation: 'bip44',
   m: 2,
   n: 3
 });
 
-buyer.addKey(seller.getPublicKey());
-buyer.addKey(mediator.getPublicKey());
+buyer.addKey(seller.accountKey);
+buyer.addKey(mediator.accountKey);
 
-seller.addKey(buyer.getPublicKey());
-seller.addKey(mediator.getPublicKey());
+seller.addKey(buyer.accountKey);
+seller.addKey(mediator.accountKey);
 
-mediator.addKey(buyer.getPublicKey());
-mediator.addKey(seller.getPublicKey());
+mediator.addKey(buyer.accountKey);
+mediator.addKey(seller.accountKey);
 
 // We should all have the same p2sh address
 utils.assert(buyer.getScriptAddress() === seller.getScriptAddress());
@@ -262,7 +261,7 @@ var btx = bcoin.tx();
 // Send 25 BTC to the shared wallet
 // to buy something from seller.
 btx.addOutput({
-  address: buyer.getScriptAddress(),
+  address: buyer.getAddress(),
   value: utils.satoshi('25.0')
 });
 
@@ -349,7 +348,8 @@ The above script could be redeemed with:
 
 ``` js
 tx2.addInput({
-  prevout: { tx: tx, hash: tx.hash('hex'), index: 0 },
+  prevout: { hash: tx.hash('hex'), index: 0 },
+  output: bcoin.coin(tx, 0),
   sequence: 0xffffffff,
   script: [
     signature, // Byte Array
@@ -395,36 +395,6 @@ script: [
 ];
 ```
 
-##### Custom Scripts
-
-Bcoin will allow you to use custom P2SH scripts, but it's up to you to
-redeem/sign it property.
-
-``` js
-var wallet = bcoin.wallet({
-  redeem: [
-    1,
-    '1add',
-    'equal'
-  ]
-});
-console.log(wallet.getScriptAddress());
-var tx1 = bcoin.tx().addOutput(wallet.getScriptAddress(), new bn(100000));
-```
-
-Which would be redeemed with:
-
-``` js
-tx2.addInput({
-  prevout: { tx: tx1, hash: tx1.hash('hex'), index: 0 },
-  script: [
-    2,
-    // Redeem script:
-    wallet.getScript()
-  ]
-});
-```
-
 ### Big Numbers
 
 Bitcoin deals with really big numbers on a regular basis. Javascript Numbers
@@ -438,7 +408,7 @@ var bn = bcoin.bn;
 ...
 
 // Add an output with 100,000 satoshis as a value.
-tx.addOutput(wallet.getKeyAddress(), new bn(100000));
+tx.addOutput(wallet.getAddress(), new bn(100000));
 ```
 
 To make this easier to deal with, bcoin has two helper functions: `utils.btc()`
@@ -567,16 +537,16 @@ pool.on('fork', function(tip1, tip2) {
   // the fork is resolved:
   db.get(tip1, function(err, block) {
     block.txs.forEach(function(tx) {
-      db.remove(tx.hash('hex'));
+      db.del(tx.hash('hex'));
     });
+    db.del(tip1);
   });
   db.get(tip2, function(err, block) {
     block.txs.forEach(function(tx) {
-      db.remove(tx.hash('hex'));
+      db.del(tx.hash('hex'));
     });
+    db.del(tip2);
   });
-  db.remove(tip1);
-  db.remove(tip2);
 });
 ```
 
@@ -589,9 +559,6 @@ Transaction building happens in 4 stages:
    fee, and potential addition of a change address.
 3. __Scripting__: Compilation of the of the input scripts (minus the
    signatures).  This will fill `n` empty signature slots (`OP_0`).
-   - __Potential recalculation of the fee__: Now that the redeem script is
-     available to the primitive TX object, it can likely calculate a lower fee.
-     Add value to the change address if the fee is lower than we thought.
 4. __Signing__: Signing of the inputs. If this is a multisig transaction, we
    have to wait for other signers to sign it before it is finalized.
    - __Finalization__: Once the final signer signs the transaction, empty
@@ -924,7 +891,8 @@ Deserialized option data:
 - Inherits all from Object.
 - All options.
 - __data__ - Normalized and deserialized data.
-- __hdpub__ - Corresponding HDPublicKey object (present on HDPrivateKeys only).
+- __hdPublicKey__ - Corresponding HDPublicKey object (present on HDPrivateKeys
+  only).
 - __xpubkey__ - Serialized xpubkey base58 string.
 - __xprivkey__ - Serialized xprivkey base58 string.
 
@@ -951,9 +919,9 @@ Usage: `bcoin.input([options])`
 
 ##### Options:
 
-- __out.tx__ - Reference to the previous output's transaction (optional).
-- __out.hash__ - Previous output's txid as a hex string.
-- __out.index__ - Previous output's index.
+- __prevout.hash__ - Previous output's txid as a hex string.
+- __prevout.index__ - Previous output's index.
+- __output__ - Previous output: a `bcoin.coin` object (coins must be filled).
 - __script__ - Array of opcodes.
 - __sequence__ - Input's nSequence, `0xffffffff` by default.
 
@@ -994,9 +962,7 @@ which parse the script and grab the previous output data and cache it as
   will only grab the first value and not deal with OP_IF statements, etc).
 - __flags__ - Coinbase flags if present.
 - __text__ - Coinbase flags converted to UTF-8, if present.
-- __output__ - Previous Output object.
 - __value__ - Value (satoshis/big number) of the previous output.
-- __tx__ - Reference to the previous output's parent transaction.
 
 ##### Events:
 
@@ -1132,7 +1098,9 @@ Usage: `bcoin.peer(pool, createConnection, options)`
 
 ##### Options:
 
-- __backoff__ - Time to delay socket creation in milliseconds.
+- __host__
+- __port__
+- __socket__ - Pre-created socket for peer to use (optional).
 
 ##### Properties:
 
@@ -1429,7 +1397,7 @@ Usage: `bcoin.txPool(wallet)`
 - Inherits all from EventEmitter.
 - __add(tx)__ - Add TX to the pool.
 - __getAll()__ - Return all TXes in the pool owned by wallet.
-- __getUnspent()__ - Return all TXes with unspent outputs, owned by wallet.
+- __getUnspent()__ - Return all unspent outputs owned by wallet.
 - __getPending()__ - Return all 0-confirmation transactions.
 - __getBalance()__ - Return total balance of TX pool.
 - __toJSON()__ - Return TX pool in serialized JSON format.
