@@ -111,6 +111,10 @@ describe('Wallet', function() {
     w.sign(f1);
     var fake = bcoin.tx().input(t1, 1) // 1000 (already redeemed)
                          .out(w, 500);
+    // Script inputs but do not sign
+    w.scriptInputs(fake);
+    // Fake signature
+    fake.inputs[0].script[0] = [0,0,0,0,0,0,0,0,0];
     // balance: 11000
 
     // Just for debugging
