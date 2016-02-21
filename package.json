@@ -11,10 +11,14 @@
   "repository": "git://github.com/indutny/bcoin.git",
   "keywords": [
     "bitcoin",
+    "blockchain",
     "bcoin",
     "wallet"
   ],
   "author": "Fedor Indutny <fedor@indutny.com>",
+  "contributors": [
+    "Christopher Jeffrey <chjjeffrey@gmail.com> (https://github.com/chjj)"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/indutny/bcoin/issues"
@@ -26,16 +30,18 @@
   "dependencies": {
     "bn.js": "4.6.3",
     "elliptic": "6.0.2",
-    "hash.js": "1.0.3",
-    "secp256k1": "3.0.0",
-    "inherits": "2.0.1",
     "leveldown": "1.4.4",
-    "level-js": "2.2.3",
-    "levelup": "1.3.1",
+    "levelup": "1.3.1"
+  },
+  "optionalDependencies": {
+    "secp256k1": "3.0.0",
     "request": "2.67.0"
   },
   "devDependencies": {
+    "hash.js": "1.0.3",
+    "level-js": "2.2.3",
     "browserify": "13.0.0",
+    "uglify-js": "2.6.1",
     "mocha": "1.21.5"
   }
 }
