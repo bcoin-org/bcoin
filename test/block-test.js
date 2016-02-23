@@ -26,7 +26,7 @@ describe('Block', function() {
       '33825657ba32afe269819f01993bd77baba86379043168c94845d32370e53562' ],
     flags: [ 245, 90, 0 ]
   }, 'merkleblock');
-  var raw = block.toJSON().block;
+  var raw = block.toCompact().block;
 
   it('should parse partial merkle tree', function() {
     assert(block.verify());
@@ -50,10 +50,10 @@ describe('Block', function() {
   });
 
   it('should be jsonified and unjsonified and still verify', function() {
-    var json = block.toJSON();
+    var json = block.toCompact();
     assert.equal(json.subtype, 'merkleblock');
     assert.equal(typeof json.block, 'string');
-    var b = bcoin.block(bcoin.block.fromJSON(json), json.subtype);
+    var b = bcoin.block.fromCompact(json);
     assert.equal(bcoin.utils.toHex(b.render()), json.block);
     assert(b.verify());
   });
