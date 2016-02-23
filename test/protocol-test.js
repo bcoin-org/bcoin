@@ -64,7 +64,7 @@ describe('Protocol', function() {
       return +n;
     });
     addr._ipv6 = addr.ipv6;
-    addr.ipv6 = utils.toArray(addr.ipv6, 'hex');
+    addr.ipv6 = new Buffer(addr.ipv6.replace(/:/g, ''), 'hex');
   });
 
   packetTest('addr', peers, function(payload) {
@@ -86,7 +86,7 @@ describe('Protocol', function() {
 
   it('should include the raw data of only one transaction in a ' +
      'parsed transaction', function() {
-    var rawTwoTxs = utils.toArray(
+    var rawTwoTxs = new Buffer(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +
@@ -137,7 +137,7 @@ describe('Protocol', function() {
       '0001976a9146167aeaeec59836b22447b8af2c5e61fb4f1b7b088ac00a3' +
       'dc5c0500000017a9149eb21980dc9d413d8eac27314938b9da920ee53e8' +
       '700000000', 'hex');
-    var rawFirstTx = utils.toArray(
+    var rawFirstTx = new Buffer(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +

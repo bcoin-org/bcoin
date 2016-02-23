@@ -40,12 +40,12 @@ describe('Block', function() {
   });
 
   it('should decode/encode with parser/framer', function() {
-    var b = bcoin.block(parser.parseMerkleBlock(bcoin.utils.toArray(raw, 'hex')), 'merkleblock');
+    var b = bcoin.block(parser.parseMerkleBlock(new Buffer(raw, 'hex')), 'merkleblock');
     assert.equal(bcoin.utils.toHex(b.render()), raw);
   });
 
   it('should be verifiable', function() {
-    var b = bcoin.block(parser.parseMerkleBlock(bcoin.utils.toArray(raw, 'hex')), 'merkleblock');
+    var b = bcoin.block(parser.parseMerkleBlock(new Buffer(raw, 'hex')), 'merkleblock');
     assert(b.verify());
   });
 

@@ -42,14 +42,15 @@ describe('TX', function() {
             '2e88ac00000000';
 
   it('should decode/encode with parser/framer', function() {
-    var tx = bcoin.tx(parser.parseTX(bcoin.utils.toArray(raw, 'hex')));
+    var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
     assert.equal(bcoin.utils.toHex(tx.render()), raw);
   });
 
   it('should be verifiable', function() {
-    var tx = bcoin.tx(parser.parseTX(bcoin.utils.toArray(raw, 'hex')));
-    var p = bcoin.tx(parser.parseTX(bcoin.utils.toArray(inp, 'hex')));
+    var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
+    var p = bcoin.tx(parser.parseTX(new Buffer(inp, 'hex')));
     tx.input(p, 1);
+    bcoin.utils.print(tx);
 
     assert(tx.verify());
   });
