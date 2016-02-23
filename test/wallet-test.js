@@ -114,7 +114,7 @@ describe('Wallet', function() {
     // Script inputs but do not sign
     w.scriptInputs(fake);
     // Fake signature
-    fake.inputs[0].script[0] = [0,0,0,0,0,0,0,0,0];
+    fake.inputs[0].script[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
     // balance: 11000
 
     // Just for debugging
@@ -346,7 +346,7 @@ describe('Wallet', function() {
     assert.equal(w2.changeAddress.getAddress(), change);
     assert.equal(w3.changeAddress.getAddress(), change);
 
-    send.inputs[0].script[2] = [];
+    send.inputs[0].script[2] = 0;
     assert(!send.verify(null, true));
     assert.equal(send.getFee().toNumber(), 10000);
 
