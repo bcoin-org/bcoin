@@ -4,7 +4,7 @@ var bcoin = require('../');
 
 describe('Block', function() {
   var parser = bcoin.protocol.parser();
-  var block = bcoin.block({
+  var block = bcoin.merkleblock({
     type: 'block',
     version: 2,
     prevBlock: 'd1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0000000000000000',
@@ -26,7 +26,7 @@ describe('Block', function() {
       '33825657ba32afe269819f01993bd77baba86379043168c94845d32370e53562' ],
     flags: [ 245, 90, 0 ]
   }, 'merkleblock');
-  var raw = block.toCompact().block;
+  var raw = bcoin.utils.toHex(block.toRaw());
 
   it('should parse partial merkle tree', function() {
     assert(block.verify());
@@ -40,21 +40,19 @@ describe('Block', function() {
   });
 
   it('should decode/encode with parser/framer', function() {
-    var b = bcoin.block(parser.parseMerkleBlock(new Buffer(raw, 'hex')), 'merkleblock');
+    var b = bcoin.merkleblock(parser.parseMerkleBlock(new Buffer(raw, 'hex')));
     assert.equal(bcoin.utils.toHex(b.render()), raw);
   });
 
   it('should be verifiable', function() {
-    var b = bcoin.block(parser.parseMerkleBlock(new Buffer(raw, 'hex')), 'merkleblock');
+    var b = bcoin.merkleblock(parser.parseMerkleBlock(new Buffer(raw, 'hex')));
     assert(b.verify());
   });
 
   it('should be jsonified and unjsonified and still verify', function() {
-    var json = block.toCompact();
-    assert.equal(json.subtype, 'merkleblock');
-    assert.equal(typeof json.block, 'string');
-    var b = bcoin.block.fromCompact(json);
-    assert.equal(bcoin.utils.toHex(b.render()), json.block);
+    var json = block.toRaw();
+    var b = bcoin.merkleblock.fromRaw(json);
+    assert.equal(b.render(), json);
     assert(b.verify());
   });
 });
