@@ -86,7 +86,7 @@ describe('HD', function() {
   });
 
   it('should deserialize and reserialize', function() {
-    var key = bcoin.hd.priv();
+    var key = bcoin.hd.fromSeed();
     assert.equal(bcoin.hd.fromJSON(key.toJSON()).xprivkey, key.xprivkey);
   });
 
