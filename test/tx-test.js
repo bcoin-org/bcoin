@@ -49,7 +49,7 @@ describe('TX', function() {
   it('should be verifiable', function() {
     var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
     var p = bcoin.tx(parser.parseTX(new Buffer(inp, 'hex')));
-    tx.input(p, 1);
+    tx.fillPrevout(p);
 
     assert(tx.verify());
   });
