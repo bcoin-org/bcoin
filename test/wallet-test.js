@@ -23,7 +23,7 @@ describe('Wallet', function() {
     var w = bcoin.wallet();
 
     // Input transcation
-    var src = bcoin.tx({
+    var src = bcoin.mtx({
       outputs: [{
         value: 5460 * 2,
         address: w.getAddress()
@@ -37,9 +37,9 @@ describe('Wallet', function() {
       return acc.iadd(out.value);
     }, new bn(0)).toString(10), 5460 * 2);
 
-    var tx = bcoin.tx()
-      .input(src, 0)
-      .out(w.getAddress(), 5460);
+    var tx = bcoin.mtx()
+      .addInput(src, 0)
+      .addOutput(w.getAddress(), 5460);
 
     w.sign(tx);
     assert(tx.verify());
@@ -56,7 +56,7 @@ describe('Wallet', function() {
     w.addKey(k2);
 
     // Input transcation
-    var src = bcoin.tx({
+    var src = bcoin.mtx({
       outputs: [{
         value: 5460 * 2,
         m: 1,
@@ -71,9 +71,9 @@ describe('Wallet', function() {
       return acc.iadd(out.value);
     }, new bn(0)).toString(10), 5460 * 2);
 
-    var tx = bcoin.tx()
-      .input(src, 0)
-      .out(w.getAddress(), 5460);
+    var tx = bcoin.mtx()
+      .addInput(src, 0)
+      .addOutput(w.getAddress(), 5460);
 
     var maxSize = tx.maxSize();
     w.sign(tx);
@@ -86,31 +86,31 @@ describe('Wallet', function() {
     var f = bcoin.wallet();
 
     // Coinbase
-    var t1 = bcoin.tx().out(w, 50000).out(w, 1000);
+    var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 1000);
     // balance: 51000
     w.sign(t1);
-    var t2 = bcoin.tx().input(t1, 0) // 50000
-                       .out(w, 24000)
-                       .out(w, 24000);
+    var t2 = bcoin.mtx().addInput(t1, 0) // 50000
+                       .addOutput(w, 24000)
+                       .addOutput(w, 24000);
     // balance: 49000
     w.sign(t2);
-    var t3 = bcoin.tx().input(t1, 1) // 1000
-                       .input(t2, 0) // 24000
-                       .out(w, 23000);
+    var t3 = bcoin.mtx().addInput(t1, 1) // 1000
+                       .addInput(t2, 0) // 24000
+                       .addOutput(w, 23000);
     // balance: 47000
     w.sign(t3);
-    var t4 = bcoin.tx().input(t2, 1) // 24000
-                       .input(t3, 0) // 23000
-                       .out(w, 11000)
-                       .out(w, 11000);
+    var t4 = bcoin.mtx().addInput(t2, 1) // 24000
+                       .addInput(t3, 0) // 23000
+                       .addOutput(w, 11000)
+                       .addOutput(w, 11000);
     // balance: 22000
     w.sign(t4);
-    var f1 = bcoin.tx().input(t4, 1) // 11000
-                       .out(f, 10000);
+    var f1 = bcoin.mtx().addInput(t4, 1) // 11000
+                       .addOutput(f, 10000);
     // balance: 11000
     w.sign(f1);
-    var fake = bcoin.tx().input(t1, 1) // 1000 (already redeemed)
-                         .out(w, 500);
+    var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
+                         .addOutput(w, 500);
     // Script inputs but do not sign
     w.scriptInputs(fake);
     // Fake signature
@@ -154,25 +154,25 @@ describe('Wallet', function() {
     var w2 = bcoin.wallet();
 
     // Coinbase
-    var t1 = bcoin.tx().out(w1, 5460).out(w1, 5460).out(w1, 5460).out(w1, 5460);
+    var t1 = bcoin.mtx().addOutput(w1, 5460).addOutput(w1, 5460).addOutput(w1, 5460).addOutput(w1, 5460);
 
     // Fake TX should temporarly change output
     w1.addTX(t1);
 
     // Create new transaction
-    var t2 = bcoin.tx().out(w2, 5460);
+    var t2 = bcoin.mtx().addOutput(w2, 5460);
     assert(w1.fill(t2));
     w1.sign(t2);
     assert(t2.verify());
 
-    assert.equal(t2.funds('in').toString(10), 16380);
+    assert.equal(t2.getInputValue().toString(10), 16380);
     // If change < dust and is added to outputs:
-    // assert.equal(t2.funds('out').toString(10), 6380);
+    // assert.equal(t2.getOutputValue().toString(10), 6380);
     // If change < dust and is added to fee:
-    assert.equal(t2.funds('out').toString(10), 5460);
+    assert.equal(t2.getOutputValue().toString(10), 5460);
 
     // Create new transaction
-    var t3 = bcoin.tx().out(w2, 15000);
+    var t3 = bcoin.mtx().addOutput(w2, 15000);
     try {
       w1.fill(t3);
     } catch (e) {
@@ -190,33 +190,33 @@ describe('Wallet', function() {
     var to = bcoin.wallet();
 
     // Coinbase
-    var t1 = bcoin.tx().out(w1, 5460).out(w1, 5460).out(w1, 5460).out(w1, 5460);
+    var t1 = bcoin.mtx().addOutput(w1, 5460).addOutput(w1, 5460).addOutput(w1, 5460).addOutput(w1, 5460);
     // Fake TX should temporarly change output
     w1.addTX(t1);
     // Coinbase
-    var t2 = bcoin.tx().out(w2, 5460).out(w2, 5460).out(w2, 5460).out(w2, 5460);
+    var t2 = bcoin.mtx().addOutput(w2, 5460).addOutput(w2, 5460).addOutput(w2, 5460).addOutput(w2, 5460);
     // Fake TX should temporarly change output
     w2.addTX(t2);
 
     // Create our tx with an output
-    var tx = bcoin.tx();
-    tx.out(to, 5460);
+    var tx = bcoin.mtx();
+    tx.addOutput(to, 5460);
 
-    var cost = tx.funds('out');
+    var cost = tx.getOutputValue();
     var total = cost.add(new bn(constants.tx.minFee));
 
     var unspent1 = w1.unspent();
     var unspent2 = w2.unspent();
 
     // Add dummy output (for `left`) to calculate maximum TX size
-    tx.out(w1, new bn(0));
+    tx.addOutput(w1, new bn(0));
 
     // Add our unspent inputs to sign
-    tx.input(unspent1[0]);
-    tx.input(unspent1[1]);
-    tx.input(unspent2[0]);
+    tx.addInput(unspent1[0]);
+    tx.addInput(unspent1[1]);
+    tx.addInput(unspent2[0]);
 
-    var left = tx.funds('in').sub(total);
+    var left = tx.getInputValue().sub(total);
     if (left.cmpn(constants.tx.dustThreshold) < 0) {
       tx.outputs[tx.outputs.length - 2].value.iadd(left);
       left = new bn(0);
@@ -235,9 +235,9 @@ describe('Wallet', function() {
 
     // Sign transaction using `inputs` and `off` params.
     tx.inputs.length = 0;
-    tx.input(unspent1[1]);
-    tx.input(unspent1[2]);
-    tx.input(unspent2[1]);
+    tx.addInput(unspent1[1]);
+    tx.addInput(unspent1[2]);
+    tx.addInput(unspent2[1]);
     assert.equal(w1.sign(tx, 'all'), 2);
     assert.equal(w2.sign(tx, 'all'), 1);
 
@@ -288,8 +288,8 @@ describe('Wallet', function() {
     assert.equal(w3.getAddress(), addr);
 
     // Add a shared unspent transaction to our wallets
-    var utx = bcoin.tx();
-    utx.output({ address: addr, value: 5460 * 10 });
+    var utx = bcoin.mtx();
+    utx.addOutput({ address: addr, value: 5460 * 10 });
 
     // Simulate a confirmation
     utx.ps = 0;
@@ -312,8 +312,8 @@ describe('Wallet', function() {
     assert.equal(w3.getAddress(), addr);
 
     // Create a tx requiring 2 signatures
-    var send = bcoin.tx();
-    send.output({ address: receive.getAddress(), value: 5460 });
+    var send = bcoin.mtx();
+    send.addOutput({ address: receive.getAddress(), value: 5460 });
     assert(!send.verify());
     var result = w1.fill(send, { m: w1.m, n: w1.n });
     assert(result);
