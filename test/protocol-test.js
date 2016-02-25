@@ -178,7 +178,7 @@ describe('Protocol', function() {
       'c9954c44b0ce168bc78efd5f1e1c7db9d6c21b3016599ffffffff01a029' +
       'de5c0500000017a9141d9ca71efa36d814424ea6ca1437e67287aebe348' +
       '700000000', 'hex');
-    var tx = parser.parseTX(rawTwoTxs);
+    var tx = bcoin.protocol.parser.parseTX(rawTwoTxs);
     assert.deepEqual(tx._raw, rawFirstTx);
   });
 });

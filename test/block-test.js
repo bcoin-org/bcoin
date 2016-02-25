@@ -3,7 +3,7 @@ var bn = require('bn.js');
 var bcoin = require('../');
 
 describe('Block', function() {
-  var parser = bcoin.protocol.parser();
+  var parser = bcoin.protocol.parser;
   var block = bcoin.merkleblock({
     type: 'block',
     version: 2,

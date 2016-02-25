@@ -3,7 +3,7 @@ var bn = require('bn.js');
 var bcoin = require('../');
 
 describe('TX', function() {
-  var parser = bcoin.protocol.parser();
+  var parser = bcoin.protocol.parser;
   var raw = '010000000125393c67cd4f581456dd0805fa8e9db3abdf90dbe1d4b53e28' +
             '6490f35d22b6f2010000006b483045022100f4fa5ced20d2dbd2f905809d' +
             '79ebe34e03496ef2a48a04d0a9a1db436a211dd202203243d086398feb4a' +
