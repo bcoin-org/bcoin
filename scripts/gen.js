@@ -4,7 +4,7 @@ var utils = bcoin.utils;
 var bn = bcoin.bn;
 
 function createGenesisBlock(options) {
-  var parser = new bcoin.protocol.parser();
+  var parser = bcoin.protocol.parser;
   var tx, block;
 
   if (!options.flags) {
@@ -98,9 +98,17 @@ var regtest = createGenesisBlock({
   nonce: 2
 });
 
+var segnet = createGenesisBlock({
+  version: 1,
+  ts: 1452368293,
+  bits: 0x1d00ffff,
+  nonce: 0
+});
+
 utils.print(main);
 utils.print(testnet);
 utils.print(regtest);
+utils.print(segnet);
 utils.print('main hash: %s', main.hash);
 utils.print('main raw: %s', utils.toHex(main._raw));
 utils.print('');
@@ -109,3 +117,5 @@ utils.print('testnet raw: %s', utils.toHex(testnet._raw));
 utils.print('');
 utils.print('regtest hash: %s', regtest.hash);
 utils.print('regtest raw: %s', utils.toHex(regtest._raw));
+utils.print('segnet hash: %s', segnet.hash);
+utils.print('segnet raw: %s', utils.toHex(segnet._raw));

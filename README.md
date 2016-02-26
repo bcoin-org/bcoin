@@ -1,12 +1,40 @@
 # BCoin
 
-**BCoin** is a bitcoin node which can act as an SPV node or a (semi-)fullnode.
+**BCoin** is a bitcoin node which can act as an SPV node or a fully validating
+fullnode. Bcoin runs in node.js, but it can also be browserified.
+
+## Features
+
+- SPV mode
+- HD Wallets (using BIP44 (or optionally BIP45) derivation)
+- Fully browserifiable
+- Full block validation
+- Full block database (leveldb + regular file i/o)
+- Mempool (still a WIP - not completely accurate to the bitcoind mempool)
+- Wallet database (leveldb)
+- HTTP server which acts as a wallet server and can also serve:
+  blocks, txs (by hash/address), and utxos (by id/address).
+  - Fast UTXO retrieval by address for wallets (10000 utxos from 10000 different
+    addresses in ~700ms, 50000+ utxos from 10-100 addresses in ~400ms)
+- Experimental segregated witness support (witness programs still need to be
+  implemented for tx signing process and wallet, but bcoin should be able to
+  validate witness blocks and txs on segnet properly)
+
+## Todo
+
+- Pruning
+- Improve mempool
 
 ## Install
 
 ```
 $ npm install bcoin
 ```
+
+## NOTE
+
+__The docs below are out of date. Bcoin is under heavy development. They will be
+updated as soon as I get the chance.__
 
 ## Example Usage
 
@@ -342,7 +370,7 @@ tx.addOutput({
 ```
 
 Opcodes are in the form of their symbolic names, in lowercase, with the `OP_`
-prefixes removed. Pushdata ops are represented with Arrays.
+prefixes removed. Pushdata ops are represented with Buffers.
 
 The above script could be redeemed with:
 
@@ -352,8 +380,8 @@ tx2.addInput({
   output: bcoin.coin(tx, 0),
   sequence: 0xffffffff,
   script: [
-    signature, // Byte Array
-    publicKey  // Byte Array
+    signature, // Buffer
+    publicKey  // Buffer
   ]
 });
 ```
@@ -362,11 +390,11 @@ Executing a script by itself is also possible:
 
 ``` js
 var stack = [];
-bcoin.script.execute([[1], 'dup'], stack);
+bcoin.script.execute([new Buffer([1]), 'dup'], stack);
 console.log(stack);
 
 Output:
-[[1], [1]]
+[<Buffer 01>, <Buffer 01>]
 ```
 
 #### Pushdata OPs
@@ -375,23 +403,19 @@ Note that with bcoins deserialized script format, you do not get to decide
 pushdata on ops. Bcoin will always serialize to `minimaldata` format scripts in
 terms of `OP_PUSHDATA0-OP_PUSHDATA4`.
 
-`OP_0` is represented with an empty array (which is appropriate because this is
-what gets pushed onto the stack). While `OP_1-16` are actually represented with
-numbers. `OP_1NEGATE` is just '1negate'.
-
 So a script making use of all pushdata ops would look like:
 
 ``` js
 script: [
-  [],                                // OP_0 / OP_FALSE
-  1,                                 // OP_1 / OP_TRUE
-  2, 3, 4, 5, 6, 7, 8, 9, 10,        // OP_2-10
-  11, 12, 13, 14, 15, 16,            // OP_11-16
-  '1negate',                         // OP_1NEGATE
-  new Array(0x4b),                   // PUSHDATA0 (direct push)
-  new Array(0xff),                   // PUSHDATA1
-  new Array(0xffff),                 // PUSHDATA2
-  new Array(0xffffffff)              // PUSHDATA4
+  0,                                  // OP_0 / OP_FALSE
+  1,                                  // OP_1 / OP_TRUE
+  2, 3, 4, 5, 6, 7, 8, 9, 10,         // OP_2-10
+  11, 12, 13, 14, 15, 16,             // OP_11-16
+  '1negate',                          // OP_1NEGATE
+  new Buffer(0x4b),                   // PUSHDATA0 (direct push)
+  new Buffer(0xff),                   // PUSHDATA1
+  new Buffer(0xffff),                 // PUSHDATA2
+  new Buffer(0xffffffff)              // PUSHDATA4
 ];
 ```
 
@@ -471,14 +495,6 @@ console.log(tx.rhash);
 console.log(block.rhash);
 ```
 
-### Arrays vs. Buffers
-
-Every piece of binary data in bcoin that is user-facing in bcoin is an Array of
-bytes. For example, `block.hash()` with no encoding passed in will return a
-byte array.  Bcoin does use Buffers behind the scenes to speed up parsing of
-blocks and transactions coming in through the network, but every piece of data
-a programmer using bcoin will deal with is going to be a byte array.
-
 ### Saving transactions to a wallet
 
 Most of the time, you won't need all transactions in the blockchain if you're
@@ -486,7 +502,7 @@ only building a wallet. When a transaction comes in pertaining to your wallet,
 it's best to called `wallet.addTX(tx)` and save the wallet afterwards.
 
 ``` js
-pool.on('watched', function(tx) {
+pool.on('tx', function(tx) {
   wallet.addTX(tx);
 });
 
@@ -494,59 +510,6 @@ pool.on('full', function() {
   fs.writeFileSync(
     process.env.HOME + '/wallet.json',
     JSON.stringify(wallet.toJSON()));
-});
-```
-
-### Saving the blockchain
-
-At the moment, bcoin does not save any full blocks or make any assumptions
-about how the programmer wants to do it. It only saves the blockchain (block
-headers and chainwork). The programmer simply needs to hook into block events
-and save the blocks.
-
-``` js
-pool.on('block', function(block) {
-  // A simple key-value store:
-  db.save(block.hash('hex'), utils.toHex(block.render()), function(err) {
-    if (err)
-      return console.error(err.message);
-    console.log('Block %s saved.', block.rhash);
-    // Could also save transactions individually here for quick lookups
-  });
-});
-```
-
-#### Handling Blockchain Forks
-
-Bcoin handles blockchain forks like an SPV client. If it sees an alternate tip,
-it will reset to the last non-forked block and kill the current peer while
-emitting a `fork` event (see Pool events). It will repeat this process until
-the network eventually chooses the best chain.
-
-Bcoin essentially backs off and waits to see which fork wins. This means bcoin
-plays no part in protecting the network by helping choose the best chain
-according to the chainwork.
-
-Note that this may _still_ cause an issue with transactions that are already
-saved and considered confirmed. It's best to hook into the fork event and
-remove all confirmed transactions you may have saved in your database.
-
-``` js
-pool.on('fork', function(tip1, tip2) {
-  // Keep deleting everything until
-  // the fork is resolved:
-  db.get(tip1, function(err, block) {
-    block.txs.forEach(function(tx) {
-      db.del(tx.hash('hex'));
-    });
-    db.del(tip1);
-  });
-  db.get(tip2, function(err, block) {
-    block.txs.forEach(function(tx) {
-      db.del(tx.hash('hex'));
-    });
-    db.del(tip2);
-  });
 });
 ```
 

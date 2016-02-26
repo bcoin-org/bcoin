@@ -3,6 +3,24 @@ var bn = require('bn.js');
 var bcoin = require('../');
 var constants = bcoin.protocol.constants;
 
+var dummyInput = {
+  prevout: {
+    hash: constants.zeroHash,
+    index: 0
+  },
+  output: {
+    version: 1,
+    height: 0,
+    value: constants.maxMoney.clone(),
+    script: [],
+    hash: constants.zeroHash,
+    index: 0,
+    spent: false
+  },
+  script: [],
+  sequence: 0xffffffff
+};
+
 describe('Wallet', function() {
   it('should generate new key and address', function() {
     var w = bcoin.wallet();
@@ -29,9 +47,10 @@ describe('Wallet', function() {
         address: w.getAddress()
       }, {
         value: 5460 * 2,
-        address: w.getAddress() + 'x'
+        address: bcoin.address.compileData(new Buffer([]))
       }]
     });
+    src.addInput(dummyInput);
     assert(w.ownOutput(src));
     assert.equal(w.ownOutput(src).reduce(function(acc, out) {
       return acc.iadd(out.value);
@@ -63,9 +82,10 @@ describe('Wallet', function() {
         keys: [ w.getPublicKey(), k2.derive('m/0/0').publicKey ]
       }, {
         value: 5460 * 2,
-        address: w.getAddress() + 'x'
+        address: bcoin.address.compileData(new Buffer([]))
       }]
     });
+    src.addInput(dummyInput);
     assert(w.ownOutput(src));
     assert.equal(w.ownOutput(src).reduce(function(acc, out) {
       return acc.iadd(out.value);
@@ -87,6 +107,7 @@ describe('Wallet', function() {
 
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 1000);
+    t1.addInput(dummyInput);
     // balance: 51000
     w.sign(t1);
     var t2 = bcoin.mtx().addInput(t1, 0) // 50000
@@ -191,10 +212,12 @@ describe('Wallet', function() {
 
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w1, 5460).addOutput(w1, 5460).addOutput(w1, 5460).addOutput(w1, 5460);
+    t1.addInput(dummyInput);
     // Fake TX should temporarly change output
     w1.addTX(t1);
     // Coinbase
     var t2 = bcoin.mtx().addOutput(w2, 5460).addOutput(w2, 5460).addOutput(w2, 5460).addOutput(w2, 5460);
+    t2.addInput(dummyInput);
     // Fake TX should temporarly change output
     w2.addTX(t2);
 
@@ -290,6 +313,7 @@ describe('Wallet', function() {
     // Add a shared unspent transaction to our wallets
     var utx = bcoin.mtx();
     utx.addOutput({ address: addr, value: 5460 * 10 });
+    utx.addInput(dummyInput);
 
     // Simulate a confirmation
     utx.ps = 0;
