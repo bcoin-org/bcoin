@@ -100,7 +100,8 @@ var regtest = createGenesisBlock({
 
 var segnet = createGenesisBlock({
   version: 1,
-  ts: 1452368293,
+  // ts: 1452368293,
+  ts: 1452831101,
   bits: 0x1d00ffff,
   nonce: 0
 });
@@ -109,13 +110,13 @@ utils.print(main);
 utils.print(testnet);
 utils.print(regtest);
 utils.print(segnet);
-utils.print('main hash: %s', main.hash);
+utils.print('main hash: %s', utils.revHex(main.hash));
 utils.print('main raw: %s', utils.toHex(main._raw));
 utils.print('');
-utils.print('testnet hash: %s', testnet.hash);
+utils.print('testnet hash: %s', utils.revHex(testnet.hash));
 utils.print('testnet raw: %s', utils.toHex(testnet._raw));
 utils.print('');
-utils.print('regtest hash: %s', regtest.hash);
+utils.print('regtest hash: %s', utils.revHex(regtest.hash));
 utils.print('regtest raw: %s', utils.toHex(regtest._raw));
-utils.print('segnet hash: %s', segnet.hash);
+utils.print('segnet hash: %s', utils.revHex(segnet.hash));
 utils.print('segnet raw: %s', utils.toHex(segnet._raw));

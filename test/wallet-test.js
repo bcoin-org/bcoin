@@ -2,6 +2,7 @@ var assert = require('assert');
 var bn = require('bn.js');
 var bcoin = require('../');
 var constants = bcoin.protocol.constants;
+var utils = bcoin.utils;
 
 var dummyInput = {
   prevout: {
@@ -52,9 +53,8 @@ describe('Wallet', function() {
     });
     src.addInput(dummyInput);
     assert(w.ownOutput(src));
-    assert.equal(w.ownOutput(src).reduce(function(acc, out) {
-      return acc.iadd(out.value);
-    }, new bn(0)).toString(10), 5460 * 2);
+    assert(w.ownOutput(src.outputs[0]));
+    assert(!w.ownOutput(src.outputs[1]));
 
     var tx = bcoin.mtx()
       .addInput(src, 0)
@@ -87,9 +87,8 @@ describe('Wallet', function() {
     });
     src.addInput(dummyInput);
     assert(w.ownOutput(src));
-    assert.equal(w.ownOutput(src).reduce(function(acc, out) {
-      return acc.iadd(out.value);
-    }, new bn(0)).toString(10), 5460 * 2);
+    assert(w.ownOutput(src.outputs[0]));
+    assert(!w.ownOutput(src.outputs[1]));
 
     var tx = bcoin.mtx()
       .addInput(src, 0)
@@ -385,6 +384,34 @@ describe('Wallet', function() {
     assert.equal(w3.getAddress(), addr);
     assert.equal(w3.changeAddress.getAddress(), change);
 
+    cb();
+  });
+
+  var coinbase = '010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2c027156266a24aa21a9edb1e139795984903d6629ddedf3763fb9bc582fd68a46b1f8c7c57f9fbcc7fc900101ffffffff02887d102a0100000023210290dd626747729e1cc445cb9a11cfb7e78ea896db9f5c335e6730491d9ee7474dac0000000000000000266a24aa21a9edb1e139795984903d6629ddedf3763fb9bc582fd68a46b1f8c7c57f9fbcc7fc900120000000000000000000000000000000000000000000000000000000000000000000000000';
+  var chash = 'ba0cb2bf1aa19e4643208f7b38798a3deaa3320968d2cb1e42c5802a7baaba99';
+  var wpkh = '0100000001fc8f4ccd25b285bcae9f305d2ec3feb79a71384bab0303f810b58089b9c6e084000000006a473044022036548e256acfbc6a77f322d32ae0f11cb20a05a240d72550bda9d8cf169b35e90220303ad1a60d8297a12501dbebc46ec39c7652ac3d75ff394b8d4c3cbdaf3279c7012103f85883e08a3581b636bbafee55f337b6bf4467826a280fda5bf0533368e99b73ffffffff0200ba1dd2050000001976a91443cec67a63867420c0c934ffbbf89f14729304f988acf0cbf01907000000160014e7b8143685eb4eb03810c8ffb7c4a74d5f23161c00000000';
+  var whash = 'a72943c0131d655ff3d272f202d4f6ad2cf378eba9416c9b8028920d71d8f90a';
+  var w2hash = 'c532af06b9a81d9171618fb0b30075ddb3a6fca68c9b89536e6e34b0beddcc23';
+
+  // https://segnet.smartbit.com.au/tx/c532af06b9a81d9171618fb0b30075ddb3a6fca68c9b89536e6e34b0beddcc23
+  var w2pkh = new Buffer(bcoin.fs.readFileSync(__dirname + '/wtx.hex', 'ascii').trim(), 'hex');
+
+  it('should have a wtxid', function(cb) {
+    var src = bcoin.mtx({
+      outputs: [{
+        value: 5460 * 2,
+        address: bcoin.address.compileData(new Buffer([]))
+      }]
+    });
+    src.addInput(dummyInput);
+    console.log(src.toJSON());
+    var t = bcoin.protocol.parser.parseWitnessTX(new Buffer(coinbase, 'hex'));
+    utils.print(t);
+    var t = new bcoin.tx(bcoin.protocol.parser.parseWitnessTX(new Buffer(w2pkh, 'hex')));
+    utils.print(t);
+    delete t._raw;
+    delete t._hash;
+    delete t._whash;
     cb();
   });
 });
