@@ -16,9 +16,7 @@ fullnode. Bcoin runs in node.js, but it can also be browserified.
   blocks, txs (by hash/address), and utxos (by id/address).
   - Fast UTXO retrieval by address for wallets (10000 utxos from 10000 different
     addresses in ~700ms, 50000+ utxos from 10-100 addresses in ~400ms)
-- Experimental segregated witness support (witness programs still need to be
-  implemented for tx signing process and wallet, but bcoin should be able to
-  validate witness blocks and txs on segnet properly)
+- Experimental segregated witness support for block validation and wallets.
 
 ## Todo
 
