@@ -38,14 +38,21 @@ describe('Wallet', function() {
     assert(!bcoin.address.validate('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
   });
 
-  it('should sign/verify TX', function() {
-    var w = bcoin.wallet();
+  function p2pkh(program, bullshitNesting) {
+    var flags = bcoin.protocol.constants.flags.STANDARD_VERIFY_FLAGS;
+
+    if (program)
+      flags |= bcoin.protocol.constants.flags.VERIFY_WITNESS;
+
+    var w = bcoin.wallet({ program: program });
 
     // Input transcation
     var src = bcoin.mtx({
       outputs: [{
         value: 5460 * 2,
-        address: w.getAddress()
+        address: bullshitNesting
+          ? w.getProgramAddress()
+          : w.getAddress()
       }, {
         value: 5460 * 2,
         address: bcoin.address.compileData(new Buffer([]))
@@ -61,7 +68,19 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 5460);
 
     w.sign(tx);
-    assert(tx.verify());
+    assert(tx.verify(null, true, flags));
+  }
+
+  it('should sign/verify pubkeyhash tx', function() {
+    p2pkh(false, false);
+  });
+
+  it('should sign/verify witnesspubkeyhash tx', function() {
+    p2pkh(true, false);
+  });
+
+  it('should sign/verify witnesspubkeyhash tx with bullshit nesting', function() {
+    p2pkh(true, true);
   });
 
   it('should multisign/verify TX', function() {
@@ -269,9 +288,15 @@ describe('Wallet', function() {
     cb();
   });
 
-  it('should verify 2-of-3 p2sh tx', function(cb) {
+  function multisig(program, bullshitNesting, cb) {
+    var flags = bcoin.protocol.constants.flags.STANDARD_VERIFY_FLAGS;
+
+    if (program)
+      flags |= bcoin.protocol.constants.flags.VERIFY_WITNESS;
+
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
     var w1 = bcoin.wallet({
+      program: program,
       derivation: 'bip44',
       type: 'multisig',
       m: 2,
@@ -279,6 +304,7 @@ describe('Wallet', function() {
     });
 
     var w2 = bcoin.wallet({
+      program: program,
       derivation: 'bip44',
       type: 'multisig',
       m: 2,
@@ -286,6 +312,7 @@ describe('Wallet', function() {
     });
 
     var w3 = bcoin.wallet({
+      program: program,
       derivation: 'bip44',
       type: 'multisig',
       m: 2,
@@ -309,10 +336,21 @@ describe('Wallet', function() {
     assert.equal(w2.getAddress(), addr);
     assert.equal(w3.getAddress(), addr);
 
+    var paddr = w1.getProgramAddress();
+    assert.equal(w1.getProgramAddress(), paddr);
+    assert.equal(w2.getProgramAddress(), paddr);
+    assert.equal(w3.getProgramAddress(), paddr);
+
     // Add a shared unspent transaction to our wallets
     var utx = bcoin.mtx();
-    utx.addOutput({ address: addr, value: 5460 * 10 });
+    if (bullshitNesting)
+      utx.addOutput({ address: paddr, value: 5460 * 10 });
+    else
+      utx.addOutput({ address: addr, value: 5460 * 10 });
+
     utx.addInput(dummyInput);
+
+    assert(w1.ownOutput(utx.outputs[0]));
 
     // Simulate a confirmation
     utx.ps = 0;
@@ -337,17 +375,15 @@ describe('Wallet', function() {
     // Create a tx requiring 2 signatures
     var send = bcoin.mtx();
     send.addOutput({ address: receive.getAddress(), value: 5460 });
-    assert(!send.verify());
+    assert(!send.verify(null, true, flags));
     var result = w1.fill(send, { m: w1.m, n: w1.n });
     assert(result);
     w1.sign(send);
 
-    // console.log(bcoin.script.format(send.inputs[0]));
-
-    assert(!send.verify());
+    assert(!send.verify(null, true, flags));
     w2.sign(send);
 
-    assert(send.verify());
+    assert(send.verify(null, true, flags));
 
     assert.equal(w1.changeDepth, 1);
     var change = w1.changeAddress.getAddress();
@@ -374,8 +410,12 @@ describe('Wallet', function() {
     assert.equal(w2.changeAddress.getAddress(), change);
     assert.equal(w3.changeAddress.getAddress(), change);
 
-    send.inputs[0].script[2] = 0;
-    assert(!send.verify(null, true));
+    if (program)
+      send.inputs[0].witness[2] = new Buffer([]);
+    else
+      send.inputs[0].script[2] = 0;
+
+    assert(!send.verify(null, true, flags));
     assert.equal(send.getFee().toNumber(), 10000);
 
     w3 = bcoin.wallet.fromJSON(w3.toJSON());
@@ -385,6 +425,18 @@ describe('Wallet', function() {
     assert.equal(w3.changeAddress.getAddress(), change);
 
     cb();
+  }
+
+  it('should verify 2-of-3 scripthash tx', function(cb) {
+    multisig(false, false, cb);
+  });
+
+  it('should verify 2-of-3 witnessscripthash tx', function(cb) {
+    multisig(true, false, cb);
+  });
+
+  it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', function(cb) {
+    multisig(true, true, cb);
   });
 
   var coinbase = '010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff2c027156266a24aa21a9edb1e139795984903d6629ddedf3763fb9bc582fd68a46b1f8c7c57f9fbcc7fc900101ffffffff02887d102a0100000023210290dd626747729e1cc445cb9a11cfb7e78ea896db9f5c335e6730491d9ee7474dac0000000000000000266a24aa21a9edb1e139795984903d6629ddedf3763fb9bc582fd68a46b1f8c7c57f9fbcc7fc900120000000000000000000000000000000000000000000000000000000000000000000000000';
@@ -404,11 +456,8 @@ describe('Wallet', function() {
       }]
     });
     src.addInput(dummyInput);
-    console.log(src.toJSON());
     var t = bcoin.protocol.parser.parseWitnessTX(new Buffer(coinbase, 'hex'));
-    utils.print(t);
     var t = new bcoin.tx(bcoin.protocol.parser.parseWitnessTX(new Buffer(w2pkh, 'hex')));
-    utils.print(t);
     delete t._raw;
     delete t._hash;
     delete t._whash;
