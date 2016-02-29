@@ -38,13 +38,18 @@ describe('Wallet', function() {
     assert(!bcoin.address.validate('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
   });
 
-  function p2pkh(program, bullshitNesting) {
+  function p2pkh(witness, bullshitNesting) {
     var flags = bcoin.protocol.constants.flags.STANDARD_VERIFY_FLAGS;
 
-    if (program)
+    if (witness)
       flags |= bcoin.protocol.constants.flags.VERIFY_WITNESS;
 
-    var w = bcoin.wallet({ program: program });
+    var w = bcoin.wallet({ witness: witness });
+
+    if (witness)
+      assert(bcoin.address.parse(w.getAddress()).type === 'witnesspubkeyhash');
+    else
+      assert(bcoin.address.parse(w.getAddress()).type === 'pubkeyhash');
 
     // Input transcation
     var src = bcoin.mtx({
@@ -168,22 +173,22 @@ describe('Wallet', function() {
     w.addTX(fake);
 
     w.addTX(t4);
-    assert.equal(w.balance().toString(10), '22500');
+    assert.equal(w.getBalance().toString(10), '22500');
     w.addTX(t1);
-    assert.equal(w.balance().toString(10), '73000');
+    assert.equal(w.getBalance().toString(10), '73000');
     w.addTX(t2);
-    assert.equal(w.balance().toString(10), '47000');
+    assert.equal(w.getBalance().toString(10), '47000');
     w.addTX(t3);
-    assert.equal(w.balance().toString(10), '22000');
+    assert.equal(w.getBalance().toString(10), '22000');
     w.addTX(f1);
-    assert.equal(w.balance().toString(10), '11000');
-    assert(w.all().some(function(tx) {
+    assert.equal(w.getBalance().toString(10), '11000');
+    assert(w.getAll().some(function(tx) {
       return tx.hash('hex') === f1.hash('hex');
     }));
 
     var w2 = bcoin.wallet.fromJSON(w.toJSON());
-    assert.equal(w2.balance().toString(10), '11000');
-    assert(w2.all().some(function(tx) {
+    assert.equal(w2.getBalance().toString(10), '11000');
+    assert(w2.getAll().some(function(tx) {
       return tx.hash('hex') === f1.hash('hex');
     }));
   });
@@ -246,8 +251,8 @@ describe('Wallet', function() {
     var cost = tx.getOutputValue();
     var total = cost.add(new bn(constants.tx.minFee));
 
-    var unspent1 = w1.unspent();
-    var unspent2 = w2.unspent();
+    var unspent1 = w1.getUnspent();
+    var unspent2 = w2.getUnspent();
 
     // Add dummy output (for `left`) to calculate maximum TX size
     tx.addOutput(w1, new bn(0));
@@ -288,15 +293,15 @@ describe('Wallet', function() {
     cb();
   });
 
-  function multisig(program, bullshitNesting, cb) {
+  function multisig(witness, bullshitNesting, cb) {
     var flags = bcoin.protocol.constants.flags.STANDARD_VERIFY_FLAGS;
 
-    if (program)
+    if (witness)
       flags |= bcoin.protocol.constants.flags.VERIFY_WITNESS;
 
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
     var w1 = bcoin.wallet({
-      program: program,
+      witness: witness,
       derivation: 'bip44',
       type: 'multisig',
       m: 2,
@@ -304,7 +309,7 @@ describe('Wallet', function() {
     });
 
     var w2 = bcoin.wallet({
-      program: program,
+      witness: witness,
       derivation: 'bip44',
       type: 'multisig',
       m: 2,
@@ -312,7 +317,7 @@ describe('Wallet', function() {
     });
 
     var w3 = bcoin.wallet({
-      program: program,
+      witness: witness,
       derivation: 'bip44',
       type: 'multisig',
       m: 2,
@@ -332,6 +337,12 @@ describe('Wallet', function() {
 
     // Our p2sh address
     var addr = w1.getAddress();
+
+    if (witness)
+      assert(bcoin.address.parse(addr).type === 'witnessscripthash');
+    else
+      assert(bcoin.address.parse(addr).type === 'scripthash');
+
     assert.equal(w1.getAddress(), addr);
     assert.equal(w2.getAddress(), addr);
     assert.equal(w3.getAddress(), addr);
@@ -410,7 +421,7 @@ describe('Wallet', function() {
     assert.equal(w2.changeAddress.getAddress(), change);
     assert.equal(w3.changeAddress.getAddress(), change);
 
-    if (program)
+    if (witness)
       send.inputs[0].witness[2] = new Buffer([]);
     else
       send.inputs[0].script[2] = 0;
