@@ -4,10 +4,16 @@ var bcoin = require('bcoin');
 var utils = bcoin.utils;
 var assert = utils.assert;
 
-var node = bcoin.node({
+var node = bcoin.fullnode({
   debug: true
 });
 
 node.on('error', function(err) {
   utils.print(err.message);
+});
+
+node.pool.on('full', function() {
+  setInterval(function() {
+  console.log(node.wallet.getAll());
+  }, 1000);
 });
