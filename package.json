@@ -6,7 +6,7 @@
   "bin": "./bin/node",
   "preferGlobal": false,
   "scripts": {
-    "test": "mocha --reporter spec test/*-test.js"
+    "test": "rm -rf ~/.bcoin-test && BCOIN_PREFIX=~/.bcoin-test mocha --reporter spec test/*-test.js"
   },
   "repository": "git://github.com/indutny/bcoin.git",
   "keywords": [
