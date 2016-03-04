@@ -11,9 +11,3 @@ var node = bcoin.fullnode({
 node.on('error', function(err) {
   utils.print(err.message);
 });
-
-node.pool.on('full', function() {
-  setInterval(function() {
-  console.log(node.wallet.getAll());
-  }, 1000);
-});
