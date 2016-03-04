@@ -179,30 +179,30 @@ describe('Wallet', function() {
         fake.hint = 'fake';
 
         // Fake TX should temporarly change output
-        // w.addTX(fake);
+        // wdb.addTX(fake);
 
-        w.addTX(fake, function(err) {
+        wdb.addTX(fake, function(err) {
           assert(!err);
-          w.addTX(t4, function(err) {
+          wdb.addTX(t4, function(err) {
             assert(!err);
             w.getBalance(function(err, balance) {
               assert(!err);
               assert.equal(balance.toString(10), '22500');
-              w.addTX(t1, function(err) {
+              wdb.addTX(t1, function(err) {
                 w.getBalance(function(err, balance) {
                   assert(!err);
                   assert.equal(balance.toString(10), '73000');
-                  w.addTX(t2, function(err) {
+                  wdb.addTX(t2, function(err) {
                     assert(!err);
                     w.getBalance(function(err, balance) {
                       assert(!err);
                       assert.equal(balance.toString(10), '47000');
-                      w.addTX(t3, function(err) {
+                      wdb.addTX(t3, function(err) {
                         assert(!err);
                         w.getBalance(function(err, balance) {
                           assert(!err);
                           assert.equal(balance.toString(10), '22000');
-                          w.addTX(f1, function(err) {
+                          wdb.addTX(f1, function(err) {
                             assert(!err);
                             w.getBalance(function(err, balance) {
                               assert(!err);
@@ -250,7 +250,7 @@ describe('Wallet', function() {
         t1.addInput(dummyInput);
 
         // Fake TX should temporarly change output
-        w1.addTX(t1, function(err) {
+        wdb.addTX(t1, function(err) {
           assert(!err);
 
           // Create new transaction
@@ -307,9 +307,9 @@ describe('Wallet', function() {
           t2.addInput(dummyInput);
           // Fake TX should temporarly change output
 
-          w1.addTX(t1, function(err) {
+          wdb.addTX(t1, function(err) {
             assert(!err);
-            w2.addTX(t2, function(err) {
+            wdb.addTX(t2, function(err) {
               assert(!err);
 
               // Create our tx with an output
@@ -319,18 +319,18 @@ describe('Wallet', function() {
               var cost = tx.getOutputValue();
               var total = cost.add(new bn(constants.tx.minFee));
 
-              w1.getUnspent(function(err, unspent1) {
+              w1.getCoins(function(err, coins1) {
                 assert(!err);
-                w2.getUnspent(function(err, unspent2) {
+                w2.getCoins(function(err, coins2) {
                   assert(!err);
 
                   // Add dummy output (for `left`) to calculate maximum TX size
                   tx.addOutput(w1, new bn(0));
 
                   // Add our unspent inputs to sign
-                  tx.addInput(unspent1[0]);
-                  tx.addInput(unspent1[1]);
-                  tx.addInput(unspent2[0]);
+                  tx.addInput(coins1[0]);
+                  tx.addInput(coins1[1]);
+                  tx.addInput(coins2[0]);
 
                   var left = tx.getInputValue().sub(total);
                   if (left.cmpn(constants.tx.dustThreshold) < 0) {
@@ -351,9 +351,9 @@ describe('Wallet', function() {
 
                   // Sign transaction using `inputs` and `off` params.
                   tx.inputs.length = 0;
-                  tx.addInput(unspent1[1]);
-                  tx.addInput(unspent1[2]);
-                  tx.addInput(unspent2[1]);
+                  tx.addInput(coins1[1]);
+                  tx.addInput(coins1[2]);
+                  tx.addInput(coins2[1]);
                   assert.equal(w1.sign(tx, 'all'), 2);
                   assert.equal(w2.sign(tx, 'all'), 1);
 
@@ -438,11 +438,11 @@ describe('Wallet', function() {
 
             assert.equal(w1.receiveDepth, 1);
 
-            w1.addTX(utx, function(err) {
+            wdb.addTX(utx, function(err) {
               assert(!err);
-              w2.addTX(utx, function(err) {
+              wdb.addTX(utx, function(err) {
                 assert(!err);
-                w3.addTX(utx, function(err) {
+                wdb.addTX(utx, function(err) {
                   assert(!err);
 
                   assert.equal(w1.receiveDepth, 2);
@@ -479,11 +479,11 @@ describe('Wallet', function() {
                     send.ts = 1;
                     send.height = 1;
 
-                    w1.addTX(send, function(err) {
+                    wdb.addTX(send, function(err) {
                       assert(!err);
-                      w2.addTX(send, function(err) {
+                      wdb.addTX(send, function(err) {
                         assert(!err);
-                        w3.addTX(send, function(err) {
+                        wdb.addTX(send, function(err) {
                           assert(!err);
 
                           assert.equal(w1.receiveDepth, 2);
