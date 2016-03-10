@@ -8,7 +8,7 @@
   "scripts": {
     "test": "rm -rf ~/.bcoin-test && BCOIN_PREFIX=~/.bcoin-test mocha --reporter spec test/*-test.js"
   },
-  "repository": "git://github.com/indutny/bcoin.git",
+  "repository": "git://github.com/bcoin-org/bcoin.git",
   "keywords": [
     "bitcoin",
     "blockchain",
@@ -35,7 +35,7 @@
   },
   "optionalDependencies": {
     "secp256k1": "3.0.0",
-    "request": "2.67.0"
+    "socket.io": "1.45.0"
   },
   "devDependencies": {
     "hash.js": "1.0.3",
