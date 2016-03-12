@@ -6,7 +6,9 @@ var assert = utils.assert;
 
 var node = bcoin.fullnode({
   debug: true,
-  passphrase: 'node'
+  passphrase: 'node',
+  prune: process.argv.indexOf('--prune') !== -1,
+  useCheckpoints: process.argv.indexOf('--checkpoints') !== -1
 });
 
 node.on('error', function(err) {
