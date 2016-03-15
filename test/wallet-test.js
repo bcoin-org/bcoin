@@ -13,12 +13,12 @@ var dummyInput = {
     version: 1,
     height: 0,
     value: constants.maxMoney.clone(),
-    script: [],
+    script: new bcoin.script([]),
     hash: constants.zeroHash,
     index: 0,
     spent: false
   },
-  script: [],
+  script: new bcoin.script([]),
   sequence: 0xffffffff
 };
 
@@ -167,7 +167,7 @@ describe('Wallet', function() {
         // Script inputs but do not sign
         w.scriptInputs(fake);
         // Fake signature
-        fake.inputs[0].script[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
+        fake.inputs[0].script.code[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
         // balance: 11000
 
         // Just for debugging
@@ -459,6 +459,8 @@ describe('Wallet', function() {
                   send.addOutput({ address: receive.getAddress(), value: 5460 });
                   assert(!send.verify(null, true, flags));
                   w1.fill(send, { m: w1.m, n: w1.n }, function(err) {
+                    if (err)
+                      throw err;
                     assert(!err);
 
                     w1.sign(send);
@@ -499,7 +501,7 @@ describe('Wallet', function() {
                           if (witness)
                             send.inputs[0].witness[2] = new Buffer([]);
                           else
-                            send.inputs[0].script[2] = 0;
+                            send.inputs[0].script.code[2] = 0;
 
                           assert(!send.verify(null, true, flags));
                           assert.equal(send.getFee().toNumber(), 10000);

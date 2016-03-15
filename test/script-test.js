@@ -1,5 +1,6 @@
 var assert = require('assert');
 var bcoin = require('../');
+var Script = bcoin.script;
 
 describe('Script', function() {
   it('should encode/decode script', function() {
@@ -34,55 +35,55 @@ describe('Script', function() {
   it('should recognize a P2SH output', function () {
     var hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87'
     var encoded = new Buffer(hex, 'hex')
-    var decoded = bcoin.script.decode(encoded);
-    assert(bcoin.script.isScripthash(decoded))
+    var decoded = new bcoin.script(encoded);
+    assert(decoded.isScripthash())
   })
 
   it('should recognize a Null Data output', function () {
     var hex = '6a28590c080112220a1b353930632e6f7267282a5f5e294f7665726c6179404f7261636c65103b1a010c'
     var encoded = new Buffer(hex, 'hex')
-    var decoded = bcoin.script.decode(encoded);
-    assert(bcoin.script.isNulldata(decoded))
+    var decoded = new Script(encoded);
+    assert(decoded.isNulldata())
   })
 
   it('should handle if statements correctly', function () {
-    var inputScript = [1, 2];
-    var prevOutScript = [2, 'equal', 'if', 3, 'else', 4, 'endif', 5];
+    var inputScript = new Script([1, 2]);
+    var prevOutScript = new Script([2, 'equal', 'if', 3, 'else', 4, 'endif', 5]);
     var stack = [];
-    bcoin.script.execute(inputScript, stack);
-    var res = bcoin.script.execute(prevOutScript, stack);
+    inputScript.execute(stack);
+    var res = prevOutScript.execute(stack);
     assert(res);
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
 
-    var inputScript = [1, 2];
-    var prevOutScript = [9, 'equal', 'if', 3, 'else', 4, 'endif', 5];
+    var inputScript = new Script([1, 2]);
+    var prevOutScript = new Script([9, 'equal', 'if', 3, 'else', 4, 'endif', 5]);
     var stack = [];
-    bcoin.script.execute(inputScript, stack);
-    var res = bcoin.script.execute(prevOutScript, stack);
+    inputScript.execute(stack);
+    var res = prevOutScript.execute(stack);
     assert(res);
     assert.deepEqual(stack.slice(), [[1], [4], [5]]);
 
-    var inputScript = [1, 2];
-    var prevOutScript = [2, 'equal', 'if', 3, 'endif', 5];
+    var inputScript = new Script([1, 2]);
+    var prevOutScript = new Script([2, 'equal', 'if', 3, 'endif', 5]);
     var stack = [];
-    bcoin.script.execute(inputScript, stack);
-    var res = bcoin.script.execute(prevOutScript, stack);
+    inputScript.execute(stack);
+    var res = prevOutScript.execute(stack);
     assert(res);
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
 
-    var inputScript = [1, 2];
-    var prevOutScript = [9, 'equal', 'if', 3, 'endif', 5];
+    var inputScript = new Script([1, 2]);
+    var prevOutScript = new Script([9, 'equal', 'if', 3, 'endif', 5]);
     var stack = [];
-    bcoin.script.execute(inputScript, stack);
-    var res = bcoin.script.execute(prevOutScript, stack);
+    inputScript.execute(stack);
+    var res = prevOutScript.execute(stack);
     assert(res);
     assert.deepEqual(stack.slice(), [[1], [5]]);
 
-    var inputScript = [1, 2];
-    var prevOutScript = [9, 'equal', 'notif', 3, 'endif', 5];
+    var inputScript = new Script([1, 2]);
+    var prevOutScript = new Script([9, 'equal', 'notif', 3, 'endif', 5]);
     var stack = [];
-    bcoin.script.execute(inputScript, stack);
-    var res = bcoin.script.execute(prevOutScript, stack);
+    inputScript.execute(stack);
+    var res = prevOutScript.execute(stack);
     assert(res);
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
   })
