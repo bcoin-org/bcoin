@@ -42,25 +42,4 @@ describe('Utils', function() {
     btc = utils.fromBTC('546.0');
     assert(btc.cmp(new bn(5460).mul(new bn(10000000))) === 0);
   });
-
-  it('should convert objects to hashes', function() {
-    var b1 = '00';
-    var b2 = new Buffer([0]);
-    var b3 = { hash: function(enc) { return enc === 'hex' ? '00' : new Buffer([0]); } };
-    var b4 = { hash: '00' };
-    var b5 = { _hash: '00' };
-    var b6 = { hash: new Buffer([0]) };
-    var b7 = { _hash: new Buffer([0]) };
-    [b1, b2, b3, b4, b5, b6, b7].forEach(function(b, i) {
-      utils.assert.equal(utils.hash(b, 'hex'), '00');
-      utils.assert(utils.isEqual(utils.hash(b), [0]));
-    });
-    var thrown = true;
-    try {
-      utils.hash(1, 'hex');
-    } catch (e) {
-      thrown = true;
-    }
-    assert.equal(thrown, true);
-  });
 });
