@@ -33,7 +33,7 @@
   "camelcase": false,
   "indent": 2,
   "maxlen": 110,
-  "newcap": true,
+  "newcap": false,
   "quotmark": "single",
 
   "laxbreak": true,
