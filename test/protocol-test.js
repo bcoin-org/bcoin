@@ -26,14 +26,14 @@ describe('Protocol', function() {
   }
 
   packetTest('version', {}, function(payload) {
-    assert.equal(payload.v, 70002);
+    assert.equal(payload.version, 70002);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 0);
     assert.equal(payload.relay, false);
   });
 
   packetTest('version', { relay: true, height: 10 }, function(payload) {
-    assert.equal(payload.v, 70002);
+    assert.equal(payload.version, 70002);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 10);
     assert.equal(payload.relay, true);
