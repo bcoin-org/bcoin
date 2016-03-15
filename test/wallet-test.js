@@ -499,7 +499,7 @@ describe('Wallet', function() {
                           assert.equal(w3.changeAddress.getAddress(), change);
 
                           if (witness)
-                            send.inputs[0].witness[2] = new Buffer([]);
+                            send.inputs[0].witness.items[2] = new Buffer([]);
                           else
                             send.inputs[0].script.code[2] = 0;
 

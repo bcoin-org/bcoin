@@ -1,6 +1,7 @@
 var assert = require('assert');
 var bcoin = require('../');
 var Script = bcoin.script;
+var Stack = bcoin.script.stack;
 
 describe('Script', function() {
   it('should encode/decode script', function() {
@@ -37,19 +38,19 @@ describe('Script', function() {
     var encoded = new Buffer(hex, 'hex')
     var decoded = new bcoin.script(encoded);
     assert(decoded.isScripthash())
-  })
+  });
 
   it('should recognize a Null Data output', function () {
     var hex = '6a28590c080112220a1b353930632e6f7267282a5f5e294f7665726c6179404f7261636c65103b1a010c'
     var encoded = new Buffer(hex, 'hex')
     var decoded = new Script(encoded);
     assert(decoded.isNulldata())
-  })
+  });
 
   it('should handle if statements correctly', function () {
     var inputScript = new Script([1, 2]);
     var prevOutScript = new Script([2, 'equal', 'if', 3, 'else', 4, 'endif', 5]);
-    var stack = [];
+    var stack = new Stack();
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
@@ -57,7 +58,7 @@ describe('Script', function() {
 
     var inputScript = new Script([1, 2]);
     var prevOutScript = new Script([9, 'equal', 'if', 3, 'else', 4, 'endif', 5]);
-    var stack = [];
+    var stack = new Stack();
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
@@ -65,7 +66,7 @@ describe('Script', function() {
 
     var inputScript = new Script([1, 2]);
     var prevOutScript = new Script([2, 'equal', 'if', 3, 'endif', 5]);
-    var stack = [];
+    var stack = new Stack();
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
@@ -73,7 +74,7 @@ describe('Script', function() {
 
     var inputScript = new Script([1, 2]);
     var prevOutScript = new Script([9, 'equal', 'if', 3, 'endif', 5]);
-    var stack = [];
+    var stack = new Stack();
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
@@ -81,10 +82,10 @@ describe('Script', function() {
 
     var inputScript = new Script([1, 2]);
     var prevOutScript = new Script([9, 'equal', 'notif', 3, 'endif', 5]);
-    var stack = [];
+    var stack = new Stack();
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
-  })
+  });
 });
