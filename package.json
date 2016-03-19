@@ -30,7 +30,7 @@
   "dependencies": {
     "bn.js": "4.10.3",
     "elliptic": "6.0.2",
-    "leveldown": "1.4.4",
+    "rocksdown": "1.4.4-2",
     "levelup": "1.3.1"
   },
   "optionalDependencies": {
