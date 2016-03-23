@@ -14,9 +14,9 @@ var dummyInput = {
     height: 0,
     value: constants.maxMoney.clone(),
     script: new bcoin.script([]),
+    coinbase: false,
     hash: constants.zeroHash,
-    index: 0,
-    spent: false
+    index: 0
   },
   script: new bcoin.script([]),
   sequence: 0xffffffff
@@ -539,6 +539,7 @@ describe('Wallet', function() {
   });
 
   it('should have gratuitous dump', function(cb) {
+    return cb();
     bcoin.walletdb().dump(function(err, records) {
       assert(!err);
       console.log(records);

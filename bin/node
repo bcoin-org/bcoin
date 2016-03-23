@@ -14,3 +14,10 @@ var node = bcoin.fullnode({
 node.on('error', function(err) {
   utils.debug(err.message);
 });
+
+node.open(function(err) {
+  if (err)
+    throw err;
+
+  node.startSync();
+});
