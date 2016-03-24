@@ -1,8 +1,8 @@
-var assert = require('assert');
 var bn = require('bn.js');
 var bcoin = require('../');
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
+var assert = utils.assert;
 
 describe('Wallet', function() {
   process.env.BCOIN_DB = 'memdown';
@@ -97,40 +97,31 @@ describe('Wallet', function() {
     var peer = { sendReject: function() {} };
 
     node.mempool.addTX(fake, peer, function(err) {
-      if (err)
-        throw err;
-      assert(!err);
+      assert.noError(err);
       node.mempool.addTX(t4, peer, function(err) {
-        assert(!err);
+        assert.noError(err);
         node.mempool.getBalance(function(err, balance) {
-          assert(!err);
+          assert.noError(err);
           assert.equal(balance.toString(10), '0');
           node.mempool.addTX(t1, peer, function(err) {
-            if (err)
-              throw err;
+            assert.noError(err);
             node.mempool.getBalance(function(err, balance) {
-              assert(!err);
+              assert.noError(err);
               assert.equal(balance.toString(10), '60000');
               node.mempool.addTX(t2, peer, function(err) {
-                if (err)
-                  throw err;
-                assert(!err);
+                assert.noError(err);
                 node.mempool.getBalance(function(err, balance) {
-                  assert(!err);
+                  assert.noError(err);
                   assert.equal(balance.toString(10), '50000');
                   node.mempool.addTX(t3, peer, function(err) {
-                    assert(!err);
+                    assert.noError(err);
                     node.mempool.getBalance(function(err, balance) {
-                      assert(!err);
+                      assert.noError(err);
                       assert.equal(balance.toString(10), '22000');
                       node.mempool.addTX(f1, peer, function(err) {
-                        if (err)
-                          throw err;
-                        assert(!err);
+                        assert.noError(err);
                         node.mempool.getBalance(function(err, balance) {
-                          if (err)
-                            throw err;
-                          assert(!err);
+                          assert.noError(err);
                           assert.equal(balance.toString(10), '20000');
                           node.mempool.getAll(function(err, txs) {
                             assert(txs.some(function(tx) {
