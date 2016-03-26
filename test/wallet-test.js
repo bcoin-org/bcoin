@@ -19,6 +19,7 @@ var dummyInput = {
     index: 0
   },
   script: new bcoin.script([]),
+  witness: new bcoin.script.witness([]),
   sequence: 0xffffffff
 };
 
@@ -131,11 +132,13 @@ describe('Wallet', function() {
     assert(tx.verify());
   });
 
+  var dw, di;
   it('should have TX pool and be serializable', function(cb) {
     wdb.create({}, function(err, w) {
       assert.noError(err);
       wdb.create({}, function(err, f) {
         assert.noError(err);
+        dw = w;
 
         // Coinbase
         var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 1000);
@@ -145,6 +148,7 @@ describe('Wallet', function() {
         var t2 = bcoin.mtx().addInput(t1, 0) // 50000
                            .addOutput(w, 24000)
                            .addOutput(w, 24000);
+        di = t2.inputs[0];
         // balance: 49000
         w.sign(t2);
         var t3 = bcoin.mtx().addInput(t1, 1) // 1000
@@ -179,8 +183,6 @@ describe('Wallet', function() {
         fake.hint = 'fake';
 
         // Fake TX should temporarly change output
-        // wdb.addTX(fake);
-
         wdb.addTX(fake, function(err) {
           assert.noError(err);
           wdb.addTX(t4, function(err) {
@@ -230,6 +232,19 @@ describe('Wallet', function() {
             });
           });
         });
+      });
+    });
+  });
+
+  it('should cleanup spenders after double-spend', function(cb) {
+    var t1 = bcoin.mtx().addOutput(dw, 5000);
+    t1.addInput(di);
+    wdb.addTX(t1, function(err) {
+      assert.noError(err);
+      dw.getBalance(function(err, balance) {
+        assert.noError(err);
+        assert.equal(balance.toString(10), '11000');
+        cb();
       });
     });
   });
