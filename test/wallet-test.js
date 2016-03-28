@@ -9,7 +9,7 @@ var dummyInput = {
     hash: constants.zeroHash,
     index: 0
   },
-  output: {
+  coin: {
     version: 1,
     height: 0,
     value: constants.maxMoney.clone(),

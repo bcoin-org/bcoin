@@ -36,7 +36,7 @@ describe('Wallet', function() {
         hash: constants.oneHash,
         index: 0
       },
-      output: {
+      coin: {
         version: 1,
         height: 0,
         value: new bn(70000),
@@ -82,7 +82,7 @@ describe('Wallet', function() {
     // balance: 11000
     [t2, t3, t4, f1, fake].forEach(function(tx) {
       tx.inputs.forEach(function(input) {
-        delete input.output;
+        delete input.coin;
       });
     });
 
