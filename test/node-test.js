@@ -3,7 +3,7 @@ var bcoin = require('../');
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 var assert = utils.assert;
-var opc = constants.opcodes;
+var opcodes = constants.opcodes;
 
 describe('Wallet', function() {
   process.env.BCOIN_DB = 'memdown';
@@ -31,7 +31,7 @@ describe('Wallet', function() {
 
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
-    var prev = new bcoin.script([w.publicKey, opc['checksig']]);
+    var prev = new bcoin.script([w.publicKey, opcodes.OP_CHECKSIG]);
     var dummyInput = {
       prevout: {
         hash: constants.oneHash,
