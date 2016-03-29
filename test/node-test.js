@@ -143,4 +143,8 @@ describe('Wallet', function() {
       });
     });
   });
+
+  it('should destroy pool', function(cb) {
+    node.close(cb);
+  });
 });
