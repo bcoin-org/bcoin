@@ -95,31 +95,29 @@ describe('Wallet', function() {
     f1.hint = 'f1';
     fake.hint = 'fake';
 
-    var peer = { sendReject: function() {} };
-
-    node.mempool.addTX(fake, peer, function(err) {
+    node.mempool.addTX(fake, function(err) {
       assert.noError(err);
-      node.mempool.addTX(t4, peer, function(err) {
+      node.mempool.addTX(t4, function(err) {
         assert.noError(err);
         node.mempool.getBalance(function(err, balance) {
           assert.noError(err);
           assert.equal(balance.toString(10), '0');
-          node.mempool.addTX(t1, peer, function(err) {
+          node.mempool.addTX(t1, function(err) {
             assert.noError(err);
             node.mempool.getBalance(function(err, balance) {
               assert.noError(err);
               assert.equal(balance.toString(10), '60000');
-              node.mempool.addTX(t2, peer, function(err) {
+              node.mempool.addTX(t2, function(err) {
                 assert.noError(err);
                 node.mempool.getBalance(function(err, balance) {
                   assert.noError(err);
                   assert.equal(balance.toString(10), '50000');
-                  node.mempool.addTX(t3, peer, function(err) {
+                  node.mempool.addTX(t3, function(err) {
                     assert.noError(err);
                     node.mempool.getBalance(function(err, balance) {
                       assert.noError(err);
                       assert.equal(balance.toString(10), '22000');
-                      node.mempool.addTX(f1, peer, function(err) {
+                      node.mempool.addTX(f1, function(err) {
                         assert.noError(err);
                         node.mempool.getBalance(function(err, balance) {
                           assert.noError(err);
