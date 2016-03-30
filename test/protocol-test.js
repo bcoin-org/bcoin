@@ -1,5 +1,6 @@
 var assert = require('assert');
 var bcoin = require('../');
+var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 
 describe('Protocol', function() {
@@ -26,14 +27,14 @@ describe('Protocol', function() {
   }
 
   packetTest('version', {}, function(payload) {
-    assert.equal(payload.version, 70002);
+    assert.equal(payload.version, constants.version);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 0);
     assert.equal(payload.relay, false);
   });
 
   packetTest('version', { relay: true, height: 10 }, function(payload) {
-    assert.equal(payload.version, 70002);
+    assert.equal(payload.version, constants.version);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 10);
     assert.equal(payload.relay, true);
@@ -65,6 +66,7 @@ describe('Protocol', function() {
     });
     addr._ipv6 = addr.ipv6;
     addr.ipv6 = new Buffer(addr.ipv6.replace(/:/g, ''), 'hex');
+    addr.services = constants.localServices;
   });
 
   packetTest('addr', peers, function(payload) {
@@ -72,13 +74,13 @@ describe('Protocol', function() {
     assert.equal(payload.length, 2);
 
     assert.equal(typeof payload[0].ts, 'number');
-    assert.equal(payload[0].services, bcoin.protocol.constants.bcoinServices);
+    assert.equal(payload[0].services, constants.localServices);
     assert.equal(payload[0].ipv6, peers[0]._ipv6);
     assert.equal(payload[0].ipv4, peers[0]._ipv4);
     assert.equal(payload[0].port, peers[0].port);
 
     assert.equal(typeof payload[1].ts, 'number');
-    assert.equal(payload[1].services, bcoin.protocol.constants.bcoinServices);
+    assert.equal(payload[1].services, constants.localServices);
     assert.equal(payload[1].ipv6, peers[1]._ipv6);
     assert.equal(payload[1].ipv4, peers[1]._ipv4);
     assert.equal(payload[1].port, peers[1].port);
