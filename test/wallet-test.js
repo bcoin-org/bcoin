@@ -25,6 +25,7 @@ var dummyInput = {
 
 describe('Wallet', function() {
   var wdb = new bcoin.walletdb();
+  wdb.tx.options.verify = true;
 
   it('should generate new key and address', function() {
     var w = bcoin.wallet();
