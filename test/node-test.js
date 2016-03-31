@@ -101,27 +101,27 @@ describe('Wallet', function() {
         assert.noError(err);
         node.mempool.getBalance(function(err, balance) {
           assert.noError(err);
-          assert.equal(balance.toString(10), '0');
+          assert.equal(balance.unconfirmed.toString(10), '0');
           node.mempool.addTX(t1, function(err) {
             assert.noError(err);
             node.mempool.getBalance(function(err, balance) {
               assert.noError(err);
-              assert.equal(balance.toString(10), '60000');
+              assert.equal(balance.unconfirmed.toString(10), '60000');
               node.mempool.addTX(t2, function(err) {
                 assert.noError(err);
                 node.mempool.getBalance(function(err, balance) {
                   assert.noError(err);
-                  assert.equal(balance.toString(10), '50000');
+                  assert.equal(balance.unconfirmed.toString(10), '50000');
                   node.mempool.addTX(t3, function(err) {
                     assert.noError(err);
                     node.mempool.getBalance(function(err, balance) {
                       assert.noError(err);
-                      assert.equal(balance.toString(10), '22000');
+                      assert.equal(balance.unconfirmed.toString(10), '22000');
                       node.mempool.addTX(f1, function(err) {
                         assert.noError(err);
                         node.mempool.getBalance(function(err, balance) {
                           assert.noError(err);
-                          assert.equal(balance.toString(10), '20000');
+                          assert.equal(balance.unconfirmed.toString(10), '20000');
                           node.mempool.getAll(function(err, txs) {
                             assert(txs.some(function(tx) {
                               return tx.hash('hex') === f1.hash('hex');

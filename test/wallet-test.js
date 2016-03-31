@@ -190,26 +190,26 @@ describe('Wallet', function() {
             assert.noError(err);
             w.getBalance(function(err, balance) {
               assert.noError(err);
-              assert.equal(balance.toString(10), '22500');
+              assert.equal(balance.unconfirmed.toString(10), '22500');
               wdb.addTX(t1, function(err) {
                 w.getBalance(function(err, balance) {
                   assert.noError(err);
-                  assert.equal(balance.toString(10), '73000');
+                  assert.equal(balance.unconfirmed.toString(10), '73000');
                   wdb.addTX(t2, function(err) {
                     assert.noError(err);
                     w.getBalance(function(err, balance) {
                       assert.noError(err);
-                      assert.equal(balance.toString(10), '47000');
+                      assert.equal(balance.unconfirmed.toString(10), '47000');
                       wdb.addTX(t3, function(err) {
                         assert.noError(err);
                         w.getBalance(function(err, balance) {
                           assert.noError(err);
-                          assert.equal(balance.toString(10), '22000');
+                          assert.equal(balance.unconfirmed.toString(10), '22000');
                           wdb.addTX(f1, function(err) {
                             assert.noError(err);
                             w.getBalance(function(err, balance) {
                               assert.noError(err);
-                              assert.equal(balance.toString(10), '11000');
+                              assert.equal(balance.unconfirmed.toString(10), '11000');
                               w.getAll(function(err, txs) {
                                 assert(txs.some(function(tx) {
                                   return tx.hash('hex') === f1.hash('hex');
@@ -244,7 +244,7 @@ describe('Wallet', function() {
       assert.noError(err);
       dw.getBalance(function(err, balance) {
         assert.noError(err);
-        assert.equal(balance.toString(10), '11000');
+        assert.equal(balance.unconfirmed.toString(10), '11000');
         cb();
       });
     });
