@@ -1,0 +1,253 @@
+#!/usr/bin/env node
+
+var bcoin = require('bcoin');
+var utils = bcoin.utils;
+var assert = utils.assert;
+var Client = bcoin.http.client;
+
+var argv = parseArg(process.argv);
+
+if (argv.network)
+  bcoin.protocol.network.set(argv.network);
+
+var client = new Client(argv.url || 'localhost:8080', {
+  setNetwork: argv.network == null
+});
+
+function createWallet(callback) {
+  var options = utils.merge({
+    id: argv.args[1]
+  }, argv);
+  client.createWallet(options, function(err, wallet) {
+    if (err)
+      return callback(err);
+    utils.print(wallet);
+    wallet.destroy();
+    callback();
+  });
+}
+
+function getWallet(callback) {
+  var options = utils.merge({
+    id: argv.args[1]
+  }, argv);
+  client.getWallet(options.id, options.passphrase, function(err, wallet) {
+    if (err)
+      return callback(err);
+    utils.print(wallet);
+    wallet.destroy();
+    callback();
+  });
+}
+
+function getTX(callback) {
+  var hash = argv.args[1];
+  if (bcoin.address.validate(hash)) {
+    return client.getTXByAddress(hash, function(err, txs) {
+      if (err)
+        return callback(err);
+      utils.print(txs);
+      callback();
+    });
+  }
+  hash = utils.revHex(hash);
+  client.getTX(hash, function(err, tx) {
+    if (err)
+      return callback(err);
+    utils.print(tx);
+    callback();
+  });
+}
+
+function getBlock(callback) {
+  var hash = argv.args[1];
+  hash = utils.revHex(hash);
+  client.getBlock(hash, function(err, block) {
+    if (err)
+      return callback(err);
+    utils.print(block);
+    callback();
+  });
+}
+
+function getCoin(callback) {
+  var hash = argv.args[1];
+  var index = argv.args[2];
+  if (bcoin.address.validate(hash)) {
+    return client.getCoinsByAddress(hash, function(err, coins) {
+      if (err)
+        return callback(err);
+      utils.print(coins);
+      callback();
+    });
+  }
+  hash = utils.revHex(hash);
+  client.getCoin(hash, index, function(err, coin) {
+    if (err)
+      return callback(err);
+    utils.print(coin);
+    callback();
+  });
+}
+
+function getWalletAll(callback) {
+  var id = argv.args[1];
+  client.getWalletAll(id, function(err, txs) {
+    if (err)
+      return callback(err);
+    utils.print(txs);
+    callback();
+  });
+}
+
+function getBalance(callback) {
+  var id = argv.args[1];
+  client.getWalletBalance(id, function(err, balance) {
+    if (err)
+      return callback(err);
+    utils.print('Confirmed: %s', utils.btc(balance.confirmed));
+    utils.print('Unconfirmed: %s', utils.btc(balance.unconfirmed));
+    callback();
+  });
+}
+
+function getMempool(callback) {
+  client.getMempool(function(err, txs) {
+    if (err)
+      return callback(err);
+    utils.print(txs);
+    callback();
+  });
+}
+
+function send(callback) {
+  var id = argv.args[1];
+  var address = argv.args[2];
+  var value = utils.satoshi(argv.args[3]);
+  var options = {
+    address: address,
+    value: value
+  };
+  client.walletSend(id, options, function(err, tx) {
+    if (err)
+      return callback(err);
+    utils.print(tx);
+    callback();
+  });
+}
+
+function zap(callback) {
+  var id = argv.args[1];
+  var now = utils.now();
+  var age = 72 * 60 * 60;
+  client.walletZap(id, now, age, function(err) {
+    if (err)
+      return callback(err);
+    utils.print('zapped');
+    callback();
+  });
+}
+
+function main(callback) {
+  switch (argv.args[0]) {
+    case 'wallet':
+      return createWallet(callback);
+    case 'getwallet':
+      return getWallet(callback);
+    case 'balance':
+      return getBalance(callback);
+    case 'history':
+      return getWalletAll(callback);
+    case 'send':
+      return send(callback);
+    case 'zap':
+      return zap(callback);
+    case 'mempool':
+      return getMempool(callback);
+    case 'tx':
+      return getTX(callback);
+    case 'coin':
+      return getCoin(callback);
+    case 'block':
+      return getBlock(callback);
+  }
+  return callback(new Error('Bad command.'));
+}
+
+function parseArg(argv) {
+  var args = [];
+  var options = {};
+  var arg;
+
+  argv = argv.slice();
+
+  function getarg() {
+    var arg = argv.shift();
+
+    if (arg.indexOf('--') === 0) {
+      // e.g. --opt
+      arg = arg.split('=');
+      if (arg.length > 1) {
+        // e.g. --opt=val
+        argv.unshift(arg.slice(1).join('='));
+      }
+      arg = arg[0];
+    } else if (arg[0] === '-') {
+      if (arg.length > 2) {
+        // e.g. -abc
+        argv = arg.substring(1).split('').map(function(ch) {
+          return '-' + ch;
+        }).concat(argv);
+        arg = argv.shift();
+      } else {
+        // e.g. -a
+      }
+    } else {
+      // e.g. foo
+    }
+
+    return arg;
+  }
+
+  while (argv.length) {
+    arg = getarg();
+    switch (arg) {
+      case '--url':
+        options.url = argv.shift();
+        break;
+      case '-h':
+      case '--help':
+        return process.exit(1);
+      default:
+        if (arg.indexOf('--') === 0) {
+          opt = arg.replace(/^--(no-)?/, '');
+          options[opt] = !argv[0] || argv[0][0] === '-'
+            ? true
+            : argv.shift();
+        } else {
+          args.push(arg);
+        }
+        break;
+    }
+  }
+
+  options.args = args.slice(2);
+
+  return options;
+}
+
+client.getInfo(function(err, info) {
+  if (err)
+    throw err;
+
+  if (!argv.args[0])
+    return utils.print(info);
+
+  main(function(err) {
+    if (err) {
+      console.error(err.stack + '');
+      return process.exit(1);
+    }
+    client.destroy();
+  });
+});
