@@ -95,8 +95,9 @@ function removeKey(callback) {
 }
 
 function getWallet(callback) {
-  var options = { id: getID(), passphrase: argv.args[0] };
-  client.getWallet(options.id, options.passphrase, function(err, wallet) {
+  var id = getID();
+  var passphrase = argv.args[0];
+  client.getWallet(id, passphrase, function(err, wallet) {
     if (err)
       return callback(err);
     utils.print(wallet);
