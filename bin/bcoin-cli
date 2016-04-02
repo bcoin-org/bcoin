@@ -14,10 +14,44 @@ var client = new Client(argv.url || 'localhost:8080', {
   setNetwork: argv.network == null
 });
 
+function getID() {
+  if (process.env.BCOIN_WALLET_ID)
+    return process.env.BCOIN_WALLET_ID;
+  if (argv.id)
+    return argv.id;
+  return argv.args.shift();
+}
+
 function createWallet(callback) {
-  var options = utils.merge({
-    id: argv.args[1]
-  }, argv);
+  var options = { id: getID() };
+
+  if (argv.master)
+    options.master = argv.master;
+
+  if (argv.keys)
+    options.keys = argv.keys.split(/[,:]/);
+
+  if (argv.lookahead)
+    options.lookahead = argv.lookahead >>> 0;
+
+  if (argv.derivation)
+    options.derivation = argv.derivation;
+
+  if (argv.m)
+    options.m = argv.m >>> 0;
+
+  if (argv.n)
+    options.n = argv.n >>> 0;
+
+  if (argv.copay != null)
+    options.copayBIP45 = !!argv.copay;
+
+  if (argv.witness != null)
+    options.witness = !!argv.witness;
+
+  if (argv.passphrase)
+    options.passphrase = argv.passphrase;
+
   client.createWallet(options, function(err, wallet) {
     if (err)
       return callback(err);
@@ -28,9 +62,7 @@ function createWallet(callback) {
 }
 
 function getWallet(callback) {
-  var options = utils.merge({
-    id: argv.args[1]
-  }, argv);
+  var options = { id: getID(), passphrase: argv.args[0] };
   client.getWallet(options.id, options.passphrase, function(err, wallet) {
     if (err)
       return callback(err);
@@ -41,7 +73,7 @@ function getWallet(callback) {
 }
 
 function getTX(callback) {
-  var hash = argv.args[1];
+  var hash = argv.args[0];
   if (bcoin.address.validate(hash)) {
     return client.getTXByAddress(hash, function(err, txs) {
       if (err)
@@ -60,7 +92,7 @@ function getTX(callback) {
 }
 
 function getBlock(callback) {
-  var hash = argv.args[1];
+  var hash = argv.args[0];
   hash = utils.revHex(hash);
   client.getBlock(hash, function(err, block) {
     if (err)
@@ -71,8 +103,8 @@ function getBlock(callback) {
 }
 
 function getCoin(callback) {
-  var hash = argv.args[1];
-  var index = argv.args[2];
+  var hash = argv.args[0];
+  var index = argv.args[1];
   if (bcoin.address.validate(hash)) {
     return client.getCoinsByAddress(hash, function(err, coins) {
       if (err)
@@ -91,7 +123,7 @@ function getCoin(callback) {
 }
 
 function getWalletAll(callback) {
-  var id = argv.args[1];
+  var id = getID();
   client.getWalletAll(id, function(err, txs) {
     if (err)
       return callback(err);
@@ -101,7 +133,7 @@ function getWalletAll(callback) {
 }
 
 function getBalance(callback) {
-  var id = argv.args[1];
+  var id = getID();
   client.getWalletBalance(id, function(err, balance) {
     if (err)
       return callback(err);
@@ -121,13 +153,15 @@ function getMempool(callback) {
 }
 
 function send(callback) {
-  var id = argv.args[1];
-  var address = argv.args[2];
-  var value = utils.satoshi(argv.args[3]);
-  var options = {
-    address: address,
-    value: value
-  };
+  var id = getID();
+  var options = {};
+  if (argv.script) {
+    options.script = new bcoin.script(new Buffer(argv.script, 'hex'));
+    options.value = utils.satoshi(argv.value || argv.args[0]);
+  } else {
+    options.address = argv.address || argv.args[0];
+    options.value = utils.satoshi(argv.value || argv.args[1]);
+  }
   client.walletSend(id, options, function(err, tx) {
     if (err)
       return callback(err);
@@ -137,9 +171,9 @@ function send(callback) {
 }
 
 function zap(callback) {
-  var id = argv.args[1];
-  var now = utils.now();
-  var age = 72 * 60 * 60;
+  var id = getID();
+  var now = (argv.now >>> 0) || utils.now();
+  var age = (argv.age >>> 0) || 72 * 60 * 60;
   client.walletZap(id, now, age, function(err) {
     if (err)
       return callback(err);
@@ -149,7 +183,7 @@ function zap(callback) {
 }
 
 function main(callback) {
-  switch (argv.args[0]) {
+  switch (argv.args.shift()) {
     case 'wallet':
       return createWallet(callback);
     case 'getwallet':
@@ -177,7 +211,7 @@ function main(callback) {
 function parseArg(argv) {
   var args = [];
   var options = {};
-  var arg;
+  var arg, negate;
 
   argv = argv.slice();
 
@@ -211,23 +245,14 @@ function parseArg(argv) {
 
   while (argv.length) {
     arg = getarg();
-    switch (arg) {
-      case '--url':
-        options.url = argv.shift();
-        break;
-      case '-h':
-      case '--help':
-        return process.exit(1);
-      default:
-        if (arg.indexOf('--') === 0) {
-          opt = arg.replace(/^--(no-)?/, '');
-          options[opt] = !argv[0] || argv[0][0] === '-'
-            ? true
-            : argv.shift();
-        } else {
-          args.push(arg);
-        }
-        break;
+    if (arg.indexOf('--') === 0) {
+      negate = arg.indexOf('--no-') === 0;
+      opt = arg.replace(/^--(no-)?/, '');
+      options[opt] = !argv[0] || argv[0][0] === '-'
+        ? (negate ? false : true)
+        : argv.shift();
+    } else {
+      args.push(arg);
     }
   }
 
