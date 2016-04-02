@@ -244,20 +244,20 @@ function main(callback) {
     default:
       utils.print('Unrecognized command.');
       utils.print('Commands:');
-      utils.print(' $ wallet [id] --keys [hdkeys]'
-        + ' --type [pubkeyhash/multisig] -m [m-value]
+      utils.print('  $ wallet [id] --keys [hdkeys]'
+        + ' --type [pubkeyhash/multisig] -m [m-value]'
         + ' -n [n-value] --witness: View or create wallet by ID.');
-      utils.print(' $ getwallet [id]: View wallet by ID.');
-      utils.print(' $ addkey [id] --keys [hdkeys]: Add keys to wallet.');
-      utils.print(' $ rmkey [id] --keys [hdkeys]: Remove keys from wallet.');
-      utils.print(' $ balance [id]: Get wallet balance.');
-      utils.print(' $ history [id]: View wallet TX history.');
-      utils.print(' $ send [id] [address] [value] --script [code]: Send transaction.');
-      utils.print(' $ zap [id] --now [now] --age [age]: Zap pending wallet TXs.');
-      utils.print(' $ mempool: Get mempool snapshot.');
-      utils.print(' $ tx [hash/address]: View transactions.');
-      utils.print(' $ coin [hash+index/address]: View coins.');
-      utils.print(' $ block [hash/height]: View block.');
+      utils.print('  $ getwallet [id]: View wallet by ID.');
+      utils.print('  $ addkey [id] --keys [hdkeys]: Add keys to wallet.');
+      utils.print('  $ rmkey [id] --keys [hdkeys]: Remove keys from wallet.');
+      utils.print('  $ balance [id]: Get wallet balance.');
+      utils.print('  $ history [id]: View wallet TX history.');
+      utils.print('  $ send [id] [address] [value] --script [code]: Send transaction.');
+      utils.print('  $ zap [id] --now [now] --age [age]: Zap pending wallet TXs.');
+      utils.print('  $ mempool: Get mempool snapshot.');
+      utils.print('  $ tx [hash/address]: View transactions.');
+      utils.print('  $ coin [hash+index/address]: View coins.');
+      utils.print('  $ block [hash/height]: View block.');
       return callback();
   }
 }
@@ -316,11 +316,13 @@ function parseArg(argv) {
 }
 
 client.getInfo(function(err, info) {
-  if (err)
-    throw err;
+  if (err) {
+    console.error(err.stack + '');
+    return process.exit(1);
+  }
 
   if (!argv.args[0])
-    return utils.print(info);
+    utils.print(info);
 
   main(function(err) {
     if (err) {
