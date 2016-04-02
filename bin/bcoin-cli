@@ -25,6 +25,9 @@ function getID() {
 function createWallet(callback) {
   var options = { id: getID() };
 
+  if (argv.type)
+    options.type = argv.type;
+
   if (argv.master)
     options.master = argv.master;
 
@@ -57,6 +60,36 @@ function createWallet(callback) {
       return callback(err);
     utils.print(wallet);
     wallet.destroy();
+    callback();
+  });
+}
+
+function addKey(callback) {
+  var id = getID();
+  var keys = argv.keys || argv.key;
+  if (keys)
+    keys = keys.split(',');
+  else
+    keys = argv.args;
+  client.addKey(id, keys, function(err, wallet) {
+    if (err)
+      return callback(err);
+    utils.print('added');
+    callback();
+  });
+}
+
+function removeKey(callback) {
+  var id = getID();
+  var keys = argv.keys || argv.key;
+  if (keys)
+    keys = keys.split(',');
+  else
+    keys = argv.args;
+  client.removeKey(id, keys, function(err) {
+    if (err)
+      return callback(err);
+    utils.print('removed');
     callback();
   });
 }
@@ -188,6 +221,10 @@ function main(callback) {
       return createWallet(callback);
     case 'getwallet':
       return getWallet(callback);
+    case 'addkey':
+      return addKey(callback);
+    case 'rmkey':
+      return removeKey(callback);
     case 'balance':
       return getBalance(callback);
     case 'history':
@@ -204,8 +241,25 @@ function main(callback) {
       return getCoin(callback);
     case 'block':
       return getBlock(callback);
+    default:
+      utils.print('Unrecognized command.');
+      utils.print('Commands:');
+      utils.print(' $ wallet [id] --keys [hdkeys]'
+        + ' --type [pubkeyhash/multisig] -m [m-value]
+        + ' -n [n-value] --witness: View or create wallet by ID.');
+      utils.print(' $ getwallet [id]: View wallet by ID.');
+      utils.print(' $ addkey [id] --keys [hdkeys]: Add keys to wallet.');
+      utils.print(' $ rmkey [id] --keys [hdkeys]: Remove keys from wallet.');
+      utils.print(' $ balance [id]: Get wallet balance.');
+      utils.print(' $ history [id]: View wallet TX history.');
+      utils.print(' $ send [id] [address] [value] --script [code]: Send transaction.');
+      utils.print(' $ zap [id] --now [now] --age [age]: Zap pending wallet TXs.');
+      utils.print(' $ mempool: Get mempool snapshot.');
+      utils.print(' $ tx [hash/address]: View transactions.');
+      utils.print(' $ coin [hash+index/address]: View coins.');
+      utils.print(' $ block [hash/height]: View block.');
+      return callback();
   }
-  return callback(new Error('Bad command.'));
 }
 
 function parseArg(argv) {
