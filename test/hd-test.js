@@ -37,7 +37,9 @@ describe('HD', function() {
   });
 
   it('should create master private key', function() {
-    master = bcoin.hd.priv({ seed: seed });
+    var s = new bcoin.hd.seed();
+    s.seed = new Buffer(seed, 'hex');
+    master = bcoin.hd.priv.fromSeed(s);
     assert.equal(master.xprivkey, master_priv);
     assert.equal(master.xpubkey, master_pub);
   });
@@ -78,11 +80,11 @@ describe('HD', function() {
   });
 
   it('should deserialize master private key', function() {
-    master._unbuild(master.xprivkey);
+    bcoin.hd.priv.parse(master.xprivkey);
   });
 
   it('should deserialize master public key', function() {
-    master.hdPublicKey._unbuild(master.hdPublicKey.xpubkey);
+    bcoin.hd.pub.parse(master.hdPublicKey.xpubkey);
   });
 
   it('should deserialize and reserialize', function() {
