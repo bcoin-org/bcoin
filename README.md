@@ -30,16 +30,6 @@ Docs need to be rewritten. They're coming soon. I promise.
 
 ## Example Usage
 
-### Running the pre-made node implementation from the CLI
-
-``` bash
-$ BCOIN_NETWORK=segnet4 node bin/node
-# View the genesis block
-$ node bin/bcoin-cli block 0
-# View primary wallet
-$ node bin/bcoin-cli wallet primary --passphrase=node
-```
-
 ### High-level usage for Node object
 
 ``` js
@@ -128,6 +118,18 @@ node.chain.on('full', function() {
     console.log(txs);
   });
 });
+```
+
+### CLI Usage
+
+``` bash
+$ BCOIN_NETWORK=segnet4 node bin/node
+# View the genesis block
+$ node bin/bcoin-cli block 0
+# View primary wallet
+$ node bin/bcoin-cli wallet primary --passphrase=node
+# View the mempool
+$ node bin/bcoin-cli mempool
 ```
 
 ### TX creation
