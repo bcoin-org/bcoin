@@ -70,7 +70,7 @@ node.open(function(err) {
     // Wait for balance and send it to a new address.
     wallet.once('balance', function(balance) {
       var newReceiving = wallet.createAddress();
-      console.log('Created new receiving address.');
+      console.log('Created new receiving address: %s', newReceiving);
       // Create a transaction, fill
       // it with coins, and sign it.
       wallet.createTX({
@@ -103,11 +103,11 @@ node.open(function(err) {
 });
 
 node.chain.on('block', function(block) {
-  utils.print(block);
+  console.log(block);
 });
 
 node.mempool.on('tx', function(tx) {
-  utils.print(block);
+  console.log(block);
 });
 
 node.chain.on('full', function() {
