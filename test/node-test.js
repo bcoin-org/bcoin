@@ -6,7 +6,7 @@ var assert = utils.assert;
 var opcodes = constants.opcodes;
 
 describe('Wallet', function() {
-  process.env.BCOIN_DB = 'memdown';
+  process.env.BCOIN_DB = 'bst';
   var node = new bcoin.fullnode();
   node.on('error', function() {});
 
