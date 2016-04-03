@@ -20,8 +20,9 @@ node.open(function(err) {
   if (err)
     throw err;
 
-  node.startSync();
 
   if (node.options.mine)
     node.miner.start();
+  else
+    node.startSync();
 });
