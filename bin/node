@@ -8,7 +8,8 @@ var node = bcoin.fullnode({
   debug: true,
   passphrase: 'node',
   prune: process.argv.indexOf('--prune') !== -1,
-  useCheckpoints: process.argv.indexOf('--checkpoints') !== -1
+  useCheckpoints: process.argv.indexOf('--checkpoints') !== -1,
+  mine: process.argv.indexOf('--mine') !== -1
 });
 
 node.on('error', function(err) {
@@ -20,4 +21,7 @@ node.open(function(err) {
     throw err;
 
   node.startSync();
+
+  if (node.options.mine)
+    node.miner.start();
 });
