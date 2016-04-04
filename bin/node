@@ -22,8 +22,12 @@ node.open(function(err) {
   if (err)
     throw err;
 
-  if (node.options.mine)
+  if (node.options.mine) {
+    if (bcoin.protocol.network.type !== 'regtest')
+      node.pool.connect();
     node.miner.start();
-  else
-    node.startSync();
+    return;
+  }
+
+  node.startSync();
 });
