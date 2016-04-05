@@ -370,8 +370,8 @@ describe('Wallet', function() {
                   tx.addInput(coins1[1]);
                   tx.addInput(coins1[2]);
                   tx.addInput(coins2[1]);
-                  assert.equal(w1.sign(tx, 'all'), 2);
-                  assert.equal(w2.sign(tx, 'all'), 1);
+                  assert.equal(w1.sign(tx), 2);
+                  assert.equal(w2.sign(tx), 1);
 
                   // Verify
                   assert.equal(tx.verify(), true);
