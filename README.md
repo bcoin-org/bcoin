@@ -132,6 +132,37 @@ $ node bin/bcoin-cli wallet primary --passphrase=node
 $ node bin/bcoin-cli mempool
 ```
 
+### Creating a blockchain and mempool
+
+``` js
+var bcoin = require('bcoin');
+bcoin.protocol.network.set('regtest');
+var chain = new bcoin.chain({ db: 'memory' });
+var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
+var miner = new bcoin.miner({ chain: chain, mempool: mempool });
+
+// Create a block "attempt"
+miner.createBlock(function(err, attempt) {
+  if (err)
+    throw err;
+
+  // Mine the block on the worker pool (use mine() for the master process)
+  attempt.mineAsync(function(err, block) {
+    if (err)
+      throw err;
+
+    // Add the block to the chain
+    chain.add(block, function(err) {
+      if (err)
+        throw err;
+
+      console.log('Added %s to the blockchain.', block.rhash);
+      console.log(block);
+    });
+  });
+});
+```
+
 ### TX creation
 
 TODO
