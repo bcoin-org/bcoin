@@ -17,6 +17,7 @@ fullnode. Bcoin runs in node.js, but it can also be browserified.
   - Fast UTXO retrieval by address for wallets (10000 utxos from 10000 different
     addresses in ~700ms, 50000+ utxos from 10-100 addresses in ~400ms)
 - Segregated witness support for block/tx validation and wallets.
+- Versionbits suport.
 
 ## Install
 
