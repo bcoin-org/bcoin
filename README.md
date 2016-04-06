@@ -224,6 +224,7 @@ var wallet = new bcoin.wallet({
 });
 
 walletdb.save(wallet);
+pool.watchWallet(wallet);
 
 console.log('Created wallet with address %s', wallet.getAddress());
 
