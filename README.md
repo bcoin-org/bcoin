@@ -163,6 +163,88 @@ miner.createBlock(function(err, attempt) {
 });
 ```
 
+### Connecting to the P2P network
+
+``` js
+var bcoin = require('bcoin');
+
+bcoin.protocol.network.set('testnet');
+
+var chain = new bcoin.chain({ db: 'leveldb' });
+var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
+var pool = new bcoin.pool({ chain: chain, mempool: mempool, size: 8 });
+
+// Connect, start retrieving and relaying txs
+pool.connect();
+
+// Start the blockchain sync.
+pool.startSync();
+
+chain.on('block', function(block) {
+  console.log('Added block:');
+  console.log(block);
+});
+
+mempool.on('tx', function(tx) {
+  console.log('Added tx to mempool:');
+  console.log(tx);
+});
+
+pool.on('tx', function(tx) {
+  console.log('Saw transaction:');
+  console.log(tx);
+});
+```
+
+### Doing an SPV sync
+
+``` js
+var bcoin = require('bcoin');
+
+bcoin.protocol.network.set('testnet');
+
+var chain = new bcoin.chain({
+  db: 'leveldb',
+  location: process.env.HOME + '/chain.db',
+  spv: true
+});
+
+var pool = new bcoin.pool({
+  chain: chain,
+  spv: true,
+  size: 8
+});
+
+var walletdb = new bcoin.walletdb({ db: 'memory' });
+
+var wallet = new bcoin.wallet({
+  provider: walletdb.provider(),
+  derivation: 'bip44',
+  type: 'pubkeyhash'
+});
+
+walletdb.save(wallet);
+
+console.log('Created wallet with address %s', wallet.getAddress());
+
+// Connect, start retrieving and relaying txs
+pool.connect();
+
+// Start the blockchain sync.
+pool.startSync();
+
+pool.on('tx', function(tx) {
+  wallet.addTX(tx);
+});
+
+wallet.on('balance', function(balance) {
+  console.log('Balance updated.');
+  console.log(bcoin.utils.btc(balance.unconfirmed));
+});
+```
+
+
+
 ### TX creation
 
 TODO
