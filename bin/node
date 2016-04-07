@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var bcoin = require('bcoin')({ debug: true });
+var bcoin = require('bcoin')({ debug: true, debugFile: true });
 var utils = bcoin.utils;
 var assert = utils.assert;
 
