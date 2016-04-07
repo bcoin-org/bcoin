@@ -1,5 +1,5 @@
 var assert = require('assert');
-var bcoin = require('../');
+var bcoin = require('../')();
 var Script = bcoin.script;
 var Stack = bcoin.script.stack;
 var opcodes = bcoin.protocol.constants.opcodes;

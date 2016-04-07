@@ -1,5 +1,5 @@
 var assert = require('assert');
-var bcoin = require('../');
+var bcoin = require('../')();
 
 describe('Bloom', function() {
   it('should do proper murmur3', function() {

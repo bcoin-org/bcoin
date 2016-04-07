@@ -1,18 +1,13 @@
 #!/usr/bin/env node
 
-var bcoin = require('bcoin');
+var argv = parseArg(process.argv);
+
+var bcoin = require('bcoin')(argv.network);
 var utils = bcoin.utils;
 var assert = utils.assert;
 var Client = bcoin.http.client;
 
-var argv = parseArg(process.argv);
-
-if (argv.network)
-  bcoin.protocol.network.set(argv.network);
-
-var client = new Client(argv.url || 'localhost:8080', {
-  setNetwork: argv.network == null
-});
+var client = new Client(argv.url || 'localhost:8080');
 
 function getID() {
   if (process.env.BCOIN_WALLET_ID)

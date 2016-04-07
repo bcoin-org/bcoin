@@ -167,9 +167,7 @@ miner.createBlock(function(err, attempt) {
 ### Connecting to the P2P network
 
 ``` js
-var bcoin = require('bcoin');
-
-bcoin.protocol.network.set('testnet');
+var bcoin = require('bcoin')('testnet');
 
 var chain = new bcoin.chain({ db: 'leveldb' });
 var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
@@ -200,9 +198,7 @@ pool.on('tx', function(tx) {
 ### Doing an SPV sync
 
 ``` js
-var bcoin = require('bcoin');
-
-bcoin.protocol.network.set('testnet');
+var bcoin = require('bcoin')('testnet');
 
 var chain = new bcoin.chain({
   db: 'leveldb',

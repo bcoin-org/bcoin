@@ -1,6 +1,6 @@
 var assert = require('assert');
 var bn = require('bn.js');
-var bcoin = require('../');
+var bcoin = require('../')();
 
 describe('Block', function() {
   var parser = bcoin.protocol.parser;
