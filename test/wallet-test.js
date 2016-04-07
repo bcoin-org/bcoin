@@ -1,5 +1,5 @@
 var bn = require('bn.js');
-var bcoin = require('../')();
+var bcoin = require('../')({ db: 'memory' });
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 var assert = utils.assert;
@@ -24,8 +24,11 @@ var dummyInput = {
 };
 
 describe('Wallet', function() {
-  var wdb = new bcoin.walletdb();
-  wdb.tx.options.verify = true;
+  var wdb = new bcoin.walletdb({ verify: true });
+
+  it('should open walletdb', function(cb) {
+    wdb.open(cb);
+  });
 
   it('should generate new key and address', function() {
     var w = bcoin.wallet();

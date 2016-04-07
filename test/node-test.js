@@ -1,12 +1,11 @@
 var bn = require('bn.js');
-var bcoin = require('../')();
+var bcoin = require('../')({ db: 'memory' });
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 var assert = utils.assert;
 var opcodes = constants.opcodes;
 
 describe('Wallet', function() {
-  process.env.BCOIN_DB = 'bst';
   var node = new bcoin.fullnode();
   node.on('error', function() {});
 
@@ -15,7 +14,6 @@ describe('Wallet', function() {
   });
 
   it('should have wallet', function(cb) {
-    delete process.env.BCOIN_DB;
     node.getWallet('primary', function(err, wallet) {
       if (err)
         return cb(err);
