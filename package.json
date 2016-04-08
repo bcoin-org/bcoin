@@ -3,7 +3,10 @@
   "version": "1.0.0-alpha",
   "description": "Bitcoin bike-shed",
   "main": "./lib/bcoin.js",
-  "bin": "./bin/node",
+  "bin": {
+    "bcoin-node": "./bin/node",
+    "bcoin-cli": "./bin/bcoin-cli"
+  },
   "preferGlobal": false,
   "scripts": {
     "test": "mocha --reporter spec test/*-test.js"
