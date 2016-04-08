@@ -122,7 +122,10 @@ function getTX(callback) {
 
 function getBlock(callback) {
   var hash = argv.args[0];
-  hash = utils.revHex(hash);
+  if (utils.isInt(hash))
+    hash = +hash;
+  else
+    hash = utils.revHex(hash);
   client.getBlock(hash, function(err, block) {
     if (err)
       return callback(err);
