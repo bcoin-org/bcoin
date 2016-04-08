@@ -1,5 +1,5 @@
 var bn = require('bn.js');
-var bcoin = require('../')({ db: 'memory' });
+var bcoin = require('../')({ db: process.env.BCOIN_TEST_DB || 'memory' });
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 var assert = utils.assert;
