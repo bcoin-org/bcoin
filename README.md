@@ -34,7 +34,7 @@ Docs need to be rewritten. They're coming soon. I promise.
 ### High-level usage for Node object
 
 ``` js
-var bcoin = require('bcoin');
+var bcoin = require('bcoin')('main');
 
 var node = bcoin.fullnode({
   prune: false,
@@ -136,8 +136,7 @@ $ node bin/bcoin-cli mempool
 ### Creating a blockchain and mempool
 
 ``` js
-var bcoin = require('bcoin');
-bcoin.protocol.network.set('regtest');
+var bcoin = require('bcoin')('regtest');
 var chain = new bcoin.chain({ db: 'memory' });
 var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
 var miner = new bcoin.miner({ chain: chain, mempool: mempool });
