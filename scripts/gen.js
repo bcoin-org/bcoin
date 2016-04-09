@@ -1,4 +1,4 @@
-var bcoin = require('bcoin');
+var bcoin = require('bcoin')();
 var constants = bcoin.protocol.constants;
 var network = bcoin.protocol.network;
 var utils = bcoin.utils;
@@ -32,13 +32,13 @@ function createGenesisBlock(options) {
     version: 1,
     inputs: [{
       prevout: {
-        hash: utils.toHex(constants.zeroHash),
+        hash: constants.nullHash,
         index: 0xffffffff
       },
       script: {
         code: [
-          new bn(486604799, 'le').toBuffer(),
-          new bn(4, 'le').toBuffer(),
+          new bn(486604799).toBuffer('le'),
+          new bn(4).toBuffer('le'),
           options.flags
         ]
       },
@@ -58,7 +58,7 @@ function createGenesisBlock(options) {
 
   block = {
     version: options.version,
-    prevBlock: utils.toHex(constants.zeroHash),
+    prevBlock: constants.nullHash,
     merkleRoot: utils.toHex(utils.dsha256(txRaw)),
     ts: options.ts,
     bits: options.bits,
@@ -109,7 +109,6 @@ var regtest = createGenesisBlock({
 
 var segnet3 = createGenesisBlock({
   version: 1,
-  // ts: 1452368293,
   ts: 1452831101,
   bits: 0x1d00ffff,
   nonce: 0
