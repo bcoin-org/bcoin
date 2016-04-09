@@ -10,10 +10,10 @@ var Client = bcoin.http.client;
 var client = new Client(argv.url || process.env.BCOIN_URL || 'localhost:8080');
 
 function getID() {
-  if (process.env.BCOIN_WALLET_ID)
-    return process.env.BCOIN_WALLET_ID;
   if (argv.id)
     return argv.id;
+  if (process.env.BCOIN_WALLET_ID)
+    return process.env.BCOIN_WALLET_ID;
   return argv.args.shift();
 }
 
