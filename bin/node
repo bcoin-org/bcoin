@@ -4,6 +4,11 @@ var bcoin = require('../')({ debug: true, debugFile: true });
 var utils = bcoin.utils;
 var assert = utils.assert;
 
+process.on('uncaughtException', function(err) {
+  bcoin.debug(err ? err.stack + '' : err + '');
+  process.exit(1);
+});
+
 var node = bcoin.fullnode({
   passphrase: 'node',
   prune: process.argv.indexOf('--prune') !== -1,
