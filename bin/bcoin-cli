@@ -171,6 +171,7 @@ function getBalance(callback) {
       return callback(err);
     utils.print('Confirmed: %s', utils.btc(balance.confirmed));
     utils.print('Unconfirmed: %s', utils.btc(balance.unconfirmed));
+    utils.print('Total: %s', utils.btc(balance.total));
     callback();
   });
 }

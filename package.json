@@ -9,7 +9,7 @@
   },
   "preferGlobal": false,
   "scripts": {
-    "test": "mocha --reporter spec test/*-test.js"
+    "test": "BCOIN_NETWORK=main mocha --reporter spec test/*-test.js"
   },
   "repository": "git://github.com/bcoin-org/bcoin.git",
   "keywords": [
