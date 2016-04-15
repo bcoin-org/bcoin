@@ -1,0 +1,6 @@
+.git*
+test/
+node_modules/
+.jshintrc
+.jscsrc
+jsdoc.json
