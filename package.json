@@ -42,6 +42,7 @@
   "devDependencies": {
     "browserify": "13.0.0",
     "hash.js": "1.0.3",
+    "jsdoc": "3.4.0",
     "level-js": "2.2.3",
     "mocha": "1.21.5",
     "uglify-js": "2.6.1",
