@@ -25,9 +25,9 @@ fullnode. Bcoin runs in node.js, but it can also be browserified.
 $ npm install bcoin
 ```
 
-## NOTE
+## Documentation
 
-Docs need to be rewritten. They're coming soon. I promise.
+Read the docs here: http://bcoin.ninja/docs/
 
 ## Example Usage
 
