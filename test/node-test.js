@@ -120,7 +120,7 @@ describe('Node', function() {
                         node.mempool.getBalance(function(err, balance) {
                           assert.noError(err);
                           assert.equal(balance.total.toString(10), '20000');
-                          node.mempool.getAll(function(err, txs) {
+                          node.mempool.getHistory(function(err, txs) {
                             assert(txs.some(function(tx) {
                               return tx.hash('hex') === f1.hash('hex');
                             }));

@@ -154,9 +154,9 @@ function getCoin(callback) {
   });
 }
 
-function getWalletAll(callback) {
+function getWalletHistory(callback) {
   var id = getID();
-  client.getWalletAll(id, function(err, txs) {
+  client.getWalletHistory(id, function(err, txs) {
     if (err)
       return callback(err);
     utils.print(txs);
@@ -228,7 +228,7 @@ function main(callback) {
     case 'balance':
       return getBalance(callback);
     case 'history':
-      return getWalletAll(callback);
+      return getWalletHistory(callback);
     case 'send':
       return send(callback);
     case 'zap':

@@ -213,14 +213,14 @@ describe('Wallet', function() {
                             w.getBalance(function(err, balance) {
                               assert.noError(err);
                               assert.equal(balance.total.toString(10), '11000');
-                              w.getAll(function(err, txs) {
+                              w.getHistory(function(err, txs) {
                                 assert(txs.some(function(tx) {
                                   return tx.hash('hex') === f1.hash('hex');
                                 }));
 
                                 var w2 = bcoin.wallet.fromJSON(w.toJSON());
                                 // assert.equal(w2.getBalance().toString(10), '11000');
-                                // assert(w2.getAll().some(function(tx) {
+                                // assert(w2.getHistory().some(function(tx) {
                                 //   return tx.hash('hex') === f1.hash('hex');
                                 // }));
                                 cb();
