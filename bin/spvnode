@@ -11,7 +11,7 @@ var node = bcoin.spvnode({
 });
 
 node.on('error', function(err) {
-  bcoin.debug(err.message);
+  bcoin.debug(err.stack + '');
 });
 
 node.open(function(err) {
