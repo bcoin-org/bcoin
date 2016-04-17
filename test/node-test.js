@@ -5,27 +5,17 @@ var utils = bcoin.utils;
 var assert = utils.assert;
 var opcodes = constants.opcodes;
 
-describe('Node', function() {
-  var node = new bcoin.fullnode();
-  node.on('error', function() {});
+describe('Mempool', function() {
+  var chain = new bcoin.chain();
+  var mempool = new bcoin.mempool({ chain: chain });
+  mempool.on('error', function() {});
 
-  it('should open node', function(cb) {
-    node.open(cb);
+  it('should open mempool', function(cb) {
+    mempool.open(cb);
   });
 
-  it('should have wallet', function(cb) {
-    node.getWallet('primary', function(err, wallet) {
-      if (err)
-        return cb(err);
-
-      node.wallet = wallet;
-
-      cb();
-    });
-  });
-
-  it('should have TX pool and be serializable', function(cb) {
-    var w = node.wallet;
+  it('should handle incoming orphans and TXs', function(cb) {
+    var w = new bcoin.wallet();
 
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
@@ -93,34 +83,34 @@ describe('Node', function() {
     f1.hint = 'f1';
     fake.hint = 'fake';
 
-    node.mempool.addTX(fake, function(err) {
+    mempool.addTX(fake, function(err) {
       assert.noError(err);
-      node.mempool.addTX(t4, function(err) {
+      mempool.addTX(t4, function(err) {
         assert.noError(err);
-        node.mempool.getBalance(function(err, balance) {
+        mempool.getBalance(function(err, balance) {
           assert.noError(err);
           assert.equal(balance.total.toString(10), '0');
-          node.mempool.addTX(t1, function(err) {
+          mempool.addTX(t1, function(err) {
             assert.noError(err);
-            node.mempool.getBalance(function(err, balance) {
+            mempool.getBalance(function(err, balance) {
               assert.noError(err);
               assert.equal(balance.total.toString(10), '60000');
-              node.mempool.addTX(t2, function(err) {
+              mempool.addTX(t2, function(err) {
                 assert.noError(err);
-                node.mempool.getBalance(function(err, balance) {
+                mempool.getBalance(function(err, balance) {
                   assert.noError(err);
                   assert.equal(balance.total.toString(10), '50000');
-                  node.mempool.addTX(t3, function(err) {
+                  mempool.addTX(t3, function(err) {
                     assert.noError(err);
-                    node.mempool.getBalance(function(err, balance) {
+                    mempool.getBalance(function(err, balance) {
                       assert.noError(err);
                       assert.equal(balance.total.toString(10), '22000');
-                      node.mempool.addTX(f1, function(err) {
+                      mempool.addTX(f1, function(err) {
                         assert.noError(err);
-                        node.mempool.getBalance(function(err, balance) {
+                        mempool.getBalance(function(err, balance) {
                           assert.noError(err);
                           assert.equal(balance.total.toString(10), '20000');
-                          node.mempool.getHistory(function(err, txs) {
+                          mempool.getHistory(function(err, txs) {
                             assert(txs.some(function(tx) {
                               return tx.hash('hex') === f1.hash('hex');
                             }));
@@ -140,7 +130,7 @@ describe('Node', function() {
     });
   });
 
-  it('should destroy pool', function(cb) {
-    node.close(cb);
+  it('should destroy mempool', function(cb) {
+    mempool.close(cb);
   });
 });
