@@ -558,7 +558,7 @@ describe('Wallet', function() {
   it('should have gratuitous dump', function(cb) {
     bcoin.walletdb().dump(function(err, records) {
       assert.noError(err);
-      console.log(records);
+      // console.log(records);
       setTimeout(cb, 200);
     });
   });
