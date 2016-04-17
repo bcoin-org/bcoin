@@ -6,16 +6,16 @@ var assert = utils.assert;
 
 var dummyInput = {
   prevout: {
-    hash: constants.zeroHash,
+    hash: constants.ZERO_HASH,
     index: 0
   },
   coin: {
     version: 1,
     height: 0,
-    value: constants.maxMoney.clone(),
+    value: constants.MAX_MONEY.clone(),
     script: new bcoin.script([]),
     coinbase: false,
-    hash: constants.zeroHash,
+    hash: constants.ZERO_HASH,
     index: 0
   },
   script: new bcoin.script([]),
@@ -336,7 +336,7 @@ describe('Wallet', function() {
               tx.addOutput(to, 5460);
 
               var cost = tx.getOutputValue();
-              var total = cost.add(new bn(constants.tx.minFee));
+              var total = cost.add(new bn(constants.tx.MIN_FEE));
 
               w1.getCoins(function(err, coins1) {
                 assert.noError(err);
@@ -352,7 +352,7 @@ describe('Wallet', function() {
                   tx.addInput(coins2[0]);
 
                   var left = tx.getInputValue().sub(total);
-                  if (left.cmpn(constants.tx.dustThreshold) < 0) {
+                  if (left.cmpn(constants.tx.DUST_THRESHOLD) < 0) {
                     tx.outputs[tx.outputs.length - 2].value.iadd(left);
                     left = new bn(0);
                   }

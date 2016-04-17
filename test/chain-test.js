@@ -7,7 +7,7 @@ var utils = bcoin.utils;
 var assert = utils.assert;
 var opcodes = constants.opcodes;
 
-constants.tx.coinbaseMaturity = 0;
+constants.tx.COINBASE_MATURITY = 0;
 
 describe('Chain', function() {
   var chain, wallet, miner;
@@ -174,7 +174,7 @@ describe('Chain', function() {
   });
 
   it('should cleanup', function(cb) {
-    constants.tx.coinbaseMaturity = 100;
+    constants.tx.COINBASE_MATURITY = 100;
     cb();
   });
 });

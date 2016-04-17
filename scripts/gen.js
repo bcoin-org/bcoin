@@ -26,13 +26,13 @@ function createGenesisBlock(options) {
   }
 
   if (!options.reward)
-    options.reward = new bn(50).mul(constants.coin);
+    options.reward = new bn(50).mul(constants.COIN);
 
   tx = {
     version: 1,
     inputs: [{
       prevout: {
-        hash: constants.nullHash,
+        hash: constants.NULL_HASH,
         index: 0xffffffff
       },
       script: {
@@ -58,7 +58,7 @@ function createGenesisBlock(options) {
 
   block = {
     version: options.version,
-    prevBlock: constants.nullHash,
+    prevBlock: constants.NULL_HASH,
     merkleRoot: utils.toHex(utils.dsha256(txRaw)),
     ts: options.ts,
     bits: options.bits,
