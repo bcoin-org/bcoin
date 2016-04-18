@@ -59,7 +59,7 @@ function createGenesisBlock(options) {
   block = {
     version: options.version,
     prevBlock: constants.NULL_HASH,
-    merkleRoot: utils.toHex(utils.dsha256(txRaw)),
+    merkleRoot: utils.dsha256(txRaw).toString('hex'),
     ts: options.ts,
     bits: options.bits,
     nonce: options.nonce,
@@ -71,7 +71,7 @@ function createGenesisBlock(options) {
   block = parser.parseBlock(blockRaw);
 
   block._hash = utils.dsha256(blockRaw.slice(0, 80));
-  block.hash = utils.toHex(block._hash);
+  block.hash = block._hash.toString('hex');
   block._raw = blockRaw;
   block._size = blockRaw.length;
   block._witnessSize = 0;
@@ -81,7 +81,7 @@ function createGenesisBlock(options) {
   tx.height = 0;
   tx.ts = block.ts;
   tx._hash = block.merkleRoot;
-  tx.hash = utils.toHex(tx._hash);
+  tx.hash = tx._hash.toString('hex');
 
   return block;
 }
