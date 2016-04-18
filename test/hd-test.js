@@ -32,7 +32,7 @@ describe('HD', function() {
   var master, child1, child2, child3, child4, child5, child6;
 
   it('should create a pbkdf2 seed', function() {
-    var checkSeed = utils.toHex(bcoin.utils.pbkdf2(phrase, 'mnemonic' + 'foo', 2048, 64));
+    var checkSeed = bcoin.utils.pbkdf2(phrase, 'mnemonic' + 'foo', 2048, 64).toString('hex');
     assert.equal(checkSeed, seed);
   });
 

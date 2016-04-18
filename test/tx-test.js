@@ -43,7 +43,7 @@ describe('TX', function() {
 
   it('should decode/encode with parser/framer', function() {
     var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
-    assert.equal(bcoin.utils.toHex(tx.render()), raw);
+    assert.equal(tx.render().toString('hex'), raw);
   });
 
   it('should be verifiable', function() {

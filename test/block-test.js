@@ -26,7 +26,7 @@ describe('Block', function() {
       '33825657ba32afe269819f01993bd77baba86379043168c94845d32370e53562' ],
     flags: new Buffer([ 245, 90, 0 ])
   }, 'merkleblock');
-  var raw = bcoin.utils.toHex(block.toRaw());
+  var raw = block.toRaw('hex');
 
   it('should parse partial merkle tree', function() {
     assert(block.verify());
@@ -41,7 +41,7 @@ describe('Block', function() {
 
   it('should decode/encode with parser/framer', function() {
     var b = bcoin.merkleblock(parser.parseMerkleBlock(new Buffer(raw, 'hex')));
-    assert.equal(bcoin.utils.toHex(b.render()), raw);
+    assert.equal(b.render().toString('hex'), raw);
   });
 
   it('should be verifiable', function() {

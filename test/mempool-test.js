@@ -22,7 +22,7 @@ describe('Mempool', function() {
     var prev = new bcoin.script([w.publicKey, opcodes.OP_CHECKSIG]);
     var dummyInput = {
       prevout: {
-        hash: constants.ONE_HASH,
+        hash: constants.ONE_HASH.toString('hex'),
         index: 0
       },
       coin: {
@@ -31,7 +31,7 @@ describe('Mempool', function() {
         value: new bn(70000),
         script: prev,
         coinbase: false,
-        hash: constants.ONE_HASH,
+        hash: constants.ONE_HASH.toString('hex'),
         index: 0
       },
       script: new bcoin.script([]),

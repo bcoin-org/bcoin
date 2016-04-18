@@ -6,7 +6,7 @@ var assert = utils.assert;
 
 var dummyInput = {
   prevout: {
-    hash: constants.ZERO_HASH,
+    hash: constants.NULL_HASH,
     index: 0
   },
   coin: {
@@ -15,7 +15,7 @@ var dummyInput = {
     value: constants.MAX_MONEY.clone(),
     script: new bcoin.script([]),
     coinbase: false,
-    hash: constants.ZERO_HASH,
+    hash: constants.NULL_HASH,
     index: 0
   },
   script: new bcoin.script([]),

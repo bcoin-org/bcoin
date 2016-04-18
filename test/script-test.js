@@ -15,15 +15,15 @@ describe('Script', function() {
     var decoded = bcoin.script.decode(new Buffer(src, 'hex'));
     assert.equal(decoded.length, 3);
     assert.equal(
-      bcoin.utils.toHex(decoded[0]),
+      decoded[0].toString('hex'),
       '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
     assert.equal(
-      bcoin.utils.toHex(decoded[1]),
+      decoded[1].toString('hex'),
       '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f');
     assert.equal(decoded[2], opcodes.OP_CHECKSIG);
 
     var dst = bcoin.script.encode(decoded);
-    assert.equal(bcoin.utils.toHex(dst), src);
+    assert.equal(dst.toString('hex'), src);
   });
 
   if (0)
