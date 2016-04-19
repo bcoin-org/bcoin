@@ -39,15 +39,13 @@ describe('Script', function() {
 
   it('should recognize a P2SH output', function () {
     var hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87'
-    var encoded = new Buffer(hex, 'hex')
-    var decoded = new bcoin.script(encoded);
+    var decoded = bcoin.script.fromRaw(hex, 'hex');
     assert(decoded.isScripthash())
   });
 
   it('should recognize a Null Data output', function () {
     var hex = '6a28590c080112220a1b353930632e6f7267282a5f5e294f7665726c6179404f7261636c65103b1a010c'
-    var encoded = new Buffer(hex, 'hex')
-    var decoded = new Script(encoded);
+    var decoded = bcoin.script.fromRaw(hex, 'hex');
     assert(decoded.isNulldata())
   });
 

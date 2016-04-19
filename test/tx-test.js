@@ -96,14 +96,14 @@ describe('TX', function() {
     var suffix = nocache ? ' without cache' : ' with cache';
 
     it('should decode/encode with parser/framer' + suffix, function() {
-      var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
+      var tx = bcoin.tx.fromRaw(raw, 'hex');
       clearCache(tx, nocache);
       assert.equal(tx.render().toString('hex'), raw);
     });
 
     it('should be verifiable' + suffix, function() {
-      var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
-      var p = bcoin.tx(parser.parseTX(new Buffer(inp, 'hex')));
+      var tx = bcoin.tx.fromRaw(raw, 'hex');
+      var p = bcoin.tx.fromRaw(inp, 'hex');
       tx.fillCoins(p);
 
       clearCache(tx, nocache);
@@ -240,7 +240,7 @@ describe('TX', function() {
         return;
       var tx = bcoin.tx.fromRaw(data[0], 'hex');
       clearCache(tx, nocache);
-      var script = new bcoin.script(new Buffer(data[1], 'hex'));
+      var script = bcoin.script.fromRaw(data[1], 'hex');
       clearCache(script, nocache);
       var index = data[2];
       var type = data[3];
