@@ -134,24 +134,59 @@ describe('Script', function() {
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
   });
 
-  var dummyInput = {
-    prevout: {
-      hash: constants.NULL_HASH,
-      index: 0
-    },
-    coin: {
-      version: 1,
-      height: 0,
-      value: constants.MAX_MONEY.clone(),
-      script: new bcoin.script([]),
-      coinbase: false,
-      hash: constants.NULL_HASH,
-      index: 0
-    },
-    script: new bcoin.script([]),
-    witness: new bcoin.script.witness([]),
-    sequence: 0xffffffff
-  };
+  function success(res, stack) {
+    if (!res)
+      return false;
+    if (stack.length === 0)
+      return false;
+    if (!bcoin.script.bool(stack.pop()))
+      return false;
+    return true;
+  }
+
+  it('should handle CScriptNums correctly', function () {
+    var s = bcoin.script.fromSymbolic([
+      new Buffer([0xff, 0xff, 0xff, 0x7f]), 'OP_NEGATE', 'OP_DUP', 'OP_ADD'
+    ]);
+    var s2 = bcoin.script.fromSymbolic([
+      new Buffer([0xfe, 0xff, 0xff, 0xff, 0x80]),
+      'OP_EQUAL'
+    ]);
+    var stack = new bcoin.script.stack();
+    assert(s.execute(stack));
+    assert(success(s2.execute(stack), stack));
+  });
+
+  it('should handle CScriptNums correctly', function () {
+    var s = bcoin.script.fromSymbolic([
+      'OP_11', 'OP_10', 'OP_1', 'OP_ADD'
+    ]);
+    var s2 = bcoin.script.fromSymbolic([
+      'OP_NUMNOTEQUAL',
+      'OP_NOT'
+    ]);
+    var stack = new bcoin.script.stack();
+    assert(s.execute(stack));
+    assert(success(s2.execute(stack), stack));
+  });
+
+  it('should handle OP_ROLL correctly', function () {
+    var s = bcoin.script.fromSymbolic([
+      new Buffer([0x16]), new Buffer([0x15]), new Buffer([0x14])
+    ]);
+    var s2 = bcoin.script.fromSymbolic([
+      'OP_0',
+      'OP_ROLL',
+      new Buffer([0x14]),
+      'OP_EQUALVERIFY',
+      'OP_DEPTH',
+      'OP_2',
+      'OP_EQUAL'
+    ]);
+    var stack = new bcoin.script.stack();
+    assert(s.execute(stack));
+    assert(success(s2.execute(stack), stack));
+  });
 
   scripts.forEach(function(data) {
     // ["Format is: [[wit...]?, scriptSig, scriptPubKey, flags, expected_scripterror, ... comments]"],
