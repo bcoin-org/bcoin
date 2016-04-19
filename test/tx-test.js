@@ -114,13 +114,12 @@ describe('TX', function() {
       tx.fillCoins(coin);
     });
 
-    if (!tx.hasCoins())
-      return;
-
     return {
       tx: tx,
       flags: flags,
-      comments: tx.inputs[0].coin.script.inspect(),
+      comments: tx.hasCoins()
+        ? utils._inspect(tx.inputs[0].coin.script, false).slice(0, -1)
+        : 'coinbase',
       data: data
     };
   }
@@ -147,10 +146,16 @@ describe('TX', function() {
       var flags = data.flags;
       var comments = comment.trim();
       if (!comments)
-        comments = data.comment;
+        comments = data.comments;
       comment = '';
 
       if (valid) {
+        if (comments.indexOf('Coinbase') === 0) {
+          it('should handle valid coinbase: ' + comments, function () {
+            assert.ok(tx.isSane());
+          });
+          return;
+        }
         it('should handle valid tx test: ' + comments, function () {
           assert.ok(tx.verify(null, true, flags));
         });
@@ -161,8 +166,14 @@ describe('TX', function() {
           });
           return;
         }
+        if (comments.indexOf('Coinbase') === 0) {
+          it('should handle invalid coinbase: ' + comments, function () {
+            assert.ok(!tx.isSane());
+          });
+          return;
+        }
         it('should handle invalid tx test: ' + comments, function () {
-            assert.ok(!tx.verify(null, true, flags));
+          assert.ok(!tx.verify(null, true, flags));
         });
       }
     });
