@@ -4,9 +4,23 @@ var bcoin = require('../')();
 var utils = bcoin.utils;
 var constants = bcoin.protocol.constants;
 var opcodes = bcoin.protocol.constants.opcodes;
-var valid = require('./data/tx_valid');
-var invalid = require('./data/tx_invalid');
-var sighash = require('./data/sighash');
+var valid = require('./data/tx_valid.json');
+var invalid = require('./data/tx_invalid.json');
+var sighash = require('./data/sighash.json');
+var fs = require('fs');
+var tx1 = parseTX('data/tx1.hex');
+var tx2 = parseTX('data/tx2.hex');
+var tx3 = parseTX('data/tx3.hex');
+
+function parseTX(file) {
+  file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim().split(/\n+/);
+  var tx = bcoin.tx.fromRaw(file.shift().trim(), 'hex');
+  for (var i = 0; i < file.length; i++) {
+    var coin = bcoin.tx.fromRaw(file[i].trim(), 'hex');
+    tx.fillCoins(coin);
+  }
+  return tx;
+}
 
 describe('TX', function() {
   var parser = bcoin.protocol.parser;
@@ -58,6 +72,18 @@ describe('TX', function() {
     tx.fillCoins(p);
 
     assert(tx.verify());
+  });
+
+  it('should verify non-minimal output', function() {
+    assert(tx1.verify(null, true, constants.flags.VERIFY_P2SH));
+  });
+
+  it('should verify tx.version == 0', function() {
+    assert(tx2.verify(null, true, constants.flags.VERIFY_P2SH));
+  });
+
+  it('should verify sighash_single bug w/ findanddelete', function() {
+    assert(tx3.verify(null, true, constants.flags.VERIFY_P2SH));
   });
 
   function parseTest(data) {
