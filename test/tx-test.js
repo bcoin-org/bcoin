@@ -210,6 +210,14 @@ describe('TX', function() {
             });
             return;
           }
+          if (comments === 'Negative output') {
+            it('should handle invalid tx (negative)' + suffix + ': ' + comments, function () {
+              clearCache(tx, nocache);
+              assert.ok(tx.verify(null, true, flags));
+              assert.ok(!tx.isSane());
+            });
+            return;
+          }
           if (comments.indexOf('Coinbase') === 0) {
             it('should handle invalid coinbase' + suffix + ': ' + comments, function () {
               clearCache(tx, nocache);
