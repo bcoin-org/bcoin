@@ -206,6 +206,7 @@ describe('TX', function() {
           if (comments === 'Duplicate inputs') {
             it('should handle duplicate input test' + suffix + ': ' + comments, function () {
               clearCache(tx, nocache);
+              assert.ok(tx.verify(null, true, flags));
               assert.ok(!tx.isSane());
             });
             return;
