@@ -203,10 +203,7 @@ describe('Script', function() {
 
     comments += ' (' + expected + ')';
 
-    if (witness)
-      witness = bcoin.witness.fromTestString(witness);
-    else
-      witness = new bcoin.witness();
+    witness = bcoin.witness.fromTestString(witness);
     input = bcoin.script.fromTestString(input);
     output = bcoin.script.fromTestString(output);
 

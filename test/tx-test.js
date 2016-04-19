@@ -25,15 +25,20 @@ function parseTX(file) {
 function clearCache(tx, nocache) {
   var i, input, output;
 
-  if (!nocache)
-    return;
-
   if (tx instanceof bcoin.script) {
+    if (!nocache)
+      return;
     delete tx.raw;
     return;
   }
 
-  delete tx.raw;
+  if (!nocache) {
+    assert.equal(tx.hash('hex'), tx.clone().hash('hex'));
+    return;
+  }
+
+  delete tx._raw;
+  delete tx._hash;
 
   for (i = 0; i < tx.inputs.length; i++) {
     input = tx.inputs[i];
@@ -179,7 +184,6 @@ describe('TX', function() {
         }
 
         var tx = data.tx;
-        clearCache(tx, nocache);
         var flags = data.flags;
         var comments = comment.trim();
         if (!comments)
@@ -189,27 +193,32 @@ describe('TX', function() {
         if (valid) {
           if (comments.indexOf('Coinbase') === 0) {
             it('should handle valid coinbase' + suffix + ': ' + comments, function () {
+              clearCache(tx, nocache);
               assert.ok(tx.isSane());
             });
             return;
           }
           it('should handle valid tx test' + suffix + ': ' + comments, function () {
+            clearCache(tx, nocache);
             assert.ok(tx.verify(null, true, flags));
           });
         } else {
           if (comments === 'Duplicate inputs') {
             it('should handle duplicate input test' + suffix + ': ' + comments, function () {
+              clearCache(tx, nocache);
               assert.ok(!tx.isSane());
             });
             return;
           }
           if (comments.indexOf('Coinbase') === 0) {
             it('should handle invalid coinbase' + suffix + ': ' + comments, function () {
+              clearCache(tx, nocache);
               assert.ok(!tx.isSane());
             });
             return;
           }
           it('should handle invalid tx test' + suffix + ': ' + comments, function () {
+            clearCache(tx, nocache);
             assert.ok(!tx.verify(null, true, flags));
           });
         }
