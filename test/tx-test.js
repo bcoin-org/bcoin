@@ -6,6 +6,7 @@ var constants = bcoin.protocol.constants;
 var opcodes = bcoin.protocol.constants.opcodes;
 var valid = require('./data/tx_valid');
 var invalid = require('./data/tx_invalid');
+var sighash = require('./data/sighash');
 
 describe('TX', function() {
   var parser = bcoin.protocol.parser;
@@ -73,7 +74,6 @@ describe('TX', function() {
     coins.forEach(function(data) {
       var hash = data[0];
       var index = data[1];
-      utils.print(data[2]);
       var script = bcoin.script.fromTestString(data[2]);
       var value = data[3];
       var coin = new bcoin.coin({
@@ -100,6 +100,7 @@ describe('TX', function() {
   }
 
   [[valid, true], [invalid, false]].forEach(function(test) {
+    // ["[[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"],
     var arr = test[0];
     var valid = test[1];
     var comment = '';
@@ -118,9 +119,9 @@ describe('TX', function() {
 
       var tx = data.tx;
       var flags = data.flags;
-      var comments = comment;
-      if (!comments.trim())
-        comment = data.comment;
+      var comments = comment.trim();
+      if (!comments)
+        comments = data.comment;
       comment = '';
 
       if (valid) {
@@ -128,15 +129,38 @@ describe('TX', function() {
           assert.ok(tx.verify(null, true, flags));
         });
       } else {
+        if (comments === 'Duplicate inputs') {
+          it('should handle duplicate input test: ' + comments, function () {
+            assert.ok(!tx.isSane());
+          });
+          return;
+        }
         it('should handle invalid tx test: ' + comments, function () {
-          try {
-          assert.ok(!tx.verify(null, true, flags));
-          } catch (e) {
-            utils.error(tx);
-            throw e;
-          }
+            assert.ok(!tx.verify(null, true, flags));
         });
       }
+    });
+  });
+
+  sighash.forEach(function(data) {
+    // ["raw_transaction, script, input_index, hashType, signature_hash (result)"],
+    if (data.length === 1)
+      return;
+    var tx = bcoin.tx.fromRaw(data[0], 'hex');
+    var script = new bcoin.script(new Buffer(data[1], 'hex'));
+    var index = data[2];
+    var type = data[3];
+    var expected = utils.revHex(data[4]);
+    var hexType = type & 3;
+    if (type & 0x80)
+      hexType |= 0x80;
+    hexType = hexType.toString(16);
+    if (hexType.length % 2 !== 0)
+      hexType = '0' + hexType;
+    it('should get signature hash of ' + data[4] + ' (' + hexType + ')', function () {
+      var subscript = script.getSubscript();
+      var hash = tx.signatureHash(index, subscript, type, 0).toString('hex');
+      assert.equal(hash, expected);
     });
   });
 });
