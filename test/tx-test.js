@@ -1,6 +1,11 @@
 var assert = require('assert');
 var bn = require('bn.js');
 var bcoin = require('../')();
+var utils = bcoin.utils;
+var constants = bcoin.protocol.constants;
+var opcodes = bcoin.protocol.constants.opcodes;
+var valid = require('./data/tx_valid');
+var invalid = require('./data/tx_invalid');
 
 describe('TX', function() {
   var parser = bcoin.protocol.parser;
@@ -52,5 +57,86 @@ describe('TX', function() {
     tx.fillCoins(p);
 
     assert(tx.verify());
+  });
+
+  function parseTest(data) {
+    var coins = data[0];
+    var tx = bcoin.tx.fromRaw(data[1], 'hex');
+    var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+    var flag = 0;
+
+    for (var i = 0; i < flags.length; i++)
+      flag |= constants.flags['VERIFY_' + flags[i]];
+
+    flags = flag;
+
+    coins.forEach(function(data) {
+      var hash = data[0];
+      var index = data[1];
+      utils.print(data[2]);
+      var script = bcoin.script.fromTestString(data[2]);
+      var value = data[3];
+      var coin = new bcoin.coin({
+        version: 1,
+        height: -1,
+        coinbase: false,
+        hash: utils.revHex(hash),
+        index: index,
+        script: script,
+        value: value != null ? new bn(value) : new bn(0)
+      });
+      tx.fillCoins(coin);
+    });
+
+    if (!tx.hasCoins())
+      return;
+
+    return {
+      tx: tx,
+      flags: flags,
+      comments: tx.inputs[0].coin.script.inspect(),
+      data: data
+    };
+  }
+
+  [[valid, true], [invalid, false]].forEach(function(test) {
+    var arr = test[0];
+    var valid = test[1];
+    var comment = '';
+    arr.forEach(function(json, i) {
+      if (json.length === 1) {
+        comment += ' ' + json[0];
+        return;
+      }
+
+      var data = parseTest(json);
+
+      if (!data) {
+        comment = '';
+        return;
+      }
+
+      var tx = data.tx;
+      var flags = data.flags;
+      var comments = comment;
+      if (!comments.trim())
+        comment = data.comment;
+      comment = '';
+
+      if (valid) {
+        it('should handle valid tx test: ' + comments, function () {
+          assert.ok(tx.verify(null, true, flags));
+        });
+      } else {
+        it('should handle invalid tx test: ' + comments, function () {
+          try {
+          assert.ok(!tx.verify(null, true, flags));
+          } catch (e) {
+            utils.error(tx);
+            throw e;
+          }
+        });
+      }
+    });
   });
 });
