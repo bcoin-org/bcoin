@@ -22,6 +22,32 @@ function parseTX(file) {
   return tx;
 }
 
+function clearCache(tx, nocache) {
+  var i, input, output;
+
+  if (!nocache)
+    return;
+
+  if (tx instanceof bcoin.script) {
+    delete tx.raw;
+    return;
+  }
+
+  delete tx.raw;
+
+  for (i = 0; i < tx.inputs.length; i++) {
+    input = tx.inputs[i];
+    delete input.script.raw;
+    if (input.coin)
+      delete input.coin.script.raw;
+  }
+
+  for (i = 0; i < tx.outputs.length; i++) {
+    output = tx.outputs[i];
+    delete output.script.raw;
+  }
+}
+
 describe('TX', function() {
   var parser = bcoin.protocol.parser;
   var raw = '010000000125393c67cd4f581456dd0805fa8e9db3abdf90dbe1d4b53e28' +
@@ -61,143 +87,157 @@ describe('TX', function() {
             '0f7c00000000001976a91495ad422bb5911c2c9fe6ce4f82a13c85f03d9b' +
             '2e88ac00000000';
 
-  it('should decode/encode with parser/framer', function() {
-    var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
-    assert.equal(tx.render().toString('hex'), raw);
-  });
+  [false, true].forEach(function(nocache) {
+    var suffix = nocache ? ' without cache' : ' with cache';
 
-  it('should be verifiable', function() {
-    var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
-    var p = bcoin.tx(parser.parseTX(new Buffer(inp, 'hex')));
-    tx.fillCoins(p);
+    it('should decode/encode with parser/framer' + suffix, function() {
+      var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
+      clearCache(tx, nocache);
+      assert.equal(tx.render().toString('hex'), raw);
+    });
 
-    assert(tx.verify());
-  });
+    it('should be verifiable' + suffix, function() {
+      var tx = bcoin.tx(parser.parseTX(new Buffer(raw, 'hex')));
+      var p = bcoin.tx(parser.parseTX(new Buffer(inp, 'hex')));
+      tx.fillCoins(p);
 
-  it('should verify non-minimal output', function() {
-    assert(tx1.verify(null, true, constants.flags.VERIFY_P2SH));
-  });
+      clearCache(tx, nocache);
+      clearCache(p, nocache);
 
-  it('should verify tx.version == 0', function() {
-    assert(tx2.verify(null, true, constants.flags.VERIFY_P2SH));
-  });
+      assert(tx.verify());
+    });
 
-  it('should verify sighash_single bug w/ findanddelete', function() {
-    assert(tx3.verify(null, true, constants.flags.VERIFY_P2SH));
-  });
+    it('should verify non-minimal output' + suffix, function() {
+      clearCache(tx1, nocache);
+      assert(tx1.verify(null, true, constants.flags.VERIFY_P2SH));
+    });
 
-  function parseTest(data) {
-    var coins = data[0];
-    var tx = bcoin.tx.fromRaw(data[1], 'hex');
-    var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
-    var flag = 0;
+    it('should verify tx.version == 0' + suffix, function() {
+      clearCache(tx2, nocache);
+      assert(tx2.verify(null, true, constants.flags.VERIFY_P2SH));
+    });
 
-    for (var i = 0; i < flags.length; i++)
-      flag |= constants.flags['VERIFY_' + flags[i]];
+    it('should verify sighash_single bug w/ findanddelete' + suffix, function() {
+      clearCache(tx3, nocache);
+      assert(tx3.verify(null, true, constants.flags.VERIFY_P2SH));
+    });
 
-    flags = flag;
+    function parseTest(data) {
+      var coins = data[0];
+      var tx = bcoin.tx.fromRaw(data[1], 'hex');
+      var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+      var flag = 0;
 
-    coins.forEach(function(data) {
-      var hash = data[0];
-      var index = data[1];
-      var script = bcoin.script.fromTestString(data[2]);
-      var value = data[3];
-      var coin = new bcoin.coin({
-        version: 1,
-        height: -1,
-        coinbase: false,
-        hash: utils.revHex(hash),
-        index: index,
-        script: script,
-        value: value != null ? new bn(value) : new bn(0)
+      for (var i = 0; i < flags.length; i++)
+        flag |= constants.flags['VERIFY_' + flags[i]];
+
+      flags = flag;
+
+      coins.forEach(function(data) {
+        var hash = data[0];
+        var index = data[1];
+        var script = bcoin.script.fromTestString(data[2]);
+        var value = data[3];
+        var coin = new bcoin.coin({
+          version: 1,
+          height: -1,
+          coinbase: false,
+          hash: utils.revHex(hash),
+          index: index,
+          script: script,
+          value: value != null ? new bn(value) : new bn(0)
+        });
+        tx.fillCoins(coin);
       });
-      tx.fillCoins(coin);
-    });
 
-    return {
-      tx: tx,
-      flags: flags,
-      comments: tx.hasCoins()
-        ? utils._inspect(tx.inputs[0].coin.script, false).slice(0, -1)
-        : 'coinbase',
-      data: data
-    };
-  }
+      return {
+        tx: tx,
+        flags: flags,
+        comments: tx.hasCoins()
+          ? utils._inspect(tx.inputs[0].coin.script, false).slice(0, -1)
+          : 'coinbase',
+        data: data
+      };
+    }
 
-  [[valid, true], [invalid, false]].forEach(function(test) {
-    // ["[[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"],
-    var arr = test[0];
-    var valid = test[1];
-    var comment = '';
-    arr.forEach(function(json, i) {
-      if (json.length === 1) {
-        comment += ' ' + json[0];
-        return;
-      }
+    [[valid, true], [invalid, false]].forEach(function(test) {
+      // ["[[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"],
+      var arr = test[0];
+      var valid = test[1];
+      var comment = '';
+      arr.forEach(function(json, i) {
+        if (json.length === 1) {
+          comment += ' ' + json[0];
+          return;
+        }
 
-      var data = parseTest(json);
+        var data = parseTest(json);
 
-      if (!data) {
+        if (!data) {
+          comment = '';
+          return;
+        }
+
+        var tx = data.tx;
+        clearCache(tx, nocache);
+        var flags = data.flags;
+        var comments = comment.trim();
+        if (!comments)
+          comments = data.comments;
         comment = '';
-        return;
-      }
 
-      var tx = data.tx;
-      var flags = data.flags;
-      var comments = comment.trim();
-      if (!comments)
-        comments = data.comments;
-      comment = '';
-
-      if (valid) {
-        if (comments.indexOf('Coinbase') === 0) {
-          it('should handle valid coinbase: ' + comments, function () {
-            assert.ok(tx.isSane());
+        if (valid) {
+          if (comments.indexOf('Coinbase') === 0) {
+            it('should handle valid coinbase' + suffix + ': ' + comments, function () {
+              assert.ok(tx.isSane());
+            });
+            return;
+          }
+          it('should handle valid tx test' + suffix + ': ' + comments, function () {
+            assert.ok(tx.verify(null, true, flags));
           });
-          return;
-        }
-        it('should handle valid tx test: ' + comments, function () {
-          assert.ok(tx.verify(null, true, flags));
-        });
-      } else {
-        if (comments === 'Duplicate inputs') {
-          it('should handle duplicate input test: ' + comments, function () {
-            assert.ok(!tx.isSane());
+        } else {
+          if (comments === 'Duplicate inputs') {
+            it('should handle duplicate input test' + suffix + ': ' + comments, function () {
+              assert.ok(!tx.isSane());
+            });
+            return;
+          }
+          if (comments.indexOf('Coinbase') === 0) {
+            it('should handle invalid coinbase' + suffix + ': ' + comments, function () {
+              assert.ok(!tx.isSane());
+            });
+            return;
+          }
+          it('should handle invalid tx test' + suffix + ': ' + comments, function () {
+            assert.ok(!tx.verify(null, true, flags));
           });
-          return;
         }
-        if (comments.indexOf('Coinbase') === 0) {
-          it('should handle invalid coinbase: ' + comments, function () {
-            assert.ok(!tx.isSane());
-          });
-          return;
-        }
-        it('should handle invalid tx test: ' + comments, function () {
-          assert.ok(!tx.verify(null, true, flags));
-        });
-      }
+      });
     });
-  });
 
-  sighash.forEach(function(data) {
-    // ["raw_transaction, script, input_index, hashType, signature_hash (result)"],
-    if (data.length === 1)
-      return;
-    var tx = bcoin.tx.fromRaw(data[0], 'hex');
-    var script = new bcoin.script(new Buffer(data[1], 'hex'));
-    var index = data[2];
-    var type = data[3];
-    var expected = utils.revHex(data[4]);
-    var hexType = type & 3;
-    if (type & 0x80)
-      hexType |= 0x80;
-    hexType = hexType.toString(16);
-    if (hexType.length % 2 !== 0)
-      hexType = '0' + hexType;
-    it('should get signature hash of ' + data[4] + ' (' + hexType + ')', function () {
-      var subscript = script.getSubscript();
-      var hash = tx.signatureHash(index, subscript, type, 0).toString('hex');
-      assert.equal(hash, expected);
+    sighash.forEach(function(data) {
+      // ["raw_transaction, script, input_index, hashType, signature_hash (result)"],
+      if (data.length === 1)
+        return;
+      var tx = bcoin.tx.fromRaw(data[0], 'hex');
+      clearCache(tx, nocache);
+      var script = new bcoin.script(new Buffer(data[1], 'hex'));
+      clearCache(script, nocache);
+      var index = data[2];
+      var type = data[3];
+      var expected = utils.revHex(data[4]);
+      var hexType = type & 3;
+      if (type & 0x80)
+        hexType |= 0x80;
+      hexType = hexType.toString(16);
+      if (hexType.length % 2 !== 0)
+        hexType = '0' + hexType;
+      it('should get signature hash of ' + data[4] + ' (' + hexType + ')' + suffix, function () {
+        var subscript = script.getSubscript();
+        var hash = tx.signatureHash(index, subscript, type, 0).toString('hex');
+        assert.equal(hash, expected);
+      });
     });
   });
 });

@@ -30,11 +30,9 @@ describe('Script', function() {
     assert.equal(dst.toString('hex'), src);
   });
 
-  if (0)
   it('should encode/decode numbers', function() {
-    var script = [ 0, 1, 2, 16 ];
+    var script = [ 0, 0x51, 0x52, 0x60 ];
     var encoded = bcoin.script.encode(script);
-    assert.deepEqual(encoded, [ 0, 0x51, 0x52, 0x60 ]);
     var decoded = bcoin.script.decode(encoded);
     assert.deepEqual(decoded, script);
   });
@@ -218,48 +216,55 @@ describe('Script', function() {
     }
     flags = flag;
 
-    it('should handle script test: ' + comments, function () {
-      var coin = bcoin.tx({
-        version: 1,
-        inputs: [{
-          prevout: {
-            hash: constants.NULL_HASH,
-            index: 0xffffffff
-          },
-          coin: null,
-          script: [bcoin.script.array(0), bcoin.script.array(0)],
-          witness: new bcoin.script.witness(),
-          sequence: 0xffffffff
-        }],
-        outputs: [{
-          script: output,
-          value: new bn(0)
-        }],
-        locktime: 0
+    [false, true].forEach(function(nocache) {
+      var suffix = nocache ? ' without cache' : ' with cache';
+      it('should handle script test' + suffix + ': ' + comments, function () {
+        var coin = bcoin.tx({
+          version: 1,
+          inputs: [{
+            prevout: {
+              hash: constants.NULL_HASH,
+              index: 0xffffffff
+            },
+            coin: null,
+            script: [bcoin.script.array(0), bcoin.script.array(0)],
+            witness: new bcoin.script.witness(),
+            sequence: 0xffffffff
+          }],
+          outputs: [{
+            script: output,
+            value: new bn(0)
+          }],
+          locktime: 0
+        });
+        var tx = bcoin.tx({
+          version: 1,
+          inputs: [{
+            prevout: {
+              hash: coin.hash('hex'),
+              index: 0
+            },
+            coin: bcoin.coin(coin, 0),
+            script: input,
+            witness: witness,
+            sequence: 0xffffffff
+          }],
+          outputs: [{
+            script: new bcoin.script(),
+            value: new bn(0)
+          }],
+          locktime: 0
+        });
+        if (nocache) {
+          delete input.raw;
+          delete output.raw;
+        }
+        var res = Script.verify(input, witness, output, tx, 0, flags);
+        if (expected === 'OK')
+          assert.ok(res);
+        else
+          assert.ok(!res);
       });
-      var tx = bcoin.tx({
-        version: 1,
-        inputs: [{
-          prevout: {
-            hash: coin.hash('hex'),
-            index: 0
-          },
-          coin: bcoin.coin(coin, 0),
-          script: input,
-          witness: witness,
-          sequence: 0xffffffff
-        }],
-        outputs: [{
-          script: new bcoin.script(),
-          value: new bn(0)
-        }],
-        locktime: 0
-      });
-      var res = Script.verify(input, witness, output, tx, 0, flags);
-      if (expected === 'OK')
-        assert.ok(res);
-      else
-        assert.ok(!res);
     });
   });
 });
