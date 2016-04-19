@@ -2,7 +2,11 @@ var assert = require('assert');
 var bcoin = require('../')();
 var Script = bcoin.script;
 var Stack = bcoin.script.stack;
+var utils = bcoin.utils;
+var constants = bcoin.protocol.constants;
 var opcodes = bcoin.protocol.constants.opcodes;
+var scripts = require('./data/script_tests');
+var bn = require('bn.js');
 
 describe('Script', function() {
   it('should encode/decode script', function() {
@@ -128,5 +132,99 @@ describe('Script', function() {
     var res = prevOutScript.execute(stack);
     assert(res);
     assert.deepEqual(stack.slice(), [[1], [3], [5]]);
+  });
+
+  var dummyInput = {
+    prevout: {
+      hash: constants.NULL_HASH,
+      index: 0
+    },
+    coin: {
+      version: 1,
+      height: 0,
+      value: constants.MAX_MONEY.clone(),
+      script: new bcoin.script([]),
+      coinbase: false,
+      hash: constants.NULL_HASH,
+      index: 0
+    },
+    script: new bcoin.script([]),
+    witness: new bcoin.script.witness([]),
+    sequence: 0xffffffff
+  };
+
+  scripts.forEach(function(data) {
+    // ["Format is: [[wit...]?, scriptSig, scriptPubKey, flags, expected_scripterror, ... comments]"],
+    var witness = Array.isArray(data[0]) ? data.shift() : null;
+    var input = data[0] ? data[0].trim() : data[0] || '';
+    var output = data[1] ? data[1].trim() : data[1] || '';
+    var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+    var expected = data[3] || '';
+    var comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
+
+    if (data.length === 1)
+      return;
+
+    if (!comments)
+      comments = output.slice(0, 60);
+
+    comments += ' (' + expected + ')';
+
+    if (witness)
+      witness = bcoin.witness.fromTestString(witness);
+    else
+      witness = new bcoin.witness();
+    input = bcoin.script.fromTestString(input);
+    output = bcoin.script.fromTestString(output);
+
+    var flag = 0;
+    for (var i = 0; i < flags.length; i++) {
+      flag |= constants.flags['VERIFY_' + flags[i]];
+    }
+    flags = flag;
+
+    it('should handle script test: ' + comments, function () {
+      var coin = bcoin.tx({
+        version: 1,
+        inputs: [{
+          prevout: {
+            hash: constants.NULL_HASH,
+            index: 0xffffffff
+          },
+          coin: null,
+          script: [bcoin.script.array(0), bcoin.script.array(0)],
+          witness: new bcoin.script.witness(),
+          sequence: 0xffffffff
+        }],
+        outputs: [{
+          script: output,
+          value: new bn(0)
+        }],
+        locktime: 0
+      });
+      var tx = bcoin.tx({
+        version: 1,
+        inputs: [{
+          prevout: {
+            hash: coin.hash('hex'),
+            index: 0
+          },
+          coin: bcoin.coin(coin, 0),
+          script: input,
+          witness: witness,
+          sequence: 0xffffffff
+        }],
+        outputs: [{
+          script: new bcoin.script(),
+          value: new bn(0)
+        }],
+        locktime: 0
+      });
+      var res = Script.verify(input, witness, output, tx, 0, flags);
+      if (expected === 'OK')
+        assert.ok(res);
+      else
+        assert.ok(!res);
+    });
   });
 });
