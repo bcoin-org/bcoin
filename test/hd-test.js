@@ -95,9 +95,7 @@ describe('HD', function() {
   });
 
   it('should create master private key', function() {
-    var s = new bcoin.hd.seed();
-    s.seed = new Buffer(seed, 'hex');
-    master = bcoin.hd.priv.fromSeed(s);
+    master = bcoin.hd.priv.fromSeed(new Buffer(seed, 'hex'));
     assert.equal(master.xprivkey, master_priv);
     assert.equal(master.xpubkey, master_pub);
   });
@@ -173,9 +171,7 @@ describe('HD', function() {
     delete vector.seed;
     delete vector.m;
     it('should create from a seed', function() {
-      var s = new bcoin.hd.seed();
-      s.seed = new Buffer(seed, 'hex');
-      master = bcoin.hd.priv.fromSeed(s);
+      master = bcoin.hd.priv.fromSeed(new Buffer(seed, 'hex'));
       equal(master.xprivkey, m.prv);
       equal(master.xpubkey, m.pub);
     });
