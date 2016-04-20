@@ -254,11 +254,20 @@ describe('Script', function() {
           delete input.raw;
           delete output.raw;
         }
-        var res = Script.verify(input, witness, output, tx, 0, flags);
-        if (expected === 'OK')
-          assert.ok(res);
-        else
-          assert.ok(!res);
+        var err, res;
+        try {
+          res = Script.verify(input, witness, output, tx, 0, flags);
+        } catch (e) {
+          err = e;
+        }
+        if (expected !== 'OK') {
+          assert(!res);
+          assert(err);
+          assert.equal(err.code, expected);
+          return;
+        }
+        utils.assert.noError(err);
+        assert(res);
       });
     });
   });
