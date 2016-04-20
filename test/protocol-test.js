@@ -1,7 +1,10 @@
 var assert = require('assert');
 var bcoin = require('../')();
 var constants = bcoin.protocol.constants;
+var network = bcoin.protocol.network;
 var utils = bcoin.utils;
+var fs = require('fs');
+var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
 
 describe('Protocol', function() {
   var version = require('../package.json').version;
@@ -181,6 +184,23 @@ describe('Protocol', function() {
       'de5c0500000017a9141d9ca71efa36d814424ea6ca1437e67287aebe348' +
       '700000000', 'hex');
     var tx = bcoin.protocol.parser.parseTX(rawTwoTxs);
+    delete tx._raw;
     assert.deepEqual(bcoin.protocol.framer.tx(tx), rawFirstTx);
+  });
+
+  it('should parse, reserialize, and verify alert packets', function() {
+    var p = new bcoin.reader(alertData);
+    p.start();
+    while (p.left()) {
+      var details = bcoin.protocol.parser.parseAlert(p);
+      var hash = utils.dsha256(details.payload);
+      var signature = details.signature;
+      assert(bcoin.ec.verify(hash, signature, network.alertKey));
+      delete details.payload;
+      var data = bcoin.protocol.framer.alert(details);
+      details = bcoin.protocol.parser.parseAlert(data);
+      assert(bcoin.ec.verify(hash, signature, network.alertKey));
+    }
+    p.end();
   });
 });
