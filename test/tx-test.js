@@ -11,6 +11,7 @@ var fs = require('fs');
 var tx1 = parseTX('data/tx1.hex');
 var tx2 = parseTX('data/tx2.hex');
 var tx3 = parseTX('data/tx3.hex');
+var tx4 = parseExtended('data/tx4.hex');
 
 function parseTX(file) {
   file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim().split(/\n+/);
@@ -20,6 +21,11 @@ function parseTX(file) {
     tx.fillCoins(coin);
   }
   return tx;
+}
+
+function parseExtended(file) {
+  file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim();
+  return bcoin.tx.fromExtended(file, 'hex', true);
 }
 
 function clearCache(tx, nocache) {
@@ -125,6 +131,11 @@ describe('TX', function() {
     it('should verify sighash_single bug w/ findanddelete' + suffix, function() {
       clearCache(tx3, nocache);
       assert(tx3.verify(null, true, constants.flags.VERIFY_P2SH));
+    });
+
+    it('should verify high S value with only DERSIG enabled' + suffix, function() {
+      clearCache(tx4, nocache);
+      assert(tx4.verify(0, true, constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG));
     });
 
     function parseTest(data) {

@@ -61,7 +61,6 @@ var vector2 = {
   },
 };
 
-
 describe('HD', function() {
   var phrase = 'volume doll flush federal inflict tomato result property total curtain shield aisle';
 
@@ -161,6 +160,7 @@ describe('HD', function() {
   }
 
   function equal(a, b) {
+    assert.equal(a, b);
     assert.equal(ub58(a), ub58(b));
   }
 
