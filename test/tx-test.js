@@ -152,7 +152,7 @@ describe('TX', function() {
       coins.forEach(function(data) {
         var hash = data[0];
         var index = data[1];
-        var script = bcoin.script.fromTestString(data[2]);
+        var script = bcoin.script.fromString(data[2]);
         var value = data[3];
         var coin = new bcoin.coin({
           version: 1,

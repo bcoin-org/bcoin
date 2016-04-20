@@ -143,7 +143,7 @@ describe('Script', function() {
   it('should handle bad size pushes correctly.', function () {
     var err;
     var stack = new bcoin.script.stack();
-    var s = bcoin.script.fromTestString(
+    var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA1'
     );
     assert(utils.equals(s.raw, new Buffer('51764c', 'hex')));
@@ -156,7 +156,7 @@ describe('Script', function() {
     }
     assert(err);
     assert(err.code === 'BAD_OPCODE');
-    var s = bcoin.script.fromTestString(
+    var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA2 0x01'
     );
     assert(utils.equals(s.raw, new Buffer('51764d01', 'hex')));
@@ -170,7 +170,7 @@ describe('Script', function() {
     }
     assert(err);
     assert(err.code === 'BAD_OPCODE');
-    var s = bcoin.script.fromTestString(
+    var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA4 0x0001'
     );
     assert(utils.equals(s.raw, new Buffer('51764e0001', 'hex')));
@@ -184,7 +184,7 @@ describe('Script', function() {
     }
     assert(err);
     assert(err.code === 'BAD_OPCODE');
-    var s = bcoin.script.fromTestString(
+    var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA1 0x02 0x01'
     );
     assert(utils.equals(s.raw, new Buffer('51764c0201', 'hex')));
@@ -198,7 +198,7 @@ describe('Script', function() {
     }
     assert(err);
     assert(err.code === 'BAD_OPCODE');
-    var s = bcoin.script.fromTestString(
+    var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA2 0x0200 0x01'
     );
     assert(utils.equals(s.raw, new Buffer('51764d020001', 'hex')));
@@ -275,9 +275,9 @@ describe('Script', function() {
 
     comments += ' (' + expected + ')';
 
-    witness = bcoin.witness.fromTestString(witness);
-    input = bcoin.script.fromTestString(input);
-    output = bcoin.script.fromTestString(output);
+    witness = bcoin.witness.fromString(witness);
+    input = bcoin.script.fromString(input);
+    output = bcoin.script.fromString(output);
 
     var flag = 0;
     for (var i = 0; i < flags.length; i++) {
