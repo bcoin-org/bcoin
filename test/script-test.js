@@ -140,6 +140,46 @@ describe('Script', function() {
     return true;
   }
 
+  it('should handle bad size pushes correctly.', function () {
+    var err;
+    var stack = new bcoin.script.stack();
+    var s = bcoin.script.fromTestString(
+      'OP_1 OP_DUP OP_PUSHDATA1'
+    );
+    assert(utils.equals(s.raw, new Buffer('51764c', 'hex')));
+    try {
+      s.execute(stack);
+    } catch (e) {
+      err = e;
+    }
+    assert(err);
+    assert(err.code === 'BAD_OPCODE');
+    var s = bcoin.script.fromTestString(
+      'OP_1 OP_DUP OP_PUSHDATA2 0x01'
+    );
+    assert(utils.equals(s.raw, new Buffer('51764d01', 'hex')));
+    err = null;
+    try {
+      s.execute(stack);
+    } catch (e) {
+      err = e;
+    }
+    assert(err);
+    assert(err.code === 'BAD_OPCODE');
+    var s = bcoin.script.fromTestString(
+      'OP_1 OP_DUP OP_PUSHDATA4 0x0001'
+    );
+    assert(utils.equals(s.raw, new Buffer('51764e0001', 'hex')));
+    err = null;
+    try {
+      s.execute(stack);
+    } catch (e) {
+      err = e;
+    }
+    assert(err);
+    assert(err.code === 'BAD_OPCODE');
+  });
+
   it('should handle CScriptNums correctly', function () {
     var s = bcoin.script.fromSymbolic([
       new Buffer([0xff, 0xff, 0xff, 0x7f]), 'OP_NEGATE', 'OP_DUP', 'OP_ADD'
