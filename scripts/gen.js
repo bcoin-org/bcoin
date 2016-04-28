@@ -51,6 +51,8 @@ function createGenesisBlock(options) {
     locktime: 0
   };
 
+  tx.inputs[0].script.code[1].opcode = 1;
+
   txRaw = bcoin.protocol.framer.tx(tx);
   tx._raw = txRaw;
   tx._size = txRaw.length;
@@ -117,7 +119,7 @@ var segnet3 = createGenesisBlock({
 var segnet4 = createGenesisBlock({
   version: 1,
   ts: 1452831101,
-  bits: utils.toCompact(network.segnet4.powLimit),
+  bits: utils.toCompact(network.segnet4.pow.limit),
   nonce: 0
 });
 
@@ -126,15 +128,15 @@ utils.print(testnet);
 utils.print(regtest);
 utils.print(segnet3);
 utils.print('main hash: %s', utils.revHex(main.hash));
-utils.print('main raw: %s', utils.toHex(main._raw));
+utils.print('main raw: %s', main._raw.toString('hex'));
 utils.print('');
 utils.print('testnet hash: %s', utils.revHex(testnet.hash));
-utils.print('testnet raw: %s', utils.toHex(testnet._raw));
+utils.print('testnet raw: %s', testnet._raw.toString('hex'));
 utils.print('');
 utils.print('regtest hash: %s', utils.revHex(regtest.hash));
-utils.print('regtest raw: %s', utils.toHex(regtest._raw));
+utils.print('regtest raw: %s', regtest._raw.toString('hex'));
 utils.print('segnet3 hash: %s', utils.revHex(segnet3.hash));
-utils.print('segnet3 raw: %s', utils.toHex(segnet3._raw));
+utils.print('segnet3 raw: %s', segnet3._raw.toString('hex'));
 utils.print('segnet4 hash: %s', utils.revHex(segnet4.hash));
-utils.print('segnet4 raw: %s', utils.toHex(segnet4._raw));
+utils.print('segnet4 raw: %s', segnet4._raw.toString('hex'));
 utils.print(segnet4);
