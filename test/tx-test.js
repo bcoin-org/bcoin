@@ -263,7 +263,7 @@ describe('TX', function() {
       if (hexType.length % 2 !== 0)
         hexType = '0' + hexType;
       it('should get signature hash of ' + data[4] + ' (' + hexType + ')' + suffix, function () {
-        var subscript = script.getSubscript();
+        var subscript = script.getSubscript(0).removeSeparators();
         var hash = tx.signatureHash(index, subscript, type, 0).toString('hex');
         assert.equal(hash, expected);
       });
