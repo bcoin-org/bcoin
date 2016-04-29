@@ -8,39 +8,41 @@ var mnemonic2 = require('./data/mnemonic2');
 describe('Mnemonic', function() {
   mnemonic1.forEach(function(data, i) {
     var entropy = new Buffer(data[0], 'hex');
-    var mnemonic = data[1];
+    var phrase = data[1];
     var seed = new Buffer(data[2], 'hex');
     var xpriv = data[3];
     it('should create an english mnemonic (' + i + ')', function() {
-      var mnem = new bcoin.hd.mnemonic({
+      var mnemonic = new bcoin.hd.mnemonic({
         passphrase: 'TREZOR',
         lang: 'english',
         entropy: entropy
       });
-      mnem.toSeed();
-      assert.equal(mnem.phrase, mnemonic);
-      assert.equal(mnem.toSeed().toString('hex'), seed.toString('hex'));
-      var key = bcoin.hd.fromSeed(mnem);
+      mnemonic.toSeed();
+      assert.equal(mnemonic.phrase, phrase);
+      assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
+      var key = bcoin.hd.fromSeed(mnemonic);
       assert.equal(key.xprivkey, xpriv);
     });
   });
-  // Disabled for now
   return;
   mnemonic2.forEach(function(data, i) {
     var entropy = new Buffer(data.entropy, 'hex');
-    var mnemonic = data.mnemonic;
+    var phrase = data.mnemonic;
     var seed = new Buffer(data.seed, 'hex');
+    var passphrase = data.passphrase;
     var xpriv = data.bip32_xprv;
     it('should create a japanese mnemonic (' + i + ')', function() {
-      var mnem = new bcoin.hd.mnemonic({
-        passphrase: 'メートルガバヴァぱばぐゞちぢ十人十色',
+      var mnemonic = new bcoin.hd.mnemonic({
         lang: 'japanese',
-        entropy: entropy
+        entropy: entropy,
+        passphrase: passphrase
       });
-      mnem.toSeed();
-      assert.equal(mnem.phrase, mnemonic);
-      assert.equal(mnem.toSeed().toString('hex'), seed.toString('hex'));
-      var key = bcoin.hd.fromSeed(mnem);
+      mnemonic.toSeed();
+      // utils.print(new Buffer(mnemonic.phrase, 'utf8').toString('hex'));
+      // utils.print(new Buffer(phrase, 'utf8').toString('hex'));
+      assert.equal(mnemonic.phrase, phrase);
+      assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
+      var key = bcoin.hd.fromSeed(mnemonic);
       assert.equal(key.xprivkey, xpriv);
     });
   });
