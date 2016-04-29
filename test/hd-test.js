@@ -146,14 +146,6 @@ describe('HD', function() {
     assert.equal(bcoin.hd.fromJSON(key.toJSON()).xprivkey, key.xprivkey);
   });
 
-  it('should create an hd seed', function() {
-    var seed = new bcoin.hd.seed({
-      // I have the same combination on my luggage:
-      entropy: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      passphrase: 'foo'
-    });
-  });
-
   function ub58(data) {
     return utils.fromBase58(data).toString('hex');
   }
