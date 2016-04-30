@@ -10,7 +10,7 @@ process.on('uncaughtException', function(err) {
 });
 
 var node = bcoin.fullnode({
-  passphrase: 'node',
+  // passphrase: 'node',
   prune: process.argv.indexOf('--prune') !== -1,
   useCheckpoints: process.argv.indexOf('--checkpoints') !== -1,
   listen: process.argv.indexOf('--listen') !== -1,
