@@ -1,5 +1,5 @@
-var assert = require('assert');
 var bcoin = require('../')();
+var assert = require('assert');
 var Script = bcoin.script;
 var Stack = bcoin.script.stack;
 var utils = bcoin.utils;
@@ -340,7 +340,7 @@ describe('Script', function() {
           assert.equal(err.code, expected);
           return;
         }
-        utils.assert.noError(err);
+        utils.assert.ifError(err);
         assert(res);
       });
     });

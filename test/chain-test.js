@@ -4,7 +4,7 @@ var bcoin = require('../')({ network: 'regtest', db: 'memory' });
 process.env.BCOIN_NETWORK = 'main';
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
-var assert = utils.assert;
+var assert = require('assert');
 var opcodes = constants.opcodes;
 
 constants.tx.COINBASE_MATURITY = 0;
@@ -32,7 +32,7 @@ describe('Chain', function() {
     miner.createBlock(function(err, attempt) {
       if (realTip)
         chain.tip = realTip;
-      assert.noError(err);
+      assert.ifError(err);
       if (tx) {
         var redeemer = bcoin.mtx();
         redeemer.addOutput({
@@ -63,7 +63,7 @@ describe('Chain', function() {
 
   it('should mine a block', function(cb) {
     miner.mineBlock(function(err, block) {
-      assert.noError(err);
+      assert.ifError(err);
       assert(block);
       cb();
     });
@@ -72,29 +72,29 @@ describe('Chain', function() {
   it('should mine competing chains', function(cb) {
     utils.forRangeSerial(0, 10, function(i, next) {
       mineBlock(ch1, cb1, function(err, chain1) {
-        assert.noError(err);
+        assert.ifError(err);
         cb1 = chain1.txs[0];
         mineBlock(ch2, cb2, function(err, chain2) {
-          assert.noError(err);
+          assert.ifError(err);
           cb2 = chain2.txs[0];
           deleteCoins(chain1.txs);
           chain.add(chain1, function(err) {
-            assert.noError(err);
+            assert.ifError(err);
             deleteCoins(chain2.txs);
             chain.add(chain2, function(err) {
-              assert.noError(err);
+              assert.ifError(err);
               assert(chain.tip.hash === chain1.hash('hex'));
               competingTip = chain2.hash('hex');
               chain.db.get(chain1.hash('hex'), function(err, entry1) {
-                assert.noError(err);
+                assert.ifError(err);
                 chain.db.get(chain2.hash('hex'), function(err, entry2) {
-                  assert.noError(err);
+                  assert.ifError(err);
                   assert(entry1);
                   assert(entry2);
                   ch1 = entry1;
                   ch2 = entry2;
                   chain.db.isMainChain(chain2.hash('hex'), function(err, result) {
-                    assert.noError(err);
+                    assert.ifError(err);
                     assert(!result);
                     next();
                   });
@@ -110,12 +110,12 @@ describe('Chain', function() {
   it('should handle a reorg', function(cb) {
     oldTip = chain.tip;
     chain.db.get(competingTip, function(err, entry) {
-      assert.noError(err);
+      assert.ifError(err);
       assert(entry);
       assert(chain.height === entry.height);
       chain.tip = entry;
       miner.mineBlock(function(err, reorg) {
-        assert.noError(err);
+        assert.ifError(err);
         assert(reorg);
         chain.tip = oldTip;
         var forked = false;
@@ -124,7 +124,7 @@ describe('Chain', function() {
         });
         deleteCoins(reorg.txs);
         chain.add(reorg, function(err) {
-          assert.noError(err);
+          assert.ifError(err);
           assert(forked);
           assert(chain.tip.hash === reorg.hash('hex'));
           assert(chain.tip.chainwork.cmp(oldTip.chainwork) > 0);
@@ -136,7 +136,7 @@ describe('Chain', function() {
 
   it('should check main chain', function(cb) {
     chain.db.isMainChain(oldTip, function(err, result) {
-      assert.noError(err);
+      assert.ifError(err);
       assert(!result);
       cb();
     });
@@ -144,16 +144,16 @@ describe('Chain', function() {
 
   it('should mine a block after a reorg', function(cb) {
     mineBlock(null, cb2, function(err, block) {
-      assert.noError(err);
+      assert.ifError(err);
       deleteCoins(block.txs);
       chain.add(block, function(err) {
-        assert.noError(err);
+        assert.ifError(err);
         chain.db.get(block.hash('hex'), function(err, entry) {
-          assert.noError(err);
+          assert.ifError(err);
           assert(entry);
           assert(chain.tip.hash === entry.hash);
           chain.db.isMainChain(entry.hash, function(err, result) {
-            assert.noError(err);
+            assert.ifError(err);
             assert(result);
             cb();
           });
@@ -164,7 +164,7 @@ describe('Chain', function() {
 
   it('should fail to mine a block with coins on a side chain', function(cb) {
     mineBlock(null, cb1, function(err, block) {
-      assert.noError(err);
+      assert.ifError(err);
       deleteCoins(block.txs);
       chain.add(block, function(err) {
         assert(err);
