@@ -13,9 +13,9 @@ describe('Mnemonic', function() {
     var xpriv = data[3];
     it('should create an english mnemonic (' + i + ')', function() {
       var mnemonic = new bcoin.hd.mnemonic({
-        passphrase: 'TREZOR',
         lang: 'english',
-        entropy: entropy
+        entropy: entropy,
+        passphrase: 'TREZOR'
       });
       mnemonic.toSeed();
       assert.equal(mnemonic.phrase, phrase);
@@ -24,7 +24,6 @@ describe('Mnemonic', function() {
       assert.equal(key.xprivkey, xpriv);
     });
   });
-  return;
   mnemonic2.forEach(function(data, i) {
     var entropy = new Buffer(data.entropy, 'hex');
     var phrase = data.mnemonic;
