@@ -122,7 +122,7 @@ function getTX(callback) {
 
 function getBlock(callback) {
   var hash = argv.args[0];
-  if (utils.isInt(hash))
+  if (hash.length !== 64)
     hash = +hash;
   else
     hash = utils.revHex(hash);
