@@ -1,6 +1,5 @@
 var bn = require('bn.js');
-var bcoin = require('../')();
-var utils = bcoin.utils;
+var utils = require('../lib/bcoin/utils');
 var assert = require('assert');
 var aes = require('../lib/bcoin/aes');
 var crypto = require('crypto');

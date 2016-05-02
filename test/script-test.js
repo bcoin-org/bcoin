@@ -1,4 +1,4 @@
-var bcoin = require('../')();
+var bcoin = require('../')('main');
 var assert = require('assert');
 var Script = bcoin.script;
 var Stack = bcoin.script.stack;

@@ -1,6 +1,7 @@
 var bn = require('bn.js');
-var bcoin = require('../').env();
+var bcoin = require('../')('main');
 var constants = bcoin.protocol.constants;
+var network = bcoin.protocol.network;
 var utils = bcoin.utils;
 var assert = require('assert');
 
@@ -24,9 +25,14 @@ var dummyInput = {
 };
 
 describe('Wallet', function() {
-  var wdb = new bcoin.walletdb({ db: 'memory', verify: true });
+  var wdb = new bcoin.walletdb({
+    name: 'wallet-test',
+    db: 'memory',
+    verify: true
+  });
 
   it('should open walletdb', function(cb) {
+    constants.tx.COINBASE_MATURITY = 0;
     wdb.open(cb);
   });
 
@@ -553,5 +559,9 @@ describe('Wallet', function() {
 
   it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', function(cb) {
     multisig(true, true, cb);
+  });
+
+  it('should cleanup', function(cb) {
+    constants.tx.COINBASE_MATURITY = 100;
   });
 });

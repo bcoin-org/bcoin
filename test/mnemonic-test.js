@@ -1,5 +1,5 @@
 var bn = require('bn.js');
-var bcoin = require('../')();
+var bcoin = require('../')('main');
 var utils = bcoin.utils;
 var assert = require('assert');
 var mnemonic1 = require('./data/mnemonic1').english;

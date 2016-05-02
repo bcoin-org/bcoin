@@ -1,4 +1,4 @@
-var bcoin = require('../')();
+var bcoin = require('../')('main');
 var assert = require('assert');
 
 describe('Bloom', function() {

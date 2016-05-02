@@ -1,7 +1,5 @@
 var bn = require('bn.js');
-delete process.env.BCOIN_NETWORK;
-var bcoin = require('../')({ network: 'regtest', db: 'memory' });
-process.env.BCOIN_NETWORK = 'main';
+var bcoin = require('../')('regtest');
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 var assert = require('assert');
@@ -13,7 +11,7 @@ describe('Chain', function() {
   var chain, wallet, miner;
   var competingTip, oldTip, ch1, ch2, cb1, cb2;
 
-  chain = new bcoin.chain();
+  chain = new bcoin.chain({ name: 'chain-test', db: 'memory' });
   wallet = new bcoin.wallet();
   miner = new bcoin.miner({
     chain: chain,
