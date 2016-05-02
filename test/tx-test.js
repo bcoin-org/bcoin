@@ -170,7 +170,7 @@ describe('TX', function() {
         tx: tx,
         flags: flags,
         comments: tx.hasCoins()
-          ? utils._inspect(tx.inputs[0].coin.script, false).slice(0, -1)
+          ? utils.inspectify(tx.inputs[0].coin.script, false)
           : 'coinbase',
         data: data
       };
