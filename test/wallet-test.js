@@ -1,5 +1,5 @@
 var bn = require('bn.js');
-var bcoin = require('../')({ db: process.env.BCOIN_TEST_DB || 'memory' });
+var bcoin = require('../').env();
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 var assert = require('assert');
@@ -24,7 +24,7 @@ var dummyInput = {
 };
 
 describe('Wallet', function() {
-  var wdb = new bcoin.walletdb({ verify: true });
+  var wdb = new bcoin.walletdb({ db: 'memory', verify: true });
 
   it('should open walletdb', function(cb) {
     wdb.open(cb);
@@ -553,13 +553,5 @@ describe('Wallet', function() {
 
   it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', function(cb) {
     multisig(true, true, cb);
-  });
-
-  it('should have gratuitous dump', function(cb) {
-    bcoin.walletdb().dump(function(err, records) {
-      assert.ifError(err);
-      // console.log(records);
-      setTimeout(cb, 200);
-    });
   });
 });

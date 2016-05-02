@@ -1,13 +1,13 @@
 var bn = require('bn.js');
-var bcoin = require('../')({ db: 'memory' });
+var bcoin = require('../')();
 var constants = bcoin.protocol.constants;
 var utils = bcoin.utils;
 var assert = require('assert');
 var opcodes = constants.opcodes;
 
 describe('Mempool', function() {
-  var chain = new bcoin.chain();
-  var mempool = new bcoin.mempool({ chain: chain });
+  var chain = new bcoin.chain({ db: 'memory' });
+  var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
   mempool.on('error', function() {});
 
   it('should open mempool', function(cb) {
