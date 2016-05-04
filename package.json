@@ -46,6 +46,6 @@
     "level-js": "2.2.3",
     "mocha": "1.21.5",
     "uglify-js": "2.6.1",
-    "v8-profiler": "5.6.0"
+    "v8-profiler": "5.6.1"
   }
 }
