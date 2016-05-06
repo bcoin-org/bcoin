@@ -120,6 +120,12 @@ function getTX(callback) {
   client.getTX(hash, function(err, tx) {
     if (err)
       return callback(err);
+
+    if (!tx) {
+      utils.print('TX not found.');
+      return callback();
+    }
+
     utils.print(tx);
     callback();
   });
@@ -134,7 +140,15 @@ function getBlock(callback) {
   client.getBlock(hash, function(err, block) {
     if (err)
       return callback(err);
+
+    if (!block) {
+      utils.print('Block not found.');
+      return callback();
+    }
+
     utils.print(block);
+    utils.print('Coinbase Data:');
+    utils.print(block.txs[0].inputs[0].script.getCoinbaseFlags());
     callback();
   });
 }
@@ -154,6 +168,12 @@ function getCoin(callback) {
   client.getCoin(hash, index, function(err, coin) {
     if (err)
       return callback(err);
+
+    if (!coin) {
+      utils.print('Coin not found.');
+      return callback();
+    }
+
     utils.print(coin);
     callback();
   });
