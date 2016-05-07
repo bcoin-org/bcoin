@@ -6,6 +6,8 @@ var assert = require('assert');
 var opcodes = constants.opcodes;
 
 describe('Mempool', function() {
+  this.timeout(5000);
+
   var chain = new bcoin.chain({
     name: 'mp-chain',
     db: 'memory'

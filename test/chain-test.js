@@ -11,6 +11,8 @@ describe('Chain', function() {
   var chain, wallet, miner;
   var competingTip, oldTip, ch1, ch2, cb1, cb2;
 
+  this.timeout(5000);
+
   chain = new bcoin.chain({ name: 'chain-test', db: 'memory' });
   wallet = new bcoin.wallet();
   miner = new bcoin.miner({
