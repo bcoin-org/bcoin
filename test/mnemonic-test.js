@@ -12,7 +12,7 @@ describe('Mnemonic', function() {
     var seed = new Buffer(data[2], 'hex');
     var xpriv = data[3];
     it('should create an english mnemonic (' + i + ')', function() {
-      var mnemonic = new bcoin.hd.mnemonic({
+      var mnemonic = new bcoin.hd.Mnemonic({
         language: 'english',
         entropy: entropy,
         passphrase: 'TREZOR'
@@ -31,7 +31,7 @@ describe('Mnemonic', function() {
     var passphrase = data.passphrase;
     var xpriv = data.bip32_xprv;
     it('should create a japanese mnemonic (' + i + ')', function() {
-      var mnemonic = new bcoin.hd.mnemonic({
+      var mnemonic = new bcoin.hd.Mnemonic({
         language: 'japanese',
         entropy: entropy,
         passphrase: passphrase
