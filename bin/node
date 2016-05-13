@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
-var bcoin = require('../')({ debug: true, debugFile: true });
+var bcoin = require('../');
 var utils = bcoin.utils;
 var assert = utils.assert;
+
+bcoin.setDefaults({ debug: true, debugFile: true });
 
 process.on('uncaughtException', function(err) {
   bcoin.debug(err ? err.stack + '' : err + '');
@@ -27,7 +29,7 @@ node.open(function(err) {
     throw err;
 
   if (node.options.mine) {
-    if (bcoin.protocol.network.type !== 'regtest')
+    if (bcoin.network.get().type !== 'regtest')
       node.pool.connect();
     node.miner.start();
     return;
