@@ -20,7 +20,7 @@ var dummyInput = {
     index: 0
   },
   script: new bcoin.script([]),
-  witness: new bcoin.script.witness([]),
+  witness: new bcoin.witness([]),
   sequence: 0xffffffff
 };
 

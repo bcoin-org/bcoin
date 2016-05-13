@@ -1,7 +1,7 @@
 var bcoin = require('../')('main');
 var assert = require('assert');
 var Script = bcoin.script;
-var Stack = bcoin.script.stack;
+var Stack = bcoin.stack;
 var utils = bcoin.utils;
 var constants = bcoin.protocol.constants;
 var opcodes = bcoin.protocol.constants.opcodes;
@@ -142,7 +142,7 @@ describe('Script', function() {
 
   it('should handle bad size pushes correctly.', function () {
     var err;
-    var stack = new bcoin.script.stack();
+    var stack = new bcoin.stack();
     var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA1'
     );
@@ -222,7 +222,7 @@ describe('Script', function() {
       new Buffer([0xfe, 0xff, 0xff, 0xff, 0x80]),
       'OP_EQUAL'
     ]);
-    var stack = new bcoin.script.stack();
+    var stack = new bcoin.stack();
     assert(s.execute(stack));
     assert(success(s2.execute(stack), stack));
   });
@@ -235,7 +235,7 @@ describe('Script', function() {
       'OP_NUMNOTEQUAL',
       'OP_NOT'
     ]);
-    var stack = new bcoin.script.stack();
+    var stack = new bcoin.stack();
     assert(s.execute(stack));
     assert(success(s2.execute(stack), stack));
   });
@@ -253,7 +253,7 @@ describe('Script', function() {
       'OP_2',
       'OP_EQUAL'
     ]);
-    var stack = new bcoin.script.stack();
+    var stack = new bcoin.stack();
     assert(s.execute(stack));
     assert(success(s2.execute(stack), stack));
   });
@@ -297,7 +297,7 @@ describe('Script', function() {
             },
             coin: null,
             script: [bcoin.script.array(0), bcoin.script.array(0)],
-            witness: new bcoin.script.witness(),
+            witness: new bcoin.witness(),
             sequence: 0xffffffff
           }],
           outputs: [{

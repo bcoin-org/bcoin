@@ -1,7 +1,7 @@
 var bcoin = require('../')('main');
 var assert = require('assert');
 var constants = bcoin.protocol.constants;
-var network = bcoin.protocol.network;
+var network = bcoin.network.get();
 var utils = bcoin.utils;
 var fs = require('fs');
 var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
