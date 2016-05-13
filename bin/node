@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 
-var bcoin = require('../');
+var bcoin = require('../')({ debug: true, debugFile: true });
 var utils = bcoin.utils;
 var assert = utils.assert;
-
-bcoin.setDefaults({ debug: true, debugFile: true });
 
 process.on('uncaughtException', function(err) {
   bcoin.debug(err ? err.stack + '' : err + '');
