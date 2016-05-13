@@ -61,9 +61,9 @@ describe('Wallet', function() {
       assert.ifError(err);
 
       if (witness)
-        assert(bcoin.address.parse(w.getAddress()).type === 'witnesspubkeyhash');
+        assert(bcoin.address.parseBase58(w.getAddress()).type === 'witnesspubkeyhash');
       else
-        assert(bcoin.address.parse(w.getAddress()).type === 'pubkeyhash');
+        assert(bcoin.address.parseBase58(w.getAddress()).type === 'pubkeyhash');
 
       // Input transcation
       var src = bcoin.mtx({
@@ -74,7 +74,7 @@ describe('Wallet', function() {
             : w.getAddress()
         }, {
           value: 5460 * 2,
-          address: bcoin.address.compileData(new Buffer([]))
+          address: bcoin.address.fromData(new Buffer([])).toBase58()
         }]
       });
 
@@ -124,7 +124,7 @@ describe('Wallet', function() {
         keys: [ w.getPublicKey(), k2.derive('m/0/0').publicKey ]
       }, {
         value: 5460 * 2,
-        address: bcoin.address.compileData(new Buffer([]))
+        address: bcoin.address.fromData(new Buffer([])).toBase58()
       }]
     });
     src.addInput(dummyInput);
@@ -432,9 +432,9 @@ describe('Wallet', function() {
             var addr = w1.getAddress();
 
             if (witness)
-              assert(bcoin.address.parse(addr).type === 'witnessscripthash');
+              assert(bcoin.address.parseBase58(addr).type === 'witnessscripthash');
             else
-              assert(bcoin.address.parse(addr).type === 'scripthash');
+              assert(bcoin.address.parseBase58(addr).type === 'scripthash');
 
             assert.equal(w1.getAddress(), addr);
             assert.equal(w2.getAddress(), addr);
