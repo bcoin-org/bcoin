@@ -1,5 +1,5 @@
 var bn = require('bn.js');
-var bcoin = require('../')('main');
+var bcoin = require('../').set('main');
 var constants = bcoin.protocol.constants;
 var network = bcoin.protocol.network;
 var utils = bcoin.utils;

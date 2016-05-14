@@ -2,7 +2,7 @@
 
 var argv = parseArg(process.argv);
 
-var bcoin = require('../')(argv.network);
+var bcoin = require('../').set(argv.network);
 var network = bcoin.protocol.network;
 var utils = bcoin.utils;
 var assert = utils.assert;

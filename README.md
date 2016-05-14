@@ -27,14 +27,14 @@ $ npm install bcoin
 
 ## Documentation
 
-Read the docs here: http://bcoin.ninja/docs/
+Read the docs here: http://bcoin.io/docs/
 
 ## Example Usage
 
 ### High-level usage for Node object
 
 ``` js
-var bcoin = require('bcoin')('main');
+var bcoin = require('bcoin').set('main');
 
 var node = bcoin.fullnode({
   prune: false,
@@ -136,7 +136,7 @@ $ node bin/bcoin-cli mempool
 ### Creating a blockchain and mempool
 
 ``` js
-var bcoin = require('bcoin')('regtest');
+var bcoin = require('bcoin').set('regtest');
 var chain = new bcoin.chain({ db: 'memory' });
 var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
 var miner = new bcoin.miner({ chain: chain, mempool: mempool });
@@ -166,7 +166,7 @@ miner.createBlock(function(err, attempt) {
 ### Connecting to the P2P network
 
 ``` js
-var bcoin = require('bcoin')('testnet');
+var bcoin = require('bcoin').set('testnet');
 
 var chain = new bcoin.chain({ db: 'leveldb' });
 var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
@@ -197,7 +197,7 @@ pool.on('tx', function(tx) {
 ### Doing an SPV sync
 
 ``` js
-var bcoin = require('bcoin')('testnet');
+var bcoin = require('bcoin').set('testnet');
 
 var chain = new bcoin.chain({
   db: 'leveldb',

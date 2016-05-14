@@ -1,4 +1,4 @@
-var bcoin = require('../')('main');
+var bcoin = require('../').set('main');
 var assert = require('assert');
 var constants = bcoin.protocol.constants;
 var network = bcoin.network.get();

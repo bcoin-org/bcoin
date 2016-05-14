@@ -1,5 +1,5 @@
 var bn = require('bn.js');
-var bcoin = require('../')('main');
+var bcoin = require('../').set('main');
 var assert = require('assert');
 var utils = bcoin.utils;
 var constants = bcoin.protocol.constants;

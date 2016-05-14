@@ -1,4 +1,4 @@
-var bcoin = require('bcoin')();
+var bcoin = require('bcoin');
 var constants = bcoin.protocol.constants;
 var network = bcoin.protocol.network;
 var utils = bcoin.utils;
