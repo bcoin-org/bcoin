@@ -142,7 +142,7 @@ describe('HD', function() {
   });
 
   it('should deserialize and reserialize', function() {
-    var key = bcoin.hd.fromSeed();
+    var key = bcoin.hd.fromMnemonic();
     assert.equal(bcoin.hd.fromJSON(key.toJSON()).xprivkey, key.xprivkey);
   });
 

@@ -20,7 +20,7 @@ describe('Mnemonic', function() {
       mnemonic.toSeed();
       assert.equal(mnemonic.phrase, phrase);
       assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
-      var key = bcoin.hd.fromSeed(mnemonic);
+      var key = bcoin.hd.fromMnemonic(mnemonic);
       assert.equal(key.xprivkey, xpriv);
     });
   });
@@ -37,11 +37,9 @@ describe('Mnemonic', function() {
         passphrase: passphrase
       });
       mnemonic.toSeed();
-      // utils.print(new Buffer(mnemonic.phrase, 'utf8').toString('hex'));
-      // utils.print(new Buffer(phrase, 'utf8').toString('hex'));
       assert.equal(mnemonic.phrase, phrase);
       assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
-      var key = bcoin.hd.fromSeed(mnemonic);
+      var key = bcoin.hd.fromMnemonic(mnemonic);
       assert.equal(key.xprivkey, xpriv);
     });
   });

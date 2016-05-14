@@ -113,7 +113,7 @@ describe('Wallet', function() {
       m: 1,
       n: 2
     });
-    var k2 = bcoin.hd.fromSeed().deriveAccount44(0).hdPublicKey;
+    var k2 = bcoin.hd.fromMnemonic().deriveAccount44(0).hdPublicKey;
     w.addKey(k2);
 
     // Input transcation
