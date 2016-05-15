@@ -302,7 +302,7 @@ describe('Script', function() {
           }],
           outputs: [{
             script: output,
-            value: new bn(0)
+            value: 0
           }],
           locktime: 0
         });
@@ -320,7 +320,7 @@ describe('Script', function() {
           }],
           outputs: [{
             script: new bcoin.script(),
-            value: new bn(0)
+            value: 0
           }],
           locktime: 0
         });

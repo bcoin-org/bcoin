@@ -39,7 +39,7 @@ describe('Mempool', function() {
       coin: {
         version: 1,
         height: 0,
-        value: new bn(70000),
+        value: 70000,
         script: prev,
         coinbase: false,
         hash: constants.ONE_HASH.toString('hex'),

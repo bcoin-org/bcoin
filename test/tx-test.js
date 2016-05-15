@@ -161,7 +161,7 @@ describe('TX', function() {
           hash: utils.revHex(hash),
           index: index,
           script: script,
-          value: value != null ? new bn(value) : new bn(0)
+          value: value != null ? parseInt(value, 10) : 0
         });
         tx.fillCoins(coin);
       });

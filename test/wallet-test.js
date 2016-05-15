@@ -13,7 +13,7 @@ var dummyInput = {
   coin: {
     version: 1,
     height: 0,
-    value: constants.MAX_MONEY.clone(),
+    value: constants.MAX_MONEY,
     script: new bcoin.script([]),
     coinbase: false,
     hash: constants.NULL_HASH,
@@ -342,7 +342,7 @@ describe('Wallet', function() {
               tx.addOutput(to, 5460);
 
               var cost = tx.getOutputValue();
-              var total = cost.add(new bn(constants.tx.MIN_FEE));
+              var total = cost * constants.tx.MIN_FEE;
 
               w1.getCoins(function(err, coins1) {
                 assert.ifError(err);
@@ -350,19 +350,19 @@ describe('Wallet', function() {
                   assert.ifError(err);
 
                   // Add dummy output (for `left`) to calculate maximum TX size
-                  tx.addOutput(w1, new bn(0));
+                  tx.addOutput(w1, 0);
 
                   // Add our unspent inputs to sign
                   tx.addInput(coins1[0]);
                   tx.addInput(coins1[1]);
                   tx.addInput(coins2[0]);
 
-                  var left = tx.getInputValue().sub(total);
-                  if (left.cmpn(constants.tx.DUST_THRESHOLD) < 0) {
-                    tx.outputs[tx.outputs.length - 2].value.iadd(left);
-                    left = new bn(0);
+                  var left = tx.getInputValue() - total;
+                  if (left < constants.tx.DUST_THRESHOLD) {
+                    tx.outputs[tx.outputs.length - 2].value += left;
+                    left = 0;
                   }
-                  if (left.cmpn(0) === 0)
+                  if (left === 0)
                     tx.outputs.pop();
                   else
                     tx.outputs[tx.outputs.length - 1].value = left;
@@ -527,7 +527,7 @@ describe('Wallet', function() {
                             send.inputs[0].script.code[2] = 0;
 
                           assert(!send.verify(null, true, flags));
-                          assert.equal(send.getFee().toNumber(), 10000);
+                          assert.equal(send.getFee(), 10000);
 
                           w3 = bcoin.wallet.fromJSON(w3.toJSON());
                           assert.equal(w3.receiveDepth, 2);
