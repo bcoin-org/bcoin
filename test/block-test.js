@@ -52,8 +52,24 @@ describe('Block', function() {
   it('should be jsonified and unjsonified and still verify', function() {
     var json = block.toRaw();
     var b = bcoin.merkleblock.fromRaw(json);
-    // FIXME
-    //assert.equal(b.render(), json);
+    assert.deepEqual(b.render(), json);
     assert(b.verify());
+  });
+
+  it('should calculate reward properly', function() {
+    var height = 0;
+    var total = 0;
+    var reward;
+
+    for (;;) {
+      reward = bcoin.block.reward(height);
+      total += reward;
+      if (reward === 0)
+        break;
+      height++;
+    }
+
+    assert.equal(height, 6930000);
+    assert.equal(total, 2099999997690000);
   });
 });

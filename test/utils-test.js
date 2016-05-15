@@ -27,7 +27,7 @@ describe('Utils', function() {
     btc = utils.btc(54678 * 1000000);
     assert.equal(btc, '546.78');
     btc = utils.btc(5460 * 10000000);
-    assert.equal(btc, '546.0');
+    assert.equal(btc, '546');
   });
 
   it('should convert btc to satoshi', function() {
@@ -35,7 +35,76 @@ describe('Utils', function() {
     assert(btc === 5460);
     btc = utils.satoshi('546.78');
     assert(btc === 54678 * 1000000);
-    btc = utils.satoshi('546.0');
+    btc = utils.satoshi('546');
     assert(btc === 5460 * 10000000);
+  });
+
+  var unsigned = [
+    new bn('ffeeffee'),
+    new bn('001fffeeffeeffee'),
+    new bn('eeffeeff'),
+    new bn('001feeffeeffeeff'),
+    new bn(0),
+    new bn(1)
+  ];
+
+  var signed = [
+    new bn('ffeeffee'),
+    new bn('001fffeeffeeffee'),
+    new bn('eeffeeff'),
+    new bn('001feeffeeffeeff'),
+    new bn(0),
+    new bn(1),
+    new bn('ffeeffee').ineg(),
+    new bn('001fffeeffeeffee').ineg(),
+    new bn('eeffeeff').ineg(),
+    new bn('001feeffeeffeeff').ineg(),
+    new bn(0).ineg(),
+    new bn(1).ineg()
+  ];
+
+  unsigned.forEach(function(num) {
+    var buf1 = new Buffer(8);
+    var buf2 = new Buffer(8);
+    var msg = 'should write+read a ' + num.bitLength() + ' bit unsigned int';
+    it(msg, function() {
+      utils.writeU64(buf1, num, 0);
+      utils.writeU64N(buf2, num.toNumber(), 0);
+      assert.deepEqual(buf1, buf2);
+      var n1 = utils.readU64(buf1, 0);
+      var n2 = utils.readU64N(buf2, 0);
+      assert.equal(n1.toNumber(), n2);
+    });
+  });
+
+  signed.forEach(function(num) {
+    var buf1 = new Buffer(8);
+    var buf2 = new Buffer(8);
+    var msg = 'should write+read a ' + num.bitLength()
+      + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int';
+    it(msg, function() {
+      utils.write64(buf1, num, 0);
+      utils.write64N(buf2, num.toNumber(), 0);
+      assert.deepEqual(buf1, buf2);
+      var n1 = utils.read64(buf1, 0);
+      var n2 = utils.read64N(buf2, 0);
+      assert.equal(n1.toNumber(), n2);
+    });
+    var msg = 'should write+read a ' + num.bitLength()
+      + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int as unsigned';
+    it(msg, function() {
+      utils.writeU64(buf1, num, 0);
+      utils.writeU64N(buf2, num.toNumber(), 0);
+      assert.deepEqual(buf1, buf2);
+      var n1 = utils.readU64(buf1, 0);
+      if (num.isNeg()) {
+        assert.throws(function() {
+          utils.readU64N(buf2, 0);
+        });
+      } else {
+        var n2 = utils.readU64N(buf2, 0);
+        assert.equal(n1.toNumber(), n2);
+      }
+    });
   });
 });

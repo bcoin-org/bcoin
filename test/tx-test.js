@@ -269,4 +269,178 @@ describe('TX', function() {
       });
     });
   });
+
+  function createInput(value) {
+    var hash = bcoin.ec.random(32).toString('hex');
+    return {
+      prevout: {
+        hash: hash,
+        index: 0
+      },
+      coin: {
+        version: 1,
+        height: 0,
+        value: value,
+        script: [],
+        coinbase: false,
+        hash: hash,
+        index: 0
+      },
+      script: [],
+      witness: [],
+      sequence: 0xffffffff
+    };
+  }
+
+  it('should fail on >51 bit coin values', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(constants.MAX_MONEY + 1)],
+      outputs: [{
+        script: [],
+        value: constants.MAX_MONEY
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  it('should handle 51 bit coin values', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(constants.MAX_MONEY)],
+      outputs: [{
+        script: [],
+        value: constants.MAX_MONEY
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(tx.checkInputs(0));
+  });
+
+  it('should fail on >51 bit output values', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(constants.MAX_MONEY)],
+      outputs: [{
+        script: [],
+        value: constants.MAX_MONEY + 1
+      }],
+      locktime: 0
+    });
+    assert.ok(!tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  it('should handle 51 bit output values', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(constants.MAX_MONEY)],
+      outputs: [{
+        script: [],
+        value: constants.MAX_MONEY
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(tx.checkInputs(0));
+  });
+
+  it('should fail on >51 bit fees', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(constants.MAX_MONEY + 1)],
+      outputs: [{
+        script: [],
+        value: 0
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  it('should fail on >51 bit values from multiple', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [
+        createInput(Math.floor(constants.MAX_MONEY / 2)),
+        createInput(Math.floor(constants.MAX_MONEY / 2)),
+        createInput(Math.floor(constants.MAX_MONEY / 2))
+      ],
+      outputs: [{
+        script: [],
+        value: constants.MAX_MONEY
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  it('should fail on >51 bit fees from multiple', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [
+        createInput(Math.floor(constants.MAX_MONEY / 2)),
+        createInput(Math.floor(constants.MAX_MONEY / 2)),
+        createInput(Math.floor(constants.MAX_MONEY / 2))
+      ],
+      outputs: [{
+        script: [],
+        value: 0
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  it('should fail on >51 bit fees from multiple txs', function () {
+    var data = utils.merge(bcoin.network.get().genesis, { height: 0 });
+    var block = new bcoin.block(data);
+    for (var i = 0; i < 3; i++) {
+      var tx = bcoin.tx({
+        version: 1,
+        inputs: [
+          createInput(Math.floor(constants.MAX_MONEY / 2))
+        ],
+        outputs: [{
+          script: [],
+          value: 0
+        }],
+        locktime: 0
+      });
+      block.txs.push(tx);
+    }
+    assert.equal(block.getReward(), -1);
+  });
+
+  it('should fail to parse >53 bit values', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [
+        createInput(Math.floor(constants.MAX_MONEY / 2))
+      ],
+      outputs: [{
+        script: [],
+        value: 0
+      }],
+      locktime: 0
+    });
+    tx.outputs[0].value = new bn('00ffffffffffffff', 'hex');
+    assert(tx.outputs[0].value.bitLength() === 56);
+    var raw = tx.toRaw()
+    assert.throws(function() {
+      tx.fromRaw(raw);
+    });
+    tx.outputs[0].value = new bn('00ffffffffffffff', 'hex').ineg();
+    assert(tx.outputs[0].value.bitLength() === 56);
+    var raw = tx.toRaw()
+    assert.throws(function() {
+      tx.fromRaw(raw);
+    });
+  });
 });
