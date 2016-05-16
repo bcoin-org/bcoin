@@ -45,16 +45,25 @@ function clearCache(tx, nocache) {
 
   delete tx._raw;
   delete tx._hash;
+  delete tx._inputValue;
+  delete tx._outputValue;
+
+  tx._size = 0;
+  tx._witnessSize = 0;
 
   for (i = 0; i < tx.inputs.length; i++) {
     input = tx.inputs[i];
+    delete input._address;
     delete input.script.raw;
+    delete input.script.redeem;
+    delete input.witness.redeem;
     if (input.coin)
       delete input.coin.script.raw;
   }
 
   for (i = 0; i < tx.outputs.length; i++) {
     output = tx.outputs[i];
+    delete output._address;
     delete output.script.raw;
   }
 }
@@ -380,6 +389,30 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
+  it('should fail on >51 bit output values from multiple', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(constants.MAX_MONEY)],
+      outputs: [
+        {
+          script: [],
+          value: Math.floor(constants.MAX_MONEY / 2)
+        },
+        {
+          script: [],
+          value: Math.floor(constants.MAX_MONEY / 2)
+        },
+        {
+          script: [],
+          value: Math.floor(constants.MAX_MONEY / 2)
+        }
+      ],
+      locktime: 0
+    });
+    assert.ok(!tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
   it('should fail on >51 bit fees from multiple', function () {
     var tx = bcoin.tx({
       version: 1,
@@ -399,7 +432,7 @@ describe('TX', function() {
   });
 
   it('should fail on >51 bit fees from multiple txs', function () {
-    var data = utils.merge(bcoin.network.get().genesis, { height: 0 });
+    var data = utils.merge({}, bcoin.network.get().genesis, { height: 0 });
     var block = new bcoin.block(data);
     for (var i = 0; i < 3; i++) {
       var tx = bcoin.tx({
@@ -441,6 +474,130 @@ describe('TX', function() {
     var raw = tx.toRaw()
     assert.throws(function() {
       tx.fromRaw(raw);
+    });
+  });
+
+  it('should fail on 53 bit coin values', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(utils.MAX_SAFE_INTEGER)],
+      outputs: [{
+        script: [],
+        value: constants.MAX_MONEY
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  it('should fail on 53 bit output values', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(constants.MAX_MONEY)],
+      outputs: [{
+        script: [],
+        value: utils.MAX_SAFE_INTEGER
+      }],
+      locktime: 0
+    });
+    assert.ok(!tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  it('should fail on 53 bit fees', function () {
+    var tx = bcoin.tx({
+      version: 1,
+      inputs: [createInput(utils.MAX_SAFE_INTEGER)],
+      outputs: [{
+        script: [],
+        value: 0
+      }],
+      locktime: 0
+    });
+    assert.ok(tx.isSane());
+    assert.ok(!tx.checkInputs(0));
+  });
+
+  [utils.MAX_SAFE_ADDITION, utils.MAX_SAFE_INTEGER].forEach(function(MAX) {
+    it('should fail on >53 bit values from multiple', function () {
+      var tx = bcoin.tx({
+        version: 1,
+        inputs: [
+          createInput(MAX),
+          createInput(MAX),
+          createInput(MAX)
+        ],
+        outputs: [{
+          script: [],
+          value: constants.MAX_MONEY
+        }],
+        locktime: 0
+      });
+      assert.ok(tx.isSane());
+      assert.ok(!tx.checkInputs(0));
+    });
+
+    it('should fail on >53 bit output values from multiple', function () {
+      var tx = bcoin.tx({
+        version: 1,
+        inputs: [createInput(constants.MAX_MONEY)],
+        outputs: [
+          {
+            script: [],
+            value: MAX
+          },
+          {
+            script: [],
+            value: MAX
+          },
+          {
+            script: [],
+            value: MAX
+          }
+        ],
+        locktime: 0
+      });
+      assert.ok(!tx.isSane());
+      assert.ok(!tx.checkInputs(0));
+    });
+
+    it('should fail on >53 bit fees from multiple', function () {
+      var tx = bcoin.tx({
+        version: 1,
+        inputs: [
+          createInput(MAX),
+          createInput(MAX),
+          createInput(MAX)
+        ],
+        outputs: [{
+          script: [],
+          value: 0
+        }],
+        locktime: 0
+      });
+      assert.ok(tx.isSane());
+      assert.ok(!tx.checkInputs(0));
+    });
+
+    it('should fail on >53 bit fees from multiple txs', function () {
+      var data = utils.merge({}, bcoin.network.get().genesis, { height: 0 });
+      var block = new bcoin.block(data);
+      for (var i = 0; i < 3; i++) {
+        var tx = bcoin.tx({
+          version: 1,
+          inputs: [
+            createInput(MAX)
+          ],
+          outputs: [{
+            script: [],
+            value: 0
+          }],
+          locktime: 0
+        });
+        block.txs.push(tx);
+      }
+      assert.equal(block.getReward(), -1);
     });
   });
 });
