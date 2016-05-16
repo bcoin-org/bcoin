@@ -12,6 +12,7 @@ var tx1 = parseTX('data/tx1.hex');
 var tx2 = parseTX('data/tx2.hex');
 var tx3 = parseTX('data/tx3.hex');
 var tx4 = parseExtended('data/tx4.hex');
+var wtx = parseTX('data/wtx.hex');
 
 function parseTX(file) {
   file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim().split(/\n+/);
@@ -35,6 +36,7 @@ function clearCache(tx, nocache) {
     if (!nocache)
       return;
     delete tx.raw;
+    delete tx.redeem;
     return;
   }
 
@@ -599,5 +601,17 @@ describe('TX', function() {
       }
       assert.equal(block.getReward(), -1);
     });
+  });
+
+  it('should parse witness tx properly', function() {
+    assert.equal(wtx.inputs.length, 5);
+    assert.equal(wtx.outputs.length, 1980);
+    assert(wtx.hasWitness());
+    assert.notEqual(wtx.hash('hex'), wtx.witnessHash('hex'));
+    assert.equal(wtx.witnessHash('hex'),
+      '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
+    assert.equal(wtx.getSize(), 62138);
+    assert.equal(wtx.getVirtualSize(), 61813);
+    assert.equal(wtx.getCost(), 247250);
   });
 });
