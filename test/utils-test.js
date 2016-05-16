@@ -27,7 +27,7 @@ describe('Utils', function() {
     btc = utils.btc(54678 * 1000000);
     assert.equal(btc, '546.78');
     btc = utils.btc(5460 * 10000000);
-    assert.equal(btc, '546');
+    assert.equal(btc, '546.0');
   });
 
   it('should convert btc to satoshi', function() {
@@ -37,6 +37,42 @@ describe('Utils', function() {
     assert(btc === 54678 * 1000000);
     btc = utils.satoshi('546');
     assert(btc === 5460 * 10000000);
+    btc = utils.satoshi('546.0');
+    assert(btc === 5460 * 10000000);
+    btc = utils.satoshi('546.0000');
+    assert(btc === 5460 * 10000000);
+    assert.doesNotThrow(function() {
+      utils.satoshi('546.00000000000000000');
+    });
+    assert.throws(function() {
+      utils.satoshi('546.00000000000000001');
+    });
+    /*
+    assert.doesNotThrow(function() {
+      utils.satoshi('21000000');
+    });
+    assert.doesNotThrow(function() {
+      utils.satoshi('021000000');
+    });
+    assert.throws(function() {
+      utils.satoshi('21000001');
+    });
+    assert.throws(function() {
+      utils.satoshi('121000000');
+    });
+    */
+    assert.doesNotThrow(function() {
+      utils.satoshi('90071992.54740991');
+    });
+    assert.doesNotThrow(function() {
+      utils.satoshi('090071992.547409910');
+    });
+    assert.throws(function() {
+      utils.satoshi('90071992.54740992');
+    });
+    assert.throws(function() {
+      utils.satoshi('190071992.54740991');
+    });
   });
 
   var unsigned = [
