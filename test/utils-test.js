@@ -18,7 +18,7 @@ describe('Utils', function() {
       'hex'
     );
     var target = utils.fromCompact(bits);
-    assert(utils.testTarget(target, hash));
+    assert(utils.testTarget(hash, target));
   });
 
   it('should convert satoshi to btc', function() {
