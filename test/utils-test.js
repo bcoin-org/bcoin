@@ -47,20 +47,6 @@ describe('Utils', function() {
     assert.throws(function() {
       utils.satoshi('546.00000000000000001');
     });
-    /*
-    assert.doesNotThrow(function() {
-      utils.satoshi('21000000');
-    });
-    assert.doesNotThrow(function() {
-      utils.satoshi('021000000');
-    });
-    assert.throws(function() {
-      utils.satoshi('21000001');
-    });
-    assert.throws(function() {
-      utils.satoshi('121000000');
-    });
-    */
     assert.doesNotThrow(function() {
       utils.satoshi('90071992.54740991');
     });
