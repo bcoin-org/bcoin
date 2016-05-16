@@ -333,7 +333,10 @@ describe('Script', function() {
         });
         if (nocache) {
           delete input.raw;
+          delete input.redeem;
+          delete input._address;
           delete output.raw;
+          delete output._address;
         }
         var err, res;
         try {
