@@ -352,4 +352,157 @@ describe('Script', function() {
       });
     });
   });
+
+  it('should execute FindAndDelete correctly', function() {
+    var s, d, expect;
+
+    function del(s) {
+      s.mutable = true;
+      delete s.raw;
+      return s;
+    }
+
+    s = bcoin.script.fromString('OP_1 OP_2');
+    del(s);
+    d = new bcoin.script();
+    expect = s.clone();
+    assert.equal(s.findAndDelete(d.encode()), 0);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromString('OP_1 OP_2 OP_3');
+    del(s);
+    d = bcoin.script.fromString('OP_2');
+    del(d);
+    expect = bcoin.script.fromString('OP_1 OP_3');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 1);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromString('OP_3 OP_1 OP_3 OP_3 OP_4 OP_3');
+    del(s);
+    d = bcoin.script.fromString('OP_3');
+    del(d);
+    expect = bcoin.script.fromString('OP_1 OP_4');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 4);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('0302ff03', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('0302ff03', 'hex');
+    del(d);
+    expect = new bcoin.script();
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 1);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('0302ff030302ff03', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('0302ff03', 'hex');
+    del(d);
+    expect = new bcoin.script();
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 2);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('0302ff030302ff03', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('02', 'hex');
+    del(d);
+    expect = s.clone();
+    del(expect);
+    //assert.equal(s.findAndDelete(d.encode()), 0);
+    s.findAndDelete(d.encode());
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('0302ff030302ff03', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('ff', 'hex');
+    del(d);
+    expect = s.clone();
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 0);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('0302ff030302ff03', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('03', 'hex');
+    del(d);
+    expect = new bcoin.script([new Buffer([0xff, 0x03]), new Buffer([0xff, 0x03])]);
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 2);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('02feed5169', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('feed51', 'hex');
+    del(d);
+    expect = s.clone();
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 0);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('02feed5169', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('02feed51', 'hex');
+    del(d);
+    expect = bcoin.script.fromRaw('69', 'hex');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 1);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('516902feed5169', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('feed51', 'hex');
+    del(d);
+    expect = s.clone();
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 0);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('516902feed5169', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('02feed51', 'hex');
+    del(d);
+    expect = bcoin.script.fromRaw('516969', 'hex');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 1);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromString('OP_0 OP_0 OP_1 OP_1');
+    del(s);
+    d = bcoin.script.fromString('OP_0 OP_1');
+    del(d);
+    expect = bcoin.script.fromString('OP_0 OP_1');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 1);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromString('OP_0 OP_0 OP_1 OP_0 OP_1 OP_1');
+    del(s);
+    d = bcoin.script.fromString('OP_0 OP_1');
+    del(d);
+    expect = bcoin.script.fromString('OP_0 OP_1');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 2);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('0003feed', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('03feed', 'hex');
+    del(d);
+    expect = bcoin.script.fromRaw('00', 'hex');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 1);
+    assert.deepEqual(s.encode(), expect.encode());
+
+    s = bcoin.script.fromRaw('0003feed', 'hex');
+    del(s);
+    d = bcoin.script.fromRaw('00', 'hex');
+    del(d);
+    expect = bcoin.script.fromRaw('03feed', 'hex');
+    del(expect);
+    assert.equal(s.findAndDelete(d.encode()), 1);
+    assert.deepEqual(s.encode(), expect.encode());
+  });
 });
