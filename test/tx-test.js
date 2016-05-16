@@ -214,19 +214,19 @@ describe('TX', function() {
 
         if (valid) {
           if (comments.indexOf('Coinbase') === 0) {
-            it('should handle valid coinbase' + suffix + ': ' + comments, function () {
+            it('should handle valid coinbase' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
               assert.ok(tx.isSane());
             });
             return;
           }
-          it('should handle valid tx test' + suffix + ': ' + comments, function () {
+          it('should handle valid tx test' + suffix + ': ' + comments, function() {
             clearCache(tx, nocache);
             assert.ok(tx.verify(null, true, flags));
           });
         } else {
           if (comments === 'Duplicate inputs') {
-            it('should handle duplicate input test' + suffix + ': ' + comments, function () {
+            it('should handle duplicate input test' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
               assert.ok(tx.verify(null, true, flags));
               assert.ok(!tx.isSane());
@@ -234,7 +234,7 @@ describe('TX', function() {
             return;
           }
           if (comments === 'Negative output') {
-            it('should handle invalid tx (negative)' + suffix + ': ' + comments, function () {
+            it('should handle invalid tx (negative)' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
               assert.ok(tx.verify(null, true, flags));
               assert.ok(!tx.isSane());
@@ -242,13 +242,13 @@ describe('TX', function() {
             return;
           }
           if (comments.indexOf('Coinbase') === 0) {
-            it('should handle invalid coinbase' + suffix + ': ' + comments, function () {
+            it('should handle invalid coinbase' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
               assert.ok(!tx.isSane());
             });
             return;
           }
-          it('should handle invalid tx test' + suffix + ': ' + comments, function () {
+          it('should handle invalid tx test' + suffix + ': ' + comments, function() {
             clearCache(tx, nocache);
             assert.ok(!tx.verify(null, true, flags));
           });
@@ -273,7 +273,7 @@ describe('TX', function() {
       hexType = hexType.toString(16);
       if (hexType.length % 2 !== 0)
         hexType = '0' + hexType;
-      it('should get signature hash of ' + data[4] + ' (' + hexType + ')' + suffix, function () {
+      it('should get signature hash of ' + data[4] + ' (' + hexType + ')' + suffix, function() {
         var subscript = script.getSubscript(0).removeSeparators();
         var hash = tx.signatureHash(index, subscript, type, 0).toString('hex');
         assert.equal(hash, expected);
@@ -303,7 +303,7 @@ describe('TX', function() {
     };
   }
 
-  it('should fail on >51 bit coin values', function () {
+  it('should fail on >51 bit coin values', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(constants.MAX_MONEY + 1)],
@@ -317,7 +317,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should handle 51 bit coin values', function () {
+  it('should handle 51 bit coin values', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(constants.MAX_MONEY)],
@@ -331,7 +331,7 @@ describe('TX', function() {
     assert.ok(tx.checkInputs(0));
   });
 
-  it('should fail on >51 bit output values', function () {
+  it('should fail on >51 bit output values', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(constants.MAX_MONEY)],
@@ -345,7 +345,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should handle 51 bit output values', function () {
+  it('should handle 51 bit output values', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(constants.MAX_MONEY)],
@@ -359,7 +359,7 @@ describe('TX', function() {
     assert.ok(tx.checkInputs(0));
   });
 
-  it('should fail on >51 bit fees', function () {
+  it('should fail on >51 bit fees', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(constants.MAX_MONEY + 1)],
@@ -373,7 +373,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should fail on >51 bit values from multiple', function () {
+  it('should fail on >51 bit values from multiple', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [
@@ -391,7 +391,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should fail on >51 bit output values from multiple', function () {
+  it('should fail on >51 bit output values from multiple', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(constants.MAX_MONEY)],
@@ -415,7 +415,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should fail on >51 bit fees from multiple', function () {
+  it('should fail on >51 bit fees from multiple', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [
@@ -433,7 +433,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should fail on >51 bit fees from multiple txs', function () {
+  it('should fail on >51 bit fees from multiple txs', function() {
     var data = utils.merge({}, bcoin.network.get().genesis, { height: 0 });
     var block = new bcoin.block(data);
     for (var i = 0; i < 3; i++) {
@@ -453,7 +453,7 @@ describe('TX', function() {
     assert.equal(block.getReward(), -1);
   });
 
-  it('should fail to parse >53 bit values', function () {
+  it('should fail to parse >53 bit values', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [
@@ -479,7 +479,7 @@ describe('TX', function() {
     });
   });
 
-  it('should fail on 53 bit coin values', function () {
+  it('should fail on 53 bit coin values', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(utils.MAX_SAFE_INTEGER)],
@@ -493,7 +493,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should fail on 53 bit output values', function () {
+  it('should fail on 53 bit output values', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(constants.MAX_MONEY)],
@@ -507,7 +507,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  it('should fail on 53 bit fees', function () {
+  it('should fail on 53 bit fees', function() {
     var tx = bcoin.tx({
       version: 1,
       inputs: [createInput(utils.MAX_SAFE_INTEGER)],
@@ -522,7 +522,7 @@ describe('TX', function() {
   });
 
   [utils.MAX_SAFE_ADDITION, utils.MAX_SAFE_INTEGER].forEach(function(MAX) {
-    it('should fail on >53 bit values from multiple', function () {
+    it('should fail on >53 bit values from multiple', function() {
       var tx = bcoin.tx({
         version: 1,
         inputs: [
@@ -540,7 +540,7 @@ describe('TX', function() {
       assert.ok(!tx.checkInputs(0));
     });
 
-    it('should fail on >53 bit output values from multiple', function () {
+    it('should fail on >53 bit output values from multiple', function() {
       var tx = bcoin.tx({
         version: 1,
         inputs: [createInput(constants.MAX_MONEY)],
@@ -564,7 +564,7 @@ describe('TX', function() {
       assert.ok(!tx.checkInputs(0));
     });
 
-    it('should fail on >53 bit fees from multiple', function () {
+    it('should fail on >53 bit fees from multiple', function() {
       var tx = bcoin.tx({
         version: 1,
         inputs: [
@@ -582,7 +582,7 @@ describe('TX', function() {
       assert.ok(!tx.checkInputs(0));
     });
 
-    it('should fail on >53 bit fees from multiple txs', function () {
+    it('should fail on >53 bit fees from multiple txs', function() {
       var data = utils.merge({}, bcoin.network.get().genesis, { height: 0 });
       var block = new bcoin.block(data);
       for (var i = 0; i < 3; i++) {
