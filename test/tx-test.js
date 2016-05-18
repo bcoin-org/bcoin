@@ -471,6 +471,7 @@ describe('TX', function() {
     assert.throws(function() {
       tx.fromRaw(raw);
     });
+    delete tx._raw;
     tx.outputs[0].value = new bn('00ffffffffffffff', 'hex').ineg();
     assert(tx.outputs[0].value.bitLength() === 56);
     var raw = tx.toRaw()
