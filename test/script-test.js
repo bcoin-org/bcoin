@@ -320,7 +320,7 @@ describe('Script', function() {
               hash: coin.hash('hex'),
               index: 0
             },
-            coin: bcoin.coin(coin, 0),
+            coin: bcoin.coin.fromTX(coin, 0),
             script: input,
             witness: witness,
             sequence: 0xffffffff
