@@ -19,7 +19,7 @@ var node = new bcoin.fullnode({
 });
 
 node.on('error', function(err) {
-  bcoin.debug(err.stack + '');
+  bcoin.error(err);
 });
 
 node.open(function(err) {
