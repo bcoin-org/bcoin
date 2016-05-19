@@ -3,7 +3,7 @@
 var argv = parseArg(process.argv);
 
 var bcoin = require('../').set(argv.network);
-var network = bcoin.protocol.network;
+var network = bcoin.network.get();
 var utils = bcoin.utils;
 var assert = utils.assert;
 var Client = bcoin.http.client;
