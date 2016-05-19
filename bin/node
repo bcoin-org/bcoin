@@ -26,12 +26,17 @@ node.open(function(err) {
   if (err)
     throw err;
 
-  if (node.options.mine) {
-    if (bcoin.network.get().type !== 'regtest')
-      node.pool.connect();
-    node.miner.start();
-    return;
-  }
+  node.listen(function(err) {
+    if (err)
+      throw err;
 
-  node.startSync();
+    if (node.options.mine) {
+      if (bcoin.network.get().type !== 'regtest')
+        node.pool.connect();
+      node.miner.start();
+      return;
+    }
+
+    node.startSync();
+  });
 });
