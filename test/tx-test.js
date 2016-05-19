@@ -306,6 +306,7 @@ describe('TX', function() {
   it('should fail on >51 bit coin values', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(constants.MAX_MONEY + 1)],
       outputs: [{
         script: [],
@@ -320,6 +321,7 @@ describe('TX', function() {
   it('should handle 51 bit coin values', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(constants.MAX_MONEY)],
       outputs: [{
         script: [],
@@ -334,6 +336,7 @@ describe('TX', function() {
   it('should fail on >51 bit output values', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(constants.MAX_MONEY)],
       outputs: [{
         script: [],
@@ -348,6 +351,7 @@ describe('TX', function() {
   it('should handle 51 bit output values', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(constants.MAX_MONEY)],
       outputs: [{
         script: [],
@@ -362,6 +366,7 @@ describe('TX', function() {
   it('should fail on >51 bit fees', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(constants.MAX_MONEY + 1)],
       outputs: [{
         script: [],
@@ -376,6 +381,7 @@ describe('TX', function() {
   it('should fail on >51 bit values from multiple', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [
         createInput(Math.floor(constants.MAX_MONEY / 2)),
         createInput(Math.floor(constants.MAX_MONEY / 2)),
@@ -394,6 +400,7 @@ describe('TX', function() {
   it('should fail on >51 bit output values from multiple', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(constants.MAX_MONEY)],
       outputs: [
         {
@@ -418,6 +425,7 @@ describe('TX', function() {
   it('should fail on >51 bit fees from multiple', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [
         createInput(Math.floor(constants.MAX_MONEY / 2)),
         createInput(Math.floor(constants.MAX_MONEY / 2)),
@@ -439,6 +447,7 @@ describe('TX', function() {
     for (var i = 0; i < 3; i++) {
       var tx = bcoin.tx({
         version: 1,
+        flag: 1,
         inputs: [
           createInput(Math.floor(constants.MAX_MONEY / 2))
         ],
@@ -456,6 +465,7 @@ describe('TX', function() {
   it('should fail to parse >53 bit values', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [
         createInput(Math.floor(constants.MAX_MONEY / 2))
       ],
@@ -483,6 +493,7 @@ describe('TX', function() {
   it('should fail on 53 bit coin values', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(utils.MAX_SAFE_INTEGER)],
       outputs: [{
         script: [],
@@ -497,6 +508,7 @@ describe('TX', function() {
   it('should fail on 53 bit output values', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(constants.MAX_MONEY)],
       outputs: [{
         script: [],
@@ -511,6 +523,7 @@ describe('TX', function() {
   it('should fail on 53 bit fees', function() {
     var tx = bcoin.tx({
       version: 1,
+      flag: 1,
       inputs: [createInput(utils.MAX_SAFE_INTEGER)],
       outputs: [{
         script: [],
@@ -526,6 +539,7 @@ describe('TX', function() {
     it('should fail on >53 bit values from multiple', function() {
       var tx = bcoin.tx({
         version: 1,
+        flag: 1,
         inputs: [
           createInput(MAX),
           createInput(MAX),
@@ -544,6 +558,7 @@ describe('TX', function() {
     it('should fail on >53 bit output values from multiple', function() {
       var tx = bcoin.tx({
         version: 1,
+        flag: 1,
         inputs: [createInput(constants.MAX_MONEY)],
         outputs: [
           {
@@ -568,6 +583,7 @@ describe('TX', function() {
     it('should fail on >53 bit fees from multiple', function() {
       var tx = bcoin.tx({
         version: 1,
+        flag: 1,
         inputs: [
           createInput(MAX),
           createInput(MAX),
@@ -589,6 +605,7 @@ describe('TX', function() {
       for (var i = 0; i < 3; i++) {
         var tx = bcoin.tx({
           version: 1,
+          flag: 1,
           inputs: [
             createInput(MAX)
           ],

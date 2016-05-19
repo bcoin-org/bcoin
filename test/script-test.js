@@ -297,6 +297,7 @@ describe('Script', function() {
       it('should handle script test' + suffix + ': ' + comments, function() {
         var coin = bcoin.tx({
           version: 1,
+          flag: 1,
           inputs: [{
             prevout: {
               hash: constants.NULL_HASH,
@@ -315,6 +316,7 @@ describe('Script', function() {
         });
         var tx = bcoin.tx({
           version: 1,
+          flag: 1,
           inputs: [{
             prevout: {
               hash: coin.hash('hex'),

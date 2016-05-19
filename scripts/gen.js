@@ -30,6 +30,7 @@ function createGenesisBlock(options) {
 
   tx = {
     version: 1,
+    flag: 1,
     inputs: [{
       prevout: {
         hash: constants.NULL_HASH,
