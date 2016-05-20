@@ -40,6 +40,7 @@ describe('Chain', function() {
           value: utils.satoshi('25.0')
         });
         redeemer.addInput(tx, 0);
+        redeemer.setLocktime(chain.height);
         wallet.sign(redeemer);
         attempt.addTX(redeemer);
       }
