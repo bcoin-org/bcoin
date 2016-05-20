@@ -17,7 +17,7 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = new Buffer(passphrase, 'utf8');
 
-    key = utils.pbkdf2key(passphrase, null, 2048, 32, 16);
+    key = utils.pbkdf2key(passphrase, 2048, 32, 16);
     cipher = crypto.createCipheriv('aes-256-cbc', key.key, key.iv);
 
     return Buffer.concat([
@@ -38,7 +38,7 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = new Buffer(passphrase, 'utf8');
 
-    key = utils.pbkdf2key(passphrase, null, 2048, 32, 16);
+    key = utils.pbkdf2key(passphrase, 2048, 32, 16);
     decipher = crypto.createDecipheriv('aes-256-cbc', key.key, key.iv);
 
     return Buffer.concat([
@@ -59,7 +59,7 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = new Buffer(passphrase, 'utf8');
 
-    key = utils.pbkdf2key(passphrase, null, 2048, 32, 16);
+    key = utils.pbkdf2key(passphrase, 2048, 32, 16);
 
     return aes.cbc.encrypt(data, key.key, key.iv);
   }
@@ -76,7 +76,7 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = new Buffer(passphrase, 'utf8');
 
-    key = utils.pbkdf2key(passphrase, null, 2048, 32, 16);
+    key = utils.pbkdf2key(passphrase, 2048, 32, 16);
 
     return aes.cbc.decrypt(data, key.key, key.iv);
   }
