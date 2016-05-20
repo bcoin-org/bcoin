@@ -79,7 +79,7 @@ describe('Bloom', function() {
       var j = i;
       do {
         var str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true, str + i);
+        assert(filter.test(str, 'ascii') === true, str);
         assert(filter.test(str + '-', 'ascii') === false, str);
       } while (j--);
     }
@@ -99,7 +99,7 @@ describe('Bloom', function() {
       var j = i;
       do {
         var str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true, str + ' GOOD');
+        assert(filter.test(str, 'ascii') === true, str);
         assert(filter.test(str + '-', 'ascii') === false, str);
       } while (j-- > 25);
       assert(filter.test('foobar 24', 'ascii') === false);
@@ -110,7 +110,7 @@ describe('Bloom', function() {
       var j = i;
       do {
         var str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true, str + ' GOOD');
+        assert(filter.test(str, 'ascii') === true, str);
         assert(filter.test(str + '-', 'ascii') === false, str);
       } while (j-- > 50);
     }
