@@ -60,6 +60,28 @@ describe('Bloom', function() {
     }
   });
 
+  it('should test hash filter', function() {
+    var filter = new bcoin.bloom.hash(210000, 0.00001, 700);
+    filter.tweak = 0xdeadbeef;
+    // ~1m operations
+    for (var i = 0; i < 1000; i++) {
+      var n = i.toString(16);
+      if (n.length % 2 !== 0)
+        n = '0' + n;
+      var str = 'deadbeef' + n;
+      filter.add(str, 'hex');
+      var j = i;
+      do {
+        var n = j.toString(16);
+        if (n.length % 2 !== 0)
+          n = '0' + n;
+        var str = 'deadbeef' + n;
+        assert(filter.test(str, 'hex') === true);
+        assert(filter.test('00' + str, 'hex') === false);
+      } while (j--);
+    }
+  });
+
   it('should handle rolling generations', function() {
     var filter = new bcoin.bloom.rolling(50, 0.00001);
     filter.tweak = 0xdeadbeee;
