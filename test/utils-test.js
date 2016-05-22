@@ -61,6 +61,62 @@ describe('Utils', function() {
     });
   });
 
+  it('should write/read new varints', function() {
+    /*
+     * 0:         [0x00]  256:        [0x81 0x00]
+     * 1:         [0x01]  16383:      [0xFE 0x7F]
+     * 127:       [0x7F]  16384:      [0xFF 0x00]
+     * 128:  [0x80 0x00]  16511: [0x80 0xFF 0x7F]
+     * 255:  [0x80 0x7F]  65535: [0x82 0xFD 0x7F]
+     * 2^32:           [0x8E 0xFE 0xFE 0xFF 0x00]
+     */
+
+    var n = 0;
+    var b = new Buffer(1);
+    b.fill(0x00);
+    utils.writeVarint2(b, 0, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 0);
+    assert.deepEqual(b, [0]);
+
+    var b = new Buffer(1);
+    b.fill(0x00);
+    utils.writeVarint2(b, 1, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 1);
+    assert.deepEqual(b, [1]);
+
+    var b = new Buffer(1);
+    b.fill(0x00);
+    utils.writeVarint2(b, 127, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 127);
+    assert.deepEqual(b, [0x7f]);
+
+    var b = new Buffer(2);
+    b.fill(0x00);
+    utils.writeVarint2(b, 128, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 128);
+    assert.deepEqual(b, [0x80, 0x00]);
+
+    var b = new Buffer(2);
+    b.fill(0x00);
+    utils.writeVarint2(b, 255, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 255);
+    assert.deepEqual(b, [0x80, 0x7f]);
+
+    var b = new Buffer(3);
+    b.fill(0x00);
+    utils.writeVarint2(b, 16511, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 16511);
+    //assert.deepEqual(b, [0x80, 0xff, 0x7f]);
+    assert.deepEqual(b, [0xff, 0x7f, 0x00]);
+
+    var b = new Buffer(3);
+    b.fill(0x00);
+    utils.writeVarint2(b, 65535, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 65535);
+    //assert.deepEqual(b, [0x82, 0xfd, 0x7f]);
+    assert.deepEqual(b, [0x82, 0xfe, 0x7f]);
+  });
+
   var unsigned = [
     new bn('ffeeffee'),
     new bn('001fffeeffeeffee'),
