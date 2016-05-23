@@ -15,7 +15,8 @@ var node = new bcoin.fullnode({
   listen: process.argv.indexOf('--listen') !== -1,
   selfish: process.argv.indexOf('--selfish') !== -1,
   broadcast: process.argv.indexOf('--broadcast') !== -1,
-  mine: process.argv.indexOf('--mine') !== -1
+  mine: process.argv.indexOf('--mine') !== -1,
+  parallel: process.argv.indexOf('--parallel') !== -1
 });
 
 node.on('error', function(err) {
@@ -30,15 +31,24 @@ node.open(function(err) {
     if (err)
       throw err;
 
-    if (node.options.mine) {
-      if (bcoin.network.get().type !== 'regtest')
-        node.pool.connect();
-      node.miner.start();
-      if (node.chain.isFull())
-        node.startSync();
+    if (!node.options.mine) {
+      node.startSync();
       return;
     }
 
+    if (node.network.type === 'regtest') {
+      node.miner.start();
+      return;
+    }
+
+    node.pool.connect();
     node.startSync();
+
+    if (node.chain.isFull()) {
+      node.miner.start();
+      return;
+    }
+
+    node.chain.once('full', node.miner.start.bind(node.miner));
   });
 });
