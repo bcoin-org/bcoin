@@ -38,6 +38,7 @@ node.open(function(err) {
 
     if (node.network.type === 'regtest') {
       node.miner.start();
+      node.startSync();
       return;
     }
 
