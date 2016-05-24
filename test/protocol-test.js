@@ -46,47 +46,34 @@ describe('Protocol', function() {
   packetTest('verack', {}, function(payload) {
   });
 
-  var peers = [
+  var hosts = [
     {
-      ipv6: '0000:0000:0000:0000:0000:ffff:0000:0000',
-      ipv4: '0.0.0.0',
+      services: constants.LOCAL_SERVICES,
+      host: '127.0.0.1',
       port: 8333,
       ts: Date.now() / 1000 | 0
     },
     {
-      ipv6:  '0000:0000:0000:0000:0000:ffff:7f00:0001',
-      ipv4: '127.0.0.1',
+      services: constants.LOCAL_SERVICES,
+      host: 'ffff:0123:4567:89ab:cdef:0123:4567:89ab',
       port: 18333,
       ts: Date.now() / 1000 | 0
     }
   ];
 
-  // Convert peers to framer payload format, backup strings.
-  peers.forEach(function(addr) {
-    addr._ipv4 = addr.ipv4;
-    addr.ipv4 = addr.ipv4.split('.').map(function(n) {
-      return +n;
-    });
-    addr._ipv6 = addr.ipv6;
-    addr.ipv6 = new Buffer(addr.ipv6.replace(/:/g, ''), 'hex');
-    addr.services = constants.LOCAL_SERVICES;
-  });
-
-  packetTest('addr', peers, function(payload) {
+  packetTest('addr', hosts, function(payload) {
     assert.equal(typeof payload.length, 'number');
     assert.equal(payload.length, 2);
 
     assert.equal(typeof payload[0].ts, 'number');
     assert.equal(payload[0].services, constants.LOCAL_SERVICES);
-    assert.equal(payload[0].ipv6, peers[0]._ipv6);
-    assert.equal(payload[0].ipv4, peers[0]._ipv4);
-    assert.equal(payload[0].port, peers[0].port);
+    assert.equal(payload[0].host, hosts[0].host);
+    assert.equal(payload[0].port, hosts[0].port);
 
     assert.equal(typeof payload[1].ts, 'number');
     assert.equal(payload[1].services, constants.LOCAL_SERVICES);
-    assert.equal(payload[1].ipv6, peers[1]._ipv6);
-    assert.equal(payload[1].ipv4, peers[1]._ipv4);
-    assert.equal(payload[1].port, peers[1].port);
+    assert.equal(payload[1].host, hosts[1].host);
+    assert.equal(payload[1].port, hosts[1].port);
   });
 
   it('should include the raw data of only one transaction in a ' +

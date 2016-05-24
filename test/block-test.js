@@ -4,10 +4,11 @@ var utils = bcoin.utils;
 var constants = bcoin.protocol.constants;
 var network = bcoin.protocol.network;
 var assert = require('assert');
+var block300025 = require('./data/block300025.json');
 
 describe('Block', function() {
   var parser = bcoin.protocol.parser;
-  var block = bcoin.merkleblock({
+  var mblock = bcoin.merkleblock({
     version: 2,
     prevBlock: 'd1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0000000000000000',
     merkleRoot: '28bec1d35af480ba3884553d72694f6ba6c163a5c081d7e6edaec15f373f19af',
@@ -27,24 +28,46 @@ describe('Block', function() {
       '1f5e46b9da3a8b1241f4a1501741d3453bafddf6135b600b926e3f4056c6d564',
       '33825657ba32afe269819f01993bd77baba86379043168c94845d32370e53562'
     ],
-    flags: new Buffer([245, 90, 0])
+    flags: new Buffer([245, 122, 0])
   });
-  var raw = block.toRaw('hex');
+  var raw = mblock.toRaw('hex');
+  var block;
+
+  var raw2 = '02000000d1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0'
+    + '00000000000000028bec1d35af480ba3884553d72694f6ba6c163a5c081d7e6edaec'
+    + '15f373f19af62ef6d536c890019d0b4bf46cd0100000a7d22e53bce1bbb3294d1a39'
+    + '6c5acc45bdcc8f192cb492f0d9f55421fd4c62de19d6d585fdaf3737b9a54aaee1dd'
+    + '003f498328d699b7dfb42dd2b44b6ebde23338b61da3053d6f382f2145bdd856bc5d'
+    + 'cf052c3a11c1784d3d51b2cbe0f6d0923d7bbaae4716cb0d329d755b707cee588cdd'
+    + 'c68601f99bc05fef1fabeb8dfe4a07393f84cd04ca8931975c66282ebf1847c78d8d'
+    + 'e6c2578d4f9bae23bc6f30857ec8c51de3170301430ec56f6703533d9ea5b05c6fa7'
+    + '068954bcb90eed8c2ee5cc7c152869db09a5ae2291fa03142912d9d7aba75be7d491'
+    + 'a8ac4230ee9a920cb5adbf04583354515a225f2c418de7c5cdac4cef211820c79717'
+    + 'cd2c50412153f1f5e46b9da3a8b1241f4a1501741d3453bafddf6135b600b926e3f4'
+    + '056c6d56433825657ba32afe269819f01993bd77baba86379043168c94845d32370e'
+    + '5356203f57a00';
+
+  var mblock = bcoin.merkleblock.fromRaw(raw2, 'hex');
 
   it('should parse partial merkle tree', function() {
-    assert(block.verify());
-    assert.equal(block.tx.length, 2);
+    assert(mblock.verify());
+    assert.equal(mblock.tx.length, 2);
+    assert.equal(mblock.hash('hex'),
+      '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
+    assert.equal(mblock.rhash,
+      '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
     assert.equal(
-      block.tx[0],
+      mblock.tx[0],
       '7393f84cd04ca8931975c66282ebf1847c78d8de6c2578d4f9bae23bc6f30857');
     assert.equal(
-      block.tx[1],
+      mblock.tx[1],
       'ec8c51de3170301430ec56f6703533d9ea5b05c6fa7068954bcb90eed8c2ee5c');
   });
 
   it('should decode/encode with parser/framer', function() {
     var b = bcoin.merkleblock.fromRaw(raw, 'hex');
     assert.equal(b.render().toString('hex'), raw);
+    assert.equal(raw, raw2);
   });
 
   it('should be verifiable', function() {
@@ -53,7 +76,7 @@ describe('Block', function() {
   });
 
   it('should be jsonified and unjsonified and still verify', function() {
-    var raw = block.toRaw();
+    var raw = mblock.toRaw();
     var b = bcoin.merkleblock.fromRaw(raw);
     assert.deepEqual(b.render(), raw);
     assert(b.verify());
@@ -75,5 +98,40 @@ describe('Block', function() {
 
     assert.equal(height, 6930000);
     assert.equal(total, 2099999997690000);
+  });
+
+  it('should parse JSON', function() {
+    block = bcoin.block.fromJSON(block300025);
+    assert.equal(block.hash('hex'),
+      '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
+    assert.equal(block.rhash,
+      '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
+  });
+
+  it('should create a merkle block', function() {
+    var filter = bcoin.bloom.fromRate(1000, 0.01, constants.filterFlags.NONE);
+    var item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
+    var item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+      + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
+      + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
+    filter.add(item1, 'hex');
+    filter.add(item2, 'hex');
+    var mblock2 = bcoin.merkleblock.fromBlock(block, filter);
+    assert(mblock2.verifyPartial());
+    assert.deepEqual(mblock2.render(), mblock.render());
+  });
+
+  it('should verify a historical block', function() {
+    assert(block.verify());
+    assert(block.txs[0].isSane());
+    var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+    for (var i = 1; i < block.txs.length; i++) {
+      var tx = block.txs[i];
+      assert(tx.isSane());
+      assert(tx.checkInputs(block.height));
+      assert(tx.verify(null, true, flags));
+
+    }
+    assert.equal(block.getReward(), 2507773345);
   });
 });

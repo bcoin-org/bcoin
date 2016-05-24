@@ -1,8 +1,16 @@
 var bcoin = require('../').set('main');
+var utils = bcoin.utils;
+var constants = bcoin.protocol.constants;
 var assert = require('assert');
 
 describe('Bloom', function() {
   this.timeout(20000);
+
+  var filterHex = ''
+    + '000000000000000000000000000000000000000000000000088004000000000000000'
+    + '000000000200000000000000000000000000000000800000000000000000002000000'
+    + '000000000000002000000000000000000000000000000000000000000040000200000'
+    + '0000000001000000800000080000000';
 
   it('should do proper murmur3', function() {
     var murmur3 = bcoin.bloom.murmur3;
@@ -26,6 +34,17 @@ describe('Bloom', function() {
 
     b.add('ping', 'ascii');
     assert(b.test('ping', 'ascii'));
+  });
+
+  it('should serialize to the correct format', function() {
+    var filter = new bcoin.bloom(952, 6, 3624314491, constants.filterFlags.NONE);
+    var item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
+    var item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+      + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
+      + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
+    filter.add(item1, 'hex');
+    filter.add(item2, 'hex');
+    assert.equal(filter.filter.toString('hex'), filterHex);
   });
 
   it('should test regular filter', function() {
