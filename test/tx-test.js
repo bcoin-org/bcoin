@@ -631,5 +631,12 @@ describe('TX', function() {
     assert.equal(wtx.getSize(), 62138);
     assert.equal(wtx.getVirtualSize(), 61813);
     assert.equal(wtx.getCost(), 247250);
+    var raw1 = wtx.render();
+    clearCache(wtx, true);
+    var raw2 = wtx.render();
+    assert.deepEqual(raw1, raw2);
+    var wtx2 = bcoin.tx.fromRaw(raw2);
+    assert.equal(wtx.hash('hex'), wtx2.hash('hex'));
+    assert.equal(wtx.witnessHash('hex'), wtx2.witnessHash('hex'));
   });
 });

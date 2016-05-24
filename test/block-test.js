@@ -51,16 +51,16 @@ describe('Block', function() {
 
   it('should parse partial merkle tree', function() {
     assert(mblock.verify());
-    assert.equal(mblock.tx.length, 2);
+    assert.equal(mblock.matches.length, 2);
     assert.equal(mblock.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.equal(mblock.rhash,
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
     assert.equal(
-      mblock.tx[0],
+      mblock.matches[0],
       '7393f84cd04ca8931975c66282ebf1847c78d8de6c2578d4f9bae23bc6f30857');
     assert.equal(
-      mblock.tx[1],
+      mblock.matches[1],
       'ec8c51de3170301430ec56f6703533d9ea5b05c6fa7068954bcb90eed8c2ee5c');
   });
 
