@@ -123,6 +123,7 @@ describe('Block', function() {
 
   it('should verify a historical block', function() {
     assert(block.verify());
+    assert(block.txs[0].isCoinbase());
     assert(block.txs[0].isSane());
     var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
     for (var i = 1; i < block.txs.length; i++) {
@@ -130,8 +131,43 @@ describe('Block', function() {
       assert(tx.isSane());
       assert(tx.checkInputs(block.height));
       assert(tx.verify(null, true, flags));
-
     }
     assert.equal(block.getReward(), 2507773345);
+    assert.equal(block.getReward(), block.txs[0].outputs[0].value);
+  });
+
+  it('should fail with a bad merkle root', function() {
+    var merkle = block.merkleRoot;
+    block.merkleRoot = constants.NULL_HASH;
+    delete block._valid;
+    assert(!block.verify());
+    delete block._valid;
+    block.merkleRoot = merkle;
+    assert(block.verify());
+  });
+
+  it('should fail on merkle block with a bad merkle root', function() {
+    var mblock2 = new bcoin.merkleblock(mblock);
+    mblock2.merkleRoot = constants.NULL_HASH;
+    assert(!mblock2.verify());
+    delete mblock2._validPartial;
+    delete mblock2._valid;
+    delete mblock2._hash;
+    mblock2.merkleRoot = mblock.merkleRoot;
+    assert(mblock2.verify());
+  });
+
+  it('should fail with a low target', function() {
+    var block2 = new bcoin.block(block);
+    block2.bits = 403014710;
+    assert(!block2.verify());
+    delete block2._valid;
+    block2.bits = block.bits;
+    assert(block2.verify());
+  });
+
+  it('should verify with headers', function() {
+    var headers = new bcoin.headers(block);
+    assert(headers.verify());
   });
 });
