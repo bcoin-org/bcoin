@@ -49,6 +49,8 @@ describe('Block', function() {
 
   var mblock = bcoin.merkleblock.fromRaw(raw2, 'hex');
 
+  this.timeout(10000);
+
   it('should parse partial merkle tree', function() {
     assert(mblock.verify());
     assert.equal(mblock.matches.length, 2);
@@ -137,13 +139,14 @@ describe('Block', function() {
   });
 
   it('should fail with a bad merkle root', function() {
-    var merkle = block.merkleRoot;
-    block.merkleRoot = constants.NULL_HASH;
-    delete block._valid;
-    assert(!block.verify());
-    delete block._valid;
-    block.merkleRoot = merkle;
-    assert(block.verify());
+    var block2 = new bcoin.block(block);
+    block2.merkleRoot = constants.NULL_HASH;
+    delete block2._valid;
+    assert(!block2.verify());
+    delete block2._valid;
+    delete block2._hash;
+    block2.merkleRoot = block.merkleRoot;
+    assert(block2.verify());
   });
 
   it('should fail on merkle block with a bad merkle root', function() {
@@ -162,6 +165,7 @@ describe('Block', function() {
     block2.bits = 403014710;
     assert(!block2.verify());
     delete block2._valid;
+    delete block2._hash;
     block2.bits = block.bits;
     assert(block2.verify());
   });
