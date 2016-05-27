@@ -39,6 +39,10 @@ describe('Chain', function() {
           address: wallet.getAddress(),
           value: utils.satoshi('25.0')
         });
+        redeemer.addOutput({
+          address: wallet.createAddress().getAddress(),
+          value: utils.satoshi('5.0')
+        });
         redeemer.addInput(tx, 0);
         redeemer.setLocktime(chain.height);
         wallet.sign(redeemer);
@@ -49,6 +53,11 @@ describe('Chain', function() {
   }
 
   function deleteCoins(tx) {
+    if (tx.txs) {
+      delete tx.view;
+      deleteCoins(tx.txs);
+      return;
+    }
     if (Array.isArray(tx)) {
       tx.forEach(deleteCoins);
       return;
@@ -78,10 +87,10 @@ describe('Chain', function() {
         mineBlock(ch2, cb2, function(err, chain2) {
           assert.ifError(err);
           cb2 = chain2.txs[0];
-          deleteCoins(chain1.txs);
+          deleteCoins(chain1);
           chain.add(chain1, function(err) {
             assert.ifError(err);
-            deleteCoins(chain2.txs);
+            deleteCoins(chain2);
             chain.add(chain2, function(err) {
               assert.ifError(err);
               assert(chain.tip.hash === chain1.hash('hex'));
@@ -123,7 +132,7 @@ describe('Chain', function() {
         chain.once('fork', function() {
           forked = true;
         });
-        deleteCoins(reorg.txs);
+        deleteCoins(reorg);
         chain.add(reorg, function(err) {
           assert.ifError(err);
           assert(forked);
@@ -146,7 +155,7 @@ describe('Chain', function() {
   it('should mine a block after a reorg', function(cb) {
     mineBlock(null, cb2, function(err, block) {
       assert.ifError(err);
-      deleteCoins(block.txs);
+      deleteCoins(block);
       chain.add(block, function(err) {
         assert.ifError(err);
         chain.db.get(block.hash('hex'), function(err, entry) {
@@ -166,10 +175,30 @@ describe('Chain', function() {
   it('should fail to mine a block with coins on an alternate chain', function(cb) {
     mineBlock(null, cb1, function(err, block) {
       assert.ifError(err);
-      deleteCoins(block.txs);
+      deleteCoins(block);
       chain.add(block, function(err) {
         assert(err);
         cb();
+      });
+    });
+  });
+
+  it('should get coin', function(cb) {
+    mineBlock(null, null, function(err, block) {
+      assert.ifError(err);
+      chain.add(block, function(err) {
+        assert.ifError(err);
+        mineBlock(null, block.txs[0], function(err, block) {
+          assert.ifError(err);
+          chain.add(block, function(err) {
+            assert.ifError(err);
+            chain.db.getCoin(block.txs[1].hash('hex'), 1, function(err, coin) {
+              assert.ifError(err);
+              assert.deepEqual(coin.toRaw(), bcoin.coin.fromTX(block.txs[1], 1).toRaw());
+              cb();
+            });
+          });
+        });
       });
     });
   });

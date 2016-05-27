@@ -47,7 +47,7 @@ describe('Bloom', function() {
     assert.equal(filter.filter.toString('hex'), filterHex);
   });
 
-  it('should test regular filter', function() {
+  it('should handle 1m ops with regular filter', function() {
     var filter = bcoin.bloom.fromRate(210000, 0.00001, -1);
     filter.tweak = 0xdeadbeef;
     // ~1m operations
@@ -63,7 +63,7 @@ describe('Bloom', function() {
     }
   });
 
-  it('should test rolling filter', function() {
+  it('should handle 1m ops with rolling filter', function() {
     var filter = new bcoin.bloom.rolling(210000, 0.00001);
     filter.tweak = 0xdeadbeef;
     // ~1m operations

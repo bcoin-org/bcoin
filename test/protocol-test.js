@@ -55,7 +55,7 @@ describe('Protocol', function() {
     },
     {
       services: constants.LOCAL_SERVICES,
-      host: 'ffff:0123:4567:89ab:cdef:0123:4567:89ab',
+      host: '::123:456:789a',
       port: 18333,
       ts: Date.now() / 1000 | 0
     }
