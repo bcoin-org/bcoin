@@ -486,134 +486,165 @@ describe('Wallet', function() {
       n: 3
     };
 
-    wdb.create(utils.merge({}, options), function(err, w1) {
-      assert.ifError(err);
-      wdb.create(utils.merge({}, options), function(err, w2) {
-        assert.ifError(err);
-        wdb.create(utils.merge({}, options), function(err, w3) {
+    var w1, w2, w3, receive;
+
+    utils.serial([
+      function(next) {
+        wdb.create(utils.merge({}, options), function(err, w1_) {
           assert.ifError(err);
-          wdb.create({}, function(err, receive) {
+          w1 = w1_;
+          next();
+        });
+      },
+      function(next) {
+        wdb.create(utils.merge({}, options), function(err, w2_) {
+          assert.ifError(err);
+          w2 = w2_;
+          next();
+        });
+      },
+      function(next) {
+        wdb.create(utils.merge({}, options), function(err, w3_) {
+          assert.ifError(err);
+          w3 = w3_;
+          next();
+        });
+      },
+      function(next) {
+        wdb.create({}, function(err, receive_) {
+          assert.ifError(err);
+          receive = receive_;
+          next();
+        });
+      },
+    ], function(err) {
+      assert.ifError(err);
+
+      w1.addKey(w2);
+      w1.addKey(w3);
+      w2.addKey(w1);
+      w2.addKey(w3);
+      w3.addKey(w1);
+      w3.addKey(w2);
+
+      utils.serial([
+        wdb.save.bind(wdb, w1),
+        wdb.save.bind(wdb, w2),
+        wdb.save.bind(wdb, w3),
+        wdb.save.bind(wdb, receive)
+      ], function(err) {
+        assert.ifError(err);
+
+        // w3 = bcoin.wallet.fromJSON(w3.toJSON());
+
+        // Our p2sh address
+        var addr = w1.getAddress();
+
+        if (witness)
+          assert(bcoin.address.parseBase58(addr).type === 'witnessscripthash');
+        else
+          assert(bcoin.address.parseBase58(addr).type === 'scripthash');
+
+        assert.equal(w1.getAddress(), addr);
+        assert.equal(w2.getAddress(), addr);
+        assert.equal(w3.getAddress(), addr);
+
+        var paddr = w1.getProgramAddress();
+        assert.equal(w1.getProgramAddress(), paddr);
+        assert.equal(w2.getProgramAddress(), paddr);
+        assert.equal(w3.getProgramAddress(), paddr);
+
+        // Add a shared unspent transaction to our wallets
+        var utx = bcoin.mtx();
+        if (bullshitNesting)
+          utx.addOutput({ address: paddr, value: 5460 * 10 });
+        else
+          utx.addOutput({ address: addr, value: 5460 * 10 });
+
+        utx.addInput(dummyInput);
+
+        assert(w1.ownOutput(utx.outputs[0]));
+
+        // Simulate a confirmation
+        utx.ps = 0;
+        utx.ts = 1;
+        utx.height = 1;
+
+        assert.equal(w1.receiveDepth, 1);
+
+        wdb.addTX(utx, function(err) {
+          assert.ifError(err);
+          wdb.addTX(utx, function(err) {
             assert.ifError(err);
-
-            w1.addKey(w2);
-            w1.addKey(w3);
-            w2.addKey(w1);
-            w2.addKey(w3);
-            w3.addKey(w1);
-            w3.addKey(w2);
-
-            // w3 = bcoin.wallet.fromJSON(w3.toJSON());
-
-            // Our p2sh address
-            var addr = w1.getAddress();
-
-            if (witness)
-              assert(bcoin.address.parseBase58(addr).type === 'witnessscripthash');
-            else
-              assert(bcoin.address.parseBase58(addr).type === 'scripthash');
-
-            assert.equal(w1.getAddress(), addr);
-            assert.equal(w2.getAddress(), addr);
-            assert.equal(w3.getAddress(), addr);
-
-            var paddr = w1.getProgramAddress();
-            assert.equal(w1.getProgramAddress(), paddr);
-            assert.equal(w2.getProgramAddress(), paddr);
-            assert.equal(w3.getProgramAddress(), paddr);
-
-            // Add a shared unspent transaction to our wallets
-            var utx = bcoin.mtx();
-            if (bullshitNesting)
-              utx.addOutput({ address: paddr, value: 5460 * 10 });
-            else
-              utx.addOutput({ address: addr, value: 5460 * 10 });
-
-            utx.addInput(dummyInput);
-
-            assert(w1.ownOutput(utx.outputs[0]));
-
-            // Simulate a confirmation
-            utx.ps = 0;
-            utx.ts = 1;
-            utx.height = 1;
-
-            assert.equal(w1.receiveDepth, 1);
-
             wdb.addTX(utx, function(err) {
               assert.ifError(err);
-              wdb.addTX(utx, function(err) {
+
+              assert.equal(w1.receiveDepth, 2);
+              assert.equal(w1.changeDepth, 1);
+
+              assert(w1.getAddress() !== addr);
+              addr = w1.getAddress();
+              assert.equal(w1.getAddress(), addr);
+              assert.equal(w2.getAddress(), addr);
+              assert.equal(w3.getAddress(), addr);
+
+              // Create a tx requiring 2 signatures
+              var send = bcoin.mtx();
+              send.addOutput({ address: receive.getAddress(), value: 5460 });
+              assert(!send.verify(null, true, flags));
+              w1.fill(send, { rate: 10000, round: true }, function(err) {
                 assert.ifError(err);
-                wdb.addTX(utx, function(err) {
+
+                w1.sign(send);
+
+                assert(!send.verify(null, true, flags));
+                w2.sign(send);
+
+                assert(send.verify(null, true, flags));
+
+                assert.equal(w1.changeDepth, 1);
+                var change = w1.changeAddress.getAddress();
+                assert.equal(w1.changeAddress.getAddress(), change);
+                assert.equal(w2.changeAddress.getAddress(), change);
+                assert.equal(w3.changeAddress.getAddress(), change);
+
+                // Simulate a confirmation
+                send.ps = 0;
+                send.ts = 1;
+                send.height = 1;
+
+                wdb.addTX(send, function(err) {
                   assert.ifError(err);
-
-                  assert.equal(w1.receiveDepth, 2);
-                  assert.equal(w1.changeDepth, 1);
-
-                  assert(w1.getAddress() !== addr);
-                  addr = w1.getAddress();
-                  assert.equal(w1.getAddress(), addr);
-                  assert.equal(w2.getAddress(), addr);
-                  assert.equal(w3.getAddress(), addr);
-
-                  // Create a tx requiring 2 signatures
-                  var send = bcoin.mtx();
-                  send.addOutput({ address: receive.getAddress(), value: 5460 });
-                  assert(!send.verify(null, true, flags));
-                  w1.fill(send, { rate: 10000, round: true }, function(err) {
+                  wdb.addTX(send, function(err) {
                     assert.ifError(err);
-
-                    w1.sign(send);
-
-                    assert(!send.verify(null, true, flags));
-                    w2.sign(send);
-
-                    assert(send.verify(null, true, flags));
-
-                    assert.equal(w1.changeDepth, 1);
-                    var change = w1.changeAddress.getAddress();
-                    assert.equal(w1.changeAddress.getAddress(), change);
-                    assert.equal(w2.changeAddress.getAddress(), change);
-                    assert.equal(w3.changeAddress.getAddress(), change);
-
-                    // Simulate a confirmation
-                    send.ps = 0;
-                    send.ts = 1;
-                    send.height = 1;
-
                     wdb.addTX(send, function(err) {
                       assert.ifError(err);
-                      wdb.addTX(send, function(err) {
-                        assert.ifError(err);
-                        wdb.addTX(send, function(err) {
-                          assert.ifError(err);
 
-                          assert.equal(w1.receiveDepth, 2);
-                          assert.equal(w1.changeDepth, 2);
+                      assert.equal(w1.receiveDepth, 2);
+                      assert.equal(w1.changeDepth, 2);
 
-                          assert(w1.getAddress() === addr);
-                          assert(w1.changeAddress.getAddress() !== change);
-                          change = w1.changeAddress.getAddress();
-                          assert.equal(w1.changeAddress.getAddress(), change);
-                          assert.equal(w2.changeAddress.getAddress(), change);
-                          assert.equal(w3.changeAddress.getAddress(), change);
+                      assert(w1.getAddress() === addr);
+                      assert(w1.changeAddress.getAddress() !== change);
+                      change = w1.changeAddress.getAddress();
+                      assert.equal(w1.changeAddress.getAddress(), change);
+                      assert.equal(w2.changeAddress.getAddress(), change);
+                      assert.equal(w3.changeAddress.getAddress(), change);
 
-                          if (witness)
-                            send.inputs[0].witness.items[2] = new Buffer([]);
-                          else
-                            send.inputs[0].script.code[2] = 0;
+                      if (witness)
+                        send.inputs[0].witness.items[2] = new Buffer([]);
+                      else
+                        send.inputs[0].script.code[2] = 0;
 
-                          assert(!send.verify(null, true, flags));
-                          assert.equal(send.getFee(), 10000);
+                      assert(!send.verify(null, true, flags));
+                      assert.equal(send.getFee(), 10000);
 
-                          w3 = bcoin.wallet.fromJSON(w3.toJSON());
-                          assert.equal(w3.receiveDepth, 2);
-                          assert.equal(w3.changeDepth, 2);
-                          assert.equal(w3.getAddress(), addr);
-                          assert.equal(w3.changeAddress.getAddress(), change);
+                      w3 = bcoin.wallet.fromJSON(w3.toJSON());
+                      assert.equal(w3.receiveDepth, 2);
+                      assert.equal(w3.changeDepth, 2);
+                      assert.equal(w3.getAddress(), addr);
+                      assert.equal(w3.changeAddress.getAddress(), change);
 
-                          cb();
-                        });
-                      });
+                      cb();
                     });
                   });
                 });
