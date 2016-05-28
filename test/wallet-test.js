@@ -60,7 +60,7 @@ describe('Wallet', function() {
 
   it('should generate new key and address', function() {
     var w = bcoin.wallet();
-    w.open(function(err) {
+    w.init(function(err) {
       assert.ifError(err);
       var addr = w.getAddress();
       assert(addr);
@@ -139,7 +139,7 @@ describe('Wallet', function() {
       m: 1,
       n: 2
     });
-    w.open(function(err) {
+    w.init(function(err) {
       assert.ifError(err);
       var k2 = bcoin.hd.fromMnemonic().deriveAccount44(0).hdPublicKey;
       w.addKey(k2, function(err) {
@@ -556,6 +556,43 @@ describe('Wallet', function() {
 
     var w1, w2, w3, receive;
 
+    function getInfo(callback) {
+      var info = { change: {} };
+      utils.serial([
+        function(next) {
+          w1.getInfo(function(err, info_) {
+            assert.ifError(err);
+            info.w1 = info_;
+            next();
+          });
+        },
+        function(next) {
+          w2.getInfo(function(err, info_) {
+            assert.ifError(err);
+            info.w2 = info_;
+            next();
+          });
+        },
+        function(next) {
+          w3.getInfo(function(err, info_) {
+            assert.ifError(err);
+            info.w3 = info_;
+            next();
+          });
+        },
+        function(next) {
+          receive.getInfo(function(err, info_) {
+            assert.ifError(err);
+            info.receive = info_;
+            next();
+          });
+        }
+      ], function(err) {
+        assert.ifError(err);
+        return callback(null, info);
+      });
+    }
+
     utils.serial([
       function(next) {
         wdb.create(utils.merge({}, options), function(err, w1_) {
@@ -584,38 +621,42 @@ describe('Wallet', function() {
           receive = receive_;
           next();
         });
-      },
+      }
     ], function(err) {
       assert.ifError(err);
 
+      getInfo(function(err, a) {
+      assert.ifError(err);
       utils.serial([
-        w1.addKey.bind(w1, w2),
-        w1.addKey.bind(w1, w3),
-        w2.addKey.bind(w2, w1),
-        w2.addKey.bind(w2, w3),
-        w3.addKey.bind(w3, w1),
-        w3.addKey.bind(w3, w2)
+        w1.addKey.bind(w1, a.w2.accountKey),
+        w1.addKey.bind(w1, a.w3.accountKey),
+        w2.addKey.bind(w2, a.w1.accountKey),
+        w2.addKey.bind(w2, a.w3.accountKey),
+        w3.addKey.bind(w3, a.w1.accountKey),
+        w3.addKey.bind(w3, a.w2.accountKey)
       ], function(err) {
+        assert.ifError(err);
+        getInfo(function(err, a) {
         assert.ifError(err);
 
         // w3 = bcoin.wallet.fromJSON(w3.toJSON());
 
         // Our p2sh address
-        var addr = w1.getAddress();
+        var addr = a.w1.getAddress();
 
         if (witness)
           assert(bcoin.address.parseBase58(addr).type === 'witnessscripthash');
         else
           assert(bcoin.address.parseBase58(addr).type === 'scripthash');
 
-        assert.equal(w1.getAddress(), addr);
-        assert.equal(w2.getAddress(), addr);
-        assert.equal(w3.getAddress(), addr);
+        assert.equal(a.w1.getAddress(), addr);
+        assert.equal(a.w2.getAddress(), addr);
+        assert.equal(a.w3.getAddress(), addr);
 
-        var paddr = w1.getProgramAddress();
-        assert.equal(w1.getProgramAddress(), paddr);
-        assert.equal(w2.getProgramAddress(), paddr);
-        assert.equal(w3.getProgramAddress(), paddr);
+        var paddr = a.w1.getProgramAddress();
+        assert.equal(a.w1.getProgramAddress(), paddr);
+        assert.equal(a.w2.getProgramAddress(), paddr);
+        assert.equal(a.w3.getProgramAddress(), paddr);
 
         // Add a shared unspent transaction to our wallets
         var utx = bcoin.mtx();
@@ -631,7 +672,7 @@ describe('Wallet', function() {
         utx.ts = 1;
         utx.height = 1;
 
-        assert.equal(w1.receiveDepth, 1);
+        assert.equal(a.w1.receiveDepth, 1);
 
         wdb.addTX(utx, function(err) {
           assert.ifError(err);
@@ -640,18 +681,20 @@ describe('Wallet', function() {
             wdb.addTX(utx, function(err) {
               assert.ifError(err);
 
-              assert.equal(w1.receiveDepth, 2);
-              assert.equal(w1.changeDepth, 1);
+              getInfo(function(err, a) {
+              assert.ifError(err);
+              assert.equal(a.w1.receiveDepth, 2);
+              assert.equal(a.w1.changeDepth, 1);
 
-              assert(w1.getAddress() !== addr);
-              addr = w1.getAddress();
-              assert.equal(w1.getAddress(), addr);
-              assert.equal(w2.getAddress(), addr);
-              assert.equal(w3.getAddress(), addr);
+              assert(a.w1.getAddress() !== addr);
+              addr = a.w1.getAddress();
+              assert.equal(a.w1.getAddress(), addr);
+              assert.equal(a.w2.getAddress(), addr);
+              assert.equal(a.w3.getAddress(), addr);
 
               // Create a tx requiring 2 signatures
               var send = bcoin.mtx();
-              send.addOutput({ address: receive.getAddress(), value: 5460 });
+              send.addOutput({ address: a.receive.getAddress(), value: 5460 });
               assert(!send.verify(null, true, flags));
               w1.fill(send, { rate: 10000, round: true }, function(err) {
                 assert.ifError(err);
@@ -665,11 +708,11 @@ describe('Wallet', function() {
 
                 assert(send.verify(null, true, flags));
 
-                assert.equal(w1.changeDepth, 1);
-                var change = w1.changeAddress.getAddress();
-                assert.equal(w1.changeAddress.getAddress(), change);
-                assert.equal(w2.changeAddress.getAddress(), change);
-                assert.equal(w3.changeAddress.getAddress(), change);
+                assert.equal(a.w1.changeDepth, 1);
+                var change = a.w1.changeAddress.getAddress();
+                assert.equal(a.w1.changeAddress.getAddress(), change);
+                assert.equal(a.w2.changeAddress.getAddress(), change);
+                assert.equal(a.w3.changeAddress.getAddress(), change);
 
                 // Simulate a confirmation
                 send.ps = 0;
@@ -682,32 +725,35 @@ describe('Wallet', function() {
                     assert.ifError(err);
                     wdb.addTX(send, function(err) {
                       assert.ifError(err);
+                      getInfo(function(err, a) {
+                        assert.ifError(err);
 
-                      assert.equal(w1.receiveDepth, 2);
-                      assert.equal(w1.changeDepth, 2);
+                        assert.equal(a.w1.receiveDepth, 2);
+                        assert.equal(a.w1.changeDepth, 2);
 
-                      assert(w1.getAddress() === addr);
-                      assert(w1.changeAddress.getAddress() !== change);
-                      change = w1.changeAddress.getAddress();
-                      assert.equal(w1.changeAddress.getAddress(), change);
-                      assert.equal(w2.changeAddress.getAddress(), change);
-                      assert.equal(w3.changeAddress.getAddress(), change);
+                        assert(a.w1.getAddress() === addr);
+                        assert(a.w1.changeAddress.getAddress() !== change);
+                        change = a.w1.changeAddress.getAddress();
+                        assert.equal(a.w1.changeAddress.getAddress(), change);
+                        assert.equal(a.w2.changeAddress.getAddress(), change);
+                        assert.equal(a.w3.changeAddress.getAddress(), change);
 
-                      if (witness)
-                        send.inputs[0].witness.items[2] = new Buffer([]);
-                      else
-                        send.inputs[0].script.code[2] = 0;
+                        if (witness)
+                          send.inputs[0].witness.items[2] = new Buffer([]);
+                        else
+                          send.inputs[0].script.code[2] = 0;
 
-                      assert(!send.verify(null, true, flags));
-                      assert.equal(send.getFee(), 10000);
+                        assert(!send.verify(null, true, flags));
+                        assert.equal(send.getFee(), 10000);
 
-                      w3 = bcoin.wallet.fromJSON(w3.toJSON());
-                      assert.equal(w3.receiveDepth, 2);
-                      assert.equal(w3.changeDepth, 2);
-                      //assert.equal(w3.getAddress(), addr);
-                      //assert.equal(w3.changeAddress.getAddress(), change);
+                        // w3 = bcoin.wallet.fromJSON(w3.toJSON());
+                        // assert.equal(a.w3.receiveDepth, 2);
+                        // assert.equal(a.w3.changeDepth, 2);
+                        //assert.equal(a.w3.getAddress(), addr);
+                        //assert.equal(a.w3.changeAddress.getAddress(), change);
 
-                      cb();
+                        cb();
+                      });
                     });
                   });
                 });
@@ -715,7 +761,10 @@ describe('Wallet', function() {
               });
               });
             });
+            });
+            });
           });
+        });
         });
       });
     });

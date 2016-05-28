@@ -8,13 +8,14 @@ var opcodes = constants.opcodes;
 constants.tx.COINBASE_MATURITY = 0;
 
 describe('Chain', function() {
-  var chain, wallet, miner;
+  var chain, wallet, miner, walletdb;
   var competingTip, oldTip, ch1, ch2, cb1, cb2;
 
   this.timeout(5000);
 
   chain = new bcoin.chain({ name: 'chain-test', db: 'memory' });
-  wallet = new bcoin.wallet();
+  walletdb = new bcoin.walletdb({ name: 'chain-test-wdb', db: 'memory' });
+  wallet = new bcoin.wallet({ db: walletdb });
   miner = new bcoin.miner({
     chain: chain,
     address: wallet.getAddress()
@@ -40,13 +41,16 @@ describe('Chain', function() {
           value: utils.satoshi('25.0')
         });
         redeemer.addOutput({
-          address: wallet.createAddress().getAddress(),
+          address: wallet.deriveAddress(false, 100).getAddress(),
           value: utils.satoshi('5.0')
         });
         redeemer.addInput(tx, 0);
         redeemer.setLocktime(chain.height);
-        wallet.sign(redeemer);
-        attempt.addTX(redeemer);
+        return wallet.sign(redeemer, function(err) {
+          assert.ifError(err);
+          attempt.addTX(redeemer);
+          callback(null, attempt.mineSync());
+        });
       }
       callback(null, attempt.mineSync());
     });
@@ -68,7 +72,10 @@ describe('Chain', function() {
   }
 
   it('should open chain and miner', function(cb) {
-    miner.open(cb);
+    miner.open(function(err) {
+      assert.ifError(cb);
+      wallet.init(cb);
+    });
   });
 
   it('should mine a block', function(cb) {
