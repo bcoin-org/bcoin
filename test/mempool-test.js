@@ -19,18 +19,24 @@ describe('Mempool', function() {
     db: 'memory'
   });
 
+  var w;
+
   mempool.on('error', function() {});
 
   it('should open mempool', function(cb) {
     mempool.open(cb);
   });
 
-  it('should handle incoming orphans and TXs', function(cb) {
-    var w = new bcoin.wallet();
+  it('should open wallet', function(cb) {
+    w = new bcoin.wallet();
+    w.open(cb);
+  });
 
+  it('should handle incoming orphans and TXs', function(cb) {
+    var kp = bcoin.hd.generate();
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
-    var prev = new bcoin.script([w.publicKey, opcodes.OP_CHECKSIG]);
+    var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
     var dummyInput = {
       prevout: {
         hash: constants.ONE_HASH.toString('hex'),
@@ -49,84 +55,96 @@ describe('Mempool', function() {
       sequence: 0xffffffff
     };
     t1.addInput(dummyInput);
-    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, w.privateKey, 'all', 0)]),
+    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
 
     // balance: 51000
-    w.sign(t1);
-    var t2 = bcoin.mtx().addInput(t1, 0) // 50000
-                       .addOutput(w, 20000)
-                       .addOutput(w, 20000);
-    // balance: 49000
-    w.sign(t2);
-    var t3 = bcoin.mtx().addInput(t1, 1) // 10000
-                       .addInput(t2, 0) // 20000
-                       .addOutput(w, 23000);
-    // balance: 47000
-    w.sign(t3);
-    var t4 = bcoin.mtx().addInput(t2, 1) // 24000
-                       .addInput(t3, 0) // 23000
-                       .addOutput(w, 11000)
-                       .addOutput(w, 11000);
-    // balance: 22000
-    w.sign(t4);
-    var f1 = bcoin.mtx().addInput(t4, 1) // 11000
-                       .addOutput(new bcoin.wallet(), 9000);
-    // balance: 11000
-    w.sign(f1);
-    var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
-                         .addOutput(w, 6000); // 6000 instead of 500
-    // Script inputs but do not sign
-    w.scriptInputs(fake);
-    // Fake signature
-    fake.inputs[0].script.code[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
-    // balance: 11000
-    [t2, t3, t4, f1, fake].forEach(function(tx) {
-      tx.inputs.forEach(function(input) {
-        delete input.coin;
-      });
-    });
-
-    // Just for debugging
-    t1.hint = 't1';
-    t2.hint = 't2';
-    t3.hint = 't3';
-    t4.hint = 't4';
-    f1.hint = 'f1';
-    fake.hint = 'fake';
-
-    mempool.addTX(fake, function(err) {
+    w.sign(t1, function(err, total) {
       assert.ifError(err);
-      mempool.addTX(t4, function(err) {
+      var t2 = bcoin.mtx().addInput(t1, 0) // 50000
+                         .addOutput(w, 20000)
+                         .addOutput(w, 20000);
+      // balance: 49000
+      w.sign(t2, function(err, total) {
         assert.ifError(err);
-        mempool.getBalance(function(err, balance) {
+        var t3 = bcoin.mtx().addInput(t1, 1) // 10000
+                           .addInput(t2, 0) // 20000
+                           .addOutput(w, 23000);
+        // balance: 47000
+        w.sign(t3, function(err, total) {
           assert.ifError(err);
-          assert.equal(balance.total, 0);
-          mempool.addTX(t1, function(err) {
+          var t4 = bcoin.mtx().addInput(t2, 1) // 24000
+                             .addInput(t3, 0) // 23000
+                             .addOutput(w, 11000)
+                             .addOutput(w, 11000);
+          // balance: 22000
+          w.sign(t4, function(err, total) {
             assert.ifError(err);
-            mempool.getBalance(function(err, balance) {
+            var f1 = bcoin.mtx().addInput(t4, 1) // 11000
+                               .addOutput(bcoin.address.fromData(new Buffer([])).toBase58(), 9000);
+            // balance: 11000
+            w.sign(f1, function(err, total) {
               assert.ifError(err);
-              assert.equal(balance.total, 60000);
-              mempool.addTX(t2, function(err) {
+              var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
+                                   .addOutput(w, 6000); // 6000 instead of 500
+              // Script inputs but do not sign
+              w.scriptInputs(fake, function(err) {
                 assert.ifError(err);
-                mempool.getBalance(function(err, balance) {
+                // Fake signature
+                fake.inputs[0].script.code[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
+                // balance: 11000
+                [t2, t3, t4, f1, fake].forEach(function(tx) {
+                  tx.inputs.forEach(function(input) {
+                    delete input.coin;
+                  });
+                });
+
+                // Just for debugging
+                t1.hint = 't1';
+                t2.hint = 't2';
+                t3.hint = 't3';
+                t4.hint = 't4';
+                f1.hint = 'f1';
+                fake.hint = 'fake';
+
+                mempool.addTX(fake, function(err) {
                   assert.ifError(err);
-                  assert.equal(balance.total, 50000);
-                  mempool.addTX(t3, function(err) {
+                  mempool.addTX(t4, function(err) {
                     assert.ifError(err);
                     mempool.getBalance(function(err, balance) {
                       assert.ifError(err);
-                      assert.equal(balance.total, 22000);
-                      mempool.addTX(f1, function(err) {
+                      assert.equal(balance.total, 0);
+                      mempool.addTX(t1, function(err) {
                         assert.ifError(err);
                         mempool.getBalance(function(err, balance) {
                           assert.ifError(err);
-                          assert.equal(balance.total, 20000);
-                          mempool.getHistory(function(err, txs) {
-                            assert(txs.some(function(tx) {
-                              return tx.hash('hex') === f1.hash('hex');
-                            }));
+                          assert.equal(balance.total, 60000);
+                          mempool.addTX(t2, function(err) {
+                            assert.ifError(err);
+                            mempool.getBalance(function(err, balance) {
+                              assert.ifError(err);
+                              assert.equal(balance.total, 50000);
+                              mempool.addTX(t3, function(err) {
+                                assert.ifError(err);
+                                mempool.getBalance(function(err, balance) {
+                                  assert.ifError(err);
+                                  assert.equal(balance.total, 22000);
+                                  mempool.addTX(f1, function(err) {
+                                    assert.ifError(err);
+                                    mempool.getBalance(function(err, balance) {
+                                      assert.ifError(err);
+                                      assert.equal(balance.total, 20000);
+                                      mempool.getHistory(function(err, txs) {
+                                        assert(txs.some(function(tx) {
+                                          return tx.hash('hex') === f1.hash('hex');
+                                        }));
 
-                            cb();
+                                        cb();
+                                      });
+                                    });
+                                  });
+                                });
+                              });
+                            });
                           });
                         });
                       });
@@ -142,11 +160,10 @@ describe('Mempool', function() {
   });
 
   it('should handle locktime', function(cb) {
-    var w = new bcoin.wallet();
-
+    var kp = bcoin.hd.generate();
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
-    var prev = new bcoin.script([w.publicKey, opcodes.OP_CHECKSIG]);
+    var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
     var prevHash = bcoin.ec.random(32).toString('hex');
     var dummyInput = {
       prevout: {
@@ -168,7 +185,7 @@ describe('Mempool', function() {
     t1.addInput(dummyInput);
     t1.setLocktime(200);
     chain.tip.height = 200;
-    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, w.privateKey, 'all', 0)]),
+    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
     mempool.addTX(t1, function(err) {
       chain.tip.height = 0;
       assert.ifError(err);
@@ -177,11 +194,10 @@ describe('Mempool', function() {
   });
 
   it('should handle invalid locktime', function(cb) {
-    var w = new bcoin.wallet();
-
+    var kp = bcoin.hd.generate();
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
-    var prev = new bcoin.script([w.publicKey, opcodes.OP_CHECKSIG]);
+    var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
     var prevHash = bcoin.ec.random(32).toString('hex');
     var dummyInput = {
       prevout: {
@@ -203,7 +219,7 @@ describe('Mempool', function() {
     t1.addInput(dummyInput);
     t1.setLocktime(200);
     chain.tip.height = 200 - 1;
-    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, w.privateKey, 'all', 0)]),
+    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
     mempool.addTX(t1, function(err) {
       chain.tip.height = 0;
       assert(err);

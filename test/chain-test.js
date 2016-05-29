@@ -17,8 +17,7 @@ describe('Chain', function() {
   walletdb = new bcoin.walletdb({ name: 'chain-test-wdb', db: 'memory' });
   wallet = new bcoin.wallet({ db: walletdb });
   miner = new bcoin.miner({
-    chain: chain,
-    address: wallet.getAddress()
+    chain: chain
   });
 
   chain.on('error', function() {});
@@ -73,8 +72,12 @@ describe('Chain', function() {
 
   it('should open chain and miner', function(cb) {
     miner.open(function(err) {
-      assert.ifError(cb);
-      wallet.init(cb);
+      assert.ifError(err);
+      wallet.open(function(err) {
+        assert.ifError(err);
+        miner.address = wallet.getAddress();
+        cb();
+      });
     });
   });
 
