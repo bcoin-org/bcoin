@@ -327,24 +327,25 @@ describe('Wallet', function() {
           w1.fill(t2, { rate: 10000, round: true }, function(err) {
             assert.ifError(err);
             w1.sign(t2, function(err) {
-            assert.ifError(err);
-            assert(t2.verify());
+              assert.ifError(err);
 
-            assert.equal(t2.getInputValue(), 16380);
-            // If change < dust and is added to outputs:
-            // assert.equal(t2.getOutputValue(), 6380);
-            // If change > dust and is added to fee:
-            assert.equal(t2.getOutputValue(), 5460);
-            assert.equal(t2.getFee(), 10920);
+              assert(t2.verify());
 
-            // Create new transaction
-            var t3 = bcoin.mtx().addOutput(w2, 15000);
-            w1.fill(t3, { rate: 10000, round: true }, function(err) {
-              assert(err);
-              assert.equal(err.requiredFunds, 25000);
-              cb();
+              assert.equal(t2.getInputValue(), 16380);
+              // If change < dust and is added to outputs:
+              // assert.equal(t2.getOutputValue(), 6380);
+              // If change > dust and is added to fee:
+              assert.equal(t2.getOutputValue(), 5460);
+              assert.equal(t2.getFee(), 10920);
+
+              // Create new transaction
+              var t3 = bcoin.mtx().addOutput(w2, 15000);
+              w1.fill(t3, { rate: 10000, round: true }, function(err) {
+                assert(err);
+                assert.equal(err.requiredFunds, 25000);
+                cb();
+              });
             });
-          });
           });
         });
       });
