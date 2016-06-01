@@ -155,6 +155,27 @@ describe('TX', function() {
       assert(coolest.verify(null, true, constants.flags.VERIFY_NONE));
     });
 
+    it('should parse witness tx properly', function() {
+      clearCache(wtx, nocache);
+      assert.equal(wtx.inputs.length, 5);
+      assert.equal(wtx.outputs.length, 1980);
+      assert(wtx.hasWitness());
+      assert.notEqual(wtx.hash('hex'), wtx.witnessHash('hex'));
+      assert.equal(wtx.witnessHash('hex'),
+        '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
+      assert.equal(wtx.getSize(), 62138);
+      assert.equal(wtx.getVirtualSize(), 61813);
+      assert.equal(wtx.getCost(), 247250);
+      var raw1 = wtx.render();
+      clearCache(wtx, true);
+      var raw2 = wtx.render();
+      assert.deepEqual(raw1, raw2);
+      var wtx2 = bcoin.tx.fromRaw(raw2);
+      clearCache(wtx2, nocache);
+      assert.equal(wtx.hash('hex'), wtx2.hash('hex'));
+      assert.equal(wtx.witnessHash('hex'), wtx2.witnessHash('hex'));
+    });
+
     function parseTest(data) {
       var coins = data[0];
       var tx = bcoin.tx.fromRaw(data[1], 'hex');
@@ -625,24 +646,5 @@ describe('TX', function() {
       }
       assert.equal(block.getReward(), -1);
     });
-  });
-
-  it('should parse witness tx properly', function() {
-    assert.equal(wtx.inputs.length, 5);
-    assert.equal(wtx.outputs.length, 1980);
-    assert(wtx.hasWitness());
-    assert.notEqual(wtx.hash('hex'), wtx.witnessHash('hex'));
-    assert.equal(wtx.witnessHash('hex'),
-      '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
-    assert.equal(wtx.getSize(), 62138);
-    assert.equal(wtx.getVirtualSize(), 61813);
-    assert.equal(wtx.getCost(), 247250);
-    var raw1 = wtx.render();
-    clearCache(wtx, true);
-    var raw2 = wtx.render();
-    assert.deepEqual(raw1, raw2);
-    var wtx2 = bcoin.tx.fromRaw(raw2);
-    assert.equal(wtx.hash('hex'), wtx2.hash('hex'));
-    assert.equal(wtx.witnessHash('hex'), wtx2.witnessHash('hex'));
   });
 });
