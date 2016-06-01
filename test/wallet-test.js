@@ -768,7 +768,11 @@ describe('Wallet', function() {
                   w1.fill(t3, { rate: 10000, round: true }, function(err) {
                     assert(err);
                     assert.equal(err.requiredFunds, 25000);
-                    cb();
+                    w1.getAccounts(function(err, accounts) {
+                      assert.ifError(err);
+                      assert.deepEqual(accounts, ['default', 'foo']);
+                      cb();
+                    });
                   });
                 });
               });
@@ -836,6 +840,43 @@ describe('Wallet', function() {
                   });
                 });
               });
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('should fill tx with inputs when encrypted', function(cb) {
+    wdb.create({ passphrase: 'foo' }, function(err, w1) {
+      assert.ifError(err);
+      w1.master.destroy();
+
+      // Coinbase
+      var t1 = bcoin.mtx()
+        .addOutput(w1, 5460)
+        .addOutput(w1, 5460)
+        .addOutput(w1, 5460)
+        .addOutput(w1, 5460);
+
+      t1.addInput(dummyInput);
+
+      wdb.addTX(t1, function(err) {
+        assert.ifError(err);
+
+        // Create new transaction
+        var t2 = bcoin.mtx().addOutput(w1, 5460);
+        w1.fill(t2, { rate: 10000, round: true }, function(err) {
+          assert.ifError(err);
+          // Should fail
+          w1.sign(t2, 'bar', function(err) {
+            assert(err);
+            assert(!t2.verify());
+            // Should succeed
+            w1.sign(t2, 'foo', function(err) {
+              assert.ifError(err);
+              assert(t2.verify());
+              cb();
             });
           });
         });
