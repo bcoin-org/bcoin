@@ -13,6 +13,7 @@ var tx2 = parseTX('data/tx2.hex');
 var tx3 = parseTX('data/tx3.hex');
 var tx4 = parseExtended('data/tx4.hex');
 var wtx = parseTX('data/wtx.hex');
+var coolest = parseTX('data/coolest-tx-ever-sent.hex');
 
 function parseTX(file) {
   file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim().split(/\n+/);
@@ -147,6 +148,11 @@ describe('TX', function() {
     it('should verify high S value with only DERSIG enabled' + suffix, function() {
       clearCache(tx4, nocache);
       assert(tx4.verify(0, true, constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG));
+    });
+
+    it('should verify the coolest tx ever sent' + suffix, function() {
+      clearCache(coolest, nocache);
+      assert(coolest.verify(null, true, constants.flags.VERIFY_NONE));
     });
 
     function parseTest(data) {
