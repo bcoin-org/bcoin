@@ -76,6 +76,22 @@ describe('Wallet', function() {
     assert(!bcoin.address.validate('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
   });
 
+  it('should create and get wallet', function(cb) {
+    wdb.create({}, function(err, w1) {
+      assert.ifError(err);
+      w1.destroy();
+      wdb.get(w1.id, function(err, w1_) {
+        assert.ifError(err);
+        assert(w1 !== w1_);
+        assert(w1.master !== w1_.master);
+        assert.equal(w1.master.key.xprivkey, w1.master.key.xprivkey);
+        assert(w1.account !== w1_.account);
+        assert.equal(w1.account.accountKey.xpubkey, w1.account.accountKey.xpubkey);
+        cb();
+      });
+    });
+  });
+
   function p2pkh(witness, bullshitNesting, cb) {
     var flags = bcoin.protocol.constants.flags.STANDARD_VERIFY_FLAGS;
 
@@ -90,7 +106,6 @@ describe('Wallet', function() {
       else
         assert(bcoin.address.parseBase58(w.getAddress()).type === 'pubkeyhash');
 
-      // Input transcation
       var src = bcoin.mtx({
         outputs: [{
           value: 5460 * 2,
@@ -318,7 +333,6 @@ describe('Wallet', function() {
 
         t1.addInput(dummyInput);
 
-        // Fake TX should temporarly change output
         wdb.addTX(t1, function(err) {
           assert.ifError(err);
 
@@ -367,7 +381,6 @@ describe('Wallet', function() {
 
         t1.addInput(dummyInput);
 
-        // Fake TX should temporarly change output
         wdb.addTX(t1, function(err) {
           assert.ifError(err);
 
@@ -430,7 +443,6 @@ describe('Wallet', function() {
 
           t1.addInput(dummyInput);
 
-          // Fake TX should temporarly change output
           // Coinbase
           var t2 = bcoin.mtx()
             .addOutput(w2, 5460)
@@ -439,7 +451,6 @@ describe('Wallet', function() {
             .addOutput(w2, 5460);
 
           t2.addInput(dummyInput);
-          // Fake TX should temporarly change output
 
           wdb.addTX(t1, function(err) {
             assert.ifError(err);
@@ -708,6 +719,128 @@ describe('Wallet', function() {
 
   it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', function(cb) {
     multisig(true, true, cb);
+  });
+
+  it('should fill tx with account 1', function(cb) {
+    wdb.create({}, function(err, w1) {
+      assert.ifError(err);
+      wdb.create({}, function(err, w2) {
+        assert.ifError(err);
+        w1.createAccount({ name: 'foo' }, function(err, account) {
+          assert.ifError(err);
+          assert.equal(account.name, 'foo');
+          assert.equal(account.accountIndex, 1);
+          w1.getAccount('foo', function(err, account) {
+            assert.ifError(err);
+            assert.equal(account.name, 'foo');
+            assert.equal(account.accountIndex, 1);
+
+            // Coinbase
+            var t1 = bcoin.mtx()
+              .addOutput(account.receiveAddress, 5460)
+              .addOutput(account.receiveAddress, 5460)
+              .addOutput(account.receiveAddress, 5460)
+              .addOutput(account.receiveAddress, 5460);
+
+            t1.addInput(dummyInput);
+
+            wdb.addTX(t1, function(err) {
+              assert.ifError(err);
+
+              // Create new transaction
+              var t2 = bcoin.mtx().addOutput(w2, 5460);
+              w1.fill(t2, { rate: 10000, round: true }, function(err) {
+                assert.ifError(err);
+                w1.sign(t2, function(err) {
+                  assert.ifError(err);
+
+                  assert(t2.verify());
+
+                  assert.equal(t2.getInputValue(), 16380);
+                  // If change < dust and is added to outputs:
+                  // assert.equal(t2.getOutputValue(), 6380);
+                  // If change > dust and is added to fee:
+                  assert.equal(t2.getOutputValue(), 5460);
+                  assert.equal(t2.getFee(), 10920);
+
+                  // Create new transaction
+                  var t3 = bcoin.mtx().addOutput(w2, 15000);
+                  w1.fill(t3, { rate: 10000, round: true }, function(err) {
+                    assert(err);
+                    assert.equal(err.requiredFunds, 25000);
+                    cb();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('should fail to fill tx with account 1', function(cb) {
+    wdb.create({}, function(err, w1) {
+      assert.ifError(err);
+      w1.createAccount({ name: 'foo' }, function(err, acc) {
+        assert.ifError(err);
+        assert.equal(acc.name, 'foo');
+        assert.equal(acc.accountIndex, 1);
+        w1.getAccount('foo', function(err, account) {
+          assert.ifError(err);
+          assert.equal(account.name, 'foo');
+          assert.equal(account.accountIndex, 1);
+          assert(account !== w1.account);
+          assert(account !== acc);
+          assert(account.accountKey.xpubkey === acc.accountKey.xpubkey);
+          assert(w1.account.accountIndex === 0);
+          assert(account.receiveAddress.getAddress() !== w1.account.receiveAddress.getAddress());
+          assert(w1.getAddress() === w1.account.receiveAddress.getAddress());
+
+          // Coinbase
+          var t1 = bcoin.mtx()
+            .addOutput(w1, 5460)
+            .addOutput(w1, 5460)
+            .addOutput(w1, 5460)
+            .addOutput(account.receiveAddress, 5460);
+
+          t1.addInput(dummyInput);
+
+          wdb.addTX(t1, function(err) {
+            assert.ifError(err);
+
+            // Should fill from `foo` and fail
+            var t2 = bcoin.mtx().addOutput(w1, 5460);
+            w1.fill(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
+              assert(err);
+              // Should fill from whole wallet and succeed
+              var t2 = bcoin.mtx().addOutput(w1, 5460);
+              w1.fill(t2, { rate: 10000, round: true }, function(err) {
+                assert.ifError(err);
+
+                // Coinbase
+                var t1 = bcoin.mtx()
+                  .addOutput(account.receiveAddress, 5460)
+                  .addOutput(account.receiveAddress, 5460)
+                  .addOutput(account.receiveAddress, 5460);
+
+                t1.addInput(dummyInput);
+
+                wdb.addTX(t1, function(err) {
+                  assert.ifError(err);
+                  var t2 = bcoin.mtx().addOutput(w1, 5460);
+                  // Should fill from `foo` and succeed
+                  w1.fill(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
+                    assert.ifError(err);
+                    cb();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
   });
 
   it('should cleanup', function(cb) {
