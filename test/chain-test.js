@@ -40,7 +40,7 @@ describe('Chain', function() {
           value: utils.satoshi('25.0')
         });
         redeemer.addOutput({
-          address: wallet.deriveAddress(false, 100).getAddress(),
+          address: wallet.account.deriveAddress(false, 100).getAddress(),
           value: utils.satoshi('5.0')
         });
         redeemer.addInput(tx, 0);
