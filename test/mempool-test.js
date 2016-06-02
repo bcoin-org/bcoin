@@ -19,6 +19,12 @@ describe('Mempool', function() {
     db: 'memory'
   });
 
+  var wdb = new bcoin.walletdb({
+    name: 'mempool-wallet-test',
+    db: 'memory',
+    verify: true
+  });
+
   var w;
 
   mempool.on('error', function() {});
@@ -28,8 +34,11 @@ describe('Mempool', function() {
   });
 
   it('should open wallet', function(cb) {
-    w = new bcoin.wallet();
-    w.open(cb);
+    wdb.create({}, function(err, wallet) {
+      assert.ifError(err);
+      w = wallet;
+      cb();
+    });
   });
 
   it('should handle incoming orphans and TXs', function(cb) {
