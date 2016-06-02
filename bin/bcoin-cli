@@ -225,6 +225,11 @@ function listenWallet(callback) {
     utils.print(tx);
     utils.print(map);
   });
+  client.on('address', function(receive, change) {
+    utils.print('New addresses allocated:');
+    utils.print(receive);
+    utils.print(change);
+  });
   client.on('balance', function(tx, map) {
     utils.print('Balance:');
     utils.print(tx);
@@ -253,7 +258,7 @@ function getMempool(callback) {
   });
 }
 
-function send(callback) {
+function sendTX(callback) {
   var id = getID();
   var options = { account: argv.account, passphrase: argv.passphrase };
   var output = {};
@@ -268,6 +273,40 @@ function send(callback) {
     if (err)
       return callback(err);
     utils.print(tx);
+    utils.print(tx.toRaw('hex'));
+    callback();
+  });
+}
+
+function createTX(callback) {
+  var id = getID();
+  var options = { account: argv.account, passphrase: argv.passphrase };
+  var output = {};
+  if (argv.script) {
+    output.script = new bcoin.script(new Buffer(argv.script, 'hex'));
+    output.value = utils.satoshi(argv.value || argv.args[0]);
+  } else {
+    output.address = argv.address || argv.args[0];
+    output.value = utils.satoshi(argv.value || argv.args[1]);
+  }
+  client.walletCreate(id, options, [output], function(err, tx) {
+    if (err)
+      return callback(err);
+    utils.print(tx);
+    utils.print(tx.toRaw('hex'));
+    callback();
+  });
+}
+
+function signTX(callback) {
+  var id = getID();
+  var options = { passphrase: argv.passphrase };
+  var tx = bcoin.tx.fromRaw(options.tx || argv.args[0], 'hex');
+  client.walletSign(id, tx, options, function(err, tx) {
+    if (err)
+      return callback(err);
+    utils.print(tx);
+    utils.print(tx.toRaw('hex'));
     callback();
   });
 }
@@ -281,6 +320,23 @@ function zap(callback) {
     utils.print('zapped');
     callback();
   });
+}
+
+function broadcast(callback) {
+  var tx = bcoin.tx.fromRaw(argv.args[0] || argv.tx, 'hex');
+  client.broadcast(tx, function(err, tx) {
+    if (err)
+      return callback(err);
+    utils.print('Broadcasted:');
+    utils.print(tx);
+    callback();
+  });
+}
+
+function view(callback) {
+  var tx = bcoin.tx.fromRaw(argv.args[0] || argv.tx, 'hex');
+  utils.print(tx);
+  callback();
 }
 
 function main(callback) {
@@ -299,10 +355,22 @@ function main(callback) {
       return getBalance(callback);
     case 'history':
       return getWalletHistory(callback);
+    case 'account':
+      return createAccount(callback);
+    case 'accounts':
+      return getAccounts(callback);
+    case 'sign':
+      return signTX(callback);
+    case 'create':
+      return createTX(callback);
     case 'send':
       return send(callback);
     case 'zap':
       return zap(callback);
+    case 'broadcast':
+      return broadcast(callback);
+    case 'view':
+      return view(callback);
     case 'mempool':
       return getMempool(callback);
     case 'tx':
@@ -311,27 +379,33 @@ function main(callback) {
       return getCoin(callback);
     case 'block':
       return getBlock(callback);
-    case 'account':
-      return createAccount(callback);
-    case 'accounts':
-      return getAccounts(callback);
     default:
       utils.print('Unrecognized command.');
       utils.print('Commands:');
       utils.print('  $ wallet [id] --keys [hdkeys]'
         + ' --type [pubkeyhash/multisig] -m [m-value]'
         + ' -n [n-value] --witness: View or create wallet by ID.');
+      utils.print('  $ listen [id]: Listen for wallet events.');
       utils.print('  $ getwallet [id]: View wallet by ID.');
       utils.print('  $ addkey [id] --keys [hdkeys]: Add keys to wallet.');
       utils.print('  $ rmkey [id] --keys [hdkeys]: Remove keys from wallet.');
       utils.print('  $ balance [id]: Get wallet balance.');
       utils.print('  $ history [id]: View wallet TX history.');
+      utils.print('  $ accounts [id]: List account names.');
+      utils.print('  $ account [id] [acct]: Get account details.');
       utils.print('  $ send [id] [address] [value] --script [code]: Send transaction.');
+      utils.print('  $ create [id] [address] [value] --script [code]: Create transaction.');
+      utils.print('  $ sign [id] [tx-hex]: Sign transaction.');
       utils.print('  $ zap [id] --age [age]: Zap pending wallet TXs.');
+      utils.print('  $ broadcast [tx-hex]: Broadcast transaction.');
+      utils.print('  $ view [tx-hex]: View transaction.');
       utils.print('  $ mempool: Get mempool snapshot.');
       utils.print('  $ tx [hash/address]: View transactions.');
       utils.print('  $ coin [hash+index/address]: View coins.');
       utils.print('  $ block [hash/height]: View block.');
+      utils.print('Other Options:');
+      utils.print('  --passphrase [passphrase]: For signing and account creation.');
+      utils.print('  --account [acctname]: Account name.');
       return callback();
   }
 }
