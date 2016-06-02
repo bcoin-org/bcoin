@@ -41,17 +41,11 @@ function createWallet(callback) {
   if (argv.lookahead)
     options.lookahead = argv.lookahead >>> 0;
 
-  if (argv.derivation)
-    options.derivation = argv.derivation;
-
   if (argv.m)
     options.m = argv.m >>> 0;
 
   if (argv.n)
     options.n = argv.n >>> 0;
-
-  if (argv.copay != null)
-    options.copayBIP45 = !!argv.copay;
 
   if (argv.witness != null)
     options.witness = !!argv.witness;
@@ -63,7 +57,6 @@ function createWallet(callback) {
     if (err)
       return callback(err);
     utils.print(wallet);
-    wallet.destroy();
     callback();
   });
 }
@@ -75,7 +68,7 @@ function addKey(callback) {
     keys = keys.split(',');
   else
     keys = argv.args;
-  client.addKey(id, keys, function(err, wallet) {
+  client.addKey(id, argv.account, keys, function(err, wallet) {
     if (err)
       return callback(err);
     utils.print('added');
@@ -90,7 +83,7 @@ function removeKey(callback) {
     keys = keys.split(',');
   else
     keys = argv.args;
-  client.removeKey(id, keys, function(err) {
+  client.removeKey(id, argv.account, keys, function(err) {
     if (err)
       return callback(err);
     utils.print('removed');
@@ -101,7 +94,7 @@ function removeKey(callback) {
 function getWallet(callback) {
   var id = getID();
   var passphrase = argv.args[0];
-  client.getWallet(id, passphrase, function(err, wallet) {
+  client.getWallet(id, argv.account, passphrase, function(err, wallet) {
     if (err)
       return callback(err);
     utils.print(wallet);
@@ -185,7 +178,7 @@ function getCoin(callback) {
 
 function getWalletHistory(callback) {
   var id = getID();
-  client.getWalletHistory(id, function(err, txs) {
+  client.getWalletHistory(id, argv.account, function(err, txs) {
     if (err)
       return callback(err);
     utils.print(txs);
@@ -195,7 +188,7 @@ function getWalletHistory(callback) {
 
 function listenWallet(callback) {
   var id = getID();
-  client.listenWallet(id);
+  client.join(id);
   client.on('tx', function(tx, map) {
     utils.print('TX:');
     utils.print(tx);
@@ -220,7 +213,7 @@ function listenWallet(callback) {
 
 function getBalance(callback) {
   var id = getID();
-  client.getWalletBalance(id, function(err, balance) {
+  client.getWalletBalance(id, argv.account, function(err, balance) {
     if (err)
       return callback(err);
     utils.print('Confirmed: %s', utils.btc(balance.confirmed));
@@ -241,15 +234,16 @@ function getMempool(callback) {
 
 function send(callback) {
   var id = getID();
-  var options = {};
+  var options = { account: argv.account, passphrase: argv.passphrase };
+  var output = {};
   if (argv.script) {
-    options.script = new bcoin.script(new Buffer(argv.script, 'hex'));
-    options.value = utils.satoshi(argv.value || argv.args[0]);
+    output.script = new bcoin.script(new Buffer(argv.script, 'hex'));
+    output.value = utils.satoshi(argv.value || argv.args[0]);
   } else {
-    options.address = argv.address || argv.args[0];
-    options.value = utils.satoshi(argv.value || argv.args[1]);
+    output.address = argv.address || argv.args[0];
+    output.value = utils.satoshi(argv.value || argv.args[1]);
   }
-  client.walletSend(id, options, function(err, tx) {
+  client.walletSend(id, options, [output], function(err, tx) {
     if (err)
       return callback(err);
     utils.print(tx);
@@ -259,9 +253,8 @@ function send(callback) {
 
 function zap(callback) {
   var id = getID();
-  var now = (argv.now >>> 0) || utils.now();
   var age = (argv.age >>> 0) || 72 * 60 * 60;
-  client.walletZap(id, now, age, function(err) {
+  client.walletZap(id, argv.account, age, function(err) {
     if (err)
       return callback(err);
     utils.print('zapped');
@@ -309,7 +302,7 @@ function main(callback) {
       utils.print('  $ balance [id]: Get wallet balance.');
       utils.print('  $ history [id]: View wallet TX history.');
       utils.print('  $ send [id] [address] [value] --script [code]: Send transaction.');
-      utils.print('  $ zap [id] --now [now] --age [age]: Zap pending wallet TXs.');
+      utils.print('  $ zap [id] --age [age]: Zap pending wallet TXs.');
       utils.print('  $ mempool: Get mempool snapshot.');
       utils.print('  $ tx [hash/address]: View transactions.');
       utils.print('  $ coin [hash+index/address]: View coins.');
@@ -374,7 +367,7 @@ function parseArg(argv) {
 client.getInfo(function(err, info) {
   if (err) {
     console.error(err.stack + '');
-    return process.exit(1);
+    //return process.exit(1);
   }
 
   if (!argv.args[0])
