@@ -76,6 +76,27 @@ function addKey(callback) {
   });
 }
 
+function createAccount(callback) {
+  var id = getID();
+  var account = argv.args[0] || argv.account;
+  client.createWalletAccount(id, account, function(err, account) {
+    if (err)
+      return callback(err);
+    utils.print(account);
+    callback();
+  });
+}
+
+function getAccounts(callback) {
+  var id = getID();
+  client.getWalletAccounts(id, function(err, accounts) {
+    if (err)
+      return callback(err);
+    utils.print(accounts);
+    callback();
+  });
+}
+
 function removeKey(callback) {
   var id = getID();
   var keys = argv.keys || argv.key;
@@ -290,6 +311,10 @@ function main(callback) {
       return getCoin(callback);
     case 'block':
       return getBlock(callback);
+    case 'account':
+      return createAccount(callback);
+    case 'accounts':
+      return getAccounts(callback);
     default:
       utils.print('Unrecognized command.');
       utils.print('Commands:');
