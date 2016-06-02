@@ -11,8 +11,12 @@ var Client = bcoin.http.client;
 var client = new Client(
   argv.url
   || process.env.BCOIN_URL
-  || 'localhost:' + network.rpcPort
+  || 'http://localhost:' + network.rpcPort
 );
+
+client.on('error', function(err) {
+  bcoin.error(err);
+});
 
 function getID() {
   if (argv.id)
@@ -189,6 +193,31 @@ function getWalletHistory(callback) {
   });
 }
 
+function listenWallet(callback) {
+  var id = getID();
+  client.listenWallet(id);
+  client.on('tx', function(tx, map) {
+    utils.print('TX:');
+    utils.print(tx);
+    utils.print(map);
+  });
+  client.on('updated', function(tx, map) {
+    utils.print('TX updated:');
+    utils.print(tx);
+    utils.print(map);
+  });
+  client.on('confirmed', function(tx, map) {
+    utils.print('TX updated:');
+    utils.print(tx);
+    utils.print(map);
+  });
+  client.on('balance', function(tx, map) {
+    utils.print('Balance:');
+    utils.print(tx);
+    utils.print(map);
+  });
+}
+
 function getBalance(callback) {
   var id = getID();
   client.getWalletBalance(id, function(err, balance) {
@@ -244,6 +273,8 @@ function main(callback) {
   switch (argv.args.shift()) {
     case 'wallet':
       return createWallet(callback);
+    case 'listen':
+      return listenWallet(callback);
     case 'getwallet':
       return getWallet(callback);
     case 'addkey':
