@@ -317,7 +317,7 @@ function zap(callback) {
   client.walletZap(id, argv.account, age, function(err) {
     if (err)
       return callback(err);
-    utils.print('zapped');
+    utils.print('Zapped!');
     callback();
   });
 }
@@ -335,8 +335,12 @@ function broadcast(callback) {
 
 function view(callback) {
   var tx = bcoin.tx.fromRaw(argv.args[0] || argv.tx, 'hex');
-  utils.print(tx);
-  callback();
+  client.walletFill(tx, function(err, tx) {
+    if (err)
+      return callback(err);
+    utils.print(tx);
+    callback();
+  });
 }
 
 function main(callback) {
