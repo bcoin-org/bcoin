@@ -4,11 +4,32 @@ var assert = require('assert');
 var utils = bcoin.utils;
 
 describe('Utils', function() {
+  var vectors = [
+    ['', ''],
+    ['61', '2g'],
+    ['626262', 'a3gV'],
+    ['636363', 'aPEr'],
+    ['73696d706c792061206c6f6e6720737472696e67', '2cFupjhnEsSn59qHXstmK2ffpLv2'],
+    ['00eb15231dfceb60925886b67d065299925915aeb172c06647', '1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L'],
+    ['516b6fcd0f', 'ABnLTmg'],
+    ['bf4f89001e670274dd', '3SEo3LWLoPntC'],
+    ['572e4794', '3EFU7m'],
+    ['ecac89cad93923c02321', 'EJDM8drfXA6uyA'],
+    ['10c8511e', 'Rt5zm'],
+    ['00000000000000000000', '1111111111']
+  ];
+
   it('should encode/decode base58', function() {
     var arr = new Buffer([ 0, 0, 0, 0xde, 0xad, 0xbe, 0xef ]);
     var b = utils.toBase58(arr);
     assert.equal(b, '1116h8cQN');
     assert.deepEqual(utils.fromBase58(b), arr);
+    for (var i = 0; i < vectors.length; i++) {
+      var r = new Buffer(vectors[i][0], 'hex');
+      var b = vectors[i][1];
+      assert.equal(utils.toBase58(r), b);
+      assert.deepEqual(utils.fromBase58(b), r);
+    }
   });
 
   it('should translate bits to target', function() {
