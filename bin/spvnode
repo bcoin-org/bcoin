@@ -18,5 +18,12 @@ node.open(function(err) {
   if (err)
     throw err;
 
+  if (process.argv.indexOf('--test') !== -1) {
+    node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
+    node.on('tx', function(tx) {
+      utils.print(tx);
+    });
+  }
+
   node.startSync();
 });

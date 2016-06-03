@@ -14,10 +14,32 @@ describe('Bloom', function() {
 
   it('should do proper murmur3', function() {
     var murmur3 = bcoin.bloom.murmur3;
-    assert.equal(murmur3(new Buffer('', 'ascii'), 0), 0);
-    assert.equal(murmur3(new Buffer('', 'ascii'), 0xfba4c795), 0x6a396f08);
-    assert.equal(murmur3(new Buffer('00', 'ascii'), 0xfba4c795), 0x2a101837);
-    assert.equal(murmur3(new Buffer('hello world', 'ascii'), 0), 0x5e928f0f);
+
+    function mm(str, seed, expect, enc) {
+      assert.equal(murmur3(new Buffer(str, enc || 'ascii'), seed), expect);
+    }
+
+    mm('', 0, 0);
+    mm('', 0xfba4c795, 0x6a396f08);
+    mm('00', 0xfba4c795, 0x2a101837);
+    mm('hello world', 0, 0x5e928f0f);
+
+    mm('', 0x00000000, 0x00000000, 'hex');
+    mm('', 0xfba4c795, 0x6a396f08, 'hex');
+    mm('', 0xffffffff, 0x81f16f39, 'hex');
+
+    mm('00', 0x00000000, 0x514e28b7, 'hex');
+    mm('00', 0xfba4c795, 0xea3f0b17, 'hex');
+    mm('ff', 0x00000000, 0xfd6cf10d, 'hex');
+
+    mm('0011', 0x00000000, 0x16c6b7ab, 'hex');
+    mm('001122', 0x00000000, 0x8eb51c3d, 'hex');
+    mm('00112233', 0x00000000, 0xb4471bf8, 'hex');
+    mm('0011223344', 0x00000000, 0xe2301fa8, 'hex');
+    mm('001122334455', 0x00000000, 0xfc2e4a15, 'hex');
+    mm('00112233445566', 0x00000000, 0xb074502c, 'hex');
+    mm('0011223344556677', 0x00000000, 0x8034d2a0, 'hex');
+    mm('001122334455667788', 0x00000000, 0xb4698def, 'hex');
   });
 
   it('should test and add stuff', function() {
