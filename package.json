@@ -44,7 +44,7 @@
     "browserify": "13.0.0",
     "hash.js": "1.0.3",
     "jsdoc": "3.4.0",
-    "level-js": "2.2.3",
+    "level-js": "2.2.4",
     "mocha": "2.4.5",
     "uglify-js": "2.6.1",
     "v8-profiler": "5.6.1"
