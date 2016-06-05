@@ -192,7 +192,6 @@ describe('Wallet', function() {
         var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 1000);
         t1.addInput(dummyInput);
         // balance: 51000
-        // w.sign(t1);
         w.sign(t1, function(err) {
           assert.ifError(err);
           var t2 = bcoin.mtx().addInput(t1, 0) // 50000
@@ -200,14 +199,12 @@ describe('Wallet', function() {
                              .addOutput(w, 24000);
           di = t2.inputs[0];
           // balance: 49000
-          // w.sign(t2);
           w.sign(t2, function(err) {
             assert.ifError(err);
             var t3 = bcoin.mtx().addInput(t1, 1) // 1000
                                .addInput(t2, 0) // 24000
                                .addOutput(w, 23000);
             // balance: 47000
-            // w.sign(t3);
             w.sign(t3, function(err) {
               assert.ifError(err);
               var t4 = bcoin.mtx().addInput(t2, 1) // 24000
@@ -215,19 +212,16 @@ describe('Wallet', function() {
                                  .addOutput(w, 11000)
                                  .addOutput(w, 11000);
               // balance: 22000
-              // w.sign(t4);
               w.sign(t4, function(err) {
                 assert.ifError(err);
                 var f1 = bcoin.mtx().addInput(t4, 1) // 11000
                                    .addOutput(f, 10000);
                 // balance: 11000
-                // w.sign(f1);
                 w.sign(f1, function(err) {
                   assert.ifError(err);
                   var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
                                        .addOutput(w, 500);
                   // Script inputs but do not sign
-                  // w.scriptInputs(fake);
                   w.scriptInputs(fake, function(err) {
                     assert.ifError(err);
                     // Fake signature
@@ -300,13 +294,36 @@ describe('Wallet', function() {
 
   it('should cleanup spenders after double-spend', function(cb) {
     var t1 = bcoin.mtx().addOutput(dw, 5000);
-    t1.addInput(di);
-    walletdb.addTX(t1, function(err) {
+    t1.addInput(di.coin);
+    dw.getHistory(function(err, txs) {
       assert.ifError(err);
-      dw.getBalance(function(err, balance) {
+      assert.equal(txs.length, 5);
+      var total = txs.reduce(function(t, tx) {
+        return t + tx.getOutputValue();
+      }, 0);
+      assert.equal(total, 154000);
+      dw.sign(t1, function(err) {
         assert.ifError(err);
-        assert.equal(balance.total, 11000);
-        cb();
+        dw.getBalance(function(err, balance) {
+          assert.ifError(err);
+          assert.equal(balance.total, 11000);
+          walletdb.addTX(t1, function(err) {
+            assert.ifError(err);
+            dw.getBalance(function(err, balance) {
+              assert.ifError(err);
+              assert.equal(balance.total, 6000);
+              dw.getHistory(function(err, txs) {
+                assert.ifError(err);
+                assert.equal(txs.length, 2);
+                var total = txs.reduce(function(t, tx) {
+                  return t + tx.getOutputValue();
+                }, 0);
+                assert.equal(total, 56000);
+                cb();
+              });
+            });
+          });
+        });
       });
     });
   });
