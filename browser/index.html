@@ -73,7 +73,7 @@
 </head>
 <body>
 <h1>BCoin, the browser full node</h1>
-<small>Welcome. Your machine is currently validating the segnet4 blockchain.
+<small>Welcome. Your machine is currently validating the blockchain.
 The blocks and wallet are stored on your local disk with indexed DB. You are
 connecting to the actual bitcoin P2P network via a websocket-&gt;tcp proxy.
 Enjoy. (See the <a href="https://github.com/bcoin-org/bcoin">bcoin repo</a> for
@@ -219,8 +219,12 @@ more bitcoin magic).</small>
     var html = '';
     var key = wallet.master.toJSON();
     html += '<b>Wallet</b><br>';
-    html += 'Current Address (p2wpkh): <b>' + wallet.getAddress() + '</b><br>';
-    html += 'Current Address (p2wpkh behind p2sh): <b>' + wallet.getProgramAddress() + '</b><br>';
+    if (bcoin.networkType === 'segnet4') {
+      html += 'Current Address (p2wpkh): <b>' + wallet.getAddress() + '</b><br>';
+      html += 'Current Address (p2wpkh behind p2sh): <b>' + wallet.getProgramAddress() + '</b><br>';
+    } else {
+      html += 'Current Address: <b>' + wallet.getAddress() + '</b><br>';
+    }
     html += 'Extended Private Key: <b>' + key.xprivkey + '</b><br>';
     html += 'Mnemonic: <b>' + key.phrase + '</b><br>';
     wallet.getBalance(function(err, balance) {
@@ -236,7 +240,7 @@ more bitcoin magic).</small>
           txs.forEach(function(tx) {
             var el = create('<a style="display:block;" href="#' + tx.rhash + '">' + tx.rhash + '</a>');
             wdiv.appendChild(el);
-            el.onclick = function(ev) {
+            el.onmouseup = function(ev) {
               show(tx);
               ev.stopPropagation();
               return false;
@@ -247,15 +251,37 @@ more bitcoin magic).</small>
     });
   }
 
+  var query = (function() {
+    var query = {};
+    var search = (window.location.search + '').substring(1);
+    var s = search.split('&');
+    var i, parts;
+
+    for (i = 0; i < s.length; i++) {
+      parts = s[i].split('=');
+      if (parts[0])
+        query[parts[0]] = parts[1];
+    }
+
+    return query;
+  })();
+
+  var proxyServer = window.location.protocol
+    + '//' + window.location.hostname
+    + (window.location.port ? ':' + window.location.port : '');
+
   bcoin.set({
-    network: 'segnet4',
+    network: query.network || 'segnet4',
     debug: true,
-    // db: 'memory',
+    db: query.db || null,
     logger: logger,
-    useWorkers: true
+    useWorkers: true,
+    proxyServer: proxyServer
   });
 
-  node = new bcoin.fullnode();
+  node = new bcoin.fullnode({
+    prune: query.prune === 'true' || query.prune === '1'
+  });
 
   node.on('error', function(err) {
     bcoin.error(err);
