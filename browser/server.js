@@ -28,4 +28,4 @@ server.get('/bcoin-worker.js', function(req, res, next, send) {
 
 proxy.attach(server.server);
 
-server.listen(8080);
+server.listen(+process.argv[2] || 8080);
