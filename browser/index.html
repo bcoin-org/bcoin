@@ -266,17 +266,12 @@ more bitcoin magic).</small>
     return query;
   })();
 
-  var proxyServer = window.location.protocol
-    + '//' + window.location.hostname
-    + (window.location.port ? ':' + window.location.port : '');
-
   bcoin.set({
     network: query.network || 'segnet4',
     debug: true,
     db: query.db || null,
     logger: logger,
-    useWorkers: true,
-    proxyServer: proxyServer
+    useWorkers: true
   });
 
   node = new bcoin.fullnode({
