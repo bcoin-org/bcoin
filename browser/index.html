@@ -1,0 +1,282 @@
+<!doctype html>
+<html>
+<head>
+<title>bcoin</title>
+<style>
+  html { height: 100%; }
+  body { height: 90%; padding: 20px; }
+  h1 {
+    font: 3em monospace;
+    margin: 10px;
+    padding: 0;
+  }
+  small {
+    margin: 10px;
+    width: 50%;
+    display: block;
+  }
+  .log {
+    padding: 5px;
+    margin-left: 10px;
+    overflow-y: scroll;
+    border: 1px solid black;
+    white-space: pre-wrap;
+    height: 40%;
+    width: 40%;
+    font: 1em monospace;
+    margin-top: 10px;
+  }
+  .wallet {
+    padding: 5px;
+    margin-left: 5px;
+    margin-top: 10px;
+    font: 1em monospace;
+  }
+  .send {
+    padding: 5px;
+    margin-left: 5px;
+    margin-top: 10px;
+    font: 1em monospace;
+  }
+  #newaddr{
+    display: block;
+    margin-left: 10px;
+  }
+  .tx {
+    float: right;
+    font: 1em monospace;
+    padding: 5px;
+    border: 1px solid black;
+    margin-top: 10px;
+  }
+  a {
+    text-decoration: none;
+  }
+  .floating {
+    font: 1em monospace;
+    white-space: pre-wrap;
+    position: absolute;
+    display: none;
+    padding: 5px;
+    background: white;
+    border: 1px solid black;
+    width: 40%;
+    height: 30%;
+    top: 50%;
+    left: 50%;
+    margin-left: -20%;
+    margin-top: -15%;
+    overflow-y: scroll;
+  }
+</style>
+<script src="/bcoin.js"></script>
+</head>
+<body>
+<h1>BCoin, the browser full node</h1>
+<small>Welcome. Your machine is currently validating the segnet4 blockchain.
+The blocks and wallet are stored on your local disk with indexed DB. You are
+connecting to the actual bitcoin P2P network via a websocket-&gt;tcp proxy.
+Enjoy. (See the <a href="https://github.com/bcoin-org/bcoin">bcoin repo</a> for
+more bitcoin magic).</small>
+<div class="tx">
+  Last 20 Blocks/TXs:
+  <div id="tx"></div>
+</div>
+<div id="log" class="log"></div>
+<div id="wallet" class="wallet"></div>
+<form id="send" class="send" action="#">
+  <input type="text" name="address" id="address" placeholder="Address">
+  <input type="text" name="amount" id="amount" placeholder="Amount (BTC)">
+  <input type="submit" value="Send">
+</form>
+<input type="button" id="newaddr" value="New Address">
+<div id="floating" class="floating"></div>
+<script>
+;(function() {
+  var utils = bcoin.utils;
+  var body = document.getElementsByTagName('body')[0];
+  var log = document.getElementById('log');
+  var wdiv = document.getElementById('wallet');
+  var tdiv = document.getElementById('tx');
+  var floating = document.getElementById('floating');
+  var send = document.getElementById('send');
+  var newaddr = document.getElementById('newaddr');
+  var items = [];
+  var scrollback = 0;
+  var logger, node;
+
+  body.onmouseup = function() {
+    floating.style.display = 'none';
+  };
+
+  floating.onmouseup = function(ev) {
+    ev.stopPropagation();
+    return false;
+  };
+
+  function show(obj) {
+    floating.innerHTML = escape(utils.inspectify(obj, false));
+    floating.style.display = 'block';
+  }
+
+  logger = {
+    debug: function(args) {
+      if (++scrollback > 1000) {
+        log.innerHTML = '';
+        scrollback = 1;
+      }
+      var msg = utils.format(args, false);
+      log.innerHTML += '<span style="color:blue;">' + utils.now() + '</span> ';
+      log.innerHTML += escape(msg) + '\n';
+      log.scrollTop = log.scrollHeight;
+    },
+    error: function(err) {
+      if (++scrollback > 1000) {
+        log.innerHTML = '';
+        scrollback = 1;
+      }
+      var msg = (err.message + '').replace(/^ *Error: */, '');
+      log.innerHTML += '<span style="color:blue;">' + utils.now() + '</span> ';
+      log.innerHTML += '<span style="color:red;">[Error]</span> ';
+      log.innerHTML += escape(msg) + '\n';
+      log.scrollTop = log.scrollHeight;
+    }
+  };
+
+  send.onsubmit = function(ev) {
+    var value = document.getElementById('amount').value;
+    var address = document.getElementById('address').value;
+    value = utils.satoshi(value);
+    node.wallet.createTX({}, [{address: address,value:value}], function(err, tx) {
+      if (err)
+        return bcoin.error(err);
+      node.wallet.sign(tx, function(err) {
+        if (err)
+          return bcoin.error(err);
+        node.sendTX(tx, function(err) {
+          if (err)
+            return bcoin.error(err);
+          show(tx);
+        });
+      });
+    });
+    ev.preventDefault();
+    ev.stopPropagation();
+    return false;
+  };
+
+  newaddr.onmouseup = function() {
+    node.wallet.createReceive(function(err) {
+      if (err)
+        throw err;
+      formatWallet(node.wallet);
+    });
+  };
+
+  function kb(size) {
+    size /= 1000;
+    return size.toFixed(2) + 'kb';
+  }
+
+  function create(html) {
+    var el = document.createElement('div');
+    el.innerHTML = html;
+    return el.firstChild;
+  }
+
+  function escape(html, encode) {
+    return html
+      .replace(!encode ? /&(?!#?\w+;)/g : /&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function addItem(tx) {
+    var el;
+
+    if (items.length === 20) {
+      el = items.shift();
+      tdiv.removeChild(el);
+    }
+
+    el = create('<a style="display:block;" href="#'
+      + tx.rhash + '">' + tx.rhash + ' (' + tx.height
+      + ' - ' + kb(tx.getSize()) + ')</a>');
+    tdiv.appendChild(el);
+
+    el.onmouseup = function(ev) {
+      show(tx);
+      ev.stopPropagation();
+      return false;
+    };
+
+    items.push(el);
+  }
+
+  function formatWallet(wallet) {
+    var html = '';
+    var key = wallet.master.toJSON();
+    html += '<b>Wallet</b><br>';
+    html += 'Current Address (p2wpkh): <b>' + wallet.getAddress() + '</b><br>';
+    html += 'Current Address (p2wpkh behind p2sh): <b>' + wallet.getProgramAddress() + '</b><br>';
+    html += 'Extended Private Key: <b>' + key.xprivkey + '</b><br>';
+    html += 'Mnemonic: <b>' + key.phrase + '</b><br>';
+    wallet.getBalance(function(err, balance) {
+      if (balance) {
+        html += 'Confirmed Balance: <b>' + utils.btc(balance.confirmed) + '</b><br>';
+        html += 'Unconfirmed Balance: <b>' + utils.btc(balance.unconfirmed) + '</b><br>';
+        html += 'Balance: <b>' + utils.btc(balance.total) + '</b><br>';
+      }
+      wallet.getHistory(function(err, txs) {
+        html += 'TXs:\n';
+        wdiv.innerHTML = html;
+        if (txs) {
+          txs.forEach(function(tx) {
+            var el = create('<a style="display:block;" href="#' + tx.rhash + '">' + tx.rhash + '</a>');
+            wdiv.appendChild(el);
+            el.onclick = function(ev) {
+              show(tx);
+              ev.stopPropagation();
+              return false;
+            };
+          });
+        }
+      });
+    });
+  }
+
+  bcoin.set({
+    network: 'segnet4',
+    debug: true,
+    // db: 'memory',
+    logger: logger,
+    useWorkers: true
+  });
+
+  node = new bcoin.fullnode();
+
+  node.on('error', function(err) {
+    bcoin.error(err);
+  });
+
+  node.on('block', addItem);
+  node.mempool.on('tx', addItem);
+
+  node.open(function(err) {
+    if (err)
+      throw err;
+
+    node.startSync();
+
+    formatWallet(node.wallet);
+
+    node.wallet.on('update', function() {
+      formatWallet(node.wallet);
+    });
+  });
+})();
+</script>
+</body>
+</html>
