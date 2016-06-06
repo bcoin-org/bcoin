@@ -31,6 +31,13 @@ Read the docs here: http://bcoin.io/docs/
 
 ## Example Usage
 
+- [Creating a blockchain and mempool](#creating-a-blockchain-and-mempool)
+- [Connecting to the P2P network](#connecting-to-the-p2p-network)
+- [Doing and SPV sync](#doing-an-spv-sync)
+- [High-level usage with the Node object](#high-level-usage-with-the-node-object)
+- [Running a full node in the browser](#running-a-full-node-in-the-browser)
+- [CLI Usage](#cli-usage)
+
 ### Creating a blockchain and mempool
 
 ``` js
@@ -206,7 +213,7 @@ pool.open(function(err) {
 });
 ```
 
-### High-level usage for Node object
+### High-level usage with the Node object
 
 ``` js
 var bcoin = require('bcoin').set('main');
@@ -292,6 +299,16 @@ node.chain.on('full', function() {
   });
 });
 ```
+
+### Running a full node in the browser
+
+``` bash
+$ cd ~/bcoin
+$ make # Browserify bcoin
+$ node browser/server.js 80 # Start up a simple webserver and websocket->tcp bridge
+```
+
+You should see something like this: http://i.imgur.com/0pWySyZ.png
 
 ### CLI Usage
 
