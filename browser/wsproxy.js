@@ -47,10 +47,16 @@ module.exports = function wsproxy(options) {
       if (socket)
         return;
 
+      if (!utils.isNumber(port)
+          || typeof host !== 'string') {
+        utils.error('Client gave bad arguments.');
+        ws.emit('tcp close');
+        ws.disconnect();
+        return;
+      }
+
       if (options.pow) {
-        if (!utils.isNumber(port)
-            || typeof host !== 'string'
-            || !utils.isNumber(nonce)) {
+        if (!utils.isNumber(nonce)) {
           utils.error('Client did not solve proof of work.');
           ws.emit('tcp close');
           ws.disconnect();
@@ -70,6 +76,13 @@ module.exports = function wsproxy(options) {
           ws.disconnect();
           return;
         }
+      }
+
+      if (!/^[a-zA-Z0-9\.:]+$/.test(host)) {
+        utils.error('Client gave a bad host.');
+        ws.emit('tcp close');
+        ws.disconnect();
+        return;
       }
 
       if (IP.isPrivate(host)) {
