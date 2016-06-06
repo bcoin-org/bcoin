@@ -78,7 +78,7 @@ module.exports = function wsproxy(options) {
         }
       }
 
-      if (!/^[a-zA-Z0-9\.:]+$/.test(host)) {
+      if (!/^[a-zA-Z0-9\.:\-]+$/.test(host)) {
         utils.error('Client gave a bad host.');
         ws.emit('tcp close');
         ws.disconnect();

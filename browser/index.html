@@ -199,6 +199,7 @@ more bitcoin magic).</small>
     if (items.length === 20) {
       el = items.shift();
       tdiv.removeChild(el);
+      el.onmouseup = null;
     }
 
     el = create('<a style="display:block;" href="#'
