@@ -174,30 +174,34 @@ pool.open(function(err) {
   if (err)
     throw err;
 
-  var wallet = new bcoin.wallet({
-    provider: walletdb.provider(),
-    derivation: 'bip44',
-    type: 'pubkeyhash'
-  });
+  walletdb.open(function(err) {
+    if (err)
+      throw err;
 
-  walletdb.save(wallet);
-  pool.watchWallet(wallet);
+    walletdb.create(function(err, wallet) {
+      if (err)
+        throw err;
 
-  console.log('Created wallet with address %s', wallet.getAddress());
+      console.log('Created wallet with address %s', wallet.getAddress());
 
-  // Connect, start retrieving and relaying txs
-  pool.connect();
+      // Add our address to the spv filter.
+      pool.watchAddress(wallet.getAddress());
 
-  // Start the blockchain sync.
-  pool.startSync();
+      // Connect, start retrieving and relaying txs
+      pool.connect();
 
-  pool.on('tx', function(tx) {
-    wallet.addTX(tx);
-  });
+      // Start the blockchain sync.
+      pool.startSync();
 
-  wallet.on('balance', function(balance) {
-    console.log('Balance updated.');
-    console.log(bcoin.utils.btc(balance.unconfirmed));
+      pool.on('tx', function(tx) {
+        wallet.addTX(tx);
+      });
+
+      wallet.on('balance', function(balance) {
+        console.log('Balance updated.');
+        console.log(bcoin.utils.btc(balance.unconfirmed));
+      });
+    });
   });
 });
 ```
@@ -225,9 +229,7 @@ node.open(function(err) {
     id: 'mywallet',
     passphrase: 'foo',
     witness: false,
-    type: 'pubkeyhash',
-    derivation: 'bip44',
-    accountIndex: 0
+    type: 'pubkeyhash'
   };
 
   node.createWallet(options, function(err, wallet) {
@@ -242,34 +244,31 @@ node.open(function(err) {
 
     // Wait for balance and send it to a new address.
     wallet.once('balance', function(balance) {
-      var newReceiving = wallet.createAddress();
-      console.log('Created new receiving address: %s', newReceiving);
-
       // Create a transaction, fill
       // it with coins, and sign it.
-      wallet.createTX({
+      var to = {
         address: newReceiving,
-        value: balance.confirmed
-      }, function(err, tx) {
+        value: balance.total
+      };
+      wallet.createTX({ subtractFee: true }, [to], function(err, tx) {
         if (err)
           throw err;
 
-        console.log('sending tx:');
-        console.log(tx);
+        wallet.sign(tx, function(err) {
+          if (err)
+            throw err;
 
-        // Destroy wallet to clean up the listeners.
-        wallet.destroy();
+          console.log('sending tx:');
+          console.log(tx);
 
-        // Broadcast the transaction (alternatively,
-        // we could just add it to our own mempool
-        // and have the mempool object relay it).
-        node.broadcast(tx, function(err) {
-          if (err) {
-            // Could be a reject
-            // packet or a timeout.
-            return console.log(err);
-          }
-          console.log('tx sent!');
+          node.sendTX(tx, function(err) {
+            if (err) {
+              // Could be a reject
+              // packet or a timeout.
+              return console.log(err);
+            }
+            console.log('tx sent!');
+          });
         });
       });
     });
@@ -301,7 +300,9 @@ $ BCOIN_NETWORK=segnet4 node bin/node
 # View the genesis block
 $ node bin/bcoin-cli block 0
 # View primary wallet
-$ node bin/bcoin-cli wallet primary --passphrase=node
+$ node bin/bcoin-cli wallet primary
+# Send a tx
+$ node bin/bcoin-cli send [address] 0.01
 # View the mempool
 $ node bin/bcoin-cli mempool
 ```
