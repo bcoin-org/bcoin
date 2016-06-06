@@ -26,6 +26,10 @@ server.get('/bcoin-worker.js', function(req, res, next, send) {
   send(200, worker, 'js');
 });
 
+server.on('error', function(err) {
+  console.error(err.stack + '');
+});
+
 proxy.attach(server.server);
 
 server.listen(+process.argv[2] || 8080);
