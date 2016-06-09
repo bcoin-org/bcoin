@@ -273,6 +273,7 @@ describe('Script', function() {
     var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
     var expected = data[3] || '';
     var comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
+    var amount = 0;
 
     if (data.length === 1)
       return;
@@ -281,6 +282,9 @@ describe('Script', function() {
       comments = output.slice(0, 60);
 
     comments += ' (' + expected + ')';
+
+    if (witness)
+      amount = witness.pop() * 100000000;
 
     witness = bcoin.witness.fromString(witness);
     input = bcoin.script.fromString(input);
@@ -310,7 +314,7 @@ describe('Script', function() {
           }],
           outputs: [{
             script: output,
-            value: 0
+            value: amount
           }],
           locktime: 0
         });
@@ -329,11 +333,13 @@ describe('Script', function() {
           }],
           outputs: [{
             script: new bcoin.script(),
-            value: 0
+            value: amount
           }],
           locktime: 0
         });
         if (nocache) {
+          delete coin._raw;
+          delete tx._raw;
           delete input.raw;
           delete input.redeem;
           delete input._address;
