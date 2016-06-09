@@ -177,9 +177,12 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     var key = '85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b';
     var msg = 'Cryptographic Forum Research Group';
     var tag = 'a8061dc1305136c6c22b8baf0c0127a9';
+    var mac;
+
     key = new Buffer(key, 'hex');
     msg = new Buffer(msg, 'ascii');
     tag = new Buffer(tag, 'hex');
+
     mac = Poly1305.auth(msg, key);
     assert(Poly1305.verify(mac, tag));
   });
