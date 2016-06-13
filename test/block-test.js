@@ -77,7 +77,7 @@ describe('Block', function() {
     assert(b.verify());
   });
 
-  it('should be jsonified and unjsonified and still verify', function() {
+  it('should be serialized and deserialized and still verify', function() {
     var raw = mblock.toRaw();
     var b = bcoin.merkleblock.fromRaw(raw);
     assert.deepEqual(b.render(), raw);
@@ -132,7 +132,7 @@ describe('Block', function() {
       var tx = block.txs[i];
       assert(tx.isSane());
       assert(tx.checkInputs(block.height));
-      assert(tx.verify(null, true, flags));
+      assert(tx.verify(flags));
     }
     assert.equal(block.getReward(), 2507773345);
     assert.equal(block.getReward(), block.txs[0].outputs[0].value);

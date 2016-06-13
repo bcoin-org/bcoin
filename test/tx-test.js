@@ -132,27 +132,27 @@ describe('TX', function() {
 
     it('should verify non-minimal output' + suffix, function() {
       clearCache(tx1, nocache);
-      assert(tx1.verify(null, true, constants.flags.VERIFY_P2SH));
+      assert(tx1.verify(constants.flags.VERIFY_P2SH));
     });
 
     it('should verify tx.version == 0' + suffix, function() {
       clearCache(tx2, nocache);
-      assert(tx2.verify(null, true, constants.flags.VERIFY_P2SH));
+      assert(tx2.verify(constants.flags.VERIFY_P2SH));
     });
 
     it('should verify sighash_single bug w/ findanddelete' + suffix, function() {
       clearCache(tx3, nocache);
-      assert(tx3.verify(null, true, constants.flags.VERIFY_P2SH));
+      assert(tx3.verify(constants.flags.VERIFY_P2SH));
     });
 
     it('should verify high S value with only DERSIG enabled' + suffix, function() {
       clearCache(tx4, nocache);
-      assert(tx4.verify(0, true, constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG));
+      assert(tx4.verifyInput(0, constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG));
     });
 
     it('should verify the coolest tx ever sent' + suffix, function() {
       clearCache(coolest, nocache);
-      assert(coolest.verify(null, true, constants.flags.VERIFY_NONE));
+      assert(coolest.verify(constants.flags.VERIFY_NONE));
     });
 
     it('should parse witness tx properly', function() {
@@ -249,13 +249,13 @@ describe('TX', function() {
           }
           it('should handle valid tx test' + suffix + ': ' + comments, function() {
             clearCache(tx, nocache);
-            assert.ok(tx.verify(null, true, flags));
+            assert.ok(tx.verify(flags));
           });
         } else {
           if (comments === 'Duplicate inputs') {
             it('should handle duplicate input test' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
-              assert.ok(tx.verify(null, true, flags));
+              assert.ok(tx.verify(flags));
               assert.ok(!tx.isSane());
             });
             return;
@@ -263,7 +263,7 @@ describe('TX', function() {
           if (comments === 'Negative output') {
             it('should handle invalid tx (negative)' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
-              assert.ok(tx.verify(null, true, flags));
+              assert.ok(tx.verify(flags));
               assert.ok(!tx.isSane());
             });
             return;
@@ -277,7 +277,7 @@ describe('TX', function() {
           }
           it('should handle invalid tx test' + suffix + ': ' + comments, function() {
             clearCache(tx, nocache);
-            assert.ok(!tx.verify(null, true, flags));
+            assert.ok(!tx.verify(flags));
           });
         }
       });

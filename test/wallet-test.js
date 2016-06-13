@@ -125,7 +125,7 @@ describe('Wallet', function() {
 
       w.sign(tx, function(err) {
         assert.ifError(err);
-        assert(tx.verify(null, true, flags));
+        assert(tx.verify(flags));
         cb();
       });
     });
@@ -649,18 +649,18 @@ describe('Wallet', function() {
               // Create a tx requiring 2 signatures
               var send = bcoin.mtx();
               send.addOutput({ address: receive.getAddress(), value: 5460 });
-              assert(!send.verify(null, true, flags));
+              assert(!send.verify(flags));
               w1.fill(send, { rate: 10000, round: true }, function(err) {
                 assert.ifError(err);
 
                 w1.sign(send, function(err) {
                   assert.ifError(err);
 
-                  assert(!send.verify(null, true, flags));
+                  assert(!send.verify(flags));
                   w2.sign(send, function(err) {
                     assert.ifError(err);
 
-                    assert(send.verify(null, true, flags));
+                    assert(send.verify(flags));
 
                     assert.equal(w1.changeDepth, 1);
                     var change = w1.changeAddress.getAddress();
@@ -695,7 +695,7 @@ describe('Wallet', function() {
                           else
                             send.inputs[0].script.code[2] = 0;
 
-                          assert(!send.verify(null, true, flags));
+                          assert(!send.verify(flags));
                           assert.equal(send.getFee(), 10000);
 
                           // w3 = bcoin.wallet.fromJSON(w3.toJSON());
