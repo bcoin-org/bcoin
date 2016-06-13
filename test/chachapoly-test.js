@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert');
 var chachapoly = require('../lib/bcoin/chachapoly');
 var ChaCha20 = chachapoly.ChaCha20;

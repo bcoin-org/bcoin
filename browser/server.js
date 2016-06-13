@@ -1,3 +1,5 @@
+'use strict';
+
 var HTTPBase = require('../lib/bcoin/http/base');
 var fs = require('fs');
 

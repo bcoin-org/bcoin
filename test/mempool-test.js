@@ -1,3 +1,5 @@
+'use strict';
+
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var constants = bcoin.protocol.constants;

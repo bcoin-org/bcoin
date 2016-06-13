@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert');
 var siphash = require('../lib/bcoin/siphash');
 

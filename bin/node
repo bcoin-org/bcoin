@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+'use strict';
+
 var bcoin = require('../').set({ debug: true, debugFile: true });
 var utils = bcoin.utils;
 var assert = utils.assert;

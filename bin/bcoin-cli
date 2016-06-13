@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+'use strict';
+
 var argv = parseArg(process.argv);
 
 var bcoin = require('../').set(argv.network);

@@ -1,3 +1,5 @@
+'use strict';
+
 var http = require('http');
 var net = require('net');
 var IOServer = require('socket.io');

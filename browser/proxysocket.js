@@ -1,3 +1,5 @@
+'use strict';
+
 var bcoin = require('../lib/bcoin/env');
 var utils = require('../lib/bcoin/utils');
 var BufferWriter = require('../lib/bcoin/writer');

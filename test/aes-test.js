@@ -1,3 +1,5 @@
+'use strict';
+
 var bn = require('bn.js');
 var utils = require('../lib/bcoin/utils');
 var assert = require('assert');
