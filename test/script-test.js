@@ -32,7 +32,7 @@ describe('Script', function() {
 
   it('should encode/decode numbers', function() {
     var script = [0, 0x51, 0x52, 0x60];
-    var encoded = bcoin.script.encodeArray(script);
+    var encoded = bcoin.script.fromArray(script).raw;
     var decoded = bcoin.script.decode(encoded).map(function(op) { return op.value; });
     assert.deepEqual(decoded, script);
   });

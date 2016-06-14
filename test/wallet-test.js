@@ -7,6 +7,8 @@ var network = bcoin.protocol.network;
 var utils = bcoin.utils;
 var assert = require('assert');
 
+var FAKE_SIG = new Buffer([0,0,0,0,0,0,0,0,0]);
+
 var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
 
@@ -227,8 +229,8 @@ describe('Wallet', function() {
                   w.scriptInputs(fake, function(err) {
                     assert.ifError(err);
                     // Fake signature
-                    fake.inputs[0].script.code[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
-                    fake.inputs[0].script.refresh();
+                    fake.inputs[0].script.code[0] = bcoin.opcode.fromData(FAKE_SIG);
+                    fake.inputs[0].script.compile();
                     // balance: 11000
 
                     // Fake TX should temporarly change output
@@ -696,8 +698,8 @@ describe('Wallet', function() {
                           if (witness) {
                             send.inputs[0].witness.items[2] = new Buffer([]);
                           } else {
-                            send.inputs[0].script.code[2] = 0;
-                            send.inputs[0].script.refresh();
+                            send.inputs[0].script.code[2] = new bcoin.opcode(0);
+                            send.inputs[0].script.compile();
                           }
 
                           assert(!send.verify(flags));
