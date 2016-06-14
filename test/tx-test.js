@@ -38,7 +38,6 @@ function clearCache(tx, nocache) {
   if (tx instanceof bcoin.script) {
     if (!nocache)
       return;
-    delete tx.raw;
     delete tx.redeem;
     return;
   }
@@ -59,17 +58,13 @@ function clearCache(tx, nocache) {
   for (i = 0; i < tx.inputs.length; i++) {
     input = tx.inputs[i];
     delete input._address;
-    delete input.script.raw;
     delete input.script.redeem;
     delete input.witness.redeem;
-    if (input.coin)
-      delete input.coin.script.raw;
   }
 
   for (i = 0; i < tx.outputs.length; i++) {
     output = tx.outputs[i];
     delete output._address;
-    delete output.script.raw;
   }
 }
 

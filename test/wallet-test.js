@@ -228,6 +228,7 @@ describe('Wallet', function() {
                     assert.ifError(err);
                     // Fake signature
                     fake.inputs[0].script.code[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
+                    fake.inputs[0].script.refresh();
                     // balance: 11000
 
                     // Fake TX should temporarly change output
@@ -692,10 +693,12 @@ describe('Wallet', function() {
                           assert.equal(w2.changeAddress.getAddress(), change);
                           assert.equal(w3.changeAddress.getAddress(), change);
 
-                          if (witness)
+                          if (witness) {
                             send.inputs[0].witness.items[2] = new Buffer([]);
-                          else
+                          } else {
                             send.inputs[0].script.code[2] = 0;
+                            send.inputs[0].script.refresh();
+                          }
 
                           assert(!send.verify(flags));
                           assert.equal(send.getFee(), 10000);
