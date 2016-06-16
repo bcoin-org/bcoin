@@ -271,7 +271,7 @@ function sendTX(callback) {
     output.address = argv.address || argv.args[0];
     output.value = utils.satoshi(argv.value || argv.args[1]);
   }
-  client.walletSend(id, options, [output], function(err, tx) {
+  client.walletSend(id, {outputs:[output]}, function(err, tx) {
     if (err)
       return callback(err);
     utils.print(tx);
@@ -370,7 +370,7 @@ function main(callback) {
     case 'create':
       return createTX(callback);
     case 'send':
-      return send(callback);
+      return sendTX(callback);
     case 'zap':
       return zap(callback);
     case 'broadcast':
