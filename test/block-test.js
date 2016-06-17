@@ -86,6 +86,13 @@ describe('Block', function() {
     assert(b.verify());
   });
 
+  it('should be jsonified and unjsonified and still verify', function() {
+    var raw = mblock.toJSON();
+    var b = bcoin.merkleblock.fromJSON(raw);
+    assert.deepEqual(b.toJSON(), raw);
+    assert(b.verify());
+  });
+
   it('should calculate reward properly', function() {
     var height = 0;
     var total = 0;
