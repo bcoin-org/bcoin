@@ -29,7 +29,7 @@ function parseTX(file) {
 
 function parseExtended(file) {
   file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim();
-  return bcoin.tx.fromExtended(file, 'hex', true);
+  return bcoin.tx.fromExtended(file, true, 'hex');
 }
 
 function clearCache(tx, nocache) {
@@ -152,7 +152,7 @@ describe('TX', function() {
       assert(coolest.verify(constants.flags.VERIFY_NONE));
     });
 
-    it('should parse witness tx properly', function() {
+    it('should parse witness tx properly' + suffix, function() {
       clearCache(wtx, nocache);
       assert.equal(wtx.inputs.length, 5);
       assert.equal(wtx.outputs.length, 1980);
@@ -503,14 +503,14 @@ describe('TX', function() {
     assert(tx.outputs[0].value.bitLength() === 56);
     var raw = tx.toRaw()
     assert.throws(function() {
-      tx.fromRaw(raw);
+      bcoin.tx.fromRaw(raw);
     });
     delete tx._raw;
     tx.outputs[0].value = new bn('00ffffffffffffff', 'hex').ineg();
     assert(tx.outputs[0].value.bitLength() === 56);
     var raw = tx.toRaw()
     assert.throws(function() {
-      tx.fromRaw(raw);
+      bcoin.tx.fromRaw(raw);
     });
   });
 

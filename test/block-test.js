@@ -32,7 +32,7 @@ describe('Block', function() {
     ],
     flags: new Buffer([245, 122, 0])
   });
-  var raw = mblock.toRaw('hex');
+  var raw = mblock.toRaw().toString('hex');
   var block;
 
   var raw2 = '02000000d1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0'
