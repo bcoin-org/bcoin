@@ -7,6 +7,7 @@ var utils = bcoin.utils;
 var assert = utils.assert;
 
 process.on('uncaughtException', function(err) {
+  bcoin.debug(err.stack);
   bcoin.error(err);
   process.exit(1);
 });

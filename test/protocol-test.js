@@ -31,14 +31,38 @@ describe('Protocol', function() {
     });
   }
 
-  packetTest('version', {}, function(payload) {
+  var v1 = {
+    version: constants.VERSION,
+    services: constants.LOCAL_SERVICES,
+    ts: bcoin.now(),
+    remote: new bcoin.networkaddress(),
+    local: new bcoin.networkaddress(),
+    nonce: utils.nonce(),
+    agent: constants.USER_AGENT,
+    height: 0,
+    relay: false
+  };
+
+  packetTest('version', v1, function(payload) {
     assert.equal(payload.version, constants.VERSION);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 0);
     assert.equal(payload.relay, false);
   });
 
-  packetTest('version', { relay: true, height: 10 }, function(payload) {
+  var v2 = {
+    version: constants.VERSION,
+    services: constants.LOCAL_SERVICES,
+    ts: bcoin.now(),
+    remote: new bcoin.networkaddress(),
+    local: new bcoin.networkaddress(),
+    nonce: utils.nonce(),
+    agent: constants.USER_AGENT,
+    height: 10,
+    relay: true
+  };
+
+  packetTest('version', v2, function(payload) {
     assert.equal(payload.version, constants.VERSION);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 10);
@@ -49,18 +73,18 @@ describe('Protocol', function() {
   });
 
   var hosts = [
-    {
+    new bcoin.networkaddress({
       services: constants.LOCAL_SERVICES,
       host: '127.0.0.1',
       port: 8333,
       ts: Date.now() / 1000 | 0
-    },
-    {
+    }),
+    new bcoin.networkaddress({
       services: constants.LOCAL_SERVICES,
       host: '::123:456:789a',
       port: 18333,
       ts: Date.now() / 1000 | 0
-    }
+    })
   ];
 
   packetTest('addr', hosts, function(payload) {
