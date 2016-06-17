@@ -70,7 +70,7 @@ describe('Block', function() {
 
   it('should decode/encode with parser/framer', function() {
     var b = bcoin.merkleblock.fromRaw(raw, 'hex');
-    assert.equal(b.render().toString('hex'), raw);
+    assert.equal(b.toRaw().toString('hex'), raw);
     assert.equal(raw, raw2);
   });
 
@@ -82,7 +82,7 @@ describe('Block', function() {
   it('should be serialized and deserialized and still verify', function() {
     var raw = mblock.toRaw();
     var b = bcoin.merkleblock.fromRaw(raw);
-    assert.deepEqual(b.render(), raw);
+    assert.deepEqual(b.toRaw(), raw);
     assert(b.verify());
   });
 
@@ -129,7 +129,7 @@ describe('Block', function() {
     filter.add(item2, 'hex');
     var mblock2 = bcoin.merkleblock.fromBlock(block, filter);
     assert(mblock2.verifyPartial());
-    assert.deepEqual(mblock2.render(), mblock.render());
+    assert.deepEqual(mblock2.toRaw(), mblock.toRaw());
   });
 
   it('should verify a historical block', function() {

@@ -113,7 +113,7 @@ describe('TX', function() {
     it('should decode/encode with parser/framer' + suffix, function() {
       var tx = bcoin.tx.fromRaw(raw, 'hex');
       clearCache(tx, nocache);
-      assert.equal(tx.render().toString('hex'), raw);
+      assert.equal(tx.toRaw().toString('hex'), raw);
     });
 
     it('should be verifiable' + suffix, function() {
@@ -163,9 +163,9 @@ describe('TX', function() {
       assert.equal(wtx.getSize(), 62138);
       assert.equal(wtx.getVirtualSize(), 61813);
       assert.equal(wtx.getCost(), 247250);
-      var raw1 = wtx.render();
+      var raw1 = wtx.toRaw();
       clearCache(wtx, true);
-      var raw2 = wtx.render();
+      var raw2 = wtx.toRaw();
       assert.deepEqual(raw1, raw2);
       var wtx2 = bcoin.tx.fromRaw(raw2);
       clearCache(wtx2, nocache);

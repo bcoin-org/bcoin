@@ -177,7 +177,7 @@ describe('Wallet', function() {
         var maxSize = tx.maxSize();
         w.sign(tx, function(err) {
           assert.ifError(err);
-          assert(tx.render().length <= maxSize);
+          assert(tx.toRaw().length <= maxSize);
           assert(tx.verify());
         });
       });
