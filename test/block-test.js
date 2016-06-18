@@ -136,12 +136,15 @@ describe('Block', function() {
     assert(block.verify());
     assert(block.txs[0].isCoinbase());
     assert(block.txs[0].isSane());
+    assert(!block.hasWitness());
+    assert.equal(block.getCost(), 1136924);
     var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
     for (var i = 1; i < block.txs.length; i++) {
       var tx = block.txs[i];
       assert(tx.isSane());
       assert(tx.checkInputs(block.height));
       assert(tx.verify(flags));
+      assert(!tx.hasWitness());
     }
     assert.equal(block.getReward(), 2507773345);
     assert.equal(block.getReward(), block.txs[0].outputs[0].value);
@@ -149,9 +152,12 @@ describe('Block', function() {
 
   it('should fail with a bad merkle root', function() {
     var block2 = new bcoin.block(block);
+    block2.hash();
     block2.merkleRoot = constants.NULL_HASH;
     delete block2._valid;
-    assert(!block2.verify());
+    var ret = {};
+    assert(!block2.verify(ret));
+    assert.equal(ret.reason, 'bad-txnmrklroot');
     delete block2._valid;
     delete block2._hash;
     block2.merkleRoot = block.merkleRoot;
@@ -160,8 +166,11 @@ describe('Block', function() {
 
   it('should fail on merkle block with a bad merkle root', function() {
     var mblock2 = new bcoin.merkleblock(mblock);
+    mblock2.hash();
     mblock2.merkleRoot = constants.NULL_HASH;
-    assert(!mblock2.verify());
+    var ret = {};
+    assert(!mblock2.verify(ret));
+    assert.equal(ret.reason, 'bad-txnmrklroot');
     delete mblock2._validPartial;
     delete mblock2._valid;
     delete mblock2._hash;
@@ -171,12 +180,23 @@ describe('Block', function() {
 
   it('should fail with a low target', function() {
     var block2 = new bcoin.block(block);
+    block2.hash();
     block2.bits = 403014710;
-    assert(!block2.verify());
+    var ret = {};
+    assert(!block2.verify(ret));
+    assert.equal(ret.reason, 'high-hash');
     delete block2._valid;
     delete block2._hash;
     block2.bits = block.bits;
     assert(block2.verify());
+  });
+
+  it('should fail on duplicate txs', function() {
+    var block2 = new bcoin.block(block);
+    block2.txs.push(block2.txs[block2.txs.length - 1]);
+    var ret = {};
+    assert(!block2.verify(ret));
+    assert.equal(ret.reason, 'bad-txns-duplicate');
   });
 
   it('should verify with headers', function() {

@@ -343,8 +343,28 @@ describe('Script', function() {
           locktime: 0
         });
         if (nocache) {
-          delete coin._raw;
-          delete tx._raw;
+          tx._raw = null;
+          tx._size = null;
+          tx._witnessSize = null;
+          tx._lastWitnessSize = 0;
+          tx._hash = null;
+          tx._inputValue = null;
+          tx._outputValue = null;
+          tx._hashPrevouts = null;
+          tx._hashSequence = null;
+          tx._hashOutputs = null;
+
+          coin._raw = null;
+          coin._size = null;
+          coin._witnessSize = null;
+          coin._lastWitnessSize = 0;
+          coin._hash = null;
+          coin._inputValue = null;
+          coin._outputValue = null;
+          coin._hashPrevouts = null;
+          coin._hashSequence = null;
+          coin._hashOutputs = null;
+
           delete input.redeem;
           delete input._address;
           delete output._address;

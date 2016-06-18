@@ -38,7 +38,7 @@ function clearCache(tx, nocache) {
   if (tx instanceof bcoin.script) {
     if (!nocache)
       return;
-    delete tx.redeem;
+    tx.redeem = null;
     return;
   }
 
@@ -47,24 +47,27 @@ function clearCache(tx, nocache) {
     return;
   }
 
-  delete tx._raw;
-  delete tx._hash;
-  delete tx._inputValue;
-  delete tx._outputValue;
-
-  tx._size = 0;
-  tx._witnessSize = 0;
+  tx._raw = null;
+  tx._size = null;
+  tx._witnessSize = null;
+  tx._lastWitnessSize = 0;
+  tx._hash = null;
+  tx._inputValue = null;
+  tx._outputValue = null;
+  tx._hashPrevouts = null;
+  tx._hashSequence = null;
+  tx._hashOutputs = null;
 
   for (i = 0; i < tx.inputs.length; i++) {
     input = tx.inputs[i];
-    delete input._address;
-    delete input.script.redeem;
-    delete input.witness.redeem;
+    input._address = null;
+    input.script.redeem = null;
+    input.witness.redeem = null;
   }
 
   for (i = 0; i < tx.outputs.length; i++) {
     output = tx.outputs[i];
-    delete output._address;
+    output._address = null;
   }
 }
 
