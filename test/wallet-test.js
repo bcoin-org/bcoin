@@ -157,12 +157,15 @@ describe('Wallet', function() {
       var k2 = bcoin.hd.fromMnemonic().deriveAccount44(0).hdPublicKey;
       w.addKey(k2, function(err) {
         assert.ifError(err);
-        // Input transcation
+        var keys = [
+          w.getPublicKey(),
+          k2.derive('m/0/0').publicKey
+        ];
+        // Input transaction (bare 1-of-2 multisig)
         var src = bcoin.mtx({
           outputs: [{
             value: 5460 * 2,
-            m: 1,
-            keys: [ w.getPublicKey(), k2.derive('m/0/0').publicKey ]
+            script: bcoin.script.fromMultisig(1, 2, keys)
           }, {
             value: 5460 * 2,
             address: bcoin.address.fromData(new Buffer([])).toBase58()

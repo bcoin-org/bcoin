@@ -206,7 +206,7 @@ describe('Protocol', function() {
     p.start();
     while (p.left()) {
       var details = bcoin.protocol.parser.parseAlert(p);
-      var hash = utils.dsha256(details.payload);
+      var hash = utils.hash256(details.payload);
       var signature = details.signature;
       assert(bcoin.ec.verify(hash, signature, network.alertKey));
       delete details.payload;
