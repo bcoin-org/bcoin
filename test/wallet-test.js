@@ -903,6 +903,90 @@ describe('Wallet', function() {
     });
   });
 
+  it('should fill tx with inputs with subtract fee', function(cb) {
+    walletdb.create(function(err, w1) {
+      assert.ifError(err);
+      walletdb.create(function(err, w2) {
+        assert.ifError(err);
+
+        // Coinbase
+        var t1 = bcoin.mtx()
+          .addOutput(w1, 5460)
+          .addOutput(w1, 5460)
+          .addOutput(w1, 5460)
+          .addOutput(w1, 5460);
+
+        t1.addInput(dummyInput);
+
+        walletdb.addTX(t1, function(err) {
+          assert.ifError(err);
+
+          // Create new transaction
+          var t2 = bcoin.mtx().addOutput(w2, 21840);
+          w1.fill(t2, { rate: 10000, round: true, subtractFee: true }, function(err) {
+            assert.ifError(err);
+            w1.sign(t2, function(err) {
+              assert.ifError(err);
+
+              assert(t2.verify());
+
+              assert.equal(t2.getInputValue(), 5460 * 4);
+              assert.equal(t2.getOutputValue(), 21840 - 10000);
+              assert.equal(t2.getFee(), 10000);
+
+              cb();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('should fill tx with inputs with subtract fee with create tx', function(cb) {
+    walletdb.create(function(err, w1) {
+      assert.ifError(err);
+      walletdb.create(function(err, w2) {
+        assert.ifError(err);
+
+        // Coinbase
+        var t1 = bcoin.mtx()
+          .addOutput(w1, 5460)
+          .addOutput(w1, 5460)
+          .addOutput(w1, 5460)
+          .addOutput(w1, 5460);
+
+        t1.addInput(dummyInput);
+
+        walletdb.addTX(t1, function(err) {
+          assert.ifError(err);
+
+          var options = {
+            subtractFee: true,
+            rate: 10000,
+            round: true,
+            outputs: [{ address: w2.getAddress(), value: 21840 }]
+          };
+
+          // Create new transaction
+          w1.createTX(options, function(err, t2) {
+            assert.ifError(err);
+            w1.sign(t2, function(err) {
+              assert.ifError(err);
+
+              assert(t2.verify());
+
+              assert.equal(t2.getInputValue(), 5460 * 4);
+              assert.equal(t2.getOutputValue(), 21840 - 10000);
+              assert.equal(t2.getFee(), 10000);
+
+              cb();
+            });
+          });
+        });
+      });
+    });
+  });
+
   it('should cleanup', function(cb) {
     constants.tx.COINBASE_MATURITY = 100;
     cb();
