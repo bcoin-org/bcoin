@@ -31,7 +31,7 @@ describe('Protocol', function() {
     });
   }
 
-  var v1 = {
+  var v1 = bcoin.packets.VersionPacket.fromOptions({
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: bcoin.now(),
@@ -41,7 +41,7 @@ describe('Protocol', function() {
     agent: constants.USER_AGENT,
     height: 0,
     relay: false
-  };
+  });
 
   packetTest('version', v1, function(payload) {
     assert.equal(payload.version, constants.VERSION);
@@ -50,7 +50,7 @@ describe('Protocol', function() {
     assert.equal(payload.relay, false);
   });
 
-  var v2 = {
+  var v2 = bcoin.packets.VersionPacket.fromOptions({
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: bcoin.now(),
@@ -60,7 +60,7 @@ describe('Protocol', function() {
     agent: constants.USER_AGENT,
     height: 10,
     relay: true
-  };
+  });
 
   packetTest('version', v2, function(payload) {
     assert.equal(payload.version, constants.VERSION);
@@ -205,14 +205,13 @@ describe('Protocol', function() {
     var p = new bcoin.reader(alertData);
     p.start();
     while (p.left()) {
-      var details = bcoin.protocol.parser.parseAlert(p);
-      var hash = utils.hash256(details.payload);
-      var signature = details.signature;
-      assert(bcoin.ec.verify(hash, signature, network.alertKey));
-      delete details.payload;
-      var data = bcoin.protocol.framer.alert(details);
-      details = bcoin.protocol.parser.parseAlert(data);
-      assert(bcoin.ec.verify(hash, signature, network.alertKey));
+      var alert = bcoin.protocol.parser.parseAlert(p);
+      assert(alert.verify(network.alertKey));
+      alert._payload = null;
+      alert._hash = null;
+      var data = bcoin.protocol.framer.alert(alert);
+      alert = bcoin.protocol.parser.parseAlert(data);
+      assert(alert.verify(network.alertKey));
     }
     p.end();
   });
