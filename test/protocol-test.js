@@ -7,6 +7,7 @@ var network = bcoin.network.get();
 var utils = bcoin.utils;
 var fs = require('fs');
 var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
+var NetworkAddress = bcoin.packets.NetworkAddress;
 
 describe('Protocol', function() {
   var version = require('../package.json').version;
@@ -35,8 +36,8 @@ describe('Protocol', function() {
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: bcoin.now(),
-    remote: new bcoin.networkaddress(),
-    local: new bcoin.networkaddress(),
+    remote: new NetworkAddress(),
+    local: new NetworkAddress(),
     nonce: utils.nonce(),
     agent: constants.USER_AGENT,
     height: 0,
@@ -54,8 +55,8 @@ describe('Protocol', function() {
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: bcoin.now(),
-    remote: new bcoin.networkaddress(),
-    local: new bcoin.networkaddress(),
+    remote: new NetworkAddress(),
+    local: new NetworkAddress(),
     nonce: utils.nonce(),
     agent: constants.USER_AGENT,
     height: 10,
@@ -73,13 +74,13 @@ describe('Protocol', function() {
   });
 
   var hosts = [
-    new bcoin.networkaddress({
+    new NetworkAddress({
       services: constants.LOCAL_SERVICES,
       host: '127.0.0.1',
       port: 8333,
       ts: Date.now() / 1000 | 0
     }),
-    new bcoin.networkaddress({
+    new NetworkAddress({
       services: constants.LOCAL_SERVICES,
       host: '::123:456:789a',
       port: 18333,
