@@ -136,11 +136,11 @@ describe('HD', function() {
   });
 
   it('should deserialize master private key', function() {
-    bcoin.hd.PrivateKey.parseBase58(master.xprivkey);
+    bcoin.hd.PrivateKey.fromBase58(master.xprivkey);
   });
 
   it('should deserialize master public key', function() {
-    bcoin.hd.PublicKey.parseBase58(master.hdPublicKey.xpubkey);
+    bcoin.hd.PublicKey.fromBase58(master.hdPublicKey.xpubkey);
   });
 
   it('should deserialize and reserialize', function() {
