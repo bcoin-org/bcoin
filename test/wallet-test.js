@@ -869,7 +869,8 @@ describe('Wallet', function() {
   it('should fill tx with inputs when encrypted', function(cb) {
     walletdb.create({ passphrase: 'foo' }, function(err, w1) {
       assert.ifError(err);
-      w1.master.destroy();
+      w1.master.stop();
+      w1.master.key = null;
 
       // Coinbase
       var t1 = bcoin.mtx()
