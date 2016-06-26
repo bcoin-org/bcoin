@@ -433,8 +433,10 @@ describe('Wallet', function() {
                 var t3 = bcoin.mtx().addOutput(w2, 15000);
                 w1.fill(t3, { rate: 10000 }, function(err) {
                   assert(err);
-                  assert(balance.total === 5460);
-                  cb();
+                  setTimeout(function() {
+                    assert(balance.total === 5460);
+                    cb();
+                  }, 100);
                 });
               });
             });
