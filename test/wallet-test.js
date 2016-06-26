@@ -873,6 +873,7 @@ describe('Wallet', function() {
       assert.ifError(err);
       w1.master.stop();
       w1.master.key = null;
+      utils.print(w1.toJSON());
 
       // Coinbase
       var t1 = bcoin.mtx()
