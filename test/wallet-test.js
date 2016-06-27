@@ -65,7 +65,7 @@ describe('Wallet', function() {
   it('should generate new key and address', function() {
     walletdb.create(function(err, w) {
       assert.ifError(err);
-      var addr = w.getAddress();
+      var addr = w.getAddress('base58');
       assert(addr);
       assert(bcoin.address.validate(addr));
     });
@@ -105,9 +105,9 @@ describe('Wallet', function() {
       assert.ifError(err);
 
       if (witness)
-        assert(bcoin.address.fromBase58(w.getAddress()).type === 'witnesspubkeyhash');
+        assert(bcoin.address.fromBase58(w.getAddress('base58')).type === 'witnesspubkeyhash');
       else
-        assert(bcoin.address.fromBase58(w.getAddress()).type === 'pubkeyhash');
+        assert(bcoin.address.fromBase58(w.getAddress('base58')).type === 'pubkeyhash');
 
       var src = bcoin.mtx({
         outputs: [{
@@ -608,21 +608,21 @@ describe('Wallet', function() {
         // w3 = bcoin.wallet.fromJSON(w3.toJSON());
 
         // Our p2sh address
-        var addr = w1.getAddress();
+        var addr = w1.getAddress('base58');
 
         if (witness)
           assert(bcoin.address.fromBase58(addr).type === 'witnessscripthash');
         else
           assert(bcoin.address.fromBase58(addr).type === 'scripthash');
 
-        assert.equal(w1.getAddress(), addr);
-        assert.equal(w2.getAddress(), addr);
-        assert.equal(w3.getAddress(), addr);
+        assert.equal(w1.getAddress('base58'), addr);
+        assert.equal(w2.getAddress('base58'), addr);
+        assert.equal(w3.getAddress('base58'), addr);
 
-        var paddr = w1.getProgramAddress();
-        assert.equal(w1.getProgramAddress(), paddr);
-        assert.equal(w2.getProgramAddress(), paddr);
-        assert.equal(w3.getProgramAddress(), paddr);
+        var paddr = w1.getProgramAddress('base58');
+        assert.equal(w1.getProgramAddress('base58'), paddr);
+        assert.equal(w2.getProgramAddress('base58'), paddr);
+        assert.equal(w3.getProgramAddress('base58'), paddr);
 
         // Add a shared unspent transaction to our wallets
         var utx = bcoin.mtx();
@@ -650,11 +650,11 @@ describe('Wallet', function() {
               assert.equal(w1.receiveDepth, 2);
               assert.equal(w1.changeDepth, 1);
 
-              assert(w1.getAddress() !== addr);
-              addr = w1.getAddress();
-              assert.equal(w1.getAddress(), addr);
-              assert.equal(w2.getAddress(), addr);
-              assert.equal(w3.getAddress(), addr);
+              assert(w1.getAddress('base58') !== addr);
+              addr = w1.getAddress('base58');
+              assert.equal(w1.getAddress('base58'), addr);
+              assert.equal(w2.getAddress('base58'), addr);
+              assert.equal(w3.getAddress('base58'), addr);
 
               // Create a tx requiring 2 signatures
               var send = bcoin.mtx();
@@ -673,10 +673,10 @@ describe('Wallet', function() {
                     assert(send.verify(flags));
 
                     assert.equal(w1.changeDepth, 1);
-                    var change = w1.changeAddress.getAddress();
-                    assert.equal(w1.changeAddress.getAddress(), change);
-                    assert.equal(w2.changeAddress.getAddress(), change);
-                    assert.equal(w3.changeAddress.getAddress(), change);
+                    var change = w1.changeAddress.getAddress('base58');
+                    assert.equal(w1.changeAddress.getAddress('base58'), change);
+                    assert.equal(w2.changeAddress.getAddress('base58'), change);
+                    assert.equal(w3.changeAddress.getAddress('base58'), change);
 
                     // Simulate a confirmation
                     send.ps = 0;
@@ -693,12 +693,12 @@ describe('Wallet', function() {
                           assert.equal(w1.receiveDepth, 2);
                           assert.equal(w1.changeDepth, 2);
 
-                          assert(w1.getAddress() === addr);
-                          assert(w1.changeAddress.getAddress() !== change);
-                          change = w1.changeAddress.getAddress();
-                          assert.equal(w1.changeAddress.getAddress(), change);
-                          assert.equal(w2.changeAddress.getAddress(), change);
-                          assert.equal(w3.changeAddress.getAddress(), change);
+                          assert(w1.getAddress('base58') === addr);
+                          assert(w1.changeAddress.getAddress('base58') !== change);
+                          change = w1.changeAddress.getAddress('base58');
+                          assert.equal(w1.changeAddress.getAddress('base58'), change);
+                          assert.equal(w2.changeAddress.getAddress('base58'), change);
+                          assert.equal(w3.changeAddress.getAddress('base58'), change);
 
                           if (witness) {
                             send.inputs[0].witness.items[2] = new Buffer([]);
@@ -713,8 +713,8 @@ describe('Wallet', function() {
                           // w3 = bcoin.wallet.fromJSON(w3.toJSON());
                           // assert.equal(w3.receiveDepth, 2);
                           // assert.equal(w3.changeDepth, 2);
-                          //assert.equal(w3.getAddress(), addr);
-                          //assert.equal(w3.changeAddress.getAddress(), change);
+                          //assert.equal(w3.getAddress('base58'), addr);
+                          //assert.equal(w3.changeAddress.getAddress('base58'), change);
 
                           cb();
                         });
@@ -819,8 +819,8 @@ describe('Wallet', function() {
           assert(account !== acc);
           assert(account.accountKey.xpubkey === acc.accountKey.xpubkey);
           assert(w1.account.accountIndex === 0);
-          assert(account.receiveAddress.getAddress() !== w1.account.receiveAddress.getAddress());
-          assert(w1.getAddress() === w1.account.receiveAddress.getAddress());
+          assert(account.receiveAddress.getAddress('base58') !== w1.account.receiveAddress.getAddress('base58'));
+          assert(w1.getAddress('base58') === w1.account.receiveAddress.getAddress('base58'));
 
           // Coinbase
           var t1 = bcoin.mtx()
