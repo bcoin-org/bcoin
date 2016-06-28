@@ -101,7 +101,8 @@ describe('Mempool', function() {
               w.scriptInputs(fake, function(err) {
                 assert.ifError(err);
                 // Fake signature
-                fake.inputs[0].script.code[0] = new Buffer([0,0,0,0,0,0,0,0,0]);
+                fake.inputs[0].script.set(0, new Buffer([0,0,0,0,0,0,0,0,0]));
+                fake.inputs[0].script.compile();
                 // balance: 11000
                 [t2, t3, t4, f1, fake].forEach(function(tx) {
                   tx.inputs.forEach(function(input) {
