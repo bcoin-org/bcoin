@@ -48,12 +48,12 @@ function clearCache(tx, nocache) {
   }
 
   tx._raw = null;
-  tx._size = null;
-  tx._witnessSize = null;
+  tx._size = -1;
+  tx._witnessSize = -1;
   tx._lastWitnessSize = 0;
   tx._hash = null;
-  tx._inputValue = null;
-  tx._outputValue = null;
+  tx._inputValue = -1;
+  tx._outputValue = -1;
   tx._hashPrevouts = null;
   tx._hashSequence = null;
   tx._hashOutputs = null;

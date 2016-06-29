@@ -344,23 +344,23 @@ describe('Script', function() {
         });
         if (nocache) {
           tx._raw = null;
-          tx._size = null;
-          tx._witnessSize = null;
+          tx._size = -1;
+          tx._witnessSize = -1;
           tx._lastWitnessSize = 0;
           tx._hash = null;
-          tx._inputValue = null;
-          tx._outputValue = null;
+          tx._inputValue = -1;
+          tx._outputValue = -1;
           tx._hashPrevouts = null;
           tx._hashSequence = null;
           tx._hashOutputs = null;
 
           coin._raw = null;
-          coin._size = null;
-          coin._witnessSize = null;
+          coin._size = -1;
+          coin._witnessSize = -1;
           coin._lastWitnessSize = 0;
           coin._hash = null;
-          coin._inputValue = null;
-          coin._outputValue = null;
+          coin._inputValue = -1;
+          coin._outputValue = -1;
           coin._hashPrevouts = null;
           coin._hashSequence = null;
           coin._hashOutputs = null;
