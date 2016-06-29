@@ -19,13 +19,13 @@ describe('Mnemonic', function() {
         entropy: entropy,
         passphrase: 'TREZOR'
       });
-      mnemonic.toSeed();
-      assert.equal(mnemonic.phrase, phrase);
+      assert.equal(mnemonic.getPhrase(), phrase);
       assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
       var key = bcoin.hd.fromMnemonic(mnemonic);
       assert.equal(key.xprivkey, xpriv);
     });
   });
+
   mnemonic2.forEach(function(data, i) {
     var entropy = new Buffer(data.entropy, 'hex');
     var phrase = data.mnemonic;
@@ -38,11 +38,19 @@ describe('Mnemonic', function() {
         entropy: entropy,
         passphrase: passphrase
       });
-      mnemonic.toSeed();
-      assert.equal(mnemonic.phrase, phrase);
+      assert.equal(mnemonic.getPhrase(), phrase);
       assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
       var key = bcoin.hd.fromMnemonic(mnemonic);
       assert.equal(key.xprivkey, xpriv);
     });
+  });
+
+  it('should verify phrase', function() {
+    var m1 = new bcoin.hd.Mnemonic();
+    var m2 = bcoin.hd.Mnemonic.fromPhrase(m1.getPhrase());
+    assert.deepEqual(m2.getEntropy(), m1.getEntropy());
+    assert.equal(m2.bits, m1.bits);
+    assert.equal(m2.language, m1.language);
+    assert.deepEqual(m2.toSeed(), m1.toSeed());
   });
 });
