@@ -117,6 +117,7 @@ describe('Block', function() {
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.equal(block.rhash,
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
+    assert.equal(block.merkleRoot, block.getMerkleRoot('hex'));
   });
 
   it('should create a merkle block', function() {
