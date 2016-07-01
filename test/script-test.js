@@ -272,7 +272,7 @@ describe('Script', function() {
 
   scripts.forEach(function(data) {
     // ["Format is: [[wit...]?, scriptSig, scriptPubKey, flags, expected_scripterror, ... comments]"],
-    var witness = Array.isArray(data[0]) ? data.shift() : null;
+    var witness = Array.isArray(data[0]) ? data.shift() : [];
     var input = data[0] ? data[0].trim() : data[0] || '';
     var output = data[1] ? data[1].trim() : data[1] || '';
     var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
@@ -288,7 +288,7 @@ describe('Script', function() {
 
     comments += ' (' + expected + ')';
 
-    if (witness)
+    if (witness.length !== 0)
       amount = witness.pop() * 100000000;
 
     witness = bcoin.witness.fromString(witness);
