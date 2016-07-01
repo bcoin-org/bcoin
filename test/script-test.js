@@ -365,7 +365,6 @@ describe('Script', function() {
           coin._hashSequence = null;
           coin._hashOutputs = null;
 
-          delete input.redeem;
           delete input._address;
           delete output._address;
         }
