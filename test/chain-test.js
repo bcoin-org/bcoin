@@ -58,7 +58,6 @@ describe('Chain', function() {
 
   function deleteCoins(tx) {
     if (tx.txs) {
-      delete tx.view;
       deleteCoins(tx.txs);
       return;
     }
@@ -67,12 +66,16 @@ describe('Chain', function() {
       return;
     }
     tx.inputs.forEach(function(input) {
-      delete input.coin;
+      input.coin = null;
     });
   }
 
   it('should open chain and miner', function(cb) {
-    miner.open(function(err) {
+    miner.open(cb);
+  });
+
+  it('should open walletdb', function(cb) {
+    walletdb.open(function(err) {
       assert.ifError(err);
       walletdb.create({}, function(err, w) {
         assert.ifError(err);
