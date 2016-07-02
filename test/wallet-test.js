@@ -6,6 +6,7 @@ var constants = bcoin.protocol.constants;
 var network = bcoin.protocol.network;
 var utils = bcoin.utils;
 var assert = require('assert');
+var scriptTypes = constants.scriptTypes;
 
 var FAKE_SIG = new Buffer([0,0,0,0,0,0,0,0,0]);
 
@@ -104,10 +105,12 @@ describe('Wallet', function() {
     walletdb.create({ witness: witness }, function(err, w) {
       assert.ifError(err);
 
+      var ad = bcoin.address.fromBase58(w.getAddress('base58'));
+
       if (witness)
-        assert(bcoin.address.fromBase58(w.getAddress('base58')).type === 'witnesspubkeyhash');
+        assert(ad.type === scriptTypes.WITNESSPUBKEYHASH);
       else
-        assert(bcoin.address.fromBase58(w.getAddress('base58')).type === 'pubkeyhash');
+        assert(ad.type === scriptTypes.PUBKEYHASH);
 
       var src = bcoin.mtx({
         outputs: [{
@@ -232,7 +235,7 @@ describe('Wallet', function() {
                   w.scriptInputs(fake, function(err) {
                     assert.ifError(err);
                     // Fake signature
-                    fake.inputs[0].script.code[0] = bcoin.opcode.fromData(FAKE_SIG);
+                    fake.inputs[0].script.set(0, FAKE_SIG);
                     fake.inputs[0].script.compile();
                     // balance: 11000
 
@@ -609,10 +612,12 @@ describe('Wallet', function() {
         // Our p2sh address
         var addr = w1.getAddress('base58');
 
+        var ad = bcoin.address.fromBase58(addr);
+
         if (witness)
-          assert(bcoin.address.fromBase58(addr).type === 'witnessscripthash');
+          assert(ad.type === scriptTypes.WITNESSSCRIPTHASH);
         else
-          assert(bcoin.address.fromBase58(addr).type === 'scripthash');
+          assert(ad.type === scriptTypes.SCRIPTHASH);
 
         assert.equal(w1.getAddress('base58'), addr);
         assert.equal(w2.getAddress('base58'), addr);
