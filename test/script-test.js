@@ -63,7 +63,6 @@ describe('Script', function() {
       opcodes.OP_5
     ]);
     var stack = new Stack();
-    utils.print(inputScript);
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);

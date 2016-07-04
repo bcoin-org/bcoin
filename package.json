@@ -13,9 +13,9 @@
   },
   "repository": "git://github.com/bcoin-org/bcoin.git",
   "keywords": [
+    "bcoin",
     "bitcoin",
     "blockchain",
-    "bcoin",
     "wallet"
   ],
   "author": "Fedor Indutny <fedor@indutny.com>",
@@ -32,10 +32,10 @@
   },
   "dependencies": {
     "bn.js": "4.11.0",
-    "elliptic": "6.2.3",
-    "leveldown": "git://github.com/chjj/leveldown.git#staging"
+    "elliptic": "6.2.3"
   },
   "optionalDependencies": {
+    "leveldown": "git://github.com/chjj/leveldown.git#staging",
     "secp256k1": "3.0.0",
     "socket.io": "1.4.5",
     "socket.io-client": "1.4.5"

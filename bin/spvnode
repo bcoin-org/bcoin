@@ -2,18 +2,20 @@
 
 'use strict';
 
-var bcoin = require('../').set({ debug: true, debugFile: true });
+var bcoin = require('../');
 var utils = bcoin.utils;
 var assert = utils.assert;
 
 var node = bcoin.spvnode({
-  // passphrase: 'node',
-  preload: process.argv.indexOf('--preload') !== -1,
-  useCheckpoints: process.argv.indexOf('--checkpoints') !== -1
+  logLevel: 'debug',
+  logFile: true,
+  db: 'leveldb',
+  useCheckpoints: process.argv.indexOf('--checkpoints') !== -1,
+  headers: process.argv.indexOf('--headers') !== -1
 });
 
 node.on('error', function(err) {
-  bcoin.debug(err.stack + '');
+  ;
 });
 
 node.open(function(err) {
@@ -23,7 +25,7 @@ node.open(function(err) {
   if (process.argv.indexOf('--test') !== -1) {
     node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
     node.on('tx', function(tx) {
-      utils.print(tx);
+      utils.log(tx);
     });
   }
 

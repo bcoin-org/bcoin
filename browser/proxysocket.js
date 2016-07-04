@@ -85,7 +85,7 @@ ProxySocket.prototype.connect = function connect(port, host) {
     return this.once('info', connect.bind(this, port, host));
 
   if (this.info.pow) {
-    bcoin.debug(
+    utils.log(
       'Solving proof of work to create socket (%d, %s) -- please wait.',
       port, host);
 
@@ -102,7 +102,7 @@ ProxySocket.prototype.connect = function connect(port, host) {
       pow.writeUInt32LE(nonce, 0, true);
     } while (utils.cmp(utils.dsha256(pow), this.target) >= 0);
 
-    bcoin.debug('Solved proof of work: %d', nonce);
+    utils.log('Solved proof of work: %d', nonce);
   }
 
   this.socket.emit('tcp connect', port, host, nonce);
