@@ -144,7 +144,7 @@ describe('Chain', function() {
         assert(reorg);
         chain.tip = oldTip;
         var forked = false;
-        chain.once('fork', function() {
+        chain.once('reorganize', function() {
           forked = true;
         });
         deleteCoins(reorg);
