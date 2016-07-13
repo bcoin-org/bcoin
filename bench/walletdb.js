@@ -81,7 +81,7 @@ function runBench(callback) {
         });
       }, function(err) {
         assert.ifError(err);
-        end(10000);
+        end(100000);
         next();
       });
       end = bench('tx');
