@@ -93,7 +93,7 @@ describe('HTTP', function() {
 */
 
   it('should fill with funds', function(cb) {
-    var balance, receive;
+    var balance, receive, tx;
 
     // Coinbase
     var t1 = bcoin.mtx()
@@ -112,10 +112,13 @@ describe('HTTP', function() {
       receive = r[0];
     });
 
+    wallet.once('tx', function(t, map) {
+      tx = t;
+    });
+
     node.walletdb.addTX(t1, function(err) {
       assert.ifError(err);
       setTimeout(function() {
-        return cb();
         assert(receive);
         assert.equal(receive.id, 'test');
         assert.equal(receive.type, 'pubkeyhash');
@@ -124,8 +127,10 @@ describe('HTTP', function() {
         assert.equal(balance.confirmed, 0);
         assert.equal(balance.unconfirmed, 201840);
         assert.equal(balance.total, 201840);
+        assert(tx);
+        assert.equal(tx.hash('hex'), t1.hash('hex'));
         cb();
-      }, 2000);
+      }, 300);
     });
   });
 
@@ -167,6 +172,24 @@ describe('HTTP', function() {
       assert.ifError(err);
       assert(tx);
       assert.equal(tx.hash('hex'), hash);
+      cb();
+    });
+  });
+
+  it('should generate new api key', function(cb) {
+    var t = wallet.token.toString('hex');
+    wallet.retoken(null, function(err, token) {
+      assert.ifError(err);
+      assert(token.length === 64);
+      assert.notEqual(token, t);
+      cb();
+    });
+  });
+
+  it('should get balance', function(cb) {
+    wallet.getBalance(function(err, balance) {
+      assert.ifError(err);
+      assert.equal(balance.total, 199570);
       cb();
     });
   });
