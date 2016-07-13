@@ -48,7 +48,7 @@ function runBench(callback) {
     },
     function(next) {
       var end = bench('accounts');
-      utils.forRange(0, 5000, function(i, next) {
+      utils.forRange(0, 1000, function(i, next) {
         wallet.createAccount({}, function(err, account) {
           assert.ifError(err);
           addrs.push(account.receiveAddress.getAddress());
