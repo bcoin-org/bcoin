@@ -359,7 +359,7 @@ describe('Wallet', function() {
 
           // Create new transaction
           var t2 = bcoin.mtx().addOutput(w2, 5460);
-          w1.fill(t2, { rate: 10000, round: true }, function(err) {
+          w1.fund(t2, { rate: 10000, round: true }, function(err) {
             assert.ifError(err);
             w1.sign(t2, function(err) {
               assert.ifError(err);
@@ -375,7 +375,7 @@ describe('Wallet', function() {
 
               // Create new transaction
               var t3 = bcoin.mtx().addOutput(w2, 15000);
-              w1.fill(t3, { rate: 10000, round: true }, function(err) {
+              w1.fund(t3, { rate: 10000, round: true }, function(err) {
                 assert(err);
                 assert.equal(err.requiredFunds, 25000);
                 cb();
@@ -407,7 +407,7 @@ describe('Wallet', function() {
 
           // Create new transaction
           var t2 = bcoin.mtx().addOutput(w2, 5460);
-          w1.fill(t2, { rate: 10000 }, function(err) {
+          w1.fund(t2, { rate: 10000 }, function(err) {
             assert.ifError(err);
             w1.sign(t2, function(err) {
               assert.ifError(err);
@@ -434,7 +434,7 @@ describe('Wallet', function() {
               walletdb.addTX(t2, function(err) {
                 assert.ifError(err);
                 var t3 = bcoin.mtx().addOutput(w2, 15000);
-                w1.fill(t3, { rate: 10000 }, function(err) {
+                w1.fund(t3, { rate: 10000 }, function(err) {
                   assert(err);
                   assert(balance);
                   assert(balance.total === 5460);
@@ -664,7 +664,7 @@ describe('Wallet', function() {
               var send = bcoin.mtx();
               send.addOutput({ address: receive.getAddress(), value: 5460 });
               assert(!send.verify(flags));
-              w1.fill(send, { rate: 10000, round: true }, function(err) {
+              w1.fund(send, { rate: 10000, round: true }, function(err) {
                 assert.ifError(err);
 
                 w1.sign(send, function(err) {
@@ -774,7 +774,7 @@ describe('Wallet', function() {
 
               // Create new transaction
               var t2 = bcoin.mtx().addOutput(w2, 5460);
-              w1.fill(t2, { rate: 10000, round: true }, function(err) {
+              w1.fund(t2, { rate: 10000, round: true }, function(err) {
                 assert.ifError(err);
                 w1.sign(t2, function(err) {
                   assert.ifError(err);
@@ -790,7 +790,7 @@ describe('Wallet', function() {
 
                   // Create new transaction
                   var t3 = bcoin.mtx().addOutput(w2, 15000);
-                  w1.fill(t3, { rate: 10000, round: true }, function(err) {
+                  w1.fund(t3, { rate: 10000, round: true }, function(err) {
                     assert(err);
                     assert.equal(err.requiredFunds, 25000);
                     w1.getAccounts(function(err, accounts) {
@@ -840,11 +840,11 @@ describe('Wallet', function() {
 
             // Should fill from `foo` and fail
             var t2 = bcoin.mtx().addOutput(w1, 5460);
-            w1.fill(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
+            w1.fund(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
               assert(err);
               // Should fill from whole wallet and succeed
               var t2 = bcoin.mtx().addOutput(w1, 5460);
-              w1.fill(t2, { rate: 10000, round: true }, function(err) {
+              w1.fund(t2, { rate: 10000, round: true }, function(err) {
                 assert.ifError(err);
 
                 // Coinbase
@@ -859,7 +859,7 @@ describe('Wallet', function() {
                   assert.ifError(err);
                   var t2 = bcoin.mtx().addOutput(w1, 5460);
                   // Should fill from `foo` and succeed
-                  w1.fill(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
+                  w1.fund(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
                     assert.ifError(err);
                     cb();
                   });
@@ -892,7 +892,7 @@ describe('Wallet', function() {
 
         // Create new transaction
         var t2 = bcoin.mtx().addOutput(w1, 5460);
-        w1.fill(t2, { rate: 10000, round: true }, function(err) {
+        w1.fund(t2, { rate: 10000, round: true }, function(err) {
           assert.ifError(err);
           // Should fail
           w1.sign(t2, 'bar', function(err) {
@@ -930,7 +930,7 @@ describe('Wallet', function() {
 
           // Create new transaction
           var t2 = bcoin.mtx().addOutput(w2, 21840);
-          w1.fill(t2, { rate: 10000, round: true, subtractFee: true }, function(err) {
+          w1.fund(t2, { rate: 10000, round: true, subtractFee: true }, function(err) {
             assert.ifError(err);
             w1.sign(t2, function(err) {
               assert.ifError(err);

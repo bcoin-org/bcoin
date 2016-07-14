@@ -497,7 +497,7 @@ tx.addOutput({
 
 // Select coins from our array and add inputs.
 // Calculate fee and add a change output.
-tx.fill(coins, {
+tx.fund(coins, {
   // Use a rate of 10,000 satoshis per kb.
   // With the `fullnode` object, you can
   // use the fee estimator for this instead
