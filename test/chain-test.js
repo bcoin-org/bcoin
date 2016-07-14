@@ -218,6 +218,21 @@ describe('Chain', function() {
     });
   });
 
+  it('should rescan for transactions', function(cb) {
+    var txs = [];
+    walletdb.getAddresses(function(err, hashes) {
+      assert.ifError(err);
+      chain.db.scan(null, hashes, function(tx, block, next) {
+        txs.push(tx);
+        next();
+      }, function(err) {
+        assert.ifError(err);
+        assert.equal(txs.length, 25);
+        cb();
+      });
+    });
+  });
+
   it('should cleanup', function(cb) {
     constants.tx.COINBASE_MATURITY = 100;
     cb();
