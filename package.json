@@ -31,21 +31,21 @@
     "node": ">= 0.10.0"
   },
   "dependencies": {
-    "bn.js": "4.11.0",
-    "elliptic": "6.2.3"
+    "bn.js": "4.11.5",
+    "elliptic": "6.3.1"
   },
   "optionalDependencies": {
     "leveldown": "git://github.com/chjj/leveldown.git#staging",
-    "secp256k1": "3.0.0",
-    "socket.io": "1.4.5",
-    "socket.io-client": "1.4.5"
+    "secp256k1": "3.1.0",
+    "socket.io": "1.4.8",
+    "socket.io-client": "1.4.8"
   },
   "devDependencies": {
-    "browserify": "13.0.0",
+    "browserify": "13.0.1",
     "hash.js": "1.0.3",
     "jsdoc": "3.4.0",
     "level-js": "2.2.4",
-    "mocha": "2.4.5",
-    "uglify-js": "2.6.1"
+    "mocha": "2.5.3",
+    "uglify-js": "2.7.0"
   }
 }
