@@ -61,6 +61,22 @@ function runBench(callback) {
       });
     },
     function(next) {
+      var end = bench('addrs');
+      utils.forRange(0, 1000, function(i, next) {
+        utils.forRange(0, 10, function(j, next) {
+          wallet.createReceive(i, function(err, addr) {
+            assert.ifError(err);
+            addrs.push(addr);
+            next();
+          });
+        }, next);
+      }, function(err) {
+        assert.ifError(err);
+        end(1000 * 10);
+        next();
+      });
+    },
+    function(next) {
       var nonce = new bn(0);
       var end;
       utils.forRange(0, 100000, function(i, next) {
