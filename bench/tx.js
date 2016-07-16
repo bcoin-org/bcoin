@@ -55,7 +55,58 @@ for (var i = 0; i < 1000; i++)
   tx.isSane();
 end(i);
 
+var end = bench('input hashes');
+for (var i = 0; i < 1000; i++)
+  tx.getInputHashes('hex');
+end(i);
+
+var end = bench('output hashes');
+for (var i = 0; i < 1000; i++)
+  tx.getOutputHashes('hex');
+end(i);
+
+var end = bench('all hashes');
+for (var i = 0; i < 1000; i++)
+  tx.getHashes('hex');
+end(i);
+
 var end = bench('verify');
 for (var i = 0; i < 3000; i++)
   tx1.verify(constants.flags.VERIFY_P2SH);
 end(i * tx1.inputs.length);
+
+var tx = bcoin.mtx();
+
+for (var i = 0; i < 100; i++) {
+  tx.addInput({
+    prevout: {
+      hash: constants.NULL_HASH,
+      index: 0
+    },
+    script: [
+      new Buffer(9),
+      bcoin.ec.random(33)
+    ]
+  });
+  tx.addOutput({
+    address: bcoin.address.fromHash(bcoin.ec.random(20)),
+    value: 0
+  });
+}
+
+tx = tx.toTX();
+
+var end = bench('input hashes');
+for (var i = 0; i < 1000; i++)
+  tx.getInputHashes('hex');
+end(i);
+
+var end = bench('output hashes');
+for (var i = 0; i < 1000; i++)
+  tx.getOutputHashes('hex');
+end(i);
+
+var end = bench('all hashes');
+for (var i = 0; i < 1000; i++)
+  tx.getHashes('hex');
+end(i);
