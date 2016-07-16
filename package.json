@@ -24,9 +24,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/indutny/bcoin/issues"
+    "url": "https://github.com/bcoin-org/bcoin/issues"
   },
-  "homepage": "https://github.com/indutny/bcoin",
+  "homepage": "https://github.com/bcoin-org/bcoin",
   "engines": {
     "node": ">= 0.10.0"
   },
@@ -38,7 +38,8 @@
     "leveldown": "git://github.com/chjj/leveldown.git#staging",
     "secp256k1": "3.1.0",
     "socket.io": "1.4.8",
-    "socket.io-client": "1.4.8"
+    "socket.io-client": "1.4.8",
+    "supersha": "0.0.1"
   },
   "devDependencies": {
     "browserify": "13.0.1",
