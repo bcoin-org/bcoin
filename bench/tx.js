@@ -10,6 +10,9 @@ var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');
 var fs = require('fs');
 
+var block = bcoin.block.fromJSON(require('../test/data/block300025.json'));
+var btx = block.txs[397];
+
 var tx1 = parseTX('../test/data/tx3.hex');
 var tx4 = parseExtended('../test/data/tx4.hex');
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
@@ -45,6 +48,20 @@ for (var i = 0; i < 1000; i++) {
 }
 end(i);
 
+var end = bench('hash');
+for (var i = 0; i < 3000; i++) {
+  tx1.hash();
+  tx1._hash = null;
+}
+end(i);
+
+var end = bench('witness hash');
+for (var i = 0; i < 3000; i++) {
+  tx.witnessHash();
+  tx._whash = null;
+}
+end(i);
+
 var end = bench('fee');
 for (var i = 0; i < 1000; i++)
   tx.getFee();
@@ -74,6 +91,12 @@ var end = bench('verify');
 for (var i = 0; i < 3000; i++)
   tx1.verify(constants.flags.VERIFY_P2SH);
 end(i * tx1.inputs.length);
+
+var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+var end = bench('verify multisig');
+for (var i = 0; i < 3000; i++)
+  btx.verify(flags);
+end(i * btx.inputs.length);
 
 var tx = bcoin.mtx();
 
