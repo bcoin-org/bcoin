@@ -211,10 +211,10 @@ describe('Block', function() {
   it('should handle compact block', function(cb) {
     var cblock = bip152.CompactBlock.fromRaw(cmpct[0], 'hex');
     var block = bcoin.block.fromRaw(cmpct[1], 'hex');
+    var cblock2 = bip152.CompactBlock.fromBlock(block, cblock.keyNonce);
     var map = {};
 
     assert.equal(cblock.toRaw().toString('hex'), cmpct[0]);
-    var cblock2 = bip152.CompactBlock.fromBlock(block, cblock.keyNonce);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct[0]);
 
     for (var i = 0; i < block.txs.length; i++) {
@@ -231,14 +231,14 @@ describe('Block', function() {
       }
     };
 
-    var realID = 125673511480291;
-    assert(cblock.sid(block.txs[1].hash('hex')) === realID);
+    assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
 
     cblock.fillMempool(fakeMempool, function(err, result) {
       assert.ifError(err);
       assert(result);
       for (var i = 0; i < cblock.available.length; i++)
         assert(cblock.available[i]);
+      assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
       cb();
     });
   });
