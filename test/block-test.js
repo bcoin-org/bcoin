@@ -7,6 +7,9 @@ var constants = bcoin.protocol.constants;
 var network = bcoin.protocol.network;
 var assert = require('assert');
 var block300025 = require('./data/block300025.json');
+var fs = require('fs');
+var cmpct = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8').trim().split('\n');
+var bip152 = require('../lib/bcoin/bip152');
 
 describe('Block', function() {
   var parser = bcoin.protocol.parser;
@@ -203,5 +206,40 @@ describe('Block', function() {
   it('should verify with headers', function() {
     var headers = new bcoin.headers(block);
     assert(headers.verify());
+  });
+
+  it('should handle compact block', function(cb) {
+    var cblock = bip152.CompactBlock.fromRaw(cmpct[0], 'hex');
+    var block = bcoin.block.fromRaw(cmpct[1], 'hex');
+    var map = {};
+
+    assert.equal(cblock.toRaw().toString('hex'), cmpct[0]);
+    var cblock2 = bip152.CompactBlock.fromBlock(block, cblock.keyNonce);
+    assert.equal(cblock2.toRaw().toString('hex'), cmpct[0]);
+
+    for (var i = 0; i < block.txs.length; i++) {
+      var tx = block.txs[i];
+      map[tx.hash('hex')] = tx;
+    }
+
+    var fakeMempool = {
+      getSnapshot: function(callback) {
+        callback(null, Object.keys(map));
+      },
+      getTX: function(hash, callback) {
+        callback(null, map[hash]);
+      }
+    };
+
+    var realID = 125673511480291;
+    assert(cblock.sid(block.txs[1].hash('hex')) === realID);
+
+    cblock.fillMempool(fakeMempool, function(err, result) {
+      assert.ifError(err);
+      assert(result);
+      for (var i = 0; i < cblock.available.length; i++)
+        assert(cblock.available[i]);
+      cb();
+    });
   });
 });
