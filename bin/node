@@ -17,6 +17,7 @@ var node = new bcoin.fullnode({
   logFile: true,
   db: 'leveldb',
   prune: process.argv.indexOf('--prune') !== -1,
+  compact: process.argv.indexOf('--compact') !== -1,
   useCheckpoints: process.argv.indexOf('--checkpoints') !== -1,
   selfish: process.argv.indexOf('--selfish') !== -1,
   headers: process.argv.indexOf('--headers') !== -1,
