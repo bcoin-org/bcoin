@@ -12,15 +12,18 @@ process.on('uncaughtException', function(err) {
   process.exit(1);
 });
 
+var fast = process.argv.indexOf('--fast') !== -1;
+
 var node = new bcoin.fullnode({
   logLevel: 'debug',
   logFile: true,
   db: 'leveldb',
   prune: process.argv.indexOf('--prune') !== -1,
   compact: process.argv.indexOf('--compact') !== -1,
-  useCheckpoints: process.argv.indexOf('--checkpoints') !== -1,
+  useCheckpoints: fast || process.argv.indexOf('--checkpoints') !== -1,
+  coinCache: fast || process.argv.indexOf('--coin-cache') !== -1,
   selfish: process.argv.indexOf('--selfish') !== -1,
-  headers: process.argv.indexOf('--headers') !== -1,
+  headers: fast || process.argv.indexOf('--headers') !== -1,
   parallel: process.argv.indexOf('--parallel') !== -1
 });
 
