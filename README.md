@@ -25,8 +25,14 @@ Try it in the browser: http://bcoin.io/browser.html
 ## Install
 
 ```
-$ npm install bcoin
+$ git clone git://github.com/bcoin-org/bcoin.git
+$ cd bcoin
+$ npm install
 ```
+
+The latest BCoin has not been published to NPM yet, as it is still under fairly
+heavy development (which may involve changing serialization formats for the
+database).
 
 ## Documentation
 
@@ -38,6 +44,7 @@ Read the docs here: http://bcoin.io/docs/
 - [Connecting to the P2P network](#connecting-to-the-p2p-network)
 - [Doing and SPV sync](#doing-an-spv-sync)
 - [High-level usage with the Node object](#high-level-usage-with-the-node-object)
+- [Running the default full node](#running-the-default-full-node)
 - [Running a full node in the browser](#running-a-full-node-in-the-browser)
 - [CLI Usage](#cli-usage)
 
@@ -335,6 +342,14 @@ node.chain.on('full', function() {
   });
 });
 ```
+
+### Running the default full node
+
+``` bash
+$ node bin/node --fast
+```
+
+`--fast` will enable checkpoints, coin cache, and getheaders.
 
 ### Running a full node in the browser
 
