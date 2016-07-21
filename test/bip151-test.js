@@ -82,8 +82,32 @@ describe('BIP151', function() {
   });
 
   it('client should rekey', function() {
-    client.rekey();
-    server.encack(client.toRekey());
+    var rekeyed = false;
+    var bytes = client.processed;
+
+    client.once('rekey', function() {
+      rekeyed = true;
+      var packet = client.frame('encack', client.toRekey());
+      var emitted = false;
+      server.once('packet', function(cmd, body) {
+        emitted = true;
+        assert.equal(cmd, 'encack');
+        server.encack(body);
+      });
+      server.feed(packet);
+      assert(emitted);
+    });
+
+    // Force a rekey after 1gb processed.
+    client.maybeRekey({ length: 1024 * (1 << 20) });
+
+    utils.nextTick(function() {
+      assert(rekeyed);
+
+      // Reset so as not to mess up
+      // the symmetry of client and server.
+      client.processed = bytes + 33 + 31;
+    });
   });
 
   it('should encrypt payload from client to server after rekey', function() {
