@@ -34,7 +34,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from client to server', function() {
-    var packet = client.frame('fake', payload);
+    var packet = client.packet('fake', payload);
     var emitted = false;
     server.once('packet', function(cmd, body) {
       emitted = true;
@@ -46,7 +46,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from server to client', function() {
-    var packet = server.frame('fake', payload);
+    var packet = server.packet('fake', payload);
     var emitted = false;
     client.once('packet', function(cmd, body) {
       emitted = true;
@@ -58,7 +58,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from client to server (2)', function() {
-    var packet = client.frame('fake', payload);
+    var packet = client.packet('fake', payload);
     var emitted = false;
     server.once('packet', function(cmd, body) {
       emitted = true;
@@ -70,7 +70,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from server to client (2)', function() {
-    var packet = server.frame('fake', payload);
+    var packet = server.packet('fake', payload);
     var emitted = false;
     client.once('packet', function(cmd, body) {
       emitted = true;
@@ -87,7 +87,7 @@ describe('BIP151', function() {
 
     client.once('rekey', function() {
       rekeyed = true;
-      var packet = client.frame('encack', client.toRekey());
+      var packet = client.packet('encack', client.toRekey());
       var emitted = false;
       server.once('packet', function(cmd, body) {
         emitted = true;
@@ -111,7 +111,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from client to server after rekey', function() {
-    var packet = client.frame('fake', payload);
+    var packet = client.packet('fake', payload);
     var emitted = false;
     server.once('packet', function(cmd, body) {
       emitted = true;
@@ -123,7 +123,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from server to client after rekey', function() {
-    var packet = server.frame('fake', payload);
+    var packet = server.packet('fake', payload);
     var emitted = false;
     client.once('packet', function(cmd, body) {
       emitted = true;
@@ -135,7 +135,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from client to server after rekey (2)', function() {
-    var packet = client.frame('fake', payload);
+    var packet = client.packet('fake', payload);
     var emitted = false;
     server.once('packet', function(cmd, body) {
       emitted = true;
@@ -147,7 +147,7 @@ describe('BIP151', function() {
   });
 
   it('should encrypt payload from server to client after rekey (2)', function() {
-    var packet = server.frame('fake', payload);
+    var packet = server.packet('fake', payload);
     var emitted = false;
     client.once('packet', function(cmd, body) {
       emitted = true;
