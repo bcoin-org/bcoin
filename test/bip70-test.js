@@ -20,6 +20,9 @@ tests.ca = {
   pub: new Buffer(tests.ca.pub, 'hex')
 };
 
+x509.allowUntrusted = true;
+x509.trusted = {};
+
 describe('BIP70', function() {
   function testRequest(data) {
     var request = bip70.PaymentRequest.fromRaw(data);
@@ -98,7 +101,7 @@ describe('BIP70', function() {
   });
 
   it('should fail to verify cert signatures when enforcing trust', function() {
-    x509.certs.push({});
+    x509.allowUntrusted = false;
     var request = bip70.PaymentRequest.fromRaw(tests.valid);
     assert(!request.verifyChain());
     var request = bip70.PaymentRequest.fromRaw(tests.invalid);

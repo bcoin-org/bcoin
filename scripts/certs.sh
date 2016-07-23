@@ -11,14 +11,13 @@ sha256() {
 getcerts() {
   local buf=''
   echo "$json" | sed 's/\\/\\\\/g' | while read line; do
-    if echo "$line" | grep "BEGIN CERT" > /dev/null; then
+    if echo "$line" | grep 'BEGIN CERT' > /dev/null; then
       buf="$line"
       continue
     fi
-    if echo "$line" | grep "END CERT" > /dev/null; then
+    if echo "$line" | grep 'END CERT' > /dev/null; then
       buf="$buf$line"
-      buf=$(echo "$buf" | sed 's/"//g' | sed 's/,//g')
-      echo '  "'"${buf}"'",'
+      echo "$buf" | sed 's/"//g' | sed 's/,//g'
       continue
     fi
     buf="$buf$line"
@@ -28,30 +27,35 @@ getcerts() {
 gethashes() {
   local buf=''
   echo "$json" | sed 's/\\n/:/g' | while read line; do
-    if echo "$line" | grep "BEGIN CERT" > /dev/null; then
+    if echo "$line" | grep 'BEGIN CERT' > /dev/null; then
       buf="$line"
       continue
     fi
-    if echo "$line" | grep "END CERT" > /dev/null; then
+    if echo "$line" | grep 'END CERT' > /dev/null; then
       buf="$buf$line"
-      buf=$(echo "$buf" | sed 's/"//g' | sed 's/,//g' | tr ':' '\n')
-      buf=$(echo "$buf" | openssl x509 -outform DER | sha256)
-      echo '  "'"${buf}"'",'
+      echo "$buf" \
+        | sed 's/"//g' \
+        | sed 's/,//g' \
+        | tr ':' '\n' \
+        | openssl x509 -outform DER \
+        | sha256
       continue
     fi
     buf="$buf$line"
   done
 }
 
-format() {
+tojson() {
   local data=$(cat)
   local body=$(echo "$data" | head -n -1)
   local last=$(echo "$data" | tail -n 1)
   echo '['
-  echo "$body"
-  echo "$last" | rev | cut -c 2- | rev
+  echo "$body" | while read line; do
+    echo '  "'"${line}"'",'
+  done
+  echo '  "'"${last}"'"'
   echo ']'
 }
 
-# getcerts | format > "${dir}/../certs.json"
-gethashes | format > "${dir}/../etc/certs.json"
+# getcerts | tojson > "${dir}/../etc/certs.json"
+gethashes | tojson > "${dir}/../etc/certs.json"
