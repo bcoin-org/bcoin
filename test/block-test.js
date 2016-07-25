@@ -242,4 +242,59 @@ describe('Block', function() {
       cb();
     });
   });
+
+  it('should handle half-full compact block', function(cb) {
+    var cblock = bip152.CompactBlock.fromRaw(cmpct[0], 'hex');
+    var block = bcoin.block.fromRaw(cmpct[1], 'hex');
+    var cblock2 = bip152.CompactBlock.fromBlock(block, cblock.keyNonce);
+    var map = {};
+
+    assert.equal(cblock.toRaw().toString('hex'), cmpct[0]);
+    assert.equal(cblock2.toRaw().toString('hex'), cmpct[0]);
+
+    for (var i = 0; i < block.txs.length; i++) {
+      var tx = block.txs[i];
+      map[tx.hash('hex')] = tx;
+    }
+
+    var mid = block.txs.length >>> 1;
+    var keys = Object.keys(map).slice(0, mid);
+
+    var fakeMempool = {
+      getSnapshot: function(callback) {
+        callback(null, keys);
+      },
+      getTX: function(hash, callback) {
+        callback(null, map[hash]);
+      }
+    };
+
+    assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
+
+    cblock.fillMempool(fakeMempool, function(err, result) {
+      assert.ifError(err);
+      assert(!result);
+
+      var req = cblock.toRequest();
+      assert.equal(req.hash, cblock.hash('hex'));
+      assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
+
+      req = bip152.TXRequest.fromRaw(req.toRaw());
+      assert.equal(req.hash, cblock.hash('hex'));
+      assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
+
+      var res = bip152.TXResponse.fromBlock(block, req);
+      res = bip152.TXResponse.fromRaw(res.toRaw());
+
+      var result = cblock.fillMissing(res);
+      assert(result);
+
+      for (var i = 0; i < cblock.available.length; i++)
+        assert(cblock.available[i]);
+
+      assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
+
+      cb();
+    });
+  });
 });
