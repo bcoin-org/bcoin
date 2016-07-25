@@ -351,6 +351,16 @@ $ node bin/node --fast
 
 `--fast` will enable checkpoints, coin cache, and getheaders.
 
+Some environment variables are available for quick configuration:
+
+- `BCOIN_USE_WORKERS=1` - Enable workers for TX verification.
+- `BCOIN_SEED=[host]` - Use a preferred seed node to connect to.
+- `BCOIN_NETWORK=[network]` - Set the network (main, testnet, regtest, segnet3,
+  or segnet4).
+- `BCOIN_DB=[db-name]` - Default database backend (leveldb, rocksdb, lmdb,
+  memory).
+- `BCOIN_LOGLEVEL=[level]` - Default log level (debug, info, warning, error).
+
 ### Running a full node in the browser
 
 ``` bash
