@@ -58,8 +58,10 @@ function ProxySocket(uri) {
     self.emit('close');
   });
 
-  this.socket.on('tcp error', function(err) {
-    self.emit('error', new Error(err));
+  this.socket.on('tcp error', function(e) {
+    var err = new Error(e.message);
+    err.code = e.code;
+    self.emit('error', err);
   });
 
   this.socket.on('close', function() {

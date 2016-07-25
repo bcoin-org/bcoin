@@ -120,7 +120,10 @@ module.exports = function wsproxy(options) {
       });
 
       socket.on('error', function(err) {
-        ws.emit('tcp error', err.message);
+        ws.emit('tcp error', {
+          message: err.message,
+          code: err.code || null
+        });
       });
 
       socket.on('close', function() {
