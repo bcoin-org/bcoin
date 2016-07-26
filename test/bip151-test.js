@@ -85,7 +85,7 @@ describe('BIP151', function() {
 
   it('client should rekey', function() {
     var rekeyed = false;
-    var bytes = client.input.processed;
+    var bytes = client.output.processed;
 
     client.once('rekey', function() {
       rekeyed = true;
@@ -101,15 +101,13 @@ describe('BIP151', function() {
     });
 
     // Force a rekey after 1gb processed.
-    client.input.maybeRekey({ length: 1024 * (1 << 20) });
+    client.output.maybeRekey({ length: 1024 * (1 << 20) });
 
-    utils.nextTick(function() {
-      assert(rekeyed);
+    assert(rekeyed);
 
-      // Reset so as not to mess up
-      // the symmetry of client and server.
-      client.input.processed = bytes + 33 + 31;
-    });
+    // Reset so as not to mess up
+    // the symmetry of client and server.
+    client.output.processed = bytes + 33 + 31;
   });
 
   it('should encrypt payload from client to server after rekey', function() {
