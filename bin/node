@@ -24,7 +24,8 @@ var node = new bcoin.fullnode({
   coinCache: fast || process.argv.indexOf('--coin-cache') !== -1,
   selfish: process.argv.indexOf('--selfish') !== -1,
   headers: fast || process.argv.indexOf('--headers') !== -1,
-  parallel: process.argv.indexOf('--parallel') !== -1
+  parallel: process.argv.indexOf('--parallel') !== -1,
+  bip151: process.argv.indexOf('--bip151') !== -1
 });
 
 node.on('error', function(err) {

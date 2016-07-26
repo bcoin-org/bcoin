@@ -11,7 +11,8 @@ var node = bcoin.spvnode({
   logFile: true,
   db: 'leveldb',
   useCheckpoints: process.argv.indexOf('--checkpoints') !== -1,
-  headers: process.argv.indexOf('--headers') !== -1
+  headers: process.argv.indexOf('--headers') !== -1,
+  bip151: process.argv.indexOf('--bip151') !== -1
 });
 
 node.on('error', function(err) {
