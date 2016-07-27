@@ -25,8 +25,11 @@ node.open(function(err) {
 
   if (process.argv.indexOf('--test') !== -1) {
     node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
-    node.on('tx', function(tx) {
-      utils.log(tx);
+    node.pool.watch(bcoin.outpoint().toRaw());
+    node.on('block', function(block) {
+      assert(block.txs.length >= 1);
+      if (block.txs.length > 1)
+        utils.log(block.txs[1]);
     });
   }
 
