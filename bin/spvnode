@@ -6,14 +6,18 @@ var bcoin = require('../');
 var utils = bcoin.utils;
 var assert = utils.assert;
 
-var node = bcoin.spvnode({
+var options = bcoin.config({
+  config: true,
+  arg: true,
+  env: true,
   logLevel: 'debug',
   logFile: true,
-  db: 'leveldb',
-  useCheckpoints: process.argv.indexOf('--checkpoints') !== -1,
-  headers: process.argv.indexOf('--headers') !== -1,
-  bip151: process.argv.indexOf('--bip151') !== -1
+  db: 'leveldb'
 });
+
+bcoin.set(options);
+
+var node = bcoin.spvnode(options);
 
 node.on('error', function(err) {
   ;

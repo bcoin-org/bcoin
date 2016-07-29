@@ -6,59 +6,34 @@ var bcoin = require('../');
 var utils = bcoin.utils;
 var assert = utils.assert;
 
+var options = bcoin.config({
+  config: true,
+  arg: true,
+  env: true,
+  logLevel: 'debug',
+  logFile: true,
+  db: 'leveldb',
+  listen: true
+});
+
+bcoin.set(options);
+
+var node = new bcoin.fullnode(options);
+
+node.on('error', function(err) {
+  ;
+});
+
 process.on('uncaughtException', function(err) {
   node.logger.debug(err.stack);
   node.logger.error(err);
   process.exit(1);
 });
 
-var fast = process.argv.indexOf('--fast') !== -1;
-
-var node = new bcoin.fullnode({
-  logLevel: 'debug',
-  logFile: true,
-  db: 'leveldb',
-  prune: process.argv.indexOf('--prune') !== -1,
-  compact: process.argv.indexOf('--compact') !== -1,
-  useCheckpoints: fast || process.argv.indexOf('--checkpoints') !== -1,
-  coinCache: fast || process.argv.indexOf('--coin-cache') !== -1,
-  selfish: process.argv.indexOf('--selfish') !== -1,
-  headers: fast || process.argv.indexOf('--headers') !== -1,
-  parallel: process.argv.indexOf('--parallel') !== -1,
-  bip151: process.argv.indexOf('--bip151') !== -1
-});
-
-node.on('error', function(err) {
-  ;
-});
-
 node.open(function(err) {
   if (err)
     throw err;
 
-  node.listen(function(err) {
-    if (err)
-      throw err;
-
-    if (process.argv.indexOf('--mine') === -1) {
-      node.startSync();
-      return;
-    }
-
-    if (node.network.type === 'regtest') {
-      node.miner.start();
-      node.startSync();
-      return;
-    }
-
-    node.pool.connect();
-    node.startSync();
-
-    if (node.chain.isFull()) {
-      node.miner.start();
-      return;
-    }
-
-    node.chain.once('full', node.miner.start.bind(node.miner));
-  });
+  node.pool.connect();
+  node.startSync();
 });
