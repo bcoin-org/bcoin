@@ -1,11 +1,12 @@
 var level = require('level-js');
 
-function DB(file) {
-  this.level = new level(file);
+function DB(location) {
+  this.level = new level(location);
   this.bufferKeys = false;
 }
 
 DB.prototype.open = function open(options, callback) {
+  this.bufferKeys = options.bufferKeys;
   this.level.open(options, callback);
 };
 
@@ -38,27 +39,24 @@ DB.prototype.batch = function batch(ops, options, callback) {
 };
 
 DB.prototype.iterator = function iterator(options) {
-  options.keyAsBuffer = false;
   return new Iterator(this, options);
 };
 
-DB.prototype.approximateSize = function approximateSize(start, end, callback) {
-  return this.level.approximateSize(start, end, callback);
-};
-
-DB.prototype.getProperty = function getProperty(name) {
-  return this.level.getProperty(name);
+DB.destroy = function destroy(db, callback) {
+  level.destroy(db, callback);
 };
 
 function Batch(db) {
   this.db = db;
   this.batch = db.level.batch();
+  this.hasOps = false;
 }
 
 Batch.prototype.put = function(key, value) {
   if (this.db.bufferKeys && Buffer.isBuffer(key))
     key = key.toString('hex');
   this.batch.put(key, value);
+  this.hasOps = true;
   return this;
 };
 
@@ -66,10 +64,13 @@ Batch.prototype.del = function del(key) {
   if (this.db.bufferKeys && Buffer.isBuffer(key))
     key = key.toString('hex');
   this.batch.del(key);
+  this.hasOps = true;
   return this;
 };
 
 Batch.prototype.write = function write(callback) {
+  if (!this.hasOps)
+    return callback();
   this.batch.write(callback);
   return this;
 };
@@ -80,6 +81,17 @@ Batch.prototype.clear = function clear() {
 };
 
 function Iterator(db, options) {
+  if (db.bufferKeys) {
+    if (Buffer.isBuffer(options.gt))
+      options.gt = options.gt.toString('hex');
+    if (Buffer.isBuffer(options.gte))
+      options.gte = options.gte.toString('hex');
+    if (Buffer.isBuffer(options.lt))
+      options.lt = options.lt.toString('hex');
+    if (Buffer.isBuffer(options.lte))
+      options.lte = options.lte.toString('hex');
+  }
+  options.keyAsBuffer = false;
   this.db = db;
   this.iter = db.level.iterator(options);
 }
