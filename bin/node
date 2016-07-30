@@ -2,6 +2,8 @@
 
 'use strict';
 
+process.title = 'bcoin';
+
 var bcoin = require('../');
 var utils = bcoin.utils;
 var assert = utils.assert;
