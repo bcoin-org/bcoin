@@ -5,7 +5,8 @@
   "main": "./lib/bcoin.js",
   "bin": {
     "bcoin-node": "./bin/node",
-    "bcoin-cli": "./bin/bcoin-cli"
+    "bcoin-cli": "./bin/cli",
+    "bcoin": "./bin/bcoin"
   },
   "preferGlobal": false,
   "scripts": {

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+daemon=0
+cli=0
+name='node'
+
+# Have to do it this way
+# because OSX isn't a real OS
+file=$(perl -MCwd -e "print Cwd::realpath('$0')")
+dir=$(dirname "$file")
+
+if test x"$1" = x'cli'; then
+  shift
+  cli=1
+fi
+
+for v in "$@"; do
+  case "$v" in
+    --daemon)
+      daemon=1
+    ;;
+    --spv)
+      name='spvnode'
+    ;;
+  esac
+done
+
+if test $cli -eq 1; then
+  exec "${dir}/bcoin-cli" "$@"
+  exit 1
+fi
+
+if test $daemon -eq 1; then
+  (
+    setsid "${dir}/${name}" "$@" > /dev/null 2>& 1 &
+    echo "$!"
+  )
+  exit 0
+else
+  exec "${dir}/${name}" "$@"
+  exit 1
+fi
