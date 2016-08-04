@@ -26,7 +26,7 @@ for v in "$@"; do
 done
 
 if test $cli -eq 1; then
-  exec "${dir}/bcoin-cli" "$@"
+  exec "${dir}/cli" "$@"
   exit 1
 fi
 
