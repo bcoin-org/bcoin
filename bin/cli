@@ -17,7 +17,7 @@ var client = new Client(
 );
 
 client.on('error', function(err) {
-  bcoin.error(err);
+  ;
 });
 
 function getID() {
