@@ -1,12 +1,26 @@
 #!/bin/bash
 
+rl=0
 daemon=0
 cli=0
-name='node'
+cmd='node'
 
-# Have to do it this way
-# because OSX isn't a real OS
-file=$(perl -MCwd -e "print Cwd::realpath('$0')")
+if ! type perl > /dev/null 2>& 1; then
+  if uname | grep -i 'darwin' > /dev/null; then
+    echo 'BCoin requires perl to start.' >& 2
+    exit 1
+  fi
+  rl=1
+fi
+
+if test $rl -eq 1; then
+  file=$(readlink -f "$0")
+else
+  # Have to do it this way
+  # because OSX isn't a real OS
+  file=$(perl -MCwd -e "print Cwd::realpath('$0')")
+fi
+
 dir=$(dirname "$file")
 
 if test x"$1" = x'cli'; then
@@ -14,13 +28,13 @@ if test x"$1" = x'cli'; then
   cli=1
 fi
 
-for v in "$@"; do
-  case "$v" in
+for arg in "$@"; do
+  case "$arg" in
     --daemon)
       daemon=1
     ;;
     --spv)
-      name='spvnode'
+      cmd='spvnode'
     ;;
   esac
 done
@@ -31,12 +45,16 @@ if test $cli -eq 1; then
 fi
 
 if test $daemon -eq 1; then
+  if ! type setsid > /dev/null 2>& 1; then
+    echo 'BCoin requires setsid to start as a daemon.' >& 2
+    exit 1
+  fi
   (
-    setsid "${dir}/${name}" "$@" > /dev/null 2>& 1 &
+    setsid "${dir}/${cmd}" "$@" > /dev/null 2>& 1 &
     echo "$!"
   )
   exit 0
 else
-  exec "${dir}/${name}" "$@"
+  exec "${dir}/${cmd}" "$@"
   exit 1
 fi
