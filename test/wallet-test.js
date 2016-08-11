@@ -313,24 +313,30 @@ describe('Wallet', function() {
         return t + tx.getOutputValue();
       }, 0);
       assert.equal(total, 154000);
-      dw.sign(t1, function(err) {
+      dw.getCoins(function(err, coins) {
         assert.ifError(err);
-        dw.getBalance(function(err, balance) {
+        dw.sign(t1, function(err) {
           assert.ifError(err);
-          assert.equal(balance.total, 11000);
-          walletdb.addTX(t1, function(err) {
+          dw.getBalance(function(err, balance) {
             assert.ifError(err);
-            dw.getBalance(function(err, balance) {
+            assert.equal(balance.total, 11000);
+            walletdb.addTX(t1, function(err) {
               assert.ifError(err);
-              assert.equal(balance.total, 6000);
-              dw.getHistory(function(err, txs) {
+              dw.getCoins(function(err, coins) {
                 assert.ifError(err);
-                assert.equal(txs.length, 2);
-                var total = txs.reduce(function(t, tx) {
-                  return t + tx.getOutputValue();
-                }, 0);
-                assert.equal(total, 56000);
-                cb();
+                dw.getBalance(function(err, balance) {
+                  assert.ifError(err);
+                  assert.equal(balance.total, 6000);
+                  dw.getHistory(function(err, txs) {
+                    assert.ifError(err);
+                    assert.equal(txs.length, 2);
+                    var total = txs.reduce(function(t, tx) {
+                      return t + tx.getOutputValue();
+                    }, 0);
+                    assert.equal(total, 56000);
+                    cb();
+                  });
+                });
               });
             });
           });
