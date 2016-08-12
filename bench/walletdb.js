@@ -79,7 +79,7 @@ function runBench(callback) {
     function(next) {
       var nonce = new bn(0);
       var end;
-      utils.forRange(0, 100000, function(i, next) {
+      utils.forRange(0, 10000, function(i, next) {
         var t1 = bcoin.mtx()
           .addOutput(addrs[(i + 0) % addrs.length], 50460)
           .addOutput(addrs[(i + 1) % addrs.length], 50460)
@@ -97,7 +97,7 @@ function runBench(callback) {
         });
       }, function(err) {
         assert.ifError(err);
-        end(100000);
+        end(10000);
         next();
       });
       end = bench('tx');
