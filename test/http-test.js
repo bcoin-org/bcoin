@@ -53,7 +53,7 @@ describe('HTTP', function() {
   });
 
   it('should create wallet', function(cb) {
-    wallet.open({ id: 'test' }, function(err, wallet) {
+    wallet.create({ id: 'test' }, function(err, wallet) {
       assert.ifError(err);
       assert.equal(wallet.id, 'test');
       cb();
@@ -113,9 +113,9 @@ describe('HTTP', function() {
         assert.equal(receive.type, 'pubkeyhash');
         assert.equal(receive.change, 0);
         assert(balance);
-        assert.equal(balance.confirmed, 0);
-        assert.equal(balance.unconfirmed, 201840);
-        assert.equal(balance.total, 201840);
+        assert.equal(utils.satoshi(balance.confirmed), 0);
+        assert.equal(utils.satoshi(balance.unconfirmed), 201840);
+        assert.equal(utils.satoshi(balance.total), 201840);
         assert(details);
         assert.equal(details.hash, t1.rhash);
         cb();
@@ -126,9 +126,9 @@ describe('HTTP', function() {
   it('should get balance', function(cb) {
     wallet.getBalance(function(err, balance) {
       assert.ifError(err);
-      assert.equal(balance.confirmed, 0);
-      assert.equal(balance.unconfirmed, 201840);
-      assert.equal(balance.total, 201840);
+      assert.equal(utils.satoshi(balance.confirmed), 0);
+      assert.equal(utils.satoshi(balance.unconfirmed), 201840);
+      assert.equal(utils.satoshi(balance.total), 201840);
       cb();
     });
   });
@@ -147,8 +147,8 @@ describe('HTTP', function() {
       assert(tx);
       assert.equal(tx.inputs.length, 1);
       assert.equal(tx.outputs.length, 2);
-      assert.equal(tx.getOutputValue(), 48190);
-      hash = tx.hash('hex');
+      assert.equal(utils.satoshi(tx.outputs[0].value) + utils.satoshi(tx.outputs[1].value), 48190);
+      hash = tx.hash;
       cb();
     });
   });
@@ -157,7 +157,7 @@ describe('HTTP', function() {
     wallet.getTX(hash, function(err, tx) {
       assert.ifError(err);
       assert(tx);
-      assert.equal(tx.hash('hex'), hash);
+      assert.equal(tx.hash, hash);
       cb();
     });
   });
@@ -175,7 +175,7 @@ describe('HTTP', function() {
   it('should get balance', function(cb) {
     wallet.getBalance(function(err, balance) {
       assert.ifError(err);
-      assert.equal(balance.total, 199570);
+      assert.equal(utils.satoshi(balance.total), 199570);
       cb();
     });
   });
