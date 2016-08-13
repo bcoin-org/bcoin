@@ -29,20 +29,19 @@ var dummyInput = {
 
 describe('HTTP', function() {
   var request = bcoin.http.request;
-  var apiKey = utils.hash256(new Buffer([]));
   var w, addr, hash;
 
   this.timeout(15000);
 
   var node = new bcoin.fullnode({
     network: 'regtest',
-    apiKey: apiKey,
+    apiKey: 'foo',
     walletAuth: true
   });
 
   var wallet = new bcoin.http.wallet({
     network: 'regtest',
-    apiKey: apiKey
+    apiKey: 'foo'
   });
 
   node.on('error', function() {});
