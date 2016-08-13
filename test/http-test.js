@@ -81,19 +81,8 @@ describe('HTTP', function() {
     });
   });
 
-/*
-  it('should get internal wallet', function(cb) {
-    node.walletdb.get('test', function(err, w_) {
-      assert.ifError(err);
-      assert(w_);
-      w = w_;
-      cb();
-    });
-  });
-*/
-
   it('should fill with funds', function(cb) {
-    var balance, receive, tx;
+    var balance, receive, details;
 
     // Coinbase
     var t1 = bcoin.mtx()
@@ -104,16 +93,16 @@ describe('HTTP', function() {
 
     t1.addInput(dummyInput);
 
-    wallet.once('balance', function(b, id) {
+    wallet.once('balance', function(b) {
       balance = b;
     });
 
-    wallet.once('address', function(r, c, map) {
+    wallet.once('address', function(r) {
       receive = r[0];
     });
 
-    wallet.once('tx', function(t, map) {
-      tx = t;
+    wallet.once('tx', function(d) {
+      details = d;
     });
 
     node.walletdb.addTX(t1, function(err) {
@@ -127,8 +116,8 @@ describe('HTTP', function() {
         assert.equal(balance.confirmed, 0);
         assert.equal(balance.unconfirmed, 201840);
         assert.equal(balance.total, 201840);
-        assert(tx);
-        assert.equal(tx.hash('hex'), t1.hash('hex'));
+        assert(details);
+        assert.equal(details.hash, t1.rhash);
         cb();
       }, 300);
     });
@@ -160,10 +149,7 @@ describe('HTTP', function() {
       assert.equal(tx.outputs.length, 2);
       assert.equal(tx.getOutputValue(), 48190);
       hash = tx.hash('hex');
-      node.walletdb.addTX(tx, function(err) {
-        assert.ifError(err);
-        cb();
-      });
+      cb();
     });
   });
 
