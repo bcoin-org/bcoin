@@ -27,7 +27,8 @@ CLI.prototype.log = function log(json) {
 };
 
 CLI.prototype.createWallet = function createWallet(callback) {
-  var options = { id: this.config.id };
+  var self = this;
+  var options = { id: this.argv[0] };
 
   if (this.config.type)
     options.type = this.config.type;
@@ -60,12 +61,8 @@ CLI.prototype.createWallet = function createWallet(callback) {
 
 CLI.prototype.addKey = function addKey(callback) {
   var self = this;
-  var keys = this.config.keys || this.config.key;
-  if (keys)
-    keys = keys.split(',');
-  else
-    keys = this.argv;
-  this.wallet.addKey(this.config.account, keys, function(err, wallet) {
+  var key = this.argv[0];
+  this.wallet.addKey(this.config.account, key, function(err, wallet) {
     if (err)
       return callback(err);
     self.log('added');
@@ -73,13 +70,13 @@ CLI.prototype.addKey = function addKey(callback) {
   });
 };
 
-CLI.prototype.createAccount = function createAccount(callback) {
+CLI.prototype.removeKey = function removeKey(callback) {
   var self = this;
-  var account = this.argv[0] || this.config.account;
-  this.wallet.createAccount(account, function(err, account) {
+  var key = this.argv[0];
+  this.wallet.removeKey(this.config.account, key, function(err) {
     if (err)
       return callback(err);
-    self.log(account);
+    self.log('removed');
     callback();
   });
 };
@@ -88,6 +85,17 @@ CLI.prototype.getAccount = function getAccount(callback) {
   var self = this;
   var account = this.argv[0] || this.config.account;
   this.wallet.getAccount(account, function(err, account) {
+    if (err)
+      return callback(err);
+    self.log(account);
+    callback();
+  });
+};
+
+CLI.prototype.createAccount = function createAccount(callback) {
+  var self = this;
+  var account = this.argv[0];
+  this.wallet.createAccount(account, function(err, account) {
     if (err)
       return callback(err);
     self.log(account);
@@ -105,25 +113,9 @@ CLI.prototype.getAccounts = function getAccounts(callback) {
   });
 };
 
-CLI.prototype.removeKey = function removeKey(callback) {
-  var self = this;
-  var keys = this.config.keys || this.config.key;
-  if (keys)
-    keys = keys.split(',');
-  else
-    keys = this.argv;
-  this.wallet.removeKey(this.config.account, keys, function(err) {
-    if (err)
-      return callback(err);
-    self.log('removed');
-    callback();
-  });
-};
-
 CLI.prototype.getWallet = function getWallet(callback) {
   var self = this;
-  var passphrase = this.argv[0];
-  this.wallet.getInfo(this.config.account, passphrase, function(err, wallet) {
+  this.wallet.getInfo(function(err, wallet) {
     if (err)
       return callback(err);
     self.log(wallet);
@@ -262,6 +254,8 @@ CLI.prototype.getMempool = function getMempool(callback) {
 CLI.prototype.sendTX = function sendTX(callback) {
   var self = this;
   var output = {};
+  var options;
+
   if (this.config.script) {
     output.script = this.config.script;
     output.value = utils.satoshi(this.config.value || this.argv[0]);
@@ -269,11 +263,13 @@ CLI.prototype.sendTX = function sendTX(callback) {
     output.address = this.config.address || this.argv[0];
     output.value = utils.satoshi(this.config.value || this.argv[1]);
   }
-  var options = {
+
+  options = {
     account: this.config.account,
     passphrase: this.config.passphrase,
     outputs: [output]
   };
+
   this.wallet.send(options, function(err, tx) {
     if (err)
       return callback(err);
@@ -284,8 +280,9 @@ CLI.prototype.sendTX = function sendTX(callback) {
 
 CLI.prototype.createTX = function createTX(callback) {
   var self = this;
-  var options = { account: this.config.account, passphrase: this.config.passphrase };
   var output = {};
+  var options;
+
   if (this.config.script) {
     output.script = this.config.script;
     output.value = utils.satoshi(this.config.value || this.argv[0]);
@@ -293,7 +290,13 @@ CLI.prototype.createTX = function createTX(callback) {
     output.address = this.config.address || this.argv[0];
     output.value = utils.satoshi(this.config.value || this.argv[1]);
   }
-  options.outputs = [output];
+
+  options = {
+    account: this.config.account,
+    passphrase: this.config.passphrase,
+    outputs: [output]
+  };
+
   this.wallet.createTX(options, function(err, tx) {
     if (err)
       return callback(err);
@@ -387,7 +390,7 @@ CLI.prototype.handleWallet = function handleWallet(callback) {
   var self = this;
 
   var options = {
-    id: this.config.id,
+    id: this.config.id || 'primary',
     token: this.config.token
   };
 
@@ -541,7 +544,7 @@ CLI.prototype.open = function open(callback) {
 
 CLI.prototype.destroy = function destroy(callback) {
   if (this.wallet)
-    this.wallet.destroy();
+    this.wallet.client.destroy();
   if (this.client)
     this.client.destroy();
   callback();
