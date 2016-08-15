@@ -222,8 +222,8 @@ describe('Chain', function() {
     var txs = [];
     walletdb.getAddresses(function(err, hashes) {
       assert.ifError(err);
-      chain.db.scan(null, hashes, function(tx, block, next) {
-        txs.push(tx);
+      chain.db.scan(null, hashes, function(block, tx, next) {
+        txs = txs.concat(tx);
         next();
       }, function(err) {
         assert.ifError(err);
