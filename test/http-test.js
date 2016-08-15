@@ -36,7 +36,8 @@ describe('HTTP', function() {
   var node = new bcoin.fullnode({
     network: 'regtest',
     apiKey: 'foo',
-    walletAuth: true
+    walletAuth: true,
+    db: 'memory'
   });
 
   var wallet = new bcoin.http.wallet({
