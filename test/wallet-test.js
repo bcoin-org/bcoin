@@ -1004,7 +1004,7 @@ describe('Wallet', function() {
   it('should cleanup', function(cb) {
     walletdb.dump(function(err, records) {
       assert.ifError(err);
-      // utils.log(JSON.stringify(Object.keys(records), null, 2));
+      //utils.log(JSON.stringify(Object.keys(records), null, 2));
       constants.tx.COINBASE_MATURITY = 100;
       cb();
     });
