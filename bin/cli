@@ -36,8 +36,8 @@ CLI.prototype.createWallet = function createWallet(callback) {
   if (this.config.master)
     options.master = this.config.master;
 
-  if (this.config.keys)
-    options.keys = this.config.keys.split(/[,:]/);
+  if (this.config.key)
+    options.key = this.config.key;
 
   if (this.config.m)
     options.m = this.config.m >>> 0;
@@ -396,7 +396,8 @@ CLI.prototype.handleWallet = function handleWallet(callback) {
 
   this.wallet = new Wallet({
     uri: this.config.url || this.config.uri,
-    apiKey: this.config.apiKey
+    apiKey: this.config.apiKey,
+    network: this.config.network
   });
 
   this.wallet.open(options, function(err) {
@@ -473,7 +474,8 @@ CLI.prototype.handleNode = function handleNode(callback) {
 
   this.client = new Client({
     uri: this.config.url || this.config.uri,
-    apiKey: this.config.apiKey
+    apiKey: this.config.apiKey,
+    network: this.config.network
   });
 
   this.client.getInfo(function(err, info) {
@@ -543,9 +545,9 @@ CLI.prototype.open = function open(callback) {
 };
 
 CLI.prototype.destroy = function destroy(callback) {
-  if (this.wallet)
+  if (this.wallet && !this.wallet.client.loading)
     this.wallet.client.destroy();
-  if (this.client)
+  if (this.client && !this.client.loading)
     this.client.destroy();
   callback();
 };
