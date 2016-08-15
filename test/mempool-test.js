@@ -126,41 +126,30 @@ describe('Mempool', function() {
                   assert.ifError(err);
                   mempool.addTX(t4, function(err) {
                     assert.ifError(err);
-                    mempool.getBalance(function(err, balance) {
+                    var balance = mempool.getBalance();
+                    assert.equal(balance, 0);
+                    mempool.addTX(t1, function(err) {
                       assert.ifError(err);
-                      assert.equal(balance.total, 0);
-                      mempool.addTX(t1, function(err) {
+                      var balance = mempool.getBalance();
+                      assert.equal(balance, 60000);
+                      mempool.addTX(t2, function(err) {
                         assert.ifError(err);
-                        mempool.getBalance(function(err, balance) {
+                        var balance = mempool.getBalance();
+                        assert.equal(balance, 50000);
+                        mempool.addTX(t3, function(err) {
                           assert.ifError(err);
-                          assert.equal(balance.total, 60000);
-                          mempool.addTX(t2, function(err) {
+                          var balance = mempool.getBalance();
+                          assert.equal(balance, 22000);
+                          mempool.addTX(f1, function(err) {
                             assert.ifError(err);
-                            mempool.getBalance(function(err, balance) {
-                              assert.ifError(err);
-                              assert.equal(balance.total, 50000);
-                              mempool.addTX(t3, function(err) {
-                                assert.ifError(err);
-                                mempool.getBalance(function(err, balance) {
-                                  assert.ifError(err);
-                                  assert.equal(balance.total, 22000);
-                                  mempool.addTX(f1, function(err) {
-                                    assert.ifError(err);
-                                    mempool.getBalance(function(err, balance) {
-                                      assert.ifError(err);
-                                      assert.equal(balance.total, 20000);
-                                      mempool.getHistory(function(err, txs) {
-                                        assert(txs.some(function(tx) {
-                                          return tx.hash('hex') === f1.hash('hex');
-                                        }));
+                            var balance = mempool.getBalance();
+                            assert.equal(balance, 20000);
+                            var txs = mempool.getHistory();
+                            assert(txs.some(function(tx) {
+                              return tx.hash('hex') === f1.hash('hex');
+                            }));
 
-                                        cb();
-                                      });
-                                    });
-                                  });
-                                });
-                              });
-                            });
+                            cb();
                           });
                         });
                       });

@@ -224,23 +224,21 @@ describe('Block', function() {
 
     var fakeMempool = {
       getSnapshot: function(callback) {
-        callback(null, Object.keys(map));
+        return Object.keys(map);
       },
       getTX: function(hash, callback) {
-        callback(null, map[hash]);
+        return map[hash];
       }
     };
 
     assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
 
-    cblock.fillMempool(fakeMempool, function(err, result) {
-      assert.ifError(err);
-      assert(result);
-      for (var i = 0; i < cblock.available.length; i++)
-        assert(cblock.available[i]);
-      assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
-      cb();
-    });
+    var result = cblock.fillMempool(fakeMempool);
+    assert(result);
+    for (var i = 0; i < cblock.available.length; i++)
+      assert(cblock.available[i]);
+    assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
+    cb();
   });
 
   it('should handle half-full compact block', function(cb) {
@@ -262,39 +260,37 @@ describe('Block', function() {
 
     var fakeMempool = {
       getSnapshot: function(callback) {
-        callback(null, keys);
+        return keys;
       },
       getTX: function(hash, callback) {
-        callback(null, map[hash]);
+        return map[hash];
       }
     };
 
     assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
 
-    cblock.fillMempool(fakeMempool, function(err, result) {
-      assert.ifError(err);
-      assert(!result);
+    var result = cblock.fillMempool(fakeMempool);
+    assert(!result);
 
-      var req = cblock.toRequest();
-      assert.equal(req.hash, cblock.hash('hex'));
-      assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
+    var req = cblock.toRequest();
+    assert.equal(req.hash, cblock.hash('hex'));
+    assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-      req = bip152.TXRequest.fromRaw(req.toRaw());
-      assert.equal(req.hash, cblock.hash('hex'));
-      assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
+    req = bip152.TXRequest.fromRaw(req.toRaw());
+    assert.equal(req.hash, cblock.hash('hex'));
+    assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-      var res = bip152.TXResponse.fromBlock(block, req);
-      res = bip152.TXResponse.fromRaw(res.toRaw());
+    var res = bip152.TXResponse.fromBlock(block, req);
+    res = bip152.TXResponse.fromRaw(res.toRaw());
 
-      var result = cblock.fillMissing(res);
-      assert(result);
+    var result = cblock.fillMissing(res);
+    assert(result);
 
-      for (var i = 0; i < cblock.available.length; i++)
-        assert(cblock.available[i]);
+    for (var i = 0; i < cblock.available.length; i++)
+      assert(cblock.available[i]);
 
-      assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
+    assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
 
-      cb();
-    });
+    cb();
   });
 });
