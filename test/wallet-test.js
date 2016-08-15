@@ -150,7 +150,7 @@ describe('Wallet', function() {
     p2pkh(true, true, cb);
   });
 
-  it('should multisign/verify TX', function() {
+  it('should multisign/verify TX', function(cb) {
     walletdb.create({
       type: 'multisig',
       m: 1,
@@ -185,6 +185,7 @@ describe('Wallet', function() {
           assert.ifError(err);
           assert(tx.toRaw().length <= maxSize);
           assert(tx.verify());
+          cb();
         });
       });
     });
