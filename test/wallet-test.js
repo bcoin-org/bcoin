@@ -57,6 +57,7 @@ describe('Wallet', function() {
     db: 'memory',
     verify: true
   });
+  var lastW;
 
   it('should open walletdb', function(cb) {
     constants.tx.COINBASE_MATURITY = 0;
@@ -818,6 +819,7 @@ describe('Wallet', function() {
   it('should fail to fill tx with account 1', function(cb) {
     walletdb.create({}, function(err, w1) {
       assert.ifError(err);
+      lastW = w1;
       w1.createAccount({ name: 'foo' }, function(err, acc) {
         assert.ifError(err);
         assert.equal(acc.name, 'foo');
@@ -860,6 +862,7 @@ describe('Wallet', function() {
                   .addOutput(account.receiveAddress, 5460)
                   .addOutput(account.receiveAddress, 5460);
 
+                t1.ps = 0xdeadbeef;
                 t1.addInput(dummyInput);
 
                 walletdb.addTX(t1, function(err) {
@@ -1001,10 +1004,47 @@ describe('Wallet', function() {
     });
   });
 
+  it('should get range of txs', function(cb) {
+    var w1 = lastW;
+    w1.getRange({ start: 0xdeadbeef - 1000 }, function(err, txs) {
+      if (err)
+        return callback(err);
+      assert.equal(txs.length, 1);
+      cb();
+    });
+  });
+
+  it('should get range of txs from account', function(cb) {
+    var w1 = lastW;
+    w1.getRange('foo', { start: 0xdeadbeef - 1000 }, function(err, txs) {
+      if (err)
+        return callback(err);
+      assert.equal(txs.length, 1);
+      cb();
+    });
+  });
+
+  it('should not get range of txs from non-existent account', function(cb) {
+    var w1 = lastW;
+    w1.getRange('bad', { start: 0xdeadbeef - 1000 }, function(err, txs) {
+      assert(err);
+      assert.equal(err.message, 'Account not found.');
+      cb();
+    });
+  });
+
+  it('should get account balance', function(cb) {
+    var w1 = lastW;
+    w1.getBalance('foo', function(err, balance) {
+      assert.ifError(err);
+      assert.equal(balance.total, 21840);
+      cb();
+    });
+  });
+
   it('should cleanup', function(cb) {
     walletdb.dump(function(err, records) {
       assert.ifError(err);
-      //utils.log(JSON.stringify(Object.keys(records), null, 2));
       constants.tx.COINBASE_MATURITY = 100;
       cb();
     });
