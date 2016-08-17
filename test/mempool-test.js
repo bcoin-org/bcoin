@@ -75,18 +75,21 @@ describe('Mempool', function() {
     // balance: 51000
     w.sign(t1, function(err, total) {
       assert.ifError(err);
+      t1 = t1.toTX();
       var t2 = bcoin.mtx().addInput(t1, 0) // 50000
                          .addOutput(w, 20000)
                          .addOutput(w, 20000);
       // balance: 49000
       w.sign(t2, function(err, total) {
         assert.ifError(err);
+        t2 = t2.toTX();
         var t3 = bcoin.mtx().addInput(t1, 1) // 10000
                            .addInput(t2, 0) // 20000
                            .addOutput(w, 23000);
         // balance: 47000
         w.sign(t3, function(err, total) {
           assert.ifError(err);
+          t3 = t3.toTX();
           var t4 = bcoin.mtx().addInput(t2, 1) // 24000
                              .addInput(t3, 0) // 23000
                              .addOutput(w, 11000)
@@ -94,11 +97,13 @@ describe('Mempool', function() {
           // balance: 22000
           w.sign(t4, function(err, total) {
             assert.ifError(err);
+            t4 = t4.toTX();
             var f1 = bcoin.mtx().addInput(t4, 1) // 11000
                                .addOutput(bcoin.address.fromData(new Buffer([])).toBase58(), 9000);
             // balance: 11000
             w.sign(f1, function(err, total) {
               assert.ifError(err);
+              f1 = f1.toTX();
               var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
                                    .addOutput(w, 6000); // 6000 instead of 500
               // Script inputs but do not sign
@@ -107,20 +112,13 @@ describe('Mempool', function() {
                 // Fake signature
                 fake.inputs[0].script.set(0, new Buffer([0,0,0,0,0,0,0,0,0]));
                 fake.inputs[0].script.compile();
+                fake = fake.toTX();
                 // balance: 11000
                 [t2, t3, t4, f1, fake].forEach(function(tx) {
                   tx.inputs.forEach(function(input) {
                     delete input.coin;
                   });
                 });
-
-                // Just for debugging
-                t1.hint = 't1';
-                t2.hint = 't2';
-                t3.hint = 't3';
-                t4.hint = 't4';
-                f1.hint = 'f1';
-                fake.hint = 'fake';
 
                 mempool.addTX(fake, function(err) {
                   assert.ifError(err);
@@ -191,6 +189,7 @@ describe('Mempool', function() {
     t1.setLocktime(200);
     chain.tip.height = 200;
     t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
+    t1 = t1.toTX();
     mempool.addTX(t1, function(err) {
       chain.tip.height = 0;
       assert.ifError(err);
@@ -225,6 +224,7 @@ describe('Mempool', function() {
     t1.setLocktime(200);
     chain.tip.height = 200 - 1;
     t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
+    t1 = t1.toTX();
     mempool.addTX(t1, function(err) {
       chain.tip.height = 0;
       assert(err);

@@ -92,6 +92,7 @@ describe('HTTP', function() {
       .addOutput(addr, 50460);
 
     t1.addInput(dummyInput);
+    t1 = t1.toTX();
 
     wallet.once('balance', function(b) {
       balance = b;

@@ -206,6 +206,7 @@ describe('Wallet', function() {
         // balance: 51000
         w.sign(t1, function(err) {
           assert.ifError(err);
+          t1 = t1.toTX();
           var t2 = bcoin.mtx().addInput(t1, 0) // 50000
                              .addOutput(w, 24000)
                              .addOutput(w, 24000);
@@ -213,12 +214,14 @@ describe('Wallet', function() {
           // balance: 49000
           w.sign(t2, function(err) {
             assert.ifError(err);
+            t2 = t2.toTX();
             var t3 = bcoin.mtx().addInput(t1, 1) // 1000
                                .addInput(t2, 0) // 24000
                                .addOutput(w, 23000);
             // balance: 47000
             w.sign(t3, function(err) {
               assert.ifError(err);
+              t3 = t3.toTX();
               var t4 = bcoin.mtx().addInput(t2, 1) // 24000
                                  .addInput(t3, 0) // 23000
                                  .addOutput(w, 11000)
@@ -226,11 +229,13 @@ describe('Wallet', function() {
               // balance: 22000
               w.sign(t4, function(err) {
                 assert.ifError(err);
+                t4 = t4.toTX();
                 var f1 = bcoin.mtx().addInput(t4, 1) // 11000
                                    .addOutput(f, 10000);
                 // balance: 11000
                 w.sign(f1, function(err) {
                   assert.ifError(err);
+                  f1 = f1.toTX();
                   var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
                                        .addOutput(w, 500);
                   // Script inputs but do not sign
@@ -240,6 +245,7 @@ describe('Wallet', function() {
                     fake.inputs[0].script.set(0, FAKE_SIG);
                     fake.inputs[0].script.compile();
                     // balance: 11000
+                    fake = fake.toTX();
 
                     // Fake TX should temporarly change output
                     walletdb.addTX(fake, function(err) {
@@ -319,6 +325,7 @@ describe('Wallet', function() {
         assert.ifError(err);
         dw.sign(t1, function(err) {
           assert.ifError(err);
+          t1 = t1.toTX();
           dw.getBalance(function(err, balance) {
             assert.ifError(err);
             assert.equal(balance.total, 11000);
@@ -361,6 +368,7 @@ describe('Wallet', function() {
           .addOutput(w1, 5460);
 
         t1.addInput(dummyInput);
+        t1 = t1.toTX();
 
         walletdb.addTX(t1, function(err) {
           assert.ifError(err);
@@ -371,6 +379,7 @@ describe('Wallet', function() {
             assert.ifError(err);
             w1.sign(t2, function(err) {
               assert.ifError(err);
+              t2 = t2.toTX();
 
               assert(t2.verify());
 
@@ -409,6 +418,7 @@ describe('Wallet', function() {
           .addOutput(w1, 5460);
 
         t1.addInput(dummyInput);
+        t1 = t1.toTX();
 
         walletdb.addTX(t1, function(err) {
           assert.ifError(err);
@@ -419,6 +429,7 @@ describe('Wallet', function() {
             assert.ifError(err);
             w1.sign(t2, function(err) {
               assert.ifError(err);
+              t2 = t2.toTX();
               assert(t2.verify());
 
               assert.equal(t2.getInputValue(), 16380);
@@ -472,6 +483,7 @@ describe('Wallet', function() {
             .addOutput(w1, 5460);
 
           t1.addInput(dummyInput);
+          t1 = t1.toTX();
 
           // Coinbase
           var t2 = bcoin.mtx()
@@ -481,6 +493,7 @@ describe('Wallet', function() {
             .addOutput(w2, 5460);
 
           t2.addInput(dummyInput);
+          t2 = t2.toTX();
 
           walletdb.addTX(t1, function(err) {
             assert.ifError(err);
@@ -644,6 +657,7 @@ describe('Wallet', function() {
           utx.addOutput({ address: addr, value: 5460 * 10 });
 
         utx.addInput(dummyInput);
+        utx = utx.toTX();
 
         // Simulate a confirmation
         utx.ps = 0;
@@ -682,6 +696,7 @@ describe('Wallet', function() {
                   w2.sign(send, function(err) {
                     assert.ifError(err);
 
+                    send = send.toTX();
                     assert(send.verify(flags));
 
                     assert.equal(w1.changeDepth, 1);
@@ -776,6 +791,7 @@ describe('Wallet', function() {
               .addOutput(account.receiveAddress, 5460);
 
             t1.addInput(dummyInput);
+            t1 = t1.toTX();
 
             walletdb.addTX(t1, function(err) {
               assert.ifError(err);
@@ -843,6 +859,7 @@ describe('Wallet', function() {
             .addOutput(account.receiveAddress, 5460);
 
           t1.addInput(dummyInput);
+          t1 = t1.toTX();
 
           walletdb.addTX(t1, function(err) {
             assert.ifError(err);
@@ -864,6 +881,7 @@ describe('Wallet', function() {
 
                 t1.ps = 0xdeadbeef;
                 t1.addInput(dummyInput);
+                t1 = t1.toTX();
 
                 walletdb.addTX(t1, function(err) {
                   assert.ifError(err);
@@ -896,6 +914,7 @@ describe('Wallet', function() {
         .addOutput(w1, 5460);
 
       t1.addInput(dummyInput);
+      t1 = t1.toTX();
 
       walletdb.addTX(t1, function(err) {
         assert.ifError(err);
@@ -934,6 +953,7 @@ describe('Wallet', function() {
           .addOutput(w1, 5460);
 
         t1.addInput(dummyInput);
+        t1 = t1.toTX();
 
         walletdb.addTX(t1, function(err) {
           assert.ifError(err);
@@ -973,6 +993,7 @@ describe('Wallet', function() {
           .addOutput(w1, 5460);
 
         t1.addInput(dummyInput);
+        t1 = t1.toTX();
 
         walletdb.addTX(t1, function(err) {
           assert.ifError(err);

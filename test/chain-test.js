@@ -48,7 +48,7 @@ describe('Chain', function() {
         redeemer.setLocktime(chain.height);
         return wallet.sign(redeemer, function(err) {
           assert.ifError(err);
-          attempt.addTX(redeemer);
+          attempt.addTX(redeemer.toTX());
           callback(null, attempt.mineSync());
         });
       }
