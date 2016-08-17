@@ -220,7 +220,7 @@ describe('Chain', function() {
 
   it('should rescan for transactions', function(cb) {
     var txs = [];
-    walletdb.getAddresses(function(err, hashes) {
+    walletdb.getAddressHashes(function(err, hashes) {
       assert.ifError(err);
       chain.db.scan(null, hashes, function(block, tx, next) {
         txs = txs.concat(tx);
