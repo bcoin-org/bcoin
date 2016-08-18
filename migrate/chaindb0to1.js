@@ -1,4 +1,4 @@
-var bcoin = require('bcoin');
+var bcoin = require('../');
 var assert = require('assert');
 var file = process.argv[2];
 
