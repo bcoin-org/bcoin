@@ -1065,13 +1065,14 @@ describe('Wallet', function() {
 
   it('should import key', function(cb) {
     var key = bcoin.keyring.generate();
-    walletdb.create(function(err, w1) {
+    walletdb.create({ passphrase: 'test' }, function(err, w1) {
       assert.ifError(err);
-      w1.importKey(key, function(err) {
+      w1.importKey('default', key, 'test', function(err) {
         assert.ifError(err);
         w1.getKeyring(key.getHash('hex'), function(err, k) {
           if (err)
             return callback(err);
+
           assert.equal(k.getHash('hex'), key.getHash('hex'));
 
           // Coinbase
