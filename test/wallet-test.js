@@ -1063,6 +1063,58 @@ describe('Wallet', function() {
     });
   });
 
+  it('should import key', function(cb) {
+    var key = bcoin.keyring.generate();
+    walletdb.create(function(err, w1) {
+      assert.ifError(err);
+      w1.importKey(key, function(err) {
+        assert.ifError(err);
+        w1.getKeyring(key.getHash('hex'), function(err, k) {
+          if (err)
+            return callback(err);
+          assert.equal(k.getHash('hex'), key.getHash('hex'));
+
+          // Coinbase
+          var t1 = bcoin.mtx()
+            .addOutput(key.getAddress(), 5460)
+            .addOutput(key.getAddress(), 5460)
+            .addOutput(key.getAddress(), 5460)
+            .addOutput(key.getAddress(), 5460);
+
+          t1.addInput(dummyInput);
+          t1 = t1.toTX();
+
+          walletdb.addTX(t1, function(err) {
+            assert.ifError(err);
+
+            w1.getTX(t1.hash('hex'), function(err, tx) {
+              assert.ifError(err);
+              assert(tx);
+              assert.equal(t1.hash('hex'), tx.hash('hex'));
+
+              var options = {
+                rate: 10000,
+                round: true,
+                outputs: [{ address: w1.getAddress(), value: 7000 }]
+              };
+
+              // Create new transaction
+              w1.createTX(options, function(err, t2) {
+                assert.ifError(err);
+                w1.sign(t2, function(err) {
+                  assert.ifError(err);
+                  assert(t2.verify());
+                  assert(t2.inputs[0].prevout.hash === tx.hash('hex'));
+                  cb();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+
   it('should cleanup', function(cb) {
     walletdb.dump(function(err, records) {
       assert.ifError(err);
