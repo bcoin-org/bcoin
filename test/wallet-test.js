@@ -239,7 +239,7 @@ describe('Wallet', function() {
                   var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
                                        .addOutput(w, 500);
                   // Script inputs but do not sign
-                  w.scriptInputs(fake, function(err) {
+                  w.template(fake, function(err) {
                     assert.ifError(err);
                     // Fake signature
                     fake.inputs[0].script.set(0, FAKE_SIG);
