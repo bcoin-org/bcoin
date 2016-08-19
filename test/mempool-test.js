@@ -48,7 +48,7 @@ describe('Mempool', function() {
   });
 
   it('should handle incoming orphans and TXs', function(cb) {
-    var kp = bcoin.hd.generate();
+    var kp = bcoin.keyring.generate();
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
     var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
@@ -70,7 +70,7 @@ describe('Mempool', function() {
       sequence: 0xffffffff
     };
     t1.addInput(dummyInput);
-    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
+    t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
 
     // balance: 51000
     w.sign(t1, function(err, total) {
@@ -107,7 +107,7 @@ describe('Mempool', function() {
               var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
                                    .addOutput(w, 6000); // 6000 instead of 500
               // Script inputs but do not sign
-              w.scriptInputs(fake, function(err) {
+              w.template(fake, function(err) {
                 assert.ifError(err);
                 // Fake signature
                 fake.inputs[0].script.set(0, new Buffer([0,0,0,0,0,0,0,0,0]));
@@ -163,7 +163,7 @@ describe('Mempool', function() {
   });
 
   it('should handle locktime', function(cb) {
-    var kp = bcoin.hd.generate();
+    var kp = bcoin.keyring.generate();
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
     var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
@@ -188,7 +188,7 @@ describe('Mempool', function() {
     t1.addInput(dummyInput);
     t1.setLocktime(200);
     chain.tip.height = 200;
-    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
+    t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
     t1 = t1.toTX();
     mempool.addTX(t1, function(err) {
       chain.tip.height = 0;
@@ -198,7 +198,7 @@ describe('Mempool', function() {
   });
 
   it('should handle invalid locktime', function(cb) {
-    var kp = bcoin.hd.generate();
+    var kp = bcoin.keyring.generate();
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
     var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
@@ -223,7 +223,7 @@ describe('Mempool', function() {
     t1.addInput(dummyInput);
     t1.setLocktime(200);
     chain.tip.height = 200 - 1;
-    t1.inputs[0].script = new bcoin.script([t1.createSignature(0, prev, kp.privateKey, 'all', 0)]),
+    t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
     t1 = t1.toTX();
     mempool.addTX(t1, function(err) {
       chain.tip.height = 0;
