@@ -417,7 +417,7 @@ var key = master.derive('m/44/0/0/0/0');
 // your program hash, your pubkey hash, your scripthash program hash, etc.
 // In this case, we'll make it simple and just add one key for a
 // pubkeyhash address. `getPublicKey` returns the non-hd public key.
-var keyring = new bcoin.keyring({ key: key.getPublicKey() });
+var keyring = new bcoin.keyring(key.privateKey);
 
 console.log(keyring.getAddress());
 
@@ -453,8 +453,8 @@ tx.addOutput({
   value: 10000
 });
 
-// Sign input 0: pass in our keyring and private key.
-tx.sign(0, keyring, key);
+// Sign input 0: pass in our keyring.
+tx.sign(keyring);
 
 // Commit our transaction and make it immutable.
 // This turns it from an MTX into a TX object.
@@ -480,7 +480,7 @@ var constants = bcoin.protocol.constants;
 
 var master = bcoin.hd.fromMnemonic();
 var key = master.derive('m/44/0/0/0/0');
-var keyring = new bcoin.keyring({ key: key.getPublicKey() });
+var keyring = new bcoin.keyring(key.privateKey);
 var cb = new bcoin.mtx();
 
 cb.addInput({
@@ -533,7 +533,7 @@ tx.fund(coins, {
 });
 
 // Sign input 0
-tx.sign(0, keyring, key);
+tx.sign(keyring);
 
 // Commit our transaction and make it immutable.
 // This turns it from an MTX into a TX.
