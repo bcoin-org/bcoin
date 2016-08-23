@@ -7,9 +7,19 @@ var constants = bcoin.protocol.constants;
 var network = bcoin.protocol.network;
 var assert = require('assert');
 
-describe('BIP151', function() {
+describe('BIP150', function() {
+  var db = new bcoin.bip150.AuthDB();
+  var ck = bcoin.ec.generatePrivateKey();
+  var sk = bcoin.ec.generatePrivateKey();
+
+  db.addAuthorized(bcoin.ec.publicKeyCreate(ck, true));
+  db.addKnown('server', bcoin.ec.publicKeyCreate(sk, true));
+
   var client = new bcoin.bip151();
   var server = new bcoin.bip151();
+
+  client.bip150 = new bcoin.bip150(client, 'server', true, db, ck);
+  server.bip150 = new bcoin.bip150(server, 'client', false, db, sk);
 
   function payload() {
     return new Buffer('deadbeef', 'hex');
@@ -34,6 +44,18 @@ describe('BIP151', function() {
     assert(server.isReady());
     assert(client.handshake);
     assert(server.handshake);
+  });
+
+  it('should do BIP150 handshake', function() {
+    var challenge = client.bip150.toChallenge();
+    var reply = server.bip150.challenge(challenge);
+    var propose = client.bip150.reply(reply);
+    var challenge = server.bip150.propose(propose);
+    var reply = client.bip150.challenge(challenge);
+    var result = server.bip150.reply(reply);
+    assert(!result);
+    assert(client.bip150.auth);
+    assert(server.bip150.auth);
   });
 
   it('should encrypt payload from client to server', function() {

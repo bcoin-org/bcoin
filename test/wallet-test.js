@@ -1069,7 +1069,7 @@ describe('Wallet', function() {
       assert.ifError(err);
       w1.importKey('default', key, 'test', function(err) {
         assert.ifError(err);
-        w1.getKeyring(key.getHash('hex'), function(err, k) {
+        w1.getKeyRing(key.getHash('hex'), function(err, k) {
           if (err)
             return callback(err);
 
