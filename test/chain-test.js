@@ -10,38 +10,28 @@ var opcodes = constants.opcodes;
 constants.tx.COINBASE_MATURITY = 0;
 
 describe('Chain', function() {
-  var chain, wallet, miner, walletdb;
-  var competingTip, oldTip, ch1, ch2, cb1, cb2;
+  var chain, wallet, node, miner, walletdb;
+  var competingTip, oldTip, tip1, tip2, cb1, cb2;
 
   this.timeout(5000);
 
-  chain = new bcoin.chain({ name: 'chain-test', db: 'memory' });
-  walletdb = new bcoin.walletdb({ name: 'chain-test-wdb', db: 'memory' });
-  miner = new bcoin.miner({
-    chain: chain
-  });
+  node = new bcoin.fullnode({ db: 'memory' });
+  chain = node.chain;
+  walletdb = node.walletdb;
+  miner = node.miner;
+  node.on('error', function() {});
 
-  chain.on('error', function() {});
-  miner.on('error', function() {});
-
-  function mineBlock(entry, tx, callback) {
-    var realTip;
-    if (entry) {
-      realTip = chain.tip;
-      chain.tip = entry;
-    }
-    miner.createBlock(function(err, attempt) {
-      if (realTip)
-        chain.tip = realTip;
+  function mineBlock(tip, tx, callback) {
+    miner.createBlock(tip, function(err, attempt) {
       assert.ifError(err);
       if (tx) {
         var redeemer = bcoin.mtx();
         redeemer.addOutput({
-          address: wallet.getAddress(),
+          address: wallet.receiveAddress.getAddress(),
           value: utils.satoshi('25.0')
         });
         redeemer.addOutput({
-          address: wallet.account.deriveAddress(false, 100).getAddress(),
+          address: wallet.changeAddress.getAddress(),
           value: utils.satoshi('5.0')
         });
         redeemer.addInput(tx, 0);
@@ -71,18 +61,16 @@ describe('Chain', function() {
   }
 
   it('should open chain and miner', function(cb) {
-    miner.open(cb);
+    miner.mempool = null;
+    node.open(cb);
   });
 
   it('should open walletdb', function(cb) {
-    walletdb.open(function(err) {
+    walletdb.create({}, function(err, w) {
       assert.ifError(err);
-      walletdb.create({}, function(err, w) {
-        assert.ifError(err);
-        wallet = w;
-        miner.address = wallet.getAddress();
-        cb();
-      });
+      wallet = w;
+      miner.address = wallet.getAddress();
+      cb();
     });
   });
 
@@ -96,29 +84,29 @@ describe('Chain', function() {
 
   it('should mine competing chains', function(cb) {
     utils.forRangeSerial(0, 10, function(i, next) {
-      mineBlock(ch1, cb1, function(err, chain1) {
+      mineBlock(tip1, cb1, function(err, block1) {
         assert.ifError(err);
-        cb1 = chain1.txs[0];
-        mineBlock(ch2, cb2, function(err, chain2) {
+        cb1 = block1.txs[0];
+        mineBlock(tip2, cb2, function(err, block2) {
           assert.ifError(err);
-          cb2 = chain2.txs[0];
-          deleteCoins(chain1);
-          chain.add(chain1, function(err) {
+          cb2 = block2.txs[0];
+          deleteCoins(block1);
+          chain.add(block1, function(err) {
             assert.ifError(err);
-            deleteCoins(chain2);
-            chain.add(chain2, function(err) {
+            deleteCoins(block2);
+            chain.add(block2, function(err) {
               assert.ifError(err);
-              assert(chain.tip.hash === chain1.hash('hex'));
-              competingTip = chain2.hash('hex');
-              chain.db.get(chain1.hash('hex'), function(err, entry1) {
+              assert(chain.tip.hash === block1.hash('hex'));
+              competingTip = block2.hash('hex');
+              chain.db.get(block1.hash('hex'), function(err, entry1) {
                 assert.ifError(err);
-                chain.db.get(chain2.hash('hex'), function(err, entry2) {
+                chain.db.get(block2.hash('hex'), function(err, entry2) {
                   assert.ifError(err);
                   assert(entry1);
                   assert(entry2);
-                  ch1 = entry1;
-                  ch2 = entry2;
-                  chain.db.isMainChain(chain2.hash('hex'), function(err, result) {
+                  tip1 = entry1;
+                  tip2 = entry2;
+                  chain.db.isMainChain(block2.hash('hex'), function(err, result) {
                     assert.ifError(err);
                     assert(!result);
                     next();
@@ -133,25 +121,25 @@ describe('Chain', function() {
   });
 
   it('should handle a reorg', function(cb) {
+    assert.equal(walletdb.height, chain.height);
+    assert.equal(chain.height, 10);
     oldTip = chain.tip;
     chain.db.get(competingTip, function(err, entry) {
       assert.ifError(err);
       assert(entry);
       assert(chain.height === entry.height);
-      chain.tip = entry;
-      miner.mineBlock(function(err, reorg) {
+      miner.mineBlock(entry, function(err, block) {
         assert.ifError(err);
-        assert(reorg);
-        chain.tip = oldTip;
+        assert(block);
         var forked = false;
         chain.once('reorganize', function() {
           forked = true;
         });
-        deleteCoins(reorg);
-        chain.add(reorg, function(err) {
+        deleteCoins(block);
+        chain.add(block, function(err) {
           assert.ifError(err);
           assert(forked);
-          assert(chain.tip.hash === reorg.hash('hex'));
+          assert(chain.tip.hash === block.hash('hex'));
           assert(chain.tip.chainwork.cmp(oldTip.chainwork) > 0);
           cb();
         });
@@ -209,13 +197,34 @@ describe('Chain', function() {
             assert.ifError(err);
             chain.db.getCoin(block.txs[1].hash('hex'), 1, function(err, coin) {
               assert.ifError(err);
-              assert.deepEqual(coin.toRaw(), bcoin.coin.fromTX(block.txs[1], 1).toRaw());
+              var output = bcoin.coin.fromTX(block.txs[1], 1);
+              assert.deepEqual(coin.toRaw(), output.toRaw());
               cb();
             });
           });
         });
       });
     });
+  });
+
+  it('should get balance', function(cb) {
+    setTimeout(function() {
+      wallet.getBalance(function(err, balance) {
+        assert.ifError(err);
+        assert.equal(balance.unconfirmed, 23000000000);
+        assert.equal(balance.confirmed, 97000000000);
+        assert.equal(balance.total, 120000000000);
+        assert.equal(wallet.account.receiveDepth, 8);
+        assert.equal(wallet.account.changeDepth, 7);
+        assert.equal(walletdb.height, chain.height);
+        assert.equal(walletdb.tip, chain.tip.hash);
+        wallet.getHistory(function(err, txs) {
+          assert.ifError(err);
+          assert.equal(txs.length, 44);
+          cb();
+        });
+      });
+    }, 100);
   });
 
   it('should rescan for transactions', function(cb) {
