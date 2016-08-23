@@ -1,12 +1,12 @@
-var level = require('level-js');
+var Level = require('level-js');
 
 function DB(location) {
-  this.level = new level(location);
+  this.level = new Level(location);
   this.bufferKeys = false;
 }
 
 DB.prototype.open = function open(options, callback) {
-  this.bufferKeys = options.bufferKeys;
+  this.bufferKeys = options.bufferKeys === true;
   this.level.open(options, callback);
 };
 
@@ -33,9 +33,20 @@ DB.prototype.del = function del(key, options, callback) {
 };
 
 DB.prototype.batch = function batch(ops, options, callback) {
+  var i, op;
+
   if (!ops)
     return new Batch(this);
-  return this.level.batch(ops, options, callback);
+
+  if (this.bufferKeys) {
+    for (i = 0; i < ops.length; i++) {
+      op = ops[i];
+      if (Buffer.isBuffer(op.key))
+        op.key = op.key.toString('hex');
+    }
+  }
+
+  this.level.batch(ops, options, callback);
 };
 
 DB.prototype.iterator = function iterator(options) {
@@ -104,15 +115,15 @@ Iterator.prototype.next = function(callback) {
       return;
     }
 
-    if (key === undefined) {
+    if (key === undefined && value === undefined) {
       callback(err, key, value);
       return;
     }
 
-    if (self.db.bufferKeys)
+    if (key && self.db.bufferKeys)
       key = new Buffer(key, 'hex');
 
-    if (!Buffer.isBuffer(value))
+    if (value && !Buffer.isBuffer(value) && value.buffer)
       value = new Buffer(value.buffer);
 
     callback(err, key, value);
