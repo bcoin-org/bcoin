@@ -50,7 +50,8 @@ module.exports = function wsproxy(options) {
         return;
 
       if (!utils.isNumber(port)
-          || typeof host !== 'string') {
+          || typeof host !== 'string'
+          || host.length === 0) {
         utils.error('Client gave bad arguments.');
         ws.emit('tcp close');
         ws.disconnect();
@@ -72,7 +73,7 @@ module.exports = function wsproxy(options) {
         pow.writeString(host, 'ascii');
         pow = pow.render();
 
-        if (utils.cmp(utils.dsha256(pow), target) >= 0) {
+        if (utils.cmp(utils.dsha256(pow), target) > 0) {
           utils.error('Client did not solve proof of work.');
           ws.emit('tcp close');
           ws.disconnect();
@@ -103,8 +104,9 @@ module.exports = function wsproxy(options) {
 
       try {
         socket = net.connect(port, host);
-        utils.error('Connecting to %s:%d.', host, port);
+        utils.log('Connecting to %s:%d.', host, port);
       } catch (e) {
+        utils.error(e.message);
         utils.error('Closing %s:%d.', host, port);
         ws.emit('tcp close');
         ws.disconnect();
@@ -127,12 +129,14 @@ module.exports = function wsproxy(options) {
       });
 
       socket.on('close', function() {
-        utils.error('Closing %s:%d.', host, port);
+        utils.log('Closing %s:%d.', host, port);
         ws.emit('tcp close');
         ws.disconnect();
       });
 
       ws.on('tcp data', function(data) {
+        if (typeof data !== 'string')
+          return;
         socket.write(new Buffer(data, 'hex'));
       });
 

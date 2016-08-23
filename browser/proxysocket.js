@@ -102,7 +102,7 @@ ProxySocket.prototype.connect = function connect(port, host) {
       nonce++;
       assert(nonce <= 0xffffffff, 'Could not create socket.');
       pow.writeUInt32LE(nonce, 0, true);
-    } while (utils.cmp(utils.dsha256(pow), this.target) >= 0);
+    } while (utils.cmp(utils.dsha256(pow), this.target) > 0);
 
     utils.log('Solved proof of work: %d', nonce);
   }
