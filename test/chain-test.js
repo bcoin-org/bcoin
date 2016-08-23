@@ -195,9 +195,10 @@ describe('Chain', function() {
           assert.ifError(err);
           chain.add(block, function(err) {
             assert.ifError(err);
-            chain.db.getCoin(block.txs[1].hash('hex'), 1, function(err, coin) {
+            var tx = block.txs[1];
+            var output = bcoin.coin.fromTX(tx, 1);
+            chain.db.getCoin(tx.hash('hex'), 1, function(err, coin) {
               assert.ifError(err);
-              var output = bcoin.coin.fromTX(block.txs[1], 1);
               assert.deepEqual(coin.toRaw(), output.toRaw());
               cb();
             });
@@ -228,15 +229,15 @@ describe('Chain', function() {
   });
 
   it('should rescan for transactions', function(cb) {
-    var txs = [];
+    var total = 0;
     walletdb.getAddressHashes(function(err, hashes) {
       assert.ifError(err);
-      chain.db.scan(null, hashes, function(block, tx, next) {
-        txs = txs.concat(tx);
+      chain.db.scan(null, hashes, function(block, txs, next) {
+        total += txs.length;
         next();
       }, function(err) {
         assert.ifError(err);
-        assert.equal(txs.length, 25);
+        assert.equal(total, 25);
         cb();
       });
     });
@@ -244,6 +245,6 @@ describe('Chain', function() {
 
   it('should cleanup', function(cb) {
     constants.tx.COINBASE_MATURITY = 100;
-    cb();
+    node.close(cb);
   });
 });
