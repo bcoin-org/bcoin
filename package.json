@@ -5,10 +5,11 @@
   "main": "./lib/bcoin.js",
   "bin": {
     "bcoin-node": "./bin/node",
+    "bcoin-spvnode": "./bin/spvnode",
     "bcoin-cli": "./bin/cli",
     "bcoin": "./bin/bcoin"
   },
-  "preferGlobal": false,
+  "preferGlobal": true,
   "scripts": {
     "test": "mocha --reporter spec test/*-test.js"
   },
@@ -32,23 +33,23 @@
     "node": ">= 0.10.0"
   },
   "dependencies": {
-    "bn.js": "4.11.5",
+    "bn.js": "4.11.6",
     "elliptic": "6.3.1"
   },
   "optionalDependencies": {
     "leveldown": "git://github.com/chjj/leveldown.git#staging",
-    "secp256k1": "3.1.0",
+    "secp256k1": "3.2.0",
     "socket.io": "1.4.8",
     "socket.io-client": "1.4.8",
     "supersha": "0.0.1"
   },
   "devDependencies": {
-    "browserify": "13.0.1",
+    "browserify": "13.1.0",
     "hash.js": "1.0.3",
     "jsdoc": "3.4.0",
     "level-js": "2.2.4",
-    "mocha": "2.5.3",
-    "uglify-js": "2.7.0"
+    "mocha": "3.0.2",
+    "uglify-js": "2.7.3"
   },
   "browser": {
     "./lib/bcoin/http/base": "./browser/empty.js",
