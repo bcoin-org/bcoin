@@ -9,7 +9,7 @@ var assert = require('assert');
 var block300025 = require('./data/block300025.json');
 var fs = require('fs');
 var cmpct = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8').trim().split('\n');
-var bip152 = require('../lib/bcoin/net/bip152');
+var bip152 = require('../lib/net/bip152');
 
 describe('Block', function() {
   var mblock = bcoin.merkleblock({

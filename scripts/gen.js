@@ -1,9 +1,8 @@
 'use strict';
 
 var bcoin = require('bcoin');
-var constants = bcoin.protocol.constants;
+var constants = bcoin.constants;
 var opcodes = constants.opcodes;
-var network = bcoin.protocol.network;
 var utils = bcoin.utils;
 var bn = require('bn.js');
 

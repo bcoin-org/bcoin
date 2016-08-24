@@ -8,8 +8,8 @@ var utils = bcoin.utils;
 var fs = require('fs');
 var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
 var NetworkAddress = bcoin.packets.NetworkAddress;
-var Framer = require('../lib/bcoin/net/framer');
-var Parser = require('../lib/bcoin/net/parser');
+var Framer = require('../lib/net/framer');
+var Parser = require('../lib/net/parser');
 
 describe('Protocol', function() {
   var version = require('../package.json').version;

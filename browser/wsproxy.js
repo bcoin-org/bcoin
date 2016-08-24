@@ -3,10 +3,10 @@
 var http = require('http');
 var net = require('net');
 var IOServer = require('socket.io');
-var utils = require('../lib/bcoin/utils/utils');
-var IP = require('../lib/bcoin/utils/ip');
-var networks = require('../lib/bcoin/protocol/networks');
-var BufferWriter = require('../lib/bcoin/utils/writer');
+var utils = require('../lib/utils/utils');
+var IP = require('../lib/utils/ip');
+var networks = require('../lib/protocol/networks');
+var BufferWriter = require('../lib/utils/writer');
 var ports = [];
 var i, type;
 

@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var chachapoly = require('../lib/bcoin/crypto/chachapoly');
+var chachapoly = require('../lib/crypto/chachapoly');
 var ChaCha20 = chachapoly.ChaCha20;
 var Poly1305 = chachapoly.Poly1305;
 var AEAD = chachapoly.AEAD;

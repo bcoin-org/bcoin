@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var scrypt = require('../lib/bcoin/crypto/scrypt');
+var scrypt = require('../lib/crypto/scrypt');
 
 describe('Scrypt', function() {
   it('should perform scrypt with N=16', function() {
