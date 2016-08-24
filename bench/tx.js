@@ -9,6 +9,8 @@ var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');
 var fs = require('fs');
 
+bcoin.cache();
+
 var block = bcoin.block.fromJSON(require('../test/data/block300025.json'));
 var btx = block.txs[397];
 

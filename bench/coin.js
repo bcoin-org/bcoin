@@ -9,6 +9,8 @@ var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');
 var fs = require('fs');
 
+bcoin.cache();
+
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
 wtx = bcoin.tx.fromRaw(wtx.trim(), 'hex');
 

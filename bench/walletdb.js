@@ -8,6 +8,8 @@ var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');
 
+bcoin.cache();
+
 var dummyInput = {
   prevout: {
     hash: constants.NULL_HASH,
