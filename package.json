@@ -49,5 +49,19 @@
     "level-js": "2.2.4",
     "mocha": "2.5.3",
     "uglify-js": "2.7.0"
+  },
+  "browser": {
+    "./lib/bcoin/http/request": "./browser/empty.js",
+    "./lib/bcoin/http/client": "./browser/empty.js",
+    "./lib/bcoin/http/wallet": "./browser/empty.js",
+    "./lib/bcoin/http/base": "./browser/empty.js",
+    "./lib/bcoin/http/server": "./browser/empty.js",
+    "fs": "./browser/empty.js",
+    "crypto": "./browser/empty.js",
+    "child_process": "./browser/empty.js",
+    "os": "./browser/empty.js",
+    "net": "./browser/empty.js",
+    "supersha": "./browser/empty.js",
+    "secp256k1": "./browser/empty.js"
   }
 }
