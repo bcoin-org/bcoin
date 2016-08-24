@@ -1,9 +1,9 @@
 'use strict';
 
 var bn = require('bn.js');
-var utils = require('../lib/bcoin/utils');
+var utils = require('../lib/bcoin/utils/utils');
 var assert = require('assert');
-var aes = require('../lib/bcoin/aes');
+var aes = require('../lib/bcoin/crypto/aes');
 var crypto = require('crypto');
 
 describe('AES', function() {

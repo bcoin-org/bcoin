@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var siphash = require('../lib/bcoin/siphash');
+var siphash = require('../lib/bcoin/crypto/siphash');
 
 describe('SipHash', function() {
   it('should perform siphash with no data', function() {
