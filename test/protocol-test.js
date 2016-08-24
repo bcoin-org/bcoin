@@ -8,6 +8,8 @@ var utils = bcoin.utils;
 var fs = require('fs');
 var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
 var NetworkAddress = bcoin.packets.NetworkAddress;
+var Framer = require('../lib/bcoin/net/framer');
+var Parser = require('../lib/bcoin/net/parser');
 
 describe('Protocol', function() {
   var version = require('../package.json').version;
@@ -16,8 +18,8 @@ describe('Protocol', function() {
   var parser;
   var framer;
   beforeEach(function() {
-    parser = bcoin.protocol.parser();
-    framer = bcoin.protocol.framer();
+    parser = new Parser();
+    framer = new Framer();
   });
 
   function packetTest(command, payload, test) {
@@ -197,21 +199,21 @@ describe('Protocol', function() {
       'c9954c44b0ce168bc78efd5f1e1c7db9d6c21b3016599ffffffff01a029' +
       'de5c0500000017a9141d9ca71efa36d814424ea6ca1437e67287aebe348' +
       '700000000', 'hex');
-    var tx = bcoin.protocol.parser.parseTX(rawTwoTxs);
+    var tx = Parser.parseTX(rawTwoTxs);
     delete tx._raw;
-    assert.deepEqual(bcoin.protocol.framer.tx(tx), rawFirstTx);
+    assert.deepEqual(Framer.tx(tx), rawFirstTx);
   });
 
   it('should parse, reserialize, and verify alert packets', function() {
     var p = new bcoin.reader(alertData);
     p.start();
     while (p.left()) {
-      var alert = bcoin.protocol.parser.parseAlert(p);
+      var alert = Parser.parseAlert(p);
       assert(alert.verify(network.alertKey));
       alert._payload = null;
       alert._hash = null;
-      var data = bcoin.protocol.framer.alert(alert);
-      alert = bcoin.protocol.parser.parseAlert(data);
+      var data = Framer.alert(alert);
+      alert = Parser.parseAlert(data);
       assert(alert.verify(network.alertKey));
     }
     p.end();
