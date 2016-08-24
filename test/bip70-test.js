@@ -3,11 +3,11 @@
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
-var constants = bcoin.protocol.constants;
-var network = bcoin.protocol.network;
+var constants = bcoin.constants;
+var network = bcoin.networks;
 var assert = require('assert');
 var tests = require('./data/bip70.json');
-var bip70 = require('../lib/bcoin/bip70');
+var bip70 = require('../lib/bcoin/bip70/bip70');
 var x509 = require('../lib/bcoin/bip70/x509');
 
 tests.valid = new Buffer(tests.valid, 'hex');

@@ -2,8 +2,8 @@
 
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
-var constants = bcoin.protocol.constants;
-var network = bcoin.protocol.network;
+var constants = bcoin.constants;
+var network = bcoin.networks;
 var utils = bcoin.utils;
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
@@ -98,10 +98,10 @@ describe('Wallet', function() {
   });
 
   function p2pkh(witness, bullshitNesting, cb) {
-    var flags = bcoin.protocol.constants.flags.STANDARD_VERIFY_FLAGS;
+    var flags = bcoin.constants.flags.STANDARD_VERIFY_FLAGS;
 
     if (witness)
-      flags |= bcoin.protocol.constants.flags.VERIFY_WITNESS;
+      flags |= bcoin.constants.flags.VERIFY_WITNESS;
 
     walletdb.create({ witness: witness }, function(err, w) {
       assert.ifError(err);
@@ -571,10 +571,10 @@ describe('Wallet', function() {
   });
 
   function multisig(witness, bullshitNesting, cb) {
-    var flags = bcoin.protocol.constants.flags.STANDARD_VERIFY_FLAGS;
+    var flags = bcoin.constants.flags.STANDARD_VERIFY_FLAGS;
 
     if (witness)
-      flags |= bcoin.protocol.constants.flags.VERIFY_WITNESS;
+      flags |= bcoin.constants.flags.VERIFY_WITNESS;
 
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
     var options = {

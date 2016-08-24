@@ -2,8 +2,8 @@
 
 var bn = require('bn.js');
 var bcoin = require('../').set('regtest');
-var constants = bcoin.protocol.constants;
-var network = bcoin.protocol.network;
+var constants = bcoin.constants;
+var network = bcoin.networks;
 var utils = bcoin.utils;
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;

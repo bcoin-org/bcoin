@@ -2,7 +2,7 @@
 
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
-var constants = bcoin.protocol.constants;
+var constants = bcoin.constants;
 var utils = bcoin.utils;
 var assert = require('assert');
 var opcodes = constants.opcodes;

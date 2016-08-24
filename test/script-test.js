@@ -5,8 +5,8 @@ var assert = require('assert');
 var Script = bcoin.script;
 var Stack = bcoin.stack;
 var utils = bcoin.utils;
-var constants = bcoin.protocol.constants;
-var opcodes = bcoin.protocol.constants.opcodes;
+var constants = bcoin.constants;
+var opcodes = bcoin.constants.opcodes;
 var scripts = require('./data/script_tests');
 var bn = require('bn.js');
 

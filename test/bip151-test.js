@@ -3,8 +3,8 @@
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
-var constants = bcoin.protocol.constants;
-var network = bcoin.protocol.network;
+var constants = bcoin.constants;
+var network = bcoin.networks;
 var assert = require('assert');
 
 describe('BIP151', function() {

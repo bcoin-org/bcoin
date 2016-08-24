@@ -2,7 +2,7 @@
 
 var bcoin = require('../').set('main');
 var assert = require('assert');
-var constants = bcoin.protocol.constants;
+var constants = bcoin.constants;
 var network = bcoin.network.get();
 var utils = bcoin.utils;
 var fs = require('fs');

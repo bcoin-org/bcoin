@@ -1,6 +1,6 @@
 'use strict';
 
-var chachapoly = require('../lib/bcoin/chachapoly');
+var chachapoly = require('../lib/bcoin/crypto/chachapoly');
 var bench = require('./bench');
 
 console.log('note: rate measured in kb/s');

@@ -3,8 +3,8 @@
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
-var constants = bcoin.protocol.constants;
-var network = bcoin.protocol.network;
+var constants = bcoin.constants;
+var network = bcoin.networks;
 var assert = require('assert');
 var block300025 = require('./data/block300025.json');
 var fs = require('fs');
@@ -12,7 +12,6 @@ var cmpct = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8').trim()
 var bip152 = require('../lib/bcoin/net/bip152');
 
 describe('Block', function() {
-  var parser = bcoin.protocol.parser;
   var mblock = bcoin.merkleblock({
     version: 2,
     prevBlock: 'd1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0000000000000000',

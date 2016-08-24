@@ -51,11 +51,13 @@
     "uglify-js": "2.7.0"
   },
   "browser": {
-    "./lib/bcoin/http/request": "./browser/empty.js",
-    "./lib/bcoin/http/client": "./browser/empty.js",
-    "./lib/bcoin/http/wallet": "./browser/empty.js",
     "./lib/bcoin/http/base": "./browser/empty.js",
+    "./lib/bcoin/http/client": "./browser/empty.js",
+    "./lib/bcoin/http/request": "./browser/empty.js",
+    "./lib/bcoin/http/rpcclient": "./browser/empty.js",
+    "./lib/bcoin/http/rpc": "./browser/empty.js",
     "./lib/bcoin/http/server": "./browser/empty.js",
+    "./lib/bcoin/http/wallet": "./browser/empty.js",
     "fs": "./browser/empty.js",
     "crypto": "./browser/empty.js",
     "child_process": "./browser/empty.js",

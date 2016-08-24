@@ -2,7 +2,7 @@
 
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
-var constants = bcoin.protocol.constants;
+var constants = bcoin.constants;
 var assert = require('assert');
 
 describe('Bloom', function() {
