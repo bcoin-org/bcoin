@@ -396,7 +396,7 @@ CLI.prototype.handleWallet = function handleWallet(callback) {
 
   this.wallet = new Wallet({
     uri: this.config.url || this.config.uri,
-    apiKey: this.config.apiKey,
+    apiKey: this.config.apikey,
     network: this.config.network
   });
 
@@ -474,7 +474,7 @@ CLI.prototype.handleNode = function handleNode(callback) {
 
   this.client = new Client({
     uri: this.config.url || this.config.uri,
-    apiKey: this.config.apiKey,
+    apiKey: this.config.apikey,
     network: this.config.network
   });
 
