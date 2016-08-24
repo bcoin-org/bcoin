@@ -1,14 +1,11 @@
 all:
-	@./node_modules/.bin/browserify lib/bcoin.js -o browser/bcoin.js
-
-ugly:
-	@./node_modules/.bin/uglifyjs --comments '/\*[^\0]+?Copyright[^\0]+?\*/' -o browser/bcoin.min.js browser/bcoin.js
+	@npm run browserify
+	@npm run uglify
 
 clean:
-	@rm browser/bcoin.js
-	@rm browser/bcoin.min.js
+	@npm run clean
 
 test:
 	@npm test
 
-.PHONY: all ugly clean test
+.PHONY: all clean test

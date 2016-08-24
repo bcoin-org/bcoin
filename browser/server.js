@@ -10,7 +10,7 @@ var proxy = require('./wsproxy')({
 
 var index = fs.readFileSync(__dirname + '/index.html');
 var bcoin = fs.readFileSync(__dirname + '/bcoin.js');
-var worker = fs.readFileSync(__dirname + '/../lib/bcoin/worker.js');
+var worker = fs.readFileSync(__dirname + '/../lib/workers/worker.js');
 
 server.get('/favicon.ico', function(req, res, next, send) {
   send(404, '', 'text');

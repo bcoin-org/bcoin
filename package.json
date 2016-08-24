@@ -11,7 +11,10 @@
   },
   "preferGlobal": true,
   "scripts": {
-    "test": "mocha --reporter spec test/*-test.js"
+    "test": "mocha --reporter spec test/*-test.js",
+    "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js",
+    "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js",
+    "clean": "rm browser/bcoin.js browser/bcoin.min.js"
   },
   "repository": "git://github.com/bcoin-org/bcoin.git",
   "keywords": [
