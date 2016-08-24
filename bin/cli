@@ -2,8 +2,8 @@
 
 'use strict';
 
-var config = require('../lib/bcoin/config');
-var utils = require('../lib/bcoin/utils');
+var config = require('../lib/bcoin/node/config');
+var utils = require('../lib/bcoin/utils/utils');
 var Client = require('../lib/bcoin/http/client');
 var Wallet = require('../lib/bcoin/http/wallet');
 var assert = utils.assert;

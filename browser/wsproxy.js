@@ -3,16 +3,16 @@
 var http = require('http');
 var net = require('net');
 var IOServer = require('socket.io');
-var utils = require('../lib/bcoin/utils');
-var IP = require('../lib/bcoin/ip');
-var network = require('../lib/bcoin/protocol/network');
-var BufferWriter = require('../lib/bcoin/writer');
+var utils = require('../lib/bcoin/utils/utils');
+var IP = require('../lib/bcoin/utils/ip');
+var networks = require('../lib/bcoin/protocol/networks');
+var BufferWriter = require('../lib/bcoin/utils/writer');
 var ports = [];
 var i, type;
 
-for (i = 0; i < network.types.length; i++) {
-  type = network.types[i];
-  ports.push(network[type].port);
+for (i = 0; i < networks.types.length; i++) {
+  type = networks.types[i];
+  ports.push(networks[type].port);
 }
 
 module.exports = function wsproxy(options) {

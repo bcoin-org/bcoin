@@ -1,8 +1,8 @@
 'use strict';
 
 var bcoin = require('../lib/bcoin/env');
-var utils = require('../lib/bcoin/utils');
-var BufferWriter = require('../lib/bcoin/writer');
+var utils = bcoin.utils;
+var BufferWriter = require('../lib/bcoin/utils/writer');
 var assert = utils.assert;
 var EventEmitter = require('events').EventEmitter;
 var IOClient = require('socket.io-client');
