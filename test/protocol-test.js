@@ -80,13 +80,13 @@ describe('Protocol', function() {
       services: constants.LOCAL_SERVICES,
       host: '127.0.0.1',
       port: 8333,
-      ts: Date.now() / 1000 | 0
+      ts: utils.now()
     }),
     new NetworkAddress({
       services: constants.LOCAL_SERVICES,
       host: '::123:456:789a',
       port: 18333,
-      ts: Date.now() / 1000 | 0
+      ts: utils.now()
     })
   ];
 
@@ -199,21 +199,21 @@ describe('Protocol', function() {
       'c9954c44b0ce168bc78efd5f1e1c7db9d6c21b3016599ffffffff01a029' +
       'de5c0500000017a9141d9ca71efa36d814424ea6ca1437e67287aebe348' +
       '700000000', 'hex');
-    var tx = Parser.parseTX(rawTwoTxs);
-    delete tx._raw;
-    assert.deepEqual(Framer.tx(tx), rawFirstTx);
+    var tx = bcoin.tx.fromRaw(rawTwoTxs);
+    tx._raw = null;
+    assert.deepEqual(tx.toRaw(), rawFirstTx);
   });
 
   it('should parse, reserialize, and verify alert packets', function() {
     var p = new bcoin.reader(alertData);
     p.start();
     while (p.left()) {
-      var alert = Parser.parseAlert(p);
+      var alert = bcoin.packets.AlertPacket.fromRaw(p);
       assert(alert.verify(network.alertKey));
       alert._payload = null;
       alert._hash = null;
-      var data = Framer.alert(alert);
-      alert = Parser.parseAlert(data);
+      var data = alert.toRaw();
+      alert = bcoin.packets.AlertPacket.fromRaw(data);
       assert(alert.verify(network.alertKey));
     }
     p.end();
