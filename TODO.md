@@ -27,3 +27,4 @@ Todo before release. Excuse the mess.
   - backupwallet
   - listaddressgroupings
   - importaddress (maybe)
+- rename cost to weight.
