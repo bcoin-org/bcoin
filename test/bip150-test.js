@@ -27,15 +27,17 @@ describe('BIP150', function() {
   }
 
   it('should do encinit', function() {
-    client.encinit(server.toEncinit());
-    server.encinit(client.toEncinit());
+    var init = server.toEncinit();
+    client.encinit(init.publicKey, init.cipher);
+    var init = client.toEncinit();
+    server.encinit(init.publicKey, init.cipher);
     assert(!client.handshake);
     assert(!server.handshake);
   });
 
   it('should do encack', function() {
-    client.encack(server.toEncack());
-    server.encack(client.toEncack());
+    client.encack(server.toEncack().publicKey);
+    server.encack(client.toEncack().publicKey);
     assert(client.handshake);
     assert(server.handshake);
   });
@@ -49,7 +51,7 @@ describe('BIP150', function() {
 
   it('should do BIP150 handshake', function() {
     var challenge = client.bip150.toChallenge();
-    var reply = server.bip150.challenge(challenge);
+    var reply = server.bip150.challenge(challenge.hash);
     var propose = client.bip150.reply(reply);
     var challenge = server.bip150.propose(propose);
     var reply = client.bip150.challenge(challenge);
@@ -113,7 +115,7 @@ describe('BIP150', function() {
 
     client.once('rekey', function() {
       rekeyed = true;
-      var packet = client.packet('encack', client.toRekey());
+      var packet = client.packet('encack', client.toRekey().toRaw());
       var emitted = false;
       server.once('packet', function(cmd, body) {
         emitted = true;

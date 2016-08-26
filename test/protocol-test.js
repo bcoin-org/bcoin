@@ -8,9 +8,10 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var fs = require('fs');
 var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
-var NetworkAddress = bcoin.packets.NetworkAddress;
+var NetworkAddress = require('../lib/primitives/netaddress');
 var Framer = require('../lib/net/framer');
 var Parser = require('../lib/net/parser');
+var packets = require('../lib/net/packets');
 
 describe('Protocol', function() {
   var version = require('../package.json').version;
@@ -25,17 +26,17 @@ describe('Protocol', function() {
 
   function packetTest(command, payload, test) {
     it('should encode/decode ' + command, function(cb) {
-      var ver = new Buffer(framer[command](payload));
+      var ver = new Buffer(framer.packet(command, payload.toRaw()));
       parser.once('packet', function(packet) {
         assert.equal(packet.cmd, command);
-        test(packet.payload);
+        test(packet);
         cb();
       });
       parser.feed(ver);
     });
   }
 
-  var v1 = bcoin.packets.VersionPacket.fromOptions({
+  var v1 = packets.VersionPacket.fromOptions({
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: bcoin.now(),
@@ -54,7 +55,7 @@ describe('Protocol', function() {
     assert.equal(payload.relay, false);
   });
 
-  var v2 = bcoin.packets.VersionPacket.fromOptions({
+  var v2 = packets.VersionPacket.fromOptions({
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: bcoin.now(),
@@ -73,7 +74,7 @@ describe('Protocol', function() {
     assert.equal(payload.relay, true);
   });
 
-  packetTest('verack', {}, function(payload) {
+  packetTest('verack', new packets.VerackPacket(), function(payload) {
   });
 
   var hosts = [
@@ -91,19 +92,19 @@ describe('Protocol', function() {
     })
   ];
 
-  packetTest('addr', hosts, function(payload) {
-    assert.equal(typeof payload.length, 'number');
-    assert.equal(payload.length, 2);
+  packetTest('addr', new packets.AddrPacket(hosts), function(payload) {
+    assert.equal(typeof payload.items.length, 'number');
+    assert.equal(payload.items.length, 2);
 
-    assert.equal(typeof payload[0].ts, 'number');
-    assert.equal(payload[0].services, constants.LOCAL_SERVICES);
-    assert.equal(payload[0].host, hosts[0].host);
-    assert.equal(payload[0].port, hosts[0].port);
+    assert.equal(typeof payload.items[0].ts, 'number');
+    assert.equal(payload.items[0].services, constants.LOCAL_SERVICES);
+    assert.equal(payload.items[0].host, hosts[0].host);
+    assert.equal(payload.items[0].port, hosts[0].port);
 
-    assert.equal(typeof payload[1].ts, 'number');
-    assert.equal(payload[1].services, constants.LOCAL_SERVICES);
-    assert.equal(payload[1].host, hosts[1].host);
-    assert.equal(payload[1].port, hosts[1].port);
+    assert.equal(typeof payload.items[1].ts, 'number');
+    assert.equal(payload.items[1].services, constants.LOCAL_SERVICES);
+    assert.equal(payload.items[1].host, hosts[1].host);
+    assert.equal(payload.items[1].port, hosts[1].port);
   });
 
   it('should include the raw data of only one transaction in a ' +
@@ -209,12 +210,12 @@ describe('Protocol', function() {
     var p = new bcoin.reader(alertData);
     p.start();
     while (p.left()) {
-      var alert = bcoin.packets.AlertPacket.fromRaw(p);
+      var alert = packets.AlertPacket.fromRaw(p);
       assert(alert.verify(network.alertKey));
       alert._payload = null;
       alert._hash = null;
       var data = alert.toRaw();
-      alert = bcoin.packets.AlertPacket.fromRaw(data);
+      alert = packets.AlertPacket.fromRaw(data);
       assert(alert.verify(network.alertKey));
     }
     p.end();
