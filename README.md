@@ -187,7 +187,7 @@ var tchain = new bcoin.chain({
 
 var tmempool = new bcoin.mempool({
   network: 'segnet4',
-  chain: tchain'
+  chain: tchain
 });
 
 var tpool = new bcoin.pool({
