@@ -125,19 +125,37 @@ describe('Utils', function() {
     assert.equal(utils.readVarint2(b, 0).value, 255);
     assert.deepEqual(b, [0x80, 0x7f]);
 
+    var b = new Buffer(2);
+    b.fill(0x00);
+    utils.writeVarint2(b, 16383, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 16383);
+    assert.deepEqual(b, [0xfe, 0x7f]);
+
+    var b = new Buffer(2);
+    b.fill(0x00);
+    utils.writeVarint2(b, 16384, 0);
+    assert.equal(utils.readVarint2(b, 0).value, 16384);
+    assert.deepEqual(b, [0xff, 0x00]);
+
     var b = new Buffer(3);
     b.fill(0x00);
     utils.writeVarint2(b, 16511, 0);
     assert.equal(utils.readVarint2(b, 0).value, 16511);
-    //assert.deepEqual(b, [0x80, 0xff, 0x7f]);
+    // assert.deepEqual(b, [0x80, 0xff, 0x7f]);
     assert.deepEqual(b, [0xff, 0x7f, 0x00]);
 
     var b = new Buffer(3);
     b.fill(0x00);
     utils.writeVarint2(b, 65535, 0);
     assert.equal(utils.readVarint2(b, 0).value, 65535);
-    //assert.deepEqual(b, [0x82, 0xfd, 0x7f]);
+    // assert.deepEqual(b, [0x82, 0xfd, 0x7f]);
     assert.deepEqual(b, [0x82, 0xfe, 0x7f]);
+
+    var b = new Buffer(5);
+    b.fill(0x00);
+    utils.writeVarint2(b, Math.pow(2, 32), 0);
+    assert.equal(utils.readVarint2(b, 0).value, Math.pow(2, 32));
+    assert.deepEqual(b, [0x8e, 0xfe, 0xfe, 0xff, 0x00]);
   });
 
   var unsigned = [
