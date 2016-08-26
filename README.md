@@ -2,24 +2,23 @@
 
 **BCoin** is a bitcoin library which can also act as an SPV node or a full
 node. It is consensus aware and is up to date with the latest BIPs: it supports
-segregated witness, versionbits, and CSV. It also has preliminary support for
-bip151 (peer-to-peer encryption), bip152 (compact block relay), and bip114
-(MAST). It runs in node.js, but it can also be browserified.
+segregated witness, versionbits, CSV, and compact block relay. It also has
+preliminary support for bip151 (peer-to-peer encryption), bip150 (peer auth),
+and bip114 (MAST). It runs in node.js, but it can also be browserified.
 
 Try it in the browser: http://bcoin.io/browser.html
 
 ## Features
 
-- HD Wallets (using BIP44 derivation and accounts)
-- Fully browserifiable
-- Full block validation
-- Full block database
-- Fully validating mempool (stored in-memory or optionally on-disk)
-- Wallet database
-- HTTP server which acts as a wallet server and can also serve:
-  blocks, txs (by hash/address), and utxos (by id/address).
-- Full segregated witness support for block/tx validation and wallets.
-- Versionbits, CSV, BIP151, BIP152, MAST support.
+- Browserifiable
+- Full blockchain validation
+- Blockchain database
+- Mempool/Miner
+- Wallet system & wallet database (HD keys w/ bip44 derivation)
+- Bitcoind-compatible JSON rpc api
+- REST api
+- Support for: Versionbits, CSV, Segwit, BIP70, BIP151, BIP152, BIP150,
+  and MAST.
 - SPV mode
 
 ## Install
@@ -28,11 +27,12 @@ Try it in the browser: http://bcoin.io/browser.html
 $ git clone git://github.com/bcoin-org/bcoin.git
 $ cd bcoin
 $ npm install
+$ bcoin --fast
 ```
 
-The latest BCoin has not been published to NPM yet, as it is still under fairly
-heavy development (which may involve changing serialization formats for the
-database).
+Note that the latest BCoin has not been published to NPM yet, as it is still
+under fairly heavy development (which may involve changing serialization
+formats for the database).
 
 ## Documentation
 
@@ -40,13 +40,50 @@ Read the docs here: http://bcoin.io/docs/
 
 ## Example Usage
 
+- [CLI Usage](#cli-usage)
 - [Creating a blockchain and mempool](#creating-a-blockchain-and-mempool)
 - [Connecting to the P2P network](#connecting-to-the-p2p-network)
 - [Doing and SPV sync](#doing-an-spv-sync)
 - [High-level usage with the Node object](#high-level-usage-with-the-node-object)
 - [Running the default full node](#running-the-default-full-node)
 - [Running a full node in the browser](#running-a-full-node-in-the-browser)
-- [CLI Usage](#cli-usage)
+
+### CLI Usage
+
+``` bash
+$ export BCOIN_API_KEY=your-api-key
+
+# View the genesis block
+$ bcoin cli block 0
+
+# View the mempool
+$ bcoin cli mempool
+
+# View primary wallet
+$ bcoin cli wallet get
+
+# View transaction history
+$ bcoin cli wallet history
+
+# Send a transaction
+$ bcoin cli wallet send [address] 0.01
+
+# View balance
+$ bcoin cli wallet balance
+
+# Derive new address
+$ bcoin cli wallet address
+```
+
+#### RPC (bitcoind-like)
+
+``` bash
+$ bcoin rpc getblockchaininfo
+$ bcoin rpc getwalletinfo
+$ bcoin rpc getpeerinfo
+$ bcoin rpc getbalance
+$ bcoin rpc sendtoaddress [address] 0.01
+```
 
 ### Creating a blockchain and mempool
 
@@ -65,7 +102,7 @@ bcoin.set({
 // Start up a blockchain, mempool, and miner using in-memory
 // databases (stored in a red-black tree instead of on-disk).
 var chain = new bcoin.chain({ db: 'memory' });
-var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
+var mempool = new bcoin.mempool({ chain: chain });
 var miner = new bcoin.miner({ chain: chain, mempool: mempool });
 
 // Open the miner (initialize the databases, etc).
@@ -107,10 +144,10 @@ var bcoin = require('bcoin').set('main');
 var prefix = process.env.HOME + '/my-bcoin-environment';
 var chain = new bcoin.chain({ db: 'leveldb', location: prefix + '/chain' });
 
-var mempool = new bcoin.mempool({ chain: chain, db: 'memory' });
+var mempool = new bcoin.mempool({ chain: chain });
 
 // Create a network pool of peers with a limit of 8 peers.
-var pool = new bcoin.pool({ chain: chain, mempool: mempool, size: 8 });
+var pool = new bcoin.pool({ chain: chain, mempool: mempool, maxPeers: 8 });
 
 // Open the pool (implicitly opens mempool and chain).
 pool.open(function(err) {
@@ -150,8 +187,7 @@ var tchain = new bcoin.chain({
 
 var tmempool = new bcoin.mempool({
   network: 'segnet4',
-  chain: tchain,
-  db: 'memory'
+  chain: tchain'
 });
 
 var tpool = new bcoin.pool({
@@ -204,7 +240,7 @@ var chain = new bcoin.chain({
 var pool = new bcoin.pool({
   chain: chain,
   spv: true,
-  size: 8
+  maxPeers: 8
 });
 
 var walletdb = new bcoin.walletdb({ db: 'memory' });
@@ -279,7 +315,7 @@ node.open(function(err) {
     type: 'pubkeyhash'
   };
 
-  node.createWallet(options, function(err, wallet) {
+  node.walletdb.create(options, function(err, wallet) {
     if (err)
       throw err;
 
@@ -346,20 +382,13 @@ node.chain.on('full', function() {
 ### Running the default full node
 
 ``` bash
-$ node bin/node --fast
+$ bcoin --fast
 ```
 
 `--fast` will enable checkpoints, coin cache, and getheaders.
 
-Some environment variables are available for quick configuration:
-
-- `BCOIN_USE_WORKERS=1` - Enable workers for TX verification.
-- `BCOIN_SEED=[host]` - Use a preferred seed node to connect to.
-- `BCOIN_NETWORK=[network]` - Set the network (main, testnet, regtest, segnet3,
-  or segnet4).
-- `BCOIN_DB=[db-name]` - Default database backend (leveldb, rocksdb, lmdb,
-  memory).
-- `BCOIN_LOGLEVEL=[level]` - Default log level (debug, info, warning, error).
+Your config file should reside in `~/.bcoin/bcoin.conf`. See `etc/sample.conf`
+for an example.
 
 ### Running a full node in the browser
 
@@ -376,22 +405,6 @@ This is a simple proof-of-concept. It's not a pretty interface. I hope to see
 others doing something far more interesting. A browser extension may be better:
 the chrome extension API exposes raw TCP access.
 
-### CLI Usage
-
-``` bash
-$ BCOIN_NETWORK=segnet4 node bin/node
-# View the genesis block
-$ node bin/bcoin-cli block 0
-# View primary wallet
-$ node bin/bcoin-cli wallet primary
-# Send a tx
-$ node bin/bcoin-cli send primary [address] 0.01
-# View balance
-$ node bin/bcoin-cli balance primary
-# View the mempool
-$ node bin/bcoin-cli mempool
-```
-
 ## TX creation
 
 Normal transactions in bcoin are immutable. The primary TX object contains a
@@ -404,7 +417,7 @@ inherit from the TX object, but can also be signed and modified.
 ``` js
 var bcoin = require('bcoin');
 var assert = require('assert');
-var constants = bcoin.protocol.constants;
+var constants = bcoin.constants;
 
 // Create an HD master keypair with a mnemonic.
 var master = bcoin.hd.fromMnemonic();
@@ -476,7 +489,7 @@ Let's try it more realistically:
 ``` js
 var bcoin = require('bcoin');
 var assert = require('assert');
-var constants = bcoin.protocol.constants;
+var constants = bcoin.constants;
 
 var master = bcoin.hd.fromMnemonic();
 var key = master.derive('m/44/0/0/0/0');
@@ -689,31 +702,19 @@ bcoin, we now have a full node that will run on almost any browser, on laptops,
 on servers, on smartphones, on most devices you can imagine, even by simply
 visting a webpage.
 
-## LICENSE
+## Contribution and License Agreement
 
-This software is licensed under the MIT License.
+If you contribute code to this project, you are implicitly allowing your code
+to be distributed under the MIT license. You are also implicitly verifying that
+all code is your original work. `</legalese>`
 
-Copyright Fedor Indutny, 2014-2016.
-Copyright Christopher Jeffrey, 2014-2016.
+## License
 
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to permit
-persons to whom the Software is furnished to do so, subject to the
-following conditions:
+Copyright (c) 2014-2015, Fedor Indutny (MIT License).
 
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
+Copyright (c) 2014-2016, Christopher Jeffrey (MIT License).
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
+See LICENSE for more info.
 
 [v8]: https://www.youtube.com/watch?v=UJPdhx5zTaw
 [libsecp256k1]: https://github.com/bitcoin-core/secp256k1
