@@ -103,6 +103,17 @@ CLI.prototype.createAccount = function createAccount(callback) {
   });
 };
 
+CLI.prototype.createAddress = function createAddress(callback) {
+  var self = this;
+  var account = this.argv[0];
+  this.wallet.createAddress(account, function(err, account) {
+    if (err)
+      return callback(err);
+    self.log(account);
+    callback();
+  });
+};
+
 CLI.prototype.getAccounts = function getAccounts(callback) {
   var self = this;
   this.wallet.getAccounts(function(err, accounts) {
@@ -362,6 +373,16 @@ CLI.prototype.getDetails = function getDetails(callback) {
   });
 };
 
+CLI.prototype.retoken = function retoken(callback) {
+  var self = this;
+  this.wallet.retoken(function(err, result) {
+    if (err)
+      return callback(err);
+    self.log(result);
+    callback();
+  });
+};
+
 CLI.prototype.rpc = function rpc(callback) {
   var self = this;
   var method = this.argv.shift();
@@ -418,13 +439,21 @@ CLI.prototype.handleWallet = function handleWallet(callback) {
       case 'history':
         return self.getWalletHistory(callback);
       case 'account':
+        if (self.argv[0] === 'list') {
+          self.argv.shift();
+          return self.getAccounts(callback);
+        }
         if (self.argv[0] === 'create') {
           self.argv.shift();
           return self.createAccount(callback);
         }
+        if (self.argv[0] === 'get')
+          self.argv.shift();
         return self.getAccount(callback);
-      case 'accounts':
-        return self.getAccounts(callback);
+      case 'address':
+        return self.createAddress(callback);
+      case 'retoken':
+        return self.retoken(callback);
       case 'sign':
         return self.signTX(callback);
       case 'mktx':
@@ -440,30 +469,26 @@ CLI.prototype.handleWallet = function handleWallet(callback) {
       default:
         self.log('Unrecognized command.');
         self.log('Commands:');
-        self.log('  $ wallet [id] --keys [hdkeys]'
-          + ' --type [pubkeyhash/multisig] -m [m-value]'
-          + ' -n [n-value] --witness: View or create wallet by ID.');
-        self.log('  $ listen [id]: Listen for wallet events.');
-        self.log('  $ getwallet [id]: View wallet by ID.');
-        self.log('  $ addkey [id] --keys [hdkeys]: Add keys to wallet.');
-        self.log('  $ rmkey [id] --keys [hdkeys]: Remove keys from wallet.');
-        self.log('  $ balance [id]: Get wallet balance.');
-        self.log('  $ history [id]: View wallet TX history.');
-        self.log('  $ accounts [id]: List account names.');
-        self.log('  $ account [id] [acct]: Get account details.');
-        self.log('  $ send [id] [address] [value] --script [code]: Send transaction.');
-        self.log('  $ create [id] [address] [value] --script [code]: Create transaction.');
-        self.log('  $ sign [id] [tx-hex]: Sign transaction.');
-        self.log('  $ zap [id] --age [age]: Zap pending wallet TXs.');
-        self.log('  $ broadcast [tx-hex]: Broadcast transaction.');
-        self.log('  $ view [tx-hex]: View transaction.');
-        self.log('  $ mempool: Get mempool snapshot.');
-        self.log('  $ tx [hash/address]: View transactions.');
-        self.log('  $ coin [hash+index/address]: View coins.');
-        self.log('  $ block [hash/height]: View block.');
+        self.log('  $ listen: Listen for events.');
+        self.log('  $ get: View wallet.');
+        self.log('  $ addkey [xpubkey]: Add key to wallet.');
+        self.log('  $ rmkey [xpubkey]: Remove key from wallet.');
+        self.log('  $ balance: Get wallet balance.');
+        self.log('  $ history: View wallet TX history.');
+        self.log('  $ account list: List account names.');
+        self.log('  $ account create [account-name]: Create account.');
+        self.log('  $ account get [account-name]: Get account details.');
+        self.log('  $ address: Derive new address.');
+        self.log('  $ retoken: Create new api key.');
+        self.log('  $ send [address] [value]: Send transaction.');
+        self.log('  $ mktx [address] [value]: Create transaction.');
+        self.log('  $ sign [tx-hex]: Sign transaction.');
+        self.log('  $ zap --age [age]: Zap pending wallet TXs.');
+        self.log('  $ tx [hash]: View transaction details.');
+        self.log('  $ view [tx-hex]: Parse and view transaction.');
         self.log('Other Options:');
         self.log('  --passphrase [passphrase]: For signing and account creation.');
-        self.log('  --account [acctname]: Account name.');
+        self.log('  --account [account-name]: Account name.');
         return callback();
     }
   });
@@ -500,30 +525,12 @@ CLI.prototype.handleNode = function handleNode(callback) {
       default:
         self.log('Unrecognized command.');
         self.log('Commands:');
-        self.log('  $ wallet [id] --keys [hdkeys]'
-          + ' --type [pubkeyhash/multisig] -m [m-value]'
-          + ' -n [n-value] --witness: View or create wallet by ID.');
-        self.log('  $ listen [id]: Listen for wallet events.');
-        self.log('  $ getwallet [id]: View wallet by ID.');
-        self.log('  $ addkey [id] --keys [hdkeys]: Add keys to wallet.');
-        self.log('  $ rmkey [id] --keys [hdkeys]: Remove keys from wallet.');
-        self.log('  $ balance [id]: Get wallet balance.');
-        self.log('  $ history [id]: View wallet TX history.');
-        self.log('  $ accounts [id]: List account names.');
-        self.log('  $ account [id] [acct]: Get account details.');
-        self.log('  $ send [id] [address] [value] --script [code]: Send transaction.');
-        self.log('  $ create [id] [address] [value] --script [code]: Create transaction.');
-        self.log('  $ sign [id] [tx-hex]: Sign transaction.');
-        self.log('  $ zap [id] --age [age]: Zap pending wallet TXs.');
+        self.log('  $ wallet create [id]: Create wallet.');
         self.log('  $ broadcast [tx-hex]: Broadcast transaction.');
-        self.log('  $ view [tx-hex]: View transaction.');
         self.log('  $ mempool: Get mempool snapshot.');
         self.log('  $ tx [hash/address]: View transactions.');
         self.log('  $ coin [hash+index/address]: View coins.');
         self.log('  $ block [hash/height]: View block.');
-        self.log('Other Options:');
-        self.log('  --passphrase [passphrase]: For signing and account creation.');
-        self.log('  --account [acctname]: Account name.');
         return callback();
     }
   });
