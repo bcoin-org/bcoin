@@ -43,7 +43,7 @@ Read the docs here: http://bcoin.io/docs/
 - [CLI Usage](#cli-usage)
 - [Creating a blockchain and mempool](#creating-a-blockchain-and-mempool)
 - [Connecting to the P2P network](#connecting-to-the-p2p-network)
-- [Doing and SPV sync](#doing-an-spv-sync)
+- [Doing an SPV sync](#doing-an-spv-sync)
 - [High-level usage with the Node object](#high-level-usage-with-the-node-object)
 - [Running the default full node](#running-the-default-full-node)
 - [Running a full node in the browser](#running-a-full-node-in-the-browser)
