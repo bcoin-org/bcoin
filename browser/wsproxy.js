@@ -143,10 +143,6 @@ module.exports = function wsproxy(options) {
       ws.on('disconnect', function() {
         socket.destroy();
       });
-
-      ws.on('close', function() {
-        socket.destroy();
-      });
     });
   });
 
