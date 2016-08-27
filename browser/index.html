@@ -234,25 +234,34 @@ more bitcoin magic).</small>
     html += 'Extended Private Key: <b>' + key.xprivkey + '</b><br>';
     html += 'Mnemonic: <b>' + key.mnemonic.phrase + '</b><br>';
     wallet.getBalance(function(err, balance) {
-      if (balance) {
-        html += 'Confirmed Balance: <b>' + utils.btc(balance.confirmed) + '</b><br>';
-        html += 'Unconfirmed Balance: <b>' + utils.btc(balance.unconfirmed) + '</b><br>';
-        html += 'Balance: <b>' + utils.btc(balance.total) + '</b><br>';
-      }
+      if (err)
+        throw err;
+
+      html += 'Confirmed Balance: <b>' + utils.btc(balance.confirmed) + '</b><br>';
+      html += 'Unconfirmed Balance: <b>' + utils.btc(balance.unconfirmed) + '</b><br>';
+      html += 'Balance: <b>' + utils.btc(balance.total) + '</b><br>';
+
       wallet.getHistory(function(err, txs) {
-        html += 'TXs:\n';
-        wdiv.innerHTML = html;
-        if (txs) {
+        if (err)
+          throw err;
+
+        wallet.toDetails(txs, function(err, txs) {
+          if (err)
+            throw err;
+
+          html += 'TXs:\n';
+          wdiv.innerHTML = html;
+
           txs.forEach(function(tx) {
-            var el = create('<a style="display:block;" href="#' + tx.rhash + '">' + tx.rhash + '</a>');
+            var el = create('<a style="display:block;" href="#' + tx.hash + '">' + tx.hash + '</a>');
             wdiv.appendChild(el);
             el.onmouseup = function(ev) {
-              show(tx);
+              show(tx.toJSON());
               ev.stopPropagation();
               return false;
             };
           });
-        }
+        });
       });
     });
   }
