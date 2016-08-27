@@ -105,7 +105,7 @@ more bitcoin magic).</small>
   var newaddr = document.getElementById('newaddr');
   var items = [];
   var scrollback = 0;
-  var logger, node;
+  var logger, node, options;
 
   body.onmouseup = function() {
     floating.style.display = 'none';
@@ -257,32 +257,17 @@ more bitcoin magic).</small>
     });
   }
 
-  var query = (function() {
-    var query = {};
-    var search = (window.location.search + '').substring(1);
-    var s = search.split('&');
-    var i, parts;
-
-    for (i = 0; i < s.length; i++) {
-      parts = s[i].split('=');
-      if (parts[0])
-        query[parts[0]] = parts[1];
-    }
-
-    return query;
-  })();
-
-  bcoin.set({
-    network: query.network || 'segnet4',
-    useWorkers: true
+  options = bcoin.config({
+    query: true,
+    network: 'segnet4',
+    useWorkers: true,
+    coinCache: true,
+    logger: logger
   });
 
-  node = new bcoin.fullnode({
-    prune: query.prune === 'true' || query.prune === '1',
-    logger: logger,
-    db: query.db || 'leveldb',
-    coinCache: true
-  });
+  bcoin.set(options);
+
+  node = new bcoin.fullnode(options);
 
   node.on('error', function(err) {
     ;
