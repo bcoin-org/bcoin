@@ -73,6 +73,12 @@ $ bcoin cli wallet balance
 
 # Derive new address
 $ bcoin cli wallet address
+
+# Create a new account
+$ bcoin cli wallet account create foo
+
+# Send from account
+$ bcoin cli wallet send [address] 0.01 --account=foo
 ```
 
 #### RPC (bitcoind-like)
@@ -82,6 +88,7 @@ $ bcoin rpc getblockchaininfo
 $ bcoin rpc getwalletinfo
 $ bcoin rpc getpeerinfo
 $ bcoin rpc getbalance
+$ bcoin rpc listtransactions
 $ bcoin rpc sendtoaddress [address] 0.01
 ```
 
