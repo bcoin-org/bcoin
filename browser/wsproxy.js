@@ -183,7 +183,7 @@ function SocketState(server, socket) {
   this.target = server.target;
   this.snonce = utils.nonce(true);
   this.socket = null;
-  this.host = socket.conn.remoteAddress;
+  this.host = IP.normalize(socket.conn.remoteAddress);
   this.remoteHost = null;
 }
 
