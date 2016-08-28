@@ -79,7 +79,8 @@ connecting to the actual bitcoin P2P network via a websocket-&gt;tcp proxy.
 Enjoy. (See the <a href="https://github.com/bcoin-org/bcoin">bcoin repo</a> for
 more bitcoin magic).</small>
 <div class="tx">
-  Last 20 Blocks/TXs:
+  <div>Chain State: <span id="state"></span></div>
+  <div>Last 20 Blocks/TXs:</div>
   <div id="tx"></div>
 </div>
 <div id="log" class="log"></div>
@@ -103,6 +104,7 @@ more bitcoin magic).</small>
   var floating = document.getElementById('floating');
   var send = document.getElementById('send');
   var newaddr = document.getElementById('newaddr');
+  var chainState = document.getElementById('state');
   var items = [];
   var scrollback = 0;
   var logger, node, options;
@@ -219,6 +221,11 @@ more bitcoin magic).</small>
     };
 
     items.push(el);
+
+    chainState.innerHTML = ''
+      + 'tx=' + node.chain.db.state.tx
+      + ' coin=' + node.chain.db.state.coin
+      + ' value=' + utils.btc(node.chain.db.state.value);
   }
 
   function formatWallet(wallet) {
