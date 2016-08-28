@@ -1,11 +1,17 @@
 'use strict';
 
 var HTTPBase = require('../lib/http/base');
+var WSProxy = require('./wsproxy');
 var fs = require('fs');
 
 var server = new HTTPBase();
-var proxy = require('./wsproxy')({
-  pow: process.argv.indexOf('--pow') !== -1
+var proxy = new WSProxy({
+  pow: process.argv.indexOf('--pow') !== -1,
+  ports: [8333, 18333, 18444, 28333, 28901]
+});
+
+proxy.on('error', function(err) {
+  console.error(err.stack + '');
 });
 
 var index = fs.readFileSync(__dirname + '/index.html');
