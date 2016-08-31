@@ -28,3 +28,4 @@ Todo before release. Excuse the mess.
   - listaddressgroupings
   - importaddress (maybe)
 - rename cost to weight.
+- man pages
