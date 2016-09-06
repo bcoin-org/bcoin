@@ -2,6 +2,7 @@
 
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var assert = require('assert');
 

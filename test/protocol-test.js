@@ -5,6 +5,7 @@ var assert = require('assert');
 var constants = bcoin.constants;
 var network = bcoin.network.get();
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var fs = require('fs');
 var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
 var NetworkAddress = bcoin.packets.NetworkAddress;

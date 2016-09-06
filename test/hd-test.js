@@ -3,6 +3,7 @@
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
@@ -90,7 +91,7 @@ describe('HD', function() {
   var master, child1, child2, child3, child4, child5, child6;
 
   it('should create a pbkdf2 seed', function() {
-    var checkSeed = bcoin.utils.pbkdf2Sync(
+    var checkSeed = crypto.pbkdf2Sync(
       phrase, 'mnemonic' + 'foo', 2048, 64, 'sha512').toString('hex');
     assert.equal(checkSeed, seed);
   });

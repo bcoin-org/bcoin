@@ -4,6 +4,7 @@ var bn = require('bn.js');
 var bcoin = require('../').set('regtest');
 var constants = bcoin.constants;
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
 

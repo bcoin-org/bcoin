@@ -2,13 +2,14 @@
 
 var bn = require('bn.js');
 var utils = require('../lib/utils/utils');
+var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var aes = require('../lib/crypto/aes');
-var crypto = require('crypto');
+var nativeCrypto = require('crypto');
 
 describe('AES', function() {
   function pbkdf2key(passphrase, iterations, dkLen, ivLen, alg) {
-    var key = utils.pbkdf2Sync(passphrase, '', iterations, dkLen + ivLen, 'sha512');
+    var key = crypto.pbkdf2Sync(passphrase, '', iterations, dkLen + ivLen, 'sha512');
     return {
       key: key.slice(0, dkLen),
       iv: key.slice(dkLen, dkLen + ivLen)
@@ -18,7 +19,7 @@ describe('AES', function() {
   function nencrypt(data, passphrase) {
     var key, cipher;
 
-    assert(crypto, 'No crypto module available.');
+    assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
@@ -28,7 +29,7 @@ describe('AES', function() {
       passphrase = new Buffer(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
-    cipher = crypto.createCipheriv('aes-256-cbc', key.key, key.iv);
+    cipher = nativeCrypto.createCipheriv('aes-256-cbc', key.key, key.iv);
 
     return Buffer.concat([
       cipher.update(data),
@@ -39,7 +40,7 @@ describe('AES', function() {
   function ndecrypt(data, passphrase) {
     var key, decipher;
 
-    assert(crypto, 'No crypto module available.');
+    assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
@@ -49,7 +50,7 @@ describe('AES', function() {
       passphrase = new Buffer(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
-    decipher = crypto.createDecipheriv('aes-256-cbc', key.key, key.iv);
+    decipher = nativeCrypto.createDecipheriv('aes-256-cbc', key.key, key.iv);
 
     return Buffer.concat([
       decipher.update(data),
@@ -60,7 +61,7 @@ describe('AES', function() {
   function encrypt(data, passphrase) {
     var key, cipher;
 
-    assert(crypto, 'No crypto module available.');
+    assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
@@ -77,7 +78,7 @@ describe('AES', function() {
   function decrypt(data, passphrase) {
     var key, decipher;
 
-    assert(crypto, 'No crypto module available.');
+    assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
@@ -92,11 +93,11 @@ describe('AES', function() {
   }
 
   it('should encrypt and decrypt a hash with 2 blocks', function() {
-    var hash = utils.sha256(new Buffer([]));
+    var hash = crypto.sha256(new Buffer([]));
     var enchash = encrypt(hash, 'foo');
     var dechash = decrypt(enchash, 'foo');
 
-    var hash2 = utils.sha256(new Buffer([]));
+    var hash2 = crypto.sha256(new Buffer([]));
     var enchash2 = nencrypt(hash2, 'foo');
     var dechash2 = ndecrypt(enchash2, 'foo');
 
@@ -106,11 +107,11 @@ describe('AES', function() {
   });
 
   it('should encrypt and decrypt a hash with uneven blocks', function() {
-    var hash = Buffer.concat([utils.sha256(new Buffer([])), new Buffer([1,2,3])]);
+    var hash = Buffer.concat([crypto.sha256(new Buffer([])), new Buffer([1,2,3])]);
     var enchash = encrypt(hash, 'foo');
     var dechash = decrypt(enchash, 'foo');
 
-    var hash2 = Buffer.concat([utils.sha256(new Buffer([])), new Buffer([1,2,3])]);
+    var hash2 = Buffer.concat([crypto.sha256(new Buffer([])), new Buffer([1,2,3])]);
     var enchash2 = nencrypt(hash2, 'foo');
     var dechash2 = ndecrypt(enchash2, 'foo');
 

@@ -4,6 +4,7 @@ var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var assert = require('assert');
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var schnorr = require('../lib/crypto/schnorr');
 
 describe('Utils', function() {
@@ -243,8 +244,8 @@ describe('Utils', function() {
     salt = new Buffer(salt, 'hex');
     info = new Buffer(info, 'hex');
 
-    var prk = utils.hkdfExtract(ikm, salt, 'sha256');
-    var okm = utils.hkdfExpand(prk, info, len, 'sha256');
+    var prk = crypto.hkdfExtract(ikm, salt, 'sha256');
+    var okm = crypto.hkdfExpand(prk, info, len, 'sha256');
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);
@@ -285,8 +286,8 @@ describe('Utils', function() {
     salt = new Buffer(salt, 'hex');
     info = new Buffer(info, 'hex');
 
-    var prk = utils.hkdfExtract(ikm, salt, 'sha256');
-    var okm = utils.hkdfExpand(prk, info, len, 'sha256');
+    var prk = crypto.hkdfExtract(ikm, salt, 'sha256');
+    var okm = crypto.hkdfExpand(prk, info, len, 'sha256');
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);
@@ -295,7 +296,7 @@ describe('Utils', function() {
   it('should do proper schnorr', function() {
     var key = bcoin.ec.generatePrivateKey();
     var pub = bcoin.ec.publicKeyCreate(key, true);
-    var msg = utils.hash256(new Buffer('foo', 'ascii'));
+    var msg = crypto.hash256(new Buffer('foo', 'ascii'));
     var sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
     assert.deepEqual(schnorr.recover(sig, msg), pub);

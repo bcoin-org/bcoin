@@ -4,6 +4,7 @@ var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var assert = require('assert');
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var opcodes = bcoin.constants.opcodes;
 var valid = require('./data/tx_valid.json');
@@ -305,7 +306,7 @@ describe('TX', function() {
   });
 
   function createInput(value) {
-    var hash = bcoin.ec.random(32).toString('hex');
+    var hash = crypto.randomBytes(32).toString('hex');
     return {
       prevout: {
         hash: hash,

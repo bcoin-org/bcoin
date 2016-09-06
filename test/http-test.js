@@ -5,6 +5,7 @@ var bcoin = require('../').set('regtest');
 var constants = bcoin.constants;
 var network = bcoin.networks;
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 

@@ -3,6 +3,7 @@
 var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var mnemonic1 = require('./data/mnemonic1').english;
 var mnemonic2 = require('./data/mnemonic2');

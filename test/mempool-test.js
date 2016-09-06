@@ -4,6 +4,7 @@ var bn = require('bn.js');
 var bcoin = require('../').set('main');
 var constants = bcoin.constants;
 var utils = bcoin.utils;
+var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
 
@@ -167,7 +168,7 @@ describe('Mempool', function() {
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
     var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
-    var prevHash = bcoin.ec.random(32).toString('hex');
+    var prevHash = crypto.randomBytes(32).toString('hex');
     var dummyInput = {
       prevout: {
         hash: prevHash,
@@ -202,7 +203,7 @@ describe('Mempool', function() {
     // Coinbase
     var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
     var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
-    var prevHash = bcoin.ec.random(32).toString('hex');
+    var prevHash = crypto.randomBytes(32).toString('hex');
     var dummyInput = {
       prevout: {
         hash: prevHash,
