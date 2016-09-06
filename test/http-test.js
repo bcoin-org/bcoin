@@ -183,6 +183,7 @@ describe('HTTP', function() {
 
   it('should cleanup', function(cb) {
     constants.tx.COINBASE_MATURITY = 100;
+    wallet.close();
     node.close(cb);
   });
 });
