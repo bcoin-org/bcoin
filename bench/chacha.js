@@ -38,8 +38,8 @@ for (var i = 0; i < 1000000; i++) {
 end(i * 32 / 1024);
 
 // For reference:
-var utils = require('../lib/bcoin/utils');
+var crypto = require('../lib/crypto/crypto');
 var end = bench('sha256');
 for (var i = 0; i < 1000000; i++)
-  utils.hash256(data);
+  crypto.hash256(data);
 end(i * 32 / 1024);
