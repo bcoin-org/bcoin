@@ -102,6 +102,13 @@ var segnet4 = createGenesisBlock({
   nonce: 0
 });
 
+var btcd = createGenesisBlock({
+  version: 1,
+  ts: 1401292357,
+  bits: 545259519,
+  nonce: 2
+});
+
 utils.log(main);
 utils.log('');
 utils.log(testnet);
@@ -127,3 +134,6 @@ utils.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
 utils.log('');
 utils.log('segnet4 hash: %s', segnet4.rhash);
 utils.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
+utils.log('');
+utils.log('btcd simnet hash: %s', btcd.rhash);
+utils.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));
