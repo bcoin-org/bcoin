@@ -40,7 +40,7 @@
     "elliptic": "6.3.1"
   },
   "optionalDependencies": {
-    "leveldown": "git://github.com/chjj/leveldown.git#staging",
+    "leveldown": "git://github.com/Level/leveldown.git#leveldb-1.19",
     "secp256k1": "3.2.0",
     "socket.io": "1.4.8",
     "socket.io-client": "1.4.8",
