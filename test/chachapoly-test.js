@@ -50,7 +50,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
 
     var aead = new AEAD();
     aead.init(key, nonce);
-    assert.equal(aead.chacha20.state[12], 1);
+    assert.equal(aead.chacha20.getCounter(), 1);
     assert.deepEqual(aead.polyKey, pk);
     aead.aad(aad);
     var plainenc = new Buffer(plain);
@@ -60,7 +60,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
 
     var aead = new AEAD();
     aead.init(key, nonce);
-    assert.equal(aead.chacha20.state[12], 1);
+    assert.equal(aead.chacha20.getCounter(), 1);
     assert.deepEqual(aead.polyKey, pk);
     aead.aad(aad);
     aead.decrypt(ciphertext);

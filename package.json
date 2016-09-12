@@ -40,11 +40,11 @@
     "elliptic": "6.3.1"
   },
   "optionalDependencies": {
+    "bcoin-native": "0.0.2",
     "leveldown": "git://github.com/Level/leveldown.git#leveldb-1.19",
     "secp256k1": "3.2.0",
     "socket.io": "1.4.8",
-    "socket.io-client": "1.4.8",
-    "supersha": "0.0.1"
+    "socket.io-client": "1.4.8"
   },
   "devDependencies": {
     "browserify": "13.1.0",
@@ -67,7 +67,7 @@
     "child_process": "./browser/empty.js",
     "os": "./browser/empty.js",
     "net": "./browser/empty.js",
-    "supersha": "./browser/empty.js",
+    "bcoin-native": "./browser/empty.js",
     "secp256k1": "./browser/empty.js"
   }
 }
