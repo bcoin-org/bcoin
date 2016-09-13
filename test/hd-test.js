@@ -91,7 +91,7 @@ describe('HD', function() {
   var master, child1, child2, child3, child4, child5, child6;
 
   it('should create a pbkdf2 seed', function() {
-    var checkSeed = crypto.pbkdf2Sync(
+    var checkSeed = crypto.pbkdf2(
       phrase, 'mnemonic' + 'foo', 2048, 64, 'sha512').toString('hex');
     assert.equal(checkSeed, seed);
   });

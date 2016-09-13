@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var scrypt = require('../lib/crypto/scrypt');
+var scrypt = require('../lib/crypto/crypto').scrypt;
 
 describe('Scrypt', function() {
   it('should perform scrypt with N=16', function() {
@@ -13,7 +13,7 @@ describe('Scrypt', function() {
   });
 
   it('should perform scrypt with N=1024', function() {
-    var result = scrypt('password', 'NaCl', 1024, 8, 16, 64)
+    var result = scrypt('password', 'NaCl', 1024, 8, 16, 64);
     assert.equal(result.toString('hex'), ''
       + 'fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e773'
       + '76634b3731622eaf30d92e22a3886ff109279d9830dac727afb9'

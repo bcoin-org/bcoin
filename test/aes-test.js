@@ -9,7 +9,7 @@ var nativeCrypto = require('crypto');
 
 describe('AES', function() {
   function pbkdf2key(passphrase, iterations, dkLen, ivLen, alg) {
-    var key = crypto.pbkdf2Sync(passphrase, '', iterations, dkLen + ivLen, 'sha512');
+    var key = crypto.pbkdf2(passphrase, '', iterations, dkLen + ivLen, 'sha512');
     return {
       key: key.slice(0, dkLen),
       iv: key.slice(dkLen, dkLen + ivLen)
