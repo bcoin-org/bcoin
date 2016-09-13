@@ -162,7 +162,7 @@ describe('TX', function() {
         '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
       assert.equal(wtx.getSize(), 62138);
       assert.equal(wtx.getVirtualSize(), 61813);
-      assert.equal(wtx.getCost(), 247250);
+      assert.equal(wtx.getWeight(), 247250);
       var raw1 = wtx.toRaw();
       clearCache(wtx, true);
       var raw2 = wtx.toRaw();

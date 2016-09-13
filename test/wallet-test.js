@@ -440,7 +440,7 @@ describe('Wallet', function() {
 
               assert.equal(t2.getFee(), 5250);
 
-              assert.equal(t2.getCost(), 2084);
+              assert.equal(t2.getWeight(), 2084);
               assert.equal(t2.getBaseSize(), 521);
               assert.equal(t2.getSize(), 521);
               assert.equal(t2.getVirtualSize(), 521);

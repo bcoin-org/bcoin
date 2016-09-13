@@ -143,7 +143,7 @@ describe('Block', function() {
     assert(block.txs[0].isCoinbase());
     assert(block.txs[0].isSane());
     assert(!block.hasWitness());
-    assert.equal(block.getCost(), 1136924);
+    assert.equal(block.getWeight(), 1136924);
     var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
     for (var i = 1; i < block.txs.length; i++) {
       var tx = block.txs[i];
