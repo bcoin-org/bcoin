@@ -105,7 +105,7 @@ describe('BIP151', function() {
     });
 
     // Force a rekey after 1gb processed.
-    client.output.maybeRekey({ length: 1024 * (1 << 20) });
+    client.maybeRekey({ length: 1024 * (1 << 20) });
 
     assert(rekeyed);
 
