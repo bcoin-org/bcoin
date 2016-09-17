@@ -14,6 +14,8 @@ var bip152 = require('../lib/net/bip152');
 var cmpct2 = fs.readFileSync(__dirname + '/data/cmpct2', 'utf8').trim();
 var cmpct2block = fs.readFileSync(__dirname + '/data/cmpct2.bin');
 
+bcoin.cache();
+
 describe('Block', function() {
   var mblock = bcoin.merkleblock({
     version: 2,
@@ -66,10 +68,10 @@ describe('Block', function() {
     assert.equal(mblock.rhash,
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
     assert.equal(
-      mblock.matches[0],
+      mblock.matches[0].toString('hex'),
       '7393f84cd04ca8931975c66282ebf1847c78d8de6c2578d4f9bae23bc6f30857');
     assert.equal(
-      mblock.matches[1],
+      mblock.matches[1].toString('hex'),
       'ec8c51de3170301430ec56f6703533d9ea5b05c6fa7068954bcb90eed8c2ee5c');
   });
 
