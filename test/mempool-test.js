@@ -28,12 +28,16 @@ describe('Mempool', function() {
     verify: true
   });
 
-  var w;
+  var w, cached;
 
   mempool.on('error', function() {});
 
   it('should open mempool', function(cb) {
-    mempool.open(cb);
+    mempool.open(function(err) {
+      assert.ifError(err);
+      chain.state.flags |= constants.flags.VERIFY_WITNESS;
+      cb();
+    });
   });
 
   it('should open walletdb', function(cb) {
@@ -229,6 +233,169 @@ describe('Mempool', function() {
     mempool.addTX(t1, function(err) {
       chain.tip.height = 0;
       assert(err);
+      cb();
+    });
+  });
+
+  it('should not cache a malleated wtx with mutated sig', function(cb) {
+    var kp = bcoin.keyring.generate();
+    kp.witness = true;
+    // Coinbase
+    var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
+    var prev = new bcoin.script([0, kp.keyHash]);
+    var prevHash = crypto.randomBytes(32).toString('hex');
+    var dummyInput = {
+      prevout: {
+        hash: prevHash,
+        index: 0
+      },
+      coin: {
+        version: 1,
+        height: 0,
+        value: 70000,
+        script: prev,
+        coinbase: false,
+        hash: prevHash,
+        index: 0
+      },
+      script: new bcoin.script([]),
+      sequence: 0xffffffff
+    };
+    t1.addInput(dummyInput);
+    var prevs = bcoin.script.fromPubkeyhash(kp.keyHash);
+    var sig = new bcoin.witness([t1.signature(0, prevs, kp.privateKey, 'all', 1), kp.publicKey]);
+    var sig2 = new bcoin.witness([t1.signature(0, prevs, kp.privateKey, 'all', 1), kp.publicKey]);
+    sig2.items[0][sig2.items[0].length - 1] = 0;
+    t1.inputs[0].witness = sig2;
+    var tx = t1.toTX();
+    mempool.addTX(tx, function(err) {
+      assert(err);
+      assert(!mempool.hasReject(tx.hash()));
+      cb();
+    });
+  });
+
+  it('should not cache a malleated tx with unnecessary witness', function(cb) {
+    var kp = bcoin.keyring.generate();
+    // Coinbase
+    var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
+    var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    var prevHash = crypto.randomBytes(32).toString('hex');
+    var dummyInput = {
+      prevout: {
+        hash: prevHash,
+        index: 0
+      },
+      coin: {
+        version: 1,
+        height: 0,
+        value: 70000,
+        script: prev,
+        coinbase: false,
+        hash: prevHash,
+        index: 0
+      },
+      script: new bcoin.script([]),
+      sequence: 0xffffffff
+    };
+    t1.addInput(dummyInput);
+    t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
+    t1.inputs[0].witness.push(new Buffer(0));
+    var tx = t1.toTX();
+    mempool.addTX(tx, function(err) {
+      assert(err);
+      assert(!mempool.hasReject(tx.hash()));
+      cb();
+    });
+  });
+
+  it('should not cache a malleated wtx with wit removed', function(cb) {
+    var kp = bcoin.keyring.generate();
+    kp.witness = true;
+    // Coinbase
+    var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
+    var prev = new bcoin.script([0, kp.keyHash]);
+    var prevHash = crypto.randomBytes(32).toString('hex');
+    var dummyInput = {
+      prevout: {
+        hash: prevHash,
+        index: 0
+      },
+      coin: {
+        version: 1,
+        height: 0,
+        value: 70000,
+        script: prev,
+        coinbase: false,
+        hash: prevHash,
+        index: 0
+      },
+      script: new bcoin.script([]),
+      sequence: 0xffffffff
+    };
+    t1.addInput(dummyInput);
+    var tx = t1.toTX();
+    mempool.addTX(tx, function(err) {
+      assert(err);
+      assert(err.malleated);
+      assert(!mempool.hasReject(tx.hash()));
+      cb();
+    });
+  });
+
+  it('should cache non-malleated tx without sig', function(cb) {
+    var kp = bcoin.keyring.generate();
+    // Coinbase
+    var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 10000); // 10000 instead of 1000
+    var prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    var prevHash = crypto.randomBytes(32).toString('hex');
+    var dummyInput = {
+      prevout: {
+        hash: prevHash,
+        index: 0
+      },
+      coin: {
+        version: 1,
+        height: 0,
+        value: 70000,
+        script: prev,
+        coinbase: false,
+        hash: prevHash,
+        index: 0
+      },
+      script: new bcoin.script([]),
+      sequence: 0xffffffff
+    };
+    t1.addInput(dummyInput);
+    var tx = t1.toTX();
+    mempool.addTX(tx, function(err) {
+      assert(err);
+      assert(!err.malleated);
+      assert(mempool.hasReject(tx.hash()));
+      cached = tx;
+      cb();
+    });
+  });
+
+  it('should clear reject cache', function(cb) {
+    var t1 = bcoin.mtx().addOutput(w, 50000);
+    var dummyInput = {
+      prevout: {
+        hash: constants.NULL_HASH,
+        index: 0xffffffff
+      },
+      coin: null,
+      script: new bcoin.script(),
+      sequence: 0xffffffff
+    };
+    t1.addInput(dummyInput);
+    var tx = t1.toTX();
+    var block = new bcoin.block();
+    block.txs.push(tx);
+    assert(mempool.hasReject(cached.hash()));
+    mempool.addBlock(block, function(err) {
+      assert(!err);
+      assert(!mempool.hasReject(cached.hash()));
       cb();
     });
   });
