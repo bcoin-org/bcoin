@@ -32,10 +32,16 @@ process.on('uncaughtException', function(err) {
   process.exit(1);
 });
 
-node.open(function(err) {
-  if (err)
-    throw err;
+process.on('unhandledRejection', function(err, promise) {
+  node.logger.debug('Unhandled Rejection');
+  node.logger.debug(err.stack);
+  node.logger.error(err);
+  process.exit(1);
+});
 
+node.open().then(function() {
   node.pool.connect();
   node.startSync();
+}).catch(function(e) {
+  throw e;
 });

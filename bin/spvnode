@@ -25,10 +25,7 @@ node.on('error', function(err) {
   ;
 });
 
-node.open(function(err) {
-  if (err)
-    throw err;
-
+node.open().then(function() {
   if (process.argv.indexOf('--test') !== -1) {
     node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
     node.pool.watch(bcoin.outpoint().toRaw());
@@ -40,4 +37,6 @@ node.open(function(err) {
   }
 
   node.startSync();
+}).catch(function(err) {
+  throw err;
 });

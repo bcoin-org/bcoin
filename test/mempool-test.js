@@ -8,6 +8,22 @@ var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
 
+function c(p, cb) {
+  var called = false;
+  p.then(function(result) {
+    called = true;
+    cb(null, result);
+  }).catch(function(err) {
+    if (called) {
+      utils.nextTick(function() {
+        throw err;
+      });
+      return;
+    }
+    cb(err);
+  });
+}
+
 describe('Mempool', function() {
   this.timeout(5000);
 
@@ -33,7 +49,7 @@ describe('Mempool', function() {
   mempool.on('error', function() {});
 
   it('should open mempool', function(cb) {
-    mempool.open(function(err) {
+    c(mempool.open(), function(err) {
       assert.ifError(err);
       chain.state.flags |= constants.flags.VERIFY_WITNESS;
       cb();
@@ -41,11 +57,11 @@ describe('Mempool', function() {
   });
 
   it('should open walletdb', function(cb) {
-    walletdb.open(cb);
+    c(walletdb.open(), cb);
   });
 
   it('should open wallet', function(cb) {
-    walletdb.create({}, function(err, wallet) {
+    c(walletdb.create({}), function(err, wallet) {
       assert.ifError(err);
       w = wallet;
       cb();
@@ -78,21 +94,21 @@ describe('Mempool', function() {
     t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
 
     // balance: 51000
-    w.sign(t1, function(err, total) {
+    c(w.sign(t1), function(err, total) {
       assert.ifError(err);
       t1 = t1.toTX();
       var t2 = bcoin.mtx().addInput(t1, 0) // 50000
                          .addOutput(w, 20000)
                          .addOutput(w, 20000);
       // balance: 49000
-      w.sign(t2, function(err, total) {
+      c(w.sign(t2), function(err, total) {
         assert.ifError(err);
         t2 = t2.toTX();
         var t3 = bcoin.mtx().addInput(t1, 1) // 10000
                            .addInput(t2, 0) // 20000
                            .addOutput(w, 23000);
         // balance: 47000
-        w.sign(t3, function(err, total) {
+        c(w.sign(t3), function(err, total) {
           assert.ifError(err);
           t3 = t3.toTX();
           var t4 = bcoin.mtx().addInput(t2, 1) // 24000
@@ -100,19 +116,19 @@ describe('Mempool', function() {
                              .addOutput(w, 11000)
                              .addOutput(w, 11000);
           // balance: 22000
-          w.sign(t4, function(err, total) {
+          c(w.sign(t4), function(err, total) {
             assert.ifError(err);
             t4 = t4.toTX();
             var f1 = bcoin.mtx().addInput(t4, 1) // 11000
                                .addOutput(bcoin.address.fromData(new Buffer([])).toBase58(), 9000);
             // balance: 11000
-            w.sign(f1, function(err, total) {
+            c(w.sign(f1), function(err, total) {
               assert.ifError(err);
               f1 = f1.toTX();
               var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
                                    .addOutput(w, 6000); // 6000 instead of 500
               // Script inputs but do not sign
-              w.template(fake, function(err) {
+              c(w.template(fake), function(err) {
                 assert.ifError(err);
                 // Fake signature
                 fake.inputs[0].script.set(0, new Buffer([0,0,0,0,0,0,0,0,0]));
@@ -121,29 +137,29 @@ describe('Mempool', function() {
                 // balance: 11000
                 [t2, t3, t4, f1, fake].forEach(function(tx) {
                   tx.inputs.forEach(function(input) {
-                    delete input.coin;
+                    input.coin = null;
                   });
                 });
 
-                mempool.addTX(fake, function(err) {
+                c(mempool.addTX(fake), function(err) {
                   assert.ifError(err);
-                  mempool.addTX(t4, function(err) {
+                  c(mempool.addTX(t4), function(err) {
                     assert.ifError(err);
                     var balance = mempool.getBalance();
                     assert.equal(balance, 0);
-                    mempool.addTX(t1, function(err) {
+                    c(mempool.addTX(t1), function(err) {
                       assert.ifError(err);
                       var balance = mempool.getBalance();
                       assert.equal(balance, 60000);
-                      mempool.addTX(t2, function(err) {
+                      c(mempool.addTX(t2), function(err) {
                         assert.ifError(err);
                         var balance = mempool.getBalance();
                         assert.equal(balance, 50000);
-                        mempool.addTX(t3, function(err) {
+                        c(mempool.addTX(t3), function(err) {
                           assert.ifError(err);
                           var balance = mempool.getBalance();
                           assert.equal(balance, 22000);
-                          mempool.addTX(f1, function(err) {
+                          c(mempool.addTX(f1), function(err) {
                             assert.ifError(err);
                             var balance = mempool.getBalance();
                             assert.equal(balance, 20000);
@@ -195,7 +211,7 @@ describe('Mempool', function() {
     chain.tip.height = 200;
     t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
     t1 = t1.toTX();
-    mempool.addTX(t1, function(err) {
+    c(mempool.addTX(t1), function(err) {
       chain.tip.height = 0;
       assert.ifError(err);
       cb();
@@ -230,7 +246,7 @@ describe('Mempool', function() {
     chain.tip.height = 200 - 1;
     t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
     t1 = t1.toTX();
-    mempool.addTX(t1, function(err) {
+    c(mempool.addTX(t1), function(err) {
       chain.tip.height = 0;
       assert(err);
       cb();
@@ -268,7 +284,7 @@ describe('Mempool', function() {
     sig2.items[0][sig2.items[0].length - 1] = 0;
     t1.inputs[0].witness = sig2;
     var tx = t1.toTX();
-    mempool.addTX(tx, function(err) {
+    c(mempool.addTX(tx), function(err) {
       assert(err);
       assert(!mempool.hasReject(tx.hash()));
       cb();
@@ -302,7 +318,7 @@ describe('Mempool', function() {
     t1.inputs[0].script = new bcoin.script([t1.signature(0, prev, kp.privateKey, 'all', 0)]),
     t1.inputs[0].witness.push(new Buffer(0));
     var tx = t1.toTX();
-    mempool.addTX(tx, function(err) {
+    c(mempool.addTX(tx), function(err) {
       assert(err);
       assert(!mempool.hasReject(tx.hash()));
       cb();
@@ -335,7 +351,7 @@ describe('Mempool', function() {
     };
     t1.addInput(dummyInput);
     var tx = t1.toTX();
-    mempool.addTX(tx, function(err) {
+    c(mempool.addTX(tx), function(err) {
       assert(err);
       assert(err.malleated);
       assert(!mempool.hasReject(tx.hash()));
@@ -368,7 +384,7 @@ describe('Mempool', function() {
     };
     t1.addInput(dummyInput);
     var tx = t1.toTX();
-    mempool.addTX(tx, function(err) {
+    c(mempool.addTX(tx), function(err) {
       assert(err);
       assert(!err.malleated);
       assert(mempool.hasReject(tx.hash()));
@@ -393,7 +409,7 @@ describe('Mempool', function() {
     var block = new bcoin.block();
     block.txs.push(tx);
     assert(mempool.hasReject(cached.hash()));
-    mempool.addBlock(block, function(err) {
+    c(mempool.addBlock(block), function(err) {
       assert(!err);
       assert(!mempool.hasReject(cached.hash()));
       cb();
@@ -401,6 +417,6 @@ describe('Mempool', function() {
   });
 
   it('should destroy mempool', function(cb) {
-    mempool.close(cb);
+    c(mempool.close(), cb);
   });
 });

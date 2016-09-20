@@ -28,6 +28,22 @@ var dummyInput = {
   sequence: 0xffffffff
 };
 
+function c(p, cb) {
+  var called = false;
+  p.then(function(result) {
+    called = true;
+    cb(null, result);
+  }).catch(function(err) {
+    if (called) {
+      utils.nextTick(function() {
+        throw err;
+      });
+      return;
+    }
+    cb(err);
+  });
+}
+
 describe('HTTP', function() {
   var request = bcoin.http.request;
   var w, addr, hash;
@@ -50,11 +66,11 @@ describe('HTTP', function() {
 
   it('should open node', function(cb) {
     constants.tx.COINBASE_MATURITY = 0;
-    node.open(cb);
+    c(node.open(), cb);
   });
 
   it('should create wallet', function(cb) {
-    wallet.create({ id: 'test' }, function(err, wallet) {
+    c(wallet.create({ id: 'test' }), function(err, wallet) {
       assert.ifError(err);
       assert.equal(wallet.id, 'test');
       cb();
@@ -62,7 +78,7 @@ describe('HTTP', function() {
   });
 
   it('should get info', function(cb) {
-    wallet.client.getInfo(function(err, info) {
+    c(wallet.client.getInfo(), function(err, info) {
       assert.ifError(err);
       assert.equal(info.network, node.network.type);
       assert.equal(info.version, constants.USER_VERSION);
@@ -73,7 +89,7 @@ describe('HTTP', function() {
   });
 
   it('should get wallet info', function(cb) {
-    wallet.getInfo(function(err, wallet) {
+    c(wallet.getInfo(), function(err, wallet) {
       assert.ifError(err);
       assert.equal(wallet.id, 'test');
       addr = wallet.account.receiveAddress;
@@ -107,7 +123,7 @@ describe('HTTP', function() {
       details = d;
     });
 
-    node.walletdb.addTX(t1, function(err) {
+    c(node.walletdb.addTX(t1), function(err) {
       assert.ifError(err);
       setTimeout(function() {
         assert(receive);
@@ -126,7 +142,7 @@ describe('HTTP', function() {
   });
 
   it('should get balance', function(cb) {
-    wallet.getBalance(function(err, balance) {
+    c(wallet.getBalance(), function(err, balance) {
       assert.ifError(err);
       assert.equal(utils.satoshi(balance.confirmed), 0);
       assert.equal(utils.satoshi(balance.unconfirmed), 201840);
@@ -144,7 +160,7 @@ describe('HTTP', function() {
       }]
     };
 
-    wallet.send(options, function(err, tx) {
+    c(wallet.send(options), function(err, tx) {
       assert.ifError(err);
       assert(tx);
       assert.equal(tx.inputs.length, 1);
@@ -156,7 +172,7 @@ describe('HTTP', function() {
   });
 
   it('should get a tx', function(cb) {
-    wallet.getTX(hash, function(err, tx) {
+    c(wallet.getTX('default', hash), function(err, tx) {
       assert.ifError(err);
       assert(tx);
       assert.equal(tx.hash, hash);
@@ -166,7 +182,7 @@ describe('HTTP', function() {
 
   it('should generate new api key', function(cb) {
     var t = wallet.token.toString('hex');
-    wallet.retoken(null, function(err, token) {
+    c(wallet.retoken(null), function(err, token) {
       assert.ifError(err);
       assert(token.length === 64);
       assert.notEqual(token, t);
@@ -175,7 +191,7 @@ describe('HTTP', function() {
   });
 
   it('should get balance', function(cb) {
-    wallet.getBalance(function(err, balance) {
+    c(wallet.getBalance(), function(err, balance) {
       assert.ifError(err);
       assert.equal(utils.satoshi(balance.total), 199570);
       cb();
@@ -184,7 +200,9 @@ describe('HTTP', function() {
 
   it('should cleanup', function(cb) {
     constants.tx.COINBASE_MATURITY = 100;
-    wallet.close();
-    node.close(cb);
+    c(wallet.close(), function(err) {
+      assert.ifError(err);
+      c(node.close(), cb);
+    });
   });
 });
