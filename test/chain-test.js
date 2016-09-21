@@ -248,9 +248,9 @@ describe('Chain', function() {
     var total = 0;
     c(walletdb.getAddressHashes(), function(err, hashes) {
       assert.ifError(err);
-      c(chain.db.scan(null, hashes, function(block, txs) {
+      c(chain.db.scan(null, hashes, function *(block, txs) {
         total += txs.length;
-        return Promise.resolve(null);
+        yield utils.wait();
       }), function(err) {
         assert.ifError(err);
         assert.equal(total, 25);
