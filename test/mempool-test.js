@@ -7,22 +7,7 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
-
-function c(p, cb) {
-  var called = false;
-  p.then(function(result) {
-    called = true;
-    cb(null, result);
-  }).catch(function(err) {
-    if (called) {
-      utils.nextTick(function() {
-        throw err;
-      });
-      return;
-    }
-    cb(err);
-  });
-}
+var c = require('../lib/utils/spawn').cb;
 
 describe('Mempool', function() {
   this.timeout(5000);

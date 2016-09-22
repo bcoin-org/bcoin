@@ -7,28 +7,14 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
+var spawn = require('../lib/utils/spawn');
+var c = require('../lib/utils/spawn').cb;
 
 describe('Chain', function() {
   var chain, wallet, node, miner, walletdb;
   var competingTip, oldTip, tip1, tip2, cb1, cb2;
 
   this.timeout(5000);
-
-  function c(p, cb) {
-    var called = false;
-    p.then(function(result) {
-      called = true;
-      cb(null, result);
-    }).catch(function(err) {
-      if (called) {
-        utils.nextTick(function() {
-          throw err;
-        });
-        return;
-      }
-      cb(err);
-    });
-  }
 
   node = new bcoin.fullnode({ db: 'memory' });
   chain = node.chain;
@@ -250,7 +236,7 @@ describe('Chain', function() {
       assert.ifError(err);
       c(chain.db.scan(null, hashes, function *(block, txs) {
         total += txs.length;
-        yield utils.wait();
+        yield spawn.wait();
       }), function(err) {
         assert.ifError(err);
         assert.equal(total, 25);

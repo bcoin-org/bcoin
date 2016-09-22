@@ -8,6 +8,7 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
+var c = require('../lib/utils/spawn').cb;
 
 var dummyInput = {
   prevout: {
@@ -27,22 +28,6 @@ var dummyInput = {
   witness: new bcoin.witness([]),
   sequence: 0xffffffff
 };
-
-function c(p, cb) {
-  var called = false;
-  p.then(function(result) {
-    called = true;
-    cb(null, result);
-  }).catch(function(err) {
-    if (called) {
-      utils.nextTick(function() {
-        throw err;
-      });
-      return;
-    }
-    cb(err);
-  });
-}
 
 describe('HTTP', function() {
   var request = bcoin.http.request;

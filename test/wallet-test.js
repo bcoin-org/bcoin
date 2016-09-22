@@ -9,6 +9,7 @@ var crypto = require('../lib/crypto/crypto');
 var spawn = require('../lib/utils/spawn');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
+var c = require('../lib/utils/spawn').cb;
 
 var FAKE_SIG = new Buffer([0,0,0,0,0,0,0,0,0]);
 
@@ -52,22 +53,6 @@ assert.range = function range(value, lo, hi, message) {
     });
   }
 };
-
-function c(p, cb) {
-  var called = false;
-  p.then(function(result) {
-    called = true;
-    cb(null, result);
-  }).catch(function(err) {
-    if (called) {
-      utils.nextTick(function() {
-        throw err;
-      });
-      return;
-    }
-    cb(err);
-  });
-}
 
 describe('Wallet', function() {
   var walletdb = new bcoin.walletdb({
