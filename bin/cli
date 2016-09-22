@@ -7,6 +7,7 @@ var utils = require('../lib/utils/utils');
 var spawn = require('../lib/utils/spawn');
 var Client = require('../lib/http/client');
 var Wallet = require('../lib/http/wallet');
+var co = spawn.co;
 var assert = utils.assert;
 var main;
 
