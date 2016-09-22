@@ -7,6 +7,7 @@ var utils = bcoin.utils;
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');
+var co = require('../lib/utils/spawn').co;
 
 bcoin.cache();
 
@@ -35,115 +36,89 @@ var walletdb = new bcoin.walletdb({
   // db: 'leveldb'
   db: 'memory'
 });
-var wallet;
-var addrs = [];
 
-function runBench(callback) {
-  utils.serial([
-    function(next) {
-      walletdb.create(function(err, w) {
-        assert.ifError(err);
-        wallet = w;
-        next();
-      });
-    },
-    function(next) {
-      var end = bench('accounts');
-      utils.forRange(0, 1000, function(i, next) {
-        wallet.createAccount({}, function(err, account) {
-          assert.ifError(err);
-          addrs.push(account.receiveAddress.getAddress());
-          next();
-        });
-      }, function(err) {
-        assert.ifError(err);
-        end(1000);
-        next();
-      });
-    },
-    function(next) {
-      var end = bench('addrs');
-      utils.forRange(0, 1000, function(i, next) {
-        utils.forRange(0, 10, function(j, next) {
-          wallet.createReceive(i, function(err, addr) {
-            assert.ifError(err);
-            addrs.push(addr);
-            next();
-          });
-        }, next);
-      }, function(err) {
-        assert.ifError(err);
-        end(1000 * 10);
-        next();
-      });
-    },
-    function(next) {
-      var nonce = new bn(0);
-      var end;
-      utils.forRange(0, 10000, function(i, next) {
-        var t1 = bcoin.mtx()
-          .addOutput(addrs[(i + 0) % addrs.length], 50460)
-          .addOutput(addrs[(i + 1) % addrs.length], 50460)
-          .addOutput(addrs[(i + 2) % addrs.length], 50460)
-          .addOutput(addrs[(i + 3) % addrs.length], 50460);
+var runBench = co(function* runBench() {
+  var i, j, wallet, addrs, jobs, end;
+  var result, nonce, tx, options;
 
-        t1.addInput(dummyInput);
-        nonce.addn(1);
-        t1.inputs[0].script.set(0, nonce);
-        t1.inputs[0].script.compile();
+  // Open and Create
+  yield walletdb.open();
+  wallet = yield walletdb.create();
+  addrs = [];
 
-        walletdb.addTX(t1.toTX(), function(err) {
-          assert.ifError(err);
-          next();
-        });
-      }, function(err) {
-        assert.ifError(err);
-        end(10000);
-        next();
-      });
-      end = bench('tx');
-    },
-    function(next) {
-      var end = bench('balance');
-      wallet.getBalance(function(err, balance) {
-        assert.ifError(err);
-        end(1);
-        next();
-      });
-    },
-    function(next) {
-      var end = bench('coins');
-      wallet.getCoins(function(err) {
-        assert.ifError(err);
-        end(1);
-        next();
-      });
-    },
-    function(next) {
-      var end = bench('create');
-      var options = {
-        rate: 10000,
-        outputs: [{
-          value: 50460,
-          address: addrs[0]
-        }]
-      };
-      wallet.createTX(options, function(err) {
-        assert.ifError(err);
-        end(1);
-        next();
-      });
-    }
-  ], function(err) {
-    assert.ifError(err);
-    callback();
-  });
-}
+  // Accounts
+  jobs = [];
+  for (i = 0; i < 1000; i++)
+    jobs.push(wallet.createAccount({}));
 
-walletdb.open(function(err) {
-  assert.ifError(err);
-  runBench(function(err) {
-    assert.ifError(err);
-    process.exit(0);
+  end = bench('accounts');
+  result = yield Promise.all(jobs);
+  end(1000);
+
+  for (i = 0; i < result.length; i++)
+    addrs.push(result[i].receiveAddress.getAddress());
+
+  // Addresses
+  jobs = [];
+  for (i = 0; i < 1000; i++) {
+    for (j = 0; j < 10; j++)
+      jobs.push(wallet.createReceive(i));
+  }
+
+  end = bench('addrs');
+  result = yield Promise.all(jobs);
+  end(1000 * 10);
+
+  for (i = 0; i < result.length; i++)
+    addrs.push(result[i].getAddress());
+
+  // TX
+  jobs = [];
+  nonce = new bn(0);
+  for (i = 0; i < 10000; i++) {
+    tx = bcoin.mtx()
+      .addOutput(addrs[(i + 0) % addrs.length], 50460)
+      .addOutput(addrs[(i + 1) % addrs.length], 50460)
+      .addOutput(addrs[(i + 2) % addrs.length], 50460)
+      .addOutput(addrs[(i + 3) % addrs.length], 50460);
+
+    tx.addInput(dummyInput);
+    nonce.addn(1);
+    tx.inputs[0].script.set(0, nonce);
+    tx.inputs[0].script.compile();
+
+    jobs.push(walletdb.addTX(tx.toTX()));
+  }
+
+  end = bench('tx');
+  result = yield Promise.all(jobs);
+  end(10000);
+
+  // Balance
+  end = bench('balance');
+  result = yield wallet.getBalance();
+  end(1);
+
+  // Coins
+  end = bench('coins');
+  result = yield wallet.getCoins();
+  end(1);
+
+  // Create
+  end = bench('create');
+  options = {
+    rate: 10000,
+    outputs: [{
+      value: 50460,
+      address: addrs[0]
+    }]
+  };
+  yield wallet.createTX(options);
+  end(1);
+});
+
+runBench().then(process.exit).catch(function(err) {
+  utils.nextTick(function() {
+    throw err;
   });
 });
