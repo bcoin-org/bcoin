@@ -8,6 +8,7 @@ var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
 var spawn = require('../lib/utils/spawn');
+var co = require('../lib/utils/spawn').co;
 var c = require('../lib/utils/spawn').cb;
 
 describe('Chain', function() {
@@ -234,10 +235,10 @@ describe('Chain', function() {
     var total = 0;
     c(walletdb.getAddressHashes(), function(err, hashes) {
       assert.ifError(err);
-      c(chain.db.scan(null, hashes, function *(block, txs) {
+      c(chain.db.scan(null, hashes, co(function *(block, txs) {
         total += txs.length;
         yield spawn.wait();
-      }), function(err) {
+      })), function(err) {
         assert.ifError(err);
         assert.equal(total, 25);
         cb();
