@@ -117,8 +117,4 @@ var runBench = co(function* runBench() {
   end(1);
 });
 
-runBench().then(process.exit).catch(function(err) {
-  utils.nextTick(function() {
-    throw err;
-  });
-});
+runBench().then(process.exit);
