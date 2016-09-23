@@ -9,6 +9,7 @@ var assert = require('assert');
 var opcodes = constants.opcodes;
 var spawn = require('../lib/utils/spawn');
 var co = require('../lib/utils/spawn').co;
+var cob = require('../lib/utils/spawn').cob;
 var c = require('../lib/utils/spawn').cb;
 
 describe('Chain', function() {
@@ -123,6 +124,17 @@ describe('Chain', function() {
     }, cb);
   });
 
+  it('should have correct balance', function(cb) {
+    setTimeout(function() {
+      c(wallet.getBalance(), function(err, balance) {
+        assert.equal(balance.unconfirmed, 0);
+        assert.equal(balance.confirmed, 500 * 1e8);
+        assert.equal(balance.total, 500 * 1e8);
+        cb();
+      });
+    }, 1000);
+  });
+
   it('should handle a reorg', function(cb) {
     assert.equal(walletdb.height, chain.height);
     assert.equal(chain.height, 10);
@@ -148,6 +160,18 @@ describe('Chain', function() {
         });
       });
     });
+  });
+
+  it('should have correct balance', function(cb) {
+    setTimeout(function() {
+      c(wallet.getBalance(), function(err, balance) {
+        assert.ifError(err);
+        assert.equal(balance.unconfirmed, 500 * 1e8);
+        assert.equal(balance.confirmed, 550 * 1e8);
+        assert.equal(balance.total, 1050 * 1e8);
+        cb();
+      });
+    }, 1000);
   });
 
   it('should check main chain', function(cb) {
@@ -215,11 +239,11 @@ describe('Chain', function() {
     setTimeout(function() {
       c(wallet.getBalance(), function(err, balance) {
         assert.ifError(err);
-        // assert.equal(balance.unconfirmed, 23000000000);
-        // assert.equal(balance.confirmed, 97000000000);
-        assert.equal(balance.total, 120000000000);
-        // assert.equal(wallet.account.receiveDepth, 8);
-        // assert.equal(wallet.account.changeDepth, 7);
+        assert.equal(balance.unconfirmed, 500 * 1e8);
+        assert.equal(balance.confirmed, 700 * 1e8);
+        assert.equal(balance.total, 1200 * 1e8);
+        assert(wallet.account.receiveDepth >= 8);
+        assert(wallet.account.changeDepth >= 7);
         assert.equal(walletdb.height, chain.height);
         assert.equal(walletdb.tip, chain.tip.hash);
         c(wallet.getHistory(), function(err, txs) {
@@ -235,10 +259,10 @@ describe('Chain', function() {
     var total = 0;
     c(walletdb.getAddressHashes(), function(err, hashes) {
       assert.ifError(err);
-      c(chain.db.scan(null, hashes, co(function *(block, txs) {
+      c(chain.db.scan(null, hashes, function(block, txs) {
         total += txs.length;
-        yield spawn.wait();
-      })), function(err) {
+        return Promise.resolve(null);
+      }), function(err) {
         assert.ifError(err);
         assert.equal(total, 25);
         cb();
