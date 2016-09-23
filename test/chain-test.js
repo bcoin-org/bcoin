@@ -217,7 +217,7 @@ describe('Chain', function() {
         assert.ifError(err);
         // assert.equal(balance.unconfirmed, 23000000000);
         // assert.equal(balance.confirmed, 97000000000);
-        // assert.equal(balance.total, 120000000000);
+        assert.equal(balance.total, 120000000000);
         // assert.equal(wallet.account.receiveDepth, 8);
         // assert.equal(wallet.account.changeDepth, 7);
         assert.equal(walletdb.height, chain.height);
