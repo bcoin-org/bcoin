@@ -1,5 +1,6 @@
 all:
 	@npm run browserify
+	@npm run uglify
 
 clean:
 	@npm run clean

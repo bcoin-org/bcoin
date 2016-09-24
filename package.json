@@ -48,6 +48,11 @@
   },
   "devDependencies": {
     "browserify": "13.1.0",
+    "babelify": "7.3.0",
+    "babel-preset-es2015": "6.14.0",
+    "babel-polyfill": "6.13.0",
+    "babel-plugin-transform-runtime": "6.12.0",
+    "babel-plugin-transform-regenerator": "6.14.0",
     "hash.js": "1.0.3",
     "jsdoc": "3.4.0",
     "level-js": "2.2.4",
@@ -69,5 +74,8 @@
     "net": "./browser/empty.js",
     "bcoin-native": "./browser/empty.js",
     "secp256k1": "./browser/empty.js"
+  },
+  "browserify": {
+    "transform": ["babelify"]
   }
 }
