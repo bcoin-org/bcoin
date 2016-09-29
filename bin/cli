@@ -95,7 +95,7 @@ CLI.prototype.getAccounts = co(function* getAccounts() {
 
 CLI.prototype.getWallet = co(function* getWallet() {
   var info = yield this.wallet.getInfo();
-  this.log(wallet);
+  this.log(info);
 });
 
 CLI.prototype.getTX = co(function* getTX() {
