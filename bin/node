@@ -36,6 +36,6 @@ node.open(function(err) {
   if (err)
     throw err;
 
-  node.pool.connect();
+  node.connect();
   node.startSync();
 });
