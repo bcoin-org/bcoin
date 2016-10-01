@@ -934,6 +934,25 @@ describe('Wallet', function() {
     assert(t2.inputs[0].prevout.hash === tx.hash('hex'));
   }));
 
+  it('should import address', cob(function *() {
+    var key = bcoin.keyring.generate();
+    var w = yield walletdb.create();
+    var options, k, t1, t2, tx;
+
+    yield w.importAddress('default', key.getAddress());
+
+    k = yield w.getPath(key.getHash('hex'));
+
+    assert.equal(k.hash, key.getHash('hex'));
+  }));
+
+  it('should get details', cob(function *() {
+    var w = wallet;
+    var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
+    var details = yield w.toDetails(txs);
+    assert.equal(details[0].toJSON().outputs[0].path.name, 'foo');
+  }));
+
   it('should cleanup', cob(function *() {
     var records = yield walletdb.dump();
     constants.tx.COINBASE_MATURITY = 100;
