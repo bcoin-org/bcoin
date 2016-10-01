@@ -953,6 +953,14 @@ describe('Wallet', function() {
     assert.equal(details[0].toJSON().outputs[0].path.name, 'foo');
   }));
 
+  it('should rename wallet', cob(function *() {
+    var w = wallet;
+    yield wallet.rename('test');
+    var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
+    var details = yield w.toDetails(txs);
+    assert.equal(details[0].toJSON().id, 'test');
+  }));
+
   it('should cleanup', cob(function *() {
     var records = yield walletdb.dump();
     constants.tx.COINBASE_MATURITY = 100;
