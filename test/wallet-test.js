@@ -507,6 +507,9 @@ describe('Wallet', function() {
     var flags = bcoin.constants.flags.STANDARD_VERIFY_FLAGS;
     var options, w1, w2, w3, receive, b58, addr, paddr, utx, send, change;
 
+    var rec = bullshitNesting ? 'nested' : 'receive';
+    var depth = bullshitNesting ? 'nestedDepth' : 'receiveDepth';
+
     if (witness)
       flags |= bcoin.constants.flags.VERIFY_WITNESS;
 
@@ -531,17 +534,21 @@ describe('Wallet', function() {
     yield w3.addKey(w2.accountKey);
 
     // Our p2sh address
-    b58 = w1.getAddress('base58');
+    b58 = w1[rec].getAddress('base58');
     addr = bcoin.address.fromBase58(b58);
 
-    if (witness)
-      assert.equal(addr.type, scriptTypes.WITNESSSCRIPTHASH);
-    else
+    if (witness) {
+      if (bullshitNesting)
+        assert.equal(addr.type, scriptTypes.SCRIPTHASH);
+      else
+        assert.equal(addr.type, scriptTypes.WITNESSSCRIPTHASH);
+    } else {
       assert.equal(addr.type, scriptTypes.SCRIPTHASH);
+    }
 
-    assert.equal(w1.getAddress('base58'), b58);
-    assert.equal(w2.getAddress('base58'), b58);
-    assert.equal(w3.getAddress('base58'), b58);
+    assert.equal(w1[rec].getAddress('base58'), b58);
+    assert.equal(w2[rec].getAddress('base58'), b58);
+    assert.equal(w3[rec].getAddress('base58'), b58);
 
     paddr = w1.getNestedAddress('base58');
     assert.equal(w1.getNestedAddress('base58'), paddr);
@@ -563,20 +570,21 @@ describe('Wallet', function() {
     utx.ts = 1;
     utx.height = 1;
 
-    assert.equal(w1.receiveDepth, 1);
+    assert.equal(w1[depth], 1);
 
     yield walletdb.addTX(utx);
     yield walletdb.addTX(utx);
     yield walletdb.addTX(utx);
 
-    assert.equal(w1.receiveDepth, 2);
+    assert.equal(w1[depth], 2);
+
     assert.equal(w1.changeDepth, 1);
 
-    assert(w1.getAddress('base58') !== b58);
-    b58 = w1.getAddress('base58');
-    assert.equal(w1.getAddress('base58'), b58);
-    assert.equal(w2.getAddress('base58'), b58);
-    assert.equal(w3.getAddress('base58'), b58);
+    assert(w1[rec].getAddress('base58') !== b58);
+    b58 = w1[rec].getAddress('base58');
+    assert.equal(w1[rec].getAddress('base58'), b58);
+    assert.equal(w2[rec].getAddress('base58'), b58);
+    assert.equal(w3[rec].getAddress('base58'), b58);
 
     // Create a tx requiring 2 signatures
     send = bcoin.mtx();
@@ -609,10 +617,10 @@ describe('Wallet', function() {
     yield walletdb.addTX(send);
     yield walletdb.addTX(send);
 
-    assert.equal(w1.receiveDepth, 2);
+    assert.equal(w1[depth], 2);
     assert.equal(w1.changeDepth, 2);
 
-    assert(w1.getAddress('base58') === b58);
+    assert(w1[rec].getAddress('base58') === b58);
     assert(w1.change.getAddress('base58') !== change);
     change = w1.change.getAddress('base58');
     assert.equal(w1.change.getAddress('base58'), change);

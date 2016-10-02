@@ -88,6 +88,12 @@ CLI.prototype.createAddress = co(function* createAddress() {
   this.log(addr);
 });
 
+CLI.prototype.createNested = co(function* createNested() {
+  var account = this.argv[0];
+  var addr = yield this.wallet.createNested(account);
+  this.log(addr);
+});
+
 CLI.prototype.getAccounts = co(function* getAccounts() {
   var accounts = yield this.wallet.getAccounts();
   this.log(accounts);
@@ -343,6 +349,8 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.getAccount();
     case 'address':
       return yield this.createAddress();
+    case 'nested':
+      return yield this.createNested();
     case 'retoken':
       return yield this.retoken();
     case 'sign':
@@ -370,6 +378,7 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ account create [account-name]: Create account.');
       this.log('  $ account get [account-name]: Get account details.');
       this.log('  $ address: Derive new address.');
+      this.log('  $ nested: Derive new nested address.');
       this.log('  $ retoken: Create new api key.');
       this.log('  $ send [address] [value]: Send transaction.');
       this.log('  $ mktx [address] [value]: Create transaction.');
