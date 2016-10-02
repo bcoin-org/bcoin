@@ -9,7 +9,7 @@ var network = bcoin.networks;
 var assert = require('assert');
 var tests = require('./data/bip70.json');
 var bip70 = require('../lib/bip70/bip70');
-var x509 = require('../lib/bip70/x509');
+var x509 = bip70.x509;
 
 tests.valid = new Buffer(tests.valid, 'hex');
 tests.invalid = new Buffer(tests.invalid, 'hex');

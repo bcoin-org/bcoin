@@ -43,7 +43,7 @@ describe('HTTP', function() {
     db: 'memory'
   });
 
-  var wallet = new bcoin.http.wallet({
+  var wallet = new bcoin.http.Wallet({
     network: 'regtest',
     apiKey: 'foo'
   });

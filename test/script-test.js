@@ -380,7 +380,7 @@ describe('Script', function() {
           assert.equal(err.code, expected);
           return;
         }
-        utils.assert.ifError(err);
+        assert.ifError(err);
         assert(res);
       });
     });
