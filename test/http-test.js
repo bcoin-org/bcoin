@@ -8,8 +8,8 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
-var spawn = require('../lib/utils/spawn');
-var cob = spawn.cob;
+var co = require('../lib/utils/co');
+var cob = co.cob;
 
 var dummyInput = {
   prevout: {
@@ -101,7 +101,7 @@ describe('HTTP', function() {
     });
 
     yield node.walletdb.addTX(t1);
-    yield spawn.timeout(300);
+    yield co.timeout(300);
 
     assert(receive);
     assert.equal(receive.id, 'test');

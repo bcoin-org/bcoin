@@ -4,10 +4,9 @@
 
 var config = require('../lib/node/config');
 var utils = require('../lib/utils/utils');
-var spawn = require('../lib/utils/spawn');
+var co = require('../lib/utils/co');
 var Client = require('../lib/http/client');
 var Wallet = require('../lib/http/wallet');
-var co = spawn.co;
 var assert = require('assert');
 var main;
 

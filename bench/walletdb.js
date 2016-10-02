@@ -7,7 +7,7 @@ var utils = bcoin.utils;
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');
-var co = require('../lib/utils/spawn').co;
+var co = require('../lib/utils/co');
 
 bcoin.cache();
 

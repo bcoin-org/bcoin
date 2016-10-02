@@ -6,12 +6,10 @@ var constants = bcoin.constants;
 var network = bcoin.networks;
 var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
-var spawn = require('../lib/utils/spawn');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
-var c = require('../lib/utils/spawn').cb;
-var co = require('../lib/utils/spawn').co;
-var cob = require('../lib/utils/spawn').cob;
+var co = require('../lib/utils/co');
+var cob = co.cob;
 
 var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';

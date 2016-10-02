@@ -7,10 +7,8 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
-var spawn = require('../lib/utils/spawn');
-var co = require('../lib/utils/spawn').co;
-var cob = require('../lib/utils/spawn').cob;
-var c = require('../lib/utils/spawn').cb;
+var co = require('../lib/utils/co');
+var cob = co.cob;
 
 describe('Chain', function() {
   var chain, wallet, node, miner, walletdb;
@@ -119,7 +117,7 @@ describe('Chain', function() {
   it('should have correct balance', cob(function* () {
     var balance;
 
-    yield spawn.timeout(100);
+    yield co.timeout(100);
 
     balance = yield wallet.getBalance();
     assert.equal(balance.unconfirmed, 0);
@@ -157,7 +155,7 @@ describe('Chain', function() {
   it('should have correct balance', cob(function *() {
     var balance;
 
-    yield spawn.timeout(100);
+    yield co.timeout(100);
 
     balance = yield wallet.getBalance();
     assert.equal(balance.unconfirmed, 500 * 1e8);
@@ -220,7 +218,7 @@ describe('Chain', function() {
   it('should get balance', cob(function *() {
     var balance, txs;
 
-    yield spawn.timeout(100);
+    yield co.timeout(100);
 
     balance = yield wallet.getBalance();
     assert.equal(balance.unconfirmed, 500 * 1e8);

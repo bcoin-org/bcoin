@@ -7,8 +7,7 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
-var c = require('../lib/utils/spawn').cb;
-var cob = require('../lib/utils/spawn').cob;
+var cob = require('../lib/utils/co').cob;
 
 function dummy(prev, prevHash) {
   if (!prevHash)

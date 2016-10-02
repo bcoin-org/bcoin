@@ -1,6 +1,5 @@
 var bcoin = require('../');
-var spawn = bcoin.spawn;
-var co = spawn.co;
+var co = bcoin.co;
 var assert = require('assert');
 var file = process.argv[2];
 
@@ -104,7 +103,7 @@ var updateEndian = co(function* updateEndian() {
   console.log('Migrated endianness.');
 });
 
-spawn(function *() {
+co.spawn(function *() {
   yield db.open();
   console.log('Opened %s.', file);
   yield checkVersion();
