@@ -114,7 +114,7 @@ describe('HTTP', function() {
         assert(receive);
         assert.equal(receive.id, 'test');
         assert.equal(receive.type, 'pubkeyhash');
-        assert.equal(receive.change, 0);
+        assert.equal(receive.branch, 0);
         assert(balance);
         assert.equal(utils.satoshi(balance.confirmed), 0);
         assert.equal(utils.satoshi(balance.unconfirmed), 201840);

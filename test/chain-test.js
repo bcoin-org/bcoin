@@ -34,12 +34,12 @@ describe('Chain', function() {
     redeemer = bcoin.mtx();
 
     redeemer.addOutput({
-      address: wallet.receiveAddress.getAddress(),
+      address: wallet.receive.getAddress(),
       value: 25 * 1e8
     });
 
     redeemer.addOutput({
-      address: wallet.changeAddress.getAddress(),
+      address: wallet.change.getAddress(),
       value: 5 * 1e8
     });
 
@@ -239,7 +239,7 @@ describe('Chain', function() {
 
   it('should rescan for transactions', cob(function *() {
     var total = 0;
-    var hashes = yield walletdb.getAddressHashes();
+    var hashes = yield walletdb.getHashes();
 
     yield chain.db.scan(null, hashes, function(block, txs) {
       total += txs.length;
