@@ -107,7 +107,7 @@ describe('Wallet', function() {
       outputs: [{
         value: 5460 * 2,
         address: bullshitNesting
-          ? w.getProgramAddress()
+          ? w.getNestedAddress()
           : w.getAddress()
       }, {
         value: 5460 * 2,
@@ -543,10 +543,10 @@ describe('Wallet', function() {
     assert.equal(w2.getAddress('base58'), b58);
     assert.equal(w3.getAddress('base58'), b58);
 
-    paddr = w1.getProgramAddress('base58');
-    assert.equal(w1.getProgramAddress('base58'), paddr);
-    assert.equal(w2.getProgramAddress('base58'), paddr);
-    assert.equal(w3.getProgramAddress('base58'), paddr);
+    paddr = w1.getNestedAddress('base58');
+    assert.equal(w1.getNestedAddress('base58'), paddr);
+    assert.equal(w2.getNestedAddress('base58'), paddr);
+    assert.equal(w3.getNestedAddress('base58'), paddr);
 
     // Add a shared unspent transaction to our wallets
     utx = bcoin.mtx();
@@ -595,10 +595,10 @@ describe('Wallet', function() {
 
     assert.equal(w1.changeDepth, 1);
 
-    change = w1.changeAddress.getAddress('base58');
-    assert.equal(w1.changeAddress.getAddress('base58'), change);
-    assert.equal(w2.changeAddress.getAddress('base58'), change);
-    assert.equal(w3.changeAddress.getAddress('base58'), change);
+    change = w1.change.getAddress('base58');
+    assert.equal(w1.change.getAddress('base58'), change);
+    assert.equal(w2.change.getAddress('base58'), change);
+    assert.equal(w3.change.getAddress('base58'), change);
 
     // Simulate a confirmation
     send.ps = 0;
@@ -613,11 +613,11 @@ describe('Wallet', function() {
     assert.equal(w1.changeDepth, 2);
 
     assert(w1.getAddress('base58') === b58);
-    assert(w1.changeAddress.getAddress('base58') !== change);
-    change = w1.changeAddress.getAddress('base58');
-    assert.equal(w1.changeAddress.getAddress('base58'), change);
-    assert.equal(w2.changeAddress.getAddress('base58'), change);
-    assert.equal(w3.changeAddress.getAddress('base58'), change);
+    assert(w1.change.getAddress('base58') !== change);
+    change = w1.change.getAddress('base58');
+    assert.equal(w1.change.getAddress('base58'), change);
+    assert.equal(w2.change.getAddress('base58'), change);
+    assert.equal(w3.change.getAddress('base58'), change);
 
     if (witness) {
       send.inputs[0].witness.set(2, 0);
@@ -654,7 +654,7 @@ describe('Wallet', function() {
     account = yield w1.getAccount('foo');
     assert.equal(account.name, 'foo');
     assert.equal(account.accountIndex, 1);
-    rec = account.receiveAddress;
+    rec = account.receive;
 
     // Coinbase
     t1 = bcoin.mtx()
@@ -712,18 +712,18 @@ describe('Wallet', function() {
     assert(w.account.accountIndex === 0);
 
     assert.notEqual(
-      account.receiveAddress.getAddress('base58'),
-      w.account.receiveAddress.getAddress('base58'));
+      account.receive.getAddress('base58'),
+      w.account.receive.getAddress('base58'));
 
     assert.equal(w.getAddress('base58'),
-      w.account.receiveAddress.getAddress('base58'));
+      w.account.receive.getAddress('base58'));
 
     // Coinbase
     t1 = bcoin.mtx()
       .addOutput(w.getAddress(), 5460)
       .addOutput(w.getAddress(), 5460)
       .addOutput(w.getAddress(), 5460)
-      .addOutput(account.receiveAddress.getAddress(), 5460);
+      .addOutput(account.receive.getAddress(), 5460);
 
     t1.addInput(dummyInput);
     t1 = t1.toTX();
@@ -745,9 +745,9 @@ describe('Wallet', function() {
 
     // Coinbase
     t1 = bcoin.mtx()
-      .addOutput(account.receiveAddress.getAddress(), 5460)
-      .addOutput(account.receiveAddress.getAddress(), 5460)
-      .addOutput(account.receiveAddress.getAddress(), 5460);
+      .addOutput(account.receive.getAddress(), 5460)
+      .addOutput(account.receive.getAddress(), 5460)
+      .addOutput(account.receive.getAddress(), 5460);
 
     t1.ps = 0xdeadbeef;
     t1.addInput(dummyInput);
@@ -901,7 +901,7 @@ describe('Wallet', function() {
 
     yield w.importKey('default', key, 'test');
 
-    k = yield w.getKeyRing(key.getHash('hex'));
+    k = yield w.getKey(key.getHash('hex'));
 
     assert.equal(k.getHash('hex'), key.getHash('hex'));
 
