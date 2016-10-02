@@ -67,7 +67,7 @@ describe('Script', function() {
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
-    assert.deepEqual(stack.slice(), [[1], [3], [5]]);
+    assert.deepEqual(stack.items, [[1], [3], [5]]);
 
     var inputScript = new Script([opcodes.OP_1, opcodes.OP_2]);
     var prevOutScript = new Script([
@@ -84,7 +84,7 @@ describe('Script', function() {
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
-    assert.deepEqual(stack.slice(), [[1], [4], [5]]);
+    assert.deepEqual(stack.items, [[1], [4], [5]]);
 
     var inputScript = new Script([opcodes.OP_1, opcodes.OP_2]);
     var prevOutScript = new Script([
@@ -99,7 +99,7 @@ describe('Script', function() {
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
-    assert.deepEqual(stack.slice(), [[1], [3], [5]]);
+    assert.deepEqual(stack.items, [[1], [3], [5]]);
 
     var inputScript = new Script([opcodes.OP_1, opcodes.OP_2]);
     var prevOutScript = new Script([
@@ -114,7 +114,7 @@ describe('Script', function() {
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
-    assert.deepEqual(stack.slice(), [[1], [5]]);
+    assert.deepEqual(stack.items, [[1], [5]]);
 
     var inputScript = new Script([opcodes.OP_1, opcodes.OP_2]);
     var prevOutScript = new Script([
@@ -129,7 +129,7 @@ describe('Script', function() {
     inputScript.execute(stack);
     var res = prevOutScript.execute(stack);
     assert(res);
-    assert.deepEqual(stack.slice(), [[1], [3], [5]]);
+    assert.deepEqual(stack.items, [[1], [3], [5]]);
   });
 
   function success(res, stack) {
