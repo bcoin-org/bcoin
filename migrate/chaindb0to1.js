@@ -2,6 +2,8 @@ var bcoin = require('../');
 var co = bcoin.co;
 var assert = require('assert');
 var file = process.argv[2];
+var BufferReader = require('../lib/utils/reader');
+var BufferWriter = require('../lib/utils/writer');
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
@@ -51,7 +53,7 @@ var updateState = co(function* updateState() {
 
   hash = data.slice(0, 32);
 
-  p = new bcoin.writer();
+  p = new BufferWriter();
   p.writeHash(hash);
   p.writeU64(0);
   p.writeU64(0);
