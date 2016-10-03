@@ -1,7 +1,10 @@
 var bcoin = require('../');
 var walletdb = require('../lib/wallet/walletdb');
+var constants = require('../lib/protocol/constants');
 var Path = require('../lib/wallet/path');
+var MasterKey = require('../lib/wallet/masterkey');
 var Account = require('../lib/wallet/account');
+var Wallet = require('../lib/wallet/wallet');
 var layout = walletdb.layout;
 var co = bcoin.co;
 var assert = require('assert');
@@ -12,7 +15,7 @@ var db, batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
-file = file.replace(/\.ldb$/, '');
+file = file.replace(/\.ldb\/?$/, '');
 
 db = bcoin.ldb({
   location: file,
@@ -45,12 +48,13 @@ var updateVersion = co(function* updateVersion() {
 
   ver = new Buffer(4);
   ver.writeUInt32LE(3, 0, true);
-  batch.put('R', ver);
+  batch.put('V', ver);
 });
 
 var updatePathMap = co(function* updatePathMap() {
-  var i, iter, item, oldPaths, oldPath, hash, path, keys, key, ring;
   var total = 0;
+  var i, iter, item, oldPaths, oldPath;
+  var hash, path, keys, key, ring;
 
   iter = db.iterator({
     gte: layout.p(constants.NULL_HASH),
@@ -68,7 +72,7 @@ var updatePathMap = co(function* updatePathMap() {
 
     total++;
     hash = layout.pp(item.key);
-    oldPaths = parsePaths(data, hash);
+    oldPaths = parsePaths(item.value, hash);
     keys = Object.keys(oldPaths);
 
     for (i = 0; i < keys.length; i++) {
@@ -98,7 +102,7 @@ var updatePathMap = co(function* updatePathMap() {
 
 var updateAccounts = co(function* updateAccounts() {
   var total = 0;
-  var i, iter, item, account;
+  var iter, item, account;
 
   iter = db.iterator({
     gte: layout.a(0, 0),
@@ -121,6 +125,33 @@ var updateAccounts = co(function* updateAccounts() {
   }
 
   console.log('Migrated %d accounts.', total);
+});
+
+var updateWallets = co(function* updateWallets() {
+  var total = 0;
+  var iter, item, wallet;
+
+  iter = db.iterator({
+    gte: layout.w(0),
+    lte: layout.w(0xffffffff),
+    values: true
+  });
+
+  console.log('Migrating wallets.');
+
+  for (;;) {
+    item = yield iter.next();
+
+    if (!item)
+      break;
+
+    total++;
+    wallet = walletFromRaw(item.value);
+    wallet = new Wallet({ network: wallet.network }, wallet);
+    batch.put(layout.w(wallet.wid), wallet.toRaw());
+  }
+
+  console.log('Migrated %d wallets.', total);
 });
 
 function pathFromRaw(data) {
@@ -187,7 +218,7 @@ function serializeWallets(wallets) {
 function readAccountKey(key) {
   return {
     wid: key.readUInt32BE(1, true),
-    index: key.readUInt32E(5, true)
+    index: key.readUInt32BE(5, true)
   };
 }
 
@@ -198,6 +229,7 @@ function accountFromRaw(data, dbkey) {
 
   dbkey = readAccountKey(dbkey);
   account.wid = dbkey.wid;
+  account.id = 'doesntmatter';
   account.network = bcoin.network.fromMagic(p.readU32());
   account.name = p.readVarString('utf8');
   account.initialized = p.readU8() === 1;
@@ -221,6 +253,20 @@ function accountFromRaw(data, dbkey) {
   }
 
   return account;
+}
+
+function walletFromRaw(data) {
+  var wallet = {};
+  var p = new BufferReader(data);
+  wallet.network = bcoin.network.fromMagic(p.readU32());
+  wallet.wid = p.readU32();
+  wallet.id = p.readVarString('utf8');
+  wallet.initialized = p.readU8() === 1;
+  wallet.accountDepth = p.readU32();
+  wallet.token = p.readBytes(32);
+  wallet.tokenDepth = p.readU32();
+  wallet.master = MasterKey.fromRaw(p.readVarBytes());
+  return wallet;
 }
 
 function keyFromRaw(data, network) {
@@ -255,6 +301,7 @@ co.spawn(function *() {
   yield updateVersion();
   yield updatePathMap();
   yield updateAccounts();
+  yield updateWallets();
   yield batch.write();
 }).then(function() {
   console.log('Migration complete.');
