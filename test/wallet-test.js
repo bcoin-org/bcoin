@@ -946,12 +946,10 @@ describe('Wallet', function() {
   it('should import pubkey', cob(function *() {
     var priv = bcoin.keyring.generate();
     var key = new bcoin.keyring(priv.publicKey);
-    var w = yield walletdb.create();
+    var w = yield walletdb.create({ watchOnly: true });
     var options, k, t1, t2, tx;
 
-    yield w.createAccount({ name: 'watchonly', watchOnly: true });
-
-    yield w.importKey('watchonly', key);
+    yield w.importKey('default', key);
 
     k = yield w.getPath(key.getHash('hex'));
 
@@ -963,12 +961,10 @@ describe('Wallet', function() {
 
   it('should import address', cob(function *() {
     var key = bcoin.keyring.generate();
-    var w = yield walletdb.create();
+    var w = yield walletdb.create({ watchOnly: true });
     var options, k, t1, t2, tx;
 
-    yield w.createAccount({ name: 'watchonly', watchOnly: true });
-
-    yield w.importAddress('watchonly', key.getAddress());
+    yield w.importAddress('default', key.getAddress());
 
     k = yield w.getPath(key.getHash('hex'));
 
