@@ -77,6 +77,6 @@
     "secp256k1": "./browser/empty.js"
   },
   "browserify": {
-    "transform": ["babelify"]
+    "transform": ["./browser/transform.js", "babelify"]
   }
 }
