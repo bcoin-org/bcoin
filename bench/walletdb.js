@@ -56,7 +56,7 @@ var runBench = co(function* runBench() {
   end(1000);
 
   for (i = 0; i < result.length; i++)
-    addrs.push(result[i].receiveAddress.getAddress());
+    addrs.push(result[i].receive.getAddress());
 
   // Addresses
   jobs = [];
