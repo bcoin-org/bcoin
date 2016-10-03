@@ -900,7 +900,7 @@ describe('Wallet', function() {
     assert.equal(balance.total, 21840);
   }));
 
-  it('should import key', cob(function *() {
+  it('should import privkey', cob(function *() {
     var key = bcoin.keyring.generate();
     var w = yield walletdb.create({ passphrase: 'test' });
     var options, k, t1, t2, tx;
@@ -943,16 +943,39 @@ describe('Wallet', function() {
     ekey = key;
   }));
 
+  it('should import pubkey', cob(function *() {
+    var priv = bcoin.keyring.generate();
+    var key = new bcoin.keyring(priv.publicKey);
+    var w = yield walletdb.create();
+    var options, k, t1, t2, tx;
+
+    yield w.createAccount({ name: 'watchonly', watchOnly: true });
+
+    yield w.importKey('watchonly', key);
+
+    k = yield w.getPath(key.getHash('hex'));
+
+    assert.equal(k.hash, key.getHash('hex'));
+
+    k = yield w.getKey(key.getHash('hex'));
+    assert(k);
+  }));
+
   it('should import address', cob(function *() {
     var key = bcoin.keyring.generate();
     var w = yield walletdb.create();
     var options, k, t1, t2, tx;
 
-    yield w.importAddress('default', key.getAddress());
+    yield w.createAccount({ name: 'watchonly', watchOnly: true });
+
+    yield w.importAddress('watchonly', key.getAddress());
 
     k = yield w.getPath(key.getHash('hex'));
 
     assert.equal(k.hash, key.getHash('hex'));
+
+    k = yield w.getKey(key.getHash('hex'));
+    assert(!k);
   }));
 
   it('should get details', cob(function *() {
