@@ -102,7 +102,7 @@ var updatePathMap = co(function* updatePathMap() {
 
 var updateAccounts = co(function* updateAccounts() {
   var total = 0;
-  var iter, item, account;
+  var iter, item, account, buf;
 
   iter = db.iterator({
     gte: layout.a(0, 0),
@@ -122,6 +122,13 @@ var updateAccounts = co(function* updateAccounts() {
     account = accountFromRaw(item.value, item.key);
     account = new Account({ network: account.network, options: {} }, account);
     batch.put(layout.a(account.wid, account.accountIndex), account.toRaw());
+
+    if (account._old) {
+      batch.del(layout.i(account.wid, account._old));
+      buf = new Buffer(4);
+      buf.writeUInt32LE(account.accountIndex, 0, true);
+      batch.put(layout.i(account.wid, account.name), buf);
+    }
   }
 
   console.log('Migrated %d accounts.', total);
@@ -129,7 +136,7 @@ var updateAccounts = co(function* updateAccounts() {
 
 var updateWallets = co(function* updateWallets() {
   var total = 0;
-  var iter, item, wallet;
+  var iter, item, wallet, buf;
 
   iter = db.iterator({
     gte: layout.w(0),
@@ -149,6 +156,13 @@ var updateWallets = co(function* updateWallets() {
     wallet = walletFromRaw(item.value);
     wallet = new Wallet({ network: wallet.network }, wallet);
     batch.put(layout.w(wallet.wid), wallet.toRaw());
+
+    if (wallet._old) {
+      batch.del(layout.l(wallet._old));
+      buf = new Buffer(4);
+      buf.writeUInt32LE(wallet.wid, 0, true);
+      batch.put(layout.l(wallet.id), buf);
+    }
   }
 
   console.log('Migrated %d wallets.', total);
@@ -225,7 +239,7 @@ function readAccountKey(key) {
 function accountFromRaw(data, dbkey) {
   var account = {};
   var p = new BufferReader(data);
-  var i, count, key;
+  var i, count, key, name;
 
   dbkey = readAccountKey(dbkey);
   account.wid = dbkey.wid;
@@ -245,6 +259,14 @@ function accountFromRaw(data, dbkey) {
   account.watchOnly = false;
   account.nestedDepth = 0;
 
+  name = account.name.replace(/[^\-\._0-9A-Za-z]+/g, '');
+
+  if (name !== account.name) {
+    console.log('Account name changed: %s -> %s.', account.name, name);
+    account._old = account.name;
+    account.name = name;
+  }
+
   count = p.readU8();
 
   for (i = 0; i < count; i++) {
@@ -258,6 +280,8 @@ function accountFromRaw(data, dbkey) {
 function walletFromRaw(data) {
   var wallet = {};
   var p = new BufferReader(data);
+  var id;
+
   wallet.network = bcoin.network.fromMagic(p.readU32());
   wallet.wid = p.readU32();
   wallet.id = p.readVarString('utf8');
@@ -267,6 +291,15 @@ function walletFromRaw(data) {
   wallet.tokenDepth = p.readU32();
   wallet.master = MasterKey.fromRaw(p.readVarBytes());
   wallet.watchOnly = false;
+
+  id = wallet.id.replace(/[^\-\._0-9A-Za-z]+/g, '');
+
+  if (id !== wallet.id) {
+    console.log('Wallet ID changed: %s -> %s.', wallet.id, id);
+    wallet._old = wallet.id;
+    wallet.id = id;
+  }
+
   return wallet;
 }
 
