@@ -32,7 +32,7 @@
     margin-top: 10px;
     font: 1em monospace;
   }
-  .send {
+  .rpc, .send {
     padding: 5px;
     margin-left: 5px;
     margin-top: 10px;
@@ -84,6 +84,10 @@ more bitcoin magic).</small>
   <div id="tx"></div>
 </div>
 <div id="log" class="log"></div>
+<form id="rpc" class="rpc" action="#">
+  <input type="text" name="cmd" id="cmd"
+    placeholder="RPC command (e.g. getblockchaininfo)">
+</form>
 <div id="wallet" class="wallet"></div>
 <form id="send" class="send" action="#">
   <input type="text" name="address" id="address" placeholder="Address">

@@ -11,6 +11,8 @@ var floating = document.getElementById('floating');
 var send = document.getElementById('send');
 var newaddr = document.getElementById('newaddr');
 var chainState = document.getElementById('state');
+var rpc = document.getElementById('rpc');
+var cmd = document.getElementById('cmd');
 var items = [];
 var scrollback = 0;
 var logger, node, options;
@@ -43,6 +45,33 @@ logger.writeConsole = function(level, args) {
     log.innerHTML += '[' + level + '] ';
   log.innerHTML += escape(msg) + '\n';
   log.scrollTop = log.scrollHeight;
+};
+
+rpc.onsubmit = function(ev) {
+  var text = cmd.value || '';
+  var argv = text.trim().split(/\s+/);
+  var method = argv.shift();
+  var params = [];
+  var i, arg, param;
+
+  cmd.value = '';
+
+  for (i = 0; i < argv.length; i++) {
+    arg = argv[i];
+    try {
+      param = JSON.parse(arg);
+    } catch (e) {
+      param = arg;
+    }
+    params.push(param);
+  }
+
+  node.rpc.execute({ method: method, params: params }).then(show, show);
+
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  return false;
 };
 
 send.onsubmit = function(ev) {
@@ -194,6 +223,7 @@ options = bcoin.config({
 bcoin.set(options);
 
 node = new bcoin.fullnode(options);
+node.rpc = new bcoin.rpc(node);
 
 node.on('error', function(err) {
   ;

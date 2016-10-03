@@ -427,6 +427,7 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('  $ tx [hash/address]: View transactions.');
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
+      this.log('  $ rpc [command] [args]: Execute RPC command.');
       return;
   }
 });
