@@ -266,6 +266,7 @@ function walletFromRaw(data) {
   wallet.token = p.readBytes(32);
   wallet.tokenDepth = p.readU32();
   wallet.master = MasterKey.fromRaw(p.readVarBytes());
+  wallet.watchOnly = false;
   return wallet;
 }
 
