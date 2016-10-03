@@ -55,20 +55,20 @@ describe('Mempool', function() {
     verify: true
   });
 
-  it('should open mempool', cob(function *() {
+  it('should open mempool', cob(function* () {
     yield mempool.open();
     chain.state.flags |= constants.flags.VERIFY_WITNESS;
   }));
 
-  it('should open walletdb', cob(function *() {
+  it('should open walletdb', cob(function* () {
     yield walletdb.open();
   }));
 
-  it('should open wallet', cob(function *() {
+  it('should open wallet', cob(function* () {
     wallet = yield walletdb.create();
   }));
 
-  it('should handle incoming orphans and TXs', cob(function *() {
+  it('should handle incoming orphans and TXs', cob(function* () {
     var kp = bcoin.keyring.generate();
     var w = wallet;
     var t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
@@ -173,7 +173,7 @@ describe('Mempool', function() {
     }));
   }));
 
-  it('should handle locktime', cob(function *() {
+  it('should handle locktime', cob(function* () {
     var w = wallet;
     var kp = bcoin.keyring.generate();
     var tx, prev, prevHash, sig;
@@ -199,7 +199,7 @@ describe('Mempool', function() {
     chain.tip.height = 0;
   }));
 
-  it('should handle invalid locktime', cob(function *() {
+  it('should handle invalid locktime', cob(function* () {
     var w = wallet;
     var kp = bcoin.keyring.generate();
     var tx, prev, prevHash, sig, err;
@@ -230,7 +230,7 @@ describe('Mempool', function() {
     chain.tip.height = 0;
   }));
 
-  it('should not cache a malleated wtx with mutated sig', cob(function *() {
+  it('should not cache a malleated wtx with mutated sig', cob(function* () {
     var w = wallet;
     var kp = bcoin.keyring.generate();
     var tx, prev, prevHash, prevs, sig, tx, err;
@@ -263,7 +263,7 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(tx.hash()));
   }));
 
-  it('should not cache a malleated tx with unnecessary witness', cob(function *() {
+  it('should not cache a malleated tx with unnecessary witness', cob(function* () {
     var w = wallet;
     var kp = bcoin.keyring.generate();
     var tx, prev, prevHash, sig, tx, err;
@@ -292,7 +292,7 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(tx.hash()));
   }));
 
-  it('should not cache a malleated wtx with wit removed', cob(function *() {
+  it('should not cache a malleated wtx with wit removed', cob(function* () {
     var w = wallet;
     var kp = bcoin.keyring.generate();
     var tx, prev, prevHash, tx, err;
@@ -321,7 +321,7 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(tx.hash()));
   }));
 
-  it('should cache non-malleated tx without sig', cob(function *() {
+  it('should cache non-malleated tx without sig', cob(function* () {
     var w = wallet;
     var kp = bcoin.keyring.generate();
     var tx, prev, prevHash, tx, err;
@@ -349,7 +349,7 @@ describe('Mempool', function() {
     cached = tx;
   }));
 
-  it('should clear reject cache', cob(function *() {
+  it('should clear reject cache', cob(function* () {
     var w = wallet;
     var tx, input, tx, block;
 
@@ -378,7 +378,7 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(cached.hash()));
   }));
 
-  it('should destroy mempool', cob(function *() {
+  it('should destroy mempool', cob(function* () {
     yield mempool.close();
   }));
 });

@@ -51,12 +51,12 @@ describe('Wallet', function() {
 
   this.timeout(5000);
 
-  it('should open walletdb', cob(function *() {
+  it('should open walletdb', cob(function* () {
     constants.tx.COINBASE_MATURITY = 0;
     yield walletdb.open();
   }));
 
-  it('should generate new key and address', cob(function *() {
+  it('should generate new key and address', cob(function* () {
     var w = yield walletdb.create();
     var addr = w.getAddress('base58');
     assert(addr);
@@ -71,7 +71,7 @@ describe('Wallet', function() {
     assert(!bcoin.address.validate('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
   });
 
-  it('should create and get wallet', cob(function *() {
+  it('should create and get wallet', cob(function* () {
     var w1, w2;
 
     w1 = yield walletdb.create();
@@ -124,19 +124,19 @@ describe('Wallet', function() {
     assert(tx.verify(flags));
   });
 
-  it('should sign/verify pubkeyhash tx', cob(function *() {
+  it('should sign/verify pubkeyhash tx', cob(function* () {
     yield p2pkh(false, false);
   }));
 
-  it('should sign/verify witnesspubkeyhash tx', cob(function *() {
+  it('should sign/verify witnesspubkeyhash tx', cob(function* () {
     yield p2pkh(true, false);
   }));
 
-  it('should sign/verify witnesspubkeyhash tx with bullshit nesting', cob(function *() {
+  it('should sign/verify witnesspubkeyhash tx with bullshit nesting', cob(function* () {
     yield p2pkh(true, true);
   }));
 
-  it('should multisign/verify TX', cob(function *() {
+  it('should multisign/verify TX', cob(function* () {
     var w, k, keys, src, tx, maxSize;
 
     w = yield walletdb.create({
@@ -179,7 +179,7 @@ describe('Wallet', function() {
     assert(tx.verify());
   }));
 
-  it('should have TX pool and be serializable', cob(function *() {
+  it('should have TX pool and be serializable', cob(function* () {
     var w = yield walletdb.create();
     var f = yield walletdb.create();
     var t1, t2, t3, t4, f1, fake, balance, txs;
@@ -284,7 +284,7 @@ describe('Wallet', function() {
     }));
   }));
 
-  it('should cleanup spenders after double-spend', cob(function *() {
+  it('should cleanup spenders after double-spend', cob(function* () {
     var w = doubleSpendWallet;
     var tx, txs, total, balance;
 
@@ -319,7 +319,7 @@ describe('Wallet', function() {
     assert.equal(total, 56000);
   }));
 
-  it('should fill tx with inputs', cob(function *() {
+  it('should fill tx with inputs', cob(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var t1, t2, t3, err;
@@ -361,7 +361,7 @@ describe('Wallet', function() {
     assert.equal(err.requiredFunds, 25000);
   }));
 
-  it('should fill tx with inputs with accurate fee', cob(function *() {
+  it('should fill tx with inputs with accurate fee', cob(function* () {
     var w1 = yield walletdb.create({ master: KEY1 });
     var w2 = yield walletdb.create({ master: KEY2 });
     var t1, t2, t3, balance, err;
@@ -418,7 +418,7 @@ describe('Wallet', function() {
     assert(balance.total === 5460);
   }));
 
-  it('should sign multiple inputs using different keys', cob(function *() {
+  it('should sign multiple inputs using different keys', cob(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var to = yield walletdb.create();
@@ -636,19 +636,19 @@ describe('Wallet', function() {
     assert.equal(send.getFee(), 10000);
   });
 
-  it('should verify 2-of-3 scripthash tx', cob(function *() {
+  it('should verify 2-of-3 scripthash tx', cob(function* () {
     yield multisig(false, false);
   }));
 
-  it('should verify 2-of-3 witnessscripthash tx', cob(function *() {
+  it('should verify 2-of-3 witnessscripthash tx', cob(function* () {
     yield multisig(true, false);
   }));
 
-  it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', cob(function *() {
+  it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', cob(function* () {
     yield multisig(true, true);
   }));
 
-  it('should fill tx with account 1', cob(function *() {
+  it('should fill tx with account 1', cob(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var account, accounts, rec, t1, t2, t3, err;
@@ -701,7 +701,7 @@ describe('Wallet', function() {
     assert.deepEqual(accounts, ['default', 'foo']);
   }));
 
-  it('should fail to fill tx with account 1', cob(function *() {
+  it('should fail to fill tx with account 1', cob(function* () {
     var w = yield walletdb.create();
     var acc, account, t1, t2, err;
 
@@ -766,7 +766,7 @@ describe('Wallet', function() {
     yield w.fund(t2, { rate: 10000, round: true, account: 'foo' });
   }));
 
-  it('should fill tx with inputs when encrypted', cob(function *() {
+  it('should fill tx with inputs when encrypted', cob(function* () {
     var w = yield walletdb.create({ passphrase: 'foo' });
     var t1, t2, err;
 
@@ -804,7 +804,7 @@ describe('Wallet', function() {
     assert(t2.verify());
   }));
 
-  it('should fill tx with inputs with subtract fee', cob(function *() {
+  it('should fill tx with inputs with subtract fee', cob(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var t1, t2;
@@ -833,7 +833,7 @@ describe('Wallet', function() {
     assert.equal(t2.getFee(), 10000);
   }));
 
-  it('should fill tx with inputs with subtract fee with create tx', cob(function *() {
+  it('should fill tx with inputs with subtract fee with create tx', cob(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var options, t1, t2;
@@ -868,19 +868,19 @@ describe('Wallet', function() {
     assert.equal(t2.getFee(), 10000);
   }));
 
-  it('should get range of txs', cob(function *() {
+  it('should get range of txs', cob(function* () {
     var w = wallet;
     var txs = yield w.getRange({ start: 0xdeadbeef - 1000 });
     assert.equal(txs.length, 1);
   }));
 
-  it('should get range of txs from account', cob(function *() {
+  it('should get range of txs from account', cob(function* () {
     var w = wallet;
     var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
     assert.equal(txs.length, 1);
   }));
 
-  it('should not get range of txs from non-existent account', cob(function *() {
+  it('should not get range of txs from non-existent account', cob(function* () {
     var w = wallet;
     var txs, err;
 
@@ -894,13 +894,13 @@ describe('Wallet', function() {
     assert.equal(err.message, 'Account not found.');
   }));
 
-  it('should get account balance', cob(function *() {
+  it('should get account balance', cob(function* () {
     var w = wallet;
     var balance = yield w.getBalance('foo');
     assert.equal(balance.total, 21840);
   }));
 
-  it('should import privkey', cob(function *() {
+  it('should import privkey', cob(function* () {
     var key = bcoin.keyring.generate();
     var w = yield walletdb.create({ passphrase: 'test' });
     var options, k, t1, t2, tx;
@@ -943,7 +943,7 @@ describe('Wallet', function() {
     ekey = key;
   }));
 
-  it('should import pubkey', cob(function *() {
+  it('should import pubkey', cob(function* () {
     var priv = bcoin.keyring.generate();
     var key = new bcoin.keyring(priv.publicKey);
     var w = yield walletdb.create({ watchOnly: true });
@@ -959,7 +959,7 @@ describe('Wallet', function() {
     assert(k);
   }));
 
-  it('should import address', cob(function *() {
+  it('should import address', cob(function* () {
     var key = bcoin.keyring.generate();
     var w = yield walletdb.create({ watchOnly: true });
     var options, k, t1, t2, tx;
@@ -974,14 +974,14 @@ describe('Wallet', function() {
     assert(!k);
   }));
 
-  it('should get details', cob(function *() {
+  it('should get details', cob(function* () {
     var w = wallet;
     var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
     var details = yield w.toDetails(txs);
     assert.equal(details[0].toJSON().outputs[0].path.name, 'foo');
   }));
 
-  it('should rename wallet', cob(function *() {
+  it('should rename wallet', cob(function* () {
     var w = wallet;
     yield wallet.rename('test');
     var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
@@ -989,7 +989,7 @@ describe('Wallet', function() {
     assert.equal(details[0].toJSON().id, 'test');
   }));
 
-  it('should handle changed passphrase with encrypted imports', cob(function *() {
+  it('should handle changed passphrase with encrypted imports', cob(function* () {
     var w = ewallet;
     var addr = ekey.getAddress();
     var path, d1, d2, k;
@@ -1028,7 +1028,7 @@ describe('Wallet', function() {
     assert.equal(k.getHash('hex'), addr.getHash('hex'));
   }));
 
-  it('should cleanup', cob(function *() {
+  it('should cleanup', cob(function* () {
     var records = yield walletdb.dump();
     constants.tx.COINBASE_MATURITY = 100;
   }));

@@ -294,7 +294,7 @@ function keyFromRaw(data, network) {
   return ring;
 }
 
-co.spawn(function *() {
+co.spawn(function* () {
   yield db.open();
   batch = db.batch();
   console.log('Opened %s.', file);

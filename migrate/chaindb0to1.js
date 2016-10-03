@@ -106,7 +106,7 @@ var updateEndian = co(function* updateEndian() {
   console.log('Migrated endianness.');
 });
 
-co.spawn(function *() {
+co.spawn(function* () {
   yield db.open();
   console.log('Opened %s.', file);
   yield checkVersion();
