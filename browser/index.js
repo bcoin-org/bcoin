@@ -11,7 +11,6 @@ var floating = document.getElementById('floating');
 var send = document.getElementById('send');
 var newaddr = document.getElementById('newaddr');
 var chainState = document.getElementById('state');
-var cb = bcoin.spawn.cb;
 var items = [];
 var scrollback = 0;
 var logger, node, options;
@@ -49,40 +48,32 @@ logger.writeConsole = function(level, args) {
 send.onsubmit = function(ev) {
   var value = document.getElementById('amount').value;
   var address = document.getElementById('address').value;
+  var tx, options;
 
-  var options = {
+  options = {
     outputs: [{
       address: address,
       value: utils.satoshi(value)
     }]
   };
 
-  cb(node.wallet.createTX(options), function(err, tx) {
-    if (err)
-      return node.logger.error(err);
-
-    cb(node.wallet.sign(tx), function(err) {
-      if (err)
-        return node.logger.error(err);
-
-      cb(node.sendTX(tx), function(err) {
-        if (err)
-          return node.logger.error(err);
-
-        show(tx);
-      });
-    });
+  node.wallet.createTX(options).then(function(mtx) {
+    tx = mtx;
+    return node.wallet.sign(tx);
+  }).then(function() {
+    return node.sendTX(tx);
+  }).then(function() {
+    show(tx);
   });
 
   ev.preventDefault();
   ev.stopPropagation();
+
   return false;
 };
 
 newaddr.onmouseup = function() {
-  cb(node.wallet.createReceive(), function(err) {
-    if (err)
-      throw err;
+  node.wallet.createReceive().then(function() {
     formatWallet(node.wallet);
   });
 };
@@ -121,11 +112,7 @@ function addItem(tx) {
     + ' - ' + kb(tx.getSize()) + ')</a>');
   tdiv.appendChild(el);
 
-  el.onmouseup = function(ev) {
-    show(tx);
-    ev.stopPropagation();
-    return false;
-  };
+  setMouseup(el, tx);
 
   items.push(el);
 
@@ -135,48 +122,63 @@ function addItem(tx) {
     + ' value=' + utils.btc(node.chain.db.state.value);
 }
 
+function setMouseup(el, obj) {
+  el.onmouseup = function(ev) {
+    show(obj);
+    ev.stopPropagation();
+    return false;
+  };
+}
+
 function formatWallet(wallet) {
   var html = '';
   var key = wallet.master.toJSON().key;
+  var i, tx, el;
+
   html += '<b>Wallet</b><br>';
-  if (bcoin.network.get().type === 'segnet4') {
-    html += 'Current Address (p2wpkh): <b>' + wallet.getAddress() + '</b><br>';
-    html += 'Current Address (p2wpkh behind p2sh): <b>' + wallet.getProgramAddress() + '</b><br>';
+
+  if (bcoin.network.primary.witness) {
+    html += 'Current Address (p2wpkh): <b>'
+      + wallet.getAddress()
+      + '</b><br>';
+    html += 'Current Address (p2wpkh behind p2sh): <b>'
+      + wallet.getProgramAddress()
+      + '</b><br>';
   } else {
     html += 'Current Address: <b>' + wallet.getAddress() + '</b><br>';
   }
+
   html += 'Extended Private Key: <b>' + key.xprivkey + '</b><br>';
   html += 'Mnemonic: <b>' + key.mnemonic.phrase + '</b><br>';
-  cb(wallet.getBalance(), function(err, balance) {
-    if (err)
-      throw err;
 
-    html += 'Confirmed Balance: <b>' + utils.btc(balance.confirmed) + '</b><br>';
-    html += 'Unconfirmed Balance: <b>' + utils.btc(balance.unconfirmed) + '</b><br>';
+  wallet.getBalance().then(function(balance) {
+    html += 'Confirmed Balance: <b>'
+      + utils.btc(balance.confirmed)
+      + '</b><br>';
+
+    html += 'Unconfirmed Balance: <b>'
+      + utils.btc(balance.unconfirmed)
+      + '</b><br>';
+
     html += 'Balance: <b>' + utils.btc(balance.total) + '</b><br>';
 
-    cb(wallet.getHistory(), function(err, txs) {
-      if (err)
-        throw err;
+    return wallet.getHistory();
+  }).then(function(txs) {
+    return wallet.toDetails(txs);
+  }).then(function(txs) {
+    html += 'TXs:\n';
+    wdiv.innerHTML = html;
 
-      cb(wallet.toDetails(txs), function(err, txs) {
-        if (err)
-          throw err;
+    for (i = 0; i < txs.length; i++) {
+      tx = txs[i];
 
-        html += 'TXs:\n';
-        wdiv.innerHTML = html;
+      el = create(
+        '<a style="display:block;" href="#' + tx.hash + '">'
+        + tx.hash + '</a>');
 
-        txs.forEach(function(tx) {
-          var el = create('<a style="display:block;" href="#' + tx.hash + '">' + tx.hash + '</a>');
-          wdiv.appendChild(el);
-          el.onmouseup = function(ev) {
-            show(tx.toJSON());
-            ev.stopPropagation();
-            return false;
-          };
-        });
-      });
-    });
+      wdiv.appendChild(el);
+      setMouseup(el, tx.toJSON());
+    }
   });
 }
 
@@ -200,15 +202,12 @@ node.on('error', function(err) {
 node.chain.on('block', addItem);
 node.mempool.on('tx', addItem);
 
-cb(node.open(), function(err) {
-  if (err)
-    throw err;
-
+node.open().then(function() {
   node.startSync();
 
   formatWallet(node.wallet);
 
-  node.wallet.on('update', function() {
+  node.wallet.on('balance', function() {
     formatWallet(node.wallet);
   });
 });
