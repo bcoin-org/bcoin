@@ -41,7 +41,7 @@ var dummyInput = {
 };
 
 describe('Wallet', function() {
-  var walletdb, wallet, doubleSpendWallet, doubleSpend;
+  var walletdb, wallet, ewallet, ekey, doubleSpendWallet, doubleSpend;
 
   walletdb = new bcoin.walletdb({
     name: 'wallet-test',
@@ -938,6 +938,9 @@ describe('Wallet', function() {
     yield w.sign(t2);
     assert(t2.verify());
     assert(t2.inputs[0].prevout.hash === tx.hash('hex'));
+
+    ewallet = w;
+    ekey = key;
   }));
 
   it('should import address', cob(function *() {
@@ -965,6 +968,45 @@ describe('Wallet', function() {
     var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
     var details = yield w.toDetails(txs);
     assert.equal(details[0].toJSON().id, 'test');
+  }));
+
+  it('should handle changed passphrase with encrypted imports', cob(function *() {
+    var w = ewallet;
+    var addr = ekey.getAddress();
+    var path, d1, d2, k;
+
+    assert(w.master.encrypted);
+
+    path = yield w.getPath(addr);
+    assert(path);
+    assert(path.data && path.encrypted);
+    d1 = path.data;
+
+    yield w.decrypt('test');
+
+    path = yield w.getPath(addr);
+    assert(path);
+    assert(path.data && !path.encrypted);
+
+    k = yield w.getKey(addr);
+    assert(k);
+
+    yield w.encrypt('foo');
+
+    path = yield w.getPath(addr);
+    assert(path);
+    assert(path.data && path.encrypted);
+    d2 = path.data;
+
+    assert(!utils.equal(d1, d2));
+
+    k = yield w.getKey(addr);
+    assert(!k);
+
+    yield w.unlock('foo');
+    k = yield w.getKey(addr);
+    assert(k);
+    assert.equal(k.getHash('hex'), addr.getHash('hex'));
   }));
 
   it('should cleanup', cob(function *() {
