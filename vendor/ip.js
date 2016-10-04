@@ -377,7 +377,7 @@ ip.address = function(name, family) {
   var os;
 
   try {
-    os = require('o' + 's');
+    os = require('os');
   } catch (e) {
     return '127.0.0.1';
   }

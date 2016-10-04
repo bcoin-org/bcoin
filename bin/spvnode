@@ -6,7 +6,7 @@ process.title = 'bcoin';
 
 var bcoin = require('../');
 var utils = bcoin.utils;
-var assert = utils.assert;
+var assert = require('assert');
 
 var options = bcoin.config({
   config: true,
@@ -25,10 +25,13 @@ node.on('error', function(err) {
   ;
 });
 
-node.open(function(err) {
-  if (err)
-    throw err;
+process.on('uncaughtException', function(err) {
+  node.logger.debug(err.stack);
+  node.logger.error(err);
+  process.exit(1);
+});
 
+node.open().then(function() {
   if (process.argv.indexOf('--test') !== -1) {
     node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
     node.pool.watch(bcoin.outpoint().toRaw());

@@ -15,22 +15,27 @@ proxy.on('error', function(err) {
 });
 
 var index = fs.readFileSync(__dirname + '/index.html');
+var indexjs = fs.readFileSync(__dirname + '/index.js');
 var bcoin = fs.readFileSync(__dirname + '/bcoin.js');
 var worker = fs.readFileSync(__dirname + '/../lib/workers/worker.js');
 
-server.get('/favicon.ico', function(req, res, next, send) {
+server.get('/favicon.ico', function(req, res, send, next) {
   send(404, '', 'text');
 });
 
-server.get('/', function(req, res, next, send) {
+server.get('/', function(req, res, send, next) {
   send(200, index, 'html');
 });
 
-server.get('/bcoin.js', function(req, res, next, send) {
+server.get('/index.js', function(req, res, send, next) {
+  send(200, indexjs, 'js');
+});
+
+server.get('/bcoin.js', function(req, res, send, next) {
   send(200, bcoin, 'js');
 });
 
-server.get('/bcoin-worker.js', function(req, res, next, send) {
+server.get('/bcoin-worker.js', function(req, res, send, next) {
   send(200, worker, 'js');
 });
 

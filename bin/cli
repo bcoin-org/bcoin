@@ -4,9 +4,11 @@
 
 var config = require('../lib/node/config');
 var utils = require('../lib/utils/utils');
+var co = require('../lib/utils/co');
 var Client = require('../lib/http/client');
 var Wallet = require('../lib/http/wallet');
-var assert = utils.assert;
+var assert = require('assert');
+var main;
 
 function CLI() {
   this.config = config({
@@ -26,9 +28,9 @@ CLI.prototype.log = function log(json) {
   console.log(JSON.stringify(json, null, 2));
 };
 
-CLI.prototype.createWallet = function createWallet(callback) {
-  var self = this;
+CLI.prototype.createWallet = co(function* createWallet() {
   var options = { id: this.argv[0] };
+  var wallet;
 
   if (this.config.type)
     options.type = this.config.type;
@@ -51,170 +53,118 @@ CLI.prototype.createWallet = function createWallet(callback) {
   if (this.config.passphrase)
     options.passphrase = this.config.passphrase;
 
-  this.client.createWallet(options, function(err, wallet) {
-    if (err)
-      return callback(err);
-    self.log(wallet);
-    callback();
-  });
-};
+  wallet = yield this.client.createWallet(options);
+  this.log(wallet);
+});
 
-CLI.prototype.addKey = function addKey(callback) {
-  var self = this;
+CLI.prototype.addKey = co(function* addKey() {
   var key = this.argv[0];
-  this.wallet.addKey(this.config.account, key, function(err, wallet) {
-    if (err)
-      return callback(err);
-    self.log('added');
-    callback();
-  });
-};
+  yield this.wallet.addKey(this.config.account, key);
+  this.log('added');
+});
 
-CLI.prototype.removeKey = function removeKey(callback) {
-  var self = this;
+CLI.prototype.removeKey = co(function* removeKey() {
   var key = this.argv[0];
-  this.wallet.removeKey(this.config.account, key, function(err) {
-    if (err)
-      return callback(err);
-    self.log('removed');
-    callback();
-  });
-};
+  yield this.wallet.removeKey(this.config.account, key);
+  this.log('removed');
+});
 
-CLI.prototype.getAccount = function getAccount(callback) {
-  var self = this;
+CLI.prototype.getAccount = co(function* getAccount() {
   var account = this.argv[0] || this.config.account;
-  this.wallet.getAccount(account, function(err, account) {
-    if (err)
-      return callback(err);
-    self.log(account);
-    callback();
-  });
-};
+  yield this.wallet.getAccount(account);
+  this.log(account);
+});
 
-CLI.prototype.createAccount = function createAccount(callback) {
-  var self = this;
+CLI.prototype.createAccount = co(function* createAccount() {
+  var name = this.argv[0];
+  var account = yield this.wallet.createAccount(name);
+  this.log(account);
+});
+
+CLI.prototype.createAddress = co(function* createAddress() {
   var account = this.argv[0];
-  this.wallet.createAccount(account, function(err, account) {
-    if (err)
-      return callback(err);
-    self.log(account);
-    callback();
-  });
-};
+  var addr = yield this.wallet.createAddress(account);
+  this.log(addr);
+});
 
-CLI.prototype.createAddress = function createAddress(callback) {
-  var self = this;
+CLI.prototype.createNested = co(function* createNested() {
   var account = this.argv[0];
-  this.wallet.createAddress(account, function(err, account) {
-    if (err)
-      return callback(err);
-    self.log(account);
-    callback();
-  });
-};
+  var addr = yield this.wallet.createNested(account);
+  this.log(addr);
+});
 
-CLI.prototype.getAccounts = function getAccounts(callback) {
-  var self = this;
-  this.wallet.getAccounts(function(err, accounts) {
-    if (err)
-      return callback(err);
-    self.log(accounts);
-    callback();
-  });
-};
+CLI.prototype.getAccounts = co(function* getAccounts() {
+  var accounts = yield this.wallet.getAccounts();
+  this.log(accounts);
+});
 
-CLI.prototype.getWallet = function getWallet(callback) {
-  var self = this;
-  this.wallet.getInfo(function(err, wallet) {
-    if (err)
-      return callback(err);
-    self.log(wallet);
-    callback();
-  });
-};
+CLI.prototype.getWallet = co(function* getWallet() {
+  var info = yield this.wallet.getInfo();
+  this.log(info);
+});
 
-CLI.prototype.getTX = function getTX(callback) {
-  var self = this;
+CLI.prototype.getTX = co(function* getTX() {
   var hash = this.argv[0];
+  var txs, tx;
+
   if (utils.isBase58(hash)) {
-    return this.client.getTXByAddress(hash, function(err, txs) {
-      if (err)
-        return callback(err);
-      self.log(txs);
-      callback();
-    });
+    txs = yield this.client.getTXByAddress(hash);
+    this.log(txs);
+    return;
   }
-  this.client.getTX(hash, function(err, tx) {
-    if (err)
-      return callback(err);
 
-    if (!tx) {
-      self.log('TX not found.');
-      return callback();
-    }
+  tx = yield this.client.getTX(hash);
 
-    self.log(tx);
-    callback();
-  });
-};
+  if (!tx) {
+    this.log('TX not found.');
+    return;
+  }
 
-CLI.prototype.getBlock = function getBlock(callback) {
-  var self = this;
+  this.log(tx);
+});
+
+CLI.prototype.getBlock = co(function* getBlock() {
   var hash = this.argv[0];
   if (hash.length !== 64)
     hash = +hash;
-  this.client.getBlock(hash, function(err, block) {
-    if (err)
-      return callback(err);
 
-    if (!block) {
-      self.log('Block not found.');
-      return callback();
-    }
+  block = yield this.client.getBlock(hash);
 
-    self.log(block);
-    callback();
-  });
-};
+  if (!block) {
+    this.log('Block not found.');
+    return
+  }
 
-CLI.prototype.getCoin = function getCoin(callback) {
-  var self = this;
+  this.log(block);
+});
+
+CLI.prototype.getCoin = co(function* getCoin() {
   var hash = this.argv[0];
   var index = this.argv[1];
+  var coins, coin;
+
   if (utils.isBase58(hash)) {
-    return this.client.getCoinsByAddress(hash, function(err, coins) {
-      if (err)
-        return callback(err);
-      self.log(coins);
-      callback();
-    });
+    coins = yield this.client.getCoinsByAddress(hash);
+    this.log(coins);
+    return;
   }
-  this.client.getCoin(hash, index, function(err, coin) {
-    if (err)
-      return callback(err);
 
-    if (!coin) {
-      self.log('Coin not found.');
-      return callback();
-    }
+  coin = yield this.client.getCoin(hash, index);
 
-    self.log(coin);
-    callback();
-  });
-};
+  if (!coin) {
+    this.log('Coin not found.');
+    return;
+  }
 
-CLI.prototype.getWalletHistory = function getWalletHistory(callback) {
-  var self = this;
-  this.wallet.getHistory(this.config.account, function(err, txs) {
-    if (err)
-      return callback(err);
-    self.log(txs);
-    callback();
-  });
-};
+  this.log(coin);
+});
 
-CLI.prototype.listenWallet = function listenWallet(callback) {
+CLI.prototype.getWalletHistory = co(function* getWalletHistory() {
+  var txs = yield this.wallet.getHistory(this.config.account);
+  this.log(txs);
+});
+
+CLI.prototype.listenWallet = function listenWallet() {
   var self = this;
   this.wallet.on('tx', function(details) {
     self.log('TX:');
@@ -240,32 +190,22 @@ CLI.prototype.listenWallet = function listenWallet(callback) {
     self.log('Balance:');
     self.log(balance);
   });
+  return new Promise(function() {});
 };
 
-CLI.prototype.getBalance = function getBalance(callback) {
-  var self = this;
-  this.wallet.getBalance(this.config.account, function(err, balance) {
-    if (err)
-      return callback(err);
-    self.log(balance);
-    callback();
-  });
-};
+CLI.prototype.getBalance = co(function* getBalance() {
+  var balance = yield this.wallet.getBalance(this.config.account);
+  this.log(balance);
+});
 
-CLI.prototype.getMempool = function getMempool(callback) {
-  var self = this;
-  this.client.getMempool(function(err, txs) {
-    if (err)
-      return callback(err);
-    self.log(txs);
-    callback();
-  });
-};
+CLI.prototype.getMempool = co(function* getMempool() {
+  var txs = yield this.client.getMempool();
+  this.log(txs);
+});
 
-CLI.prototype.sendTX = function sendTX(callback) {
-  var self = this;
+CLI.prototype.sendTX = co(function* sendTX() {
   var output = {};
-  var options;
+  var options, tx;
 
   if (this.config.script) {
     output.script = this.config.script;
@@ -281,18 +221,14 @@ CLI.prototype.sendTX = function sendTX(callback) {
     outputs: [output]
   };
 
-  this.wallet.send(options, function(err, tx) {
-    if (err)
-      return callback(err);
-    self.log(tx);
-    callback();
-  });
-};
+  tx = yield this.wallet.send(options);
 
-CLI.prototype.createTX = function createTX(callback) {
-  var self = this;
+  this.log(tx);
+});
+
+CLI.prototype.createTX = co(function* createTX() {
   var output = {};
-  var options;
+  var options, tx;
 
   if (this.config.script) {
     output.script = this.config.script;
@@ -308,86 +244,53 @@ CLI.prototype.createTX = function createTX(callback) {
     outputs: [output]
   };
 
-  this.wallet.createTX(options, function(err, tx) {
-    if (err)
-      return callback(err);
-    self.log(tx);
-    callback();
-  });
-};
+  tx = yield this.wallet.createTX(options);
 
-CLI.prototype.signTX = function signTX(callback) {
-  var self = this;
+  this.log(tx);
+});
+
+CLI.prototype.signTX = co(function* signTX() {
   var options = { passphrase: this.config.passphrase };
-  var tx = options.tx || this.argv[0];
-  this.wallet.sign(tx, options, function(err, tx) {
-    if (err)
-      return callback(err);
-    self.log(tx);
-    callback();
-  });
-};
+  var raw = options.tx || this.argv[0];
+  var tx = yield this.wallet.sign(raw, options);
+  this.log(tx);
+});
 
-CLI.prototype.zap = function zap(callback) {
-  var self = this;
+CLI.prototype.zap = co(function* zap() {
   var age = (this.config.age >>> 0) || 72 * 60 * 60;
-  this.wallet.zap(this.config.account, age, function(err) {
-    if (err)
-      return callback(err);
-    self.log('Zapped!');
-    callback();
-  });
-};
+  yield this.wallet.zap(this.config.account, age);
+  this.log('Zapped!');
+});
 
-CLI.prototype.broadcast = function broadcast(callback) {
+CLI.prototype.broadcast = co(function* broadcast() {
   var self = this;
-  var tx = this.argv[0] || this.config.tx;
-  this.client.broadcast(tx, function(err, tx) {
-    if (err)
-      return callback(err);
-    self.log('Broadcasted:');
-    self.log(tx);
-    callback();
-  });
-};
+  var raw = this.argv[0] || this.config.tx;
+  var tx = yield this.client.broadcast(raw);
+  this.log('Broadcasted:');
+  this.log(tx);
+});
 
-CLI.prototype.viewTX = function viewTX(callback) {
-  var self = this;
-  var tx = this.argv[0] || this.config.tx;
-  this.wallet.fill(tx, function(err, tx) {
-    if (err)
-      return callback(err);
-    self.log(tx);
-    callback();
-  });
-};
+CLI.prototype.viewTX = co(function* viewTX() {
+  var raw = this.argv[0] || this.config.tx;
+  var tx = yield this.wallet.fill(raw);
+  this.log(tx);
+});
 
-CLI.prototype.getDetails = function getDetails(callback) {
-  var self = this;
+CLI.prototype.getDetails = co(function* getDetails() {
   var hash = this.argv[0];
-  this.wallet.getTX(hash, function(err, tx) {
-    if (err)
-      return callback(err);
-    self.log(tx);
-    callback();
-  });
-};
+  var details = yield this.wallet.getTX(hash);
+  this.log(details);
+});
 
-CLI.prototype.retoken = function retoken(callback) {
-  var self = this;
-  this.wallet.retoken(function(err, result) {
-    if (err)
-      return callback(err);
-    self.log(result);
-    callback();
-  });
-};
+CLI.prototype.retoken = co(function* retoken() {
+  var result = yield this.wallet.retoken();
+  this.log(result);
+});
 
-CLI.prototype.rpc = function rpc(callback) {
-  var self = this;
+CLI.prototype.rpc = co(function* rpc() {
   var method = this.argv.shift();
   var params = [];
-  var i, arg, param;
+  var i, arg, param, result;
 
   for (i = 0; i < this.argv.length; i++) {
     arg = this.argv[i];
@@ -399,17 +302,12 @@ CLI.prototype.rpc = function rpc(callback) {
     params.push(param);
   }
 
-  this.client.rpc.call(method, params, function(err, result) {
-    if (err)
-      return callback(err);
-    self.log(result);
-    callback();
-  });
-};
+  result = yield this.client.rpc.call(method, params);
 
-CLI.prototype.handleWallet = function handleWallet(callback) {
-  var self = this;
+  this.log(result);
+});
 
+CLI.prototype.handleWallet = co(function* handleWallet() {
   var options = {
     id: this.config.id || 'primary',
     token: this.config.token
@@ -421,81 +319,81 @@ CLI.prototype.handleWallet = function handleWallet(callback) {
     network: this.config.network
   });
 
-  this.wallet.open(options, function(err) {
-    if (err)
-      return callback(err);
+  yield this.wallet.open(options);
 
-    switch (self.argv.shift()) {
-      case 'listen':
-        return self.listenWallet(callback);
-      case 'get':
-        return self.getWallet(callback);
-      case 'addkey':
-        return self.addKey(callback);
-      case 'rmkey':
-        return self.removeKey(callback);
-      case 'balance':
-        return self.getBalance(callback);
-      case 'history':
-        return self.getWalletHistory(callback);
-      case 'account':
-        if (self.argv[0] === 'list') {
-          self.argv.shift();
-          return self.getAccounts(callback);
-        }
-        if (self.argv[0] === 'create') {
-          self.argv.shift();
-          return self.createAccount(callback);
-        }
-        if (self.argv[0] === 'get')
-          self.argv.shift();
-        return self.getAccount(callback);
-      case 'address':
-        return self.createAddress(callback);
-      case 'retoken':
-        return self.retoken(callback);
-      case 'sign':
-        return self.signTX(callback);
-      case 'mktx':
-        return self.createTX(callback);
-      case 'send':
-        return self.sendTX(callback);
-      case 'zap':
-        return self.zap(callback);
-      case 'tx':
-        return self.getDetails(callback);
-      case 'view':
-        return self.viewTX(callback);
-      default:
-        self.log('Unrecognized command.');
-        self.log('Commands:');
-        self.log('  $ listen: Listen for events.');
-        self.log('  $ get: View wallet.');
-        self.log('  $ addkey [xpubkey]: Add key to wallet.');
-        self.log('  $ rmkey [xpubkey]: Remove key from wallet.');
-        self.log('  $ balance: Get wallet balance.');
-        self.log('  $ history: View wallet TX history.');
-        self.log('  $ account list: List account names.');
-        self.log('  $ account create [account-name]: Create account.');
-        self.log('  $ account get [account-name]: Get account details.');
-        self.log('  $ address: Derive new address.');
-        self.log('  $ retoken: Create new api key.');
-        self.log('  $ send [address] [value]: Send transaction.');
-        self.log('  $ mktx [address] [value]: Create transaction.');
-        self.log('  $ sign [tx-hex]: Sign transaction.');
-        self.log('  $ zap --age [age]: Zap pending wallet TXs.');
-        self.log('  $ tx [hash]: View transaction details.');
-        self.log('  $ view [tx-hex]: Parse and view transaction.');
-        self.log('Other Options:');
-        self.log('  --passphrase [passphrase]: For signing and account creation.');
-        self.log('  --account [account-name]: Account name.');
-        return callback();
-    }
-  });
-};
+  switch (this.argv.shift()) {
+    case 'listen':
+      return yield this.listenWallet();
+    case 'get':
+      return yield this.getWallet();
+    case 'addkey':
+      return yield this.addKey();
+    case 'rmkey':
+      return yield this.removeKey();
+    case 'balance':
+      return yield this.getBalance();
+    case 'history':
+      return yield this.getWalletHistory();
+    case 'account':
+      if (this.argv[0] === 'list') {
+        this.argv.shift();
+        return yield this.getAccounts();
+      }
+      if (this.argv[0] === 'create') {
+        this.argv.shift();
+        return yield this.createAccount();
+      }
+      if (this.argv[0] === 'get')
+        this.argv.shift();
+      return yield this.getAccount();
+    case 'address':
+      return yield this.createAddress();
+    case 'nested':
+      return yield this.createNested();
+    case 'retoken':
+      return yield this.retoken();
+    case 'sign':
+      return yield this.signTX();
+    case 'mktx':
+      return yield this.createTX();
+    case 'send':
+      return yield this.sendTX();
+    case 'zap':
+      return yield this.zap();
+    case 'tx':
+      return yield this.getDetails();
+    case 'view':
+      return yield this.viewTX();
+    default:
+      this.log('Unrecognized command.');
+      this.log('Commands:');
+      this.log('  $ listen: Listen for events.');
+      this.log('  $ get: View wallet.');
+      this.log('  $ addkey [xpubkey]: Add key to wallet.');
+      this.log('  $ rmkey [xpubkey]: Remove key from wallet.');
+      this.log('  $ balance: Get wallet balance.');
+      this.log('  $ history: View wallet TX history.');
+      this.log('  $ account list: List account names.');
+      this.log('  $ account create [account-name]: Create account.');
+      this.log('  $ account get [account-name]: Get account details.');
+      this.log('  $ address: Derive new address.');
+      this.log('  $ nested: Derive new nested address.');
+      this.log('  $ retoken: Create new api key.');
+      this.log('  $ send [address] [value]: Send transaction.');
+      this.log('  $ mktx [address] [value]: Create transaction.');
+      this.log('  $ sign [tx-hex]: Sign transaction.');
+      this.log('  $ zap --age [age]: Zap pending wallet TXs.');
+      this.log('  $ tx [hash]: View transaction details.');
+      this.log('  $ view [tx-hex]: Parse and view transaction.');
+      this.log('Other Options:');
+      this.log('  --passphrase [passphrase]: For signing and account creation.');
+      this.log('  --account [account-name]: Account name.');
+      return;
+  }
+});
 
-CLI.prototype.handleNode = function handleNode(callback) {
-  var self = this;
+CLI.prototype.handleNode = co(function* handleNode() {
+  var info;
 
   this.client = new Client({
     uri: this.config.url || this.config.uri,
@@ -503,75 +401,67 @@ CLI.prototype.handleNode = function handleNode(callback) {
     network: this.config.network
   });
 
-  this.client.getInfo(function(err, info) {
-    if (err)
-      return callback(err);
+  info = yield this.client.getInfo();
 
-    switch (self.argv.shift()) {
-      case 'mkwallet':
-        return self.createWallet(callback);
-      case 'broadcast':
-        return self.broadcast(callback);
-      case 'mempool':
-        return self.getMempool(callback);
-      case 'tx':
-        return self.getTX(callback);
-      case 'coin':
-        return self.getCoin(callback);
-      case 'block':
-        return self.getBlock(callback);
-      case 'rpc':
-        return self.rpc(callback);
-      default:
-        self.log('Unrecognized command.');
-        self.log('Commands:');
-        self.log('  $ wallet create [id]: Create wallet.');
-        self.log('  $ broadcast [tx-hex]: Broadcast transaction.');
-        self.log('  $ mempool: Get mempool snapshot.');
-        self.log('  $ tx [hash/address]: View transactions.');
-        self.log('  $ coin [hash+index/address]: View coins.');
-        self.log('  $ block [hash/height]: View block.');
-        return callback();
-    }
-  });
-};
+  switch (this.argv.shift()) {
+    case 'mkwallet':
+      return yield this.createWallet();
+    case 'broadcast':
+      return yield this.broadcast();
+    case 'mempool':
+      return yield this.getMempool();
+    case 'tx':
+      return yield this.getTX();
+    case 'coin':
+      return yield this.getCoin();
+    case 'block':
+      return yield this.getBlock();
+    case 'rpc':
+      return yield this.rpc();
+    default:
+      this.log('Unrecognized command.');
+      this.log('Commands:');
+      this.log('  $ wallet create [id]: Create wallet.');
+      this.log('  $ broadcast [tx-hex]: Broadcast transaction.');
+      this.log('  $ mempool: Get mempool snapshot.');
+      this.log('  $ tx [hash/address]: View transactions.');
+      this.log('  $ coin [hash+index/address]: View coins.');
+      this.log('  $ block [hash/height]: View block.');
+      this.log('  $ rpc [command] [args]: Execute RPC command.');
+      return;
+  }
+});
 
-CLI.prototype.open = function open(callback) {
+CLI.prototype.open = co(function* open() {
   switch (this.argv[0]) {
     case 'w':
     case 'wallet':
       this.argv.shift();
       if (this.argv[0] === 'create') {
         this.argv[0] = 'mkwallet';
-        return this.handleNode(callback);
+        return yield this.handleNode();
       }
-      return this.handleWallet(callback);
+      return yield this.handleWallet();
     default:
-      return this.handleNode(callback);
+      return yield this.handleNode();
   }
-};
+});
 
-CLI.prototype.destroy = function destroy(callback) {
+CLI.prototype.destroy = function destroy() {
   if (this.wallet && !this.wallet.client.loading)
     this.wallet.client.destroy();
   if (this.client && !this.client.loading)
     this.client.destroy();
-  callback();
+  return Promise.resolve(null);
 };
 
-function main(callback) {
+main = co(function* main() {
   var cli = new CLI();
-  cli.open(function(err) {
-    if (err)
-      return callback(err);
-    cli.destroy(callback);
-  });
-}
+  yield cli.open();
+  yield cli.destroy();
+});
 
-main(function(err) {
-  if (err) {
-    console.error(err.stack + '');
-    return process.exit(1);
-  }
-  return process.exit(0);
+main().then(process.exit).catch(function(err) {
+  console.error(err.stack + '');
+  return process.exit(1);
 });

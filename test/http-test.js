@@ -8,6 +8,8 @@ var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
+var co = require('../lib/utils/co');
+var cob = co.cob;
 
 var dummyInput = {
   prevout: {
@@ -41,48 +43,39 @@ describe('HTTP', function() {
     db: 'memory'
   });
 
-  var wallet = new bcoin.http.wallet({
+  var wallet = new bcoin.http.Wallet({
     network: 'regtest',
     apiKey: 'foo'
   });
 
   node.on('error', function() {});
 
-  it('should open node', function(cb) {
+  it('should open node', cob(function* () {
     constants.tx.COINBASE_MATURITY = 0;
-    node.open(cb);
-  });
+    yield node.open();
+  }));
 
-  it('should create wallet', function(cb) {
-    wallet.create({ id: 'test' }, function(err, wallet) {
-      assert.ifError(err);
-      assert.equal(wallet.id, 'test');
-      cb();
-    });
-  });
+  it('should create wallet', cob(function* () {
+    var info = yield wallet.create({ id: 'test' });
+    assert.equal(info.id, 'test');
+  }));
 
-  it('should get info', function(cb) {
-    wallet.client.getInfo(function(err, info) {
-      assert.ifError(err);
-      assert.equal(info.network, node.network.type);
-      assert.equal(info.version, constants.USER_VERSION);
-      assert.equal(info.agent, constants.USER_AGENT);
-      assert.equal(info.height, 0);
-      cb();
-    });
-  });
+  it('should get info', cob(function* () {
+    var info = yield wallet.client.getInfo();
+    assert.equal(info.network, node.network.type);
+    assert.equal(info.version, constants.USER_VERSION);
+    assert.equal(info.agent, constants.USER_AGENT);
+    assert.equal(info.height, 0);
+  }));
 
-  it('should get wallet info', function(cb) {
-    wallet.getInfo(function(err, wallet) {
-      assert.ifError(err);
-      assert.equal(wallet.id, 'test');
-      addr = wallet.account.receiveAddress;
-      assert.equal(typeof addr, 'string');
-      cb();
-    });
-  });
+  it('should get wallet info', cob(function* () {
+    var info = yield wallet.getInfo();
+    assert.equal(info.id, 'test');
+    addr = info.account.receiveAddress;
+    assert.equal(typeof addr, 'string');
+  }));
 
-  it('should fill with funds', function(cb) {
+  it('should fill with funds', cob(function* () {
     var balance, receive, details;
 
     // Coinbase
@@ -107,35 +100,29 @@ describe('HTTP', function() {
       details = d;
     });
 
-    node.walletdb.addTX(t1, function(err) {
-      assert.ifError(err);
-      setTimeout(function() {
-        assert(receive);
-        assert.equal(receive.id, 'test');
-        assert.equal(receive.type, 'pubkeyhash');
-        assert.equal(receive.change, 0);
-        assert(balance);
-        assert.equal(utils.satoshi(balance.confirmed), 0);
-        assert.equal(utils.satoshi(balance.unconfirmed), 201840);
-        assert.equal(utils.satoshi(balance.total), 201840);
-        assert(details);
-        assert.equal(details.hash, t1.rhash);
-        cb();
-      }, 300);
-    });
-  });
+    yield node.walletdb.addTX(t1);
+    yield co.timeout(300);
 
-  it('should get balance', function(cb) {
-    wallet.getBalance(function(err, balance) {
-      assert.ifError(err);
-      assert.equal(utils.satoshi(balance.confirmed), 0);
-      assert.equal(utils.satoshi(balance.unconfirmed), 201840);
-      assert.equal(utils.satoshi(balance.total), 201840);
-      cb();
-    });
-  });
+    assert(receive);
+    assert.equal(receive.id, 'test');
+    assert.equal(receive.type, 'pubkeyhash');
+    assert.equal(receive.branch, 0);
+    assert(balance);
+    assert.equal(utils.satoshi(balance.confirmed), 0);
+    assert.equal(utils.satoshi(balance.unconfirmed), 201840);
+    assert.equal(utils.satoshi(balance.total), 201840);
+    assert(details);
+    assert.equal(details.hash, t1.rhash);
+  }));
 
-  it('should send a tx', function(cb) {
+  it('should get balance', cob(function* () {
+    var balance = yield wallet.getBalance();
+    assert.equal(utils.satoshi(balance.confirmed), 0);
+    assert.equal(utils.satoshi(balance.unconfirmed), 201840);
+    assert.equal(utils.satoshi(balance.total), 201840);
+  }));
+
+  it('should send a tx', cob(function* () {
     var options = {
       rate: 10000,
       outputs: [{
@@ -144,47 +131,41 @@ describe('HTTP', function() {
       }]
     };
 
-    wallet.send(options, function(err, tx) {
-      assert.ifError(err);
-      assert(tx);
-      assert.equal(tx.inputs.length, 1);
-      assert.equal(tx.outputs.length, 2);
-      assert.equal(utils.satoshi(tx.outputs[0].value) + utils.satoshi(tx.outputs[1].value), 48190);
-      hash = tx.hash;
-      cb();
-    });
-  });
+    var tx = yield wallet.send(options);
 
-  it('should get a tx', function(cb) {
-    wallet.getTX(hash, function(err, tx) {
-      assert.ifError(err);
-      assert(tx);
-      assert.equal(tx.hash, hash);
-      cb();
-    });
-  });
+    assert(tx);
+    assert.equal(tx.inputs.length, 1);
+    assert.equal(tx.outputs.length, 2);
+    assert.equal(utils.satoshi(tx.outputs[0].value) + utils.satoshi(tx.outputs[1].value), 48190);
+    hash = tx.hash;
+  }));
 
-  it('should generate new api key', function(cb) {
+  it('should get a tx', cob(function* () {
+    var tx = yield wallet.getTX('default', hash);
+    assert(tx);
+    assert.equal(tx.hash, hash);
+  }));
+
+  it('should generate new api key', cob(function* () {
     var t = wallet.token.toString('hex');
-    wallet.retoken(null, function(err, token) {
-      assert.ifError(err);
-      assert(token.length === 64);
-      assert.notEqual(token, t);
-      cb();
-    });
-  });
+    var token = yield wallet.retoken(null);
+    assert(token.length === 64);
+    assert.notEqual(token, t);
+  }));
 
-  it('should get balance', function(cb) {
-    wallet.getBalance(function(err, balance) {
-      assert.ifError(err);
-      assert.equal(utils.satoshi(balance.total), 199570);
-      cb();
-    });
-  });
+  it('should get balance', cob(function* () {
+    var balance = yield wallet.getBalance();
+    assert.equal(utils.satoshi(balance.total), 199570);
+  }));
 
-  it('should cleanup', function(cb) {
+  it('should execute an rpc call', cob(function* () {
+    var info = yield wallet.client.rpc.call('getblockchaininfo', []);
+    assert.equal(info.blocks, 0);
+  }));
+
+  it('should cleanup', cob(function* () {
     constants.tx.COINBASE_MATURITY = 100;
-    wallet.close();
-    node.close(cb);
-  });
+    yield wallet.close();
+    yield node.close();
+  }));
 });

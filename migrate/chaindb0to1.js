@@ -1,8 +1,12 @@
 var bcoin = require('../');
+var co = bcoin.co;
 var assert = require('assert');
 var file = process.argv[2];
+var BufferWriter = require('../lib/utils/writer');
 
 assert(typeof file === 'string', 'Please pass in a database path.');
+
+file = file.replace(/\.ldb\/?$/, '');
 
 var db = bcoin.ldb({
   location: file,
@@ -22,91 +26,93 @@ function makeKey(data) {
   return key;
 }
 
-function updateState(callback) {
-  var hash, batch, ver, p;
+var checkVersion = co(function* checkVersion() {
+  var data, ver;
+
+  console.log('Checking version.');
+
+  data = yield db.get('V');
+
+  if (!data)
+    return;
+
+  ver = data.readUInt32LE(0, true);
+
+  if (ver !== 0)
+    throw Error('DB is version ' + ver + '.');
+});
+
+var updateState = co(function* updateState() {
+  var data, hash, batch, ver, p;
 
   console.log('Updating chain state.');
 
-  db.get('R', function(err, data) {
-    if (err)
-      return callback(err);
+  data = yield db.get('R');
 
-    if (!data || data.length < 32)
-      return callback(new Error('No chain state.'));
+  if (!data || data.length < 32)
+    throw new Error('No chain state.');
 
-    hash = data.slice(0, 32);
+  hash = data.slice(0, 32);
 
-    p = new bcoin.writer();
-    p.writeHash(hash);
-    p.writeU64(0);
-    p.writeU64(0);
-    p.writeU64(0);
-    p = p.render();
+  p = new BufferWriter();
+  p.writeHash(hash);
+  p.writeU64(0);
+  p.writeU64(0);
+  p.writeU64(0);
+  p = p.render();
 
-    batch = db.batch();
+  batch = db.batch();
 
-    batch.put('R', p);
+  batch.put('R', p);
 
-    ver = new Buffer(4);
-    ver.writeUInt32LE(1, 0, true);
-    batch.put('V', ver);
+  ver = new Buffer(4);
+  ver.writeUInt32LE(1, 0, true);
+  batch.put('V', ver);
 
-    batch.write(function(err) {
-      if (err)
-        return callback(err);
-      console.log('Updated chain state.');
-      callback();
-    });
-  });
-}
+  yield batch.write();
 
-function updateEndian(callback) {
-  var lo = new Buffer('4800000000', 'hex');
-  var hi = new Buffer('48ffffffff', 'hex');
+  console.log('Updated chain state.');
+});
+
+var updateEndian = co(function* updateEndian() {
   var batch = db.batch();
   var total = 0;
+  var iter, item;
 
   console.log('Updating endianness.');
   console.log('Iterating...');
 
-  db.iterate({
-    gte: lo,
-    lte: hi,
-    values: true,
-    parse: function(key, value) {
-      batch.del(key);
-      batch.put(makeKey(key), value);
-      total++;
-    }
-  }, function(err) {
-    if (err)
-      throw err;
-
-    console.log('Migrating %d items.', total);
-
-    batch.write(function(err) {
-      if (err)
-        throw err;
-      console.log('Migrated endianness.');
-      callback();
-    });
+  iter = db.iterator({
+    gte: new Buffer('4800000000', 'hex'),
+    lte: new Buffer('48ffffffff', 'hex'),
+    values: true
   });
-}
 
-db.open(function(err) {
-  if (err)
-    throw err;
+  for (;;) {
+    item = yield iter.next();
 
+    if (!item)
+      break;
+
+    batch.del(item.key);
+    batch.put(makeKey(item.key), item.value);
+    total++;
+  }
+
+  console.log('Migrating %d items.', total);
+
+  yield batch.write();
+
+  console.log('Migrated endianness.');
+});
+
+co.spawn(function* () {
+  yield db.open();
   console.log('Opened %s.', file);
-
-  updateState(function(err) {
-    if (err)
-      throw err;
-    updateEndian(function(err) {
-      if (err)
-        throw err;
-      console.log('Migration complete.');
-      process.exit(0);
-    });
-  });
+  yield checkVersion();
+  yield updateState();
+  yield updateEndian();
+}).then(function() {
+  console.log('Migration complete.');
+  process.exit(0);
 });

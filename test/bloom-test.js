@@ -89,7 +89,7 @@ describe('Bloom', function() {
   });
 
   it('should handle 1m ops with rolling filter', function() {
-    var filter = new bcoin.bloom.rolling(210000, 0.00001);
+    var filter = new bcoin.bloom.Rolling(210000, 0.00001);
     filter.tweak = 0xdeadbeef;
     // ~1m operations
     for (var i = 0; i < 1000; i++) {
@@ -105,7 +105,7 @@ describe('Bloom', function() {
   });
 
   it('should handle rolling generations', function() {
-    var filter = new bcoin.bloom.rolling(50, 0.00001);
+    var filter = new bcoin.bloom.Rolling(50, 0.00001);
     filter.tweak = 0xdeadbeee;
     for (var i = 0; i < 25; i++) {
       var str = 'foobar' + i;

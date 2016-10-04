@@ -1,0 +1,75 @@
+var Transform = require('stream').Transform;
+var path = require('path');
+var assert = require('assert');
+var fs = require('fs');
+var StringDecoder = require('string_decoder').StringDecoder;
+
+function nil() {
+  var stream = new Transform();
+
+  stream._transform = function(chunk, encoding, callback) {
+    callback(null, chunk);
+  };
+
+  stream._flush = function(callback) {
+    callback();
+  };
+
+  return stream;
+}
+
+function processEnv(str) {
+  return str.replace(
+    /^( *)this\.require\('(\w+)', '([^']+)'\)/gm,
+    '$1this.$2 = require(\'$3\')');
+}
+
+function processLazy(str) {
+  str.replace(
+    /^( *)lazy\('(\w+)', '([^']+)'\)/gm,
+    function(_, sp, w1, w2) {
+      str += sp + 'if (0) require(\'' + w2 + '\');\n';
+      return '';
+    }
+  );
+  return str;
+}
+
+function transformer(file, process) {
+  var stream = new Transform();
+  var decoder = new StringDecoder('utf8');
+  var str = '';
+
+  stream._transform = function(chunk, encoding, callback) {
+    assert(Buffer.isBuffer(chunk));
+    str += decoder.write(chunk);
+    callback(null, new Buffer(0));
+  };
+
+  stream._flush = function(callback) {
+    str = process(str);
+
+    stream.push(new Buffer(str, 'utf8'));
+
+    callback();
+  };
+
+  return stream;
+}
+
+function end(file, offset) {
+  return path.normalize(file).split(path.sep).slice(-offset).join('/');
+}
+
+module.exports = function(file) {
+  if (end(file, 3) === 'lib/utils/utils.js')
+    return transformer(file, processLazy);
+
+  if (end(file, 3) === 'lib/crypto/crypto.js')
+    return transformer(file, processLazy);
+
+  if (end(file, 2) === 'lib/env.js')
+    return transformer(file, processEnv);
+
+  return nil();
+};

@@ -114,30 +114,19 @@ var miner = new bcoin.miner({ chain: chain, mempool: mempool });
 
 // Open the miner (initialize the databases, etc).
 // Miner will implicitly call `open` on chain and mempool.
-miner.open(function(err) {
-  if (err)
-    throw err;
-
+miner.open().then(function() {
   // Create a block "attempt".
-  miner.createBlock(function(err, attempt) {
-    if (err)
-      throw err;
-
-    // Mine the block on the worker pool (use mine() for the master process)
-    attempt.mineAsync(function(err, block) {
-      if (err)
-        throw err;
-
-      // Add the block to the chain
-      chain.add(block, function(err) {
-        if (err)
-          throw err;
-
-        console.log('Added %s to the blockchain.', block.rhash);
-        console.log(block);
-      });
-    });
-  });
+  return miner.createBlock();
+}).then(function(attempt) {
+  // Mine the block on the worker pool (use mine() for the master process)
+  return attempt.mineAsync();
+}).then(function(block) {
+  // Add the block to the chain
+  console.log('Adding %s to the blockchain.', block.rhash);
+  console.log(block);
+  return chain.add(block);
+}).then(function() {
+  console.log('Added block!');
 });
 ```
 
@@ -157,10 +146,7 @@ var mempool = new bcoin.mempool({ chain: chain });
 var pool = new bcoin.pool({ chain: chain, mempool: mempool, maxPeers: 8 });
 
 // Open the pool (implicitly opens mempool and chain).
-pool.open(function(err) {
-  if (err)
-    throw err;
-
+pool.open().then(function() {
   // Connect, start retrieving and relaying txs
   pool.connect();
 
@@ -204,10 +190,7 @@ var tpool = new bcoin.pool({
   size: 8
 });
 
-tpool.open(function(err) {
-  if (err)
-    throw err;
-
+tpool.open().then(function() {
   // Connect, start retrieving and relaying txs
   tpool.connect();
 
@@ -252,38 +235,29 @@ var pool = new bcoin.pool({
 
 var walletdb = new bcoin.walletdb({ db: 'memory' });
 
-pool.open(function(err) {
-  if (err)
-    throw err;
+pool.open().then(function() {
+  return walletdb.open();
+}).then(function() {
+  return walletdb.create();
+}).then(function(wallet) {
+  console.log('Created wallet with address %s', wallet.getAddress('base58'));
 
-  walletdb.open(function(err) {
-    if (err)
-      throw err;
+  // Add our address to the spv filter.
+  pool.watchAddress(wallet.getAddress());
 
-    walletdb.create(function(err, wallet) {
-      if (err)
-        throw err;
+  // Connect, start retrieving and relaying txs
+  pool.connect();
 
-      console.log('Created wallet with address %s', wallet.getAddress('base58'));
+  // Start the blockchain sync.
+  pool.startSync();
 
-      // Add our address to the spv filter.
-      pool.watchAddress(wallet.getAddress());
+  pool.on('tx', function(tx) {
+    wallet.addTX(tx);
+  });
 
-      // Connect, start retrieving and relaying txs
-      pool.connect();
-
-      // Start the blockchain sync.
-      pool.startSync();
-
-      pool.on('tx', function(tx) {
-        wallet.addTX(tx);
-      });
-
-      wallet.on('balance', function(balance) {
-        console.log('Balance updated.');
-        console.log(bcoin.utils.btc(balance.unconfirmed));
-      });
-    });
+  wallet.on('balance', function(balance) {
+    console.log('Balance updated.');
+    console.log(bcoin.utils.btc(balance.unconfirmed));
   });
 });
 ```
@@ -310,10 +284,7 @@ node.on('error', function(err) {
 });
 
 // Start the node
-node.open(function(err) {
-  if (err)
-    throw err;
-
+node.open().then(function() {
   // Create a new wallet (or get an existing one with the same ID)
   var options = {
     id: 'mywallet',
@@ -322,48 +293,33 @@ node.open(function(err) {
     type: 'pubkeyhash'
   };
 
-  node.walletdb.create(options, function(err, wallet) {
-    if (err)
-      throw err;
+  return node.walletdb.create(options);
+}).then(function(wallet) {
+  console.log('Created wallet with address: %s', wallet.getAddress('base58'));
 
-    console.log('Created wallet with address: %s', wallet.getAddress('base58'));
+  // Start syncing the blockchain
+  node.startSync();
 
-    // Start syncing the blockchain
-    node.startSync();
-
-    // Wait for balance and send it to a new address.
-    wallet.once('balance', function(balance) {
-      // Create a transaction, fill
-      // it with coins, and sign it.
-      var options = {
-        subtractFee: true,
-        outputs: [{
-          address: newReceiving,
-          value: balance.total
-        }]
-      };
-      wallet.createTX(options, function(err, tx) {
-        if (err)
-          throw err;
-
-        // Need to pass our passphrase back in to sign!
-        wallet.sign(tx, 'foo', function(err) {
-          if (err)
-            throw err;
-
-          console.log('sending tx:');
-          console.log(tx);
-
-          node.sendTX(tx, function(err) {
-            if (err) {
-              // Could be a reject
-              // packet or a timeout.
-              return console.log(err);
-            }
-            console.log('tx sent!');
-          });
-        });
-      });
+  // Wait for balance and send it to a new address.
+  wallet.once('balance', function(balance) {
+    // Create a transaction, fill
+    // it with coins, and sign it.
+    var options = {
+      subtractFee: true,
+      outputs: [{
+        address: newReceiving,
+        value: balance.total
+      }]
+    };
+    wallet.createTX(options).then(function(tx) {
+      // Need to pass our passphrase back in to sign!
+      return wallet.sign(tx, 'foo');
+    }).then(function(tx) {
+      console.log('sending tx:');
+      console.log(tx);
+      return node.sendTX(tx);
+    }).then(function() {
+      console.log('tx sent!');
     });
   });
 });
@@ -377,12 +333,7 @@ node.mempool.on('tx', function(tx) {
 });
 
 node.chain.on('full', function() {
-  node.mempool.getHistory(function(err, txs) {
-    if (err)
-      throw err;
-
-    console.log(txs);
-  });
+  node.mempool.getHistory().then(console.log);
 });
 ```
 
