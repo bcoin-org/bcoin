@@ -187,11 +187,12 @@ var updateTXMap = co(function* updateTXMap() {
     if (!item)
       break;
 
+    total++;
     wallets = parseWallets(item.value);
     batch.put(item.key, serializeWallets(wallets.sort()));
   }
 
-  console.log('Migrated %d tx map.', total);
+  console.log('Migrated %d tx maps.', total);
 });
 
 function pathFromRaw(data) {
