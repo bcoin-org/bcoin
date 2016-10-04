@@ -28,6 +28,7 @@ db = bcoin.ldb({
 });
 
 var updateVersion = co(function* updateVersion() {
+  var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
   var data, ver;
 
   console.log('Checking version.');
@@ -42,9 +43,9 @@ var updateVersion = co(function* updateVersion() {
   if (ver !== 2)
     throw Error('DB is version ' + ver + '.');
 
-  console.log('Backing up DB.');
+  console.log('Backing up DB to: %s.', bak);
 
-  yield db.backup(process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb');
+  yield db.backup(bak);
 
   ver = new Buffer(4);
   ver.writeUInt32LE(3, 0, true);
@@ -94,7 +95,7 @@ var updatePathMap = co(function* updatePathMap() {
       batch.put(layout.P(key, hash), path.toRaw());
     }
 
-    batch.put(layout.p(hash), serializeWallets(keys.sort()));
+    batch.put(item.key, serializeWallets(keys.sort()));
   }
 
   console.log('Migrated %d paths.', total);
@@ -121,7 +122,7 @@ var updateAccounts = co(function* updateAccounts() {
     total++;
     account = accountFromRaw(item.value, item.key);
     account = new Account({ network: account.network, options: {} }, account);
-    batch.put(layout.a(account.wid, account.accountIndex), account.toRaw());
+    batch.put(item.key, account.toRaw());
 
     if (account._old) {
       batch.del(layout.i(account.wid, account._old));
@@ -155,7 +156,7 @@ var updateWallets = co(function* updateWallets() {
     total++;
     wallet = walletFromRaw(item.value);
     wallet = new Wallet({ network: wallet.network }, wallet);
-    batch.put(layout.w(wallet.wid), wallet.toRaw());
+    batch.put(item.key, wallet.toRaw());
 
     if (wallet._old) {
       batch.del(layout.l(wallet._old));
@@ -166,6 +167,31 @@ var updateWallets = co(function* updateWallets() {
   }
 
   console.log('Migrated %d wallets.', total);
+});
+
+var updateTXMap = co(function* updateTXMap() {
+  var total = 0;
+  var iter, item, wallets;
+
+  iter = db.iterator({
+    gte: layout.e(constants.NULL_HASH),
+    lte: layout.e(constants.HIGH_HASH),
+    values: true
+  });
+
+  console.log('Migrating tx map.');
+
+  for (;;) {
+    item = yield iter.next();
+
+    if (!item)
+      break;
+
+    wallets = parseWallets(item.value);
+    batch.put(item.key, serializeWallets(wallets.sort()));
+  }
+
+  console.log('Migrated %d tx map.', total);
 });
 
 function pathFromRaw(data) {
@@ -215,6 +241,14 @@ function parsePaths(data, hash) {
   }
 
   return out;
+}
+
+function parseWallets(data) {
+  var p = new BufferReader(data);
+  var wallets = [];
+  while (p.left())
+    wallets.push(p.readU32());
+  return wallets;
 }
 
 function serializeWallets(wallets) {
@@ -336,6 +370,7 @@ co.spawn(function* () {
   yield updatePathMap();
   yield updateAccounts();
   yield updateWallets();
+  yield updateTXMap();
   yield batch.write();
 }).then(function() {
   console.log('Migration complete.');
