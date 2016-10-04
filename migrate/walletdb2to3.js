@@ -94,7 +94,7 @@ var updatePathMap = co(function* updatePathMap() {
       batch.put(layout.P(key, hash), path.toRaw());
     }
 
-    batch.put(layout.p(hash), serializeWallets(keys));
+    batch.put(layout.p(hash), serializeWallets(keys.sort()));
   }
 
   console.log('Migrated %d paths.', total);
