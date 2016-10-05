@@ -506,8 +506,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('  $ tx [hash/address]: View transactions.');
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
-      this.log('  $ rescan [height/hash]: Rescan for transactions (admin-only).');
-      this.log('  $ backup [path]: Backup the wallet db (admin-only).');
+      this.log('  $ rescan [height/hash]: Rescan for transactions.');
+      this.log('  $ backup [path]: Backup the wallet db.');
       this.log('  $ rpc [command] [args]: Execute RPC command.');
       return;
   }
