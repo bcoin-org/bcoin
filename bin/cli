@@ -303,6 +303,14 @@ CLI.prototype.rescan = co(function* rescan() {
   this.log('Rescanning...');
 });
 
+CLI.prototype.backup = co(function* backup() {
+  var path = this.argv[0];
+
+  yield this.client.backup(path);
+
+  this.log('Backup complete.');
+});
+
 CLI.prototype.importKey = co(function* importKey() {
   var key = this.argv[0];
 
@@ -485,6 +493,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       return yield this.getBlock();
     case 'rescan':
       return yield this.rescan();
+    case 'backup':
+      return yield this.backup();
     case 'rpc':
       return yield this.rpc();
     default:
@@ -496,7 +506,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('  $ tx [hash/address]: View transactions.');
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
-      this.log('  $ rescan [height/hash]: Rescan for transactions.');
+      this.log('  $ rescan [height/hash]: Rescan for transactions (admin-only).');
+      this.log('  $ backup [path]: Backup the wallet db (admin-only).');
       this.log('  $ rpc [command] [args]: Execute RPC command.');
       return;
   }
