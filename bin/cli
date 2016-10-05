@@ -7,7 +7,6 @@ var utils = require('../lib/utils/utils');
 var co = require('../lib/utils/co');
 var Client = require('../lib/http/client');
 var Wallet = require('../lib/http/wallet');
-var assert = require('assert');
 var main;
 
 function CLI() {
@@ -38,8 +37,8 @@ CLI.prototype.createWallet = co(function* createWallet() {
   if (this.config.master)
     options.master = this.config.master;
 
-  if (this.config.key)
-    options.key = this.config.key;
+  if (this.config.mnemonic)
+    options.master = this.config.mnemonic;
 
   if (this.config.m)
     options.m = this.config.m >>> 0;
@@ -65,13 +64,13 @@ CLI.prototype.createWallet = co(function* createWallet() {
 CLI.prototype.addKey = co(function* addKey() {
   var key = this.argv[0];
   yield this.wallet.addKey(this.config.account, key);
-  this.log('added');
+  this.log('Added key.');
 });
 
 CLI.prototype.removeKey = co(function* removeKey() {
   var key = this.argv[0];
   yield this.wallet.removeKey(this.config.account, key);
-  this.log('removed');
+  this.log('Removed key.');
 });
 
 CLI.prototype.getAccount = co(function* getAccount() {
@@ -130,6 +129,8 @@ CLI.prototype.getTX = co(function* getTX() {
 
 CLI.prototype.getBlock = co(function* getBlock() {
   var hash = this.argv[0];
+  var block;
+
   if (hash.length !== 64)
     hash = +hash;
 
@@ -137,7 +138,7 @@ CLI.prototype.getBlock = co(function* getBlock() {
 
   if (!block) {
     this.log('Block not found.');
-    return
+    return;
   }
 
   this.log(block);
@@ -268,7 +269,6 @@ CLI.prototype.zap = co(function* zap() {
 });
 
 CLI.prototype.broadcast = co(function* broadcast() {
-  var self = this;
   var raw = this.argv[0] || this.config.tx;
   var tx = yield this.client.broadcast(raw);
   this.log('Broadcasted:');
@@ -290,6 +290,56 @@ CLI.prototype.getDetails = co(function* getDetails() {
 CLI.prototype.retoken = co(function* retoken() {
   var result = yield this.wallet.retoken();
   this.log(result);
+});
+
+CLI.prototype.rescan = co(function* rescan() {
+  var hash = this.argv[0];
+
+  if (hash.length !== 64)
+    hash = +hash;
+
+  yield this.client.rescan(hash);
+
+  this.log('Rescanning...');
+});
+
+CLI.prototype.importKey = co(function* importKey() {
+  var key = this.argv[0];
+
+  if (!key)
+    throw new Error('No key for import.');
+
+  if (utils.isBase58(key)) {
+    yield this.wallet.importPrivate(key);
+    this.log('Imported private key.');
+    return;
+  }
+
+  if (utils.isHex(key)) {
+    yield this.wallet.importPublic(key);
+    this.log('Imported public key.');
+    return;
+  }
+
+  throw new Error('Bad key for import.');
+});
+
+CLI.prototype.importAddress = co(function* importKey() {
+  var address = this.argv[0];
+  yield this.wallet.importAddress(address);
+  this.log('Imported address.');
+});
+
+CLI.prototype.lock = co(function* lock() {
+  yield this.wallet.lock();
+  this.log('Locked.');
+});
+
+CLI.prototype.unlock = co(function* unlock() {
+  var passphrase = this.argv[0];
+  var timeout = +this.argv[1] || null;
+  yield this.wallet.unlock(passphrase, timeout);
+  this.log('Unlocked.');
 });
 
 CLI.prototype.rpc = co(function* rpc() {
@@ -369,6 +419,14 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.getDetails();
     case 'view':
       return yield this.viewTX();
+    case 'import':
+      return yield this.importKey();
+    case 'watch':
+      return yield this.importAddress();
+    case 'lock':
+      return yield this.lock();
+    case 'unlock':
+      return yield this.unlock();
     default:
       this.log('Unrecognized command.');
       this.log('Commands:');
@@ -390,6 +448,10 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ zap --age [age]: Zap pending wallet TXs.');
       this.log('  $ tx [hash]: View transaction details.');
       this.log('  $ view [tx-hex]: Parse and view transaction.');
+      this.log('  $ import [wif|hex]: Import private or public key.');
+      this.log('  $ watch [address]: Import an address.');
+      this.log('  $ lock: Lock wallet.');
+      this.log('  $ unlock [passphrase] [timeout]: Unlock wallet.');
       this.log('Other Options:');
       this.log('  --passphrase [passphrase]: For signing and account creation.');
       this.log('  --account [account-name]: Account name.');
@@ -421,6 +483,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       return yield this.getCoin();
     case 'block':
       return yield this.getBlock();
+    case 'rescan':
+      return yield this.rescan();
     case 'rpc':
       return yield this.rpc();
     default:
@@ -432,6 +496,7 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('  $ tx [hash/address]: View transactions.');
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
+      this.log('  $ rescan [height/hash]: Rescan for transactions.');
       this.log('  $ rpc [command] [args]: Execute RPC command.');
       return;
   }
