@@ -53,6 +53,11 @@ CLI.prototype.createWallet = co(function* createWallet() {
   if (this.config.passphrase)
     options.passphrase = this.config.passphrase;
 
+  if (this.config.watch) {
+    options.watchOnly = true;
+    options.accountKey = this.config.watch;
+  }
+
   wallet = yield this.client.createWallet(options);
   this.log(wallet);
 });
