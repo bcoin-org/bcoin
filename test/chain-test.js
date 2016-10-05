@@ -27,7 +27,7 @@ describe('Chain', function() {
     var redeemer;
 
     if (!tx)
-      return attempt.mineSync();
+      return yield attempt.mineAsync();
 
     redeemer = bcoin.mtx();
 
@@ -49,7 +49,7 @@ describe('Chain', function() {
 
     attempt.addTX(redeemer.toTX());
 
-    return attempt.mineSync();
+    return yield attempt.mineAsync();
   });
 
   function deleteCoins(tx) {
