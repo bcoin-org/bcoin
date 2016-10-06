@@ -262,7 +262,7 @@ CLI.prototype.signTX = co(function* signTX() {
   this.log(tx);
 });
 
-CLI.prototype.zap = co(function* zap() {
+CLI.prototype.zapWallet = co(function* zapWallet() {
   var age = (this.config.age >>> 0) || 72 * 60 * 60;
   yield this.wallet.zap(this.config.account, age);
   this.log('Zapped!');
@@ -303,9 +303,9 @@ CLI.prototype.rescan = co(function* rescan() {
   this.log('Rescanning...');
 });
 
-CLI.prototype.zapAll = co(function* zapAll() {
+CLI.prototype.zap = co(function* zap() {
   var age = +this.argv[0] || 72 * 3600;
-  yield this.client.zapAll(age);
+  yield this.client.zap(age);
   this.log('Zapped.');
 });
 
@@ -428,7 +428,7 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
     case 'send':
       return yield this.sendTX();
     case 'zap':
-      return yield this.zap();
+      return yield this.zapWallet();
     case 'tx':
       return yield this.getDetails();
     case 'view':
@@ -500,7 +500,7 @@ CLI.prototype.handleNode = co(function* handleNode() {
     case 'rescan':
       return yield this.rescan();
     case 'zap':
-      return yield this.zapAll();
+      return yield this.zap();
     case 'backup':
       return yield this.backup();
     case 'rpc':
