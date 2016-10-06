@@ -303,6 +303,12 @@ CLI.prototype.rescan = co(function* rescan() {
   this.log('Rescanning...');
 });
 
+CLI.prototype.zapAll = co(function* zapAll() {
+  var age = +this.argv[0] || 72 * 3600;
+  yield this.client.zapAll(age);
+  this.log('Zapped.');
+});
+
 CLI.prototype.backup = co(function* backup() {
   var path = this.argv[0];
 
@@ -493,6 +499,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       return yield this.getBlock();
     case 'rescan':
       return yield this.rescan();
+    case 'zap':
+      return yield this.zapAll();
     case 'backup':
       return yield this.backup();
     case 'rpc':
@@ -507,6 +515,7 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
       this.log('  $ rescan [height/hash]: Rescan for transactions.');
+      this.log('  $ zap [age?]: Zap stale transactions from walletdb.');
       this.log('  $ backup [path]: Backup the wallet db.');
       this.log('  $ rpc [command] [args]: Execute RPC command.');
       return;
