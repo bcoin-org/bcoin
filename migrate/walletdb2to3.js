@@ -34,9 +34,7 @@ var updateVersion = co(function* updateVersion() {
   console.log('Checking version.');
 
   data = yield db.get('V');
-
-  if (!data)
-    return;
+  assert(data, 'No version.');
 
   ver = data.readUInt32LE(0, true);
 
