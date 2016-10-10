@@ -459,13 +459,13 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ send [address] [value]: Send transaction.');
       this.log('  $ mktx [address] [value]: Create transaction.');
       this.log('  $ sign [tx-hex]: Sign transaction.');
-      this.log('  $ zap --age [age]: Zap pending wallet TXs.');
+      this.log('  $ zap [age?]: Zap pending wallet TXs.');
       this.log('  $ tx [hash]: View transaction details.');
       this.log('  $ view [tx-hex]: Parse and view transaction.');
       this.log('  $ import [wif|hex]: Import private or public key.');
       this.log('  $ watch [address]: Import an address.');
       this.log('  $ lock: Lock wallet.');
-      this.log('  $ unlock [passphrase] [timeout]: Unlock wallet.');
+      this.log('  $ unlock [passphrase] [timeout?]: Unlock wallet.');
       this.log('Other Options:');
       this.log('  --passphrase [passphrase]: For signing and account creation.');
       this.log('  --account [account-name]: Account name.');
