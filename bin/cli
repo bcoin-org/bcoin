@@ -542,7 +542,7 @@ CLI.prototype.destroy = function destroy() {
     this.wallet.client.destroy();
   if (this.client && !this.client.loading)
     this.client.destroy();
-  return Promise.resolve(null);
+  return Promise.resolve();
 };
 
 main = co(function* main() {

@@ -241,7 +241,7 @@ describe('Chain', function() {
 
     yield chain.db.scan(null, hashes, function(block, txs) {
       total += txs.length;
-      return Promise.resolve(null);
+      return Promise.resolve();
     });
 
     assert.equal(total, 25);
