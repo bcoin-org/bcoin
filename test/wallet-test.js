@@ -787,7 +787,7 @@ describe('Wallet', function() {
 
     // Should fail
     try {
-      yield w.sign(t2, { passphrase: 'bar' });
+      yield w.sign(t2, 'bar');
     } catch (e) {
       err = e;
     }
@@ -796,7 +796,7 @@ describe('Wallet', function() {
     assert(!t2.verify());
 
     // Should succeed
-    yield w.sign(t2, { passphrase: 'foo' });
+    yield w.sign(t2, 'foo');
     assert(t2.verify());
   }));
 
