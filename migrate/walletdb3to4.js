@@ -96,7 +96,9 @@ var updateStates = co(function* updateStates() {
   wallets = yield db.keys({
     gte: layout.w(0),
     lte: layout.w(0xffffffff),
-    parse: layout.pre
+    parse: function(key) {
+      return key.readUInt32LE(1, true);
+    }
   });
 
   console.log('Updating states...');
