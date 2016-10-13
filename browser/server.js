@@ -17,7 +17,7 @@ proxy.on('error', function(err) {
 var index = fs.readFileSync(__dirname + '/index.html');
 var indexjs = fs.readFileSync(__dirname + '/index.js');
 var bcoin = fs.readFileSync(__dirname + '/bcoin.js');
-var worker = fs.readFileSync(__dirname + '/../lib/workers/worker.js');
+var worker = fs.readFileSync(__dirname + '/../lib/workers/worker-browser.js');
 
 server.get('/favicon.ico', function(req, res, send, next) {
   send(404, '', 'text');
