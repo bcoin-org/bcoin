@@ -303,6 +303,16 @@ CLI.prototype.rescan = co(function* rescan() {
   this.log('Rescanning...');
 });
 
+CLI.prototype.resend = co(function* resend() {
+  yield this.client.resend();
+  this.log('Resending...');
+});
+
+CLI.prototype.resendWallet = co(function* resendWallet() {
+  yield this.wallet.resend();
+  this.log('Resending...');
+});
+
 CLI.prototype.zap = co(function* zap() {
   var age = +this.argv[0] || 72 * 3600;
   yield this.client.zap(age);
@@ -441,6 +451,8 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.lock();
     case 'unlock':
       return yield this.unlock();
+    case 'resend':
+      return yield this.resendWallet();
     default:
       this.log('Unrecognized command.');
       this.log('Commands:');
@@ -466,6 +478,7 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ watch [address]: Import an address.');
       this.log('  $ lock: Lock wallet.');
       this.log('  $ unlock [passphrase] [timeout?]: Unlock wallet.');
+      this.log('  $ resend: Resend pending transactions.');
       this.log('Other Options:');
       this.log('  --passphrase [passphrase]: For signing and account creation.');
       this.log('  --account [account-name]: Account name.');
@@ -499,6 +512,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       return yield this.getBlock();
     case 'rescan':
       return yield this.rescan();
+    case 'resend':
+      return yield this.resend();
     case 'zap':
       return yield this.zap();
     case 'backup':
@@ -515,6 +530,7 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
       this.log('  $ rescan [height/hash]: Rescan for transactions.');
+      this.log('  $ resend: Resend pending transactions.');
       this.log('  $ zap [age?]: Zap stale transactions from walletdb.');
       this.log('  $ backup [path]: Backup the wallet db.');
       this.log('  $ rpc [command] [args]: Execute RPC command.');
