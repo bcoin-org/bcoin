@@ -1,6 +1,6 @@
 'use strict';
 
-var bn = require('bn.js');
+var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var constants = bcoin.constants;
 var utils = bcoin.utils;
@@ -74,7 +74,7 @@ var runBench = co(function* runBench() {
 
   // TX
   jobs = [];
-  nonce = new bn(0);
+  nonce = new BN(0);
   for (i = 0; i < 10000; i++) {
     tx = bcoin.mtx()
       .addOutput(addrs[(i + 0) % addrs.length], 50460)

@@ -1,6 +1,6 @@
 'use strict';
 
-var bn = require('bn.js');
+var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var assert = require('assert');
 var utils = bcoin.utils;
@@ -161,27 +161,27 @@ describe('Utils', function() {
   });
 
   var unsigned = [
-    new bn('ffeeffee'),
-    new bn('001fffeeffeeffee'),
-    new bn('eeffeeff'),
-    new bn('001feeffeeffeeff'),
-    new bn(0),
-    new bn(1)
+    new BN('ffeeffee'),
+    new BN('001fffeeffeeffee'),
+    new BN('eeffeeff'),
+    new BN('001feeffeeffeeff'),
+    new BN(0),
+    new BN(1)
   ];
 
   var signed = [
-    new bn('ffeeffee'),
-    new bn('001fffeeffeeffee'),
-    new bn('eeffeeff'),
-    new bn('001feeffeeffeeff'),
-    new bn(0),
-    new bn(1),
-    new bn('ffeeffee').ineg(),
-    new bn('001fffeeffeeffee').ineg(),
-    new bn('eeffeeff').ineg(),
-    new bn('001feeffeeffeeff').ineg(),
-    new bn(0).ineg(),
-    new bn(1).ineg()
+    new BN('ffeeffee'),
+    new BN('001fffeeffeeffee'),
+    new BN('eeffeeff'),
+    new BN('001feeffeeffeeff'),
+    new BN(0),
+    new BN(1),
+    new BN('ffeeffee').ineg(),
+    new BN('001fffeeffeeffee').ineg(),
+    new BN('eeffeeff').ineg(),
+    new BN('001feeffeeffeeff').ineg(),
+    new BN(0).ineg(),
+    new BN(1).ineg()
   ];
 
   unsigned.forEach(function(num) {

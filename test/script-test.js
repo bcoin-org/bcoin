@@ -9,7 +9,7 @@ var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var opcodes = bcoin.constants.opcodes;
 var scripts = require('./data/script_tests');
-var bn = require('bn.js');
+var BN = require('bn.js');
 
 describe('Script', function() {
   it('should encode/decode script', function() {

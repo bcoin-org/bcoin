@@ -1,6 +1,6 @@
 'use strict';
 
-var bn = require('bn.js');
+var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
 var crypto = require('../lib/crypto/crypto');

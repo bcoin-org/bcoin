@@ -1,6 +1,6 @@
 'use strict';
 
-var bn = require('bn.js');
+var BN = require('bn.js');
 var bcoin = require('../').set('regtest');
 var constants = bcoin.constants;
 var network = bcoin.networks;

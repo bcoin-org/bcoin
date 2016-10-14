@@ -1,6 +1,6 @@
 'use strict';
 
-var bn = require('bn.js');
+var BN = require('bn.js');
 var constants = require('../lib/protocol/constants');
 var utils = require('../lib/utils/utils');
 var assert = require('assert');

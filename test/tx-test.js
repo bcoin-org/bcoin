@@ -1,6 +1,6 @@
 'use strict';
 
-var bn = require('bn.js');
+var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var assert = require('assert');
 var utils = bcoin.utils;
@@ -499,14 +499,14 @@ describe('TX', function() {
       }],
       locktime: 0
     });
-    tx.outputs[0].value = new bn('00ffffffffffffff', 'hex');
+    tx.outputs[0].value = new BN('00ffffffffffffff', 'hex');
     assert(tx.outputs[0].value.bitLength() === 56);
     var raw = tx.toRaw()
     assert.throws(function() {
       bcoin.tx.fromRaw(raw);
     });
     delete tx._raw;
-    tx.outputs[0].value = new bn('00ffffffffffffff', 'hex').ineg();
+    tx.outputs[0].value = new BN('00ffffffffffffff', 'hex').ineg();
     assert(tx.outputs[0].value.bitLength() === 56);
     var raw = tx.toRaw()
     assert.throws(function() {

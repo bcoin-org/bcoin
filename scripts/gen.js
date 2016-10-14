@@ -4,7 +4,7 @@ var bcoin = require('bcoin');
 var constants = bcoin.constants;
 var opcodes = constants.opcodes;
 var utils = bcoin.utils;
-var bn = require('bn.js');
+var BN = require('bn.js');
 
 function createGenesisBlock(options) {
   var flags = options.flags;
@@ -39,7 +39,7 @@ function createGenesisBlock(options) {
         index: 0xffffffff
       },
       script: [
-        bcoin.opcode.fromNumber(new bn(486604799)),
+        bcoin.opcode.fromNumber(new BN(486604799)),
         bcoin.opcode.fromPush(new Buffer([4])),
         bcoin.opcode.fromData(flags)
       ],
