@@ -1028,6 +1028,151 @@ describe('Wallet', function() {
     assert.equal(k.getHash('hex'), addr.getHash('hex'));
   }));
 
+  it('should recover from a missed tx', cob(function* () {
+    var alice, addr, bob, t1, t2, t3;
+
+    // walletdb.options.verify = false;
+    // walletdb.options.resolution = false;
+
+    alice = yield walletdb.create({ master: KEY1 });
+    bob = yield walletdb.create({ master: KEY1 });
+    addr = alice.getAddress();
+
+    // Coinbase
+    t1 = bcoin.mtx()
+      .addOutput(addr, 50000);
+    t1.addInput(dummyInput);
+    t1.height = 1;
+
+    yield alice.sign(t1);
+    t1 = t1.toTX();
+
+    yield alice.add(t1);
+    yield bob.add(t1);
+
+    // Bob misses this tx!
+    t2 = bcoin.mtx()
+      .addInput(t1, 0)
+      .addOutput(addr, 24000)
+      .addOutput(addr, 24000);
+
+    yield alice.sign(t2);
+    t2 = t2.toTX();
+
+    yield alice.add(t2);
+
+    assert.notEqual(
+      (yield alice.getBalance()).total,
+      (yield bob.getBalance()).total);
+
+    // Bob sees this one.
+    t3 = bcoin.mtx()
+      .addInput(t2, 0)
+      .addInput(t2, 1)
+      .addOutput(addr, 30000);
+
+    yield alice.sign(t3);
+    t3 = t3.toTX();
+
+    assert.equal((yield bob.getBalance()).total, 50000);
+
+    yield alice.add(t3);
+    yield bob.add(t3);
+
+    assert.equal((yield alice.getBalance()).total, 30000);
+    // assert.equal((yield bob.getBalance()).total, 80000);
+
+    // Bob sees t2 on the chain.
+    t2.height = 3;
+    t2.ts = utils.now();
+    yield bob.add(t2);
+
+    // Bob sees t3 on the chain.
+    t3.height = 3;
+    t3.ts = utils.now();
+    yield bob.add(t3);
+
+    assert.equal((yield bob.getBalance()).total, 30000);
+  }));
+
+  it('should recover from a missed tx and double spend', cob(function* () {
+    var alice, addr, bob, t1, t2, t3, t2a;
+
+    // walletdb.options.verify = false;
+    // walletdb.options.resolution = false;
+
+    alice = yield walletdb.create({ master: KEY1 });
+    bob = yield walletdb.create({ master: KEY1 });
+    addr = alice.getAddress();
+
+    // Coinbase
+    t1 = bcoin.mtx()
+      .addOutput(addr, 50000);
+    t1.addInput(dummyInput);
+    t1.height = 1;
+
+    yield alice.sign(t1);
+    t1 = t1.toTX();
+
+    yield alice.add(t1);
+    yield bob.add(t1);
+
+    // Bob misses this tx!
+    t2 = bcoin.mtx()
+      .addInput(t1, 0)
+      .addOutput(addr, 24000)
+      .addOutput(addr, 24000);
+
+    yield alice.sign(t2);
+    t2 = t2.toTX();
+
+    yield alice.add(t2);
+
+    assert.notEqual(
+      (yield alice.getBalance()).total,
+      (yield bob.getBalance()).total);
+
+    // Bob doublespends.
+    t2a = bcoin.mtx()
+      .addInput(t1, 0)
+      .addOutput(addr, 10000)
+      .addOutput(addr, 10000);
+
+    yield bob.sign(t2a);
+    t2a = t2a.toTX();
+
+    yield bob.add(t2a);
+
+    // Bob sees this one.
+    t3 = bcoin.mtx()
+      .addInput(t2, 0)
+      .addInput(t2, 1)
+      .addOutput(addr, 30000);
+
+    yield alice.sign(t3);
+    t3 = t3.toTX();
+
+    assert.equal((yield bob.getBalance()).total, 20000);
+
+    yield alice.add(t3);
+    yield bob.add(t3);
+
+    assert.equal((yield alice.getBalance()).total, 30000);
+    // assert.equal((yield bob.getBalance()).total, 80000);
+
+    // Bob sees t2 on the chain.
+    t2.height = 3;
+    t2.ts = utils.now();
+    yield bob.add(t2);
+
+    // Bob sees t3 on the chain.
+    t3.height = 3;
+    t3.ts = utils.now();
+    yield bob.add(t3);
+
+    assert.equal((yield bob.getBalance()).total, 30000);
+  }));
+
   it('should cleanup', cob(function* () {
     var records = yield walletdb.dump();
     constants.tx.COINBASE_MATURITY = 100;
