@@ -42,6 +42,7 @@ describe('Wallet', function() {
   walletdb = new bcoin.walletdb({
     name: 'wallet-test',
     db: 'memory',
+    resolution: true,
     verify: true
   });
 
@@ -244,17 +245,20 @@ describe('Wallet', function() {
     yield walletdb.addTX(t4);
 
     balance = yield w.getBalance();
-    assert.equal(balance.total, 22500);
+    //assert.equal(balance.total, 22500);
+    assert.equal(balance.total, 0);
 
     yield walletdb.addTX(t1);
 
     balance = yield w.getBalance();
-    assert.equal(balance.total, 73000);
+    //assert.equal(balance.total, 73000);
+    assert.equal(balance.total, 51000);
 
     yield walletdb.addTX(t2);
 
     balance = yield w.getBalance();
-    assert.equal(balance.total, 47000);
+    //assert.equal(balance.total, 47000);
+    assert.equal(balance.total, 49000);
 
     yield walletdb.addTX(t3);
 

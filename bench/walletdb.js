@@ -34,7 +34,9 @@ var walletdb = new bcoin.walletdb({
   name: 'wallet-test',
   // location: __dirname + '/../walletdb-bench',
   // db: 'leveldb'
-  db: 'memory'
+  db: 'memory',
+  resolution: false,
+  verify: false
 });
 
 var runBench = co(function* runBench() {
