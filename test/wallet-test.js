@@ -176,7 +176,7 @@ describe('Wallet', function() {
     assert(tx.verify());
   }));
 
-  it('should have TX pool and be serializable', cob(function* () {
+  it('should handle missed and invalid txs', cob(function* () {
     var w = yield walletdb.create();
     var f = yield walletdb.create();
     var t1, t2, t3, t4, f1, fake, balance, txs;
@@ -188,6 +188,7 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 1000);
     t1.addInput(dummyInput);
+    t1.ts = utils.now();
     t1.height = 1;
 
     // balance: 51000
@@ -228,6 +229,7 @@ describe('Wallet', function() {
     // balance: 11000
     yield w.sign(f1);
     f1 = f1.toTX();
+
     fake = bcoin.mtx()
       .addInput(t1, 1) // 1000 (already redeemed)
       .addOutput(w.getAddress(), 500);
@@ -324,6 +326,144 @@ describe('Wallet', function() {
       return t + tx.getOutputValue();
     }, 0);
     assert.equal(total, 56000);
+  }));
+
+  it('should handle missed txs without resolution', cob(function* () {
+    var walletdb, w, f, t1, t2, t3, t4, f1, fake, balance, txs;
+
+    walletdb = new bcoin.walletdb({
+      name: 'wallet-test',
+      db: 'memory',
+      resolution: false,
+      verify: false
+    });
+
+    yield walletdb.open();
+
+    w = yield walletdb.create();
+    f = yield walletdb.create();
+
+    // Coinbase
+    t1 = bcoin.mtx()
+      .addOutput(w.getAddress(), 50000)
+      .addOutput(w.getAddress(), 1000);
+    t1.addInput(dummyInput);
+    t1.ts = utils.now();
+    t1.height = 1;
+
+    // balance: 51000
+    yield w.sign(t1);
+    t1 = t1.toTX();
+
+    t2 = bcoin.mtx()
+      .addInput(t1, 0) // 50000
+      .addOutput(w.getAddress(), 24000)
+      .addOutput(w.getAddress(), 24000);
+
+    // balance: 49000
+    yield w.sign(t2);
+    t2 = t2.toTX();
+    t3 = bcoin.mtx()
+      .addInput(t1, 1) // 1000
+      .addInput(t2, 0) // 24000
+      .addOutput(w.getAddress(), 23000);
+
+    // balance: 47000
+    yield w.sign(t3);
+    t3 = t3.toTX();
+    t4 = bcoin.mtx()
+      .addInput(t2, 1) // 24000
+      .addInput(t3, 0) // 23000
+      .addOutput(w.getAddress(), 11000)
+      .addOutput(w.getAddress(), 11000);
+
+    // balance: 22000
+    yield w.sign(t4);
+    t4 = t4.toTX();
+    f1 = bcoin.mtx()
+      .addInput(t4, 1) // 11000
+      .addOutput(f.getAddress(), 10000);
+
+    // balance: 11000
+    yield w.sign(f1);
+    f1 = f1.toTX();
+
+    // fake = bcoin.mtx()
+    //   .addInput(t1, 1) // 1000 (already redeemed)
+    //   .addOutput(w.getAddress(), 500);
+
+    // Script inputs but do not sign
+    // yield w.template(fake);
+    // Fake signature
+    // fake.inputs[0].script.set(0, constants.ZERO_SIG);
+    // fake.inputs[0].script.compile();
+    // balance: 11000
+    // fake = fake.toTX();
+
+    // Fake TX should temporarly change output
+    // yield walletdb.addTX(fake);
+
+    yield walletdb.addTX(t4);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 22000);
+
+    yield walletdb.addTX(t1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 73000);
+
+    yield walletdb.addTX(t2);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 71000);
+
+    yield walletdb.addTX(t3);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 69000);
+
+    yield walletdb.addTX(f1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 58000);
+
+    txs = yield w.getHistory();
+    assert(txs.some(function(tx) {
+      return tx.hash('hex') === f1.hash('hex');
+    }));
+
+    balance = yield f.getBalance();
+    assert.equal(balance.unconfirmed, 10000);
+
+    txs = yield f.getHistory();
+    assert(txs.some(function(tx) {
+      return tx.hash('hex') === f1.hash('hex');
+    }));
+
+    t2.ts = utils.now();
+    t2.height = 1;
+    yield walletdb.addTX(t2);
+
+    t3.ts = utils.now();
+    t3.height = 1;
+    yield walletdb.addTX(t3);
+
+    t4.ts = utils.now();
+    t4.height = 1;
+    yield walletdb.addTX(t4);
+
+    f1.ts = utils.now();
+    f1.height = 1;
+    yield walletdb.addTX(f1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 11000);
+    assert.equal(balance.confirmed, 11000);
+
+    balance = yield f.getBalance();
+    assert.equal(balance.unconfirmed, 10000);
+    assert.equal(balance.confirmed, 10000);
   }));
 
   it('should fill tx with inputs', cob(function* () {
@@ -1036,10 +1176,16 @@ describe('Wallet', function() {
   }));
 
   it('should recover from a missed tx', cob(function* () {
-    var alice, addr, bob, t1, t2, t3;
+    var walletdb, alice, addr, bob, t1, t2, t3;
 
-    walletdb.options.verify = false;
-    walletdb.options.resolution = false;
+    walletdb = new bcoin.walletdb({
+      name: 'wallet-test',
+      db: 'memory',
+      resolution: false,
+      verify: false
+    });
+
+    yield walletdb.open();
 
     alice = yield walletdb.create({ master: KEY1 });
     bob = yield walletdb.create({ master: KEY1 });
@@ -1103,10 +1249,16 @@ describe('Wallet', function() {
   }));
 
   it('should recover from a missed tx and double spend', cob(function* () {
-    var alice, addr, bob, t1, t2, t3, t2a;
+    var walletdb, alice, addr, bob, t1, t2, t3, t2a;
 
-    walletdb.options.verify = false;
-    walletdb.options.resolution = false;
+    walletdb = new bcoin.walletdb({
+      name: 'wallet-test',
+      db: 'memory',
+      resolution: false,
+      verify: false
+    });
+
+    yield walletdb.open();
 
     alice = yield walletdb.create({ master: KEY1 });
     bob = yield walletdb.create({ master: KEY1 });
