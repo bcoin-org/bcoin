@@ -120,9 +120,8 @@ describe('Chain', function() {
     yield co.timeout(100);
 
     balance = yield wallet.getBalance();
-    assert.equal(balance.unconfirmed, 0);
+    assert.equal(balance.unconfirmed, 500 * 1e8);
     assert.equal(balance.confirmed, 500 * 1e8);
-    assert.equal(balance.total, 500 * 1e8);
   }));
 
   it('should handle a reorg', cob(function* () {
@@ -158,9 +157,8 @@ describe('Chain', function() {
     yield co.timeout(100);
 
     balance = yield wallet.getBalance();
-    assert.equal(balance.unconfirmed, 500 * 1e8);
+    assert.equal(balance.unconfirmed, 1050 * 1e8);
     assert.equal(balance.confirmed, 550 * 1e8);
-    assert.equal(balance.total, 1050 * 1e8);
   }));
 
   it('should check main chain', cob(function* () {
@@ -221,9 +219,8 @@ describe('Chain', function() {
     yield co.timeout(100);
 
     balance = yield wallet.getBalance();
-    assert.equal(balance.unconfirmed, 500 * 1e8);
+    assert.equal(balance.unconfirmed, 1200 * 1e8);
     assert.equal(balance.confirmed, 700 * 1e8);
-    assert.equal(balance.total, 1200 * 1e8);
 
     assert(wallet.account.receiveDepth >= 8);
     assert(wallet.account.changeDepth >= 7);

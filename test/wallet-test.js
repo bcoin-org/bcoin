@@ -188,6 +188,7 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 1000);
     t1.addInput(dummyInput);
+    t1.height = 1;
 
     // balance: 51000
     yield w.sign(t1);
@@ -245,30 +246,30 @@ describe('Wallet', function() {
     yield walletdb.addTX(t4);
 
     balance = yield w.getBalance();
-    //assert.equal(balance.total, 22500);
-    assert.equal(balance.total, 0);
+    //assert.equal(balance.unconfirmed, 22500);
+    assert.equal(balance.unconfirmed, 0);
 
     yield walletdb.addTX(t1);
 
     balance = yield w.getBalance();
-    //assert.equal(balance.total, 73000);
-    assert.equal(balance.total, 51000);
+    //assert.equal(balance.unconfirmed, 73000);
+    assert.equal(balance.unconfirmed, 51000);
 
     yield walletdb.addTX(t2);
 
     balance = yield w.getBalance();
-    //assert.equal(balance.total, 47000);
-    assert.equal(balance.total, 49000);
+    //assert.equal(balance.unconfirmed, 47000);
+    assert.equal(balance.unconfirmed, 49000);
 
     yield walletdb.addTX(t3);
 
     balance = yield w.getBalance();
-    assert.equal(balance.total, 22000);
+    assert.equal(balance.unconfirmed, 22000);
 
     yield walletdb.addTX(f1);
 
     balance = yield w.getBalance();
-    assert.equal(balance.total, 11000);
+    assert.equal(balance.unconfirmed, 11000);
 
     txs = yield w.getHistory();
     assert(txs.some(function(tx) {
@@ -276,12 +277,16 @@ describe('Wallet', function() {
     }));
 
     balance = yield f.getBalance();
-    assert.equal(balance.total, 10000);
+    assert.equal(balance.unconfirmed, 10000);
 
     txs = yield f.getHistory();
     assert(txs.some(function(tx) {
       return tx.hash('hex') === f1.hash('hex');
     }));
+
+    t2.ts = utils.now();
+    t2.height = 1;
+    yield walletdb.addTX(t2);
   }));
 
   it('should cleanup spenders after double-spend', cob(function* () {
@@ -290,6 +295,8 @@ describe('Wallet', function() {
 
     tx = bcoin.mtx().addOutput(w.getAddress(), 5000);
     tx.addInput(doubleSpend.coin);
+    tx.ts = utils.now();
+    tx.height = 1;
 
     txs = yield w.getHistory();
     assert.equal(txs.length, 5);
@@ -303,12 +310,12 @@ describe('Wallet', function() {
     tx = tx.toTX();
 
     balance = yield w.getBalance();
-    assert.equal(balance.total, 11000);
+    assert.equal(balance.unconfirmed, 11000);
 
     yield walletdb.addTX(tx);
 
     balance = yield w.getBalance();
-    assert.equal(balance.total, 6000);
+    assert.equal(balance.unconfirmed, 6000);
 
     txs = yield w.getHistory();
     assert.equal(txs.length, 2);
@@ -415,7 +422,7 @@ describe('Wallet', function() {
 
     assert(err);
     assert(balance);
-    assert(balance.total === 5460);
+    assert(balance.unconfirmed === 5460);
   }));
 
   it('should sign multiple inputs using different keys', cob(function* () {
@@ -897,7 +904,7 @@ describe('Wallet', function() {
   it('should get account balance', cob(function* () {
     var w = wallet;
     var balance = yield w.getBalance('foo');
-    assert.equal(balance.total, 21840);
+    assert.equal(balance.unconfirmed, 21840);
   }));
 
   it('should import privkey', cob(function* () {
@@ -1031,8 +1038,8 @@ describe('Wallet', function() {
   it('should recover from a missed tx', cob(function* () {
     var alice, addr, bob, t1, t2, t3;
 
-    // walletdb.options.verify = false;
-    // walletdb.options.resolution = false;
+    walletdb.options.verify = false;
+    walletdb.options.resolution = false;
 
     alice = yield walletdb.create({ master: KEY1 });
     bob = yield walletdb.create({ master: KEY1 });
@@ -1062,8 +1069,8 @@ describe('Wallet', function() {
     yield alice.add(t2);
 
     assert.notEqual(
-      (yield alice.getBalance()).total,
-      (yield bob.getBalance()).total);
+      (yield alice.getBalance()).unconfirmed,
+      (yield bob.getBalance()).unconfirmed);
 
     // Bob sees this one.
     t3 = bcoin.mtx()
@@ -1074,13 +1081,13 @@ describe('Wallet', function() {
     yield alice.sign(t3);
     t3 = t3.toTX();
 
-    assert.equal((yield bob.getBalance()).total, 50000);
+    assert.equal((yield bob.getBalance()).unconfirmed, 50000);
 
     yield alice.add(t3);
     yield bob.add(t3);
 
-    assert.equal((yield alice.getBalance()).total, 30000);
-    // assert.equal((yield bob.getBalance()).total, 80000);
+    assert.equal((yield alice.getBalance()).unconfirmed, 30000);
+    // assert.equal((yield bob.getBalance()).unconfirmed, 80000);
 
     // Bob sees t2 on the chain.
     t2.height = 3;
@@ -1092,14 +1099,14 @@ describe('Wallet', function() {
     t3.ts = utils.now();
     yield bob.add(t3);
 
-    assert.equal((yield bob.getBalance()).total, 30000);
+    assert.equal((yield bob.getBalance()).unconfirmed, 30000);
   }));
 
   it('should recover from a missed tx and double spend', cob(function* () {
     var alice, addr, bob, t1, t2, t3, t2a;
 
-    // walletdb.options.verify = false;
-    // walletdb.options.resolution = false;
+    walletdb.options.verify = false;
+    walletdb.options.resolution = false;
 
     alice = yield walletdb.create({ master: KEY1 });
     bob = yield walletdb.create({ master: KEY1 });
@@ -1129,8 +1136,8 @@ describe('Wallet', function() {
     yield alice.add(t2);
 
     assert.notEqual(
-      (yield alice.getBalance()).total,
-      (yield bob.getBalance()).total);
+      (yield alice.getBalance()).unconfirmed,
+      (yield bob.getBalance()).unconfirmed);
 
     // Bob doublespends.
     t2a = bcoin.mtx()
@@ -1152,13 +1159,13 @@ describe('Wallet', function() {
     yield alice.sign(t3);
     t3 = t3.toTX();
 
-    assert.equal((yield bob.getBalance()).total, 20000);
+    assert.equal((yield bob.getBalance()).unconfirmed, 20000);
 
     yield alice.add(t3);
     yield bob.add(t3);
 
-    assert.equal((yield alice.getBalance()).total, 30000);
-    // assert.equal((yield bob.getBalance()).total, 80000);
+    assert.equal((yield alice.getBalance()).unconfirmed, 30000);
+    // assert.equal((yield bob.getBalance()).unconfirmed, 80000);
 
     // Bob sees t2 on the chain.
     t2.height = 3;
@@ -1170,7 +1177,7 @@ describe('Wallet', function() {
     t3.ts = utils.now();
     yield bob.add(t3);
 
-    assert.equal((yield bob.getBalance()).total, 30000);
+    assert.equal((yield bob.getBalance()).unconfirmed, 30000);
   }));
 
   it('should cleanup', cob(function* () {
