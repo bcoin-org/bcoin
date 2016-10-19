@@ -17,24 +17,27 @@ var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
 var KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
-var dummyInput = {
-  prevout: {
-    hash: constants.NULL_HASH,
-    index: 0
-  },
-  coin: {
-    version: 1,
-    height: 0,
-    value: constants.MAX_MONEY,
-    script: new bcoin.script([]),
-    coinbase: false,
-    hash: constants.NULL_HASH,
-    index: 0
-  },
-  script: new bcoin.script([]),
-  witness: new bcoin.witness([]),
-  sequence: 0xffffffff
-};
+function dummy() {
+  var hash = crypto.randomBytes(32).toString('hex');
+  return {
+    prevout: {
+      hash: hash,
+      index: 0
+    },
+    coin: {
+      version: 1,
+      height: 0,
+      value: constants.MAX_MONEY,
+      script: new bcoin.script(),
+      coinbase: false,
+      hash: hash,
+      index: 0
+    },
+    script: new bcoin.script(),
+    witness: new bcoin.witness(),
+    sequence: 0xffffffff
+  };
+}
 
 describe('Wallet', function() {
   var walletdb, wallet, ewallet, ekey, doubleSpendWallet, doubleSpend;
@@ -110,7 +113,7 @@ describe('Wallet', function() {
       }]
     });
 
-    src.addInput(dummyInput);
+    src.addInput(dummy());
 
     tx = bcoin.mtx()
       .addInput(src, 0)
@@ -162,7 +165,7 @@ describe('Wallet', function() {
       }]
     });
 
-    src.addInput(dummyInput);
+    src.addInput(dummy());
 
     tx = bcoin.mtx()
       .addInput(src, 0)
@@ -187,7 +190,7 @@ describe('Wallet', function() {
     t1 = bcoin.mtx()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 1000);
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1.ts = utils.now();
     t1.height = 1;
 
@@ -347,7 +350,7 @@ describe('Wallet', function() {
     t1 = bcoin.mtx()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 1000);
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1.ts = utils.now();
     t1.height = 1;
 
@@ -416,17 +419,20 @@ describe('Wallet', function() {
     yield walletdb.addTX(t2);
 
     balance = yield w.getBalance();
-    assert.equal(balance.unconfirmed, 71000);
+    //assert.equal(balance.unconfirmed, 71000);
+    assert.equal(balance.unconfirmed, 47000);
 
     yield walletdb.addTX(t3);
 
     balance = yield w.getBalance();
-    assert.equal(balance.unconfirmed, 69000);
+    //assert.equal(balance.unconfirmed, 69000);
+    assert.equal(balance.unconfirmed, 22000);
 
     yield walletdb.addTX(f1);
 
     balance = yield w.getBalance();
-    assert.equal(balance.unconfirmed, 58000);
+    //assert.equal(balance.unconfirmed, 58000);
+    assert.equal(balance.unconfirmed, 11000);
 
     txs = yield w.getHistory();
     assert(txs.some(function(tx) {
@@ -478,7 +484,7 @@ describe('Wallet', function() {
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -520,7 +526,7 @@ describe('Wallet', function() {
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -578,7 +584,7 @@ describe('Wallet', function() {
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     // Coinbase
@@ -588,7 +594,7 @@ describe('Wallet', function() {
       .addOutput(w2.getAddress(), 5460)
       .addOutput(w2.getAddress(), 5460);
 
-    t2.addInput(dummyInput);
+    t2.addInput(dummy());
     t2 = t2.toTX();
 
     yield walletdb.addTX(t1);
@@ -707,7 +713,7 @@ describe('Wallet', function() {
     else
       utx.addOutput({ address: addr, value: 5460 * 10 });
 
-    utx.addInput(dummyInput);
+    utx.addInput(dummy());
     utx = utx.toTX();
 
     // Simulate a confirmation
@@ -816,7 +822,7 @@ describe('Wallet', function() {
       .addOutput(rec.getAddress(), 5460)
       .addOutput(rec.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -878,7 +884,7 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 5460)
       .addOutput(account.receive.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -903,7 +909,7 @@ describe('Wallet', function() {
       .addOutput(account.receive.getAddress(), 5460);
 
     t1.ps = 0xdeadbeef;
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -927,7 +933,7 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 5460)
       .addOutput(w.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -963,7 +969,7 @@ describe('Wallet', function() {
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -992,7 +998,7 @@ describe('Wallet', function() {
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -1065,7 +1071,7 @@ describe('Wallet', function() {
       .addOutput(key.getAddress(), 5460)
       .addOutput(key.getAddress(), 5460);
 
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -1194,7 +1200,7 @@ describe('Wallet', function() {
     // Coinbase
     t1 = bcoin.mtx()
       .addOutput(addr, 50000);
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1.height = 1;
 
     yield alice.sign(t1);
@@ -1267,7 +1273,7 @@ describe('Wallet', function() {
     // Coinbase
     t1 = bcoin.mtx()
       .addOutput(addr, 50000);
-    t1.addInput(dummyInput);
+    t1.addInput(dummy());
     t1.height = 1;
 
     yield alice.sign(t1);
