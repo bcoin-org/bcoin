@@ -19,6 +19,7 @@ describe('Chain', function() {
   node = new bcoin.fullnode({ db: 'memory' });
   chain = node.chain;
   walletdb = node.walletdb;
+  walletdb.options.resolution = false;
   miner = node.miner;
   node.on('error', function() {});
 
