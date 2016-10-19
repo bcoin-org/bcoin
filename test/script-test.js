@@ -348,6 +348,8 @@ describe('Script', function() {
           tx._witnessSize = -1;
           tx._lastWitnessSize = 0;
           tx._hash = null;
+          tx._hhash = null;
+          tx._whash = null;
           tx._inputValue = -1;
           tx._outputValue = -1;
           tx._hashPrevouts = null;
