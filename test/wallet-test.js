@@ -17,8 +17,8 @@ var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
 var KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
-function dummy() {
-  var hash = crypto.randomBytes(32).toString('hex');
+function dummy(hash) {
+  hash = hash || crypto.randomBytes(32).toString('hex');
   return {
     prevout: {
       hash: hash,
@@ -542,7 +542,7 @@ describe('Wallet', function() {
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460);
 
-    t1.addInput(dummy());
+    t1.addInput(dummy(constants.NULL_HASH));
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
