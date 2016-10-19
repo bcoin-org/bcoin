@@ -110,7 +110,6 @@ describe('HTTP', function() {
     assert(balance);
     assert.equal(utils.satoshi(balance.confirmed), 0);
     assert.equal(utils.satoshi(balance.unconfirmed), 201840);
-    assert.equal(utils.satoshi(balance.total), 201840);
     assert(details);
     assert.equal(details.hash, t1.rhash);
   }));
@@ -119,11 +118,13 @@ describe('HTTP', function() {
     var balance = yield wallet.getBalance();
     assert.equal(utils.satoshi(balance.confirmed), 0);
     assert.equal(utils.satoshi(balance.unconfirmed), 201840);
-    assert.equal(utils.satoshi(balance.total), 201840);
   }));
 
   it('should send a tx', cob(function* () {
-    var options = {
+    var value = 0;
+    var options, tx;
+
+    options = {
       rate: 10000,
       outputs: [{
         value: 10000,
@@ -131,12 +132,16 @@ describe('HTTP', function() {
       }]
     };
 
-    var tx = yield wallet.send(options);
+    tx = yield wallet.send(options);
 
     assert(tx);
     assert.equal(tx.inputs.length, 1);
     assert.equal(tx.outputs.length, 2);
-    assert.equal(utils.satoshi(tx.outputs[0].value) + utils.satoshi(tx.outputs[1].value), 48190);
+
+    value += utils.satoshi(tx.outputs[0].value);
+    value += utils.satoshi(tx.outputs[1].value);
+    assert.equal(value, 48190);
+
     hash = tx.hash;
   }));
 
@@ -155,7 +160,7 @@ describe('HTTP', function() {
 
   it('should get balance', cob(function* () {
     var balance = yield wallet.getBalance();
-    assert.equal(utils.satoshi(balance.total), 199570);
+    assert.equal(utils.satoshi(balance.unconfirmed), 199570);
   }));
 
   it('should execute an rpc call', cob(function* () {
