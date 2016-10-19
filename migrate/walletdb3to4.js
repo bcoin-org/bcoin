@@ -48,67 +48,47 @@ var updateVersion = co(function* updateVersion() {
   batch.put('V', ver);
 });
 
-var updateState = co(function* updateState(wid) {
-  var total = 0;
-  var unconfirmed = 0;
-  var confirmed = 0;
-  var txs = 0;
-  var coins = 0;
-  var p, keys;
+var updateTXDB = co(function* updateTXDB() {
+  var txs = {};
+  var i, keys, key, hash, tx, walletdb;
 
   keys = yield db.keys({
-    gte: tlayout.prefix(wid, tlayout.t(constants.NULL_HASH)),
-    lte: tlayout.prefix(wid, tlayout.t(constants.HIGH_HASH))
+    gte: new Buffer([0x00]),
+    lte: new Buffer([0xff])
   });
 
-  txs += keys.length;
-
-  yield db.range({
-    gte: tlayout.prefix(wid, tlayout.c(constants.NULL_HASH, 0x00000000)),
-    lte: tlayout.prefix(wid, tlayout.c(constants.HIGH_HASH, 0xffffffff)),
-    parse: function(key, data) {
-      var height = data.readUInt32LE(4, true);
-      var value = utils.read64N(data, 8);
-
-      total += value;
-
-      if (height === 0x7fffffff)
-        unconfirmed += value;
-      else
-        confirmed += value;
-
-      coins += 1;
+  for (i = 0; i < keys.length; i++) {
+    key = keys[i];
+    if (key[0] === 0x74 && key[5] === 0x74) {
+      tx = yield db.get(key);
+      tx = bcoin.tx.fromExtended(tx);
+      hash = tx.hash('hex');
+      txs[hash] = tx;
     }
-  });
-
-  p = new BufferWriter();
-  p.writeU64(txs);
-  p.writeU64(coins);
-  p.writeU64(unconfirmed);
-  p.writeU64(confirmed);
-
-  batch.put(tlayout.prefix(wid, tlayout.R), p.render());
-});
-
-var updateStates = co(function* updateStates() {
-  var i, wallets, wid;
-
-  wallets = yield db.keys({
-    gte: layout.w(0),
-    lte: layout.w(0xffffffff),
-    parse: function(key) {
-      return key.readUInt32LE(1, true);
-    }
-  });
-
-  console.log('Updating states...');
-
-  for (i = 0; i < wallets.length; i++) {
-    wid = wallets[i];
-    yield updateState(wid);
+    if (key[0] === 0x74)
+      batch.del(key);
   }
 
-  console.log('Updated %d states.', wallets.length);
+  txs = utils.values(txs);
+
+  yield batch.write();
+  yield db.close();
+
+  walletdb = new WalletDB({
+    location: file,
+    db: 'leveldb',
+    resolution: true,
+    verify: false
+  });
+
+  yield walletdb.open();
+
+  for (i = 0; i < txs.length; i++) {
+    tx = txs[i];
+    yield walletdb.addTX(tx);
+  }
+
+  yield walletdb.close();
 });
 
 co.spawn(function* () {
@@ -116,8 +96,7 @@ co.spawn(function* () {
   batch = db.batch();
   console.log('Opened %s.', file);
   yield updateVersion();
-  yield updateStates();
-  yield batch.write();
+  yield updateTXDB();
 }).then(function() {
   console.log('Migration complete.');
   process.exit(0);
