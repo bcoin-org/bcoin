@@ -14,7 +14,7 @@ var fs = require('fs');
 var tx1 = parseTX('data/tx1.hex');
 var tx2 = parseTX('data/tx2.hex');
 var tx3 = parseTX('data/tx3.hex');
-var tx4 = parseExtended('data/tx4.hex');
+var tx4 = parseTX('data/tx4.hex');
 var wtx = parseTX('data/wtx.hex');
 var coolest = parseTX('data/coolest-tx-ever-sent.hex');
 
@@ -26,11 +26,6 @@ function parseTX(file) {
     tx.fillCoins(coin);
   }
   return tx;
-}
-
-function parseExtended(file) {
-  file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim();
-  return bcoin.tx.fromExtended(file, true, 'hex');
 }
 
 function clearCache(tx, nocache) {

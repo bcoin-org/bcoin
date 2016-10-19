@@ -15,7 +15,7 @@ var block = bcoin.block.fromJSON(require('../test/data/block300025.json'));
 var btx = block.txs[397];
 
 var tx1 = parseTX('../test/data/tx3.hex');
-var tx4 = parseExtended('../test/data/tx4.hex');
+var tx4 = parseTX('../test/data/tx4.hex');
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
 wtx = new Buffer(wtx.trim(), 'hex');
 var tx;
@@ -28,11 +28,6 @@ function parseTX(file) {
     tx.fillCoins(coin);
   }
   return tx;
-}
-
-function parseExtended(file) {
-  file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim();
-  return bcoin.tx.fromExtended(file, true, 'hex');
 }
 
 var end = bench('parse');

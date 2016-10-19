@@ -4,6 +4,9 @@ var constants = require('../lib/protocol/constants');
 var WalletDB = require('../lib/wallet/walletdb');
 var TXDB = require('../lib/wallet/txdb');
 var BufferWriter = require('../lib/utils/writer');
+var BufferReader = require('../lib/utils/reader');
+var TX = require('../lib/primitives/tx');
+var Coin = require('../lib/primitives/coin');
 var utils = require('../lib/utils/utils');
 var co = bcoin.co;
 var layout = WalletDB.layout;
@@ -61,7 +64,7 @@ var updateTXDB = co(function* updateTXDB() {
     key = keys[i];
     if (key[0] === 0x74 && key[5] === 0x74) {
       tx = yield db.get(key);
-      tx = bcoin.tx.fromExtended(tx);
+      tx = fromExtended(tx);
       hash = tx.hash('hex');
       txs[hash] = tx;
     }
@@ -90,6 +93,44 @@ var updateTXDB = co(function* updateTXDB() {
 
   yield walletdb.close();
 });
+
+function fromExtended(data, saveCoins) {
+  var tx = new TX();
+  var p = BufferReader(data);
+  var i, coinCount, coin;
+
+  tx.fromRaw(p);
+
+  tx.height = p.readU32();
+  tx.block = p.readHash('hex');
+  tx.index = p.readU32();
+  tx.ts = p.readU32();
+  tx.ps = p.readU32();
+
+  if (tx.block === constants.NULL_HASH)
+    tx.block = null;
+
+  if (tx.height === 0x7fffffff)
+    tx.height = -1;
+
+  if (tx.index === 0x7fffffff)
+    tx.index = -1;
+
+  if (saveCoins) {
+    coinCount = p.readVarint();
+    for (i = 0; i < coinCount; i++) {
+      coin = p.readVarBytes();
+      if (coin.length === 0)
+        continue;
+      coin = Coin.fromRaw(coin);
+      coin.hash = tx.inputs[i].prevout.hash;
+      coin.index = tx.inputs[i].prevout.index;
+      tx.inputs[i].coin = coin;
+    }
+  }
+
+  return tx;
+}
 
 co.spawn(function* () {
   yield db.open();

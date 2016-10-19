@@ -193,6 +193,8 @@ describe('Wallet', function() {
     t1.addInput(dummy());
     t1.ts = utils.now();
     t1.height = 1;
+    t1.block = constants.NULL_HASH;
+    t1.index = 0;
 
     // balance: 51000
     yield w.sign(t1);
@@ -291,6 +293,8 @@ describe('Wallet', function() {
 
     t2.ts = utils.now();
     t2.height = 1;
+    t2.block = constants.NULL_HASH;
+    t2.index = 0;
     yield walletdb.addTX(t2);
   }));
 
@@ -302,6 +306,8 @@ describe('Wallet', function() {
     tx.addInput(doubleSpend.coin);
     tx.ts = utils.now();
     tx.height = 1;
+    tx.block = constants.NULL_HASH;
+    tx.index = 0;
 
     txs = yield w.getHistory();
     assert.equal(txs.length, 5);
@@ -353,6 +359,8 @@ describe('Wallet', function() {
     t1.addInput(dummy());
     t1.ts = utils.now();
     t1.height = 1;
+    t1.block = constants.NULL_HASH;
+    t1.index = 0;
 
     // balance: 51000
     yield w.sign(t1);
@@ -449,18 +457,26 @@ describe('Wallet', function() {
 
     t2.ts = utils.now();
     t2.height = 1;
+    t2.block = constants.NULL_HASH;
+    t2.index = 0;
     yield walletdb.addTX(t2);
 
     t3.ts = utils.now();
     t3.height = 1;
+    t3.block = constants.NULL_HASH;
+    t3.index = 0;
     yield walletdb.addTX(t3);
 
     t4.ts = utils.now();
     t4.height = 1;
+    t4.block = constants.NULL_HASH;
+    t4.index = 0;
     yield walletdb.addTX(t4);
 
     f1.ts = utils.now();
     f1.height = 1;
+    f1.block = constants.NULL_HASH;
+    f1.index = 0;
     yield walletdb.addTX(f1);
 
     balance = yield w.getBalance();
@@ -717,9 +733,10 @@ describe('Wallet', function() {
     utx = utx.toTX();
 
     // Simulate a confirmation
-    utx.ps = 0;
     utx.ts = 1;
     utx.height = 1;
+    utx.block = constants.NULL_HASH;
+    utx.index = 0;
 
     assert.equal(w1[depth], 1);
 
@@ -760,9 +777,10 @@ describe('Wallet', function() {
     assert.equal(w3.change.getAddress('base58'), change);
 
     // Simulate a confirmation
-    send.ps = 0;
     send.ts = 1;
     send.height = 1;
+    send.block = constants.NULL_HASH;
+    send.index = 0;
 
     yield walletdb.addTX(send);
     yield walletdb.addTX(send);
@@ -1201,7 +1219,10 @@ describe('Wallet', function() {
     t1 = bcoin.mtx()
       .addOutput(addr, 50000);
     t1.addInput(dummy());
+    t1.ts = utils.now();
+    t1.block = constants.NULL_HASH;
     t1.height = 1;
+    t1.index = 0;
 
     yield alice.sign(t1);
     t1 = t1.toTX();
@@ -1244,11 +1265,15 @@ describe('Wallet', function() {
     // Bob sees t2 on the chain.
     t2.height = 3;
     t2.ts = utils.now();
+    t2.block = constants.NULL_HASH;
+    t2.index = 0;
     yield bob.add(t2);
 
     // Bob sees t3 on the chain.
     t3.height = 3;
     t3.ts = utils.now();
+    t3.block = constants.NULL_HASH;
+    t3.index = 0;
     yield bob.add(t3);
 
     assert.equal((yield bob.getBalance()).unconfirmed, 30000);
@@ -1274,7 +1299,10 @@ describe('Wallet', function() {
     t1 = bcoin.mtx()
       .addOutput(addr, 50000);
     t1.addInput(dummy());
+    t1.ts = utils.now();
+    t1.block = constants.NULL_HASH;
     t1.height = 1;
+    t1.index = 0;
 
     yield alice.sign(t1);
     t1 = t1.toTX();
@@ -1328,11 +1356,15 @@ describe('Wallet', function() {
     // Bob sees t2 on the chain.
     t2.height = 3;
     t2.ts = utils.now();
+    t2.block = constants.NULL_HASH;
+    t2.index = 0;
     yield bob.add(t2);
 
     // Bob sees t3 on the chain.
     t3.height = 3;
     t3.ts = utils.now();
+    t3.block = constants.NULL_HASH;
+    t3.index = 0;
     yield bob.add(t3);
 
     assert.equal((yield bob.getBalance()).unconfirmed, 30000);
