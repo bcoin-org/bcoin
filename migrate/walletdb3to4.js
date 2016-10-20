@@ -81,7 +81,8 @@ var updateTXDB = co(function* updateTXDB() {
     location: file,
     db: 'leveldb',
     resolution: true,
-    verify: false
+    verify: false,
+    network: process.argv[3]
   });
 
   yield walletdb.open();
