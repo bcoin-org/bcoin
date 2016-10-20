@@ -104,11 +104,11 @@ for (var i = 0; i < 100; i++) {
     },
     script: [
       new Buffer(9),
-      bcoin.ec.random(33)
+      bcoin.crypto.randomBytes(33)
     ]
   });
   tx.addOutput({
-    address: bcoin.address.fromHash(bcoin.ec.random(20)),
+    address: bcoin.address.fromHash(bcoin.crypto.randomBytes(20)),
     value: 0
   });
 }
