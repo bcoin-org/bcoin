@@ -227,7 +227,7 @@ describe('Chain', function() {
     assert(wallet.account.changeDepth >= 7);
 
     assert.equal(walletdb.height, chain.height);
-    assert.equal(walletdb.tip, chain.tip.hash);
+    assert.equal(walletdb.tip.hash, chain.tip.hash);
 
     txs = yield wallet.getHistory();
     assert.equal(txs.length, 44);
