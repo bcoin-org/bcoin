@@ -28,9 +28,13 @@ if test x"$1" = x'cli'; then
   exit 1
 fi
 
+if test x"$1" = x'wallet'; then
+  exec "${dir}/cli" "$@"
+  exit 1
+fi
+
 if test x"$1" = x'rpc'; then
-  shift
-  exec "${dir}/cli" rpc "$@"
+  exec "${dir}/cli" "$@"
   exit 1
 fi
 
