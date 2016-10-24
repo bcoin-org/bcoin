@@ -170,6 +170,11 @@ CLI.prototype.getWalletHistory = co(function* getWalletHistory() {
   this.log(txs);
 });
 
+CLI.prototype.getWalletCoins = co(function* getWalletCoins() {
+  var coins = yield this.wallet.getCoins(this.config.account);
+  this.log(coins);
+});
+
 CLI.prototype.listenWallet = function listenWallet() {
   var self = this;
   this.wallet.on('tx', function(details) {
@@ -413,6 +418,8 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.getBalance();
     case 'history':
       return yield this.getWalletHistory();
+    case 'coins':
+      return yield this.getWalletCoins();
     case 'account':
       if (this.argv[0] === 'list') {
         this.argv.shift();
@@ -462,6 +469,7 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ rmkey [xpubkey]: Remove key from wallet.');
       this.log('  $ balance: Get wallet balance.');
       this.log('  $ history: View wallet TX history.');
+      this.log('  $ coins: View wallet coins.');
       this.log('  $ account list: List account names.');
       this.log('  $ account create [account-name]: Create account.');
       this.log('  $ account get [account-name]: Get account details.');
