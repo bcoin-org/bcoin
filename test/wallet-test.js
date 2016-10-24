@@ -10,7 +10,6 @@ var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var co = require('../lib/utils/co');
 var cob = co.cob;
-var WalletBlock = require('../lib/wallet/walletblock');
 
 var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
