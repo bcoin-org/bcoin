@@ -19,12 +19,26 @@ var KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
 var globalHeight = 1;
+var globalTime = utils.now();
 
 function nextBlock(height) {
-  var hash;
-  height = height != null ? height : globalHeight++;
+  var hash, prev;
+
+  if (height == null)
+    height = globalHeight++;
+
   hash = crypto.hash256(utils.U32(height)).toString('hex');
-  return new WalletBlock(hash, height++, utils.now());
+  prev = crypto.hash256(utils.U32(height - 1)).toString('hex');
+
+  return {
+    hash: hash,
+    height: height,
+    prevBlock: prev,
+    ts: globalTime + height,
+    merkleRoot: constants.NULL_HASH,
+    nonce: 0,
+    bits: 0
+  };
 }
 
 function dummy(hash) {
@@ -709,9 +723,9 @@ describe('Wallet', function() {
 
     // Simulate a confirmation
     var block = nextBlock();
-    utx.ts = block.ts;
     utx.height = block.height;
     utx.block = block.hash;
+    utx.ts = block.ts;
     utx.index = 0;
 
     assert.equal(w1[depth], 1);
@@ -752,9 +766,9 @@ describe('Wallet', function() {
 
     // Simulate a confirmation
     var block = nextBlock();
-    send.ts = block.ts;
     send.height = block.height;
     send.block = block.hash;
+    send.ts = block.ts;
     send.index = 0;
 
     yield walletdb.addBlock(block, [send]);
