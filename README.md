@@ -660,6 +660,12 @@ bcoin, we now have a full node that will run on almost any browser, on laptops,
 on servers, on smartphones, on most devices you can imagine, even by simply
 visting a webpage.
 
+## Disclaimer
+
+BCoin does not guarantee you against theft or lost funds due to bugs, mishaps,
+or your own incompetence. You and you alone are responsible for securing your
+money.
+
 ## Contribution and License Agreement
 
 If you contribute code to this project, you are implicitly allowing your code
