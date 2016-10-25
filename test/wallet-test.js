@@ -923,6 +923,20 @@ describe('Wallet', function() {
     yield w.fund(t2, { rate: 10000, round: true, account: 'foo' });
   }));
 
+  it('should create two accounts multiple encryption', cob(function* () {
+    var w = yield walletdb.create({ id: 'foobar', passphrase: 'foo' });
+    w.destroy();
+    var w = yield walletdb.get('foobar');
+    var account = yield w.createAccount({ name: 'foo1' });
+    assert(account);
+    yield w.lock();
+    account = yield w.createAccount({ name: 'foo2' }, 'foo');
+    assert(account);
+    yield w.lock();
+    account = yield w.createAccount({ name: 'foo3' }, 'foo');
+    assert(account);
+  }));
+
   it('should fill tx with inputs when encrypted', cob(function* () {
     var w = yield walletdb.create({ passphrase: 'foo' });
     var t1, t2, err;
