@@ -235,9 +235,8 @@ describe('Chain', function() {
 
   it('should rescan for transactions', cob(function* () {
     var total = 0;
-    var hashes = yield walletdb.getHashes();
 
-    yield chain.db.scan(null, hashes, function(block, txs) {
+    yield chain.db.scan(null, walletdb.filter, function(block, txs) {
       total += txs.length;
       return Promise.resolve();
     });
