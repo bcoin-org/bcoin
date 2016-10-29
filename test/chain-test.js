@@ -128,7 +128,7 @@ describe('Chain', function() {
   it('should handle a reorg', cob(function* () {
     var entry, block, forked;
 
-    assert.equal(walletdb.height, chain.height);
+    assert.equal(walletdb.state.height, chain.height);
     assert.equal(chain.height, 10);
 
     entry = yield chain.db.get(tip2.hash);
@@ -227,8 +227,7 @@ describe('Chain', function() {
     assert(wallet.account.receiveDepth >= 8);
     assert(wallet.account.changeDepth >= 7);
 
-    assert.equal(walletdb.height, chain.height);
-    assert.equal(walletdb.state.tip.hash, chain.tip.hash);
+    assert.equal(walletdb.state.height, chain.height);
 
     txs = yield wallet.getHistory();
     assert.equal(txs.length, 44);
