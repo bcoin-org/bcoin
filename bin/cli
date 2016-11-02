@@ -66,21 +66,44 @@ CLI.prototype.createWallet = co(function* createWallet() {
   this.log(wallet);
 });
 
-CLI.prototype.addKey = co(function* addKey() {
+CLI.prototype.getMaster = co(function* getMaster() {
+  var master = yield this.wallet.getMaster();
+  this.log(master);
+});
+
+CLI.prototype.getKey = co(function* getKey() {
+  var address = this.argv[0];
+  var key = yield this.wallet.getKey(address);
+  this.log(key);
+});
+
+CLI.prototype.getWIF = co(function* getWIF() {
+  var address = this.argv[0];
+  var key = yield this.wallet.getWIF(address, this.config.passphrase);
+  this.log(key.privateKey);
+});
+
+CLI.prototype.addSharedKey = co(function* addSharedKey() {
   var key = this.argv[0];
-  yield this.wallet.addKey(this.config.account, key);
+  yield this.wallet.addSharedKey(this.config.account, key);
   this.log('Added key.');
 });
 
-CLI.prototype.removeKey = co(function* removeKey() {
+CLI.prototype.removeSharedKey = co(function* removeSharedKey() {
   var key = this.argv[0];
-  yield this.wallet.removeKey(this.config.account, key);
+  yield this.wallet.removeSharedKey(this.config.account, key);
   this.log('Removed key.');
 });
 
+CLI.prototype.getSharedKeys = co(function* getSharedKeys() {
+  var acct = this.argv[0] || this.config.account;
+  var account = yield this.wallet.getAccount(acct);
+  this.log(account.keys);
+});
+
 CLI.prototype.getAccount = co(function* getAccount() {
-  var account = this.argv[0] || this.config.account;
-  yield this.wallet.getAccount(account);
+  var acct = this.argv[0] || this.config.account;
+  var account = yield this.wallet.getAccount(acct);
   this.log(account);
 });
 
@@ -409,10 +432,20 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.listenWallet();
     case 'get':
       return yield this.getWallet();
-    case 'addkey':
-      return yield this.addKey();
-    case 'rmkey':
-      return yield this.removeKey();
+    case 'master':
+      return yield this.getMaster();
+    case 'shared':
+      if (this.argv[0] === 'add') {
+        this.argv.shift();
+        return yield this.addSharedKey();
+      }
+      if (this.argv[0] === 'remove') {
+        this.argv.shift();
+        return yield this.removeSharedKey();
+      }
+      if (this.argv[0] === 'list')
+        this.argv.shift();
+      return yield this.getSharedKeys();
     case 'balance':
       return yield this.getBalance();
     case 'history':
@@ -453,6 +486,10 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.importKey();
     case 'watch':
       return yield this.importAddress();
+    case 'key':
+      return yield this.getKey();
+    case 'dump':
+      return yield this.getWIF();
     case 'lock':
       return yield this.lock();
     case 'unlock':
@@ -464,8 +501,9 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('Commands:');
       this.log('  $ listen: Listen for events.');
       this.log('  $ get: View wallet.');
-      this.log('  $ addkey [xpubkey]: Add key to wallet.');
-      this.log('  $ rmkey [xpubkey]: Remove key from wallet.');
+      this.log('  $ master: View wallet master key.');
+      this.log('  $ shared add [xpubkey]: Add key to wallet.');
+      this.log('  $ shared remove [xpubkey]: Remove key from wallet.');
       this.log('  $ balance: Get wallet balance.');
       this.log('  $ history: View wallet TX history.');
       this.log('  $ coins: View wallet coins.');
@@ -483,6 +521,8 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ view [tx-hex]: Parse and view transaction.');
       this.log('  $ import [wif|hex]: Import private or public key.');
       this.log('  $ watch [address]: Import an address.');
+      this.log('  $ key [address]: Get wallet key by address.');
+      this.log('  $ dump [address]: Get wallet key WIF by address.');
       this.log('  $ lock: Lock wallet.');
       this.log('  $ unlock [passphrase] [timeout?]: Unlock wallet.');
       this.log('  $ resend: Resend pending transactions.');

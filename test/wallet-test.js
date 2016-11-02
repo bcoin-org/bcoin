@@ -170,7 +170,7 @@ describe('Wallet', function() {
 
     k = bcoin.hd.fromMnemonic().deriveAccount44(0).hdPublicKey;
 
-    yield w.addKey(k);
+    yield w.addSharedKey(k);
 
     keys = [
       w.getPublicKey(),
@@ -681,12 +681,12 @@ describe('Wallet', function() {
     w3 = yield walletdb.create(options);
     receive = yield walletdb.create();
 
-    yield w1.addKey(w2.accountKey);
-    yield w1.addKey(w3.accountKey);
-    yield w2.addKey(w1.accountKey);
-    yield w2.addKey(w3.accountKey);
-    yield w3.addKey(w1.accountKey);
-    yield w3.addKey(w2.accountKey);
+    yield w1.addSharedKey(w2.accountKey);
+    yield w1.addSharedKey(w3.accountKey);
+    yield w2.addSharedKey(w1.accountKey);
+    yield w2.addSharedKey(w3.accountKey);
+    yield w3.addSharedKey(w1.accountKey);
+    yield w3.addSharedKey(w2.accountKey);
 
     // Our p2sh address
     b58 = w1[rec].getAddress('base58');

@@ -146,7 +146,7 @@ describe('HTTP', function() {
   }));
 
   it('should get a tx', cob(function* () {
-    var tx = yield wallet.getTX('default', hash);
+    var tx = yield wallet.getTX(hash);
     assert(tx);
     assert.equal(tx.hash, hash);
   }));
