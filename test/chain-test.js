@@ -236,7 +236,7 @@ describe('Chain', function() {
   it('should rescan for transactions', cob(function* () {
     var total = 0;
 
-    yield chain.db.scan(null, walletdb.filter, function(block, txs) {
+    yield chain.db.scan(0, walletdb.filter, function(block, txs) {
       total += txs.length;
       return Promise.resolve();
     });
