@@ -14,7 +14,7 @@ describe('Chain', function() {
   var chain, wallet, node, miner, walletdb;
   var tip1, tip2, cb1, cb2;
 
-  this.timeout(5000);
+  this.timeout(15000);
 
   node = new bcoin.fullnode({ db: 'memory' });
   chain = node.chain;
@@ -203,6 +203,7 @@ describe('Chain', function() {
 
     block = yield mineBlock();
     yield chain.add(block);
+
     block = yield mineBlock(null, block.txs[0]);
     yield chain.add(block);
 
@@ -242,6 +243,172 @@ describe('Chain', function() {
     });
 
     assert.equal(total, 25);
+  }));
+
+  it('should activate csv', cob(function* () {
+    var i, block, prev, state;
+
+    prev = yield chain.tip.getPrevious();
+    state = yield chain.getState(prev, 'csv');
+    assert(state === 0);
+
+    for (i = 0; i < 418; i++) {
+      block = yield miner.mineBlock();
+      yield chain.add(block);
+      switch (chain.height) {
+        case 144:
+          prev = yield chain.tip.getPrevious();
+          state = yield chain.getState(prev, 'csv');
+          assert(state === 1);
+          break;
+        case 288:
+          prev = yield chain.tip.getPrevious();
+          state = yield chain.getState(prev, 'csv');
+          assert(state === 2);
+          break;
+        case 432:
+          prev = yield chain.tip.getPrevious();
+          state = yield chain.getState(prev, 'csv');
+          assert(state === 3);
+          break;
+      }
+    }
+
+    assert(chain.height === 432);
+    assert(chain.state.hasCSV());
+  }));
+
+  var mineCSV = co(function* mineCSV(tx) {
+    var attempt = yield miner.createBlock();
+    var redeemer;
+
+    redeemer = bcoin.mtx();
+
+    redeemer.addOutput({
+      script: [
+        bcoin.script.array(new BN(1)),
+        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+      ],
+      value: 10 * 1e8
+    });
+
+    redeemer.addInput(tx, 0);
+
+    redeemer.setLocktime(chain.height);
+
+    yield wallet.sign(redeemer);
+
+    attempt.addTX(redeemer.toTX());
+
+    return yield attempt.mineAsync();
+  });
+
+  it('should test csv', cob(function* () {
+    var tx = (yield chain.db.getBlock(chain.height)).txs[0];
+    var block = yield mineCSV(tx);
+    var csv, attempt, redeemer;
+
+    yield chain.add(block);
+
+    csv = block.txs[1];
+
+    redeemer = bcoin.mtx();
+
+    redeemer.addOutput({
+      script: [
+        bcoin.script.array(new BN(2)),
+        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+      ],
+      value: 10 * 1e8
+    });
+
+    redeemer.addInput(csv, 0);
+    redeemer.setSequence(0, 1, false);
+
+    attempt = yield miner.createBlock();
+
+    attempt.addTX(redeemer.toTX());
+
+    block = yield attempt.mineAsync();
+
+    yield chain.add(block);
+  }));
+
+  it('should fail csv with bad sequence', cob(function* () {
+    var csv = (yield chain.db.getBlock(chain.height)).txs[1];
+    var block, attempt, redeemer, err;
+
+    redeemer = bcoin.mtx();
+
+    redeemer.addOutput({
+      script: [
+        bcoin.script.array(new BN(1)),
+        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+      ],
+      value: 10 * 1e8
+    });
+
+    redeemer.addInput(csv, 0);
+    redeemer.setSequence(0, 1, false);
+
+    attempt = yield miner.createBlock();
+
+    attempt.addTX(redeemer.toTX());
+
+    block = yield attempt.mineAsync();
+
+    try {
+      yield chain.add(block);
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert(err.reason, 'mandatory-script-verify-flag-failed');
+  }));
+
+  it('should mine a block', cob(function* () {
+    var block = yield miner.mineBlock();
+    assert(block);
+    yield chain.add(block);
+  }));
+
+  it('should fail csv lock checks', cob(function* () {
+    var tx = (yield chain.db.getBlock(chain.height)).txs[0];
+    var block = yield mineCSV(tx);
+    var csv, attempt, redeemer, err;
+
+    yield chain.add(block);
+
+    csv = block.txs[1];
+
+    redeemer = bcoin.mtx();
+
+    redeemer.addOutput({
+      script: [
+        bcoin.script.array(new BN(2)),
+        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+      ],
+      value: 10 * 1e8
+    });
+
+    redeemer.addInput(csv, 0);
+    redeemer.setSequence(0, 2, false);
+
+    attempt = yield miner.createBlock();
+
+    attempt.addTX(redeemer.toTX());
+
+    block = yield attempt.mineAsync();
+
+    try {
+      yield chain.add(block);
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert.equal(err.reason, 'bad-txns-nonfinal');
   }));
 
   it('should cleanup', cob(function* () {
