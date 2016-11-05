@@ -320,10 +320,15 @@ CLI.prototype.getDetails = co(function* getDetails() {
   this.log(details);
 });
 
+CLI.prototype.getWalletBlocks = co(function* getWalletBlocks() {
+  var blocks = yield this.wallet.getBlocks();
+  this.log(blocks);
+});
+
 CLI.prototype.getWalletBlock = co(function* getWalletBlock() {
   var height = this.argv[0] | 0;
-  var details = yield this.wallet.getBlock(height);
-  this.log(details);
+  var block = yield this.wallet.getBlock(height);
+  this.log(block);
 });
 
 CLI.prototype.retoken = co(function* retoken() {
@@ -486,6 +491,8 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.zapWallet();
     case 'tx':
       return yield this.getDetails();
+    case 'blocks':
+      return yield this.getWalletBlocks();
     case 'block':
       return yield this.getWalletBlock();
     case 'view':
@@ -526,6 +533,7 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ sign [tx-hex]: Sign transaction.');
       this.log('  $ zap [age?]: Zap pending wallet TXs.');
       this.log('  $ tx [hash]: View transaction details.');
+      this.log('  $ blocks: List wallet blocks.');
       this.log('  $ block [height]: View wallet block.');
       this.log('  $ view [tx-hex]: Parse and view transaction.');
       this.log('  $ import [wif|hex]: Import private or public key.');
