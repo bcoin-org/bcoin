@@ -112,6 +112,50 @@ var indexPaths = co(function* indexPaths() {
   }
 });
 
+var patchPathMaps = co(function* patchPathMaps() {
+  var i, items, item, hash, wids;
+
+  items = yield db.range({
+    gte: new Buffer('70' + constants.NULL_HASH, 'hex'), // p
+    lte: new Buffer('70' + constants.HIGH_HASH, 'hex')  // p
+  });
+
+  for (i = 0; i < items.length; i++) {
+    item = items[i];
+    hash = item.key.toString('hex', 1);
+    wids = parseWallets(item.value);
+    console.log('p[%s] -> varint(%d)', hash, wids.length);
+    batch.put(item.key, serializeWallets(wids));
+  }
+});
+
+function parseWallets(data) {
+  var p = new BufferReader(data);
+  var wids = [];
+
+  while (p.left())
+    wids.push(p.readU32());
+
+  return wids;
+}
+
+function serializeWallets(wids, writer) {
+  var p = new BufferWriter(writer);
+  var i, wid;
+
+  p.writeVarint(wids.length);
+
+  for (i = 0; i < wids.length; i++) {
+    wid = wids[i];
+    p.writeU32(wid);
+  }
+
+  if (!writer)
+    p = p.render();
+
+  return p;
+}
+
 function accountToRaw(account) {
   var p = new BufferWriter();
   var i, key;
@@ -192,6 +236,7 @@ co.spawn(function* () {
   yield wipeTXDB();
   yield patchAccounts();
   yield indexPaths();
+  yield patchPathMaps();
   yield batch.write();
   yield db.close();
 }).then(function() {
