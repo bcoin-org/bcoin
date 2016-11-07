@@ -143,7 +143,7 @@ function serializeWallets(wids, writer) {
   var p = new BufferWriter(writer);
   var i, wid;
 
-  p.writeVarint(wids.length);
+  p.writeU32(wids.length);
 
   for (i = 0; i < wids.length; i++) {
     wid = wids[i];
