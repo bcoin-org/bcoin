@@ -21,9 +21,7 @@ describe('Chain', function() {
       init: function(node) {
         var self = this;
 
-        this.node = node;
-        this.chain = node.chain;
-        this.logger = node.logger;
+        this.chain = node.require('chain');
 
         this.chain.on('block', function(block) {
           self.logger.info(block);
