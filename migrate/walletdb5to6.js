@@ -194,10 +194,10 @@ function accountFromRaw(data) {
   account.m = p.readU8();
   account.n = p.readU8();
   account.accountIndex = p.readU32();
-  account.receiveDepth = p.readU32() + 5;
-  account.changeDepth = p.readU32() + 10;
-  account.nestedDepth = p.readU32() + (account.witness ? 5 : 0);
-  account.lookahead = 5;
+  account.receiveDepth = p.readU32();
+  account.changeDepth = p.readU32();
+  account.nestedDepth = p.readU32();
+  account.lookahead = 10;
   account.accountKey = p.readBytes(82);
   account.keys = [];
 
