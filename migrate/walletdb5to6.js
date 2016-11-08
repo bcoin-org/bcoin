@@ -228,6 +228,42 @@ function r(wid, index, hash) {
   return key;
 }
 
+var updateLookahead = co(function* updateLookahead() {
+  var WalletDB = require('../lib/wallet/walletdb');
+  var i, j, db, wallet;
+
+  db = new WalletDB({
+    network: process.argv[3],
+    db: 'leveldb',
+    location: file,
+    witness: false,
+    useCheckpoints: false,
+    maxFiles: 64,
+    resolution: false,
+    verify: false
+  });
+
+  yield db.open();
+
+  for (i = 1; i < db.depth; i++) {
+    wallet = yield db.get(i);
+    assert(wallet);
+    console.log('Updating wallet lookahead: %s', wallet.id);
+    for (j = 0; j < wallet.accountDepth; j++)
+      yield wallet.setLookahead(j, 20);
+  }
+
+  yield db.close();
+});
+
+var unstate = co(function* unstate() {
+  yield db.open();
+  batch = db.batch();
+  yield wipeTXDB();
+  yield batch.write();
+  yield db.close();
+});
+
 co.spawn(function* () {
   yield db.open();
   batch = db.batch();
@@ -239,6 +275,8 @@ co.spawn(function* () {
   yield patchPathMaps();
   yield batch.write();
   yield db.close();
+  yield updateLookahead();
+  yield unstate();
 }).then(function() {
   console.log('Migration complete.');
   console.log('Rescan is required...');
