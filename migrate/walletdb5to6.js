@@ -124,7 +124,7 @@ var patchPathMaps = co(function* patchPathMaps() {
     item = items[i];
     hash = item.key.toString('hex', 1);
     wids = parseWallets(item.value);
-    console.log('p[%s] -> varint(%d)', hash, wids.length);
+    console.log('p[%s] -> u32(%d)', hash, wids.length);
     batch.put(item.key, serializeWallets(wids));
   }
 });
