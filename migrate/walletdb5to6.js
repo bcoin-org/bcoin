@@ -275,12 +275,11 @@ co.spawn(function* () {
   yield patchPathMaps();
   yield batch.write();
   yield db.close();
-  yield updateLookahead();
-  yield unstate();
+  // yield updateLookahead();
+  // yield unstate();
 }).then(function() {
   console.log('Migration complete.');
   console.log('Rescan is required...');
-  console.log('Start bcoin with `--start-height=[wallet-creation-height]`');
-  console.log('for a fast sync.');
+  console.log('Start bcoin with `--start-height=[wallet-creation-height]`.');
   process.exit(0);
 });
