@@ -233,6 +233,20 @@ describe('Chain', function() {
     assert.equal(txs.length, 44);
   }));
 
+  it('should get tips and remove chains', cob(function* () {
+    var tips = yield chain.db.getTips();
+
+    assert.notEqual(tips.indexOf(chain.tip.hash), -1);
+    assert.equal(tips.length, 2);
+
+    yield chain.db.removeChains();
+
+    tips = yield chain.db.getTips();
+
+    assert.notEqual(tips.indexOf(chain.tip.hash), -1);
+    assert.equal(tips.length, 1);
+  }));
+
   it('should rescan for transactions', cob(function* () {
     var total = 0;
 
