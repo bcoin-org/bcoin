@@ -119,6 +119,12 @@ CLI.prototype.createAddress = co(function* createAddress() {
   this.log(addr);
 });
 
+CLI.prototype.createChange = co(function* createChange() {
+  var account = this.argv[0];
+  var addr = yield this.wallet.createChange(account);
+  this.log(addr);
+});
+
 CLI.prototype.createNested = co(function* createNested() {
   var account = this.argv[0];
   var addr = yield this.wallet.createNested(account);
@@ -208,34 +214,43 @@ CLI.prototype.getWalletCoins = co(function* getWalletCoins() {
   this.log(coins);
 });
 
-CLI.prototype.listenWallet = function listenWallet() {
+CLI.prototype.listenWallet = co(function* listenWallet() {
   var self = this;
+
+  yield this.wallet.open();
+
   this.wallet.on('tx', function(details) {
     self.log('TX:');
     self.log(details);
   });
+
   this.wallet.on('confirmed', function(details) {
     self.log('TX confirmed:');
     self.log(details);
   });
+
   this.wallet.on('unconfirmed', function(details) {
     self.log('TX unconfirmed:');
     self.log(details);
   });
+
   this.wallet.on('conflict', function(details) {
     self.log('TX conflict:');
     self.log(details);
   });
+
   this.wallet.on('address', function(receive) {
     self.log('New addresses allocated:');
     self.log(receive);
   });
+
   this.wallet.on('balance', function(balance) {
     self.log('Balance:');
     self.log(balance);
   });
-  return new Promise(function() {});
-};
+
+  return yield this.wallet.onDisconnect();
+});
 
 CLI.prototype.getBalance = co(function* getBalance() {
   var balance = yield this.wallet.getBalance(this.config.account);
@@ -430,18 +445,13 @@ CLI.prototype.rpc = co(function* rpc() {
 });
 
 CLI.prototype.handleWallet = co(function* handleWallet() {
-  var options = {
-    id: this.config.id || 'primary',
-    token: this.config.token
-  };
-
   this.wallet = new Wallet({
     uri: this.config.url || this.config.uri,
     apiKey: this.config.apikey,
-    network: this.config.network
+    network: this.config.network,
+    id: this.config.id || 'primary',
+    token: this.config.token
   });
-
-  yield this.wallet.open(options);
 
   switch (this.argv.shift()) {
     case 'listen':
@@ -484,6 +494,8 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       return yield this.getAccount();
     case 'address':
       return yield this.createAddress();
+    case 'change':
+      return yield this.createChange();
     case 'nested':
       return yield this.createNested();
     case 'retoken':
@@ -534,6 +546,7 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
       this.log('  $ account create [account-name]: Create account.');
       this.log('  $ account get [account-name]: Get account details.');
       this.log('  $ address: Derive new address.');
+      this.log('  $ change: Derive new change address.');
       this.log('  $ nested: Derive new nested address.');
       this.log('  $ retoken: Create new api key.');
       this.log('  $ send [address] [value]: Send transaction.');
@@ -559,15 +572,11 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
 });
 
 CLI.prototype.handleNode = co(function* handleNode() {
-  var info;
-
   this.client = new Client({
     uri: this.config.url || this.config.uri,
     apiKey: this.config.apikey,
     network: this.config.network
   });
-
-  info = yield this.client.getInfo();
 
   switch (this.argv.shift()) {
     case 'info':
@@ -626,9 +635,9 @@ CLI.prototype.open = co(function* open() {
 });
 
 CLI.prototype.destroy = function destroy() {
-  if (this.wallet && !this.wallet.client.loading)
+  if (this.wallet)
     this.wallet.client.destroy();
-  if (this.client && !this.client.loading)
+  if (this.client)
     this.client.destroy();
   return Promise.resolve();
 };
