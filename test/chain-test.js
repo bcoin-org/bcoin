@@ -85,6 +85,7 @@ describe('Chain', function() {
   it('should mine a block', cob(function* () {
     var block = yield miner.mineBlock();
     assert(block);
+    yield chain.add(block);
   }));
 
   it('should mine competing chains', cob(function* () {
@@ -121,15 +122,15 @@ describe('Chain', function() {
     yield co.timeout(100);
 
     balance = yield wallet.getBalance();
-    assert.equal(balance.unconfirmed, 500 * 1e8);
-    assert.equal(balance.confirmed, 500 * 1e8);
+    assert.equal(balance.unconfirmed, 550 * 1e8);
+    assert.equal(balance.confirmed, 550 * 1e8);
   }));
 
   it('should handle a reorg', cob(function* () {
     var entry, block, forked;
 
     assert.equal(walletdb.state.height, chain.height);
-    assert.equal(chain.height, 10);
+    assert.equal(chain.height, 11);
 
     entry = yield chain.db.get(tip2.hash);
     assert(entry);
@@ -158,8 +159,8 @@ describe('Chain', function() {
     yield co.timeout(100);
 
     balance = yield wallet.getBalance();
-    assert.equal(balance.unconfirmed, 1050 * 1e8);
-    assert.equal(balance.confirmed, 550 * 1e8);
+    assert.equal(balance.unconfirmed, 1100 * 1e8);
+    assert.equal(balance.confirmed, 600 * 1e8);
   }));
 
   it('should check main chain', cob(function* () {
@@ -221,8 +222,8 @@ describe('Chain', function() {
     yield co.timeout(100);
 
     balance = yield wallet.getBalance();
-    assert.equal(balance.unconfirmed, 1200 * 1e8);
-    assert.equal(balance.confirmed, 700 * 1e8);
+    assert.equal(balance.unconfirmed, 1250 * 1e8);
+    assert.equal(balance.confirmed, 750 * 1e8);
 
     assert(wallet.account.receiveDepth >= 8);
     assert(wallet.account.changeDepth >= 7);
@@ -230,7 +231,7 @@ describe('Chain', function() {
     assert.equal(walletdb.state.height, chain.height);
 
     txs = yield wallet.getHistory();
-    assert.equal(txs.length, 44);
+    assert.equal(txs.length, 45);
   }));
 
   it('should get tips and remove chains', cob(function* () {
@@ -255,7 +256,7 @@ describe('Chain', function() {
       return Promise.resolve();
     });
 
-    assert.equal(total, 25);
+    assert.equal(total, 26);
   }));
 
   it('should activate csv', cob(function* () {
@@ -265,7 +266,7 @@ describe('Chain', function() {
     state = yield chain.getState(prev, 'csv');
     assert(state === 0);
 
-    for (i = 0; i < 418; i++) {
+    for (i = 0; i < 417; i++) {
       block = yield miner.mineBlock();
       yield chain.add(block);
       switch (chain.height) {
