@@ -108,8 +108,26 @@ CLI.prototype.getAccount = co(function* getAccount() {
 });
 
 CLI.prototype.createAccount = co(function* createAccount() {
-  var name = this.argv[0];
-  var account = yield this.wallet.createAccount(name);
+  var options = { name: this.argv[0] };
+  var account;
+
+  if (this.config.type)
+    options.type = this.config.type;
+
+  if (this.config.m)
+    options.m = this.config.m >>> 0;
+
+  if (this.config.n)
+    options.n = this.config.n >>> 0;
+
+  if (this.config.witness != null)
+    options.witness = !!this.config.witness;
+
+  if (this.config.watch)
+    options.accountKey = this.config.watch;
+
+  account = yield this.wallet.createAccount(options);
+
   this.log(account);
 });
 
