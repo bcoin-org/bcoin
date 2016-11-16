@@ -357,14 +357,25 @@ CLI.prototype.retoken = co(function* retoken() {
 });
 
 CLI.prototype.rescan = co(function* rescan() {
+  var height = this.argv[0];
+
+  if (!utils.isUInt32(height))
+    height = null;
+
+  yield this.client.rescan(height);
+
+  this.log('Rescanning...');
+});
+
+CLI.prototype.reset = co(function* reset() {
   var hash = this.argv[0];
 
   if (hash.length !== 64)
     hash = +hash;
 
-  yield this.client.rescan(hash);
+  yield this.client.reset(hash);
 
-  this.log('Rescanning...');
+  this.log('Chain has been reset.');
 });
 
 CLI.prototype.resend = co(function* resend() {
@@ -595,6 +606,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       return yield this.getBlock();
     case 'rescan':
       return yield this.rescan();
+    case 'reset':
+      return yield this.reset();
     case 'resend':
       return yield this.resend();
     case 'backup':
@@ -611,7 +624,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('  $ tx [hash/address]: View transactions.');
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
-      this.log('  $ rescan [height/hash]: Rescan for transactions.');
+      this.log('  $ rescan [height]: Rescan for transactions.');
+      this.log('  $ reset [height/hash]: Reset chain to desired block.');
       this.log('  $ resend: Resend pending transactions.');
       this.log('  $ backup [path]: Backup the wallet db.');
       this.log('  $ rpc [command] [args]: Execute RPC command.');
