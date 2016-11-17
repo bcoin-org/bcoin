@@ -15,7 +15,7 @@
     "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js",
     "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js",
     "clean": "rm browser/bcoin.js browser/bcoin.min.js",
-    "hint": "jshint lib/ || exit 0"
+    "lint": "jshint lib/ || exit 0"
   },
   "repository": "git://github.com/bcoin-org/bcoin.git",
   "keywords": [
