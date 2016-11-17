@@ -38,7 +38,8 @@
   },
   "dependencies": {
     "bn.js": "4.11.6",
-    "elliptic": "6.3.2"
+    "elliptic": "6.3.2",
+    "level-js": "2.2.4"
   },
   "optionalDependencies": {
     "bcoin-native": "0.0.9",
@@ -56,7 +57,6 @@
     "browserify": "13.1.0",
     "hash.js": "1.0.3",
     "jsdoc": "3.4.0",
-    "level-js": "2.2.4",
     "mocha": "3.0.2",
     "uglify-js": "2.7.3"
   },
