@@ -79,7 +79,8 @@ describe('Chain', function() {
 
   it('should open walletdb', cob(function* () {
     wallet = yield walletdb.create();
-    miner.address = wallet.getAddress();
+    miner.addresses.length = 0;
+    miner.addAddress(wallet.getAddress());
   }));
 
   it('should mine a block', cob(function* () {
