@@ -161,17 +161,17 @@ function setMouseup(el, obj) {
 
 function formatWallet(wallet) {
   var html = '';
-  var key = wallet.master.toJSON().key;
+  var key = wallet.master.toJSON(true).key;
   var i, tx, el;
 
   html += '<b>Wallet</b><br>';
 
-  if (bcoin.network.primary.witness) {
+  if (wallet.account.witness) {
     html += 'Current Address (p2wpkh): <b>'
       + wallet.getAddress()
       + '</b><br>';
     html += 'Current Address (p2wpkh behind p2sh): <b>'
-      + wallet.getProgramAddress()
+      + wallet.getNestedAddress()
       + '</b><br>';
   } else {
     html += 'Current Address: <b>' + wallet.getAddress() + '</b><br>';
@@ -188,8 +188,6 @@ function formatWallet(wallet) {
     html += 'Unconfirmed Balance: <b>'
       + utils.btc(balance.unconfirmed)
       + '</b><br>';
-
-    html += 'Balance: <b>' + utils.btc(balance.total) + '</b><br>';
 
     return wallet.getHistory();
   }).then(function(txs) {

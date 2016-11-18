@@ -107,21 +107,30 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
 
   if (!/^[a-zA-Z0-9\.:\-]+$/.test(host)) {
     this.log('Client gave a bad host (%s).', state.host);
-    ws.emit('tcp close');
+    ws.emit('tcp error', {
+      message: 'EHOSTUNREACH',
+      code: 'EHOSTUNREACH'
+    });
     ws.disconnect();
     return;
   }
 
   if (IP.isPrivate(host)) {
     this.log('Client is trying to connect to a private ip (%s).', state.host);
-    ws.emit('tcp close');
+    ws.emit('tcp error', {
+      message: 'ENETUNREACH',
+      code: 'ENETUNREACH'
+    });
     ws.disconnect();
     return;
   }
 
   if (this.ports.indexOf(port) === -1) {
     this.log('Client is connecting to non-whitelist port (%s).', state.host);
-    ws.emit('tcp close');
+    ws.emit('tcp error', {
+      message: 'ENETUNREACH',
+      code: 'ENETUNREACH'
+    });
     ws.disconnect();
     return;
   }
@@ -132,7 +141,10 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
   } catch (e) {
     this.log(e.message);
     this.log('Closing %s (%s).', state.remoteHost, state.host);
-    ws.emit('tcp close');
+    ws.emit('tcp error', {
+      message: 'ENETUNREACH',
+      code: 'ENETUNREACH'
+    });
     ws.disconnect();
     return;
   }
