@@ -67,6 +67,8 @@
     "./lib/http/rpcclient": "./browser/empty.js",
     "./lib/http/server": "./browser/empty.js",
     "./lib/http/wallet": "./browser/empty.js",
+    "./lib/db/flat": "./browser/empty.js",
+    "./lib/chain/blockdb": "./lib/chain/blockdb-browser.js",
     "fs": "./browser/empty.js",
     "crypto": "./browser/empty.js",
     "child_process": "./browser/empty.js",
