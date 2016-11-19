@@ -67,6 +67,8 @@
     "./lib/http/rpcclient": "./browser/empty.js",
     "./lib/http/server": "./browser/empty.js",
     "./lib/http/wallet": "./browser/empty.js",
+    "./lib/chain/layout": "./lib/chain/layout-browser.js",
+    "./lib/wallet/layout": "./lib/wallet/layout-browser.js",
     "fs": "./browser/empty.js",
     "crypto": "./browser/empty.js",
     "child_process": "./browser/empty.js",
