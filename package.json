@@ -71,6 +71,7 @@
     "./lib/utils/native": "./browser/empty.js",
     "./lib/utils/nfkd": "./lib/utils/nfkd-browser.js",
     "./lib/utils/nexttick": "./lib/utils/nexttick-browser.js",
+    "./lib/utils/lazy": "./lib/utils/lazy-browser.js",
     "./lib/crypto/backend": "./lib/crypto/backend-browser.js",
     "./lib/crypto/ec": "./lib/crypto/ec-elliptic.js",
     "./lib/crypto/pk": "./lib/crypto/pk-browser.js",
