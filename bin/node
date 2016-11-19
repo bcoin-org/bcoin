@@ -5,7 +5,6 @@
 process.title = 'bcoin';
 
 var bcoin = require('../');
-var utils = bcoin.utils;
 var assert = require('assert');
 
 var options = bcoin.config({

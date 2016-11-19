@@ -5,7 +5,7 @@
 process.title = 'bcoin';
 
 var bcoin = require('../');
-var utils = bcoin.utils;
+var util = bcoin.util;
 var assert = require('assert');
 
 var options = bcoin.config({
@@ -38,7 +38,7 @@ node.open().then(function() {
     node.on('block', function(block) {
       assert(block.txs.length >= 1);
       if (block.txs.length > 1)
-        utils.log(block.txs[1]);
+        util.log(block.txs[1]);
     });
   }
 

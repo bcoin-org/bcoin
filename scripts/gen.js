@@ -1,10 +1,10 @@
 'use strict';
 
+var BN = require('bn.js');
 var bcoin = require('bcoin');
 var constants = bcoin.constants;
 var opcodes = constants.opcodes;
-var utils = bcoin.utils;
-var BN = require('bn.js');
+var util = bcoin.util;
 
 function createGenesisBlock(options) {
   var flags = options.flags;
@@ -109,31 +109,31 @@ var btcd = createGenesisBlock({
   nonce: 2
 });
 
-utils.log(main);
-utils.log('');
-utils.log(testnet);
-utils.log('');
-utils.log(regtest);
-utils.log('');
-utils.log(segnet3);
-utils.log('');
-utils.log(segnet4);
-utils.log('');
-utils.log('');
-utils.log('main hash: %s', main.rhash);
-utils.log('main raw: %s', main.toRaw().toString('hex'));
-utils.log('');
-utils.log('testnet hash: %s', testnet.rhash);
-utils.log('testnet raw: %s', testnet.toRaw().toString('hex'));
-utils.log('');
-utils.log('regtest hash: %s', regtest.rhash);
-utils.log('regtest raw: %s', regtest.toRaw().toString('hex'));
-utils.log('');
-utils.log('segnet3 hash: %s', segnet3.rhash);
-utils.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
-utils.log('');
-utils.log('segnet4 hash: %s', segnet4.rhash);
-utils.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
-utils.log('');
-utils.log('btcd simnet hash: %s', btcd.rhash);
-utils.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));
+util.log(main);
+util.log('');
+util.log(testnet);
+util.log('');
+util.log(regtest);
+util.log('');
+util.log(segnet3);
+util.log('');
+util.log(segnet4);
+util.log('');
+util.log('');
+util.log('main hash: %s', main.rhash);
+util.log('main raw: %s', main.toRaw().toString('hex'));
+util.log('');
+util.log('testnet hash: %s', testnet.rhash);
+util.log('testnet raw: %s', testnet.toRaw().toString('hex'));
+util.log('');
+util.log('regtest hash: %s', regtest.rhash);
+util.log('regtest raw: %s', regtest.toRaw().toString('hex'));
+util.log('');
+util.log('segnet3 hash: %s', segnet3.rhash);
+util.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
+util.log('');
+util.log('segnet4 hash: %s', segnet4.rhash);
+util.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
+util.log('');
+util.log('btcd simnet hash: %s', btcd.rhash);
+util.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));
