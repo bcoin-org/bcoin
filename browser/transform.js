@@ -24,17 +24,6 @@ function processEnv(str) {
     '$1this.$2 = require(\'$3\')');
 }
 
-function processLazy(str) {
-  str.replace(
-    /^( *)lazy\('(\w+)', '([^']+)'\)/gm,
-    function(_, sp, w1, w2) {
-      str += sp + 'if (0) require(\'' + w2 + '\');\n';
-      return '';
-    }
-  );
-  return str;
-}
-
 function transformer(file, process) {
   var stream = new Transform();
   var decoder = new StringDecoder('utf8');
@@ -62,12 +51,6 @@ function end(file, offset) {
 }
 
 module.exports = function(file) {
-  if (end(file, 3) === 'lib/utils/utils.js')
-    return transformer(file, processLazy);
-
-  if (end(file, 3) === 'lib/crypto/crypto.js')
-    return transformer(file, processLazy);
-
   if (end(file, 2) === 'lib/env.js')
     return transformer(file, processEnv);
 

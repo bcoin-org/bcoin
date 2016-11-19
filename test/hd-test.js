@@ -3,6 +3,7 @@
 var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
+var base58 = require('../lib/utils/base58');
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 
@@ -159,7 +160,7 @@ describe('HD', function() {
   });
 
   function ub58(data) {
-    return utils.fromBase58(data).toString('hex');
+    return base58.decode(data).toString('hex');
   }
 
   function equal(a, b) {

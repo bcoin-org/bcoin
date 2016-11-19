@@ -3,6 +3,7 @@
 var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var utils = bcoin.utils;
+var btcutils = require('../lib/utils/btcutils');
 var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var network = bcoin.networks;
@@ -106,7 +107,7 @@ describe('Block', function() {
     var reward;
 
     for (;;) {
-      reward = bcoin.block.reward(height);
+      reward = btcutils.getReward(height, 210000);
       assert(reward <= constants.COIN * 50);
       total += reward;
       if (reward === 0)

@@ -5,6 +5,7 @@ var bcoin = require('../').set('main');
 var constants = bcoin.constants;
 var network = bcoin.networks;
 var utils = bcoin.utils;
+var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
@@ -26,8 +27,8 @@ function nextBlock(height) {
   if (height == null)
     height = globalHeight++;
 
-  hash = crypto.hash256(utils.U32(height)).toString('hex');
-  prev = crypto.hash256(utils.U32(height - 1)).toString('hex');
+  hash = crypto.hash256(encoding.U32(height)).toString('hex');
+  prev = crypto.hash256(encoding.U32(height - 1)).toString('hex');
 
   return {
     hash: hash,
