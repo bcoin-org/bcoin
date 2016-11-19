@@ -4,7 +4,7 @@ var bcoin = require('../').set('main');
 var assert = require('assert');
 var constants = bcoin.constants;
 var network = bcoin.network.get();
-var utils = bcoin.utils;
+var util = bcoin.util;
 var crypto = require('../lib/crypto/crypto');
 var fs = require('fs');
 var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
@@ -42,7 +42,7 @@ describe('Protocol', function() {
     ts: bcoin.now(),
     remote: new NetworkAddress(),
     local: new NetworkAddress(),
-    nonce: utils.nonce(),
+    nonce: util.nonce(),
     agent: constants.USER_AGENT,
     height: 0,
     relay: false
@@ -61,7 +61,7 @@ describe('Protocol', function() {
     ts: bcoin.now(),
     remote: new NetworkAddress(),
     local: new NetworkAddress(),
-    nonce: utils.nonce(),
+    nonce: util.nonce(),
     agent: constants.USER_AGENT,
     height: 10,
     relay: true
@@ -82,13 +82,13 @@ describe('Protocol', function() {
       services: constants.LOCAL_SERVICES,
       host: '127.0.0.1',
       port: 8333,
-      ts: utils.now()
+      ts: util.now()
     }),
     new NetworkAddress({
       services: constants.LOCAL_SERVICES,
       host: '::123:456:789a',
       port: 18333,
-      ts: utils.now()
+      ts: util.now()
     })
   ];
 

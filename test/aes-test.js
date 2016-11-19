@@ -1,7 +1,7 @@
 'use strict';
 
 var BN = require('bn.js');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var aes = require('../lib/crypto/aes');

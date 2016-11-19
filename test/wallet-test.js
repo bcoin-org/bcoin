@@ -4,7 +4,7 @@ var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var constants = bcoin.constants;
 var network = bcoin.networks;
-var utils = bcoin.utils;
+var util = bcoin.util;
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
@@ -19,7 +19,7 @@ var KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
 var globalHeight = 1;
-var globalTime = utils.now();
+var globalTime = util.now();
 
 function nextBlock(height) {
   var hash, prev;
@@ -215,7 +215,7 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 1000);
     t1.addInput(dummy());
-    t1.ts = utils.now();
+    t1.ts = util.now();
 
     // balance: 51000
     yield w.sign(t1);
@@ -1184,7 +1184,7 @@ describe('Wallet', function() {
     assert(path.data && path.encrypted);
     d2 = path.data;
 
-    assert(!utils.equal(d1, d2));
+    assert(!util.equal(d1, d2));
 
     k = yield w.getKey(addr);
     assert(!k);

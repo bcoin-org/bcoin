@@ -2,14 +2,14 @@
 
 var assert = require('assert');
 var BN = require('bn.js');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var ec = require('../lib/crypto/ec');
-var btcutils = require('../lib/utils/btcutils');
+var btcutils = require('../lib/btc/btcutils');
 var base58 = require('../lib/utils/base58');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var schnorr = require('../lib/crypto/schnorr');
-var Amount = require('../lib/utils/amount');
+var Amount = require('../lib/btc/amount');
 
 describe('Utils', function() {
   var vectors = [

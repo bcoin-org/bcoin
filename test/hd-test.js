@@ -2,7 +2,7 @@
 
 var BN = require('bn.js');
 var bcoin = require('../').set('main');
-var utils = bcoin.utils;
+var util = bcoin.util;
 var base58 = require('../lib/utils/base58');
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');

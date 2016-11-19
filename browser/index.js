@@ -2,7 +2,7 @@
 
 'use strict';
 
-var utils = bcoin.utils;
+var util = bcoin.util;
 var body = document.getElementsByTagName('body')[0];
 var log = document.getElementById('log');
 var wdiv = document.getElementById('wallet');
@@ -27,18 +27,18 @@ floating.onmouseup = function(ev) {
 };
 
 function show(obj) {
-  floating.innerHTML = escape(utils.inspectify(obj, false));
+  floating.innerHTML = escape(util.inspectify(obj, false));
   floating.style.display = 'block';
 }
 
 logger = new bcoin.logger({ level: 'debug' });
 logger.writeConsole = function(level, args) {
-  var msg = utils.format(args, false);
+  var msg = util.format(args, false);
   if (++scrollback > 1000) {
     log.innerHTML = '';
     scrollback = 1;
   }
-  log.innerHTML += '<span style="color:blue;">' + utils.now() + '</span> ';
+  log.innerHTML += '<span style="color:blue;">' + util.now() + '</span> ';
   if (level === 'error')
     log.innerHTML += '<span style="color:red;">[' + level + ']</span> ';
   else

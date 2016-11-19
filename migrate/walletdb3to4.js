@@ -7,7 +7,7 @@ var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
 var TX = require('../lib/primitives/tx');
 var Coin = require('../lib/primitives/coin');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var co = bcoin.co;
 var layout = WalletDB.layout;
 var tlayout = TXDB.layout;
@@ -72,7 +72,7 @@ var updateTXDB = co(function* updateTXDB() {
       batch.del(key);
   }
 
-  txs = utils.values(txs);
+  txs = util.values(txs);
 
   yield batch.write();
   yield db.close();

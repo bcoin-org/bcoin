@@ -2,7 +2,7 @@
 
 var BN = require('bn.js');
 var bcoin = require('../').set('main');
-var utils = bcoin.utils;
+var util = bcoin.util;
 var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var network = bcoin.networks;

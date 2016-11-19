@@ -3,11 +3,11 @@
 'use strict';
 
 var config = require('../lib/node/config');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var co = require('../lib/utils/co');
 var Client = require('../lib/http/client');
 var Wallet = require('../lib/http/wallet');
-var Amount = require('../lib/utils/amount');
+var Amount = require('../lib/btc/amount');
 var main;
 
 function CLI() {
@@ -164,7 +164,7 @@ CLI.prototype.getTX = co(function* getTX() {
   var hash = this.argv[0];
   var txs, tx;
 
-  if (utils.isBase58(hash)) {
+  if (util.isBase58(hash)) {
     txs = yield this.client.getTXByAddress(hash);
     this.log(txs);
     return;
@@ -202,7 +202,7 @@ CLI.prototype.getCoin = co(function* getCoin() {
   var index = this.argv[1];
   var coins, coin;
 
-  if (utils.isBase58(hash)) {
+  if (util.isBase58(hash)) {
     coins = yield this.client.getCoinsByAddress(hash);
     this.log(coins);
     return;
@@ -378,7 +378,7 @@ CLI.prototype.retoken = co(function* retoken() {
 CLI.prototype.rescan = co(function* rescan() {
   var height = this.argv[0];
 
-  if (!utils.isUInt32(height))
+  if (!util.isUInt32(height))
     height = null;
 
   yield this.client.rescan(height);
@@ -421,13 +421,13 @@ CLI.prototype.importKey = co(function* importKey() {
   if (!key)
     throw new Error('No key for import.');
 
-  if (utils.isBase58(key)) {
+  if (util.isBase58(key)) {
     yield this.wallet.importPrivate(key);
     this.log('Imported private key.');
     return;
   }
 
-  if (utils.isHex(key)) {
+  if (util.isHex(key)) {
     yield this.wallet.importPublic(key);
     this.log('Imported public key.');
     return;

@@ -2,8 +2,8 @@
 
 var BN = require('bn.js');
 var bcoin = require('../').set('main');
-var utils = bcoin.utils;
-var btcutils = require('../lib/utils/btcutils');
+var util = bcoin.util;
+var btcutils = require('../lib/btc/btcutils');
 var crypto = require('../lib/crypto/crypto');
 var Bloom = require('../lib/utils/bloom');
 var constants = bcoin.constants;

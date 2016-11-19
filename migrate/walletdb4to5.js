@@ -3,7 +3,7 @@ var bcoin = require('../');
 var constants = require('../lib/protocol/constants');
 var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var co = bcoin.co;
 var file = process.argv[2];
 var db, batch;

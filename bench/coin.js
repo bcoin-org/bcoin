@@ -2,7 +2,7 @@
 
 var BN = require('bn.js');
 var constants = require('../lib/protocol/constants');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');

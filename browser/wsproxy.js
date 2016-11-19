@@ -2,7 +2,7 @@
 
 var net = require('net');
 var IOServer = require('socket.io');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var IP = require('../lib/utils/ip');
 var BufferWriter = require('../lib/utils/writer');
 var EventEmitter = require('events').EventEmitter;
@@ -30,7 +30,7 @@ function WSProxy(options) {
   this._init();
 }
 
-utils.inherits(WSProxy, EventEmitter);
+util.inherits(WSProxy, EventEmitter);
 
 WSProxy.prototype._init = function _init() {
   var self = this;
@@ -73,7 +73,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     return;
   }
 
-  if (!utils.isNumber(port)
+  if (!util.isNumber(port)
       || typeof host !== 'string'
       || host.length === 0) {
     this.log('Client gave bad arguments (%s).', state.host);
@@ -83,7 +83,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
   }
 
   if (this.pow) {
-    if (!utils.isNumber(nonce)) {
+    if (!util.isNumber(nonce)) {
       this.log('Client did not solve proof of work.', state.host);
       ws.emit('tcp close');
       ws.disconnect();
@@ -97,7 +97,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     pow.writeString(host, 'ascii');
     pow = pow.render();
 
-    if (utils.cmp(utils.hash256(pow), this.target) > 0) {
+    if (util.cmp(util.hash256(pow), this.target) > 0) {
       this.log('Client did not solve proof of work (%s).', state.host);
       ws.emit('tcp close');
       ws.disconnect();
@@ -193,7 +193,7 @@ WSProxy.prototype.attach = function attach(server) {
 function SocketState(server, socket) {
   this.pow = server.pow;
   this.target = server.target;
-  this.snonce = utils.nonce(true);
+  this.snonce = util.nonce(true);
   this.socket = null;
   this.host = IP.normalize(socket.conn.remoteAddress);
   this.remoteHost = null;

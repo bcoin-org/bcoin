@@ -3,7 +3,7 @@
 var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var assert = require('assert');
-var utils = bcoin.utils;
+var util = bcoin.util;
 var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var opcodes = bcoin.constants.opcodes;
@@ -190,7 +190,7 @@ describe('TX', function() {
           version: 1,
           height: -1,
           coinbase: false,
-          hash: utils.revHex(hash),
+          hash: util.revHex(hash),
           index: index,
           script: script,
           value: value != null ? parseInt(value, 10) : 0
@@ -202,7 +202,7 @@ describe('TX', function() {
         tx: tx,
         flags: flags,
         comments: tx.hasCoins()
-          ? utils.inspectify(tx.inputs[0].coin.script, false)
+          ? util.inspectify(tx.inputs[0].coin.script, false)
           : 'coinbase',
         data: data
       };
@@ -287,7 +287,7 @@ describe('TX', function() {
       clearCache(script, nocache);
       var index = data[2];
       var type = data[3];
-      var expected = utils.revHex(data[4]);
+      var expected = util.revHex(data[4]);
       var hexType = type & 3;
       if (type & 0x80)
         hexType |= 0x80;
@@ -463,7 +463,7 @@ describe('TX', function() {
   });
 
   it('should fail on >51 bit fees from multiple txs', function() {
-    var data = utils.merge({}, bcoin.network.get().genesis, { height: 0 });
+    var data = util.merge({}, bcoin.network.get().genesis, { height: 0 });
     var block = new bcoin.block(data);
     for (var i = 0; i < 3; i++) {
       var tx = bcoin.tx({
@@ -515,7 +515,7 @@ describe('TX', function() {
     var tx = bcoin.tx({
       version: 1,
       flag: 1,
-      inputs: [createInput(utils.MAX_SAFE_INTEGER)],
+      inputs: [createInput(util.MAX_SAFE_INTEGER)],
       outputs: [{
         script: [],
         value: constants.MAX_MONEY
@@ -533,7 +533,7 @@ describe('TX', function() {
       inputs: [createInput(constants.MAX_MONEY)],
       outputs: [{
         script: [],
-        value: utils.MAX_SAFE_INTEGER
+        value: util.MAX_SAFE_INTEGER
       }],
       locktime: 0
     });
@@ -545,7 +545,7 @@ describe('TX', function() {
     var tx = bcoin.tx({
       version: 1,
       flag: 1,
-      inputs: [createInput(utils.MAX_SAFE_INTEGER)],
+      inputs: [createInput(util.MAX_SAFE_INTEGER)],
       outputs: [{
         script: [],
         value: 0
@@ -556,7 +556,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(0));
   });
 
-  [utils.MAX_SAFE_ADDITION, utils.MAX_SAFE_INTEGER].forEach(function(MAX) {
+  [util.MAX_SAFE_ADDITION, util.MAX_SAFE_INTEGER].forEach(function(MAX) {
     it('should fail on >53 bit values from multiple', function() {
       var tx = bcoin.tx({
         version: 1,
@@ -621,7 +621,7 @@ describe('TX', function() {
     });
 
     it('should fail on >53 bit fees from multiple txs', function() {
-      var data = utils.merge({}, bcoin.network.get().genesis, { height: 0 });
+      var data = util.merge({}, bcoin.network.get().genesis, { height: 0 });
       var block = new bcoin.block(data);
       for (var i = 0; i < 3; i++) {
         var tx = bcoin.tx({

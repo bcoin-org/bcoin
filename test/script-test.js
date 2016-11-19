@@ -4,7 +4,7 @@ var bcoin = require('../').set('main');
 var assert = require('assert');
 var Script = bcoin.script;
 var Stack = bcoin.stack;
-var utils = bcoin.utils;
+var util = bcoin.util;
 var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var opcodes = bcoin.constants.opcodes;
@@ -149,9 +149,9 @@ describe('Script', function() {
     var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA1'
     );
-    assert(utils.equal(s.raw, new Buffer('51764c', 'hex')));
+    assert(util.equal(s.raw, new Buffer('51764c', 'hex')));
     delete s.raw;
-    assert(utils.equal(s.encode(), new Buffer('51764c', 'hex')));
+    assert(util.equal(s.encode(), new Buffer('51764c', 'hex')));
     try {
       s.execute(stack);
     } catch (e) {
@@ -162,9 +162,9 @@ describe('Script', function() {
     var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA2 0x01'
     );
-    assert(utils.equal(s.raw, new Buffer('51764d01', 'hex')));
+    assert(util.equal(s.raw, new Buffer('51764d01', 'hex')));
     delete s.raw;
-    assert(utils.equal(s.encode(), new Buffer('51764d01', 'hex')));
+    assert(util.equal(s.encode(), new Buffer('51764d01', 'hex')));
     err = null;
     try {
       s.execute(stack);
@@ -176,9 +176,9 @@ describe('Script', function() {
     var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA4 0x0001'
     );
-    assert(utils.equal(s.raw, new Buffer('51764e0001', 'hex')));
+    assert(util.equal(s.raw, new Buffer('51764e0001', 'hex')));
     delete s.raw;
-    assert(utils.equal(s.encode(), new Buffer('51764e0001', 'hex')));
+    assert(util.equal(s.encode(), new Buffer('51764e0001', 'hex')));
     err = null;
     try {
       s.execute(stack);
@@ -190,9 +190,9 @@ describe('Script', function() {
     var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA1 0x02 0x01'
     );
-    assert(utils.equal(s.raw, new Buffer('51764c0201', 'hex')));
+    assert(util.equal(s.raw, new Buffer('51764c0201', 'hex')));
     delete s.raw;
-    assert(utils.equal(s.encode(), new Buffer('51764c0201', 'hex')));
+    assert(util.equal(s.encode(), new Buffer('51764c0201', 'hex')));
     err = null;
     try {
       s.execute(stack);
@@ -204,9 +204,9 @@ describe('Script', function() {
     var s = bcoin.script.fromString(
       'OP_1 OP_DUP OP_PUSHDATA2 0x0200 0x01'
     );
-    assert(utils.equal(s.raw, new Buffer('51764d020001', 'hex')));
+    assert(util.equal(s.raw, new Buffer('51764d020001', 'hex')));
     delete s.raw;
-    assert(utils.equal(s.encode(), new Buffer('51764d020001', 'hex')));
+    assert(util.equal(s.encode(), new Buffer('51764d020001', 'hex')));
     err = null;
     try {
       s.execute(stack);

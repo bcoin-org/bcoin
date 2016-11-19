@@ -4,7 +4,7 @@ var co = require('../lib/utils/co');
 var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
 var crypto = require('../lib/crypto/crypto');
-var utils = require('../lib/utils/utils');
+var util = require('../lib/utils/util');
 var LDB = require('../lib/db/ldb');
 var BN = require('bn.js');
 var DUMMY = new Buffer([0]);
@@ -129,7 +129,7 @@ var indexTips = co(function* indexTips() {
 
   for (i = 0; i < tips.length; i++) {
     tip = tips[i];
-    console.log('Indexing chain tip: %s.', utils.revHex(tip));
+    console.log('Indexing chain tip: %s.', util.revHex(tip));
     batch.put(pair('p', tip), DUMMY);
   }
 });

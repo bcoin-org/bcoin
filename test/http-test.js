@@ -4,12 +4,12 @@ var BN = require('bn.js');
 var bcoin = require('../').set('regtest');
 var constants = bcoin.constants;
 var network = bcoin.networks;
-var utils = bcoin.utils;
+var util = bcoin.util;
 var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var co = require('../lib/utils/co');
-var Amount = require('../lib/utils/amount');
+var Amount = require('../lib/btc/amount');
 var cob = co.cob;
 
 var dummyInput = {

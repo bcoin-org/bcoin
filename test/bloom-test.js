@@ -1,7 +1,7 @@
 'use strict';
 
 var bcoin = require('../').set('main');
-var utils = bcoin.utils;
+var util = bcoin.util;
 var crypto = require('../lib/crypto/crypto');
 var Bloom = require('../lib/utils/bloom');
 var murmur3 = require('../lib/utils/murmur3');
