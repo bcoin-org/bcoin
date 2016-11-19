@@ -1,2 +1,2 @@
 // Empty module for browserify.
-exports.empty = true;
+exports.unsupported = true;

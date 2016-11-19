@@ -68,7 +68,7 @@
     "./lib/http/server": "./browser/empty.js",
     "./lib/http/wallet": "./browser/empty.js",
     "./lib/utils/lazy": "./browser/empty.js",
-    "./lib/crypto/native": "./lib/crypto/empty.js",
+    "./lib/utils/native": "./browser/empty.js",
     "./lib/utils/nfkd": "./lib/utils/nfkd-browser.js",
     "./lib/utils/nexttick": "./lib/utils/nexttick-browser.js",
     "./lib/crypto/backend": "./lib/crypto/backend-browser.js",
