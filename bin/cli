@@ -7,6 +7,7 @@ var utils = require('../lib/utils/utils');
 var co = require('../lib/utils/co');
 var Client = require('../lib/http/client');
 var Wallet = require('../lib/http/wallet');
+var Amount = require('../lib/utils/amount');
 var main;
 
 function CLI() {
@@ -286,10 +287,10 @@ CLI.prototype.sendTX = co(function* sendTX() {
 
   if (this.config.script) {
     output.script = this.config.script;
-    output.value = utils.satoshi(this.config.value || this.argv[0]);
+    output.value = Amount.value(this.config.value || this.argv[0]);
   } else {
     output.address = this.config.address || this.argv[0];
-    output.value = utils.satoshi(this.config.value || this.argv[1]);
+    output.value = Amount.value(this.config.value || this.argv[1]);
   }
 
   options = {
@@ -309,10 +310,10 @@ CLI.prototype.createTX = co(function* createTX() {
 
   if (this.config.script) {
     output.script = this.config.script;
-    output.value = utils.satoshi(this.config.value || this.argv[0]);
+    output.value = Amount.value(this.config.value || this.argv[0]);
   } else {
     output.address = this.config.address || this.argv[0];
-    output.value = utils.satoshi(this.config.value || this.argv[1]);
+    output.value = Amount.value(this.config.value || this.argv[1]);
   }
 
   options = {

@@ -9,6 +9,7 @@ var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var co = require('../lib/utils/co');
+var Amount = require('../lib/utils/amount');
 var cob = co.cob;
 
 var dummyInput = {
@@ -108,16 +109,16 @@ describe('HTTP', function() {
     assert.equal(receive.type, 'pubkeyhash');
     assert.equal(receive.branch, 0);
     assert(balance);
-    assert.equal(utils.satoshi(balance.confirmed), 0);
-    assert.equal(utils.satoshi(balance.unconfirmed), 201840);
+    assert.equal(Amount.value(balance.confirmed), 0);
+    assert.equal(Amount.value(balance.unconfirmed), 201840);
     assert(details);
     assert.equal(details.hash, t1.rhash);
   }));
 
   it('should get balance', cob(function* () {
     var balance = yield wallet.getBalance();
-    assert.equal(utils.satoshi(balance.confirmed), 0);
-    assert.equal(utils.satoshi(balance.unconfirmed), 201840);
+    assert.equal(Amount.value(balance.confirmed), 0);
+    assert.equal(Amount.value(balance.unconfirmed), 201840);
   }));
 
   it('should send a tx', cob(function* () {
@@ -138,8 +139,8 @@ describe('HTTP', function() {
     assert.equal(tx.inputs.length, 1);
     assert.equal(tx.outputs.length, 2);
 
-    value += utils.satoshi(tx.outputs[0].value);
-    value += utils.satoshi(tx.outputs[1].value);
+    value += Amount.value(tx.outputs[0].value);
+    value += Amount.value(tx.outputs[1].value);
     assert.equal(value, 48190);
 
     hash = tx.hash;
@@ -160,7 +161,7 @@ describe('HTTP', function() {
 
   it('should get balance', cob(function* () {
     var balance = yield wallet.getBalance();
-    assert.equal(utils.satoshi(balance.unconfirmed), 199570);
+    assert.equal(Amount.value(balance.unconfirmed), 199570);
   }));
 
   it('should execute an rpc call', cob(function* () {

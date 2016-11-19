@@ -257,7 +257,7 @@ pool.open().then(function() {
 
   wallet.on('balance', function(balance) {
     console.log('Balance updated.');
-    console.log(bcoin.utils.btc(balance.unconfirmed));
+    console.log(bcoin.amount.btc(balance.unconfirmed));
   });
 });
 ```

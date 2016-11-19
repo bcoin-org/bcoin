@@ -82,7 +82,7 @@ send.onsubmit = function(ev) {
   options = {
     outputs: [{
       address: address,
-      value: utils.satoshi(value)
+      value: bcoin.amount.value(value)
     }]
   };
 
@@ -148,7 +148,7 @@ function addItem(tx) {
   chainState.innerHTML = ''
     + 'tx=' + node.chain.db.state.tx
     + ' coin=' + node.chain.db.state.coin
-    + ' value=' + utils.btc(node.chain.db.state.value);
+    + ' value=' + bcoin.amount.btc(node.chain.db.state.value);
 }
 
 function setMouseup(el, obj) {
@@ -182,11 +182,11 @@ function formatWallet(wallet) {
 
   wallet.getBalance().then(function(balance) {
     html += 'Confirmed Balance: <b>'
-      + utils.btc(balance.confirmed)
+      + bcoin.amount.btc(balance.confirmed)
       + '</b><br>';
 
     html += 'Unconfirmed Balance: <b>'
-      + utils.btc(balance.unconfirmed)
+      + bcoin.amount.btc(balance.unconfirmed)
       + '</b><br>';
 
     return wallet.getHistory();

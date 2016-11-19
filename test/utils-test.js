@@ -9,6 +9,7 @@ var base58 = require('../lib/utils/base58');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var schnorr = require('../lib/crypto/schnorr');
+var Amount = require('../lib/utils/amount');
 
 describe('Utils', function() {
   var vectors = [
@@ -49,42 +50,42 @@ describe('Utils', function() {
   });
 
   it('should convert satoshi to btc', function() {
-    var btc = btcutils.btc(5460);
+    var btc = Amount.btc(5460);
     assert.equal(btc, '0.0000546');
-    btc = btcutils.btc(54678 * 1000000);
+    btc = Amount.btc(54678 * 1000000);
     assert.equal(btc, '546.78');
-    btc = btcutils.btc(5460 * 10000000);
+    btc = Amount.btc(5460 * 10000000);
     assert.equal(btc, '546.0');
   });
 
   it('should convert btc to satoshi', function() {
-    var btc = btcutils.satoshi('0.0000546');
+    var btc = Amount.value('0.0000546');
     assert(btc === 5460);
-    btc = btcutils.satoshi('546.78');
+    btc = Amount.value('546.78');
     assert(btc === 54678 * 1000000);
-    btc = btcutils.satoshi('546');
+    btc = Amount.value('546');
     assert(btc === 5460 * 10000000);
-    btc = btcutils.satoshi('546.0');
+    btc = Amount.value('546.0');
     assert(btc === 5460 * 10000000);
-    btc = btcutils.satoshi('546.0000');
+    btc = Amount.value('546.0000');
     assert(btc === 5460 * 10000000);
     assert.doesNotThrow(function() {
-      btcutils.satoshi('546.00000000000000000');
+      Amount.value('546.00000000000000000');
     });
     assert.throws(function() {
-      btcutils.satoshi('546.00000000000000001');
+      Amount.value('546.00000000000000001');
     });
     assert.doesNotThrow(function() {
-      btcutils.satoshi('90071992.54740991');
+      Amount.value('90071992.54740991');
     });
     assert.doesNotThrow(function() {
-      btcutils.satoshi('090071992.547409910');
+      Amount.value('090071992.547409910');
     });
     assert.throws(function() {
-      btcutils.satoshi('90071992.54740992');
+      Amount.value('90071992.54740992');
     });
     assert.throws(function() {
-      btcutils.satoshi('190071992.54740991');
+      Amount.value('190071992.54740991');
     });
   });
 
