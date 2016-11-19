@@ -5,6 +5,7 @@ var bcoin = require('../').set('main');
 var utils = bcoin.utils;
 var btcutils = require('../lib/utils/btcutils');
 var crypto = require('../lib/crypto/crypto');
+var Bloom = require('../lib/utils/bloom');
 var constants = bcoin.constants;
 var network = bcoin.networks;
 var assert = require('assert');
@@ -129,7 +130,7 @@ describe('Block', function() {
   });
 
   it('should create a merkle block', function() {
-    var filter = bcoin.bloom.fromRate(1000, 0.01, constants.filterFlags.NONE);
+    var filter = Bloom.fromRate(1000, 0.01, constants.filterFlags.NONE);
     var item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
     var item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
