@@ -7,7 +7,7 @@ var assert = require('assert');
 var scriptTypes = constants.scriptTypes;
 var bench = require('./bench');
 var fs = require('fs');
-var Coins = require('../lib/chain/coins');
+var Coins = require('../lib/blockchain/coins');
 var TX = require('../lib/primitives/tx');
 
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
