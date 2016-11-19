@@ -17,7 +17,8 @@ proxy.on('error', function(err) {
 var index = fs.readFileSync(__dirname + '/index.html');
 var indexjs = fs.readFileSync(__dirname + '/index.js');
 var bcoin = fs.readFileSync(__dirname + '/bcoin.js');
-var worker = fs.readFileSync(__dirname + '/../lib/workers/worker-browser.js');
+var master = fs.readFileSync(__dirname + '/bcoin-master.js');
+var worker = fs.readFileSync(__dirname + '/bcoin-worker.js');
 
 server.get('/favicon.ico', function(req, res, send, next) {
   send(404, '', 'text');
@@ -33,6 +34,10 @@ server.get('/index.js', function(req, res, send, next) {
 
 server.get('/bcoin.js', function(req, res, send, next) {
   send(200, bcoin, 'js');
+});
+
+server.get('/bcoin-master.js', function(req, res, send, next) {
+  send(200, master, 'js');
 });
 
 server.get('/bcoin-worker.js', function(req, res, send, next) {

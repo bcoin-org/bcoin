@@ -12,9 +12,9 @@
   "preferGlobal": true,
   "scripts": {
     "test": "mocha --reporter spec test/*-test.js",
-    "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js",
-    "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js",
-    "clean": "rm browser/bcoin.js browser/bcoin.min.js",
+    "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js && browserify --im -o browser/bcoin-master.js lib/workers/master.js",
+    "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js && uglifyjs -m -o browser/bcoin-master.min.js browser/bcoin-master.js",
+    "clean": "rm browser/bcoin.js browser/bcoin.min.js browser/bcoin-master.js browser/bcoin-master.min.js",
     "lint": "jshint lib/ || exit 0"
   },
   "repository": "git://github.com/bcoin-org/bcoin.git",
