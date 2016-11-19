@@ -20,11 +20,24 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-(function (global, undefined) {
-    "use strict";
+(function(root, undefined) {
+  "use strict";
 
+  var global;
+
+  if (typeof window !== "undefined")
+    global = window;
+  else if (typeof self !== "undefined")
+    global = self;
+  else
+    global = root;
+
+  if (!global)
+    throw new Error("Global not found.");
+
+  function install() {
     if (global.setImmediate) {
-        return;
+        return global.setImmediate;
     }
 
     var nextHandle = 1; // Spec says greater than zero
@@ -166,10 +179,6 @@
         };
     }
 
-    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
-    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
-    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
-
     // Don't get fooled by e.g. browserify environments.
     if ({}.toString.call(global.process) === "[object process]") {
         // For Node.js before 0.9
@@ -192,6 +201,8 @@
         installSetTimeoutImplementation();
     }
 
-    attachTo.setImmediate = setImmediate;
-    attachTo.clearImmediate = clearImmediate;
-}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
+    return setImmediate;
+  }
+
+  module.exports = install();
+})(this);

@@ -26,6 +26,7 @@
  * IN THE SOFTWARE.
  */
 
+var os = require('os');
 var ip = exports;
 
 ip.toBuffer = function(ip, buff, offset) {
@@ -374,16 +375,10 @@ ip.loopback = function(family) {
 //   * undefined: First address with `ipv4` or loopback address `127.0.0.1`.
 //
 ip.address = function(name, family) {
-  var os;
-
-  try {
-    os = require('os');
-  } catch (e) {
+  if (os.unsupported)
     return '127.0.0.1';
-  }
 
   var interfaces = os.networkInterfaces();
-  var all;
 
   //
   // Default to `ipv4`
