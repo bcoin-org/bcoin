@@ -426,6 +426,11 @@ describe('Chain', function() {
     assert.equal(err.reason, 'bad-txns-nonfinal');
   }));
 
+  it('should rescan for transactions', cob(function* () {
+    yield walletdb.rescan(0);
+    assert.equal(wallet.state.confirmed, 1289250000000);
+  }));
+
   it('should cleanup', cob(function* () {
     constants.tx.COINBASE_MATURITY = 100;
     yield node.close();
