@@ -9,14 +9,16 @@ var assert = require('assert');
 var opcodes = constants.opcodes;
 var co = require('../lib/utils/co');
 var cob = co.cob;
+// var Client = require('../lib/wallet/client');
 
 describe('Chain', function() {
   var chain, wallet, node, miner, walletdb;
   var tip1, tip2, cb1, cb2;
 
-  this.timeout(15000);
+  this.timeout(5000);
 
-  node = new bcoin.fullnode({ db: 'memory' });
+  node = new bcoin.fullnode({ db: 'memory', apiKey: 'foo' });
+  // node.walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
   chain = node.chain;
   walletdb = node.walletdb;
   walletdb.options.resolution = false;
