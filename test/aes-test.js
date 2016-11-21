@@ -58,6 +58,38 @@ describe('AES', function() {
     ]);
   }
 
+  function bencrypt(data, passphrase) {
+    var key, cipher;
+
+    assert(nativeCrypto, 'No crypto module available.');
+    assert(passphrase, 'No passphrase.');
+
+    if (typeof data === 'string')
+      data = new Buffer(data, 'utf8');
+
+    if (typeof passphrase === 'string')
+      passphrase = new Buffer(passphrase, 'utf8');
+
+    key = pbkdf2key(passphrase, 2048, 32, 16);
+    return crypto.encipher(data, key.key, key.iv);
+  }
+
+  function bdecrypt(data, passphrase) {
+    var key, decipher;
+
+    assert(nativeCrypto, 'No crypto module available.');
+    assert(passphrase, 'No passphrase.');
+
+    if (typeof data === 'string')
+      data = new Buffer(data, 'hex');
+
+    if (typeof passphrase === 'string')
+      passphrase = new Buffer(passphrase, 'utf8');
+
+    key = pbkdf2key(passphrase, 2048, 32, 16);
+    return crypto.decipher(data, key.key, key.iv);
+  }
+
   function encrypt(data, passphrase) {
     var key, cipher;
 
@@ -101,9 +133,14 @@ describe('AES', function() {
     var enchash2 = nencrypt(hash2, 'foo');
     var dechash2 = ndecrypt(enchash2, 'foo');
 
+    var hash3 = crypto.sha256(new Buffer([]));
+    var enchash3 = bencrypt(hash3, 'foo');
+    var dechash3 = bdecrypt(enchash3, 'foo');
+
     assert.deepEqual(hash, hash2);
     assert.deepEqual(enchash, enchash2);
     assert.deepEqual(dechash, dechash2);
+    assert.deepEqual(dechash, dechash3);
   });
 
   it('should encrypt and decrypt a hash with uneven blocks', function() {
