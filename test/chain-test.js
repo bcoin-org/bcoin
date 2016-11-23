@@ -263,10 +263,11 @@ describe('Chain', function() {
   }));
 
   it('should activate csv', cob(function* () {
+    var deployments = chain.network.deployments;
     var i, block, prev, state, cache;
 
     prev = yield chain.tip.getPrevious();
-    state = yield chain.getState(prev, 'csv');
+    state = yield chain.getState(prev, deployments.csv);
     assert(state === 0);
 
     for (i = 0; i < 417; i++) {
@@ -275,17 +276,17 @@ describe('Chain', function() {
       switch (chain.height) {
         case 144:
           prev = yield chain.tip.getPrevious();
-          state = yield chain.getState(prev, 'csv');
+          state = yield chain.getState(prev, deployments.csv);
           assert(state === 1);
           break;
         case 288:
           prev = yield chain.tip.getPrevious();
-          state = yield chain.getState(prev, 'csv');
+          state = yield chain.getState(prev, deployments.csv);
           assert(state === 2);
           break;
         case 432:
           prev = yield chain.tip.getPrevious();
-          state = yield chain.getState(prev, 'csv');
+          state = yield chain.getState(prev, deployments.csv);
           assert(state === 3);
           break;
       }
