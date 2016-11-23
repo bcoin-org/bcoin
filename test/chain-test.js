@@ -263,7 +263,7 @@ describe('Chain', function() {
   }));
 
   it('should activate csv', cob(function* () {
-    var i, block, prev, state;
+    var i, block, prev, state, cache;
 
     prev = yield chain.tip.getPrevious();
     state = yield chain.getState(prev, 'csv');
@@ -293,6 +293,11 @@ describe('Chain', function() {
 
     assert(chain.height === 432);
     assert(chain.state.hasCSV());
+
+    cache = yield chain.db.getStateCache();
+    assert.deepEqual(cache, chain.db.stateCache);
+    assert.equal(chain.db.stateCache.updates.length, 0);
+    assert(yield chain.db.verifyDeployments());
   }));
 
   var mineCSV = co(function* mineCSV(tx) {
