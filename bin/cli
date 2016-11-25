@@ -417,18 +417,19 @@ CLI.prototype.backup = co(function* backup() {
 
 CLI.prototype.importKey = co(function* importKey() {
   var key = this.argv[0];
+  var account = this.config.account;
 
   if (!key)
     throw new Error('No key for import.');
 
   if (util.isBase58(key)) {
-    yield this.wallet.importPrivate(key);
+    yield this.wallet.importPrivate(account, key);
     this.log('Imported private key.');
     return;
   }
 
   if (util.isHex(key)) {
-    yield this.wallet.importPublic(key);
+    yield this.wallet.importPublic(account, key);
     this.log('Imported public key.');
     return;
   }
@@ -438,7 +439,8 @@ CLI.prototype.importKey = co(function* importKey() {
 
 CLI.prototype.importAddress = co(function* importKey() {
   var address = this.argv[0];
-  yield this.wallet.importAddress(address);
+  var account = this.config.account;
+  yield this.wallet.importAddress(account, address);
   this.log('Imported address.');
 });
 
