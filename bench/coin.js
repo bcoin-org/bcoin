@@ -11,7 +11,7 @@ var Coins = require('../lib/blockchain/coins');
 var TX = require('../lib/primitives/tx');
 
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
-wtx = tx.fromRaw(wtx.trim(), 'hex');
+wtx = TX.fromRaw(wtx.trim(), 'hex');
 
 var coins = Coins.fromTX(wtx);
 var raw;
