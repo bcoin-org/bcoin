@@ -13,7 +13,7 @@ var cob = co.cob;
 
 describe('Chain', function() {
   var chain, wallet, node, miner, walletdb;
-  var tip1, tip2, cb1, cb2;
+  var tip1, tip2, cb1, cb2, mineBlock;
 
   this.timeout(5000);
 
@@ -25,7 +25,7 @@ describe('Chain', function() {
   miner = node.miner;
   node.on('error', function() {});
 
-  var mineBlock = co(function* mineBlock(tip, tx) {
+  mineBlock = co(function* mineBlock(tip, tx) {
     var attempt = yield miner.createBlock(tip);
     var redeemer;
 
@@ -55,24 +55,6 @@ describe('Chain', function() {
     return yield attempt.mineAsync();
   });
 
-  function deleteCoins(tx) {
-    var i;
-
-    if (tx.txs) {
-      deleteCoins(tx.txs);
-      return;
-    }
-
-    if (Array.isArray(tx)) {
-      for (i = 0; i < tx.length; i++)
-        deleteCoins(tx[i]);
-      return;
-    }
-
-    for (i = 0; i < tx.inputs.length; i++)
-      tx.inputs[i].coin = null;
-  }
-
   it('should open chain and miner', cob(function* () {
     miner.mempool = null;
     constants.tx.COINBASE_MATURITY = 0;
@@ -101,10 +83,8 @@ describe('Chain', function() {
       block2 = yield mineBlock(tip2, cb2);
       cb2 = block2.txs[0];
 
-      deleteCoins(block1);
       yield chain.add(block1);
 
-      deleteCoins(block2);
       yield chain.add(block2);
 
       assert(chain.tip.hash === block1.hash('hex'));
@@ -147,8 +127,6 @@ describe('Chain', function() {
       forked = true;
     });
 
-    deleteCoins(block);
-
     yield chain.add(block);
 
     assert(forked);
@@ -175,7 +153,6 @@ describe('Chain', function() {
     var block = yield mineBlock(null, cb2);
     var entry, result;
 
-    deleteCoins(block);
     yield chain.add(block);
 
     entry = yield chain.db.getEntry(block.hash('hex'));
@@ -190,8 +167,6 @@ describe('Chain', function() {
     var block = yield mineBlock(null, cb2);
     var tip = chain.tip;
     var err;
-
-    deleteCoins(block);
 
     try {
       yield chain.add(block);
@@ -208,8 +183,6 @@ describe('Chain', function() {
     var block = yield mineBlock(null, cb1);
     var tip = chain.tip;
     var err;
-
-    deleteCoins(block);
 
     try {
       yield chain.add(block);
