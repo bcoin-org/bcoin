@@ -172,9 +172,9 @@ describe('Chain', function() {
   }));
 
   it('should mine a block after a reorg', cob(function* () {
-    var block, entry, result;
+    var block = yield mineBlock(null, cb2);
+    var entry, result;
 
-    block = yield mineBlock(null, cb2);
     deleteCoins(block);
     yield chain.add(block);
 
@@ -186,8 +186,9 @@ describe('Chain', function() {
     assert(result);
   }));
 
-  it('should fail to mine a block with coins on an alternate chain', cob(function* () {
-    var block = yield mineBlock(null, cb1);
+  it('should prevent double spend on new chain', cob(function* () {
+    var block = yield mineBlock(null, cb2);
+    var tip = chain.tip;
     var err;
 
     deleteCoins(block);
@@ -200,6 +201,25 @@ describe('Chain', function() {
 
     assert(err);
     assert.equal(err.reason, 'bad-txns-inputs-missingorspent');
+    assert(chain.tip === tip);
+  }));
+
+  it('should fail to mine a block with coins on an alternate chain', cob(function* () {
+    var block = yield mineBlock(null, cb1);
+    var tip = chain.tip;
+    var err;
+
+    deleteCoins(block);
+
+    try {
+      yield chain.add(block);
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert.equal(err.reason, 'bad-txns-inputs-missingorspent');
+    assert(chain.tip === tip);
   }));
 
   it('should get coin', cob(function* () {
