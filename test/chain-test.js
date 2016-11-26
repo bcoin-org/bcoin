@@ -109,8 +109,8 @@ describe('Chain', function() {
 
       assert(chain.tip.hash === block1.hash('hex'));
 
-      tip1 = yield chain.db.get(block1.hash('hex'));
-      tip2 = yield chain.db.get(block2.hash('hex'));
+      tip1 = yield chain.db.getEntry(block1.hash('hex'));
+      tip2 = yield chain.db.getEntry(block2.hash('hex'));
 
       assert(tip1);
       assert(tip2);
@@ -135,7 +135,7 @@ describe('Chain', function() {
     assert.equal(walletdb.state.height, chain.height);
     assert.equal(chain.height, 11);
 
-    entry = yield chain.db.get(tip2.hash);
+    entry = yield chain.db.getEntry(tip2.hash);
     assert(entry);
     assert(chain.height === entry.height);
 
@@ -178,7 +178,7 @@ describe('Chain', function() {
     deleteCoins(block);
     yield chain.add(block);
 
-    entry = yield chain.db.get(block.hash('hex'));
+    entry = yield chain.db.getEntry(block.hash('hex'));
     assert(entry);
     assert(chain.tip.hash === entry.hash);
 
@@ -228,8 +228,8 @@ describe('Chain', function() {
     assert.equal(balance.unconfirmed, 1250 * 1e8);
     assert.equal(balance.confirmed, 750 * 1e8);
 
-    assert(wallet.account.receiveDepth >= 8);
-    assert(wallet.account.changeDepth >= 7);
+    assert(wallet.account.receiveDepth >= 7);
+    assert(wallet.account.changeDepth >= 6);
 
     assert.equal(walletdb.state.height, chain.height);
 
