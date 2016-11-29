@@ -166,7 +166,7 @@ describe('Block', function() {
     block2.merkleRoot = constants.NULL_HASH;
     delete block2._valid;
     var ret = {};
-    assert(!block2.verify(0, ret));
+    assert(!block2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
     delete block2._valid;
     delete block2._hash;
@@ -179,7 +179,7 @@ describe('Block', function() {
     mblock2.hash();
     mblock2.merkleRoot = constants.NULL_HASH;
     var ret = {};
-    assert(!mblock2.verify(0, ret));
+    assert(!mblock2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
     delete mblock2._validPartial;
     delete mblock2._valid;
@@ -193,7 +193,7 @@ describe('Block', function() {
     block2.hash();
     block2.bits = 403014710;
     var ret = {};
-    assert(!block2.verify(0, ret));
+    assert(!block2.verify(ret));
     assert.equal(ret.reason, 'high-hash');
     delete block2._valid;
     delete block2._hash;
@@ -205,7 +205,7 @@ describe('Block', function() {
     var block2 = new bcoin.block(block);
     block2.txs.push(block2.txs[block2.txs.length - 1]);
     var ret = {};
-    assert(!block2.verify(0, ret));
+    assert(!block2.verify(ret));
     assert.equal(ret.reason, 'bad-txns-duplicate');
   });
 
