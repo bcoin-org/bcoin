@@ -162,7 +162,7 @@ function defaultOptions() {
   if (options.spv)
     flags |= 1 << 0;
 
-  if (options.witness)
+  if (options.witness || options.network.witness)
     flags |= 1 << 1;
 
   if (options.prune)
