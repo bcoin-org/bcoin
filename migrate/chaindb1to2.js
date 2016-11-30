@@ -64,6 +64,26 @@ var updateVersion = co(function* updateVersion() {
   batch.put('V', ver);
 });
 
+var checkTipIndex = co(function* checkTipIndex() {
+  var iter, item;
+
+  iter = db.iterator({
+    gte: pair('p', constants.ZERO_HASH),
+    lte: pair('p', constants.MAX_HASH)
+  });
+
+  item = yield iter.next();
+
+  if (!item) {
+    console.log('No tip index found.');
+    console.log('Please run migrate/ensure-tip-index.js first!');
+    process.exit(1);
+    return;
+  }
+
+  yield iter.end();
+});
+
 var updateOptions = co(function* updateOptions() {
   if (yield db.has('O'))
     return;
@@ -202,6 +222,7 @@ co.spawn(function* () {
   console.log('Opened %s.', file);
   batch = db.batch();
   yield updateVersion();
+  yield checkTipIndex();
   yield updateOptions();
   yield updateDeployments();
   yield reserializeCoins();
