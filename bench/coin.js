@@ -15,8 +15,8 @@ wtx = TX.fromRaw(wtx.trim(), 'hex');
 
 var coins = Coins.fromTX(wtx);
 var raw;
-//raw = coins.toRaw2();
-//console.log(Coins.fromRaw2(raw));
+//raw = coins.toRaw();
+//console.log(Coins.fromRaw(raw));
 
 var end = bench('serialize');
 for (var i = 0; i < 10000; i++)
@@ -34,7 +34,7 @@ for (var i = 0; i < 10000; i++)
   Coins.parseCoin(raw, hash, 5);
 end(i);
 
-var coins = Coins.fromRaw2(raw);
+var coins = Coins.fromRaw(raw);
 var end = bench('get');
 var j;
 
