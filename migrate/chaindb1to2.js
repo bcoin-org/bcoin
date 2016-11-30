@@ -226,7 +226,7 @@ co.spawn(function* () {
   yield updateOptions();
   yield updateDeployments();
   yield reserializeCoins();
-  // yield batch.write();
+  yield batch.write();
 }).then(function() {
   console.log('Migration complete.');
   process.exit(0);
