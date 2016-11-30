@@ -17,7 +17,7 @@ describe('Chain', function() {
 
   this.timeout(5000);
 
-  node = new bcoin.fullnode({ db: 'memory', apiKey: 'foo', newCoins: true });
+  node = new bcoin.fullnode({ db: 'memory', apiKey: 'foo' });
   // node.walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
   chain = node.chain;
   walletdb = node.walletdb;
@@ -53,13 +53,6 @@ describe('Chain', function() {
     attempt.addTX(redeemer.toTX());
 
     return yield attempt.mineAsync();
-  });
-
-  it('should use correct coin serialiation', function() {
-    assert(node.chain.db.CoinView === require('../lib/blockchain/coinview'));
-    assert(node.chain.db.Coins === require('../lib/blockchain/coins'));
-    assert(node.chain.db.CoinView !== require('../lib/blockchain/coinview-old'));
-    assert(node.chain.db.Coins !== require('../lib/blockchain/coins-old'));
   });
 
   it('should open chain and miner', cob(function* () {
