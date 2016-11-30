@@ -117,7 +117,7 @@ var updateDeployments = co(function* updateDeployments() {
 
 var reserializeCoins = co(function* reserializeCoins() {
   var total = 0;
-  var iter, item, hash, old, coins;
+  var i, iter, item, hash, old, coins, coin;
 
   iter = db.iterator({
     gte: pair('c', constants.ZERO_HASH),
@@ -139,7 +139,16 @@ var reserializeCoins = co(function* reserializeCoins() {
     coins.hash = old.hash;
     coins.height = old.height;
     coins.coinbase = old.coinbase;
-    coins.outputs = old.outputs;
+
+    for (i = 0; i < old.outputs.length; i++) {
+      coin = old.get(i);
+      if (!coin) {
+        coins.outputs.push(null);
+        continue;
+      }
+      coins.add(coin);
+    }
+
     coins.cleanup();
 
     batch.put(item.key, coins.toRaw());
