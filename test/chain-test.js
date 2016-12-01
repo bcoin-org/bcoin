@@ -35,12 +35,12 @@ describe('Chain', function() {
     redeemer = bcoin.mtx();
 
     redeemer.addOutput({
-      address: wallet.receive.getAddress(),
+      address: wallet.getReceive(),
       value: 25 * 1e8
     });
 
     redeemer.addOutput({
-      address: wallet.change.getAddress(),
+      address: wallet.getChange(),
       value: 5 * 1e8
     });
 
@@ -64,7 +64,7 @@ describe('Chain', function() {
   it('should open walletdb', cob(function* () {
     wallet = yield walletdb.create();
     miner.addresses.length = 0;
-    miner.addAddress(wallet.getAddress());
+    miner.addAddress(wallet.getReceive());
   }));
 
   it('should mine a block', cob(function* () {
@@ -447,7 +447,7 @@ describe('Chain', function() {
 
   it('should rescan for transactions', cob(function* () {
     yield walletdb.rescan(0);
-    assert.equal(wallet.state.confirmed, 1289250000000);
+    assert.equal(wallet.txdb.state.confirmed, 1289250000000);
   }));
 
   it('should cleanup', cob(function* () {

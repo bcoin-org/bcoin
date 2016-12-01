@@ -241,12 +241,12 @@ describe('Mempool', function() {
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([0, kp.keyHash]);
+    prev = new bcoin.script([0, kp.getKeyHash()]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));
 
-    prevs = bcoin.script.fromPubkeyhash(kp.keyHash);
+    prevs = bcoin.script.fromPubkeyhash(kp.getKeyHash());
 
     sig = tx.signature(0, prevs, kp.privateKey, 'all', 1);
     sig[sig.length - 1] = 0;
@@ -303,7 +303,7 @@ describe('Mempool', function() {
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([0, kp.keyHash]);
+    prev = new bcoin.script([0, kp.getKeyHash()]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));

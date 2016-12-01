@@ -129,7 +129,7 @@ describe('Wallet', function() {
       outputs: [{
         value: 5460 * 2,
         address: bullshitNesting
-          ? w.getNestedAddress()
+          ? w.getNested()
           : w.getAddress()
       }, {
         value: 5460 * 2,
@@ -174,7 +174,7 @@ describe('Wallet', function() {
     yield w.addSharedKey(k);
 
     keys = [
-      w.getPublicKey(),
+      w.account.receive.getPublicKey(),
       k.derive('m/0/0').publicKey
     ];
 
@@ -682,15 +682,15 @@ describe('Wallet', function() {
     w3 = yield walletdb.create(options);
     receive = yield walletdb.create();
 
-    yield w1.addSharedKey(w2.accountKey);
-    yield w1.addSharedKey(w3.accountKey);
-    yield w2.addSharedKey(w1.accountKey);
-    yield w2.addSharedKey(w3.accountKey);
-    yield w3.addSharedKey(w1.accountKey);
-    yield w3.addSharedKey(w2.accountKey);
+    yield w1.addSharedKey(w2.account.accountKey);
+    yield w1.addSharedKey(w3.account.accountKey);
+    yield w2.addSharedKey(w1.account.accountKey);
+    yield w2.addSharedKey(w3.account.accountKey);
+    yield w3.addSharedKey(w1.account.accountKey);
+    yield w3.addSharedKey(w2.account.accountKey);
 
     // Our p2sh address
-    b58 = w1[rec].getAddress('base58');
+    b58 = w1.account[rec].getAddress('base58');
     addr = bcoin.address.fromBase58(b58);
 
     if (witness) {
@@ -702,14 +702,14 @@ describe('Wallet', function() {
       assert.equal(addr.type, scriptTypes.SCRIPTHASH);
     }
 
-    assert.equal(w1[rec].getAddress('base58'), b58);
-    assert.equal(w2[rec].getAddress('base58'), b58);
-    assert.equal(w3[rec].getAddress('base58'), b58);
+    assert.equal(w1.account[rec].getAddress('base58'), b58);
+    assert.equal(w2.account[rec].getAddress('base58'), b58);
+    assert.equal(w3.account[rec].getAddress('base58'), b58);
 
-    paddr = w1.getNestedAddress('base58');
-    assert.equal(w1.getNestedAddress('base58'), paddr);
-    assert.equal(w2.getNestedAddress('base58'), paddr);
-    assert.equal(w3.getNestedAddress('base58'), paddr);
+    paddr = w1.getNested('base58');
+    assert.equal(w1.getNested('base58'), paddr);
+    assert.equal(w2.getNested('base58'), paddr);
+    assert.equal(w3.getNested('base58'), paddr);
 
     // Add a shared unspent transaction to our wallets
     utx = bcoin.mtx();
@@ -728,19 +728,19 @@ describe('Wallet', function() {
     utx.ts = block.ts;
     utx.index = 0;
 
-    assert.equal(w1[depth], 1);
+    assert.equal(w1.account[depth], 1);
 
     yield walletdb.addBlock(block, [utx]);
 
-    assert.equal(w1[depth], 2);
+    assert.equal(w1.account[depth], 2);
 
-    assert.equal(w1.changeDepth, 1);
+    assert.equal(w1.account.changeDepth, 1);
 
-    assert(w1[rec].getAddress('base58') !== b58);
-    b58 = w1[rec].getAddress('base58');
-    assert.equal(w1[rec].getAddress('base58'), b58);
-    assert.equal(w2[rec].getAddress('base58'), b58);
-    assert.equal(w3[rec].getAddress('base58'), b58);
+    assert(w1.account[rec].getAddress('base58') !== b58);
+    b58 = w1.account[rec].getAddress('base58');
+    assert.equal(w1.account[rec].getAddress('base58'), b58);
+    assert.equal(w2.account[rec].getAddress('base58'), b58);
+    assert.equal(w3.account[rec].getAddress('base58'), b58);
 
     // Create a tx requiring 2 signatures
     send = bcoin.mtx();
@@ -757,12 +757,12 @@ describe('Wallet', function() {
     send = send.toTX();
     assert(send.verify(flags));
 
-    assert.equal(w1.changeDepth, 1);
+    assert.equal(w1.account.changeDepth, 1);
 
-    change = w1.change.getAddress('base58');
-    assert.equal(w1.change.getAddress('base58'), change);
-    assert.equal(w2.change.getAddress('base58'), change);
-    assert.equal(w3.change.getAddress('base58'), change);
+    change = w1.account.change.getAddress('base58');
+    assert.equal(w1.account.change.getAddress('base58'), change);
+    assert.equal(w2.account.change.getAddress('base58'), change);
+    assert.equal(w3.account.change.getAddress('base58'), change);
 
     // Simulate a confirmation
     var block = nextBlock();
@@ -773,15 +773,15 @@ describe('Wallet', function() {
 
     yield walletdb.addBlock(block, [send]);
 
-    assert.equal(w1[depth], 2);
-    assert.equal(w1.changeDepth, 2);
+    assert.equal(w1.account[depth], 2);
+    assert.equal(w1.account.changeDepth, 2);
 
-    assert(w1[rec].getAddress('base58') === b58);
-    assert(w1.change.getAddress('base58') !== change);
-    change = w1.change.getAddress('base58');
-    assert.equal(w1.change.getAddress('base58'), change);
-    assert.equal(w2.change.getAddress('base58'), change);
-    assert.equal(w3.change.getAddress('base58'), change);
+    assert(w1.account[rec].getAddress('base58') === b58);
+    assert(w1.account.change.getAddress('base58') !== change);
+    change = w1.account.change.getAddress('base58');
+    assert.equal(w1.account.change.getAddress('base58'), change);
+    assert.equal(w2.account.change.getAddress('base58'), change);
+    assert.equal(w3.account.change.getAddress('base58'), change);
 
     if (witness) {
       send.inputs[0].witness.set(2, 0);
