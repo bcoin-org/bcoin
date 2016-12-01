@@ -65,23 +65,23 @@ var updateVersion = co(function* updateVersion() {
 });
 
 var checkTipIndex = co(function* checkTipIndex() {
-  var iter, item;
-
-  iter = db.iterator({
+  var keys = yield db.keys({
     gte: pair('p', constants.ZERO_HASH),
     lte: pair('p', constants.MAX_HASH)
   });
 
-  item = yield iter.next();
-
-  if (!item) {
+  if (keys.length === 0) {
     console.log('No tip index found.');
     console.log('Please run migrate/ensure-tip-index.js first!');
     process.exit(1);
     return;
   }
 
-  yield iter.end();
+  if (keys.length < 3) {
+    console.log('Note: please run ensure-tip-index.js if you haven\'t yet.');
+    yield co.timeout(2000);
+    return;
+  }
 });
 
 var updateOptions = co(function* updateOptions() {

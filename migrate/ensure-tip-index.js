@@ -88,18 +88,6 @@ var isMainChain = co(function* isMainChain(entry, tip) {
   return false;
 });
 
-var removeOld = co(function* removeOld() {
-  var i, keys, key;
-
-  keys = yield db.keys({
-    gte: pair('a', constants.ZERO_HASH),
-    lte: pair('a', constants.MAX_HASH)
-  });
-
-  for (i = 0; i < keys.length; i++)
-    batch.del(keys[i]);
-});
-
 // And this insane function is why we should
 // be indexing tips in the first place!
 var indexTips = co(function* indexTips() {
@@ -163,7 +151,6 @@ co.spawn(function* () {
   console.log('Opened %s.', file);
   batch = db.batch();
   yield checkVersion();
-  yield removeOld();
   yield indexTips();
   yield batch.write();
 }).then(function() {
