@@ -67,7 +67,7 @@ describe('Block', function() {
     assert.equal(mblock.matches.length, 2);
     assert.equal(mblock.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
-    assert.equal(mblock.rhash,
+    assert.equal(mblock.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
     assert.equal(
       mblock.matches[0].toString('hex'),
@@ -124,7 +124,7 @@ describe('Block', function() {
     block = bcoin.block.fromJSON(block300025);
     assert.equal(block.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
-    assert.equal(block.rhash,
+    assert.equal(block.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
     assert.equal(block.merkleRoot, block.createMerkleRoot('hex'));
   });

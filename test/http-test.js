@@ -112,7 +112,7 @@ describe('HTTP', function() {
     assert.equal(Amount.value(balance.confirmed), 0);
     assert.equal(Amount.value(balance.unconfirmed), 201840);
     assert(details);
-    assert.equal(details.hash, t1.rhash);
+    assert.equal(details.hash, t1.rhash());
   }));
 
   it('should get balance', cob(function* () {
