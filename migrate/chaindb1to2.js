@@ -6,11 +6,11 @@ var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
 var OldCoins = require('../lib/blockchain/coins-old');
 var Coins = require('../lib/blockchain/coins');
-var crypto = require('../lib/crypto/crypto');
+var UndoCoins = require('../lib/blockchain/undocoins');
+var Coin = require('../lib/primitives/coin');
+var Output = require('../lib/primitives/output');
 var util = require('../lib/utils/util');
 var LDB = require('../lib/db/ldb');
-var BN = require('bn.js');
-var DUMMY = new Buffer([0]);
 var file = process.argv[2];
 var options = {};
 var db, batch, index;
@@ -117,7 +117,7 @@ var updateDeployments = co(function* updateDeployments() {
 
 var reserializeCoins = co(function* reserializeCoins() {
   var total = 0;
-  var i, iter, item, hash, old, coins, coin;
+  var i, iter, item, hash, old, coins, coin, output;
 
   iter = db.iterator({
     gte: pair('c', constants.ZERO_HASH),
@@ -142,11 +142,18 @@ var reserializeCoins = co(function* reserializeCoins() {
 
     for (i = 0; i < old.outputs.length; i++) {
       coin = old.get(i);
+
       if (!coin) {
         coins.outputs.push(null);
         continue;
       }
-      coins.add(coin);
+
+      output = new Output();
+      output.script = coin.script;
+      output.value = coin.value;
+
+      if (!output.script.isUnspendable())
+        coins.add(coin.index, output);
     }
 
     coins.cleanup();
@@ -158,6 +165,39 @@ var reserializeCoins = co(function* reserializeCoins() {
   }
 
   console.log('Reserialized %d coins.', total);
+});
+
+var reserializeUndo = co(function* reserializeUndo() {
+  var total = 0;
+  var iter, item, br, undo;
+
+  iter = db.iterator({
+    gte: pair('u', constants.ZERO_HASH),
+    lte: pair('u', constants.MAX_HASH),
+    values: true
+  });
+
+  for (;;) {
+    item = yield iter.next();
+
+    if (!item)
+      break;
+
+    br = new BufferReader(item.value);
+    undo = new UndoCoins();
+
+    while (br.left()) {
+      undo.push(null);
+      injectCoin(undo.top(), Coin.fromRaw(br));
+    }
+
+    batch.write(item.key, undo.toRaw());
+
+    if (++total % 10000 === 0)
+      console.log('Reserialized %d undo coins.', total);
+  }
+
+  console.log('Reserialized %d undo coins.', total);
 });
 
 function write(data, str, off) {
@@ -182,6 +222,18 @@ function ipair(prefix, num) {
   key[0] = prefix;
   key.writeUInt32BE(num, 1, true);
   return key;
+}
+
+function injectCoin(undo, coin) {
+  var output = new Output();
+
+  output.value = coin.value;
+  output.script = coin.script;
+
+  undo.output = output;
+  undo.version = coin.version;
+  undo.height = coin.height;
+  undo.coinbase = coin.coinbase;
 }
 
 function defaultOptions() {
@@ -235,6 +287,7 @@ co.spawn(function* () {
   yield updateOptions();
   yield updateDeployments();
   yield reserializeCoins();
+  yield reserializeUndo();
   yield batch.write();
 }).then(function() {
   console.log('Migration complete.');
