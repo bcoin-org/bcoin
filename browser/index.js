@@ -177,7 +177,7 @@ function formatWallet(wallet) {
     html += 'Current Address: <b>' + wallet.getAddress() + '</b><br>';
   }
 
-  html += 'Extended Private Key: <b>' + key.xprivkey + '</b><br>';
+  html += 'Extended Private Key: <b>' + key.toBase58() + '</b><br>';
   html += 'Mnemonic: <b>' + key.mnemonic.phrase + '</b><br>';
 
   wallet.getBalance().then(function(balance) {

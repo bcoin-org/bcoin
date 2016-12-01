@@ -105,8 +105,8 @@ describe('Wallet', function() {
 
     assert(w1 !== w2);
     assert(w1.master !== w2.master);
-    assert.equal(w1.master.key.xprivkey, w2.master.key.xprivkey);
-    assert.equal(w1.account.accountKey.xpubkey, w2.account.accountKey.xpubkey);
+    assert.equal(w1.master.key.toBase58(), w2.master.key.toBase58());
+    assert.equal(w1.account.accountKey.toBase58(), w2.account.accountKey.toBase58());
   }));
 
   var p2pkh = co(function* p2pkh(witness, bullshitNesting) {
@@ -169,7 +169,7 @@ describe('Wallet', function() {
       n: 2
     });
 
-    k = bcoin.hd.fromMnemonic().deriveAccount44(0).hdPublicKey;
+    k = bcoin.hd.fromMnemonic().deriveAccount44(0).toPublic();
 
     yield w.addSharedKey(k);
 
@@ -872,7 +872,7 @@ describe('Wallet', function() {
     account = yield w.getAccount('foo');
     assert.equal(account.name, 'foo');
     assert.equal(account.accountIndex, 1);
-    assert(account.accountKey.xpubkey === acc.accountKey.xpubkey);
+    assert(account.accountKey.toBase58() === acc.accountKey.toBase58());
     assert(w.account.accountIndex === 0);
 
     assert.notEqual(

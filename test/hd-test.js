@@ -99,43 +99,43 @@ describe('HD', function() {
 
   it('should create master private key', function() {
     master = bcoin.hd.PrivateKey.fromSeed(new Buffer(seed, 'hex'));
-    assert.equal(master.xprivkey, master_priv);
-    assert.equal(master.xpubkey, master_pub);
+    assert.equal(master.toBase58(), master_priv);
+    assert.equal(master.toPublic().toBase58(), master_pub);
   });
 
   it('should derive(0) child from master', function() {
     child1 = master.derive(0);
-    assert.equal(child1.xprivkey, child1_priv);
-    assert.equal(child1.xpubkey, child1_pub);
+    assert.equal(child1.toBase58(), child1_priv);
+    assert.equal(child1.toPublic().toBase58(), child1_pub);
   });
 
   it('should derive(1) child from master public key', function() {
-    child2 = master.hdPublicKey.derive(1);
-    assert.equal(child2.xpubkey, child2_pub);
+    child2 = master.toPublic().derive(1);
+    assert.equal(child2.toBase58(), child2_pub);
   });
 
   it('should derive(1) child from master', function() {
     child3 = master.derive(1);
-    assert.equal(child3.xprivkey, child3_priv);
-    assert.equal(child3.xpubkey, child3_pub);
+    assert.equal(child3.toBase58(), child3_priv);
+    assert.equal(child3.toPublic().toBase58(), child3_pub);
   });
 
   it('should derive(2) child from master', function() {
     child4 = master.derive(2);
-    assert.equal(child4.xprivkey, child4_priv);
-    assert.equal(child4.xpubkey, child4_pub);
+    assert.equal(child4.toBase58(), child4_priv);
+    assert.equal(child4.toPublic().toBase58(), child4_pub);
   });
 
   it('should derive(0) child from child(2)', function() {
     child5 = child4.derive(0);
-    assert.equal(child5.xprivkey, child5_priv);
-    assert.equal(child5.xpubkey, child5_pub);
+    assert.equal(child5.toBase58(), child5_priv);
+    assert.equal(child5.toPublic().toBase58(), child5_pub);
   });
 
   it('should derive(1) child from child(2)', function() {
     child6 = child4.derive(1);
-    assert.equal(child6.xprivkey, child6_priv);
-    assert.equal(child6.xpubkey, child6_pub);
+    assert.equal(child6.toBase58(), child6_priv);
+    assert.equal(child6.toPublic().toBase58(), child6_pub);
   });
 
   it('should derive correctly when private key has leading zeros', function() {
@@ -147,16 +147,16 @@ describe('HD', function() {
   });
 
   it('should deserialize master private key', function() {
-    bcoin.hd.PrivateKey.fromBase58(master.xprivkey);
+    bcoin.hd.PrivateKey.fromBase58(master.toBase58());
   });
 
   it('should deserialize master public key', function() {
-    bcoin.hd.PublicKey.fromBase58(master.hdPublicKey.xpubkey);
+    bcoin.hd.PublicKey.fromBase58(master.toPublic().toBase58());
   });
 
   it('should deserialize and reserialize', function() {
     var key = bcoin.hd.fromMnemonic();
-    assert.equal(bcoin.hd.fromJSON(key.toJSON()).xprivkey, key.xprivkey);
+    assert.equal(bcoin.hd.fromJSON(key.toJSON()).toBase58(), key.toBase58());
   });
 
   function ub58(data) {
@@ -176,8 +176,8 @@ describe('HD', function() {
     delete vector.m;
     it('should create from a seed', function() {
       master = bcoin.hd.PrivateKey.fromSeed(new Buffer(seed, 'hex'));
-      equal(master.xprivkey, m.prv);
-      equal(master.xpubkey, m.pub);
+      equal(master.toBase58(), m.prv);
+      equal(master.toPublic().toBase58(), m.pub);
     });
     Object.keys(vector).forEach(function(path) {
       var data = vector[path];
@@ -185,8 +185,8 @@ describe('HD', function() {
       var xpub = data.pub;
       it('should derive ' + path + ' from master', function() {
         var key = master.derive(path);
-        equal(key.xprivkey, xpriv);
-        equal(key.xpubkey, xpub);
+        equal(key.toBase58(), xpriv);
+        equal(key.toPublic().toBase58(), xpub);
       });
     });
   });
