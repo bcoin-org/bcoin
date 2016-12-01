@@ -99,6 +99,12 @@ describe('Chain', function() {
     }
   }));
 
+  it('should have correct chain value', cob(function* () {
+    assert.equal(chain.db.state.value, 55000000000);
+    assert.equal(chain.db.state.coin, 20);
+    assert.equal(chain.db.state.tx, 21);
+  }));
+
   it('should have correct balance', cob(function* () {
     var balance;
 
@@ -132,6 +138,12 @@ describe('Chain', function() {
     assert(forked);
     assert(chain.tip.hash === block.hash('hex'));
     assert(chain.tip.chainwork.cmp(tip1.chainwork) > 0);
+  }));
+
+  it('should have correct chain value', cob(function* () {
+    assert.equal(chain.db.state.value, 60000000000);
+    assert.equal(chain.db.state.coin, 21);
+    assert.equal(chain.db.state.tx, 22);
   }));
 
   it('should have correct balance', cob(function* () {
@@ -193,6 +205,12 @@ describe('Chain', function() {
     assert(err);
     assert.equal(err.reason, 'bad-txns-inputs-missingorspent');
     assert(chain.tip === tip);
+  }));
+
+  it('should have correct chain value', cob(function* () {
+    assert.equal(chain.db.state.value, 65000000000);
+    assert.equal(chain.db.state.coin, 23);
+    assert.equal(chain.db.state.tx, 24);
   }));
 
   it('should get coin', cob(function* () {
