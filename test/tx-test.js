@@ -4,6 +4,7 @@ var BN = require('bn.js');
 var bcoin = require('../').set('main');
 var assert = require('assert');
 var util = bcoin.util;
+var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var constants = bcoin.constants;
 var opcodes = bcoin.constants.opcodes;
@@ -492,22 +493,23 @@ describe('TX', function() {
       ],
       outputs: [{
         script: [],
-        value: 0
+        value: 0xdeadbeef
       }],
       locktime: 0
     });
-    tx.outputs[0].value = new BN('00ffffffffffffff', 'hex');
-    assert(tx.outputs[0].value.bitLength() === 56);
-    var raw = tx.toRaw()
+    var raw = tx.toRaw();
+    assert(encoding.readU64(raw, 47) === 0xdeadbeef);
+    raw[54] = 0x7f;
     assert.throws(function() {
-      bcoin.tx.fromRaw(raw);
+      console.log(bcoin.tx.fromRaw(raw));
     });
-    delete tx._raw;
-    tx.outputs[0].value = new BN('00ffffffffffffff', 'hex').ineg();
-    assert(tx.outputs[0].value.bitLength() === 56);
-    var raw = tx.toRaw()
+    tx._raw = null;
+    tx.outputs[0].value = 0;
+    var raw = tx.toRaw();
+    assert(encoding.readU64(raw, 47) === 0x00);
+    raw[54] = 0x80;
     assert.throws(function() {
-      bcoin.tx.fromRaw(raw);
+      console.log(bcoin.tx.fromRaw(raw));
     });
   });
 

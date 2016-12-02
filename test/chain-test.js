@@ -15,7 +15,7 @@ describe('Chain', function() {
   var chain, wallet, node, miner, walletdb;
   var tip1, tip2, cb1, cb2, mineBlock;
 
-  this.timeout(5000);
+  this.timeout(8000);
 
   node = new bcoin.fullnode({ db: 'memory', apiKey: 'foo' });
   // node.walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });

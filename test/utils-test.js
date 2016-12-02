@@ -192,11 +192,11 @@ describe('Utils', function() {
     var buf2 = new Buffer(8);
     var msg = 'should write+read a ' + num.bitLength() + ' bit unsigned int';
     it(msg, function() {
-      encoding.writeU64(buf1, num, 0);
-      encoding.writeU64N(buf2, num.toNumber(), 0);
+      encoding.writeU64BN(buf1, num, 0);
+      encoding.writeU64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
-      var n1 = encoding.readU64(buf1, 0);
-      var n2 = encoding.readU64N(buf2, 0);
+      var n1 = encoding.readU64BN(buf1, 0);
+      var n2 = encoding.readU64(buf2, 0);
       assert.equal(n1.toNumber(), n2);
     });
   });
@@ -207,26 +207,26 @@ describe('Utils', function() {
     var msg = 'should write+read a ' + num.bitLength()
       + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int';
     it(msg, function() {
-      encoding.write64(buf1, num, 0);
-      encoding.write64N(buf2, num.toNumber(), 0);
+      encoding.write64BN(buf1, num, 0);
+      encoding.write64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
-      var n1 = encoding.read64(buf1, 0);
-      var n2 = encoding.read64N(buf2, 0);
+      var n1 = encoding.read64BN(buf1, 0);
+      var n2 = encoding.read64(buf2, 0);
       assert.equal(n1.toNumber(), n2);
     });
     var msg = 'should write+read a ' + num.bitLength()
       + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int as unsigned';
     it(msg, function() {
-      encoding.writeU64(buf1, num, 0);
-      encoding.writeU64N(buf2, num.toNumber(), 0);
+      encoding.writeU64BN(buf1, num, 0);
+      encoding.writeU64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
-      var n1 = encoding.readU64(buf1, 0);
+      var n1 = encoding.readU64BN(buf1, 0);
       if (num.isNeg()) {
         assert.throws(function() {
-          encoding.readU64N(buf2, 0);
+          encoding.readU64(buf2, 0);
         });
       } else {
-        var n2 = encoding.readU64N(buf2, 0);
+        var n2 = encoding.readU64(buf2, 0);
         assert.equal(n1.toNumber(), n2);
       }
     });
