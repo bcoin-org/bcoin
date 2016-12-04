@@ -19,8 +19,7 @@ db = LDB({
   location: file,
   db: 'leveldb',
   compression: true,
-  cacheSize: 16 << 20,
-  writeBufferSize: 8 << 20,
+  cacheSize: 32 << 20,
   createIfMissing: false,
   bufferKeys: true
 });
