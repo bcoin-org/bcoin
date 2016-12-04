@@ -207,10 +207,9 @@ describe('Protocol', function() {
   });
 
   it('should parse, reserialize, and verify alert packets', function() {
-    var p = new bcoin.reader(alertData);
-    p.start();
-    while (p.left()) {
-      var alert = packets.AlertPacket.fromRaw(p);
+    var br = new bcoin.reader(alertData);
+    while (br.left()) {
+      var alert = packets.AlertPacket.fromReader(br);
       assert(alert.verify(network.alertKey));
       alert._payload = null;
       alert._hash = null;
@@ -218,6 +217,5 @@ describe('Protocol', function() {
       alert = packets.AlertPacket.fromRaw(data);
       assert(alert.verify(network.alertKey));
     }
-    p.end();
   });
 });

@@ -188,7 +188,7 @@ var reserializeUndo = co(function* reserializeUndo() {
 
     while (br.left()) {
       undo.push(null);
-      injectCoin(undo.top(), Coin.fromRaw(br));
+      injectCoin(undo.top(), Coin.fromReader(br));
     }
 
     batch.write(item.key, undo.toRaw());

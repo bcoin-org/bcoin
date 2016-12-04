@@ -139,8 +139,8 @@ function parseWallets(data) {
   return wids;
 }
 
-function serializeWallets(wids, writer) {
-  var p = new BufferWriter(writer);
+function serializeWallets(wids) {
+  var p = new BufferWriter();
   var i, wid;
 
   p.writeU32(wids.length);
@@ -150,10 +150,7 @@ function serializeWallets(wids, writer) {
     p.writeU32(wid);
   }
 
-  if (!writer)
-    p = p.render();
-
-  return p;
+  return p.render();
 }
 
 function accountToRaw(account) {

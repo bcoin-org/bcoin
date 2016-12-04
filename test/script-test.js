@@ -19,22 +19,22 @@ describe('Script', function() {
       + '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f'
       + 'ac';
 
-    var decoded = bcoin.script.decode(new Buffer(src, 'hex'));
-    assert.equal(decoded.length, 3);
-    assert.equal(decoded[0].data.toString('hex'),
+    var decoded = bcoin.script(new Buffer(src, 'hex'));
+    assert.equal(decoded.code.length, 3);
+    assert.equal(decoded.code[0].data.toString('hex'),
       '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
-    assert.equal(decoded[1].data.toString('hex'),
+    assert.equal(decoded.code[1].data.toString('hex'),
       '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f');
-    assert.equal(decoded[2].value, opcodes.OP_CHECKSIG);
+    assert.equal(decoded.code[2].value, opcodes.OP_CHECKSIG);
 
-    var dst = bcoin.script.encode(decoded);
+    var dst = decoded.toRaw();
     assert.equal(dst.toString('hex'), src);
   });
 
   it('should encode/decode numbers', function() {
     var script = [0, 0x51, 0x52, 0x60];
     var encoded = bcoin.script.fromArray(script).raw;
-    var decoded = bcoin.script.decode(encoded).map(function(op) { return op.value; });
+    var decoded = bcoin.script(encoded).toArray();
     assert.deepEqual(decoded, script);
   });
 
