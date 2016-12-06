@@ -8,6 +8,7 @@ var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
 var opcodes = constants.opcodes;
 var cob = require('../lib/utils/co').cob;
+var MempoolEntry = require('../lib/mempool/mempoolentry');
 
 function dummy(prev, prevHash) {
   if (!prevHash)
@@ -46,7 +47,8 @@ describe('Mempool', function() {
   mempool = new bcoin.mempool({
     chain: chain,
     name: 'mempool-test',
-    db: 'memory'
+    db: 'memory',
+    test: true
   });
 
   walletdb = new bcoin.walletdb({
@@ -80,7 +82,7 @@ describe('Mempool', function() {
     prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
     t1.addInput(dummy(prev));
     sig = t1.signature(0, prev, kp.privateKey, 'all', 0);
-    t1.inputs[0].script = new bcoin.script([sig]),
+    t1.inputs[0].script = new bcoin.script([sig]);
 
     // balance: 51000
     yield w.sign(t1);
