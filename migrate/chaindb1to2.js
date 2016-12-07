@@ -152,7 +152,7 @@ var reserializeCoins = co(function* reserializeCoins() {
       output.value = coin.value;
 
       if (!output.script.isUnspendable())
-        coins.add(coin.index, output);
+        coins.addOutput(coin.index, output);
     }
 
     coins.cleanup();
