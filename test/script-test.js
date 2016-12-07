@@ -371,8 +371,9 @@ describe('Script', function() {
           delete output._address;
         }
         var err, res;
+        var value = tx.inputs[0].coin.value;
         try {
-          res = Script.verify(input, witness, output, tx, 0, flags);
+          res = Script.verify(input, witness, output, tx, 0, value, flags);
         } catch (e) {
           err = e;
         }
