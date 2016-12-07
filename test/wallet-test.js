@@ -195,7 +195,7 @@ describe('Wallet', function() {
       .addInput(src, 0)
       .addOutput(w.getAddress(), 5460);
 
-    maxSize = tx.maxSize();
+    maxSize = yield tx.estimateSize();
 
     yield w.sign(tx);
 
