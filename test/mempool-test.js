@@ -24,8 +24,7 @@ describe('Mempool', function() {
   mempool = new bcoin.mempool({
     chain: chain,
     name: 'mempool-test',
-    db: 'memory',
-    test: true
+    db: 'memory'
   });
 
   walletdb = new bcoin.walletdb({
