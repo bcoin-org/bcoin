@@ -10,29 +10,6 @@ var opcodes = constants.opcodes;
 var cob = require('../lib/utils/co').cob;
 var MempoolEntry = require('../lib/mempool/mempoolentry');
 
-function dummy(prev, prevHash) {
-  if (!prevHash)
-    prevHash = constants.ONE_HASH.toString('hex');
-
-  return {
-    prevout: {
-      hash: prevHash,
-      index: 0
-    },
-    coin: {
-      version: 1,
-      height: 0,
-      value: 70000,
-      script: prev,
-      coinbase: false,
-      hash: prevHash,
-      index: 0
-    },
-    script: new bcoin.script(),
-    sequence: 0xffffffff
-  };
-}
-
 describe('Mempool', function() {
   var chain, mempool, walletdb;
   var wallet, cached;
@@ -56,6 +33,41 @@ describe('Mempool', function() {
     db: 'memory',
     verify: true
   });
+
+  function dummy(prev, prevHash) {
+    var funding = bcoin.mtx();
+
+    if (!prevHash)
+      prevHash = constants.ONE_HASH.toString('hex');
+
+    funding.addInput({
+      prevout: {
+        hash: prevHash,
+        index: 0
+      },
+      coin: {
+        version: 1,
+        height: 0,
+        value: 0,
+        script: prev,
+        coinbase: false,
+        hash: prevHash,
+        index: 0
+      },
+      script: new bcoin.script(),
+      sequence: 0xffffffff
+    });
+
+    funding.addOutput({ value: 70000, script: prev });
+
+    funding = funding.toTX();
+
+    var entry = MempoolEntry.fromTX(funding, 0);
+
+    mempool.trackEntry(entry);
+
+    return bcoin.coin.fromTX(funding, 0);
+  }
 
   it('should open mempool', cob(function* () {
     yield mempool.open();
@@ -147,7 +159,7 @@ describe('Mempool', function() {
     yield mempool.addTX(t4);
 
     balance = mempool.getBalance();
-    assert.equal(balance, 0);
+    assert.equal(balance, 70000); // note: funding balance
 
     yield mempool.addTX(t1);
 
@@ -376,7 +388,7 @@ describe('Mempool', function() {
     block.txs.push(tx);
 
     assert(mempool.hasReject(cached.hash()));
-    yield mempool.addBlock(block);
+    yield mempool.addBlock({ height: 1 }, block.txs);
     assert(!mempool.hasReject(cached.hash()));
   }));
 
