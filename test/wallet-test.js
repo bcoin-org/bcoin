@@ -503,8 +503,12 @@ describe('Wallet', function() {
     assert(t2.verify());
 
     assert.equal(t2.getInputValue(), 16380);
-    assert.equal(t2.getOutputValue(), 5460);
-    assert.equal(t2.getFee(), 10920);
+
+    // assert.equal(t2.getOutputValue(), 5460); // minrelay=10000
+    // assert.equal(t2.getFee(), 10920); // minrelay=10000
+
+    assert.equal(t2.getOutputValue(), 6380); // minrelay=1000
+    assert.equal(t2.getFee(), 10000); // minrelay=1000
 
     // Create new transaction
     t3 = bcoin.mtx().addOutput(w2.getAddress(), 15000);
@@ -840,8 +844,12 @@ describe('Wallet', function() {
     assert(t2.verify());
 
     assert.equal(t2.getInputValue(), 16380);
-    assert.equal(t2.getOutputValue(), 5460);
-    assert.equal(t2.getFee(), 10920);
+
+    // assert.equal(t2.getOutputValue(), 5460); // minrelay=10000
+    // assert.equal(t2.getFee(), 10920); // minrelay=10000
+
+    assert.equal(t2.getOutputValue(), 6380); // minrelay=1000
+    assert.equal(t2.getFee(), 10000); // minrelay=1000
 
     // Create new transaction
     t3 = bcoin.mtx().addOutput(w2.getAddress(), 15000);
