@@ -9,10 +9,11 @@ var assert = require('assert');
 var opcodes = constants.opcodes;
 var co = require('../lib/utils/co');
 var cob = co.cob;
+var CoinView = require('../lib/blockchain/coinview');
 // var Client = require('../lib/wallet/client');
 
 describe('Chain', function() {
-  var chain, wallet, node, miner, walletdb;
+  var chain, wallet, node, miner, walletdb, mempool;
   var tip1, tip2, cb1, cb2, mineBlock;
 
   this.timeout(5000);
@@ -20,6 +21,7 @@ describe('Chain', function() {
   node = new bcoin.fullnode({ db: 'memory', apiKey: 'foo' });
   // node.walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
   chain = node.chain;
+  mempool = node.mempool;
   walletdb = node.walletdb;
   walletdb.options.resolution = false;
   miner = node.miner;
@@ -50,7 +52,7 @@ describe('Chain', function() {
 
     yield wallet.sign(redeemer);
 
-    attempt.addTX(redeemer.toTX());
+    attempt.addTX(redeemer.toTX(), redeemer.view);
 
     return yield attempt.mineAsync();
   });
@@ -332,7 +334,7 @@ describe('Chain', function() {
 
     yield wallet.sign(redeemer);
 
-    attempt.addTX(redeemer.toTX());
+    attempt.addTX(redeemer.toTX(), redeemer.view);
 
     return yield attempt.mineAsync();
   });
@@ -361,7 +363,7 @@ describe('Chain', function() {
 
     attempt = yield miner.createBlock();
 
-    attempt.addTX(redeemer.toTX());
+    attempt.addTX(redeemer.toTX(), redeemer.view);
 
     block = yield attempt.mineAsync();
 
@@ -387,7 +389,7 @@ describe('Chain', function() {
 
     attempt = yield miner.createBlock();
 
-    attempt.addTX(redeemer.toTX());
+    attempt.addTX(redeemer.toTX(), redeemer.view);
 
     block = yield attempt.mineAsync();
 
@@ -431,7 +433,7 @@ describe('Chain', function() {
 
     attempt = yield miner.createBlock();
 
-    attempt.addTX(redeemer.toTX());
+    attempt.addTX(redeemer.toTX(), redeemer.view);
 
     block = yield attempt.mineAsync();
 

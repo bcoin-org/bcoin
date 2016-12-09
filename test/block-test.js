@@ -6,6 +6,8 @@ var util = bcoin.util;
 var btcutils = require('../lib/btc/utils');
 var crypto = require('../lib/crypto/crypto');
 var Bloom = require('../lib/utils/bloom');
+var CoinView = require('../lib/blockchain/coinview');
+var Coin = require('../lib/primitives/coin');
 var constants = bcoin.constants;
 var network = bcoin.networks;
 var assert = require('assert');
@@ -143,6 +145,15 @@ describe('Block', function() {
   });
 
   it('should verify a historical block', function() {
+    var view = new CoinView();
+    for (var i = 1; i < block300025.txs.length; i++) {
+      var tx = block300025.txs[i];
+      for (var j = 0; j < tx.inputs.length; j++) {
+        var input = tx.inputs[j];
+        var coin = Coin.fromJSON(input.coin);
+        view.addCoin(coin);
+      }
+    }
     assert(block.verify());
     assert(block.txs[0].isCoinbase());
     assert(block.txs[0].isSane());
@@ -152,12 +163,13 @@ describe('Block', function() {
     for (var i = 1; i < block.txs.length; i++) {
       var tx = block.txs[i];
       assert(tx.isSane());
-      assert(tx.checkInputs(block.height));
-      assert(tx.verify(flags));
+      assert(tx.checkInputs(view, block300025.height));
+      assert(tx.verify(view, flags));
       assert(!tx.hasWitness());
+      view.addTX(tx, block300025.height);
     }
-    assert.equal(block.getReward(), 2507773345);
-    assert.equal(block.getReward(), block.txs[0].outputs[0].value);
+    assert.equal(block.getReward(view), 2507773345);
+    assert.equal(block.getReward(view), block.txs[0].outputs[0].value);
   });
 
   it('should fail with a bad merkle root', function() {

@@ -16,19 +16,7 @@ var dummyInput = {
   prevout: {
     hash: constants.NULL_HASH,
     index: 0
-  },
-  coin: {
-    version: 1,
-    height: 0,
-    value: constants.MAX_MONEY,
-    script: new bcoin.script([]),
-    coinbase: false,
-    hash: constants.NULL_HASH,
-    index: 0
-  },
-  script: new bcoin.script([]),
-  witness: new bcoin.witness([]),
-  sequence: 0xffffffff
+  }
 };
 
 describe('HTTP', function() {

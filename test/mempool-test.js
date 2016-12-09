@@ -35,35 +35,28 @@ describe('Mempool', function() {
 
   function dummy(prev, prevHash) {
     var funding = bcoin.mtx();
+    var coin, entry;
 
     if (!prevHash)
       prevHash = constants.ONE_HASH.toString('hex');
 
-    funding.addInput({
-      prevout: {
-        hash: prevHash,
-        index: 0
-      },
-      coin: {
-        version: 1,
-        height: 0,
-        value: 0,
-        script: prev,
-        coinbase: false,
-        hash: prevHash,
-        index: 0
-      },
-      script: new bcoin.script(),
-      sequence: 0xffffffff
+    coin = new bcoin.coin({
+      version: 1,
+      height: 0,
+      value: 0,
+      script: prev,
+      coinbase: false,
+      hash: prevHash,
+      index: 0
     });
+
+    funding.addInput(coin);
 
     funding.addOutput({ value: 70000, script: prev });
 
-    funding = funding.toTX();
+    entry = MempoolEntry.fromTX(funding.toTX(), funding.view, 0);
 
-    var entry = MempoolEntry.fromTX(funding, 0);
-
-    mempool.trackEntry(entry);
+    mempool.trackEntry(entry, funding.view);
 
     return bcoin.coin.fromTX(funding, 0);
   }
@@ -92,7 +85,7 @@ describe('Mempool', function() {
 
     prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
     t1.addInput(dummy(prev));
-    sig = t1.signature(0, prev, t1.inputs[0].coin.value, kp.privateKey, 'all', 0);
+    sig = t1.signature(0, prev, 70000, kp.privateKey, 'all', 0);
     t1.inputs[0].script = new bcoin.script([sig]);
 
     // balance: 51000
@@ -148,12 +141,6 @@ describe('Mempool', function() {
     fake = fake.toTX();
     // balance: 11000
 
-    [t2, t3, t4, f1, fake].forEach(function(tx) {
-      tx.inputs.forEach(function(input) {
-        input.coin = null;
-      });
-    });
-
     yield mempool.addTX(fake);
     yield mempool.addTX(t4);
 
@@ -203,7 +190,7 @@ describe('Mempool', function() {
 
     chain.tip.height = 200;
 
-    sig = tx.signature(0, prev, tx.inputs[0].coin.value, kp.privateKey, 'all', 0);
+    sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
     tx.inputs[0].script = new bcoin.script([sig]),
 
     tx = tx.toTX();
@@ -228,7 +215,7 @@ describe('Mempool', function() {
     tx.setLocktime(200);
     chain.tip.height = 200 - 1;
 
-    sig = tx.signature(0, prev, tx.inputs[0].coin.value, kp.privateKey, 'all', 0);
+    sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
     tx.inputs[0].script = new bcoin.script([sig]),
     tx = tx.toTX();
 
@@ -261,7 +248,7 @@ describe('Mempool', function() {
 
     prevs = bcoin.script.fromPubkeyhash(kp.getKeyHash());
 
-    sig = tx.signature(0, prevs, tx.inputs[0].coin.value, kp.privateKey, 'all', 1);
+    sig = tx.signature(0, prevs, 70000, kp.privateKey, 'all', 1);
     sig[sig.length - 1] = 0;
     tx.inputs[0].witness = new bcoin.witness([sig, kp.publicKey]);
     tx = tx.toTX();
@@ -290,7 +277,7 @@ describe('Mempool', function() {
 
     tx.addInput(dummy(prev, prevHash));
 
-    sig = tx.signature(0, prev, tx.inputs[0].coin.value, kp.privateKey, 'all', 0);
+    sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
     tx.inputs[0].script = new bcoin.script([sig]);
     tx.inputs[0].witness.push(new Buffer(0));
     tx = tx.toTX();
@@ -373,10 +360,7 @@ describe('Mempool', function() {
       prevout: {
         hash: constants.NULL_HASH,
         index: 0xffffffff
-      },
-      coin: null,
-      script: new bcoin.script(),
-      sequence: 0xffffffff
+      }
     };
 
     tx.addInput(input);

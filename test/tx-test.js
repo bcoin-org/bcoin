@@ -12,6 +12,7 @@ var valid = require('./data/tx_valid.json');
 var invalid = require('./data/tx_invalid.json');
 var sighash = require('./data/sighash.json');
 var fs = require('fs');
+var CoinView = require('../lib/blockchain/coinview');
 var tx1 = parseTX('data/tx1.hex');
 var tx2 = parseTX('data/tx2.hex');
 var tx3 = parseTX('data/tx3.hex');
@@ -20,24 +21,23 @@ var wtx = parseTX('data/wtx.hex');
 var coolest = parseTX('data/coolest-tx-ever-sent.hex');
 
 function parseTX(file) {
-  file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim().split(/\n+/);
-  var tx = bcoin.tx.fromRaw(file.shift().trim(), 'hex');
-  for (var i = 0; i < file.length; i++) {
-    var coin = bcoin.tx.fromRaw(file[i].trim(), 'hex');
-    tx.fillCoins(coin);
+  var data = fs.readFileSync(__dirname + '/' + file, 'utf8');
+  var parts = data.trim().split(/\n+/);
+  var raw = parts[0];
+  var tx = bcoin.tx.fromRaw(raw.trim(), 'hex');
+  var view = new CoinView();
+  var i, prev;
+
+  for (i = 1; i < parts.length; i++) {
+    raw = parts[i];
+    prev = bcoin.tx.fromRaw(raw.trim(), 'hex');
+    view.addTX(prev, -1);
   }
-  return tx;
+
+  return { tx: tx, view: view };
 }
 
 function clearCache(tx, nocache) {
-  var i, input, output;
-
-  if (tx instanceof bcoin.script) {
-    if (!nocache)
-      return;
-    return;
-  }
-
   if (!nocache) {
     assert.equal(tx.hash('hex'), tx.clone().hash('hex'));
     return;
@@ -46,7 +46,6 @@ function clearCache(tx, nocache) {
   tx._raw = null;
   tx._size = -1;
   tx._witnessSize = -1;
-  tx._lastWitnessSize = 0;
   tx._hash = null;
   tx._hhash = null;
   tx._whash = null;
@@ -55,16 +54,6 @@ function clearCache(tx, nocache) {
   tx._hashPrevouts = null;
   tx._hashSequence = null;
   tx._hashOutputs = null;
-
-  for (i = 0; i < tx.inputs.length; i++) {
-    input = tx.inputs[i];
-    input._address = null;
-  }
-
-  for (i = 0; i < tx.outputs.length; i++) {
-    output = tx.outputs[i];
-    output._address = null;
-  }
 }
 
 describe('TX', function() {
@@ -117,69 +106,83 @@ describe('TX', function() {
     it('should be verifiable' + suffix, function() {
       var tx = bcoin.tx.fromRaw(raw, 'hex');
       var p = bcoin.tx.fromRaw(inp, 'hex');
-      tx.fillCoins(p);
+      var view = new CoinView();
+      view.addTX(p, -1);
 
       clearCache(tx, nocache);
       clearCache(p, nocache);
 
-      assert(tx.verify());
+      assert(tx.verify(view));
     });
 
     it('should verify non-minimal output' + suffix, function() {
-      clearCache(tx1, nocache);
-      assert(tx1.verify(constants.flags.VERIFY_P2SH));
+      clearCache(tx1.tx, nocache);
+      assert(tx1.tx.verify(tx1.view, constants.flags.VERIFY_P2SH));
     });
 
     it('should verify tx.version == 0' + suffix, function() {
-      clearCache(tx2, nocache);
-      assert(tx2.verify(constants.flags.VERIFY_P2SH));
+      clearCache(tx2.tx, nocache);
+      assert(tx2.tx.verify(tx2.view, constants.flags.VERIFY_P2SH));
     });
 
     it('should verify sighash_single bug w/ findanddelete' + suffix, function() {
-      clearCache(tx3, nocache);
-      assert(tx3.verify(constants.flags.VERIFY_P2SH));
+      clearCache(tx3.tx, nocache);
+      assert(tx3.tx.verify(tx3.view, constants.flags.VERIFY_P2SH));
     });
 
     it('should verify high S value with only DERSIG enabled' + suffix, function() {
-      var coin = tx4.inputs[0].coin;
-      clearCache(tx4, nocache);
-      assert(tx4.verifyInput(0, coin, constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG));
+      var coin = tx4.view.getOutput(tx4.tx.inputs[0]);
+      var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+      clearCache(tx4.tx, nocache);
+      assert(tx4.tx.verifyInput(0, coin, flags));
     });
 
     it('should verify the coolest tx ever sent' + suffix, function() {
-      clearCache(coolest, nocache);
-      assert(coolest.verify(constants.flags.VERIFY_NONE));
+      clearCache(coolest.tx, nocache);
+      assert(coolest.tx.verify(coolest.view, constants.flags.VERIFY_NONE));
     });
 
     it('should parse witness tx properly' + suffix, function() {
-      clearCache(wtx, nocache);
-      assert.equal(wtx.inputs.length, 5);
-      assert.equal(wtx.outputs.length, 1980);
-      assert(wtx.hasWitness());
-      assert.notEqual(wtx.hash('hex'), wtx.witnessHash('hex'));
-      assert.equal(wtx.witnessHash('hex'),
+      var raw1, raw2, wtx2;
+
+      clearCache(wtx.tx, nocache);
+
+      assert.equal(wtx.tx.inputs.length, 5);
+      assert.equal(wtx.tx.outputs.length, 1980);
+      assert(wtx.tx.hasWitness());
+      assert.notEqual(wtx.tx.hash('hex'), wtx.tx.witnessHash('hex'));
+      assert.equal(wtx.tx.witnessHash('hex'),
         '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
-      assert.equal(wtx.getSize(), 62138);
-      assert.equal(wtx.getVirtualSize(), 61813);
-      assert.equal(wtx.getWeight(), 247250);
-      var raw1 = wtx.toRaw();
-      clearCache(wtx, true);
-      var raw2 = wtx.toRaw();
+      assert.equal(wtx.tx.getSize(), 62138);
+      assert.equal(wtx.tx.getVirtualSize(), 61813);
+      assert.equal(wtx.tx.getWeight(), 247250);
+
+      raw1 = wtx.tx.toRaw();
+      clearCache(wtx.tx, true);
+
+      raw2 = wtx.tx.toRaw();
       assert.deepEqual(raw1, raw2);
-      var wtx2 = bcoin.tx.fromRaw(raw2);
+
+      wtx2 = bcoin.tx.fromRaw(raw2);
       clearCache(wtx2, nocache);
-      assert.equal(wtx.hash('hex'), wtx2.hash('hex'));
-      assert.equal(wtx.witnessHash('hex'), wtx2.witnessHash('hex'));
+
+      assert.equal(wtx.tx.hash('hex'), wtx2.hash('hex'));
+      assert.equal(wtx.tx.witnessHash('hex'), wtx2.witnessHash('hex'));
     });
 
     function parseTest(data) {
       var coins = data[0];
       var tx = bcoin.tx.fromRaw(data[1], 'hex');
       var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+      var view = new CoinView();
       var flag = 0;
+      var i, name;
 
-      for (var i = 0; i < flags.length; i++)
-        flag |= constants.flags['VERIFY_' + flags[i]];
+      for (i = 0; i < flags.length; i++) {
+        name = 'VERIFY_' + flags[i];
+        assert(constants.flags[name] != null, 'Unknown flag.');
+        flag |= constants.flags[name];
+      }
 
       flags = flag;
 
@@ -188,7 +191,9 @@ describe('TX', function() {
         var index = data[1];
         var script = bcoin.script.fromString(data[2]);
         var value = data[3];
-        var coin = new bcoin.coin({
+        var coin;
+
+        coin = new bcoin.coin({
           version: 1,
           height: -1,
           coinbase: false,
@@ -197,14 +202,17 @@ describe('TX', function() {
           script: script,
           value: value != null ? parseInt(value, 10) : 0
         });
-        tx.fillCoins(coin);
+
+        if (index !== -1)
+          view.addCoin(coin);
       });
 
       return {
         tx: tx,
         flags: flags,
-        comments: tx.hasCoins()
-          ? util.inspectify(tx.inputs[0].coin.script, false)
+        view: view,
+        comments: tx.hasCoins(view)
+          ? util.inspectify(view.getOutput(tx.inputs[0]).script, false)
           : 'coinbase',
         data: data
       };
@@ -215,24 +223,30 @@ describe('TX', function() {
       var arr = test[0];
       var valid = test[1];
       var comment = '';
+
       arr.forEach(function(json, i) {
+        var data, tx, view, flags, comments;
+
         if (json.length === 1) {
           comment += ' ' + json[0];
           return;
         }
 
-        var data = parseTest(json);
+        data = parseTest(json);
 
         if (!data) {
           comment = '';
           return;
         }
 
-        var tx = data.tx;
-        var flags = data.flags;
-        var comments = comment.trim();
+        tx = data.tx;
+        view = data.view;
+        flags = data.flags;
+        comments = comment.trim();
+
         if (!comments)
           comments = data.comments;
+
         comment = '';
 
         if (valid) {
@@ -245,13 +259,13 @@ describe('TX', function() {
           }
           it('should handle valid tx test' + suffix + ': ' + comments, function() {
             clearCache(tx, nocache);
-            assert.ok(tx.verify(flags));
+            assert.ok(tx.verify(view, flags));
           });
         } else {
           if (comments === 'Duplicate inputs') {
             it('should handle duplicate input test' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
-              assert.ok(tx.verify(flags));
+              assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
             });
             return;
@@ -259,7 +273,7 @@ describe('TX', function() {
           if (comments === 'Negative output') {
             it('should handle invalid tx (negative)' + suffix + ': ' + comments, function() {
               clearCache(tx, nocache);
-              assert.ok(tx.verify(flags));
+              assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
             });
             return;
@@ -273,29 +287,38 @@ describe('TX', function() {
           }
           it('should handle invalid tx test' + suffix + ': ' + comments, function() {
             clearCache(tx, nocache);
-            assert.ok(!tx.verify(flags));
+            assert.ok(!tx.verify(view, flags));
           });
         }
       });
     });
 
     sighash.forEach(function(data) {
+      var tx, script, index, type, expected, hexType;
+
       // ["raw_transaction, script, input_index, hashType, signature_hash (result)"],
+
       if (data.length === 1)
         return;
-      var tx = bcoin.tx.fromRaw(data[0], 'hex');
+
+      tx = bcoin.tx.fromRaw(data[0], 'hex');
       clearCache(tx, nocache);
-      var script = bcoin.script.fromRaw(data[1], 'hex');
-      clearCache(script, nocache);
-      var index = data[2];
-      var type = data[3];
-      var expected = util.revHex(data[4]);
-      var hexType = type & 3;
+
+      script = bcoin.script.fromRaw(data[1], 'hex');
+
+      index = data[2];
+      type = data[3];
+      expected = util.revHex(data[4]);
+      hexType = type & 3;
+
       if (type & 0x80)
         hexType |= 0x80;
+
       hexType = hexType.toString(16);
+
       if (hexType.length % 2 !== 0)
         hexType = '0' + hexType;
+
       it('should get signature hash of ' + data[4] + ' (' + hexType + ')' + suffix, function() {
         var subscript = script.getSubscript(0).removeSeparators();
         var hash = tx.signatureHash(index, subscript, 0, type, 0).toString('hex');
@@ -338,7 +361,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should handle 51 bit coin values', function() {
@@ -353,7 +376,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(tx.checkInputs(0));
+    // assert.ok(tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit output values', function() {
@@ -368,7 +391,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(!tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should handle 51 bit output values', function() {
@@ -383,7 +406,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(tx.checkInputs(0));
+    // assert.ok(tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit fees', function() {
@@ -398,7 +421,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit values from multiple', function() {
@@ -417,7 +440,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit output values from multiple', function() {
@@ -442,7 +465,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(!tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit fees from multiple', function() {
@@ -461,7 +484,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit fees from multiple txs', function() {
@@ -482,7 +505,7 @@ describe('TX', function() {
       });
       block.txs.push(tx);
     }
-    assert.equal(block.getReward(), -1);
+    // assert.equal(block.getReward(), -1);
   });
 
   it('should fail to parse >53 bit values', function() {
@@ -502,7 +525,7 @@ describe('TX', function() {
     assert(encoding.readU64(raw, 47) === 0xdeadbeef);
     raw[54] = 0x7f;
     assert.throws(function() {
-      console.log(bcoin.tx.fromRaw(raw));
+      bcoin.tx.fromRaw(raw);
     });
     tx._raw = null;
     tx.outputs[0].value = 0;
@@ -510,7 +533,7 @@ describe('TX', function() {
     assert(encoding.readU64(raw, 47) === 0x00);
     raw[54] = 0x80;
     assert.throws(function() {
-      console.log(bcoin.tx.fromRaw(raw));
+      bcoin.tx.fromRaw(raw);
     });
   });
 
@@ -526,7 +549,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on 53 bit output values', function() {
@@ -541,7 +564,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(!tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on 53 bit fees', function() {
@@ -556,7 +579,7 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    assert.ok(!tx.checkInputs(0));
+    // assert.ok(!tx.checkInputs(view, 0));
   });
 
   [util.MAX_SAFE_ADDITION, util.MAX_SAFE_INTEGER].forEach(function(MAX) {
@@ -576,7 +599,7 @@ describe('TX', function() {
         locktime: 0
       });
       assert.ok(tx.isSane());
-      assert.ok(!tx.checkInputs(0));
+      // assert.ok(!tx.checkInputs(view, 0));
     });
 
     it('should fail on >53 bit output values from multiple', function() {
@@ -601,7 +624,7 @@ describe('TX', function() {
         locktime: 0
       });
       assert.ok(!tx.isSane());
-      assert.ok(!tx.checkInputs(0));
+      // assert.ok(!tx.checkInputs(view, 0));
     });
 
     it('should fail on >53 bit fees from multiple', function() {
@@ -620,14 +643,16 @@ describe('TX', function() {
         locktime: 0
       });
       assert.ok(tx.isSane());
-      assert.ok(!tx.checkInputs(0));
+      // assert.ok(!tx.checkInputs(view, 0));
     });
 
     it('should fail on >53 bit fees from multiple txs', function() {
-      var data = util.merge({}, bcoin.network.get().genesis, { height: 0 });
-      var block = new bcoin.block(data);
-      for (var i = 0; i < 3; i++) {
-        var tx = bcoin.tx({
+      var genesis = bcoin.network.get().genesis;
+      var block = new bcoin.block(genesis);
+      var i, tx;
+
+      for (i = 0; i < 3; i++) {
+        tx = bcoin.tx({
           version: 1,
           flag: 1,
           inputs: [
@@ -641,7 +666,8 @@ describe('TX', function() {
         });
         block.txs.push(tx);
       }
-      assert.equal(block.getReward(), -1);
+
+      // assert.equal(block.getReward(view), -1);
     });
   });
 });

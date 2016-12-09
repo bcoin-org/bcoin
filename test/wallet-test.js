@@ -42,24 +42,14 @@ function nextBlock(height) {
 }
 
 function dummy(hash) {
-  hash = hash || crypto.randomBytes(32).toString('hex');
+  if (!hash)
+    hash = crypto.randomBytes(32).toString('hex');
+
   return {
     prevout: {
       hash: hash,
       index: 0
-    },
-    coin: {
-      version: 1,
-      height: 0,
-      value: constants.MAX_MONEY,
-      script: new bcoin.script(),
-      coinbase: false,
-      hash: hash,
-      index: 0
-    },
-    script: new bcoin.script(),
-    witness: new bcoin.witness(),
-    sequence: 0xffffffff
+    }
   };
 }
 
@@ -218,7 +208,7 @@ describe('Wallet', function() {
     t1.ts = util.now();
 
     // balance: 51000
-    yield w.sign(t1);
+    // yield w.sign(t1);
     t1 = t1.toTX();
 
     t2 = bcoin.mtx()
@@ -226,7 +216,7 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 24000)
       .addOutput(w.getAddress(), 24000);
 
-    doubleSpend = t2.inputs[0];
+    doubleSpend = bcoin.coin.fromTX(t1, 0);
 
     // balance: 49000
     yield w.sign(t2);
@@ -318,7 +308,7 @@ describe('Wallet', function() {
     var tx, txs, total, balance;
 
     tx = bcoin.mtx().addOutput(w.getAddress(), 5000);
-    tx.addInput(doubleSpend.coin);
+    tx.addInput(doubleSpend);
 
     txs = yield w.getHistory();
     assert.equal(txs.length, 5);
@@ -370,7 +360,7 @@ describe('Wallet', function() {
     t1.addInput(dummy());
 
     // balance: 51000
-    yield w.sign(t1);
+    // yield w.sign(t1);
     t1 = t1.toTX();
 
     t2 = bcoin.mtx()
@@ -480,7 +470,7 @@ describe('Wallet', function() {
   it('should fill tx with inputs', cob(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
-    var t1, t2, t3, err;
+    var view, t1, t2, t3, err;
 
     // Coinbase
     t1 = bcoin.mtx()
@@ -498,17 +488,18 @@ describe('Wallet', function() {
     t2 = bcoin.mtx().addOutput(w2.getAddress(), 5460);
     yield w1.fund(t2, { rate: 10000, round: true });
     yield w1.sign(t2);
+    view = t2.view;
     t2 = t2.toTX();
 
-    assert(t2.verify());
+    assert(t2.verify(view));
 
-    assert.equal(t2.getInputValue(), 16380);
+    assert.equal(t2.getInputValue(view), 16380);
 
     // assert.equal(t2.getOutputValue(), 5460); // minrelay=10000
-    // assert.equal(t2.getFee(), 10920); // minrelay=10000
+    // assert.equal(t2.getFee(view), 10920); // minrelay=10000
 
     assert.equal(t2.getOutputValue(), 6380); // minrelay=1000
-    assert.equal(t2.getFee(), 10000); // minrelay=1000
+    assert.equal(t2.getFee(view), 10000); // minrelay=1000
 
     // Create new transaction
     t3 = bcoin.mtx().addOutput(w2.getAddress(), 15000);
@@ -526,7 +517,7 @@ describe('Wallet', function() {
   it('should fill tx with inputs with accurate fee', cob(function* () {
     var w1 = yield walletdb.create({ master: KEY1 });
     var w2 = yield walletdb.create({ master: KEY2 });
-    var t1, t2, t3, balance, err;
+    var view, t1, t2, t3, balance, err;
 
     // Coinbase
     t1 = bcoin.mtx()
@@ -545,15 +536,16 @@ describe('Wallet', function() {
     yield w1.fund(t2, { rate: 10000 });
 
     yield w1.sign(t2);
+    view = t2.view;
     t2 = t2.toTX();
-    assert(t2.verify());
+    assert(t2.verify(view));
 
-    assert.equal(t2.getInputValue(), 16380);
+    assert.equal(t2.getInputValue(view), 16380);
 
     // Should now have a change output:
     assert.equal(t2.getOutputValue(), 11130);
 
-    assert.equal(t2.getFee(), 5250);
+    assert.equal(t2.getFee(view), 5250);
 
     assert.equal(t2.getWeight(), 2084);
     assert.equal(t2.getBaseSize(), 521);
@@ -666,6 +658,7 @@ describe('Wallet', function() {
   var multisig = co(function* multisig(witness, bullshitNesting, cb) {
     var flags = bcoin.constants.flags.STANDARD_VERIFY_FLAGS;
     var options, w1, w2, w3, receive, b58, addr, paddr, utx, send, change;
+    var view;
 
     var rec = bullshitNesting ? 'nested' : 'receive';
     var depth = bullshitNesting ? 'nestedDepth' : 'receiveDepth';
@@ -758,8 +751,9 @@ describe('Wallet', function() {
 
     yield w2.sign(send);
 
+    view = send.view;
     send = send.toTX();
-    assert(send.verify(flags));
+    assert(send.verify(view, flags));
 
     assert.equal(w1.account.changeDepth, 1);
 
@@ -794,8 +788,8 @@ describe('Wallet', function() {
       send.inputs[0].script.compile();
     }
 
-    assert(!send.verify(flags));
-    assert.equal(send.getFee(), 10000);
+    assert(!send.verify(view, flags));
+    assert.equal(send.getFee(view), 10000);
   });
 
   it('should verify 2-of-3 scripthash tx', cob(function* () {
@@ -1224,7 +1218,7 @@ describe('Wallet', function() {
       .addOutput(addr, 50000);
     t1.addInput(dummy());
 
-    yield alice.sign(t1);
+    // yield alice.sign(t1);
     t1 = t1.toTX();
 
     yield alice.add(t1);
@@ -1291,7 +1285,7 @@ describe('Wallet', function() {
       .addOutput(addr, 50000);
     t1.addInput(dummy());
 
-    yield alice.sign(t1);
+    // yield alice.sign(t1);
     t1 = t1.toTX();
 
     yield alice.add(t1);
