@@ -141,8 +141,9 @@ describe('TX', function() {
     });
 
     it('should verify high S value with only DERSIG enabled' + suffix, function() {
+      var coin = tx4.inputs[0].coin;
       clearCache(tx4, nocache);
-      assert(tx4.verifyInput(0, constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG));
+      assert(tx4.verifyInput(0, coin, constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG));
     });
 
     it('should verify the coolest tx ever sent' + suffix, function() {
@@ -297,7 +298,7 @@ describe('TX', function() {
         hexType = '0' + hexType;
       it('should get signature hash of ' + data[4] + ' (' + hexType + ')' + suffix, function() {
         var subscript = script.getSubscript(0).removeSeparators();
-        var hash = tx.signatureHash(index, subscript, type, 0).toString('hex');
+        var hash = tx.signatureHash(index, subscript, 0, type, 0).toString('hex');
         assert.equal(hash, expected);
       });
     });
