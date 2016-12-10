@@ -1,27 +1,29 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('main');
-var util = bcoin.util;
+var assert = require('assert');
+var fs = require('fs');
+var util = require('../lib/utils/util');
 var btcutils = require('../lib/btc/utils');
 var crypto = require('../lib/crypto/crypto');
 var Bloom = require('../lib/utils/bloom');
+var Block = require('../lib/primitives/block');
+var Headers = require('../lib/primitives/headers');
+var MerkleBlock = require('../lib/primitives/merkleblock');
+var TX = require('../lib/primitives/tx');
 var CoinView = require('../lib/blockchain/coinview');
 var Coin = require('../lib/primitives/coin');
-var constants = bcoin.constants;
-var network = bcoin.networks;
-var assert = require('assert');
-var block300025 = require('./data/block300025.json');
-var fs = require('fs');
-var cmpct = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8').trim().split('\n');
+var constants = require('../lib/protocol/constants');
 var bip152 = require('../lib/net/bip152');
+
+var block300025 = require('./data/block300025.json');
+var cmpct = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8').trim().split('\n');
 var cmpct2 = fs.readFileSync(__dirname + '/data/cmpct2', 'utf8').trim();
 var cmpct2block = fs.readFileSync(__dirname + '/data/cmpct2.bin');
 
-bcoin.cache();
-
 describe('Block', function() {
-  var mblock = bcoin.merkleblock({
+  var mblock, raw, block, raw2;
+
+  mblock = new MerkleBlock({
     version: 2,
     prevBlock: 'd1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0000000000000000',
     merkleRoot: '28bec1d35af480ba3884553d72694f6ba6c163a5c081d7e6edaec15f373f19af',
@@ -43,10 +45,9 @@ describe('Block', function() {
     ],
     flags: new Buffer([245, 122, 0])
   });
-  var raw = mblock.toRaw().toString('hex');
-  var block;
+  raw = mblock.toRaw().toString('hex');
 
-  var raw2 = '02000000d1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0'
+  raw2 = '02000000d1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0'
     + '00000000000000028bec1d35af480ba3884553d72694f6ba6c163a5c081d7e6edaec'
     + '15f373f19af62ef6d536c890019d0b4bf46cd0100000a7d22e53bce1bbb3294d1a39'
     + '6c5acc45bdcc8f192cb492f0d9f55421fd4c62de19d6d585fdaf3737b9a54aaee1dd'
@@ -60,7 +61,7 @@ describe('Block', function() {
     + '056c6d56433825657ba32afe269819f01993bd77baba86379043168c94845d32370e'
     + '5356203f57a00';
 
-  var mblock = bcoin.merkleblock.fromRaw(raw2, 'hex');
+  mblock = MerkleBlock.fromRaw(raw2, 'hex');
 
   this.timeout(10000);
 
@@ -80,26 +81,26 @@ describe('Block', function() {
   });
 
   it('should decode/encode with parser/framer', function() {
-    var b = bcoin.merkleblock.fromRaw(raw, 'hex');
+    var b = MerkleBlock.fromRaw(raw, 'hex');
     assert.equal(b.toRaw().toString('hex'), raw);
     assert.equal(raw, raw2);
   });
 
   it('should be verifiable', function() {
-    var b = bcoin.merkleblock.fromRaw(raw, 'hex');
+    var b = MerkleBlock.fromRaw(raw, 'hex');
     assert(b.verify());
   });
 
   it('should be serialized and deserialized and still verify', function() {
     var raw = mblock.toRaw();
-    var b = bcoin.merkleblock.fromRaw(raw);
+    var b = MerkleBlock.fromRaw(raw);
     assert.deepEqual(b.toRaw(), raw);
     assert(b.verify());
   });
 
   it('should be jsonified and unjsonified and still verify', function() {
     var raw = mblock.toJSON();
-    var b = bcoin.merkleblock.fromJSON(raw);
+    var b = MerkleBlock.fromJSON(raw);
     assert.deepEqual(b.toJSON(), raw);
     assert(b.verify());
   });
@@ -123,7 +124,7 @@ describe('Block', function() {
   });
 
   it('should parse JSON', function() {
-    block = bcoin.block.fromJSON(block300025);
+    block = Block.fromJSON(block300025);
     assert.equal(block.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.equal(block.rhash(),
@@ -132,53 +133,66 @@ describe('Block', function() {
   });
 
   it('should create a merkle block', function() {
-    var filter = Bloom.fromRate(1000, 0.01, constants.filterFlags.NONE);
-    var item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
-    var item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+    var filter, item1, item2, mblock2;
+
+    filter = Bloom.fromRate(1000, 0.01, constants.filterFlags.NONE);
+
+    item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
+    item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
       + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
+
     filter.add(item1, 'hex');
     filter.add(item2, 'hex');
-    var mblock2 = bcoin.merkleblock.fromBlock(block, filter);
+
+    mblock2 = MerkleBlock.fromBlock(block, filter);
+
     assert(mblock2.verifyPartial());
     assert.deepEqual(mblock2.toRaw(), mblock.toRaw());
   });
 
   it('should verify a historical block', function() {
     var view = new CoinView();
-    for (var i = 1; i < block300025.txs.length; i++) {
-      var tx = block300025.txs[i];
-      for (var j = 0; j < tx.inputs.length; j++) {
-        var input = tx.inputs[j];
-        var coin = Coin.fromJSON(input.coin);
+    var height = block300025.height;
+    var i, j, tx, input, coin, flags;
+
+    for (i = 1; i < block300025.txs.length; i++) {
+      tx = block300025.txs[i];
+      for (j = 0; j < tx.inputs.length; j++) {
+        input = tx.inputs[j];
+        coin = Coin.fromJSON(input.coin);
         view.addCoin(coin);
       }
     }
+
     assert(block.verify());
     assert(block.txs[0].isCoinbase());
     assert(block.txs[0].isSane());
     assert(!block.hasWitness());
     assert.equal(block.getWeight(), 1136924);
-    var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
-    for (var i = 1; i < block.txs.length; i++) {
-      var tx = block.txs[i];
+
+    flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+
+    for (i = 1; i < block.txs.length; i++) {
+      tx = block.txs[i];
       assert(tx.isSane());
       assert(tx.checkInputs(view, block300025.height));
       assert(tx.verify(view, flags));
       assert(!tx.hasWitness());
-      view.addTX(tx, block300025.height);
+      view.addTX(tx, height);
     }
-    assert.equal(block.getReward(view), 2507773345);
-    assert.equal(block.getReward(view), block.txs[0].outputs[0].value);
+
+    assert.equal(block.getReward(view, height), 2507773345);
+    assert.equal(block.getReward(view, height), block.txs[0].outputs[0].value);
   });
 
   it('should fail with a bad merkle root', function() {
-    var block2 = new bcoin.block(block);
+    var block2 = new Block(block);
+    var ret = {};
     block2.hash();
     block2.merkleRoot = constants.NULL_HASH;
     block2._valid = null;
     block2._validHeaders = null;
-    var ret = {};
     assert(!block2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
     block2._valid = null;
@@ -189,10 +203,10 @@ describe('Block', function() {
   });
 
   it('should fail on merkle block with a bad merkle root', function() {
-    var mblock2 = new bcoin.merkleblock(mblock);
+    var mblock2 = new MerkleBlock(mblock);
+    var ret = {};
     mblock2.hash();
     mblock2.merkleRoot = constants.NULL_HASH;
-    var ret = {};
     assert(!mblock2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
     mblock2._valid = null;
@@ -204,10 +218,10 @@ describe('Block', function() {
   });
 
   it('should fail with a low target', function() {
-    var block2 = new bcoin.block(block);
+    var block2 = new Block(block);
+    var ret = {};
     block2.hash();
     block2.bits = 403014710;
-    var ret = {};
     assert(!block2.verify(ret));
     assert.equal(ret.reason, 'high-hash');
     block2._valid = null;
@@ -218,83 +232,90 @@ describe('Block', function() {
   });
 
   it('should fail on duplicate txs', function() {
-    var block2 = new bcoin.block(block);
-    block2.txs.push(block2.txs[block2.txs.length - 1]);
+    var block2 = new Block(block);
     var ret = {};
+    block2.txs.push(block2.txs[block2.txs.length - 1]);
     assert(!block2.verify(ret));
     assert.equal(ret.reason, 'bad-txns-duplicate');
   });
 
   it('should verify with headers', function() {
-    var headers = new bcoin.headers(block);
+    var headers = new Headers(block);
     assert(headers.verify());
   });
 
   it('should handle compact block', function(cb) {
     var cblock = bip152.CompactBlock.fromRaw(cmpct[0], 'hex');
-    var block = bcoin.block.fromRaw(cmpct[1], 'hex');
+    var block = Block.fromRaw(cmpct[1], 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
     var map = {};
+    var i, tx, mempool, result;
 
     assert.equal(cblock.toRaw().toString('hex'), cmpct[0]);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct[0]);
 
-    for (var i = 0; i < block.txs.length; i++) {
-      var tx = block.txs[i];
+    for (i = 0; i < block.txs.length; i++) {
+      tx = block.txs[i];
       map[tx.hash('hex')] = tx;
     }
 
-    var fakeMempool = {
-      getSnapshot: function(callback) {
+    mempool = {
+      getSnapshot: function() {
         return Object.keys(map);
       },
-      getTX: function(hash, callback) {
+      getTX: function(hash) {
         return map[hash];
       }
     };
 
     assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
 
-    var result = cblock.fillMempool(false, fakeMempool);
+    result = cblock.fillMempool(false, mempool);
     assert(result);
-    for (var i = 0; i < cblock.available.length; i++)
+
+    for (i = 0; i < cblock.available.length; i++)
       assert(cblock.available[i]);
-    assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
+
+    assert.equal(
+      cblock.toBlock().toRaw().toString('hex'),
+      block.toRaw().toString('hex'));
+
     cb();
   });
 
   it('should handle half-full compact block', function(cb) {
     var cblock = bip152.CompactBlock.fromRaw(cmpct[0], 'hex');
-    var block = bcoin.block.fromRaw(cmpct[1], 'hex');
+    var block = Block.fromRaw(cmpct[1], 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
     var map = {};
+    var i, tx, mid, keys, mempool, result, req, res;
 
     assert.equal(cblock.toRaw().toString('hex'), cmpct[0]);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct[0]);
 
-    for (var i = 0; i < block.txs.length; i++) {
-      var tx = block.txs[i];
+    for (i = 0; i < block.txs.length; i++) {
+      tx = block.txs[i];
       map[tx.hash('hex')] = tx;
     }
 
-    var mid = block.txs.length >>> 1;
-    var keys = Object.keys(map).slice(0, mid);
+    mid = block.txs.length >>> 1;
+    keys = Object.keys(map).slice(0, mid);
 
-    var fakeMempool = {
-      getSnapshot: function(callback) {
+    mempool = {
+      getSnapshot: function() {
         return keys;
       },
-      getTX: function(hash, callback) {
+      getTX: function(hash) {
         return map[hash];
       }
     };
 
     assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
 
-    var result = cblock.fillMempool(false, fakeMempool);
+    result = cblock.fillMempool(false, mempool);
     assert(!result);
 
-    var req = cblock.toRequest();
+    req = cblock.toRequest();
     assert.equal(req.hash, cblock.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
@@ -302,102 +323,107 @@ describe('Block', function() {
     assert.equal(req.hash, cblock.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-    var res = bip152.TXResponse.fromBlock(block, req);
+    res = bip152.TXResponse.fromBlock(block, req);
     res = bip152.TXResponse.fromRaw(res.toRaw());
 
-    var result = cblock.fillMissing(res);
+    result = cblock.fillMissing(res);
     assert(result);
 
-    for (var i = 0; i < cblock.available.length; i++)
+    for (i = 0; i < cblock.available.length; i++)
       assert(cblock.available[i]);
 
-    assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
+    assert.equal(
+      cblock.toBlock().toRaw().toString('hex'),
+      block.toRaw().toString('hex'));
 
     cb();
   });
 
   it('should handle compact block', function(cb) {
     var cblock = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
-    var block = bcoin.block.fromRaw(cmpct2block);
+    var block = Block.fromRaw(cmpct2block);
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
     var map = {};
+    var i, tx, result, mempool;
 
     assert.equal(cblock.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
-    for (var i = 0; i < block.txs.length; i++) {
-      var tx = block.txs[i];
+    for (i = 0; i < block.txs.length; i++) {
+      tx = block.txs[i];
       map[tx.hash('hex')] = tx;
     }
 
-    var fakeMempool = {
-      getSnapshot: function(callback) {
+    mempool = {
+      getSnapshot: function() {
         return Object.keys(map);
       },
-      getTX: function(hash, callback) {
+      getTX: function(hash) {
         return map[hash];
       }
     };
 
-    //assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
-
-    var result = cblock.fillMempool(false, fakeMempool);
+    result = cblock.fillMempool(false, mempool);
     assert(result);
-    for (var i = 0; i < cblock.available.length; i++)
+
+    for (i = 0; i < cblock.available.length; i++)
       assert(cblock.available[i]);
-    assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
+
+    assert.equal(
+      cblock.toBlock().toRaw().toString('hex'),
+      block.toRaw().toString('hex'));
+
     cb();
   });
 
   it('should handle half-full compact block', function(cb) {
     var cblock = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
-    var block = bcoin.block.fromRaw(cmpct2block);
+    var block = Block.fromRaw(cmpct2block);
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
     var map = {};
+    var i, tx, mid, keys, mempool, result, req, res;
 
     assert.equal(cblock.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
-    for (var i = 0; i < block.txs.length; i++) {
-      var tx = block.txs[i];
+    for (i = 0; i < block.txs.length; i++) {
+      tx = block.txs[i];
       map[tx.hash('hex')] = tx;
     }
 
-    var mid = block.txs.length >>> 1;
-    var keys = Object.keys(map).slice(0, mid);
+    mid = block.txs.length >>> 1;
+    keys = Object.keys(map).slice(0, mid);
 
-    var fakeMempool = {
-      getSnapshot: function(callback) {
+    mempool = {
+      getSnapshot: function() {
         return keys;
       },
-      getTX: function(hash, callback) {
+      getTX: function(hash) {
         return map[hash];
       }
     };
 
-    //assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
-
-    var result = cblock.fillMempool(false, fakeMempool);
+    result = cblock.fillMempool(false, mempool);
     assert(!result);
 
-    var req = cblock.toRequest();
+    req = cblock.toRequest();
     assert.equal(req.hash, cblock.hash('hex'));
-    //assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
     req = bip152.TXRequest.fromRaw(req.toRaw());
     assert.equal(req.hash, cblock.hash('hex'));
-    //assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-    var res = bip152.TXResponse.fromBlock(block, req);
+    res = bip152.TXResponse.fromBlock(block, req);
     res = bip152.TXResponse.fromRaw(res.toRaw());
 
-    var result = cblock.fillMissing(res);
+    result = cblock.fillMissing(res);
     assert(result);
 
-    for (var i = 0; i < cblock.available.length; i++)
+    for (i = 0; i < cblock.available.length; i++)
       assert(cblock.available[i]);
 
-    assert.equal(cblock.toBlock().toRaw().toString('hex'), block.toRaw().toString('hex'));
+    assert.equal(
+      cblock.toBlock().toRaw().toString('hex'),
+      block.toRaw().toString('hex'));
 
     cb();
   });

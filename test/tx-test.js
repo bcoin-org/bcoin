@@ -1,18 +1,22 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('main');
+var fs = require('fs');
 var assert = require('assert');
-var util = bcoin.util;
+var util = require('../lib/utils/util');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
-var constants = bcoin.constants;
-var opcodes = bcoin.constants.opcodes;
+var constants = require('../lib/protocol/constants');
+var Network = require('../lib/protocol/network');
+var TX = require('../lib/primitives/tx');
+var Block = require('../lib/primitives/block');
+var Coin = require('../lib/primitives/coin');
+var Output = require('../lib/primitives/output');
+var Script = require('../lib/script/script');
+var CoinView = require('../lib/blockchain/coinview');
+
 var valid = require('./data/tx_valid.json');
 var invalid = require('./data/tx_invalid.json');
 var sighash = require('./data/sighash.json');
-var fs = require('fs');
-var CoinView = require('../lib/blockchain/coinview');
 var tx1 = parseTX('data/tx1.hex');
 var tx2 = parseTX('data/tx2.hex');
 var tx3 = parseTX('data/tx3.hex');
@@ -24,13 +28,13 @@ function parseTX(file) {
   var data = fs.readFileSync(__dirname + '/' + file, 'utf8');
   var parts = data.trim().split(/\n+/);
   var raw = parts[0];
-  var tx = bcoin.tx.fromRaw(raw.trim(), 'hex');
+  var tx = TX.fromRaw(raw.trim(), 'hex');
   var view = new CoinView();
   var i, prev;
 
   for (i = 1; i < parts.length; i++) {
     raw = parts[i];
-    prev = bcoin.tx.fromRaw(raw.trim(), 'hex');
+    prev = TX.fromRaw(raw.trim(), 'hex');
     view.addTX(prev, -1);
   }
 
@@ -54,6 +58,56 @@ function clearCache(tx, nocache) {
   tx._hashPrevouts = null;
   tx._hashSequence = null;
   tx._hashOutputs = null;
+}
+
+function parseTest(data) {
+  var coins = data[0];
+  var tx = TX.fromRaw(data[1], 'hex');
+  var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+  var view = new CoinView();
+  var flag = 0;
+  var i, name, coin;
+
+  for (i = 0; i < flags.length; i++) {
+    name = 'VERIFY_' + flags[i];
+    assert(constants.flags[name] != null, 'Unknown flag.');
+    flag |= constants.flags[name];
+  }
+
+  flags = flag;
+
+  coins.forEach(function(data) {
+    var hash = data[0];
+    var index = data[1];
+    var script = Script.fromString(data[2]);
+    var value = data[3];
+    var coin;
+
+    coin = new Coin({
+      version: 1,
+      height: -1,
+      coinbase: false,
+      hash: util.revHex(hash),
+      index: index,
+      script: script,
+      value: value != null ? parseInt(value, 10) : 0
+    });
+
+    if (index !== -1)
+      view.addCoin(coin);
+  });
+
+  coin = view.getOutput(tx.inputs[0]);
+
+  return {
+    tx: tx,
+    flags: flags,
+    view: view,
+    comments: coin
+      ? util.inspectify(coin.script, false)
+      : 'coinbase',
+    data: data
+  };
 }
 
 describe('TX', function() {
@@ -98,14 +152,14 @@ describe('TX', function() {
     var suffix = nocache ? ' without cache' : ' with cache';
 
     it('should decode/encode with parser/framer' + suffix, function() {
-      var tx = bcoin.tx.fromRaw(raw, 'hex');
+      var tx = TX.fromRaw(raw, 'hex');
       clearCache(tx, nocache);
       assert.equal(tx.toRaw().toString('hex'), raw);
     });
 
     it('should be verifiable' + suffix, function() {
-      var tx = bcoin.tx.fromRaw(raw, 'hex');
-      var p = bcoin.tx.fromRaw(inp, 'hex');
+      var tx = TX.fromRaw(raw, 'hex');
+      var p = TX.fromRaw(inp, 'hex');
       var view = new CoinView();
       view.addTX(p, -1);
 
@@ -163,63 +217,14 @@ describe('TX', function() {
       raw2 = wtx.tx.toRaw();
       assert.deepEqual(raw1, raw2);
 
-      wtx2 = bcoin.tx.fromRaw(raw2);
+      wtx2 = TX.fromRaw(raw2);
       clearCache(wtx2, nocache);
 
       assert.equal(wtx.tx.hash('hex'), wtx2.hash('hex'));
       assert.equal(wtx.tx.witnessHash('hex'), wtx2.witnessHash('hex'));
     });
 
-    function parseTest(data) {
-      var coins = data[0];
-      var tx = bcoin.tx.fromRaw(data[1], 'hex');
-      var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
-      var view = new CoinView();
-      var flag = 0;
-      var i, name;
-
-      for (i = 0; i < flags.length; i++) {
-        name = 'VERIFY_' + flags[i];
-        assert(constants.flags[name] != null, 'Unknown flag.');
-        flag |= constants.flags[name];
-      }
-
-      flags = flag;
-
-      coins.forEach(function(data) {
-        var hash = data[0];
-        var index = data[1];
-        var script = bcoin.script.fromString(data[2]);
-        var value = data[3];
-        var coin;
-
-        coin = new bcoin.coin({
-          version: 1,
-          height: -1,
-          coinbase: false,
-          hash: util.revHex(hash),
-          index: index,
-          script: script,
-          value: value != null ? parseInt(value, 10) : 0
-        });
-
-        if (index !== -1)
-          view.addCoin(coin);
-      });
-
-      return {
-        tx: tx,
-        flags: flags,
-        view: view,
-        comments: tx.hasCoins(view)
-          ? util.inspectify(view.getOutput(tx.inputs[0]).script, false)
-          : 'coinbase',
-        data: data
-      };
-    }
-
     [[valid, true], [invalid, false]].forEach(function(test) {
-      // ["[[[prevout hash, prevout index, prevout scriptPubKey], [input 2], ...],"],
       var arr = test[0];
       var valid = test[1];
       var comment = '';
@@ -296,15 +301,13 @@ describe('TX', function() {
     sighash.forEach(function(data) {
       var tx, script, index, type, expected, hexType;
 
-      // ["raw_transaction, script, input_index, hashType, signature_hash (result)"],
-
       if (data.length === 1)
         return;
 
-      tx = bcoin.tx.fromRaw(data[0], 'hex');
+      tx = TX.fromRaw(data[0], 'hex');
       clearCache(tx, nocache);
 
-      script = bcoin.script.fromRaw(data[1], 'hex');
+      script = Script.fromRaw(data[1], 'hex');
 
       index = data[2];
       type = data[3];
@@ -327,33 +330,25 @@ describe('TX', function() {
     });
   });
 
-  function createInput(value) {
+  function createInput(value, view) {
     var hash = crypto.randomBytes(32).toString('hex');
+    var output = new Output();
+    output.value = value;
+    view.addOutput(hash, 0, output);
     return {
       prevout: {
         hash: hash,
         index: 0
-      },
-      coin: {
-        version: 1,
-        height: 0,
-        value: value,
-        script: [],
-        coinbase: false,
-        hash: hash,
-        index: 0
-      },
-      script: [],
-      witness: [],
-      sequence: 0xffffffff
+      }
     };
   }
 
   it('should fail on >51 bit coin values', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY + 1)],
+      inputs: [createInput(constants.MAX_MONEY + 1, view)],
       outputs: [{
         script: [],
         value: constants.MAX_MONEY
@@ -361,14 +356,15 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should handle 51 bit coin values', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY)],
+      inputs: [createInput(constants.MAX_MONEY, view)],
       outputs: [{
         script: [],
         value: constants.MAX_MONEY
@@ -376,14 +372,15 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(tx.checkInputs(view, 0));
+    assert.ok(tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit output values', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY)],
+      inputs: [createInput(constants.MAX_MONEY, view)],
       outputs: [{
         script: [],
         value: constants.MAX_MONEY + 1
@@ -391,14 +388,15 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(!tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should handle 51 bit output values', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY)],
+      inputs: [createInput(constants.MAX_MONEY, view)],
       outputs: [{
         script: [],
         value: constants.MAX_MONEY
@@ -406,14 +404,15 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(tx.checkInputs(view, 0));
+    assert.ok(tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit fees', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY + 1)],
+      inputs: [createInput(constants.MAX_MONEY + 1, view)],
       outputs: [{
         script: [],
         value: 0
@@ -421,17 +420,18 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit values from multiple', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
       inputs: [
-        createInput(Math.floor(constants.MAX_MONEY / 2)),
-        createInput(Math.floor(constants.MAX_MONEY / 2)),
-        createInput(Math.floor(constants.MAX_MONEY / 2))
+        createInput(Math.floor(constants.MAX_MONEY / 2), view),
+        createInput(Math.floor(constants.MAX_MONEY / 2), view),
+        createInput(Math.floor(constants.MAX_MONEY / 2), view)
       ],
       outputs: [{
         script: [],
@@ -440,14 +440,15 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit output values from multiple', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY)],
+      inputs: [createInput(constants.MAX_MONEY, view)],
       outputs: [
         {
           script: [],
@@ -465,17 +466,18 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(!tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit fees from multiple', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
       inputs: [
-        createInput(Math.floor(constants.MAX_MONEY / 2)),
-        createInput(Math.floor(constants.MAX_MONEY / 2)),
-        createInput(Math.floor(constants.MAX_MONEY / 2))
+        createInput(Math.floor(constants.MAX_MONEY / 2), view),
+        createInput(Math.floor(constants.MAX_MONEY / 2), view),
+        createInput(Math.floor(constants.MAX_MONEY / 2), view)
       ],
       outputs: [{
         script: [],
@@ -484,18 +486,21 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on >51 bit fees from multiple txs', function() {
-    var data = util.merge({}, bcoin.network.get().genesis, { height: 0 });
-    var block = new bcoin.block(data);
-    for (var i = 0; i < 3; i++) {
-      var tx = bcoin.tx({
+    var view = new CoinView();
+    var genesis = Network.get().genesis;
+    var block = new Block(genesis);
+    var i, tx;
+
+    for (i = 0; i < 3; i++) {
+      tx = new TX({
         version: 1,
         flag: 1,
         inputs: [
-          createInput(Math.floor(constants.MAX_MONEY / 2))
+          createInput(Math.floor(constants.MAX_MONEY / 2), view)
         ],
         outputs: [{
           script: [],
@@ -503,17 +508,22 @@ describe('TX', function() {
         }],
         locktime: 0
       });
+
       block.txs.push(tx);
     }
-    // assert.equal(block.getReward(), -1);
+
+    assert.equal(block.getReward(view, 0), -1);
   });
 
   it('should fail to parse >53 bit values', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx, raw;
+
+    tx = new TX({
       version: 1,
       flag: 1,
       inputs: [
-        createInput(Math.floor(constants.MAX_MONEY / 2))
+        createInput(Math.floor(constants.MAX_MONEY / 2), view)
       ],
       outputs: [{
         script: [],
@@ -521,27 +531,30 @@ describe('TX', function() {
       }],
       locktime: 0
     });
-    var raw = tx.toRaw();
+
+    raw = tx.toRaw();
     assert(encoding.readU64(raw, 47) === 0xdeadbeef);
     raw[54] = 0x7f;
     assert.throws(function() {
-      bcoin.tx.fromRaw(raw);
+      TX.fromRaw(raw);
     });
     tx._raw = null;
     tx.outputs[0].value = 0;
-    var raw = tx.toRaw();
+
+    raw = tx.toRaw();
     assert(encoding.readU64(raw, 47) === 0x00);
     raw[54] = 0x80;
     assert.throws(function() {
-      bcoin.tx.fromRaw(raw);
+      TX.fromRaw(raw);
     });
   });
 
   it('should fail on 53 bit coin values', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(util.MAX_SAFE_INTEGER)],
+      inputs: [createInput(util.MAX_SAFE_INTEGER, view)],
       outputs: [{
         script: [],
         value: constants.MAX_MONEY
@@ -549,14 +562,15 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on 53 bit output values', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY)],
+      inputs: [createInput(constants.MAX_MONEY, view)],
       outputs: [{
         script: [],
         value: util.MAX_SAFE_INTEGER
@@ -564,14 +578,15 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(!tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   it('should fail on 53 bit fees', function() {
-    var tx = bcoin.tx({
+    var view = new CoinView();
+    var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(util.MAX_SAFE_INTEGER)],
+      inputs: [createInput(util.MAX_SAFE_INTEGER, view)],
       outputs: [{
         script: [],
         value: 0
@@ -579,18 +594,19 @@ describe('TX', function() {
       locktime: 0
     });
     assert.ok(tx.isSane());
-    // assert.ok(!tx.checkInputs(view, 0));
+    assert.ok(!tx.checkInputs(view, 0));
   });
 
   [util.MAX_SAFE_ADDITION, util.MAX_SAFE_INTEGER].forEach(function(MAX) {
     it('should fail on >53 bit values from multiple', function() {
-      var tx = bcoin.tx({
+      var view = new CoinView();
+      var tx = new TX({
         version: 1,
         flag: 1,
         inputs: [
-          createInput(MAX),
-          createInput(MAX),
-          createInput(MAX)
+          createInput(MAX, view),
+          createInput(MAX, view),
+          createInput(MAX, view)
         ],
         outputs: [{
           script: [],
@@ -599,14 +615,15 @@ describe('TX', function() {
         locktime: 0
       });
       assert.ok(tx.isSane());
-      // assert.ok(!tx.checkInputs(view, 0));
+      assert.ok(!tx.checkInputs(view, 0));
     });
 
     it('should fail on >53 bit output values from multiple', function() {
-      var tx = bcoin.tx({
+      var view = new CoinView();
+      var tx = new TX({
         version: 1,
         flag: 1,
-        inputs: [createInput(constants.MAX_MONEY)],
+        inputs: [createInput(constants.MAX_MONEY, view)],
         outputs: [
           {
             script: [],
@@ -624,17 +641,18 @@ describe('TX', function() {
         locktime: 0
       });
       assert.ok(!tx.isSane());
-      // assert.ok(!tx.checkInputs(view, 0));
+      assert.ok(!tx.checkInputs(view, 0));
     });
 
     it('should fail on >53 bit fees from multiple', function() {
-      var tx = bcoin.tx({
+      var view = new CoinView();
+      var tx = new TX({
         version: 1,
         flag: 1,
         inputs: [
-          createInput(MAX),
-          createInput(MAX),
-          createInput(MAX)
+          createInput(MAX, view),
+          createInput(MAX, view),
+          createInput(MAX, view)
         ],
         outputs: [{
           script: [],
@@ -643,20 +661,21 @@ describe('TX', function() {
         locktime: 0
       });
       assert.ok(tx.isSane());
-      // assert.ok(!tx.checkInputs(view, 0));
+      assert.ok(!tx.checkInputs(view, 0));
     });
 
     it('should fail on >53 bit fees from multiple txs', function() {
-      var genesis = bcoin.network.get().genesis;
-      var block = new bcoin.block(genesis);
+      var view = new CoinView();
+      var genesis = Network.get().genesis;
+      var block = new Block(genesis);
       var i, tx;
 
       for (i = 0; i < 3; i++) {
-        tx = bcoin.tx({
+        tx = new TX({
           version: 1,
           flag: 1,
           inputs: [
-            createInput(MAX)
+            createInput(MAX, view)
           ],
           outputs: [{
             script: [],
@@ -667,7 +686,7 @@ describe('TX', function() {
         block.txs.push(tx);
       }
 
-      // assert.equal(block.getReward(view), -1);
+      assert.equal(block.getReward(view, 0), -1);
     });
   });
 });
