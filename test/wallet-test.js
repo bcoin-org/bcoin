@@ -216,7 +216,7 @@ describe('Wallet', function() {
       .addOutput(w.getAddress(), 24000)
       .addOutput(w.getAddress(), 24000);
 
-    doubleSpend = bcoin.coin.fromTX(t1, 0);
+    doubleSpend = bcoin.coin.fromTX(t1, 0, -1);
 
     // balance: 49000
     yield w.sign(t2);

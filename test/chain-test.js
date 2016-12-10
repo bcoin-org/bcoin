@@ -225,7 +225,7 @@ describe('Chain', function() {
     yield chain.add(block);
 
     tx = block.txs[1];
-    output = bcoin.coin.fromTX(tx, 1);
+    output = bcoin.coin.fromTX(tx, 1, chain.height);
 
     coin = yield chain.db.getCoin(tx.hash('hex'), 1);
 

@@ -58,7 +58,7 @@ describe('Mempool', function() {
 
     mempool.trackEntry(entry, funding.view);
 
-    return bcoin.coin.fromTX(funding, 0);
+    return bcoin.coin.fromTX(funding, 0, -1);
   }
 
   it('should open mempool', cob(function* () {
