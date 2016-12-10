@@ -1,46 +1,54 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('main');
-var constants = bcoin.constants;
-var util = bcoin.util;
-var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
-var opcodes = constants.opcodes;
-var cob = require('../lib/utils/co').cob;
+var constants = require('../lib/protocol/constants');
+var util = require('../lib/utils/util');
+var crypto = require('../lib/crypto/crypto');
+var co = require('../lib/utils/co');
 var MempoolEntry = require('../lib/mempool/mempoolentry');
+var Mempool = require('../lib/mempool/mempool');
+var Chain = require('../lib/blockchain/chain');
+var WalletDB = require('../lib/wallet/walletdb');
+var MTX = require('../lib/primitives/mtx');
+var Coin = require('../lib/primitives/coin');
+var KeyRing = require('../lib/primitives/keyring');
+var Address = require('../lib/primitives/address');
+var Script = require('../lib/script/script');
+var Witness = require('../lib/script/witness');
+var Block = require('../lib/primitives/block');
+var opcodes = constants.opcodes;
+var cob = co.cob;
 
 describe('Mempool', function() {
-  var chain, mempool, walletdb;
-  var wallet, cached;
+  var chain, mempool, walletdb, wallet, cached;
 
   this.timeout(5000);
 
-  chain = new bcoin.chain({
+  chain = new Chain({
     name: 'mp-chain',
     db: 'memory'
   });
 
-  mempool = new bcoin.mempool({
+  mempool = new Mempool({
     chain: chain,
     name: 'mempool-test',
     db: 'memory'
   });
 
-  walletdb = new bcoin.walletdb({
+  walletdb = new WalletDB({
     name: 'mempool-wallet-test',
     db: 'memory',
     verify: true
   });
 
   function dummy(prev, prevHash) {
-    var funding = bcoin.mtx();
+    var funding = new MTX();
     var coin, entry;
 
     if (!prevHash)
       prevHash = constants.ONE_HASH.toString('hex');
 
-    coin = new bcoin.coin({
+    coin = new Coin({
       version: 1,
       height: 0,
       value: 0,
@@ -58,7 +66,7 @@ describe('Mempool', function() {
 
     mempool.trackEntry(entry, funding.view);
 
-    return bcoin.coin.fromTX(funding, 0, -1);
+    return Coin.fromTX(funding, 0, -1);
   }
 
   it('should open mempool', cob(function* () {
@@ -75,24 +83,24 @@ describe('Mempool', function() {
   }));
 
   it('should handle incoming orphans and TXs', cob(function* () {
-    var kp = bcoin.keyring.generate();
+    var kp = KeyRing.generate();
     var w = wallet;
     var t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
 
-    t1 = bcoin.mtx()
+    t1 = MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     t1.addInput(dummy(prev));
     sig = t1.signature(0, prev, 70000, kp.privateKey, 'all', 0);
-    t1.inputs[0].script = new bcoin.script([sig]);
+    t1.inputs[0].script = new Script([sig]);
 
     // balance: 51000
     yield w.sign(t1);
     t1 = t1.toTX();
 
-    t2 = bcoin.mtx()
+    t2 = MTX()
       .addInput(t1, 0) // 50000
       .addOutput(w.getAddress(), 20000)
       .addOutput(w.getAddress(), 20000);
@@ -101,7 +109,7 @@ describe('Mempool', function() {
     yield w.sign(t2);
     t2 = t2.toTX();
 
-    t3 = bcoin.mtx()
+    t3 = MTX()
       .addInput(t1, 1) // 10000
       .addInput(t2, 0) // 20000
       .addOutput(w.getAddress(), 23000);
@@ -110,7 +118,7 @@ describe('Mempool', function() {
     yield w.sign(t3);
     t3 = t3.toTX();
 
-    t4 = bcoin.mtx()
+    t4 = MTX()
       .addInput(t2, 1) // 24000
       .addInput(t3, 0) // 23000
       .addOutput(w.getAddress(), 11000)
@@ -120,15 +128,15 @@ describe('Mempool', function() {
     yield w.sign(t4);
     t4 = t4.toTX();
 
-    f1 = bcoin.mtx()
+    f1 = MTX()
       .addInput(t4, 1) // 11000
-      .addOutput(new bcoin.address(), 9000);
+      .addOutput(new Address(), 9000);
 
     // balance: 11000
     yield w.sign(f1);
     f1 = f1.toTX();
 
-    fake = bcoin.mtx()
+    fake = MTX()
       .addInput(t1, 1) // 1000 (already redeemed)
       .addOutput(w.getAddress(), 6000); // 6000 instead of 500
 
@@ -175,14 +183,14 @@ describe('Mempool', function() {
 
   it('should handle locktime', cob(function* () {
     var w = wallet;
-    var kp = bcoin.keyring.generate();
+    var kp = KeyRing.generate();
     var tx, prev, prevHash, sig;
 
-    tx = bcoin.mtx()
+    tx = MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));
@@ -191,7 +199,7 @@ describe('Mempool', function() {
     chain.tip.height = 200;
 
     sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
-    tx.inputs[0].script = new bcoin.script([sig]),
+    tx.inputs[0].script = new Script([sig]),
 
     tx = tx.toTX();
 
@@ -201,14 +209,14 @@ describe('Mempool', function() {
 
   it('should handle invalid locktime', cob(function* () {
     var w = wallet;
-    var kp = bcoin.keyring.generate();
+    var kp = KeyRing.generate();
     var tx, prev, prevHash, sig, err;
 
-    tx = bcoin.mtx()
+    tx = MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));
@@ -216,7 +224,7 @@ describe('Mempool', function() {
     chain.tip.height = 200 - 1;
 
     sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
-    tx.inputs[0].script = new bcoin.script([sig]),
+    tx.inputs[0].script = new Script([sig]),
     tx = tx.toTX();
 
     try {
@@ -232,25 +240,25 @@ describe('Mempool', function() {
 
   it('should not cache a malleated wtx with mutated sig', cob(function* () {
     var w = wallet;
-    var kp = bcoin.keyring.generate();
+    var kp = KeyRing.generate();
     var tx, prev, prevHash, prevs, sig, tx, err;
 
     kp.witness = true;
 
-    tx = bcoin.mtx()
+    tx = MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([0, kp.getKeyHash()]);
+    prev = new Script([0, kp.getKeyHash()]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));
 
-    prevs = bcoin.script.fromPubkeyhash(kp.getKeyHash());
+    prevs = Script.fromPubkeyhash(kp.getKeyHash());
 
     sig = tx.signature(0, prevs, 70000, kp.privateKey, 'all', 1);
     sig[sig.length - 1] = 0;
-    tx.inputs[0].witness = new bcoin.witness([sig, kp.publicKey]);
+    tx.inputs[0].witness = new Witness([sig, kp.publicKey]);
     tx = tx.toTX();
 
     try {
@@ -265,20 +273,20 @@ describe('Mempool', function() {
 
   it('should not cache a malleated tx with unnecessary witness', cob(function* () {
     var w = wallet;
-    var kp = bcoin.keyring.generate();
+    var kp = KeyRing.generate();
     var tx, prev, prevHash, sig, tx, err;
 
-    tx = bcoin.mtx()
+    tx = MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));
 
     sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
-    tx.inputs[0].script = new bcoin.script([sig]);
+    tx.inputs[0].script = new Script([sig]);
     tx.inputs[0].witness.push(new Buffer(0));
     tx = tx.toTX();
 
@@ -294,16 +302,16 @@ describe('Mempool', function() {
 
   it('should not cache a malleated wtx with wit removed', cob(function* () {
     var w = wallet;
-    var kp = bcoin.keyring.generate();
+    var kp = KeyRing.generate();
     var tx, prev, prevHash, tx, err;
 
     kp.witness = true;
 
-    tx = bcoin.mtx()
+    tx = MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([0, kp.getKeyHash()]);
+    prev = new Script([0, kp.getKeyHash()]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));
@@ -323,14 +331,14 @@ describe('Mempool', function() {
 
   it('should cache non-malleated tx without sig', cob(function* () {
     var w = wallet;
-    var kp = bcoin.keyring.generate();
+    var kp = KeyRing.generate();
     var tx, prev, prevHash, tx, err;
 
-    tx = bcoin.mtx()
+    tx = MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
-    prev = new bcoin.script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addInput(dummy(prev, prevHash));
@@ -353,7 +361,7 @@ describe('Mempool', function() {
     var w = wallet;
     var tx, input, tx, block;
 
-    tx = bcoin.mtx()
+    tx = MTX()
       .addOutput(w.getAddress(), 50000);
 
     input = {
@@ -367,7 +375,7 @@ describe('Mempool', function() {
 
     tx = tx.toTX();
 
-    block = new bcoin.block();
+    block = new Block();
     block.txs.push(tx);
 
     assert(mempool.hasReject(cached.hash()));

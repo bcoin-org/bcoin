@@ -1,27 +1,26 @@
 'use strict';
 
-var bcoin = require('../').set('main');
-var util = bcoin.util;
+var assert = require('assert');
+var util = require('../lib/utils/util');
+var constants = require('../lib/protocol/constants');
 var crypto = require('../lib/crypto/crypto');
 var Bloom = require('../lib/utils/bloom');
 var murmur3 = require('../lib/utils/murmur3');
-var constants = bcoin.constants;
-var assert = require('assert');
 
 describe('Bloom', function() {
-  this.timeout(20000);
-
   var filterHex = ''
     + '000000000000000000000000000000000000000000000000088004000000000000000'
     + '000000000200000000000000000000000000000000800000000000000000002000000'
     + '000000000000002000000000000000000000000000000000000000000040000200000'
     + '0000000001000000800000080000000';
 
-  it('should do proper murmur3', function() {
-    function mm(str, seed, expect, enc) {
-      assert.equal(murmur3(new Buffer(str, enc || 'ascii'), seed), expect);
-    }
+  function mm(str, seed, expect, enc) {
+    assert.equal(murmur3(new Buffer(str, enc || 'ascii'), seed), expect);
+  }
 
+  this.timeout(20000);
+
+  it('should do proper murmur3', function() {
     mm('', 0, 0);
     mm('', 0xfba4c795, 0x6a396f08);
     mm('00', 0xfba4c795, 0x2a101837);
@@ -74,14 +73,17 @@ describe('Bloom', function() {
 
   it('should handle 1m ops with regular filter', function() {
     var filter = Bloom.fromRate(210000, 0.00001, -1);
+    var i, j, str;
+
     filter.tweak = 0xdeadbeef;
+
     // ~1m operations
-    for (var i = 0; i < 1000; i++) {
-      var str = 'foobar' + i;
+    for (i = 0; i < 1000; i++) {
+      str = 'foobar' + i;
       filter.add(str, 'ascii');
-      var j = i;
+      j = i;
       do {
-        var str = 'foobar' + j;
+        str = 'foobar' + j;
         assert(filter.test(str, 'ascii') === true);
         assert(filter.test(str + '-', 'ascii') === false);
       } while (j--);
@@ -90,14 +92,17 @@ describe('Bloom', function() {
 
   it('should handle 1m ops with rolling filter', function() {
     var filter = new Bloom.Rolling(210000, 0.00001);
+    var i, j, str;
+
     filter.tweak = 0xdeadbeef;
+
     // ~1m operations
-    for (var i = 0; i < 1000; i++) {
-      var str = 'foobar' + i;
+    for (i = 0; i < 1000; i++) {
+      str = 'foobar' + i;
       filter.add(str, 'ascii');
-      var j = i;
+      j = i;
       do {
-        var str = 'foobar' + j;
+        str = 'foobar' + j;
         assert(filter.test(str, 'ascii') === true);
         assert(filter.test(str + '-', 'ascii') === false);
       } while (j--);
@@ -106,58 +111,66 @@ describe('Bloom', function() {
 
   it('should handle rolling generations', function() {
     var filter = new Bloom.Rolling(50, 0.00001);
+    var i, j, str;
+
     filter.tweak = 0xdeadbeee;
-    for (var i = 0; i < 25; i++) {
-      var str = 'foobar' + i;
+
+    for (i = 0; i < 25; i++) {
+      str = 'foobar' + i;
       filter.add(str, 'ascii');
-      var j = i;
+      j = i;
       do {
-        var str = 'foobar' + j;
+        str = 'foobar' + j;
         assert(filter.test(str, 'ascii') === true);
         assert(filter.test(str + '-', 'ascii') === false);
       } while (j--);
     }
-    for (var i = 25; i < 50; i++) {
-      var str = 'foobar' + i;
+
+    for (i = 25; i < 50; i++) {
+      str = 'foobar' + i;
       filter.add(str, 'ascii');
-      var j = i;
+      j = i;
       do {
-        var str = 'foobar' + j;
+        str = 'foobar' + j;
         assert(filter.test(str, 'ascii') === true, str);
         assert(filter.test(str + '-', 'ascii') === false, str);
       } while (j--);
     }
-    for (var i = 50; i < 75; i++) {
-      var str = 'foobar' + i;
+
+    for (i = 50; i < 75; i++) {
+      str = 'foobar' + i;
       filter.add(str, 'ascii');
-      var j = i;
+      j = i;
       do {
-        var str = 'foobar' + j;
+        str = 'foobar' + j;
         assert(filter.test(str, 'ascii') === true, str);
         assert(filter.test(str + '-', 'ascii') === false, str);
       } while (j--);
     }
-    for (var i = 75; i < 100; i++) {
-      var str = 'foobar' + i;
+
+    for (i = 75; i < 100; i++) {
+      str = 'foobar' + i;
       filter.add(str, 'ascii');
-      var j = i;
+      j = i;
       do {
-        var str = 'foobar' + j;
+        str = 'foobar' + j;
         assert(filter.test(str, 'ascii') === true, str);
         assert(filter.test(str + '-', 'ascii') === false, str);
       } while (j-- > 25);
       assert(filter.test('foobar 24', 'ascii') === false);
     }
-    for (var i = 100; i < 125; i++) {
-      var str = 'foobar' + i;
+
+    for (i = 100; i < 125; i++) {
+      str = 'foobar' + i;
       filter.add(str, 'ascii');
-      var j = i;
+      j = i;
       do {
-        var str = 'foobar' + j;
+        str = 'foobar' + j;
         assert(filter.test(str, 'ascii') === true, str);
         assert(filter.test(str + '-', 'ascii') === false, str);
       } while (j-- > 50);
     }
+
     assert(filter.test('foobar 49', 'ascii') === false);
   });
 });

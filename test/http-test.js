@@ -1,15 +1,16 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('regtest');
-var constants = bcoin.constants;
-var network = bcoin.networks;
-var util = bcoin.util;
-var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
-var scriptTypes = constants.scriptTypes;
+var constants = require('../lib/protocol/constants');
+var network = require('../lib/protocol/networks');
+var util = require('../lib/utils/util');
+var crypto = require('../lib/crypto/crypto');
 var co = require('../lib/utils/co');
 var Amount = require('../lib/btc/amount');
+var MTX = require('../lib/primitives/mtx');
+var HTTP = require('../lib/http');
+var FullNode = require('../lib/node/fullnode');
+var scriptTypes = constants.scriptTypes;
 var cob = co.cob;
 
 var dummyInput = {
@@ -20,24 +21,24 @@ var dummyInput = {
 };
 
 describe('HTTP', function() {
-  var request = bcoin.http.request;
-  var w, addr, hash;
+  var request = HTTP.request;
+  var node, wallet, w, addr, hash;
 
-  this.timeout(15000);
-
-  var node = new bcoin.fullnode({
+  node = new FullNode({
     network: 'regtest',
     apiKey: 'foo',
     walletAuth: true,
     db: 'memory'
   });
 
-  var wallet = new bcoin.http.Wallet({
+  wallet = new HTTP.Wallet({
     network: 'regtest',
     apiKey: 'foo'
   });
 
   node.on('error', function() {});
+
+  this.timeout(15000);
 
   it('should open node', cob(function* () {
     constants.tx.COINBASE_MATURITY = 0;
@@ -65,17 +66,17 @@ describe('HTTP', function() {
   }));
 
   it('should fill with funds', cob(function* () {
-    var balance, receive, details;
+    var tx, balance, receive, details;
 
     // Coinbase
-    var t1 = bcoin.mtx()
+    tx = MTX()
       .addOutput(addr, 50460)
       .addOutput(addr, 50460)
       .addOutput(addr, 50460)
       .addOutput(addr, 50460);
 
-    t1.addInput(dummyInput);
-    t1 = t1.toTX();
+    tx.addInput(dummyInput);
+    tx = tx.toTX();
 
     wallet.once('balance', function(b) {
       balance = b;
@@ -89,7 +90,7 @@ describe('HTTP', function() {
       details = d;
     });
 
-    yield node.walletdb.addTX(t1);
+    yield node.walletdb.addTX(tx);
     yield co.timeout(300);
 
     assert(receive);
@@ -100,7 +101,7 @@ describe('HTTP', function() {
     assert.equal(Amount.value(balance.confirmed), 0);
     assert.equal(Amount.value(balance.unconfirmed), 201840);
     assert(details);
-    assert.equal(details.hash, t1.rhash());
+    assert.equal(details.hash, tx.rhash());
   }));
 
   it('should get balance', cob(function* () {

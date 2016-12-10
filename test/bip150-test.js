@@ -1,26 +1,25 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('main');
-var util = bcoin.util;
-var crypto = require('../lib/crypto/crypto');
-var constants = bcoin.constants;
-var network = bcoin.networks;
 var assert = require('assert');
+var util = require('../lib/utils/util');
+var crypto = require('../lib/crypto/crypto');
+var ec = require('../lib/crypto/ec');
+var BIP150 = require('../lib/net/bip150');
+var BIP151 = require('../lib/net/bip151');
 
 describe('BIP150', function() {
-  var db = new bcoin.bip150.AuthDB();
-  var ck = bcoin.ec.generatePrivateKey();
-  var sk = bcoin.ec.generatePrivateKey();
+  var db = new BIP150.AuthDB();
+  var ck = ec.generatePrivateKey();
+  var sk = ec.generatePrivateKey();
 
-  db.addAuthorized(bcoin.ec.publicKeyCreate(ck, true));
-  db.addKnown('server', bcoin.ec.publicKeyCreate(sk, true));
+  db.addAuthorized(ec.publicKeyCreate(ck, true));
+  db.addKnown('server', ec.publicKeyCreate(sk, true));
 
-  var client = new bcoin.bip151();
-  var server = new bcoin.bip151();
+  var client = new BIP151();
+  var server = new BIP151();
 
-  client.bip150 = new bcoin.bip150(client, 'server', true, db, ck);
-  server.bip150 = new bcoin.bip150(server, 'client', false, db, sk);
+  client.bip150 = new BIP150(client, 'server', true, db, ck);
+  server.bip150 = new BIP150(server, 'client', false, db, sk);
 
   function payload() {
     return new Buffer('deadbeef', 'hex');

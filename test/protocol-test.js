@@ -1,24 +1,26 @@
 'use strict';
 
-var bcoin = require('../').set('main');
-var assert = require('assert');
-var constants = bcoin.constants;
-var network = bcoin.network.get();
-var util = bcoin.util;
-var crypto = require('../lib/crypto/crypto');
 var fs = require('fs');
-var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
+var assert = require('assert');
+var constants = require('../lib/protocol/constants');
+var Network = require('../lib/protocol/network');
+var util = require('../lib/utils/util');
+var BufferReader = require('../lib/utils/reader');
+var crypto = require('../lib/crypto/crypto');
 var NetworkAddress = require('../lib/primitives/netaddress');
+var TX = require('../lib/primitives/tx');
 var Framer = require('../lib/net/framer');
 var Parser = require('../lib/net/parser');
 var packets = require('../lib/net/packets');
+var network = Network.get('main');
+
+var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
 
 describe('Protocol', function() {
   var version = require('../package.json').version;
   var agent = '/bcoin:' + version + '/';
+  var parser, framer, v1, v2, hosts;
 
-  var parser;
-  var framer;
   beforeEach(function() {
     parser = new Parser();
     framer = new Framer();
@@ -36,10 +38,10 @@ describe('Protocol', function() {
     });
   }
 
-  var v1 = packets.VersionPacket.fromOptions({
+  v1 = packets.VersionPacket.fromOptions({
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
-    ts: bcoin.now(),
+    ts: network.now(),
     remote: new NetworkAddress(),
     local: new NetworkAddress(),
     nonce: util.nonce(),
@@ -55,10 +57,10 @@ describe('Protocol', function() {
     assert.equal(payload.relay, false);
   });
 
-  var v2 = packets.VersionPacket.fromOptions({
+  v2 = packets.VersionPacket.fromOptions({
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
-    ts: bcoin.now(),
+    ts: network.now(),
     remote: new NetworkAddress(),
     local: new NetworkAddress(),
     nonce: util.nonce(),
@@ -77,7 +79,7 @@ describe('Protocol', function() {
   packetTest('verack', new packets.VerackPacket(), function(payload) {
   });
 
-  var hosts = [
+  hosts = [
     new NetworkAddress({
       services: constants.LOCAL_SERVICES,
       host: '127.0.0.1',
@@ -109,7 +111,9 @@ describe('Protocol', function() {
 
   it('should include the raw data of only one transaction in a ' +
      'parsed transaction', function() {
-    var rawTwoTxs = new Buffer(
+    var tx, rawTwoTxs, rawFirstTx;
+
+    rawTwoTxs = new Buffer(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +
@@ -160,7 +164,8 @@ describe('Protocol', function() {
       '0001976a9146167aeaeec59836b22447b8af2c5e61fb4f1b7b088ac00a3' +
       'dc5c0500000017a9149eb21980dc9d413d8eac27314938b9da920ee53e8' +
       '700000000', 'hex');
-    var rawFirstTx = new Buffer(
+
+    rawFirstTx = new Buffer(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +
@@ -201,19 +206,24 @@ describe('Protocol', function() {
       'c9954c44b0ce168bc78efd5f1e1c7db9d6c21b3016599ffffffff01a029' +
       'de5c0500000017a9141d9ca71efa36d814424ea6ca1437e67287aebe348' +
       '700000000', 'hex');
-    var tx = bcoin.tx.fromRaw(rawTwoTxs);
+
+    tx = TX.fromRaw(rawTwoTxs);
     tx._raw = null;
+
     assert.deepEqual(tx.toRaw(), rawFirstTx);
   });
 
   it('should parse, reserialize, and verify alert packets', function() {
-    var br = new bcoin.reader(alertData);
+    var br = new BufferReader(alertData);
+    var alert, data;
+
     while (br.left()) {
-      var alert = packets.AlertPacket.fromReader(br);
+      alert = packets.AlertPacket.fromReader(br);
       assert(alert.verify(network.alertKey));
       alert._payload = null;
       alert._hash = null;
-      var data = alert.toRaw();
+
+      data = alert.toRaw();
       alert = packets.AlertPacket.fromRaw(data);
       assert(alert.verify(network.alertKey));
     }

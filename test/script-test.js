@@ -164,57 +164,57 @@ describe('Script', function() {
   });
 
   it('should handle CScriptNums correctly', function() {
-    var s1, s2, stack;
+    var input, output, stack;
 
-    s1 = new Script([
-      new Buffer([0xff, 0xff, 0xff, 0x7f]),
+    input = new Script([
+      new Buffer('ffffff7f', 'hex'),
       opcodes.OP_NEGATE,
       opcodes.OP_DUP,
       opcodes.OP_ADD
     ]);
 
-    s2 = new Script([
-      new Buffer([0xfe, 0xff, 0xff, 0xff, 0x80]),
+    output = new Script([
+      new Buffer('feffffff80', 'hex'),
       opcodes.OP_EQUAL
     ]);
 
     stack = new Stack();
 
-    assert(s1.execute(stack));
-    assert(success(s2.execute(stack), stack));
+    assert(input.execute(stack));
+    assert(success(output.execute(stack), stack));
   });
 
   it('should handle CScriptNums correctly', function() {
-    var s1, s2, stack;
+    var input, output, stack;
 
-    s1 = new Script([
+    input = new Script([
       opcodes.OP_11,
       opcodes.OP_10,
       opcodes.OP_1,
       opcodes.OP_ADD
     ]);
 
-    s2 = new Script([
+    output = new Script([
       opcodes.OP_NUMNOTEQUAL,
       opcodes.OP_NOT
     ]);
 
     stack = new Stack();
 
-    assert(s1.execute(stack));
-    assert(success(s2.execute(stack), stack));
+    assert(input.execute(stack));
+    assert(success(output.execute(stack), stack));
   });
 
   it('should handle OP_ROLL correctly', function() {
-    var s1, s2, stack;
+    var input, output, stack;
 
-    s1 = new Script([
+    input = new Script([
       new Buffer([0x16]),
       new Buffer([0x15]),
       new Buffer([0x14])
     ]);
 
-    s2 = new Script([
+    output = new Script([
       opcodes.OP_0,
       opcodes.OP_ROLL,
       new Buffer([0x14]),
@@ -226,8 +226,8 @@ describe('Script', function() {
 
     stack = new Stack();
 
-    assert(s1.execute(stack));
-    assert(success(s2.execute(stack), stack));
+    assert(input.execute(stack));
+    assert(success(output.execute(stack), stack));
   });
 
   scripts.forEach(function(data) {
@@ -264,8 +264,8 @@ describe('Script', function() {
 
     flags = flag;
 
-    [false, true].forEach(function(nocache) {
-      var suffix = nocache ? ' without cache' : ' with cache';
+    [false, true].forEach(function(noCache) {
+      var suffix = noCache ? ' without cache' : ' with cache';
       it('should handle script test' + suffix + ': ' + comments, function() {
         var prev, tx, err, res;
 
@@ -278,7 +278,7 @@ describe('Script', function() {
               hash: constants.NULL_HASH,
               index: 0xffffffff
             },
-            script: [Script.array(0), Script.array(0)],
+            script: new Script([opcodes.OP_0, opcodes.OP_0]),
             witness: new Witness(),
             sequence: 0xffffffff
           }],
@@ -309,7 +309,7 @@ describe('Script', function() {
           locktime: 0
         });
 
-        if (nocache) {
+        if (noCache) {
           tx._raw = null;
           tx._size = -1;
           tx._witnessSize = -1;

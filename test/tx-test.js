@@ -41,8 +41,8 @@ function parseTX(file) {
   return { tx: tx, view: view };
 }
 
-function clearCache(tx, nocache) {
-  if (!nocache) {
+function clearCache(tx, noCache) {
+  if (!noCache) {
     assert.equal(tx.hash('hex'), tx.clone().hash('hex'));
     return;
   }
@@ -77,24 +77,27 @@ function parseTest(data) {
   flags = flag;
 
   coins.forEach(function(data) {
-    var hash = data[0];
+    var hash = util.revHex(data[0]);
     var index = data[1];
     var script = Script.fromString(data[2]);
-    var value = data[3];
+    var amount = data[3] != null ? data[3] : '0';
+    var value = parseInt(amount, 10);
     var coin;
+
+    if (index === -1)
+      return;
 
     coin = new Coin({
       version: 1,
       height: -1,
       coinbase: false,
-      hash: util.revHex(hash),
+      hash: hash,
       index: index,
       script: script,
-      value: value != null ? parseInt(value, 10) : 0
+      value: value
     });
 
-    if (index !== -1)
-      view.addCoin(coin);
+    view.addCoin(coin);
   });
 
   coin = view.getOutput(tx.inputs[0]);
@@ -148,12 +151,12 @@ describe('TX', function() {
             '0f7c00000000001976a91495ad422bb5911c2c9fe6ce4f82a13c85f03d9b' +
             '2e88ac00000000';
 
-  [false, true].forEach(function(nocache) {
-    var suffix = nocache ? ' without cache' : ' with cache';
+  [false, true].forEach(function(noCache) {
+    var suffix = noCache ? ' without cache' : ' with cache';
 
     it('should decode/encode with parser/framer' + suffix, function() {
       var tx = TX.fromRaw(raw, 'hex');
-      clearCache(tx, nocache);
+      clearCache(tx, noCache);
       assert.equal(tx.toRaw().toString('hex'), raw);
     });
 
@@ -163,43 +166,44 @@ describe('TX', function() {
       var view = new CoinView();
       view.addTX(p, -1);
 
-      clearCache(tx, nocache);
-      clearCache(p, nocache);
+      clearCache(tx, noCache);
+      clearCache(p, noCache);
 
       assert(tx.verify(view));
+      util.log(tx.format(view));
     });
 
     it('should verify non-minimal output' + suffix, function() {
-      clearCache(tx1.tx, nocache);
+      clearCache(tx1.tx, noCache);
       assert(tx1.tx.verify(tx1.view, constants.flags.VERIFY_P2SH));
     });
 
     it('should verify tx.version == 0' + suffix, function() {
-      clearCache(tx2.tx, nocache);
+      clearCache(tx2.tx, noCache);
       assert(tx2.tx.verify(tx2.view, constants.flags.VERIFY_P2SH));
     });
 
     it('should verify sighash_single bug w/ findanddelete' + suffix, function() {
-      clearCache(tx3.tx, nocache);
+      clearCache(tx3.tx, noCache);
       assert(tx3.tx.verify(tx3.view, constants.flags.VERIFY_P2SH));
     });
 
     it('should verify high S value with only DERSIG enabled' + suffix, function() {
       var coin = tx4.view.getOutput(tx4.tx.inputs[0]);
       var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
-      clearCache(tx4.tx, nocache);
+      clearCache(tx4.tx, noCache);
       assert(tx4.tx.verifyInput(0, coin, flags));
     });
 
     it('should verify the coolest tx ever sent' + suffix, function() {
-      clearCache(coolest.tx, nocache);
+      clearCache(coolest.tx, noCache);
       assert(coolest.tx.verify(coolest.view, constants.flags.VERIFY_NONE));
     });
 
     it('should parse witness tx properly' + suffix, function() {
       var raw1, raw2, wtx2;
 
-      clearCache(wtx.tx, nocache);
+      clearCache(wtx.tx, noCache);
 
       assert.equal(wtx.tx.inputs.length, 5);
       assert.equal(wtx.tx.outputs.length, 1980);
@@ -218,7 +222,7 @@ describe('TX', function() {
       assert.deepEqual(raw1, raw2);
 
       wtx2 = TX.fromRaw(raw2);
-      clearCache(wtx2, nocache);
+      clearCache(wtx2, noCache);
 
       assert.equal(wtx.tx.hash('hex'), wtx2.hash('hex'));
       assert.equal(wtx.tx.witnessHash('hex'), wtx2.witnessHash('hex'));
@@ -257,19 +261,19 @@ describe('TX', function() {
         if (valid) {
           if (comments.indexOf('Coinbase') === 0) {
             it('should handle valid coinbase' + suffix + ': ' + comments, function() {
-              clearCache(tx, nocache);
+              clearCache(tx, noCache);
               assert.ok(tx.isSane());
             });
             return;
           }
           it('should handle valid tx test' + suffix + ': ' + comments, function() {
-            clearCache(tx, nocache);
+            clearCache(tx, noCache);
             assert.ok(tx.verify(view, flags));
           });
         } else {
           if (comments === 'Duplicate inputs') {
             it('should handle duplicate input test' + suffix + ': ' + comments, function() {
-              clearCache(tx, nocache);
+              clearCache(tx, noCache);
               assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
             });
@@ -277,7 +281,7 @@ describe('TX', function() {
           }
           if (comments === 'Negative output') {
             it('should handle invalid tx (negative)' + suffix + ': ' + comments, function() {
-              clearCache(tx, nocache);
+              clearCache(tx, noCache);
               assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
             });
@@ -285,13 +289,13 @@ describe('TX', function() {
           }
           if (comments.indexOf('Coinbase') === 0) {
             it('should handle invalid coinbase' + suffix + ': ' + comments, function() {
-              clearCache(tx, nocache);
+              clearCache(tx, noCache);
               assert.ok(!tx.isSane());
             });
             return;
           }
           it('should handle invalid tx test' + suffix + ': ' + comments, function() {
-            clearCache(tx, nocache);
+            clearCache(tx, noCache);
             assert.ok(!tx.verify(view, flags));
           });
         }
@@ -299,13 +303,14 @@ describe('TX', function() {
     });
 
     sighash.forEach(function(data) {
-      var tx, script, index, type, expected, hexType;
+      var name, tx, script, index;
+      var type, expected, hexType;
 
       if (data.length === 1)
         return;
 
       tx = TX.fromRaw(data[0], 'hex');
-      clearCache(tx, nocache);
+      clearCache(tx, noCache);
 
       script = Script.fromRaw(data[1], 'hex');
 
@@ -322,10 +327,13 @@ describe('TX', function() {
       if (hexType.length % 2 !== 0)
         hexType = '0' + hexType;
 
-      it('should get signature hash of ' + data[4] + ' (' + hexType + ')' + suffix, function() {
+      name = 'should get signature hash of '
+        + data[4] + ' (' + hexType + ')' + suffix;
+
+      it(name, function() {
         var subscript = script.getSubscript(0).removeSeparators();
-        var hash = tx.signatureHash(index, subscript, 0, type, 0).toString('hex');
-        assert.equal(hash, expected);
+        var hash = tx.signatureHash(index, subscript, 0, type, 0);
+        assert.equal(hash.toString('hex'), expected);
       });
     });
   });

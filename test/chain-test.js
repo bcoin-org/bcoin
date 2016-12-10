@@ -1,31 +1,35 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('regtest');
-var constants = bcoin.constants;
-var util = bcoin.util;
-var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
-var opcodes = constants.opcodes;
+var BN = require('bn.js');
+var constants = require('../lib/protocol/constants');
+var util = require('../lib/utils/util');
 var co = require('../lib/utils/co');
-var cob = co.cob;
+var crypto = require('../lib/crypto/crypto');
 var CoinView = require('../lib/blockchain/coinview');
+var Coin = require('../lib/primitives/coin');
+var Script = require('../lib/script/script');
+var FullNode = require('../lib/node/fullnode');
+var TX = require('../lib/primitives/tx');
+var MTX = require('../lib/primitives/mtx');
 // var Client = require('../lib/wallet/client');
+var opcodes = constants.opcodes;
+var cob = co.cob;
 
 describe('Chain', function() {
-  var chain, wallet, node, miner, walletdb, mempool;
-  var tip1, tip2, cb1, cb2, mineBlock;
+  var node = new FullNode({ db: 'memory', apiKey: 'foo', network: 'regtest' });
+  var chain = node.chain;
+  var mempool = node.mempool;
+  var walletdb = node.walletdb;
+  var miner = node.miner;
+  var wallet, tip1, tip2, cb1, cb2, mineBlock;
+
+  // walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
+  walletdb.options.resolution = false;
+
+  node.on('error', function() {});
 
   this.timeout(5000);
-
-  node = new bcoin.fullnode({ db: 'memory', apiKey: 'foo' });
-  // node.walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
-  chain = node.chain;
-  mempool = node.mempool;
-  walletdb = node.walletdb;
-  walletdb.options.resolution = false;
-  miner = node.miner;
-  node.on('error', function() {});
 
   mineBlock = co(function* mineBlock(tip, tx) {
     var attempt = yield miner.createBlock(tip);
@@ -34,7 +38,7 @@ describe('Chain', function() {
     if (!tx)
       return yield attempt.mineAsync();
 
-    redeemer = bcoin.mtx();
+    redeemer = new MTX();
 
     redeemer.addOutput({
       address: wallet.getReceive(),
@@ -225,7 +229,7 @@ describe('Chain', function() {
     yield chain.add(block);
 
     tx = block.txs[1];
-    output = bcoin.coin.fromTX(tx, 1, chain.height);
+    output = Coin.fromTX(tx, 1, chain.height);
 
     coin = yield chain.db.getCoin(tx.hash('hex'), 1);
 
@@ -318,11 +322,11 @@ describe('Chain', function() {
     var attempt = yield miner.createBlock();
     var redeemer;
 
-    redeemer = bcoin.mtx();
+    redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
-        bcoin.script.array(new BN(1)),
+        Script.array(new BN(1)),
         constants.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
@@ -348,11 +352,11 @@ describe('Chain', function() {
 
     csv = block.txs[1];
 
-    redeemer = bcoin.mtx();
+    redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
-        bcoin.script.array(new BN(2)),
+        Script.array(new BN(2)),
         constants.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
@@ -374,11 +378,11 @@ describe('Chain', function() {
     var csv = (yield chain.db.getBlock(chain.height)).txs[1];
     var block, attempt, redeemer, err;
 
-    redeemer = bcoin.mtx();
+    redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
-        bcoin.script.array(new BN(1)),
+        Script.array(new BN(1)),
         constants.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
@@ -418,11 +422,11 @@ describe('Chain', function() {
 
     csv = block.txs[1];
 
-    redeemer = bcoin.mtx();
+    redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
-        bcoin.script.array(new BN(2)),
+        Script.array(new BN(2)),
         constants.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8

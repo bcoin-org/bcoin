@@ -1,7 +1,7 @@
 'use strict';
 
-var assert = require('assert');
 var fs = require('fs');
+var assert = require('assert');
 var util = require('../lib/utils/util');
 var btcutils = require('../lib/btc/utils');
 var crypto = require('../lib/crypto/crypto');
@@ -16,9 +16,12 @@ var constants = require('../lib/protocol/constants');
 var bip152 = require('../lib/net/bip152');
 
 var block300025 = require('./data/block300025.json');
-var cmpct = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8').trim().split('\n');
-var cmpct2 = fs.readFileSync(__dirname + '/data/cmpct2', 'utf8').trim();
+var cmpct1 = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8');
+var cmpct2 = fs.readFileSync(__dirname + '/data/cmpct2', 'utf8');
 var cmpct2block = fs.readFileSync(__dirname + '/data/cmpct2.bin');
+
+cmpct1 = cmpct1.trim().split('\n');
+cmpct2 = cmpct2.trim();
 
 describe('Block', function() {
   var mblock, raw, block, raw2;
@@ -245,14 +248,14 @@ describe('Block', function() {
   });
 
   it('should handle compact block', function(cb) {
-    var cblock = bip152.CompactBlock.fromRaw(cmpct[0], 'hex');
-    var block = Block.fromRaw(cmpct[1], 'hex');
-    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
+    var block = Block.fromRaw(cmpct1[1], 'hex');
+    var cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
+    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     var map = {};
     var i, tx, mempool, result;
 
-    assert.equal(cblock.toRaw().toString('hex'), cmpct[0]);
-    assert.equal(cblock2.toRaw().toString('hex'), cmpct[0]);
+    assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
+    assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
 
     for (i = 0; i < block.txs.length; i++) {
       tx = block.txs[i];
@@ -268,30 +271,30 @@ describe('Block', function() {
       }
     };
 
-    assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
+    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    result = cblock.fillMempool(false, mempool);
+    result = cblock1.fillMempool(false, mempool);
     assert(result);
 
-    for (i = 0; i < cblock.available.length; i++)
-      assert(cblock.available[i]);
+    for (i = 0; i < cblock1.available.length; i++)
+      assert(cblock1.available[i]);
 
     assert.equal(
-      cblock.toBlock().toRaw().toString('hex'),
+      cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
 
     cb();
   });
 
   it('should handle half-full compact block', function(cb) {
-    var cblock = bip152.CompactBlock.fromRaw(cmpct[0], 'hex');
-    var block = Block.fromRaw(cmpct[1], 'hex');
-    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
+    var block = Block.fromRaw(cmpct1[1], 'hex');
+    var cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
+    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     var map = {};
     var i, tx, mid, keys, mempool, result, req, res;
 
-    assert.equal(cblock.toRaw().toString('hex'), cmpct[0]);
-    assert.equal(cblock2.toRaw().toString('hex'), cmpct[0]);
+    assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
+    assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
 
     for (i = 0; i < block.txs.length; i++) {
       tx = block.txs[i];
@@ -310,43 +313,43 @@ describe('Block', function() {
       }
     };
 
-    assert.equal(cblock.sid(block.txs[1].hash()), 125673511480291);
+    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    result = cblock.fillMempool(false, mempool);
+    result = cblock1.fillMempool(false, mempool);
     assert(!result);
 
-    req = cblock.toRequest();
-    assert.equal(req.hash, cblock.hash('hex'));
+    req = cblock1.toRequest();
+    assert.equal(req.hash, cblock1.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
     req = bip152.TXRequest.fromRaw(req.toRaw());
-    assert.equal(req.hash, cblock.hash('hex'));
+    assert.equal(req.hash, cblock1.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
     res = bip152.TXResponse.fromBlock(block, req);
     res = bip152.TXResponse.fromRaw(res.toRaw());
 
-    result = cblock.fillMissing(res);
+    result = cblock1.fillMissing(res);
     assert(result);
 
-    for (i = 0; i < cblock.available.length; i++)
-      assert(cblock.available[i]);
+    for (i = 0; i < cblock1.available.length; i++)
+      assert(cblock1.available[i]);
 
     assert.equal(
-      cblock.toBlock().toRaw().toString('hex'),
+      cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
 
     cb();
   });
 
   it('should handle compact block', function(cb) {
-    var cblock = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     var block = Block.fromRaw(cmpct2block);
-    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
+    var cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
+    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     var map = {};
     var i, tx, result, mempool;
 
-    assert.equal(cblock.toRaw().toString('hex'), cmpct2);
+    assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
     for (i = 0; i < block.txs.length; i++) {
@@ -363,27 +366,27 @@ describe('Block', function() {
       }
     };
 
-    result = cblock.fillMempool(false, mempool);
+    result = cblock1.fillMempool(false, mempool);
     assert(result);
 
-    for (i = 0; i < cblock.available.length; i++)
-      assert(cblock.available[i]);
+    for (i = 0; i < cblock1.available.length; i++)
+      assert(cblock1.available[i]);
 
     assert.equal(
-      cblock.toBlock().toRaw().toString('hex'),
+      cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
 
     cb();
   });
 
   it('should handle half-full compact block', function(cb) {
-    var cblock = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     var block = Block.fromRaw(cmpct2block);
-    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock.keyNonce);
+    var cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
+    var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     var map = {};
     var i, tx, mid, keys, mempool, result, req, res;
 
-    assert.equal(cblock.toRaw().toString('hex'), cmpct2);
+    assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
     for (i = 0; i < block.txs.length; i++) {
@@ -403,26 +406,26 @@ describe('Block', function() {
       }
     };
 
-    result = cblock.fillMempool(false, mempool);
+    result = cblock1.fillMempool(false, mempool);
     assert(!result);
 
-    req = cblock.toRequest();
-    assert.equal(req.hash, cblock.hash('hex'));
+    req = cblock1.toRequest();
+    assert.equal(req.hash, cblock1.hash('hex'));
 
     req = bip152.TXRequest.fromRaw(req.toRaw());
-    assert.equal(req.hash, cblock.hash('hex'));
+    assert.equal(req.hash, cblock1.hash('hex'));
 
     res = bip152.TXResponse.fromBlock(block, req);
     res = bip152.TXResponse.fromRaw(res.toRaw());
 
-    result = cblock.fillMissing(res);
+    result = cblock1.fillMissing(res);
     assert(result);
 
-    for (i = 0; i < cblock.available.length; i++)
-      assert(cblock.available[i]);
+    for (i = 0; i < cblock1.available.length; i++)
+      assert(cblock1.available[i]);
 
     assert.equal(
-      cblock.toBlock().toRaw().toString('hex'),
+      cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
 
     cb();
