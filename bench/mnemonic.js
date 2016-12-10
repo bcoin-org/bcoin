@@ -1,19 +1,17 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('main');
-var constants = bcoin.constants;
-var util = bcoin.util;
 var assert = require('assert');
 var bench = require('./bench');
-var Mnemonic = bcoin.hd.Mnemonic;
+var HD = require('../lib/hd');
+var Mnemonic = require('../lib/hd/mnemonic');
 
-var key = bcoin.hd.fromMnemonic();
+var key = HD.fromMnemonic();
 var phrase = key.mnemonic.getPhrase();
+var i, end;
 
 assert.equal(Mnemonic.fromPhrase(phrase).getPhrase(), phrase);
 
-var end = bench('fromPhrase');
-for (var i = 0; i < 10000; i++)
+end = bench('fromPhrase');
+for (i = 0; i < 10000; i++)
   Mnemonic.fromPhrase(phrase);
 end(i);

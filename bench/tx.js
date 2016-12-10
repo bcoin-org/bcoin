@@ -1,102 +1,116 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('main');
-var constants = bcoin.constants;
-var util = bcoin.util;
-var assert = require('assert');
-var scriptTypes = constants.scriptTypes;
-var bench = require('./bench');
 var fs = require('fs');
+var assert = require('assert');
+var Block = require('../lib/primitives/block');
+var Address = require('../lib/primitives/address');
+var TX = require('../lib/primitives/tx');
+var MTX = require('../lib/primitives/mtx');
+var Coin = require('../lib/primitives/coin');
+var CoinView = require('../lib/blockchain/coinview');
+var constants = require('../lib/protocol/constants');
+var crypto = require('../lib/crypto/crypto');
+var util = require('../lib/utils/util');
+var bench = require('./bench');
 
-bcoin.cache();
-
-var block = bcoin.block.fromJSON(require('../test/data/block300025.json'));
-var btx = block.txs[397];
+var json = require('../test/data/block300025.json');
+var block = Block.fromJSON(json);
+var btx = { tx: block.txs[397], view: new CoinView() };
 
 var tx1 = parseTX('../test/data/tx3.hex');
-var tx4 = parseTX('../test/data/tx4.hex');
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
-wtx = new Buffer(wtx.trim(), 'hex');
-var tx;
+var i, tx, raw, end, flags, input;
 
-function parseTX(file) {
-  file = fs.readFileSync(__dirname + '/' + file, 'utf8').trim().split(/\n+/);
-  var tx = bcoin.tx.fromRaw(file.shift().trim(), 'hex');
-  for (var i = 0; i < file.length; i++) {
-    var coin = bcoin.tx.fromRaw(file[i].trim(), 'hex');
-    tx.fillCoins(coin);
-  }
-  return tx;
+wtx = new Buffer(wtx.trim(), 'hex');
+
+tx = json.txs[397];
+for (i = 0; i < tx.inputs.length; i++) {
+  input = tx.inputs[i];
+  btx.view.addCoin(Coin.fromJSON(input.coin));
 }
 
-var end = bench('parse');
-for (var i = 0; i < 1000; i++)
-  tx = bcoin.tx.fromRaw(wtx);
+function parseTX(file) {
+  var data = fs.readFileSync(__dirname + '/' + file, 'utf8');
+  var parts = data.trim().split(/\n+/);
+  var raw = parts[0];
+  var tx = TX.fromRaw(raw.trim(), 'hex');
+  var view = new CoinView();
+  var i, prev;
+
+  for (i = 1; i < parts.length; i++) {
+    raw = parts[i];
+    prev = TX.fromRaw(raw.trim(), 'hex');
+    view.addTX(prev, -1);
+  }
+
+  return { tx: tx, view: view };
+}
+
+end = bench('parse');
+for (i = 0; i < 1000; i++)
+  tx = TX.fromRaw(wtx);
 end(i);
 
-var end = bench('serialize');
-var raw;
-
-for (var i = 0; i < 1000; i++) {
+end = bench('serialize');
+for (i = 0; i < 1000; i++) {
   tx._raw = null;
   raw = tx.toRaw();
 }
 end(i);
 
-var end = bench('hash');
-for (var i = 0; i < 3000; i++) {
-  tx1.hash();
-  tx1._hash = null;
+end = bench('hash');
+for (i = 0; i < 3000; i++) {
+  tx1.tx.hash();
+  tx1.tx._hash = null;
 }
 end(i);
 
-var end = bench('witness hash');
-for (var i = 0; i < 3000; i++) {
+end = bench('witness hash');
+for (i = 0; i < 3000; i++) {
   tx.witnessHash();
   tx._whash = null;
 }
 end(i);
 
-var end = bench('fee');
-for (var i = 0; i < 1000; i++)
-  tx.getFee();
-end(i);
-
-var end = bench('sanity');
-for (var i = 0; i < 1000; i++)
+end = bench('sanity');
+for (i = 0; i < 1000; i++)
   tx.isSane();
 end(i);
 
-var end = bench('input hashes');
-for (var i = 0; i < 1000; i++)
-  tx.getInputHashes('hex');
+end = bench('input hashes');
+for (i = 0; i < 1000; i++)
+  tx.getInputHashes(null, 'hex');
 end(i);
 
-var end = bench('output hashes');
-for (var i = 0; i < 1000; i++)
+end = bench('output hashes');
+for (i = 0; i < 1000; i++)
   tx.getOutputHashes('hex');
 end(i);
 
-var end = bench('all hashes');
-for (var i = 0; i < 1000; i++)
-  tx.getHashes('hex');
+end = bench('all hashes');
+for (i = 0; i < 1000; i++)
+  tx.getHashes(null, 'hex');
 end(i);
 
-var end = bench('verify');
-for (var i = 0; i < 3000; i++)
-  tx1.verify(constants.flags.VERIFY_P2SH);
-end(i * tx1.inputs.length);
+end = bench('verify');
+for (i = 0; i < 3000; i++)
+  tx1.tx.verify(tx1.view, constants.flags.VERIFY_P2SH);
+end(i * tx1.tx.inputs.length);
 
-var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
-var end = bench('verify multisig');
-for (var i = 0; i < 3000; i++)
-  btx.verify(flags);
-end(i * btx.inputs.length);
+end = bench('fee');
+for (i = 0; i < 1000; i++)
+  tx1.tx.getFee(tx1.view);
+end(i);
 
-var tx = bcoin.mtx();
+flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+end = bench('verify multisig');
+for (i = 0; i < 3000; i++)
+  btx.tx.verify(btx.view, flags);
+end(i * btx.tx.inputs.length);
 
-for (var i = 0; i < 100; i++) {
+tx = new MTX();
+
+for (i = 0; i < 100; i++) {
   tx.addInput({
     prevout: {
       hash: constants.NULL_HASH,
@@ -104,28 +118,28 @@ for (var i = 0; i < 100; i++) {
     },
     script: [
       new Buffer(9),
-      bcoin.crypto.randomBytes(33)
+      crypto.randomBytes(33)
     ]
   });
   tx.addOutput({
-    address: bcoin.address.fromHash(bcoin.crypto.randomBytes(20)),
+    address: Address.fromHash(crypto.randomBytes(20)),
     value: 0
   });
 }
 
 tx = tx.toTX();
 
-var end = bench('input hashes');
-for (var i = 0; i < 1000; i++)
-  tx.getInputHashes('hex');
+end = bench('input hashes');
+for (i = 0; i < 1000; i++)
+  tx.getInputHashes(null, 'hex');
 end(i);
 
-var end = bench('output hashes');
-for (var i = 0; i < 1000; i++)
+end = bench('output hashes');
+for (i = 0; i < 1000; i++)
   tx.getOutputHashes('hex');
 end(i);
 
-var end = bench('all hashes');
-for (var i = 0; i < 1000; i++)
-  tx.getHashes('hex');
+end = bench('all hashes');
+for (i = 0; i < 1000; i++)
+  tx.getHashes(null, 'hex');
 end(i);

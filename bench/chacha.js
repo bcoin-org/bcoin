@@ -1,36 +1,38 @@
 'use strict';
 
 var chachapoly = require('../lib/crypto/chachapoly');
+var crypto = require('../lib/crypto/crypto');
 var bench = require('./bench');
+var i, chacha, iv, poly, key, data, end;
 
 console.log('note: rate measured in kb/s');
 
-var chacha = new chachapoly.ChaCha20();
-var iv = new Buffer('0102030405060708', 'hex');
+chacha = new chachapoly.ChaCha20();
+iv = new Buffer('0102030405060708', 'hex');
 chacha.init(iv, 0);
-var data = new Buffer(32);
-for (var i = 0; i < 32; i++)
+data = new Buffer(32);
+for (i = 0; i < 32; i++)
   data[i] = i;
-var end = bench('encrypt');
-for (var i = 0; i < 1000000; i++)
+end = bench('encrypt');
+for (i = 0; i < 1000000; i++)
   chacha.encrypt(data);
 end(i * 32 / 1024);
 
-var poly = new chachapoly.Poly1305();
-var key = new Buffer('000102030405060708090a0b0c0d0e0f', 'hex');
+poly = new chachapoly.Poly1305();
+key = new Buffer('000102030405060708090a0b0c0d0e0f', 'hex');
 poly.init(key);
 
-var data = new Buffer(32);
-for (var i = 0; i < 32; i++)
+data = new Buffer(32);
+for (i = 0; i < 32; i++)
   data[i] = i & 0xff;
 
-var end = bench('update');
-for (var i = 0; i < 1000000; i++)
+end = bench('update');
+for (i = 0; i < 1000000; i++)
   poly.update(data);
 end(i * 32 / 1024);
 
-var end = bench('finish');
-for (var i = 0; i < 1000000; i++) {
+end = bench('finish');
+for (i = 0; i < 1000000; i++) {
   poly.init(key);
   poly.update(data);
   poly.finish();
@@ -38,8 +40,7 @@ for (var i = 0; i < 1000000; i++) {
 end(i * 32 / 1024);
 
 // For reference:
-var crypto = require('../lib/crypto/crypto');
-var end = bench('sha256');
-for (var i = 0; i < 1000000; i++)
+end = bench('sha256');
+for (i = 0; i < 1000000; i++)
   crypto.hash256(data);
 end(i * 32 / 1024);

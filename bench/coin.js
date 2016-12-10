@@ -1,44 +1,38 @@
 'use strict';
 
-var BN = require('bn.js');
-var constants = require('../lib/protocol/constants');
-var util = require('../lib/utils/util');
-var assert = require('assert');
-var scriptTypes = constants.scriptTypes;
-var bench = require('./bench');
 var fs = require('fs');
+var assert = require('assert');
+var util = require('../lib/utils/util');
 var Coins = require('../lib/blockchain/coins');
 var TX = require('../lib/primitives/tx');
+var bench = require('./bench');
 
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+var i, j, coins, raw, end;
+
 wtx = TX.fromRaw(wtx.trim(), 'hex');
+coins = Coins.fromTX(wtx);
 
-var coins = Coins.fromTX(wtx);
-var raw;
-//raw = coins.toRaw();
-//console.log(Coins.fromRaw(raw));
-
-var end = bench('serialize');
-for (var i = 0; i < 10000; i++)
+end = bench('serialize');
+for (i = 0; i < 10000; i++)
   raw = coins.toRaw();
 end(i);
 
-var end = bench('parse');
-for (var i = 0; i < 10000; i++)
+end = bench('parse');
+for (i = 0; i < 10000; i++)
   Coins.fromRaw(raw);
 end(i);
 
-var end = bench('parse-single');
-var hash = wtx.hash('hex');
-for (var i = 0; i < 10000; i++)
+end = bench('parse-single');
+hash = wtx.hash('hex');
+for (i = 0; i < 10000; i++)
   Coins.parseCoin(raw, hash, 5);
 end(i);
 
-var coins = Coins.fromRaw(raw);
-var end = bench('get');
-var j;
+coins = Coins.fromRaw(raw);
+end = bench('get');
 
-for (var i = 0; i < 10000; i++)
-  for (var j = 0; j < coins.outputs.length; j++)
+for (i = 0; i < 10000; i++)
+  for (j = 0; j < coins.outputs.length; j++)
     coins.get(j);
 end(i * coins.outputs.length);

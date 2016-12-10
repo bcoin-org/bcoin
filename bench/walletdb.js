@@ -1,16 +1,13 @@
 'use strict';
 
-var BN = require('bn.js');
-var bcoin = require('../').set('main');
-var constants = bcoin.constants;
-var util = bcoin.util;
 var assert = require('assert');
-var scriptTypes = constants.scriptTypes;
+var util = require('../lib/utils/util');
 var bench = require('./bench');
 var co = require('../lib/utils/co');
 var crypto = require('../lib/crypto/crypto');
-
-bcoin.cache();
+var WalletDB = require('../lib/wallet/walletdb');
+var MTX = require('../lib/primitives/mtx');
+var walletdb, runBench;
 
 function dummy() {
   var hash = crypto.randomBytes(32).toString('hex');
@@ -18,32 +15,18 @@ function dummy() {
     prevout: {
       hash: hash,
       index: 0
-    },
-    coin: {
-      version: 1,
-      height: 0,
-      value: 50460 * 4,
-      script: new bcoin.script(),
-      coinbase: false,
-      hash: hash,
-      index: 0
-    },
-    script: new bcoin.script(),
-    witness: new bcoin.witness(),
-    sequence: 0xffffffff
+    }
   };
 }
 
-var walletdb = new bcoin.walletdb({
+walletdb = new WalletDB({
   name: 'wallet-test',
-  // location: __dirname + '/../walletdb-bench',
-  // db: 'leveldb'
   db: 'memory',
   resolution: false,
   verify: false
 });
 
-var runBench = co(function* runBench() {
+runBench = co(function* runBench() {
   var i, j, wallet, addrs, jobs, end;
   var result, tx, options;
 
@@ -81,7 +64,7 @@ var runBench = co(function* runBench() {
   // TX deposit
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = bcoin.mtx()
+    tx = MTX()
       .addInput(dummy())
       .addOutput(addrs[(i + 0) % addrs.length], 50460)
       .addOutput(addrs[(i + 1) % addrs.length], 50460)
@@ -99,7 +82,7 @@ var runBench = co(function* runBench() {
   // TX redemption
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = bcoin.mtx()
+    tx = MTX()
       .addInput(tx, 0)
       .addInput(tx, 1)
       .addInput(tx, 2)
