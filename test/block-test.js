@@ -154,6 +154,7 @@ describe('Block', function() {
   it('should verify a historical block', function() {
     var view = new CoinView();
     var height = block300025.height;
+    var sigops = 0;
     var i, j, tx, input, coin, flags;
 
     for (i = 1; i < block300025.txs.length; i++) {
@@ -176,12 +177,14 @@ describe('Block', function() {
     for (i = 1; i < block.txs.length; i++) {
       tx = block.txs[i];
       assert(tx.isSane());
-      assert(tx.checkInputs(view, block300025.height));
+      assert(tx.checkInputs(view, height));
       assert(tx.verify(view, flags));
       assert(!tx.hasWitness());
+      sigops += tx.getSigopsWeight(view, flags);
       view.addTX(tx, height);
     }
 
+    assert.equal(sigops, 5280);
     assert.equal(block.getReward(view, height), 2507773345);
     assert.equal(block.getReward(view, height), block.txs[0].outputs[0].value);
   });
@@ -198,6 +201,7 @@ describe('Block', function() {
     block2._valid = null;
     block2._validHeaders = null;
     block2._hash = null;
+    block2._hhash = null;
     block2.merkleRoot = block.merkleRoot;
     assert(block2.verify());
   });
@@ -213,6 +217,7 @@ describe('Block', function() {
     mblock2._validHeaders = null;
     mblock2._validPartial = null;
     mblock2._hash = null;
+    mblock2._hhash = null;
     mblock2.merkleRoot = mblock.merkleRoot;
     assert(mblock2.verify());
   });
@@ -227,6 +232,7 @@ describe('Block', function() {
     block2._valid = null;
     block2._validHeaders = null;
     block2._hash = null;
+    block2._hhash = null;
     block2.bits = block.bits;
     assert(block2.verify());
   });
