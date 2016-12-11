@@ -397,10 +397,7 @@ var cb = new bcoin.mtx();
 
 // Add a typical coinbase input
 cb.addInput({
-  prevout: {
-    hash: constants.NULL_HASH,
-    index: 0
-  },
+  prevout: new bcoin.outpoint(),
   script: new bcoin.script(),
   sequence: 0xffffffff
 });
@@ -412,28 +409,34 @@ cb.addOutput({
 });
 
 // Create our redeeming transaction.
-var tx = new bcoin.mtx();
+var mtx = new bcoin.mtx();
 
 // Add output 0 from our coinbase.
-tx.addInput(cb, 0);
+mtx.addInput(cb, 0);
 
 // Send 10,000 satoshis to ourself,
 // creating a fee of 40,000 satoshis.
-tx.addOutput({
+mtx.addOutput({
   address: keyring.getAddress(),
   value: 10000
 });
 
 // Sign input 0: pass in our keyring.
-tx.sign(keyring);
+mtx.sign(keyring);
+
+// The transaction should now verify.
+assert(mtx.verify());
+assert(tx.getFee() === 40000);
 
 // Commit our transaction and make it immutable.
 // This turns it from an MTX into a TX object.
-tx = tx.toTX();
+var tx = mtx.toTX();
 
-// The transaction should now verify.
-assert(tx.verify());
-assert(tx.getFee() === 40000);
+// The transaction should still verify.
+// Regular transactions require a coin
+// viewpoint to be passed in.
+assert(tx.verify(mtx.view));
+assert(tx.getFee(mtx.view) === 40000);
 ```
 
 ### Coin Selection
@@ -455,10 +458,7 @@ var keyring = new bcoin.keyring(key.privateKey);
 var cb = new bcoin.mtx();
 
 cb.addInput({
-  prevout: {
-    hash: constants.NULL_HASH,
-    index: 0
-  },
+  prevout: new bcoin.outpoint(),
   script: new bcoin.script(),
   sequence: 0xffffffff
 });
@@ -479,10 +479,10 @@ var coin = bcoin.coin.fromTX(cb, 0);
 coins.push(coin);
 
 // Create our redeeming transaction.
-var tx = new bcoin.mtx();
+var mtx = new bcoin.mtx();
 
 // Send 10,000 satoshis to ourself.
-tx.addOutput({
+mtx.addOutput({
   address: keyring.getAddress(),
   value: 10000
 });
@@ -493,7 +493,7 @@ tx.addOutput({
 
 // Select coins from our array and add inputs.
 // Calculate fee and add a change output.
-tx.fund(coins, {
+mtx.fund(coins, {
   // Use a rate of 10,000 satoshis per kb.
   // With the `fullnode` object, you can
   // use the fee estimator for this instead
@@ -504,14 +504,20 @@ tx.fund(coins, {
 });
 
 // Sign input 0
-tx.sign(keyring);
+mtx.sign(keyring);
+
+// The transaction should now verify.
+assert(mtx.verify());
 
 // Commit our transaction and make it immutable.
 // This turns it from an MTX into a TX.
-tx = tx.toTX();
+var tx = mtx.toTX();
 
-// The transaction should now verify.
-assert(tx.verify());
+// The transaction should still verify.
+// Regular transactions require a coin
+// viewpoint to be passed in.
+assert(tx.verify(mtx.view));
+
 ```
 
 ## Scripting
@@ -658,7 +664,7 @@ assembly, but it's still usable.
 The real feature of javascript is that your code will run almost anywhere. With
 bcoin, we now have a full node that will run on almost any browser, on laptops,
 on servers, on smartphones, on most devices you can imagine, even by simply
-visting a webpage.
+visiting a webpage.
 
 ## Disclaimer
 
