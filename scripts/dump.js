@@ -1,32 +1,36 @@
+'use strict';
+
 var fs = require('fs');
 var heapdump = require('heapdump');
-
 var MempoolEntry = require('../lib/mempool/mempoolentry');
 var Coins = require('../lib/blockchain/coins');
 var TX = require('../lib/primitives/tx');
+var CoinView = require('../lib/blockchain/coinview');
 
 var SNAPSHOT = __dirname + '/../dump.heapsnapshot';
 var tx = parseTX('../test/data/tx4.hex');
+var raw, coins, entry;
 
 function parseTX(file) {
-  var filename = __dirname + '/' + file;
-  var data = fs.readFileSync(filename, 'utf8');
+  var data = fs.readFileSync(__dirname + '/' + file, 'utf8');
   var parts = data.trim().split(/\n+/);
-  var hex = parts[0].trim();
-  var tx = TX.fromRaw(hex, 'hex');
-  var i, tx, coin;
+  var raw = parts[0];
+  var tx = TX.fromRaw(raw.trim(), 'hex');
+  var view = new CoinView();
+  var i, prev;
 
   for (i = 1; i < parts.length; i++) {
-    hex = parts[i].trim();
-    coin = TX.fromRaw(hex, 'hex');
-    tx.fillCoins(coin);
+    raw = parts[i];
+    prev = TX.fromRaw(raw.trim(), 'hex');
+    view.addTX(prev, -1);
   }
 
-  return tx;
+  return { tx: tx, view: view };
 }
 
-var coins = Coins.fromRaw(Coins.fromTX(tx).toRaw(), tx.hash('hex'));
-var entry = MempoolEntry.fromTX(tx, 1000000);
+raw = Coins.fromTX(tx.tx, 0).toRaw();
+coins = Coins.fromRaw(raw, tx.hash('hex'));
+entry = MempoolEntry.fromTX(tx, tx.view, 1000000);
 
 setInterval(function() {
   console.log(tx.hash('hex'));
