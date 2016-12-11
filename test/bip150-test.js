@@ -1,8 +1,6 @@
 'use strict';
 
 var assert = require('assert');
-var util = require('../lib/utils/util');
-var crypto = require('../lib/crypto/crypto');
 var ec = require('../lib/crypto/ec');
 var BIP150 = require('../lib/net/bip150');
 var BIP151 = require('../lib/net/bip151');
@@ -28,8 +26,10 @@ describe('BIP150', function() {
   it('should do encinit', function() {
     var init = server.toEncinit();
     client.encinit(init.publicKey, init.cipher);
-    var init = client.toEncinit();
+
+    init = client.toEncinit();
     server.encinit(init.publicKey, init.cipher);
+
     assert(!client.handshake);
     assert(!server.handshake);
   });
@@ -49,12 +49,15 @@ describe('BIP150', function() {
   });
 
   it('should do BIP150 handshake', function() {
-    var challenge = client.bip150.toChallenge();
-    var reply = server.bip150.challenge(challenge.hash);
-    var propose = client.bip150.reply(reply);
-    var challenge = server.bip150.propose(propose);
-    var reply = client.bip150.challenge(challenge);
-    var result = server.bip150.reply(reply);
+    var challenge, reply, propose, result;
+
+    challenge = client.bip150.toChallenge();
+    reply = server.bip150.challenge(challenge.hash);
+    propose = client.bip150.reply(reply);
+    challenge = server.bip150.propose(propose);
+    reply = client.bip150.challenge(challenge);
+    result = server.bip150.reply(reply);
+
     assert(!result);
     assert(client.bip150.auth);
     assert(server.bip150.auth);

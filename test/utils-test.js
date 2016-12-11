@@ -2,7 +2,6 @@
 
 var assert = require('assert');
 var BN = require('bn.js');
-var util = require('../lib/utils/util');
 var ec = require('../lib/crypto/ec');
 var btcutils = require('../lib/btc/utils');
 var base58 = require('../lib/utils/base58');
@@ -30,12 +29,12 @@ describe('Utils', function() {
   ];
 
   it('should encode/decode base58', function() {
-    var arr = new Buffer([ 0, 0, 0, 0xde, 0xad, 0xbe, 0xef ]);
-    var b = base58.encode(arr);
-    var i, r, b;
+    var buf = new Buffer('000000deadbeef', 'hex');
+    var b = base58.encode(buf);
+    var i, r;
 
     assert.equal(b, '1116h8cQN');
-    assert.deepEqual(base58.decode(b), arr);
+    assert.deepEqual(base58.decode(b), buf);
 
     for (i = 0; i < vectors.length; i++) {
       r = new Buffer(vectors[i][0], 'hex');
@@ -257,12 +256,12 @@ describe('Utils', function() {
 
   it('should do proper hkdf', function() {
     // https://tools.ietf.org/html/rfc5869
-    var hash = 'sha256';
+    var alg = 'sha256';
     var ikm = '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b';
     var salt = '000102030405060708090a0b0c';
     var info = 'f0f1f2f3f4f5f6f7f8f9';
     var len = 42;
-    var prkE, okmE, prk, okm, hash;
+    var prkE, okmE, prk, okm;
 
     prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5';
     okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1'
@@ -272,13 +271,13 @@ describe('Utils', function() {
     salt = new Buffer(salt, 'hex');
     info = new Buffer(info, 'hex');
 
-    prk = crypto.hkdfExtract(ikm, salt, 'sha256');
-    okm = crypto.hkdfExpand(prk, info, len, 'sha256');
+    prk = crypto.hkdfExtract(ikm, salt, alg);
+    okm = crypto.hkdfExpand(prk, info, len, alg);
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);
 
-    hash = 'sha256';
+    alg = 'sha256';
 
     ikm = '000102030405060708090a0b0c0d0e0f'
       + '101112131415161718191a1b1c1d1e1f'
@@ -314,8 +313,8 @@ describe('Utils', function() {
     salt = new Buffer(salt, 'hex');
     info = new Buffer(info, 'hex');
 
-    prk = crypto.hkdfExtract(ikm, salt, 'sha256');
-    okm = crypto.hkdfExpand(prk, info, len, 'sha256');
+    prk = crypto.hkdfExtract(ikm, salt, alg);
+    okm = crypto.hkdfExpand(prk, info, len, alg);
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);

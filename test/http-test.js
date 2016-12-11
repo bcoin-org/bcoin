@@ -2,15 +2,11 @@
 
 var assert = require('assert');
 var constants = require('../lib/protocol/constants');
-var network = require('../lib/protocol/networks');
-var util = require('../lib/utils/util');
-var crypto = require('../lib/crypto/crypto');
 var co = require('../lib/utils/co');
 var Amount = require('../lib/btc/amount');
 var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
 var FullNode = require('../lib/node/fullnode');
-var scriptTypes = constants.scriptTypes;
 var cob = co.cob;
 
 var dummyInput = {
@@ -21,8 +17,7 @@ var dummyInput = {
 };
 
 describe('HTTP', function() {
-  var request = HTTP.request;
-  var node, wallet, w, addr, hash;
+  var node, wallet, addr, hash;
 
   node = new FullNode({
     network: 'regtest',

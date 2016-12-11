@@ -1,9 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var util = require('../lib/utils/util');
 var constants = require('../lib/protocol/constants');
-var crypto = require('../lib/crypto/crypto');
 var Bloom = require('../lib/utils/bloom');
 var murmur3 = require('../lib/utils/murmur3');
 

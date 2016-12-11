@@ -2,7 +2,6 @@
 
 var assert = require('assert');
 var constants = require('../lib/protocol/constants');
-var util = require('../lib/utils/util');
 var crypto = require('../lib/crypto/crypto');
 var co = require('../lib/utils/co');
 var MempoolEntry = require('../lib/mempool/mempoolentry');
@@ -87,7 +86,7 @@ describe('Mempool', function() {
     var w = wallet;
     var t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
 
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
@@ -100,7 +99,7 @@ describe('Mempool', function() {
     yield w.sign(t1);
     t1 = t1.toTX();
 
-    t2 = MTX()
+    t2 = new MTX()
       .addInput(t1, 0) // 50000
       .addOutput(w.getAddress(), 20000)
       .addOutput(w.getAddress(), 20000);
@@ -109,7 +108,7 @@ describe('Mempool', function() {
     yield w.sign(t2);
     t2 = t2.toTX();
 
-    t3 = MTX()
+    t3 = new MTX()
       .addInput(t1, 1) // 10000
       .addInput(t2, 0) // 20000
       .addOutput(w.getAddress(), 23000);
@@ -118,7 +117,7 @@ describe('Mempool', function() {
     yield w.sign(t3);
     t3 = t3.toTX();
 
-    t4 = MTX()
+    t4 = new MTX()
       .addInput(t2, 1) // 24000
       .addInput(t3, 0) // 23000
       .addOutput(w.getAddress(), 11000)
@@ -128,7 +127,7 @@ describe('Mempool', function() {
     yield w.sign(t4);
     t4 = t4.toTX();
 
-    f1 = MTX()
+    f1 = new MTX()
       .addInput(t4, 1) // 11000
       .addOutput(new Address(), 9000);
 
@@ -136,7 +135,7 @@ describe('Mempool', function() {
     yield w.sign(f1);
     f1 = f1.toTX();
 
-    fake = MTX()
+    fake = new MTX()
       .addInput(t1, 1) // 1000 (already redeemed)
       .addOutput(w.getAddress(), 6000); // 6000 instead of 500
 
@@ -186,7 +185,7 @@ describe('Mempool', function() {
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig;
 
-    tx = MTX()
+    tx = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
@@ -212,7 +211,7 @@ describe('Mempool', function() {
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig, err;
 
-    tx = MTX()
+    tx = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
@@ -241,11 +240,11 @@ describe('Mempool', function() {
   it('should not cache a malleated wtx with mutated sig', cob(function* () {
     var w = wallet;
     var kp = KeyRing.generate();
-    var tx, prev, prevHash, prevs, sig, tx, err;
+    var tx, prev, prevHash, prevs, sig, err;
 
     kp.witness = true;
 
-    tx = MTX()
+    tx = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
@@ -258,6 +257,7 @@ describe('Mempool', function() {
 
     sig = tx.signature(0, prevs, 70000, kp.privateKey, 'all', 1);
     sig[sig.length - 1] = 0;
+
     tx.inputs[0].witness = new Witness([sig, kp.publicKey]);
     tx = tx.toTX();
 
@@ -274,9 +274,9 @@ describe('Mempool', function() {
   it('should not cache a malleated tx with unnecessary witness', cob(function* () {
     var w = wallet;
     var kp = KeyRing.generate();
-    var tx, prev, prevHash, sig, tx, err;
+    var tx, prev, prevHash, sig, err;
 
-    tx = MTX()
+    tx = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
@@ -303,11 +303,11 @@ describe('Mempool', function() {
   it('should not cache a malleated wtx with wit removed', cob(function* () {
     var w = wallet;
     var kp = KeyRing.generate();
-    var tx, prev, prevHash, tx, err;
+    var tx, prev, prevHash, err;
 
     kp.witness = true;
 
-    tx = MTX()
+    tx = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
@@ -332,9 +332,9 @@ describe('Mempool', function() {
   it('should cache non-malleated tx without sig', cob(function* () {
     var w = wallet;
     var kp = KeyRing.generate();
-    var tx, prev, prevHash, tx, err;
+    var tx, prev, prevHash, err;
 
-    tx = MTX()
+    tx = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 10000);
 
@@ -359,10 +359,9 @@ describe('Mempool', function() {
 
   it('should clear reject cache', cob(function* () {
     var w = wallet;
-    var tx, input, tx, block;
+    var tx, input, block;
 
-    tx = MTX()
-      .addOutput(w.getAddress(), 50000);
+    tx = new MTX().addOutput(w.getAddress(), 50000);
 
     input = {
       prevout: {

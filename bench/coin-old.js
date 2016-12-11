@@ -1,12 +1,7 @@
 'use strict';
 
-var BN = require('bn.js');
-var constants = require('../lib/protocol/constants');
-var util = require('../lib/utils/util');
-var assert = require('assert');
-var scriptTypes = constants.scriptTypes;
-var bench = require('./bench');
 var fs = require('fs');
+var bench = require('./bench');
 var Coins = require('../lib/blockchain/coins-old');
 var TX = require('../lib/primitives/tx');
 

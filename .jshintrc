@@ -39,5 +39,11 @@
   "quotmark": "single",
 
   "laxbreak": true,
-  "laxcomma": true
+  "laxcomma": true,
+
+  "predef": [
+    "it",
+    "describe",
+    "beforeEach"
+  ]
 }

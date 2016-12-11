@@ -1,7 +1,6 @@
 'use strict';
 
 var assert = require('assert');
-var util = require('../lib/utils/util');
 var crypto = require('../lib/crypto/crypto');
 var aes = require('../lib/crypto/aes');
 var nativeCrypto = require('crypto');
@@ -58,7 +57,7 @@ describe('AES', function() {
   }
 
   function bencrypt(data, passphrase) {
-    var key, cipher;
+    var key;
 
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
@@ -74,7 +73,7 @@ describe('AES', function() {
   }
 
   function bdecrypt(data, passphrase) {
-    var key, decipher;
+    var key;
 
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
@@ -90,7 +89,7 @@ describe('AES', function() {
   }
 
   function encrypt(data, passphrase) {
-    var key, cipher;
+    var key;
 
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
@@ -107,7 +106,7 @@ describe('AES', function() {
   }
 
   function decrypt(data, passphrase) {
-    var key, decipher;
+    var key;
 
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');

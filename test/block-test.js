@@ -2,14 +2,11 @@
 
 var fs = require('fs');
 var assert = require('assert');
-var util = require('../lib/utils/util');
 var btcutils = require('../lib/btc/utils');
-var crypto = require('../lib/crypto/crypto');
 var Bloom = require('../lib/utils/bloom');
 var Block = require('../lib/primitives/block');
 var Headers = require('../lib/primitives/headers');
 var MerkleBlock = require('../lib/primitives/merkleblock');
-var TX = require('../lib/primitives/tx');
 var CoinView = require('../lib/blockchain/coinview');
 var Coin = require('../lib/primitives/coin');
 var constants = require('../lib/protocol/constants');

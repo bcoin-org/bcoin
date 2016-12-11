@@ -2,7 +2,6 @@
 
 var assert = require('assert');
 var util = require('../lib/utils/util');
-var crypto = require('../lib/crypto/crypto');
 var bip70 = require('../lib/bip70');
 var Address = require('../lib/primitives/address');
 var x509 = bip70.x509;

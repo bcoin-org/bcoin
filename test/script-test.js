@@ -5,8 +5,6 @@ var Script = require('../lib/script/script');
 var Witness = require('../lib/script/witness');
 var Stack = require('../lib/script/stack');
 var TX = require('../lib/primitives/tx');
-var util = require('../lib/utils/util');
-var crypto = require('../lib/crypto/crypto');
 var constants = require('../lib/protocol/constants');
 var opcodes = constants.opcodes;
 
@@ -239,7 +237,7 @@ describe('Script', function() {
     var comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
     var amount = 0;
     var flag = 0;
-    var i, name, err, res;
+    var i, name;
 
     if (data.length === 1)
       return;

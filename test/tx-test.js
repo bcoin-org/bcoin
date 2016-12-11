@@ -170,7 +170,6 @@ describe('TX', function() {
       clearCache(p, noCache);
 
       assert(tx.verify(view));
-      util.log(tx.format(view));
     });
 
     it('should verify non-minimal output' + suffix, function() {

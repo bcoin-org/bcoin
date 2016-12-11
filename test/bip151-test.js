@@ -14,8 +14,10 @@ describe('BIP151', function() {
   it('should do encinit', function() {
     var init = server.toEncinit();
     client.encinit(init.publicKey, init.cipher);
-    var init = client.toEncinit();
+
+    init = client.toEncinit();
     server.encinit(init.publicKey, init.cipher);
+
     assert(!client.handshake);
     assert(!server.handshake);
   });

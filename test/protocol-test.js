@@ -6,7 +6,6 @@ var constants = require('../lib/protocol/constants');
 var Network = require('../lib/protocol/network');
 var util = require('../lib/utils/util');
 var BufferReader = require('../lib/utils/reader');
-var crypto = require('../lib/crypto/crypto');
 var NetworkAddress = require('../lib/primitives/netaddress');
 var TX = require('../lib/primitives/tx');
 var Framer = require('../lib/net/framer');

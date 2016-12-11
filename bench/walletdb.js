@@ -1,7 +1,5 @@
 'use strict';
 
-var assert = require('assert');
-var util = require('../lib/utils/util');
 var bench = require('./bench');
 var co = require('../lib/utils/co');
 var crypto = require('../lib/crypto/crypto');
@@ -64,7 +62,7 @@ runBench = co(function* runBench() {
   // TX deposit
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = MTX()
+    tx = new MTX()
       .addInput(dummy())
       .addOutput(addrs[(i + 0) % addrs.length], 50460)
       .addOutput(addrs[(i + 1) % addrs.length], 50460)
@@ -82,7 +80,7 @@ runBench = co(function* runBench() {
   // TX redemption
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = MTX()
+    tx = new MTX()
       .addInput(tx, 0)
       .addInput(tx, 1)
       .addInput(tx, 2)

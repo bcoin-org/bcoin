@@ -3,23 +3,17 @@
 var assert = require('assert');
 var BN = require('bn.js');
 var constants = require('../lib/protocol/constants');
-var util = require('../lib/utils/util');
 var co = require('../lib/utils/co');
-var crypto = require('../lib/crypto/crypto');
-var CoinView = require('../lib/blockchain/coinview');
 var Coin = require('../lib/primitives/coin');
 var Script = require('../lib/script/script');
 var FullNode = require('../lib/node/fullnode');
-var TX = require('../lib/primitives/tx');
 var MTX = require('../lib/primitives/mtx');
 // var Client = require('../lib/wallet/client');
-var opcodes = constants.opcodes;
 var cob = co.cob;
 
 describe('Chain', function() {
   var node = new FullNode({ db: 'memory', apiKey: 'foo', network: 'regtest' });
   var chain = node.chain;
-  var mempool = node.mempool;
   var walletdb = node.walletdb;
   var miner = node.miner;
   var wallet, tip1, tip2, cb1, cb2, mineBlock;
@@ -105,11 +99,11 @@ describe('Chain', function() {
     }
   }));
 
-  it('should have correct chain value', cob(function* () {
+  it('should have correct chain value', function() {
     assert.equal(chain.db.state.value, 55000000000);
     assert.equal(chain.db.state.coin, 20);
     assert.equal(chain.db.state.tx, 21);
-  }));
+  });
 
   it('should have correct balance', cob(function* () {
     var balance;
@@ -146,11 +140,11 @@ describe('Chain', function() {
     assert(chain.tip.chainwork.cmp(tip1.chainwork) > 0);
   }));
 
-  it('should have correct chain value', cob(function* () {
+  it('should have correct chain value', function() {
     assert.equal(chain.db.state.value, 60000000000);
     assert.equal(chain.db.state.coin, 21);
     assert.equal(chain.db.state.tx, 22);
-  }));
+  });
 
   it('should have correct balance', cob(function* () {
     var balance;
@@ -213,11 +207,11 @@ describe('Chain', function() {
     assert(chain.tip === tip);
   }));
 
-  it('should have correct chain value', cob(function* () {
+  it('should have correct chain value', function() {
     assert.equal(chain.db.state.value, 65000000000);
     assert.equal(chain.db.state.coin, 23);
     assert.equal(chain.db.state.tx, 24);
-  }));
+  });
 
   it('should get coin', cob(function* () {
     var block, tx, output, coin;

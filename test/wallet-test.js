@@ -124,7 +124,7 @@ describe('Wallet', function() {
     else
       assert.equal(addr.type, scriptTypes.PUBKEYHASH);
 
-    src = MTX({
+    src = new MTX({
       outputs: [{
         value: 5460 * 2,
         address: bullshitNesting
@@ -138,7 +138,7 @@ describe('Wallet', function() {
 
     src.addInput(dummy());
 
-    tx = MTX()
+    tx = new MTX()
       .addInput(src, 0)
       .addOutput(w.getAddress(), 5460);
 
@@ -178,7 +178,7 @@ describe('Wallet', function() {
     ];
 
     // Input transaction (bare 1-of-2 multisig)
-    src = MTX({
+    src = new MTX({
       outputs: [{
         value: 5460 * 2,
         script: Script.fromMultisig(1, 2, keys)
@@ -190,7 +190,7 @@ describe('Wallet', function() {
 
     src.addInput(dummy());
 
-    tx = MTX()
+    tx = new MTX()
       .addInput(src, 0)
       .addOutput(w.getAddress(), 5460);
 
@@ -210,7 +210,7 @@ describe('Wallet', function() {
     doubleSpendWallet = w;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 1000);
     t1.addInput(dummy());
@@ -220,7 +220,7 @@ describe('Wallet', function() {
     // yield w.sign(t1);
     t1 = t1.toTX();
 
-    t2 = MTX()
+    t2 = new MTX()
       .addInput(t1, 0) // 50000
       .addOutput(w.getAddress(), 24000)
       .addOutput(w.getAddress(), 24000);
@@ -230,7 +230,7 @@ describe('Wallet', function() {
     // balance: 49000
     yield w.sign(t2);
     t2 = t2.toTX();
-    t3 = MTX()
+    t3 = new MTX()
       .addInput(t1, 1) // 1000
       .addInput(t2, 0) // 24000
       .addOutput(w.getAddress(), 23000);
@@ -238,7 +238,7 @@ describe('Wallet', function() {
     // balance: 47000
     yield w.sign(t3);
     t3 = t3.toTX();
-    t4 = MTX()
+    t4 = new MTX()
       .addInput(t2, 1) // 24000
       .addInput(t3, 0) // 23000
       .addOutput(w.getAddress(), 11000)
@@ -247,7 +247,7 @@ describe('Wallet', function() {
     // balance: 22000
     yield w.sign(t4);
     t4 = t4.toTX();
-    f1 = MTX()
+    f1 = new MTX()
       .addInput(t4, 1) // 11000
       .addOutput(f.getAddress(), 10000);
 
@@ -255,7 +255,7 @@ describe('Wallet', function() {
     yield w.sign(f1);
     f1 = f1.toTX();
 
-    fake = MTX()
+    fake = new MTX()
       .addInput(t1, 1) // 1000 (already redeemed)
       .addOutput(w.getAddress(), 500);
 
@@ -316,7 +316,7 @@ describe('Wallet', function() {
     var w = doubleSpendWallet;
     var tx, txs, total, balance;
 
-    tx = MTX().addOutput(w.getAddress(), 5000);
+    tx = new MTX().addOutput(w.getAddress(), 5000);
     tx.addInput(doubleSpend);
 
     txs = yield w.getHistory();
@@ -348,7 +348,7 @@ describe('Wallet', function() {
   }));
 
   it('should handle missed txs without resolution', cob(function* () {
-    var walletdb, w, f, t1, t2, t3, t4, f1, fake, balance, txs;
+    var walletdb, w, f, t1, t2, t3, t4, f1, balance, txs;
 
     walletdb = new WalletDB({
       name: 'wallet-test',
@@ -363,7 +363,7 @@ describe('Wallet', function() {
     f = yield walletdb.create();
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w.getAddress(), 50000)
       .addOutput(w.getAddress(), 1000);
     t1.addInput(dummy());
@@ -372,7 +372,7 @@ describe('Wallet', function() {
     // yield w.sign(t1);
     t1 = t1.toTX();
 
-    t2 = MTX()
+    t2 = new MTX()
       .addInput(t1, 0) // 50000
       .addOutput(w.getAddress(), 24000)
       .addOutput(w.getAddress(), 24000);
@@ -380,7 +380,7 @@ describe('Wallet', function() {
     // balance: 49000
     yield w.sign(t2);
     t2 = t2.toTX();
-    t3 = MTX()
+    t3 = new MTX()
       .addInput(t1, 1) // 1000
       .addInput(t2, 0) // 24000
       .addOutput(w.getAddress(), 23000);
@@ -388,7 +388,7 @@ describe('Wallet', function() {
     // balance: 47000
     yield w.sign(t3);
     t3 = t3.toTX();
-    t4 = MTX()
+    t4 = new MTX()
       .addInput(t2, 1) // 24000
       .addInput(t3, 0) // 23000
       .addOutput(w.getAddress(), 11000)
@@ -397,7 +397,7 @@ describe('Wallet', function() {
     // balance: 22000
     yield w.sign(t4);
     t4 = t4.toTX();
-    f1 = MTX()
+    f1 = new MTX()
       .addInput(t4, 1) // 11000
       .addOutput(f.getAddress(), 10000);
 
@@ -405,7 +405,7 @@ describe('Wallet', function() {
     yield w.sign(f1);
     f1 = f1.toTX();
 
-    // fake = MTX()
+    // fake = new MTX()
     //   .addInput(t1, 1) // 1000 (already redeemed)
     //   .addOutput(w.getAddress(), 500);
 
@@ -482,7 +482,7 @@ describe('Wallet', function() {
     var view, t1, t2, t3, err;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
@@ -494,7 +494,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t1);
 
     // Create new transaction
-    t2 = MTX().addOutput(w2.getAddress(), 5460);
+    t2 = new MTX().addOutput(w2.getAddress(), 5460);
     yield w1.fund(t2, { rate: 10000, round: true });
     yield w1.sign(t2);
     view = t2.view;
@@ -511,7 +511,7 @@ describe('Wallet', function() {
     assert.equal(t2.getFee(view), 10000); // minrelay=1000
 
     // Create new transaction
-    t3 = MTX().addOutput(w2.getAddress(), 15000);
+    t3 = new MTX().addOutput(w2.getAddress(), 15000);
 
     try {
       yield w1.fund(t3, { rate: 10000, round: true });
@@ -529,7 +529,7 @@ describe('Wallet', function() {
     var view, t1, t2, t3, balance, err;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
@@ -541,7 +541,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t1);
 
     // Create new transaction
-    t2 = MTX().addOutput(w2.getAddress(), 5460);
+    t2 = new MTX().addOutput(w2.getAddress(), 5460);
     yield w1.fund(t2, { rate: 10000 });
 
     yield w1.sign(t2);
@@ -568,7 +568,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t2);
 
     // Create new transaction
-    t3 = MTX().addOutput(w2.getAddress(), 15000);
+    t3 = new MTX().addOutput(w2.getAddress(), 15000);
 
     try {
       yield w1.fund(t3, { rate: 10000 });
@@ -588,7 +588,7 @@ describe('Wallet', function() {
     var t1, t2, tx, cost, total, coins1, coins2, left;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
@@ -598,7 +598,7 @@ describe('Wallet', function() {
     t1 = t1.toTX();
 
     // Coinbase
-    t2 = MTX()
+    t2 = new MTX()
       .addOutput(w2.getAddress(), 5460)
       .addOutput(w2.getAddress(), 5460)
       .addOutput(w2.getAddress(), 5460)
@@ -611,7 +611,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t2);
 
     // Create our tx with an output
-    tx = MTX();
+    tx = new MTX();
     tx.addOutput(to.getAddress(), 5460);
 
     cost = tx.getOutputValue();
@@ -718,7 +718,7 @@ describe('Wallet', function() {
     assert.equal(w3.getNested('base58'), paddr);
 
     // Add a shared unspent transaction to our wallets
-    utx = MTX();
+    utx = new MTX();
     if (bullshitNesting)
       utx.addOutput({ address: paddr, value: 5460 * 10 });
     else
@@ -749,7 +749,7 @@ describe('Wallet', function() {
     assert.equal(w3.account[rec].getAddress('base58'), b58);
 
     // Create a tx requiring 2 signatures
-    send = MTX();
+    send = new MTX();
     send.addOutput({ address: receive.getAddress(), value: 5460 });
     assert(!send.verify(flags));
     yield w1.fund(send, { rate: 10000, round: true });
@@ -772,7 +772,7 @@ describe('Wallet', function() {
     assert.equal(w3.account.change.getAddress('base58'), change);
 
     // Simulate a confirmation
-    var block = nextBlock();
+    block = nextBlock();
     send.height = block.height;
     send.block = block.hash;
     send.ts = block.ts;
@@ -828,7 +828,7 @@ describe('Wallet', function() {
     rec = account.receive;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(rec.getAddress(), 5460)
       .addOutput(rec.getAddress(), 5460)
       .addOutput(rec.getAddress(), 5460)
@@ -840,7 +840,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t1);
 
     // Create new transaction
-    t2 = MTX().addOutput(w2.getAddress(), 5460);
+    t2 = new MTX().addOutput(w2.getAddress(), 5460);
     yield w1.fund(t2, { rate: 10000, round: true });
     yield w1.sign(t2);
 
@@ -855,7 +855,7 @@ describe('Wallet', function() {
     assert.equal(t2.getFee(), 10000); // minrelay=1000
 
     // Create new transaction
-    t3 = MTX().addOutput(w2.getAddress(), 15000);
+    t3 = new MTX().addOutput(w2.getAddress(), 15000);
 
     try {
       yield w1.fund(t3, { rate: 10000, round: true });
@@ -894,7 +894,7 @@ describe('Wallet', function() {
       w.account.receive.getAddress('base58'));
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w.getAddress(), 5460)
       .addOutput(w.getAddress(), 5460)
       .addOutput(w.getAddress(), 5460)
@@ -906,7 +906,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t1);
 
     // Should fill from `foo` and fail
-    t2 = MTX().addOutput(w.getAddress(), 5460);
+    t2 = new MTX().addOutput(w.getAddress(), 5460);
     try {
       yield w.fund(t2, { rate: 10000, round: true, account: 'foo' });
     } catch (e) {
@@ -915,11 +915,11 @@ describe('Wallet', function() {
     assert(err);
 
     // Should fill from whole wallet and succeed
-    t2 = MTX().addOutput(w.getAddress(), 5460);
+    t2 = new MTX().addOutput(w.getAddress(), 5460);
     yield w.fund(t2, { rate: 10000, round: true });
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(account.receive.getAddress(), 5460)
       .addOutput(account.receive.getAddress(), 5460)
       .addOutput(account.receive.getAddress(), 5460);
@@ -930,17 +930,22 @@ describe('Wallet', function() {
 
     yield walletdb.addTX(t1);
 
-    t2 = MTX().addOutput(w.getAddress(), 5460);
+    t2 = new MTX().addOutput(w.getAddress(), 5460);
     // Should fill from `foo` and succeed
     yield w.fund(t2, { rate: 10000, round: true, account: 'foo' });
   }));
 
-  it('should create two accounts multiple encryption', cob(function* () {
+  it('should create two accounts (multiple encryption)', cob(function* () {
     var w = yield walletdb.create({ id: 'foobar', passphrase: 'foo' });
+    var account;
+
     yield w.destroy();
-    var w = yield walletdb.get('foobar');
-    var account = yield w.createAccount({ name: 'foo1' }, 'foo');
+
+    w = yield walletdb.get('foobar');
+
+    account = yield w.createAccount({ name: 'foo1' }, 'foo');
     assert(account);
+
     yield w.lock();
   }));
 
@@ -952,7 +957,7 @@ describe('Wallet', function() {
     w.master.key = null;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w.getAddress(), 5460)
       .addOutput(w.getAddress(), 5460)
       .addOutput(w.getAddress(), 5460)
@@ -964,7 +969,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t1);
 
     // Create new transaction
-    t2 = MTX().addOutput(w.getAddress(), 5460);
+    t2 = new MTX().addOutput(w.getAddress(), 5460);
     yield w.fund(t2, { rate: 10000, round: true });
 
     // Should fail
@@ -988,7 +993,7 @@ describe('Wallet', function() {
     var t1, t2;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
@@ -1000,7 +1005,7 @@ describe('Wallet', function() {
     yield walletdb.addTX(t1);
 
     // Create new transaction
-    t2 = MTX().addOutput(w2.getAddress(), 21840);
+    t2 = new MTX().addOutput(w2.getAddress(), 21840);
     yield w1.fund(t2, { rate: 10000, round: true, subtractFee: true });
     yield w1.sign(t2);
 
@@ -1017,7 +1022,7 @@ describe('Wallet', function() {
     var options, t1, t2;
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460)
@@ -1090,7 +1095,7 @@ describe('Wallet', function() {
     assert.equal(k.getHash('hex'), key.getHash('hex'));
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(key.getAddress(), 5460)
       .addOutput(key.getAddress(), 5460)
       .addOutput(key.getAddress(), 5460)
@@ -1125,7 +1130,7 @@ describe('Wallet', function() {
     var priv = KeyRing.generate();
     var key = new KeyRing(priv.publicKey);
     var w = yield walletdb.create({ watchOnly: true });
-    var options, k, t1, t2, tx;
+    var k;
 
     yield w.importKey('default', key);
 
@@ -1140,7 +1145,7 @@ describe('Wallet', function() {
   it('should import address', cob(function* () {
     var key = KeyRing.generate();
     var w = yield walletdb.create({ watchOnly: true });
-    var options, k, t1, t2, tx;
+    var k;
 
     yield w.importAddress('default', key.getAddress());
 
@@ -1223,7 +1228,7 @@ describe('Wallet', function() {
     addr = alice.getAddress();
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(addr, 50000);
     t1.addInput(dummy());
 
@@ -1234,7 +1239,7 @@ describe('Wallet', function() {
     yield bob.add(t1);
 
     // Bob misses this tx!
-    t2 = MTX()
+    t2 = new MTX()
       .addInput(t1, 0)
       .addOutput(addr, 24000)
       .addOutput(addr, 24000);
@@ -1249,7 +1254,7 @@ describe('Wallet', function() {
       (yield bob.getBalance()).unconfirmed);
 
     // Bob sees this one.
-    t3 = MTX()
+    t3 = new MTX()
       .addInput(t2, 0)
       .addInput(t2, 1)
       .addOutput(addr, 30000);
@@ -1290,7 +1295,7 @@ describe('Wallet', function() {
     addr = alice.getAddress();
 
     // Coinbase
-    t1 = MTX()
+    t1 = new MTX()
       .addOutput(addr, 50000);
     t1.addInput(dummy());
 
@@ -1301,7 +1306,7 @@ describe('Wallet', function() {
     yield bob.add(t1);
 
     // Bob misses this tx!
-    t2 = MTX()
+    t2 = new MTX()
       .addInput(t1, 0)
       .addOutput(addr, 24000)
       .addOutput(addr, 24000);
@@ -1316,7 +1321,7 @@ describe('Wallet', function() {
       (yield bob.getBalance()).unconfirmed);
 
     // Bob doublespends.
-    t2a = MTX()
+    t2a = new MTX()
       .addInput(t1, 0)
       .addOutput(addr, 10000)
       .addOutput(addr, 10000);
@@ -1327,7 +1332,7 @@ describe('Wallet', function() {
     yield bob.add(t2a);
 
     // Bob sees this one.
-    t3 = MTX()
+    t3 = new MTX()
       .addInput(t2, 0)
       .addInput(t2, 1)
       .addOutput(addr, 30000);
@@ -1351,8 +1356,7 @@ describe('Wallet', function() {
     assert.equal((yield bob.getBalance()).unconfirmed, 30000);
   }));
 
-  it('should cleanup', cob(function* () {
-    var records = yield walletdb.dump();
+  it('should cleanup', function() {
     constants.tx.COINBASE_MATURITY = 100;
-  }));
+  });
 });

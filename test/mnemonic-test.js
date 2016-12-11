@@ -1,8 +1,6 @@
 'use strict';
 
 var assert = require('assert');
-var util = require('../lib/utils/util');
-var crypto = require('../lib/crypto/crypto');
 var HD = require('../lib/hd');
 
 var mnemonic1 = require('./data/mnemonic1').english;

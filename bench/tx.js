@@ -1,7 +1,6 @@
 'use strict';
 
 var fs = require('fs');
-var assert = require('assert');
 var Block = require('../lib/primitives/block');
 var Address = require('../lib/primitives/address');
 var TX = require('../lib/primitives/tx');
@@ -10,7 +9,6 @@ var Coin = require('../lib/primitives/coin');
 var CoinView = require('../lib/blockchain/coinview');
 var constants = require('../lib/protocol/constants');
 var crypto = require('../lib/crypto/crypto');
-var util = require('../lib/utils/util');
 var bench = require('./bench');
 
 var json = require('../test/data/block300025.json');
