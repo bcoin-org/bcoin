@@ -299,16 +299,16 @@ describe('Wallet', function() {
     assert.equal(balance.unconfirmed, 11000);
 
     txs = yield w.getHistory();
-    assert(txs.some(function(tx) {
-      return tx.hash('hex') === f1.hash('hex');
+    assert(txs.some(function(wtx) {
+      return wtx.hash === f1.hash('hex');
     }));
 
     balance = yield f.getBalance();
     assert.equal(balance.unconfirmed, 10000);
 
     txs = yield f.getHistory();
-    assert(txs.some(function(tx) {
-      return tx.hash('hex') === f1.hash('hex');
+    assert(txs.some(function(wtx) {
+      return wtx.tx.hash('hex') === f1.hash('hex');
     }));
   }));
 
@@ -321,8 +321,8 @@ describe('Wallet', function() {
 
     txs = yield w.getHistory();
     assert.equal(txs.length, 5);
-    total = txs.reduce(function(t, tx) {
-      return t + tx.getOutputValue();
+    total = txs.reduce(function(t, wtx) {
+      return t + wtx.tx.getOutputValue();
     }, 0);
 
     assert.equal(total, 154000);
@@ -341,8 +341,8 @@ describe('Wallet', function() {
     txs = yield w.getHistory();
     assert.equal(txs.length, 2);
 
-    total = txs.reduce(function(t, tx) {
-      return t + tx.getOutputValue();
+    total = txs.reduce(function(t, wtx) {
+      return t + wtx.tx.getOutputValue();
     }, 0);
     assert.equal(total, 56000);
   }));
@@ -449,16 +449,16 @@ describe('Wallet', function() {
     assert.equal(balance.unconfirmed, 11000);
 
     txs = yield w.getHistory();
-    assert(txs.some(function(tx) {
-      return tx.hash('hex') === f1.hash('hex');
+    assert(txs.some(function(wtx) {
+      return wtx.tx.hash('hex') === f1.hash('hex');
     }));
 
     balance = yield f.getBalance();
     assert.equal(balance.unconfirmed, 10000);
 
     txs = yield f.getHistory();
-    assert(txs.some(function(tx) {
-      return tx.hash('hex') === f1.hash('hex');
+    assert(txs.some(function(wtx) {
+      return wtx.tx.hash('hex') === f1.hash('hex');
     }));
 
     yield walletdb.addTX(t2);
@@ -667,10 +667,9 @@ describe('Wallet', function() {
   multisig = co(function* multisig(witness, bullshitNesting, cb) {
     var flags = constants.flags.STANDARD_VERIFY_FLAGS;
     var options, w1, w2, w3, receive, b58, addr, paddr, utx, send, change;
-    var view;
-
     var rec = bullshitNesting ? 'nested' : 'receive';
     var depth = bullshitNesting ? 'nestedDepth' : 'receiveDepth';
+    var view, block;
 
     if (witness)
       flags |= constants.flags.VERIFY_WITNESS;
@@ -728,11 +727,7 @@ describe('Wallet', function() {
     utx = utx.toTX();
 
     // Simulate a confirmation
-    var block = nextBlock();
-    utx.height = block.height;
-    utx.block = block.hash;
-    utx.ts = block.ts;
-    utx.index = 0;
+    block = nextBlock();
 
     assert.equal(w1.account[depth], 1);
 
@@ -773,10 +768,6 @@ describe('Wallet', function() {
 
     // Simulate a confirmation
     block = nextBlock();
-    send.height = block.height;
-    send.block = block.hash;
-    send.ts = block.ts;
-    send.index = 0;
 
     yield walletdb.addBlock(block, [send]);
 
@@ -924,7 +915,6 @@ describe('Wallet', function() {
       .addOutput(account.receive.getAddress(), 5460)
       .addOutput(account.receive.getAddress(), 5460);
 
-    t1.ps = 0xdeadbeef;
     t1.addInput(dummy());
     t1 = t1.toTX();
 
@@ -1053,14 +1043,14 @@ describe('Wallet', function() {
 
   it('should get range of txs', cob(function* () {
     var w = wallet;
-    var txs = yield w.getRange({ start: 0xdeadbeef - 1000 });
-    assert.equal(txs.length, 1);
+    var txs = yield w.getRange({ start: util.now() - 1000 });
+    assert.equal(txs.length, 2);
   }));
 
   it('should get range of txs from account', cob(function* () {
     var w = wallet;
-    var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
-    assert.equal(txs.length, 1);
+    var txs = yield w.getRange('foo', { start: util.now() - 1000 });
+    assert.equal(txs.length, 2);
   }));
 
   it('should not get range of txs from non-existent account', cob(function* () {
@@ -1086,7 +1076,7 @@ describe('Wallet', function() {
   it('should import privkey', cob(function* () {
     var key = KeyRing.generate();
     var w = yield walletdb.create({ passphrase: 'test' });
-    var options, k, t1, t2, tx;
+    var options, k, t1, t2, wtx;
 
     yield w.importKey('default', key, 'test');
 
@@ -1106,9 +1096,9 @@ describe('Wallet', function() {
 
     yield walletdb.addTX(t1);
 
-    tx = yield w.getTX(t1.hash('hex'));
-    assert(tx);
-    assert.equal(t1.hash('hex'), tx.hash('hex'));
+    wtx = yield w.getTX(t1.hash('hex'));
+    assert(wtx);
+    assert.equal(t1.hash('hex'), wtx.hash);
 
     options = {
       rate: 10000,
@@ -1120,7 +1110,7 @@ describe('Wallet', function() {
     t2 = yield w.createTX(options);
     yield w.sign(t2);
     assert(t2.verify());
-    assert(t2.inputs[0].prevout.hash === tx.hash('hex'));
+    assert(t2.inputs[0].prevout.hash === wtx.hash);
 
     ewallet = w;
     ekey = key;
@@ -1159,15 +1149,15 @@ describe('Wallet', function() {
 
   it('should get details', cob(function* () {
     var w = wallet;
-    var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
+    var txs = yield w.getRange('foo', { start: util.now() - 1000 });
     var details = yield w.toDetails(txs);
-    assert.equal(details[0].toJSON().outputs[0].path.name, 'foo');
+    assert.equal(details[1].toJSON().outputs[0].path.name, 'foo');
   }));
 
   it('should rename wallet', cob(function* () {
     var w = wallet;
     yield wallet.rename('test');
-    var txs = yield w.getRange('foo', { start: 0xdeadbeef - 1000 });
+    var txs = yield w.getRange('foo', { start: util.now() - 1000 });
     var details = yield w.toDetails(txs);
     assert.equal(details[0].toJSON().id, 'test');
   }));

@@ -127,7 +127,8 @@ function escape(html, encode) {
     .replace(/'/g, '&#39;');
 }
 
-function addItem(tx) {
+function addItem(item, entry) {
+  var height = entry ? entry.height : -1;
   var el;
 
   if (items.length === 20) {
@@ -137,11 +138,11 @@ function addItem(tx) {
   }
 
   el = create('<a style="display:block;" href="#'
-    + tx.rhash + '">' + tx.rhash + ' (' + tx.height
-    + ' - ' + kb(tx.getSize()) + ')</a>');
+    + item.rhash() + '">' + item.rhash() + ' (' + height
+    + ' - ' + kb(item.getSize()) + ')</a>');
   tdiv.appendChild(el);
 
-  setMouseup(el, tx);
+  setMouseup(el, item);
 
   items.push(el);
 

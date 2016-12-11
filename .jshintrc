@@ -41,6 +41,8 @@
   "laxbreak": true,
   "laxcomma": true,
 
+  "noyield": true,
+
   "predef": [
     "it",
     "describe",
