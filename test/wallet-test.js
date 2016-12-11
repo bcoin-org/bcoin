@@ -1151,7 +1151,9 @@ describe('Wallet', function() {
     var w = wallet;
     var txs = yield w.getRange('foo', { start: util.now() - 1000 });
     var details = yield w.toDetails(txs);
-    assert.equal(details[1].toJSON().outputs[0].path.name, 'foo');
+    assert(details.some(function(tx) {
+      return tx.toJSON().outputs[0].path.name === 'foo';
+    }));
   }));
 
   it('should rename wallet', cob(function* () {
