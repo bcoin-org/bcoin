@@ -7,7 +7,7 @@ var bench = require('./bench');
 
 var raw = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
 var wtx = TX.fromRaw(raw.trim(), 'hex');
-var coins = Coins.fromTX(wtx);
+var coins = Coins.fromTX(wtx, 1);
 var i, j, end, hash;
 
 end = bench('serialize');
