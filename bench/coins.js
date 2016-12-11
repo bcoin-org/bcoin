@@ -1,7 +1,7 @@
 'use strict';
 
 var fs = require('fs');
-var Coins = require('../lib/blockchain/coins');
+var Coins = require('../lib/coins/coins');
 var TX = require('../lib/primitives/tx');
 var bench = require('./bench');
 

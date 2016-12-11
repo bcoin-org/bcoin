@@ -12,7 +12,7 @@ var Block = require('../lib/primitives/block');
 var Coin = require('../lib/primitives/coin');
 var Output = require('../lib/primitives/output');
 var Script = require('../lib/script/script');
-var CoinView = require('../lib/blockchain/coinview');
+var CoinView = require('../lib/coins/coinview');
 
 var valid = require('./data/tx_valid.json');
 var invalid = require('./data/tx_invalid.json');

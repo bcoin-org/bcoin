@@ -2,7 +2,7 @@
 
 var fs = require('fs');
 var bench = require('./bench');
-var Coins = require('../lib/blockchain/coins-old');
+var Coins = require('../migrate/coins-old');
 var TX = require('../lib/primitives/tx');
 
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');

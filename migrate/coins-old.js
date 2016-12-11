@@ -6,13 +6,13 @@
 
 'use strict';
 
-var util = require('../utils/util');
 var assert = require('assert');
-var constants = require('../protocol/constants');
-var Coin = require('../primitives/coin');
-var Output = require('../primitives/output');
-var BufferReader = require('../utils/reader');
-var BufferWriter = require('../utils/writer');
+var util = require('../lib/utils/util');
+var constants = require('../lib/protocol/constants');
+var Coin = require('../lib/primitives/coin');
+var Output = require('../lib/primitives/output');
+var BufferReader = require('../lib/utils/reader');
+var BufferWriter = require('../lib/utils/writer');
 var compressor = require('./compress-old');
 var compress = compressor.compress;
 var decompress = compressor.decompress;

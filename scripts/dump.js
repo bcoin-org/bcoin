@@ -3,9 +3,9 @@
 var fs = require('fs');
 var heapdump = require('heapdump');
 var MempoolEntry = require('../lib/mempool/mempoolentry');
-var Coins = require('../lib/blockchain/coins');
+var Coins = require('../lib/coins/coins');
 var TX = require('../lib/primitives/tx');
-var CoinView = require('../lib/blockchain/coinview');
+var CoinView = require('../lib/coins/coinview');
 
 var SNAPSHOT = __dirname + '/../dump.heapsnapshot';
 var tx = parseTX('../test/data/tx4.hex');

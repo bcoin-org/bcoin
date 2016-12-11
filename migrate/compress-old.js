@@ -7,13 +7,11 @@
 'use strict';
 
 var assert = require('assert');
-var ec = require('../crypto/ec');
+var ec = require('../lib/crypto/ec');
 
 /*
- * Constants
+ * Compression
  */
-
-var COMPRESS_TYPES = 10; // Space for 4 extra.
 
 /**
  * Compress a script, write directly to the buffer.
@@ -30,39 +28,40 @@ function compressScript(script, bw) {
   // we need to recreate them when we read
   // them.
 
-  // P2PKH -> 0 | key-hash
+  // P2PKH -> 1 | key-hash
   // Saves 5 bytes.
   if (script.isPubkeyhash(true)) {
     data = script.code[2].data;
-    bw.writeU8(0);
-    bw.writeBytes(data);
-    return bw;
-  }
-
-  // P2SH -> 1 | script-hash
-  // Saves 3 bytes.
-  if (script.isScripthash()) {
-    data = script.code[1].data;
     bw.writeU8(1);
     bw.writeBytes(data);
     return bw;
   }
 
-  // P2PK -> 2-5 | compressed-key
+  // P2SH -> 2 | script-hash
+  // Saves 3 bytes.
+  if (script.isScripthash()) {
+    data = script.code[1].data;
+    bw.writeU8(2);
+    bw.writeBytes(data);
+    return bw;
+  }
+
+  // P2PK -> 3 | compressed-key
   // Only works if the key is valid.
-  // Saves up to 35 bytes.
+  // Saves up to 34 bytes.
   if (script.isPubkey(true)) {
     data = script.code[0].data;
-    if (publicKeyVerify(data)) {
+    if (ec.publicKeyVerify(data)) {
       data = compressKey(data);
+      bw.writeU8(3);
       bw.writeBytes(data);
       return bw;
     }
   }
 
-  // Raw -> varlen + 10 | script
-  bw.writeVarint(script.raw.length + COMPRESS_TYPES);
-  bw.writeBytes(script.raw);
+  // Raw -> 0 | varlen | script
+  bw.writeU8(0);
+  bw.writeVarBytes(script.toRaw());
 
   return bw;
 }
@@ -74,23 +73,23 @@ function compressScript(script, bw) {
  */
 
 function decompressScript(script, br) {
-  var size, data;
+  var data;
 
   // Decompress the script.
   switch (br.readU8()) {
     case 0:
-      data = br.readBytes(20, true);
-      script.fromPubkeyhash(data);
+      data = br.readVarBytes();
+      script.fromRaw(data);
       break;
     case 1:
       data = br.readBytes(20, true);
-      script.fromScripthash(data);
+      script.fromPubkeyhash(data);
       break;
     case 2:
+      data = br.readBytes(20, true);
+      script.fromScripthash(data);
+      break;
     case 3:
-    case 4:
-    case 5:
-      br.offset -= 1;
       data = br.readBytes(33, true);
       // Decompress the key. If this fails,
       // we have database corruption!
@@ -98,108 +97,16 @@ function decompressScript(script, br) {
       script.fromPubkey(data);
       break;
     default:
-      br.offset -= 1;
-      size = br.readVarint() - COMPRESS_TYPES;
-      if (size > 10000) {
-        // This violates consensus rules.
-        // We don't need to read it.
-        script.fromNulldata(new Buffer(0));
-        br.seek(size);
-      } else {
-        data = br.readBytes(size);
-        script.fromRaw(data);
-      }
-      break;
+      throw new Error('Bad prefix.');
   }
 
   return script;
 }
 
 /**
- * Compress an output.
- * @param {Output} output
- * @param {BufferWriter} bw
- */
-
-function compressOutput(output, bw) {
-  bw.writeVarint(output.value);
-  compressScript(output.script, bw);
-  return bw;
-}
-
-/**
- * Decompress a script from buffer reader.
- * @param {Output} output
- * @param {BufferReader} br
- */
-
-function decompressOutput(output, br) {
-  output.value = br.readVarint();
-  decompressScript(output.script, br);
-  return output;
-}
-
-/**
- * Compress an output.
- * @param {Coin} coin
- * @param {BufferWriter} bw
- */
-
-function compressCoin(coin, bw) {
-  bw.writeVarint(coin.value);
-  compressScript(coin.script, bw);
-  return bw;
-}
-
-/**
- * Decompress a script from buffer reader.
- * @param {Coin} coin
- * @param {BufferReader} br
- */
-
-function decompressCoin(coin, br) {
-  coin.value = br.readVarint();
-  decompressScript(coin.script, br);
-  return coin;
-}
-
-/**
- * Skip past a compressed output.
- * @param {BufferWriter} bw
- * @returns {Number}
- */
-
-function skipOutput(br) {
-  var start = br.offset;
-
-  // Skip past the value.
-  br.skipVarint();
-
-  // Skip past the compressed scripts.
-  switch (br.readU8()) {
-    case 0:
-    case 1:
-      br.seek(20);
-      break;
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-      br.seek(32);
-      break;
-    default:
-      br.offset -= 1;
-      br.seek(br.readVarint() - COMPRESS_TYPES);
-      break;
-  }
-
-  return br.offset - start;
-}
-
-/**
  * Compress value using an exponent. Takes advantage of
  * the fact that many bitcoin values are divisible by 10.
- * @see https://github.com/btcsuite/btcd/blob/master/blockblockchain/compress.go
+ * @see https://github.com/btcsuite/btcd/blob/master/blockchain/compress.go
  * @param {Amount} value
  * @returns {Number}
  */
@@ -259,30 +166,6 @@ function decompressValue(value) {
 }
 
 /**
- * Verify a public key (no hybrid keys allowed).
- * @param {Buffer} key
- * @returns {Boolean}
- */
-
-function publicKeyVerify(key) {
-  if (key.length === 0)
-    return false;
-
-  switch (key[0]) {
-    case 0x02:
-    case 0x03:
-      return key.length === 33;
-    case 0x04:
-      if (key.length !== 65)
-        return false;
-
-      return ec.publicKeyVerify(key);
-    default:
-      return false;
-  }
-}
-
-/**
  * Compress a public key to coins compression format.
  * @param {Buffer} key
  * @returns {Buffer}
@@ -298,11 +181,17 @@ function compressKey(key) {
       out = key;
       break;
     case 0x04:
+    case 0x06:
+    case 0x07:
       // Compress the key normally.
       out = ec.publicKeyConvert(key, true);
-      // Store the oddness.
-      // Pseudo-hybrid format.
-      out[0] = 0x04 | (key[64] & 0x01);
+      // Store the original format (which
+      // may be a hybrid byte) in the hi
+      // 3 bits so we can restore it later.
+      // The hi bits being set also lets us
+      // know that this key was originally
+      // decompressed.
+      out[0] |= key[0] << 2;
       break;
     default:
       throw new Error('Bad point format.');
@@ -320,31 +209,29 @@ function compressKey(key) {
  */
 
 function decompressKey(key) {
-  var format = key[0];
+  var format = key[0] >>> 2;
   var out;
 
   assert(key.length === 33);
 
-  switch (format) {
-    case 0x02:
-    case 0x03:
-      return key;
-    case 0x04:
-      key[0] = 0x02;
-      break;
-    case 0x05:
-      key[0] = 0x03;
-      break;
-    default:
-      throw new Error('Bad point format.');
-  }
+  // Hi bits are not set. This key
+  // is not meant to be decompressed.
+  if (format === 0)
+    return key;
 
-  // Decompress the key.
+  // Decompress the key, and off the
+  // low bits so publicKeyConvert
+  // actually understands it.
+  key[0] &= 0x03;
   out = ec.publicKeyConvert(key, false);
 
-  // Reset the first byte so as not to
+  // Reset the hi bits so as not to
   // mutate the original buffer.
-  key[0] = format;
+  key[0] |= format << 2;
+
+  // Set the original format, which
+  // may have been a hybrid prefix byte.
+  out[0] = format;
 
   return out;
 }
@@ -354,17 +241,12 @@ function decompressKey(key) {
  */
 
 exports.compress = {
-  output: compressOutput,
-  coin: compressCoin,
   script: compressScript,
   value: compressValue,
   key: compressKey
 };
 
 exports.decompress = {
-  output: decompressOutput,
-  coin: decompressCoin,
-  skip: skipOutput,
   script: decompressScript,
   value: decompressValue,
   key: decompressKey
