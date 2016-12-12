@@ -15,7 +15,7 @@ var json = require('../test/data/block300025.json');
 var block = Block.fromJSON(json);
 var btx = { tx: block.txs[397], view: new CoinView() };
 
-var tx1 = parseTX('../test/data/tx3.hex');
+var tx3 = parseTX('../test/data/tx3.hex');
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
 var i, tx, raw, end, flags, input;
 
@@ -58,8 +58,8 @@ end(i);
 
 end = bench('hash');
 for (i = 0; i < 3000; i++) {
-  tx1.tx.hash();
-  tx1.tx._hash = null;
+  tx3.tx.hash();
+  tx3.tx._hash = null;
 }
 end(i);
 
@@ -92,12 +92,12 @@ end(i);
 
 end = bench('verify');
 for (i = 0; i < 3000; i++)
-  tx1.tx.verify(tx1.view, constants.flags.VERIFY_P2SH);
-end(i * tx1.tx.inputs.length);
+  tx3.tx.verify(tx3.view, constants.flags.VERIFY_P2SH);
+end(i * tx3.tx.inputs.length);
 
 end = bench('fee');
 for (i = 0; i < 1000; i++)
-  tx1.tx.getFee(tx1.view);
+  tx3.tx.getFee(tx3.view);
 end(i);
 
 flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
