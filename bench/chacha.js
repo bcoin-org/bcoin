@@ -8,8 +8,10 @@ var i, chacha, iv, poly, key, data, end;
 console.log('note: rate measured in kb/s');
 
 chacha = new chachapoly.ChaCha20();
+key = new Buffer(32);
+key.fill(2);
 iv = new Buffer('0102030405060708', 'hex');
-chacha.init(iv, 0);
+chacha.init(key, iv, 0);
 data = new Buffer(32);
 for (i = 0; i < 32; i++)
   data[i] = i;
@@ -19,7 +21,8 @@ for (i = 0; i < 1000000; i++)
 end(i * 32 / 1024);
 
 poly = new chachapoly.Poly1305();
-key = new Buffer('000102030405060708090a0b0c0d0e0f', 'hex');
+key = new Buffer(32);
+key.fill(2);
 poly.init(key);
 
 data = new Buffer(32);
