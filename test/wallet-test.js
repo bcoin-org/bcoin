@@ -66,7 +66,6 @@ describe('Wallet', function() {
   walletdb = new WalletDB({
     name: 'wallet-test',
     db: 'memory',
-    resolution: true,
     verify: true
   });
 
@@ -273,20 +272,20 @@ describe('Wallet', function() {
     yield walletdb.addTX(t4);
 
     balance = yield w.getBalance();
-    //assert.equal(balance.unconfirmed, 22500);
-    assert.equal(balance.unconfirmed, 0);
+    assert.equal(balance.unconfirmed, 22500);
+    // assert.equal(balance.unconfirmed, 0);
 
     yield walletdb.addTX(t1);
 
     balance = yield w.getBalance();
-    //assert.equal(balance.unconfirmed, 73000);
-    assert.equal(balance.unconfirmed, 51000);
+    assert.equal(balance.unconfirmed, 72500);
+    // assert.equal(balance.unconfirmed, 51000);
 
     yield walletdb.addTX(t2);
 
     balance = yield w.getBalance();
-    //assert.equal(balance.unconfirmed, 47000);
-    assert.equal(balance.unconfirmed, 49000);
+    assert.equal(balance.unconfirmed, 46500);
+    // assert.equal(balance.unconfirmed, 49000);
 
     yield walletdb.addTX(t3);
 
@@ -353,7 +352,6 @@ describe('Wallet', function() {
     walletdb = new WalletDB({
       name: 'wallet-test',
       db: 'memory',
-      resolution: false,
       verify: false
     });
 
@@ -1209,7 +1207,6 @@ describe('Wallet', function() {
     walletdb = new WalletDB({
       name: 'wallet-test',
       db: 'memory',
-      resolution: false,
       verify: false
     });
 
@@ -1276,7 +1273,6 @@ describe('Wallet', function() {
     walletdb = new WalletDB({
       name: 'wallet-test',
       db: 'memory',
-      resolution: false,
       verify: false
     });
 
