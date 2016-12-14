@@ -180,7 +180,7 @@ describe('Block', function() {
       assert(tx.checkInputs(view, height));
       assert(tx.verify(view, flags));
       assert(!tx.hasWitness());
-      sigops += tx.getSigopsWeight(view, flags);
+      sigops += tx.getSigopsCost(view, flags);
       view.addTX(tx, height);
     }
 
