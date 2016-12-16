@@ -150,7 +150,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
   }
 
   socket.on('connect', function() {
-    ws.emit('tcp connect');
+    ws.emit('tcp connect', socket.remoteAddress, socket.remotePort);
   });
 
   socket.on('data', function(data) {

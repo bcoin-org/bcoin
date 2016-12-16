@@ -78,6 +78,7 @@
     "./lib/db/backends": "./lib/db/backends-browser.js",
     "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/net/tcp": "./lib/net/tcp-browser.js",
+    "./lib/net/dns": "./lib/net/dns-browser.js",
     "./lib/blockchain/layout": "./lib/blockchain/layout-browser.js",
     "./lib/wallet/layout": "./lib/wallet/layout-browser.js",
     "fs": "./browser/empty.js",
