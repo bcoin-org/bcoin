@@ -46,18 +46,7 @@ function clearCache(tx, noCache) {
     assert.equal(tx.hash('hex'), tx.clone().hash('hex'));
     return;
   }
-
-  tx._raw = null;
-  tx._size = -1;
-  tx._witnessSize = -1;
-  tx._hash = null;
-  tx._hhash = null;
-  tx._whash = null;
-  tx._inputValue = -1;
-  tx._outputValue = -1;
-  tx._hashPrevouts = null;
-  tx._hashSequence = null;
-  tx._hashOutputs = null;
+  tx.refresh();
 }
 
 function parseTest(data) {
@@ -542,11 +531,13 @@ describe('TX', function() {
     raw = tx.toRaw();
     assert(encoding.readU64(raw, 47) === 0xdeadbeef);
     raw[54] = 0x7f;
+
     assert.throws(function() {
       TX.fromRaw(raw);
     });
-    tx._raw = null;
+
     tx.outputs[0].value = 0;
+    tx.refresh();
 
     raw = tx.toRaw();
     assert(encoding.readU64(raw, 47) === 0x00);

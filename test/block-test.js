@@ -194,15 +194,11 @@ describe('Block', function() {
     var ret = {};
     block2.hash();
     block2.merkleRoot = constants.NULL_HASH;
-    block2._valid = null;
-    block2._validHeaders = null;
+    block2.refresh();
     assert(!block2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
-    block2._valid = null;
-    block2._validHeaders = null;
-    block2._hash = null;
-    block2._hhash = null;
     block2.merkleRoot = block.merkleRoot;
+    block2.refresh();
     assert(block2.verify());
   });
 
@@ -213,12 +209,8 @@ describe('Block', function() {
     mblock2.merkleRoot = constants.NULL_HASH;
     assert(!mblock2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
-    mblock2._valid = null;
-    mblock2._validHeaders = null;
-    mblock2._validPartial = null;
-    mblock2._hash = null;
-    mblock2._hhash = null;
     mblock2.merkleRoot = mblock.merkleRoot;
+    mblock2.refresh();
     assert(mblock2.verify());
   });
 
@@ -229,11 +221,8 @@ describe('Block', function() {
     block2.bits = 403014710;
     assert(!block2.verify(ret));
     assert.equal(ret.reason, 'high-hash');
-    block2._valid = null;
-    block2._validHeaders = null;
-    block2._hash = null;
-    block2._hhash = null;
     block2.bits = block.bits;
+    block2.refresh();
     assert(block2.verify());
   });
 

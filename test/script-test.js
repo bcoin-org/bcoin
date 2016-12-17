@@ -308,27 +308,8 @@ describe('Script', function() {
         });
 
         if (noCache) {
-          tx._raw = null;
-          tx._size = -1;
-          tx._witnessSize = -1;
-          tx._hash = null;
-          tx._hhash = null;
-          tx._whash = null;
-          tx._inputValue = -1;
-          tx._outputValue = -1;
-          tx._hashPrevouts = null;
-          tx._hashSequence = null;
-          tx._hashOutputs = null;
-
-          prev._raw = null;
-          prev._size = -1;
-          prev._witnessSize = -1;
-          prev._hash = null;
-          prev._inputValue = -1;
-          prev._outputValue = -1;
-          prev._hashPrevouts = null;
-          prev._hashSequence = null;
-          prev._hashOutputs = null;
+          prev.refresh();
+          tx.refresh();
         }
 
         try {
