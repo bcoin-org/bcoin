@@ -1,11 +1,14 @@
 'use strict';
 
 var net = require('net');
+var dns = require('dns');
 var IOServer = require('socket.io');
 var util = require('../lib/utils/util');
 var IP = require('../lib/utils/ip');
 var BufferWriter = require('../lib/utils/writer');
 var EventEmitter = require('events').EventEmitter;
+
+var NAME_REGEX = /^[a-z0-9\-\.]+?\.(?:be|me|org|com|net|ch|de)$/i;
 
 var TARGET = new Buffer(
   '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
@@ -61,6 +64,41 @@ WSProxy.prototype._handleSocket = function _handleSocket(ws) {
   ws.on('tcp connect', function(port, host, nonce) {
     self._handleConnect(ws, port, host, nonce);
   });
+
+  ws.on('dns resolve', function(name, record, callback) {
+    self._handleResolve(ws, name, record, callback);
+  });
+};
+
+WSProxy.prototype._handleResolve = function _handleResolve(ws, name, record, callback) {
+  if (typeof name !== 'string') {
+    ws.disconnect();
+    return;
+  }
+
+  if (typeof record !== 'string') {
+    ws.disconnect();
+    return;
+  }
+
+  if (typeof callback !== 'function') {
+    ws.disconnect();
+    return;
+  }
+
+  if (!NAME_REGEX.test(name) || name.length > 200) {
+    this.log('Client sent a bad domain: %s.', name);
+    ws.disconnect();
+    return;
+  }
+
+  dns.resolve(name, record, function(err, result) {
+    if (err) {
+      callback({ message: err.message, code: err.code });
+      return;
+    }
+    callback(null, result);
+  });
 };
 
 WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce) {
@@ -84,7 +122,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
 
   if (this.pow) {
     if (!util.isNumber(nonce)) {
-      this.log('Client did not solve proof of work.', state.host);
+      this.log('Client did not solve proof of work (%s).', state.host);
       ws.emit('tcp close');
       ws.disconnect();
       return;
