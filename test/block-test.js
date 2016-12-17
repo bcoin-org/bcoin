@@ -194,7 +194,7 @@ describe('Block', function() {
     var ret = {};
     block2.hash();
     block2.merkleRoot = constants.NULL_HASH;
-    block2.refresh();
+    block2._validHeaders = null;
     assert(!block2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
     block2.merkleRoot = block.merkleRoot;
