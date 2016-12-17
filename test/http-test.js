@@ -50,7 +50,8 @@ describe('HTTP', function() {
     assert.equal(info.network, node.network.type);
     assert.equal(info.version, constants.USER_VERSION);
     assert.equal(info.agent, constants.USER_AGENT);
-    assert.equal(info.height, 0);
+    assert.equal(typeof info.chain, 'object');
+    assert.equal(info.chain.height, 0);
   }));
 
   it('should get wallet info', cob(function* () {
