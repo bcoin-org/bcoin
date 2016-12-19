@@ -33,6 +33,11 @@ CLI.prototype.getInfo = co(function* getInfo() {
   this.log(info);
 });
 
+CLI.prototype.getWallets = co(function* getWallets() {
+  var wallets = yield this.client.getWallets();
+  this.log(wallets);
+});
+
 CLI.prototype.createWallet = co(function* createWallet() {
   var options = { id: this.argv[0] };
   var wallet;
@@ -613,6 +618,8 @@ CLI.prototype.handleNode = co(function* handleNode() {
   switch (this.argv.shift()) {
     case 'info':
       return yield this.getInfo();
+    case 'wallets':
+      return yield this.getWallets();
     case 'mkwallet':
       return yield this.createWallet();
     case 'broadcast':
@@ -639,6 +646,7 @@ CLI.prototype.handleNode = co(function* handleNode() {
       this.log('Unrecognized command.');
       this.log('Commands:');
       this.log('  $ info: Get server info.');
+      this.log('  $ wallets: List all wallets.');
       this.log('  $ wallet create [id]: Create wallet.');
       this.log('  $ broadcast [tx-hex]: Broadcast transaction.');
       this.log('  $ mempool: Get mempool snapshot.');
