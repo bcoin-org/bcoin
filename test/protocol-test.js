@@ -6,7 +6,7 @@ var constants = require('../lib/protocol/constants');
 var Network = require('../lib/protocol/network');
 var util = require('../lib/utils/util');
 var BufferReader = require('../lib/utils/reader');
-var NetworkAddress = require('../lib/primitives/netaddress');
+var NetAddress = require('../lib/primitives/netaddress');
 var TX = require('../lib/primitives/tx');
 var Framer = require('../lib/net/framer');
 var Parser = require('../lib/net/parser');
@@ -41,8 +41,8 @@ describe('Protocol', function() {
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: network.now(),
-    remote: new NetworkAddress(),
-    local: new NetworkAddress(),
+    remote: new NetAddress(),
+    local: new NetAddress(),
     nonce: util.nonce(),
     agent: constants.USER_AGENT,
     height: 0,
@@ -60,8 +60,8 @@ describe('Protocol', function() {
     version: constants.VERSION,
     services: constants.LOCAL_SERVICES,
     ts: network.now(),
-    remote: new NetworkAddress(),
-    local: new NetworkAddress(),
+    remote: new NetAddress(),
+    local: new NetAddress(),
     nonce: util.nonce(),
     agent: constants.USER_AGENT,
     height: 10,
@@ -79,13 +79,13 @@ describe('Protocol', function() {
   });
 
   hosts = [
-    new NetworkAddress({
+    new NetAddress({
       services: constants.LOCAL_SERVICES,
       host: '127.0.0.1',
       port: 8333,
       ts: util.now()
     }),
-    new NetworkAddress({
+    new NetAddress({
       services: constants.LOCAL_SERVICES,
       host: '::123:456:789a',
       port: 18333,
