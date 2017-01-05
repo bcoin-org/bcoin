@@ -46,14 +46,14 @@ describe('Protocol', function() {
     nonce: util.nonce(),
     agent: constants.USER_AGENT,
     height: 0,
-    relay: false
+    noRelay: false
   });
 
   packetTest('version', v1, function(payload) {
     assert.equal(payload.version, constants.VERSION);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 0);
-    assert.equal(payload.relay, false);
+    assert.equal(payload.noRelay, false);
   });
 
   v2 = packets.VersionPacket.fromOptions({
@@ -65,14 +65,14 @@ describe('Protocol', function() {
     nonce: util.nonce(),
     agent: constants.USER_AGENT,
     height: 10,
-    relay: true
+    noRelay: true
   });
 
   packetTest('version', v2, function(payload) {
     assert.equal(payload.version, constants.VERSION);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 10);
-    assert.equal(payload.relay, true);
+    assert.equal(payload.noRelay, true);
   });
 
   packetTest('verack', new packets.VerackPacket(), function(payload) {
