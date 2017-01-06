@@ -375,7 +375,6 @@ inherit from the TX object, but can also be signed and modified.
 ``` js
 var bcoin = require('bcoin');
 var assert = require('assert');
-var constants = bcoin.constants;
 
 // Create an HD master keypair with a mnemonic.
 var master = bcoin.hd.fromMnemonic();
@@ -450,7 +449,6 @@ Let's try it more realistically:
 ``` js
 var bcoin = require('bcoin');
 var assert = require('assert');
-var constants = bcoin.constants;
 
 var master = bcoin.hd.fromMnemonic();
 var key = master.derive('m/44/0/0/0/0');

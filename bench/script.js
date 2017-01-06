@@ -1,7 +1,6 @@
 'use strict';
 
 var assert = require('assert');
-var constants = require('../lib/protocol/constants');
 var crypto = require('../lib/crypto/crypto');
 var Script = require('../lib/script/script');
 var bench = require('./bench');

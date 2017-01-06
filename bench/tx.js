@@ -8,7 +8,6 @@ var Script = require('../lib/script/script');
 var MTX = require('../lib/primitives/mtx');
 var Coin = require('../lib/primitives/coin');
 var CoinView = require('../lib/coins/coinview');
-var constants = require('../lib/protocol/constants');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var bench = require('./bench');

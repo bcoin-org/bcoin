@@ -1,5 +1,4 @@
 var assert = require('assert');
-var constants = require('../lib/protocol/constants');
 var encoding = require('../lib/utils/encoding');
 var co = require('../lib/utils/co');
 var BufferWriter = require('../lib/utils/writer');

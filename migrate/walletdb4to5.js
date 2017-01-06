@@ -1,6 +1,5 @@
 var assert = require('assert');
 var bcoin = require('../');
-var constants = require('../lib/protocol/constants');
 var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
 var util = require('../lib/utils/util');

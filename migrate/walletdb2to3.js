@@ -1,6 +1,5 @@
 var bcoin = require('../');
 var walletdb = require('../lib/wallet/walletdb');
-var constants = require('../lib/protocol/constants');
 var encoding = require('../lib/utils/encoding');
 var Path = require('../lib/wallet/path');
 var MasterKey = require('../lib/wallet/masterkey');

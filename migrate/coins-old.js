@@ -8,7 +8,6 @@
 
 var assert = require('assert');
 var util = require('../lib/utils/util');
-var constants = require('../lib/protocol/constants');
 var encoding = require('../lib/utils/encoding');
 var Coin = require('../lib/primitives/coin');
 var Output = require('../lib/primitives/output');
