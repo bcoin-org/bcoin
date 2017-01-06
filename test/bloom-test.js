@@ -59,7 +59,7 @@ describe('Bloom', function() {
   });
 
   it('should serialize to the correct format', function() {
-    var filter = new Bloom(952, 6, 3624314491, constants.filterFlags.NONE);
+    var filter = new Bloom(952, 6, 3624314491, Bloom.flags.NONE);
     var item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
     var item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'

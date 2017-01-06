@@ -135,7 +135,7 @@ describe('Block', function() {
   it('should create a merkle block', function() {
     var filter, item1, item2, mblock2;
 
-    filter = Bloom.fromRate(1000, 0.01, constants.filterFlags.NONE);
+    filter = Bloom.fromRate(1000, 0.01, Bloom.flags.NONE);
 
     item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
     item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
