@@ -9,6 +9,7 @@
 var assert = require('assert');
 var util = require('../lib/utils/util');
 var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var Coin = require('../lib/primitives/coin');
 var Output = require('../lib/primitives/output');
 var BufferReader = require('../lib/utils/reader');
@@ -35,7 +36,7 @@ function Coins(options) {
     return new Coins(options);
 
   this.version = 1;
-  this.hash = constants.NULL_HASH;
+  this.hash = encoding.NULL_HASH;
   this.height = -1;
   this.coinbase = true;
   this.outputs = [];

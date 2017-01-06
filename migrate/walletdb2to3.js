@@ -1,6 +1,7 @@
 var bcoin = require('../');
 var walletdb = require('../lib/wallet/walletdb');
 var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var Path = require('../lib/wallet/path');
 var MasterKey = require('../lib/wallet/masterkey');
 var Account = require('../lib/wallet/account');
@@ -55,8 +56,8 @@ var updatePathMap = co(function* updatePathMap() {
   var hash, path, keys, key, ring;
 
   iter = db.iterator({
-    gte: layout.p(constants.NULL_HASH),
-    lte: layout.p(constants.HIGH_HASH),
+    gte: layout.p(encoding.NULL_HASH),
+    lte: layout.p(encoding.HIGH_HASH),
     values: true
   });
 
@@ -171,8 +172,8 @@ var updateTXMap = co(function* updateTXMap() {
   var iter, item, wallets;
 
   iter = db.iterator({
-    gte: layout.e(constants.NULL_HASH),
-    lte: layout.e(constants.HIGH_HASH),
+    gte: layout.e(encoding.NULL_HASH),
+    lte: layout.e(encoding.HIGH_HASH),
     values: true
   });
 

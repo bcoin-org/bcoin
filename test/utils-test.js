@@ -3,12 +3,12 @@
 var assert = require('assert');
 var BN = require('bn.js');
 var ec = require('../lib/crypto/ec');
-var btcutils = require('../lib/btc/utils');
 var base58 = require('../lib/utils/base58');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var schnorr = require('../lib/crypto/schnorr');
 var Amount = require('../lib/btc/amount');
+var consensus = require('../lib/protocol/consensus');
 
 describe('Utils', function() {
   var vectors, signed, unsigned;
@@ -53,7 +53,7 @@ describe('Utils', function() {
       'hex'
     );
 
-    assert(btcutils.verifyPOW(hash, bits));
+    assert(consensus.verifyPOW(hash, bits));
   });
 
   it('should convert satoshi to btc', function() {

@@ -2,7 +2,7 @@
 
 var assert = require('assert');
 var BN = require('bn.js');
-var constants = require('../lib/protocol/constants');
+var consensus = require('../lib/protocol/consensus');
 var co = require('../lib/utils/co');
 var Coin = require('../lib/primitives/coin');
 var Script = require('../lib/script/script');
@@ -57,7 +57,7 @@ describe('Chain', function() {
 
   it('should open chain and miner', cob(function* () {
     miner.mempool = null;
-    constants.tx.COINBASE_MATURITY = 0;
+    consensus.COINBASE_MATURITY = 0;
     yield node.open();
   }));
 
@@ -321,7 +321,7 @@ describe('Chain', function() {
     redeemer.addOutput({
       script: [
         Script.array(new BN(1)),
-        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+        Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
     });
@@ -351,7 +351,7 @@ describe('Chain', function() {
     redeemer.addOutput({
       script: [
         Script.array(new BN(2)),
-        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+        Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
     });
@@ -377,7 +377,7 @@ describe('Chain', function() {
     redeemer.addOutput({
       script: [
         Script.array(new BN(1)),
-        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+        Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
     });
@@ -421,7 +421,7 @@ describe('Chain', function() {
     redeemer.addOutput({
       script: [
         Script.array(new BN(2)),
-        constants.opcodes.OP_CHECKSEQUENCEVERIFY
+        Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
     });
@@ -451,7 +451,7 @@ describe('Chain', function() {
   }));
 
   it('should cleanup', cob(function* () {
-    constants.tx.COINBASE_MATURITY = 100;
+    consensus.COINBASE_MATURITY = 100;
     yield node.close();
   }));
 });

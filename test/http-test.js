@@ -1,17 +1,19 @@
 'use strict';
 
 var assert = require('assert');
-var constants = require('../lib/protocol/constants');
+var consensus = require('../lib/protocol/consensus');
+var encoding = require('../lib/utils/encoding');
 var co = require('../lib/utils/co');
 var Amount = require('../lib/btc/amount');
 var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
 var FullNode = require('../lib/node/fullnode');
+var USER_VERSION = require('../package.json').version;
 var cob = co.cob;
 
 var dummyInput = {
   prevout: {
-    hash: constants.NULL_HASH,
+    hash: encoding.NULL_HASH,
     index: 0
   }
 };
@@ -36,7 +38,7 @@ describe('HTTP', function() {
   this.timeout(15000);
 
   it('should open node', cob(function* () {
-    constants.tx.COINBASE_MATURITY = 0;
+    consensus.COINBASE_MATURITY = 0;
     yield node.open();
   }));
 
@@ -48,8 +50,8 @@ describe('HTTP', function() {
   it('should get info', cob(function* () {
     var info = yield wallet.client.getInfo();
     assert.equal(info.network, node.network.type);
-    assert.equal(info.version, constants.USER_VERSION);
-    assert.equal(info.agent, constants.USER_AGENT);
+    assert.equal(info.version, USER_VERSION);
+    assert.equal(info.agent, node.pool.userAgent);
     assert.equal(typeof info.chain, 'object');
     assert.equal(info.chain.height, 0);
   }));
@@ -155,7 +157,7 @@ describe('HTTP', function() {
   }));
 
   it('should cleanup', cob(function* () {
-    constants.tx.COINBASE_MATURITY = 100;
+    consensus.COINBASE_MATURITY = 100;
     yield wallet.close();
     yield node.close();
   }));

@@ -2,12 +2,13 @@
 
 var BN = require('bn.js');
 var util = require('../lib/utils/util');
-var constants = require('../lib/protocol/constants');
+var consensus = require('../lib/protocol/consensus');
+var encoding = require('../lib/utils/encoding');
 var TX = require('../lib/primitives/tx');
 var Block = require('../lib/primitives/block');
 var Script = require('../lib/script/script');
 var Opcode = require('../lib/script/opcode');
-var opcodes = constants.opcodes;
+var opcodes = Script.opcodes;
 var main, testnet, regtest, segnet3, segnet4, btcd;
 
 function createGenesisBlock(options) {
@@ -32,14 +33,14 @@ function createGenesisBlock(options) {
   }
 
   if (!reward)
-    reward = 50 * constants.COIN;
+    reward = 50 * consensus.COIN;
 
   tx = new TX({
     version: 1,
     flag: 1,
     inputs: [{
       prevout: {
-        hash: constants.NULL_HASH,
+        hash: encoding.NULL_HASH,
         index: 0xffffffff
       },
       script: [
@@ -58,7 +59,7 @@ function createGenesisBlock(options) {
 
   block = new Block({
     version: options.version,
-    prevBlock: constants.NULL_HASH,
+    prevBlock: encoding.NULL_HASH,
     merkleRoot: tx.hash('hex'),
     ts: options.ts,
     bits: options.bits,

@@ -1,6 +1,7 @@
 var assert = require('assert');
 var bcoin = require('../');
 var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
 var util = require('../lib/utils/util');
@@ -97,8 +98,8 @@ var indexPaths = co(function* indexPaths() {
   var i, items, item, wid, index, hash;
 
   items = yield db.range({
-    gte: new Buffer('5000000000' + constants.NULL_HASH, 'hex'), // P
-    lte: new Buffer('50ffffffff' + constants.HIGH_HASH, 'hex')  // P
+    gte: new Buffer('5000000000' + encoding.NULL_HASH, 'hex'), // P
+    lte: new Buffer('50ffffffff' + encoding.HIGH_HASH, 'hex')  // P
   });
 
   for (i = 0; i < items.length; i++) {
@@ -115,8 +116,8 @@ var patchPathMaps = co(function* patchPathMaps() {
   var i, items, item, hash, wids;
 
   items = yield db.range({
-    gte: new Buffer('70' + constants.NULL_HASH, 'hex'), // p
-    lte: new Buffer('70' + constants.HIGH_HASH, 'hex')  // p
+    gte: new Buffer('70' + encoding.NULL_HASH, 'hex'), // p
+    lte: new Buffer('70' + encoding.HIGH_HASH, 'hex')  // p
   });
 
   for (i = 0; i < items.length; i++) {

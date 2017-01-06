@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var constants = require('../lib/protocol/constants');
+var consensus = require('../lib/protocol/consensus');
 var util = require('../lib/utils/util');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
@@ -14,7 +14,7 @@ var KeyRing = require('../lib/primitives/keyring');
 var Address = require('../lib/primitives/address');
 var Script = require('../lib/script/script');
 var HD = require('../lib/hd');
-var scriptTypes = constants.scriptTypes;
+var scriptTypes = Script.types;
 var cob = co.cob;
 
 var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
@@ -40,7 +40,7 @@ function nextBlock(height) {
     height: height,
     prevBlock: prev,
     ts: globalTime + height,
-    merkleRoot: constants.NULL_HASH,
+    merkleRoot: encoding.NULL_HASH,
     nonce: 0,
     bits: 0
   };
@@ -72,7 +72,7 @@ describe('Wallet', function() {
   this.timeout(5000);
 
   it('should open walletdb', cob(function* () {
-    constants.tx.COINBASE_MATURITY = 0;
+    consensus.COINBASE_MATURITY = 0;
     yield walletdb.open();
   }));
 
@@ -108,11 +108,11 @@ describe('Wallet', function() {
   }));
 
   p2pkh = co(function* p2pkh(witness, bullshitNesting) {
-    var flags = constants.flags.STANDARD_VERIFY_FLAGS;
+    var flags = Script.flags.STANDARD_VERIFY_FLAGS;
     var w, addr, src, tx;
 
     if (witness)
-      flags |= constants.flags.VERIFY_WITNESS;
+      flags |= Script.flags.VERIFY_WITNESS;
 
     w = yield walletdb.create({ witness: witness });
 
@@ -261,7 +261,7 @@ describe('Wallet', function() {
     // Script inputs but do not sign
     yield w.template(fake);
     // Fake signature
-    fake.inputs[0].script.set(0, constants.ZERO_SIG);
+    fake.inputs[0].script.set(0, encoding.ZERO_SIG);
     fake.inputs[0].script.compile();
     // balance: 11000
     fake = fake.toTX();
@@ -410,7 +410,7 @@ describe('Wallet', function() {
     // Script inputs but do not sign
     // yield w.template(fake);
     // Fake signature
-    // fake.inputs[0].script.set(0, constants.ZERO_SIG);
+    // fake.inputs[0].script.set(0, encoding.ZERO_SIG);
     // fake.inputs[0].script.compile();
     // balance: 11000
     // fake = fake.toTX();
@@ -533,7 +533,7 @@ describe('Wallet', function() {
       .addOutput(w1.getAddress(), 5460)
       .addOutput(w1.getAddress(), 5460);
 
-    t1.addInput(dummy(constants.NULL_HASH));
+    t1.addInput(dummy(encoding.NULL_HASH));
     t1 = t1.toTX();
 
     yield walletdb.addTX(t1);
@@ -613,7 +613,7 @@ describe('Wallet', function() {
     tx.addOutput(to.getAddress(), 5460);
 
     cost = tx.getOutputValue();
-    total = cost * constants.tx.MIN_FEE;
+    total = cost * MTX.MIN_FEE;
 
     coins1 = yield w1.getCoins();
     coins2 = yield w2.getCoins();
@@ -627,10 +627,6 @@ describe('Wallet', function() {
     tx.addInput(coins2[0]);
 
     left = tx.getInputValue() - total;
-    if (left < constants.tx.DUST_THRESHOLD) {
-      tx.outputs[tx.outputs.length - 2].value += left;
-      left = 0;
-    }
     if (left === 0)
       tx.outputs.pop();
     else
@@ -663,14 +659,14 @@ describe('Wallet', function() {
   }));
 
   multisig = co(function* multisig(witness, bullshitNesting, cb) {
-    var flags = constants.flags.STANDARD_VERIFY_FLAGS;
+    var flags = Script.flags.STANDARD_VERIFY_FLAGS;
     var options, w1, w2, w3, receive, b58, addr, paddr, utx, send, change;
     var rec = bullshitNesting ? 'nested' : 'receive';
     var depth = bullshitNesting ? 'nestedDepth' : 'receiveDepth';
     var view, block;
 
     if (witness)
-      flags |= constants.flags.VERIFY_WITNESS;
+      flags |= Script.flags.VERIFY_WITNESS;
 
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
     options = {
@@ -1345,6 +1341,6 @@ describe('Wallet', function() {
   }));
 
   it('should cleanup', function() {
-    constants.tx.COINBASE_MATURITY = 100;
+    consensus.COINBASE_MATURITY = 100;
   });
 });

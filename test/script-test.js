@@ -5,8 +5,8 @@ var Script = require('../lib/script/script');
 var Witness = require('../lib/script/witness');
 var Stack = require('../lib/script/stack');
 var TX = require('../lib/primitives/tx');
-var constants = require('../lib/protocol/constants');
-var opcodes = constants.opcodes;
+var encoding = require('../lib/utils/encoding');
+var opcodes = Script.opcodes;
 
 var scripts = require('./data/script_tests');
 
@@ -256,8 +256,8 @@ describe('Script', function() {
 
     for (i = 0; i < flags.length; i++) {
       name = 'VERIFY_' + flags[i];
-      assert(constants.flags[name] != null, 'Unknown flag.');
-      flag |= constants.flags[name];
+      assert(Script.flags[name] != null, 'Unknown flag.');
+      flag |= Script.flags[name];
     }
 
     flags = flag;
@@ -273,7 +273,7 @@ describe('Script', function() {
           flag: 1,
           inputs: [{
             prevout: {
-              hash: constants.NULL_HASH,
+              hash: encoding.NULL_HASH,
               index: 0xffffffff
             },
             script: new Script([opcodes.OP_0, opcodes.OP_0]),

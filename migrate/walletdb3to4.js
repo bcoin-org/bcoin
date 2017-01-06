@@ -1,6 +1,7 @@
 var assert = require('assert');
 var bcoin = require('../');
 var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var WalletDB = require('../lib/wallet/walletdb');
 var TXDB = require('../lib/wallet/txdb');
 var BufferWriter = require('../lib/utils/writer');
@@ -107,7 +108,7 @@ function fromExtended(data, saveCoins) {
   tx.ts = p.readU32();
   tx.ps = p.readU32();
 
-  if (tx.block === constants.NULL_HASH)
+  if (tx.block === encoding.NULL_HASH)
     tx.block = null;
 
   if (tx.height === 0x7fffffff)

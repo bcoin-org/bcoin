@@ -5,7 +5,7 @@ var constants = require('../lib/protocol/constants');
 var crypto = require('../lib/crypto/crypto');
 var Script = require('../lib/script/script');
 var bench = require('./bench');
-var opcodes = constants.opcodes;
+var opcodes = Script.opcodes;
 var i, hashes, end;
 
 Script.prototype.fromPubkeyhashOld = function fromScripthash(hash) {

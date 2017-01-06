@@ -2,14 +2,15 @@
 
 var fs = require('fs');
 var assert = require('assert');
-var btcutils = require('../lib/btc/utils');
 var Bloom = require('../lib/utils/bloom');
 var Block = require('../lib/primitives/block');
 var Headers = require('../lib/primitives/headers');
 var MerkleBlock = require('../lib/primitives/merkleblock');
 var CoinView = require('../lib/coins/coinview');
 var Coin = require('../lib/primitives/coin');
-var constants = require('../lib/protocol/constants');
+var consensus = require('../lib/protocol/consensus');
+var Script = require('../lib/script/script');
+var encoding = require('../lib/utils/encoding');
 var bip152 = require('../lib/net/bip152');
 
 var block300025 = require('./data/block300025.json');
@@ -111,8 +112,8 @@ describe('Block', function() {
     var reward;
 
     for (;;) {
-      reward = btcutils.getReward(height, 210000);
-      assert(reward <= constants.COIN * 50);
+      reward = consensus.getReward(height, 210000);
+      assert(reward <= consensus.COIN * 50);
       total += reward;
       if (reward === 0)
         break;
@@ -172,7 +173,7 @@ describe('Block', function() {
     assert(!block.hasWitness());
     assert.equal(block.getWeight(), 1136924);
 
-    flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+    flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
 
     for (i = 1; i < block.txs.length; i++) {
       tx = block.txs[i];
@@ -193,7 +194,7 @@ describe('Block', function() {
     var block2 = new Block(block);
     var ret = {};
     block2.hash();
-    block2.merkleRoot = constants.NULL_HASH;
+    block2.merkleRoot = encoding.NULL_HASH;
     block2._validHeaders = null;
     assert(!block2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
@@ -206,7 +207,7 @@ describe('Block', function() {
     var mblock2 = new MerkleBlock(mblock);
     var ret = {};
     mblock2.hash();
-    mblock2.merkleRoot = constants.NULL_HASH;
+    mblock2.merkleRoot = encoding.NULL_HASH;
     assert(!mblock2.verify(ret));
     assert.equal(ret.reason, 'bad-txnmrklroot');
     mblock2.merkleRoot = mblock.merkleRoot;

@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var co = require('../lib/utils/co');
 var MempoolEntry = require('../lib/mempool/mempoolentry');
@@ -15,7 +15,7 @@ var Address = require('../lib/primitives/address');
 var Script = require('../lib/script/script');
 var Witness = require('../lib/script/witness');
 var Block = require('../lib/primitives/block');
-var opcodes = constants.opcodes;
+var opcodes = Script.opcodes;
 var cob = co.cob;
 
 describe('Mempool', function() {
@@ -45,7 +45,7 @@ describe('Mempool', function() {
     var coin, entry;
 
     if (!prevHash)
-      prevHash = constants.ONE_HASH.toString('hex');
+      prevHash = encoding.ONE_HASH.toString('hex');
 
     coin = new Coin({
       version: 1,
@@ -70,7 +70,7 @@ describe('Mempool', function() {
 
   it('should open mempool', cob(function* () {
     yield mempool.open();
-    chain.state.flags |= constants.flags.VERIFY_WITNESS;
+    chain.state.flags |= Script.flags.VERIFY_WITNESS;
   }));
 
   it('should open walletdb', cob(function* () {
@@ -143,7 +143,7 @@ describe('Mempool', function() {
     yield w.template(fake);
 
     // Fake signature
-    fake.inputs[0].script.set(0, constants.ZERO_SIG);
+    fake.inputs[0].script.set(0, encoding.ZERO_SIG);
     fake.inputs[0].script.compile();
     fake = fake.toTX();
     // balance: 11000
@@ -365,7 +365,7 @@ describe('Mempool', function() {
 
     input = {
       prevout: {
-        hash: constants.NULL_HASH,
+        hash: encoding.NULL_HASH,
         index: 0xffffffff
       }
     };

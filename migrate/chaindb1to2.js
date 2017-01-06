@@ -1,5 +1,6 @@
 var assert = require('assert');
 var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var networks = require('../lib/protocol/networks');
 var co = require('../lib/utils/co');
 var BufferWriter = require('../lib/utils/writer');
@@ -65,8 +66,8 @@ var updateVersion = co(function* updateVersion() {
 
 var checkTipIndex = co(function* checkTipIndex() {
   var keys = yield db.keys({
-    gte: pair('p', constants.ZERO_HASH),
-    lte: pair('p', constants.MAX_HASH)
+    gte: pair('p', encoding.ZERO_HASH),
+    lte: pair('p', encoding.MAX_HASH)
   });
 
   if (keys.length === 0) {
@@ -119,8 +120,8 @@ var reserializeCoins = co(function* reserializeCoins() {
   var i, iter, item, hash, old, coins, coin, output;
 
   iter = db.iterator({
-    gte: pair('c', constants.ZERO_HASH),
-    lte: pair('c', constants.MAX_HASH),
+    gte: pair('c', encoding.ZERO_HASH),
+    lte: pair('c', encoding.MAX_HASH),
     values: true
   });
 
@@ -171,8 +172,8 @@ var reserializeUndo = co(function* reserializeUndo() {
   var iter, item, br, undo;
 
   iter = db.iterator({
-    gte: pair('u', constants.ZERO_HASH),
-    lte: pair('u', constants.MAX_HASH),
+    gte: pair('u', encoding.ZERO_HASH),
+    lte: pair('u', encoding.MAX_HASH),
     values: true
   });
 

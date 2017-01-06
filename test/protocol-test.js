@@ -2,7 +2,6 @@
 
 var fs = require('fs');
 var assert = require('assert');
-var constants = require('../lib/protocol/constants');
 var Network = require('../lib/protocol/network');
 var util = require('../lib/utils/util');
 var BufferReader = require('../lib/utils/reader');
@@ -38,38 +37,38 @@ describe('Protocol', function() {
   }
 
   v1 = packets.VersionPacket.fromOptions({
-    version: constants.VERSION,
-    services: constants.LOCAL_SERVICES,
+    version: 300,
+    services: 1,
     ts: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
     nonce: util.nonce(),
-    agent: constants.USER_AGENT,
+    agent: agent,
     height: 0,
     noRelay: false
   });
 
   packetTest('version', v1, function(payload) {
-    assert.equal(payload.version, constants.VERSION);
+    assert.equal(payload.version, 300);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 0);
     assert.equal(payload.noRelay, false);
   });
 
   v2 = packets.VersionPacket.fromOptions({
-    version: constants.VERSION,
-    services: constants.LOCAL_SERVICES,
+    version: 300,
+    services: 1,
     ts: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
     nonce: util.nonce(),
-    agent: constants.USER_AGENT,
+    agent: agent,
     height: 10,
     noRelay: true
   });
 
   packetTest('version', v2, function(payload) {
-    assert.equal(payload.version, constants.VERSION);
+    assert.equal(payload.version, 300);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 10);
     assert.equal(payload.noRelay, true);
@@ -80,13 +79,13 @@ describe('Protocol', function() {
 
   hosts = [
     new NetAddress({
-      services: constants.LOCAL_SERVICES,
+      services: 1,
       host: '127.0.0.1',
       port: 8333,
       ts: util.now()
     }),
     new NetAddress({
-      services: constants.LOCAL_SERVICES,
+      services: 1,
       host: '::123:456:789a',
       port: 18333,
       ts: util.now()
@@ -98,12 +97,12 @@ describe('Protocol', function() {
     assert.equal(payload.items.length, 2);
 
     assert.equal(typeof payload.items[0].ts, 'number');
-    assert.equal(payload.items[0].services, constants.LOCAL_SERVICES);
+    assert.equal(payload.items[0].services, 1);
     assert.equal(payload.items[0].host, hosts[0].host);
     assert.equal(payload.items[0].port, hosts[0].port);
 
     assert.equal(typeof payload.items[1].ts, 'number');
-    assert.equal(payload.items[1].services, constants.LOCAL_SERVICES);
+    assert.equal(payload.items[1].services, 1);
     assert.equal(payload.items[1].host, hosts[1].host);
     assert.equal(payload.items[1].port, hosts[1].port);
   });

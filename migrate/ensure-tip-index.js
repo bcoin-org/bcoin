@@ -1,5 +1,6 @@
 var assert = require('assert');
 var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var co = require('../lib/utils/co');
 var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
@@ -62,8 +63,8 @@ function entryFromRaw(data) {
 
 function getEntries() {
   return db.values({
-    gte: pair('e', constants.ZERO_HASH),
-    lte: pair('e', constants.MAX_HASH),
+    gte: pair('e', encoding.ZERO_HASH),
+    lte: pair('e', encoding.MAX_HASH),
     parse: entryFromRaw
   });
 }

@@ -4,10 +4,12 @@ var fs = require('fs');
 var Block = require('../lib/primitives/block');
 var Address = require('../lib/primitives/address');
 var TX = require('../lib/primitives/tx');
+var Script = require('../lib/script/script');
 var MTX = require('../lib/primitives/mtx');
 var Coin = require('../lib/primitives/coin');
 var CoinView = require('../lib/coins/coinview');
 var constants = require('../lib/protocol/constants');
+var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var bench = require('./bench');
 
@@ -92,7 +94,7 @@ end(i);
 
 end = bench('verify');
 for (i = 0; i < 3000; i++)
-  tx3.tx.verify(tx3.view, constants.flags.VERIFY_P2SH);
+  tx3.tx.verify(tx3.view, Script.flags.VERIFY_P2SH);
 end(i * tx3.tx.inputs.length);
 
 end = bench('fee');
@@ -100,7 +102,7 @@ for (i = 0; i < 1000; i++)
   tx3.tx.getFee(tx3.view);
 end(i);
 
-flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
 end = bench('verify multisig');
 for (i = 0; i < 3000; i++)
   btx.tx.verify(btx.view, flags);
@@ -111,7 +113,7 @@ tx = new MTX();
 for (i = 0; i < 100; i++) {
   tx.addInput({
     prevout: {
-      hash: constants.NULL_HASH,
+      hash: encoding.NULL_HASH,
       index: 0
     },
     script: [

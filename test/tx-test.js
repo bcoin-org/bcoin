@@ -5,7 +5,7 @@ var assert = require('assert');
 var util = require('../lib/utils/util');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
-var constants = require('../lib/protocol/constants');
+var consensus = require('../lib/protocol/consensus');
 var Network = require('../lib/protocol/network');
 var TX = require('../lib/primitives/tx');
 var Block = require('../lib/primitives/block');
@@ -59,8 +59,8 @@ function parseTest(data) {
 
   for (i = 0; i < flags.length; i++) {
     name = 'VERIFY_' + flags[i];
-    assert(constants.flags[name] != null, 'Unknown flag.');
-    flag |= constants.flags[name];
+    assert(Script.flags[name] != null, 'Unknown flag.');
+    flag |= Script.flags[name];
   }
 
   flags = flag;
@@ -163,29 +163,29 @@ describe('TX', function() {
 
     it('should verify non-minimal output' + suffix, function() {
       clearCache(tx1.tx, noCache);
-      assert(tx1.tx.verify(tx1.view, constants.flags.VERIFY_P2SH));
+      assert(tx1.tx.verify(tx1.view, Script.flags.VERIFY_P2SH));
     });
 
     it('should verify tx.version == 0' + suffix, function() {
       clearCache(tx2.tx, noCache);
-      assert(tx2.tx.verify(tx2.view, constants.flags.VERIFY_P2SH));
+      assert(tx2.tx.verify(tx2.view, Script.flags.VERIFY_P2SH));
     });
 
     it('should verify sighash_single bug w/ findanddelete' + suffix, function() {
       clearCache(tx3.tx, noCache);
-      assert(tx3.tx.verify(tx3.view, constants.flags.VERIFY_P2SH));
+      assert(tx3.tx.verify(tx3.view, Script.flags.VERIFY_P2SH));
     });
 
     it('should verify high S value with only DERSIG enabled' + suffix, function() {
       var coin = tx4.view.getOutput(tx4.tx.inputs[0]);
-      var flags = constants.flags.VERIFY_P2SH | constants.flags.VERIFY_DERSIG;
+      var flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx4.tx, noCache);
       assert(tx4.tx.verifyInput(0, coin, flags));
     });
 
     it('should verify the coolest tx ever sent' + suffix, function() {
       clearCache(coolest.tx, noCache);
-      assert(coolest.tx.verify(coolest.view, constants.flags.VERIFY_NONE));
+      assert(coolest.tx.verify(coolest.view, Script.flags.VERIFY_NONE));
     });
 
     it('should parse witness tx properly' + suffix, function() {
@@ -344,10 +344,10 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY + 1, view)],
+      inputs: [createInput(consensus.MAX_MONEY + 1, view)],
       outputs: [{
         script: [],
-        value: constants.MAX_MONEY
+        value: consensus.MAX_MONEY
       }],
       locktime: 0
     });
@@ -360,10 +360,10 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY, view)],
+      inputs: [createInput(consensus.MAX_MONEY, view)],
       outputs: [{
         script: [],
-        value: constants.MAX_MONEY
+        value: consensus.MAX_MONEY
       }],
       locktime: 0
     });
@@ -376,10 +376,10 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY, view)],
+      inputs: [createInput(consensus.MAX_MONEY, view)],
       outputs: [{
         script: [],
-        value: constants.MAX_MONEY + 1
+        value: consensus.MAX_MONEY + 1
       }],
       locktime: 0
     });
@@ -392,10 +392,10 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY, view)],
+      inputs: [createInput(consensus.MAX_MONEY, view)],
       outputs: [{
         script: [],
-        value: constants.MAX_MONEY
+        value: consensus.MAX_MONEY
       }],
       locktime: 0
     });
@@ -408,7 +408,7 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY + 1, view)],
+      inputs: [createInput(consensus.MAX_MONEY + 1, view)],
       outputs: [{
         script: [],
         value: 0
@@ -425,13 +425,13 @@ describe('TX', function() {
       version: 1,
       flag: 1,
       inputs: [
-        createInput(Math.floor(constants.MAX_MONEY / 2), view),
-        createInput(Math.floor(constants.MAX_MONEY / 2), view),
-        createInput(Math.floor(constants.MAX_MONEY / 2), view)
+        createInput(Math.floor(consensus.MAX_MONEY / 2), view),
+        createInput(Math.floor(consensus.MAX_MONEY / 2), view),
+        createInput(Math.floor(consensus.MAX_MONEY / 2), view)
       ],
       outputs: [{
         script: [],
-        value: constants.MAX_MONEY
+        value: consensus.MAX_MONEY
       }],
       locktime: 0
     });
@@ -444,19 +444,19 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY, view)],
+      inputs: [createInput(consensus.MAX_MONEY, view)],
       outputs: [
         {
           script: [],
-          value: Math.floor(constants.MAX_MONEY / 2)
+          value: Math.floor(consensus.MAX_MONEY / 2)
         },
         {
           script: [],
-          value: Math.floor(constants.MAX_MONEY / 2)
+          value: Math.floor(consensus.MAX_MONEY / 2)
         },
         {
           script: [],
-          value: Math.floor(constants.MAX_MONEY / 2)
+          value: Math.floor(consensus.MAX_MONEY / 2)
         }
       ],
       locktime: 0
@@ -471,9 +471,9 @@ describe('TX', function() {
       version: 1,
       flag: 1,
       inputs: [
-        createInput(Math.floor(constants.MAX_MONEY / 2), view),
-        createInput(Math.floor(constants.MAX_MONEY / 2), view),
-        createInput(Math.floor(constants.MAX_MONEY / 2), view)
+        createInput(Math.floor(consensus.MAX_MONEY / 2), view),
+        createInput(Math.floor(consensus.MAX_MONEY / 2), view),
+        createInput(Math.floor(consensus.MAX_MONEY / 2), view)
       ],
       outputs: [{
         script: [],
@@ -496,7 +496,7 @@ describe('TX', function() {
         version: 1,
         flag: 1,
         inputs: [
-          createInput(Math.floor(constants.MAX_MONEY / 2), view)
+          createInput(Math.floor(consensus.MAX_MONEY / 2), view)
         ],
         outputs: [{
           script: [],
@@ -519,7 +519,7 @@ describe('TX', function() {
       version: 1,
       flag: 1,
       inputs: [
-        createInput(Math.floor(constants.MAX_MONEY / 2), view)
+        createInput(Math.floor(consensus.MAX_MONEY / 2), view)
       ],
       outputs: [{
         script: [],
@@ -555,7 +555,7 @@ describe('TX', function() {
       inputs: [createInput(util.MAX_SAFE_INTEGER, view)],
       outputs: [{
         script: [],
-        value: constants.MAX_MONEY
+        value: consensus.MAX_MONEY
       }],
       locktime: 0
     });
@@ -568,7 +568,7 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(constants.MAX_MONEY, view)],
+      inputs: [createInput(consensus.MAX_MONEY, view)],
       outputs: [{
         script: [],
         value: util.MAX_SAFE_INTEGER
@@ -608,7 +608,7 @@ describe('TX', function() {
         ],
         outputs: [{
           script: [],
-          value: constants.MAX_MONEY
+          value: consensus.MAX_MONEY
         }],
         locktime: 0
       });
@@ -621,7 +621,7 @@ describe('TX', function() {
       var tx = new TX({
         version: 1,
         flag: 1,
-        inputs: [createInput(constants.MAX_MONEY, view)],
+        inputs: [createInput(consensus.MAX_MONEY, view)],
         outputs: [
           {
             script: [],
