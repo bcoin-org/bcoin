@@ -1,7 +1,6 @@
+var assert = require('assert');
 var Transform = require('stream').Transform;
 var path = require('path');
-var assert = require('assert');
-var fs = require('fs');
 var StringDecoder = require('string_decoder').StringDecoder;
 
 function nil() {

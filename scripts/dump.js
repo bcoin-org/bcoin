@@ -36,7 +36,7 @@ setInterval(function() {
   console.log(tx.hash('hex'));
   console.log(coins.hash);
   console.log(entry.tx);
-}, 60 * 1000)
+}, 60 * 1000);
 
 setImmediate(function() {
   heapdump.writeSnapshot(SNAPSHOT, function(err) {
