@@ -1,6 +1,6 @@
-# BCoin
+# Bcoin
 
-**BCoin** is a bitcoin library which can also act as an SPV node or a full
+**Bcoin** is a bitcoin library which can also act as an SPV node or a full
 node. It is consensus aware and is up to date with the latest BIPs: it supports
 segregated witness, versionbits, CSV, and compact block relay. It also has
 preliminary support for bip151 (peer-to-peer encryption), bip150 (peer auth),
@@ -38,6 +38,11 @@ formats for the database).
 
 Read the docs here: http://bcoin.io/docs/
 
+## Support
+
+Join us on freenode in the [#bcoin][irc] channel, or on the [bitcoin core
+slack][slack].
+
 ## Example Usage
 
 - [CLI Usage](#cli-usage)
@@ -60,25 +65,25 @@ $ bcoin cli block 0
 $ bcoin cli mempool
 
 # View primary wallet
-$ bcoin cli wallet get
+$ bcoin wallet get
 
 # View transaction history
-$ bcoin cli wallet history
+$ bcoin wallet history
 
 # Send a transaction
-$ bcoin cli wallet send [address] 0.01
+$ bcoin wallet send [address] 0.01
 
 # View balance
-$ bcoin cli wallet balance
+$ bcoin wallet balance
 
 # Derive new address
-$ bcoin cli wallet address
+$ bcoin wallet address
 
 # Create a new account
-$ bcoin cli wallet account create foo
+$ bcoin wallet account create foo
 
 # Send from account
-$ bcoin cli wallet send [address] 0.01 --account=foo
+$ bcoin wallet send [address] 0.01 --account=foo
 ```
 
 #### RPC (bitcoind-like)
@@ -340,7 +345,7 @@ node.chain.on('full', function() {
 ### Running the default full node
 
 ``` bash
-$ bcoin --fast
+$ bcoin --use-workers --fast
 ```
 
 `--fast` will enable checkpoints, coin cache, and getheaders.
@@ -473,7 +478,7 @@ var coins = [];
 // Convert the coinbase output to a Coin
 // object and add it to our available coins.
 // In reality you might get these coins from a wallet.
-var coin = bcoin.coin.fromTX(cb, 0);
+var coin = bcoin.coin.fromTX(cb, 0, -1);
 coins.push(coin);
 
 // Create our redeeming transaction.
@@ -499,23 +504,22 @@ mtx.fund(coins, {
   rate: 10000,
   // Send the change back to ourselves.
   changeAddress: keyring.getAddress()
+}).then(function() {
+  // Sign input 0
+  mtx.sign(keyring);
+
+  // The transaction should now verify.
+  assert(mtx.verify());
+
+  // Commit our transaction and make it immutable.
+  // This turns it from an MTX into a TX.
+  var tx = mtx.toTX();
+
+  // The transaction should still verify.
+  // Regular transactions require a coin
+  // viewpoint to be passed in.
+  assert(tx.verify(mtx.view));
 });
-
-// Sign input 0
-mtx.sign(keyring);
-
-// The transaction should now verify.
-assert(mtx.verify());
-
-// Commit our transaction and make it immutable.
-// This turns it from an MTX into a TX.
-var tx = mtx.toTX();
-
-// The transaction should still verify.
-// Regular transactions require a coin
-// viewpoint to be passed in.
-assert(tx.verify(mtx.view));
-
 ```
 
 ## Scripting
@@ -688,3 +692,5 @@ See LICENSE for more info.
 [libsecp256k1]: https://github.com/bitcoin-core/secp256k1
 [secp256k1-node]: https://github.com/cryptocoinjs/secp256k1-node
 [elliptic]: https://github.com/indutny/elliptic
+[irc]: irc://irc.freenode.net/bcoin
+[slack]: https://slack.bitcoincore.org/
