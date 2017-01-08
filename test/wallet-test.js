@@ -613,7 +613,7 @@ describe('Wallet', function() {
     tx.addOutput(to.getAddress(), 5460);
 
     cost = tx.getOutputValue();
-    total = cost * MTX.MIN_FEE;
+    total = cost * 10000;
 
     coins1 = yield w1.getCoins();
     coins2 = yield w2.getCoins();
