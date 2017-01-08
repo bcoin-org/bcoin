@@ -5,16 +5,12 @@ var co = require('../lib/utils/co');
 var crypto = require('../lib/crypto/crypto');
 var WalletDB = require('../lib/wallet/walletdb');
 var MTX = require('../lib/primitives/mtx');
+var Outpoint = require('../lib/primitives/outpoint');
 var walletdb, runBench;
 
 function dummy() {
   var hash = crypto.randomBytes(32).toString('hex');
-  return {
-    prevout: {
-      hash: hash,
-      index: 0
-    }
-  };
+  return new Outpoint(hash, 0);
 }
 
 walletdb = new WalletDB({
@@ -62,13 +58,13 @@ runBench = co(function* runBench() {
   // TX deposit
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = new MTX()
-      .addInput(dummy())
-      .addOutput(addrs[(i + 0) % addrs.length], 50460)
-      .addOutput(addrs[(i + 1) % addrs.length], 50460)
-      .addOutput(addrs[(i + 2) % addrs.length], 50460)
-      .addOutput(addrs[(i + 3) % addrs.length], 50460)
-      .toTX();
+    tx = new MTX();
+    tx.addOutpoint(dummy());
+    tx.addOutput(addrs[(i + 0) % addrs.length], 50460);
+    tx.addOutput(addrs[(i + 1) % addrs.length], 50460);
+    tx.addOutput(addrs[(i + 2) % addrs.length], 50460);
+    tx.addOutput(addrs[(i + 3) % addrs.length], 50460);
+    tx = tx.toTX();
 
     jobs.push(walletdb.addTX(tx));
   }
@@ -80,16 +76,16 @@ runBench = co(function* runBench() {
   // TX redemption
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = new MTX()
-      .addInput(tx, 0)
-      .addInput(tx, 1)
-      .addInput(tx, 2)
-      .addInput(tx, 3)
-      .addOutput(addrs[(i + 0) % addrs.length], 50460)
-      .addOutput(addrs[(i + 1) % addrs.length], 50460)
-      .addOutput(addrs[(i + 2) % addrs.length], 50460)
-      .addOutput(addrs[(i + 3) % addrs.length], 50460)
-      .toTX();
+    tx = new MTX();
+    tx.addTX(tx, 0);
+    tx.addTX(tx, 1);
+    tx.addTX(tx, 2);
+    tx.addTX(tx, 3);
+    tx.addOutput(addrs[(i + 0) % addrs.length], 50460);
+    tx.addOutput(addrs[(i + 1) % addrs.length], 50460);
+    tx.addOutput(addrs[(i + 2) % addrs.length], 50460);
+    tx.addOutput(addrs[(i + 3) % addrs.length], 50460);
+    tx = tx.toTX();
 
     jobs.push(walletdb.addTX(tx));
   }

@@ -27,30 +27,23 @@ describe('Chain', function() {
 
   mineBlock = co(function* mineBlock(tip, tx) {
     var attempt = yield miner.createBlock(tip);
-    var redeemer;
+    var rtx;
 
     if (!tx)
       return yield attempt.mineAsync();
 
-    redeemer = new MTX();
+    rtx = new MTX();
 
-    redeemer.addOutput({
-      address: wallet.getReceive(),
-      value: 25 * 1e8
-    });
+    rtx.addTX(tx, 0);
 
-    redeemer.addOutput({
-      address: wallet.getChange(),
-      value: 5 * 1e8
-    });
+    rtx.addOutput(wallet.getReceive(), 25 * 1e8);
+    rtx.addOutput(wallet.getChange(), 5 * 1e8);
 
-    redeemer.addInput(tx, 0);
+    rtx.setLocktime(chain.height);
 
-    redeemer.setLocktime(chain.height);
+    yield wallet.sign(rtx);
 
-    yield wallet.sign(redeemer);
-
-    attempt.addTX(redeemer.toTX(), redeemer.view);
+    attempt.addTX(rtx.toTX(), rtx.view);
 
     return yield attempt.mineAsync();
   });
@@ -326,7 +319,7 @@ describe('Chain', function() {
       value: 10 * 1e8
     });
 
-    redeemer.addInput(tx, 0);
+    redeemer.addTX(tx, 0);
 
     redeemer.setLocktime(chain.height);
 
@@ -356,7 +349,7 @@ describe('Chain', function() {
       value: 10 * 1e8
     });
 
-    redeemer.addInput(csv, 0);
+    redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 1, false);
 
     attempt = yield miner.createBlock();
@@ -382,7 +375,7 @@ describe('Chain', function() {
       value: 10 * 1e8
     });
 
-    redeemer.addInput(csv, 0);
+    redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 1, false);
 
     attempt = yield miner.createBlock();
@@ -426,7 +419,7 @@ describe('Chain', function() {
       value: 10 * 1e8
     });
 
-    redeemer.addInput(csv, 0);
+    redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 2, false);
 
     attempt = yield miner.createBlock();

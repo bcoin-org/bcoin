@@ -5,6 +5,7 @@ var consensus = require('../lib/protocol/consensus');
 var encoding = require('../lib/utils/encoding');
 var co = require('../lib/utils/co');
 var Amount = require('../lib/btc/amount');
+var Address = require('../lib/primitives/address');
 var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
 var FullNode = require('../lib/node/fullnode');
@@ -61,17 +62,18 @@ describe('HTTP', function() {
     assert.equal(info.id, 'test');
     addr = info.account.receiveAddress;
     assert.equal(typeof addr, 'string');
+    addr = Address.fromBase58(addr);
   }));
 
   it('should fill with funds', cob(function* () {
     var tx, balance, receive, details;
 
     // Coinbase
-    tx = MTX()
-      .addOutput(addr, 50460)
-      .addOutput(addr, 50460)
-      .addOutput(addr, 50460)
-      .addOutput(addr, 50460);
+    tx = new MTX();
+    tx.addOutput(addr, 50460);
+    tx.addOutput(addr, 50460);
+    tx.addOutput(addr, 50460);
+    tx.addOutput(addr, 50460);
 
     tx.addInput(dummyInput);
     tx = tx.toTX();
@@ -116,7 +118,7 @@ describe('HTTP', function() {
       rate: 10000,
       outputs: [{
         value: 10000,
-        address: addr
+        address: addr.toBase58()
       }]
     };
 

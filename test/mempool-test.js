@@ -41,31 +41,27 @@ describe('Mempool', function() {
   });
 
   function dummy(prev, prevHash) {
-    var funding = new MTX();
-    var coin, entry;
+    var fund, coin, entry;
 
     if (!prevHash)
       prevHash = encoding.ONE_HASH.toString('hex');
 
-    coin = new Coin({
-      version: 1,
-      height: 0,
-      value: 0,
-      script: prev,
-      coinbase: false,
-      hash: prevHash,
-      index: 0
-    });
+    coin = new Coin();
+    coin.height = 0;
+    coin.value = 0;
+    coin.script = prev;
+    coin.hash = prevHash;
+    coin.index = 0;
 
-    funding.addInput(coin);
+    fund = new MTX();
+    fund.addCoin(coin);
+    fund.addOutput(prev, 70000);
 
-    funding.addOutput({ value: 70000, script: prev });
+    entry = MempoolEntry.fromTX(fund.toTX(), fund.view, 0);
 
-    entry = MempoolEntry.fromTX(funding.toTX(), funding.view, 0);
+    mempool.trackEntry(entry, fund.view);
 
-    mempool.trackEntry(entry, funding.view);
-
-    return Coin.fromTX(funding, 0, -1);
+    return Coin.fromTX(fund, 0, -1);
   }
 
   it('should open mempool', cob(function* () {
@@ -86,58 +82,58 @@ describe('Mempool', function() {
     var w = wallet;
     var t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
 
-    t1 = new MTX()
-      .addOutput(w.getAddress(), 50000)
-      .addOutput(w.getAddress(), 10000);
+    t1 = new MTX();
+    t1.addOutput(w.getAddress(), 50000);
+    t1.addOutput(w.getAddress(), 10000);
 
     prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
-    t1.addInput(dummy(prev));
-    sig = t1.signature(0, prev, 70000, kp.privateKey, 'all', 0);
+    t1.addCoin(dummy(prev));
+    sig = t1.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     t1.inputs[0].script = new Script([sig]);
 
     // balance: 51000
     yield w.sign(t1);
     t1 = t1.toTX();
 
-    t2 = new MTX()
-      .addInput(t1, 0) // 50000
-      .addOutput(w.getAddress(), 20000)
-      .addOutput(w.getAddress(), 20000);
+    t2 = new MTX();
+    t2.addTX(t1, 0); // 50000
+    t2.addOutput(w.getAddress(), 20000);
+    t2.addOutput(w.getAddress(), 20000);
 
     // balance: 49000
     yield w.sign(t2);
     t2 = t2.toTX();
 
-    t3 = new MTX()
-      .addInput(t1, 1) // 10000
-      .addInput(t2, 0) // 20000
-      .addOutput(w.getAddress(), 23000);
+    t3 = new MTX();
+    t3.addTX(t1, 1); // 10000
+    t3.addTX(t2, 0); // 20000
+    t3.addOutput(w.getAddress(), 23000);
 
     // balance: 47000
     yield w.sign(t3);
     t3 = t3.toTX();
 
-    t4 = new MTX()
-      .addInput(t2, 1) // 24000
-      .addInput(t3, 0) // 23000
-      .addOutput(w.getAddress(), 11000)
-      .addOutput(w.getAddress(), 11000);
+    t4 = new MTX();
+    t4.addTX(t2, 1); // 24000
+    t4.addTX(t3, 0); // 23000
+    t4.addOutput(w.getAddress(), 11000);
+    t4.addOutput(w.getAddress(), 11000);
 
     // balance: 22000
     yield w.sign(t4);
     t4 = t4.toTX();
 
-    f1 = new MTX()
-      .addInput(t4, 1) // 11000
-      .addOutput(new Address(), 9000);
+    f1 = new MTX();
+    f1.addTX(t4, 1); // 11000
+    f1.addOutput(new Address(), 9000);
 
     // balance: 11000
     yield w.sign(f1);
     f1 = f1.toTX();
 
-    fake = new MTX()
-      .addInput(t1, 1) // 1000 (already redeemed)
-      .addOutput(w.getAddress(), 6000); // 6000 instead of 500
+    fake = new MTX();
+    fake.addTX(t1, 1); // 1000 (already redeemed)
+    fake.addOutput(w.getAddress(), 6000); // 6000 instead of 500
 
     // Script inputs but do not sign
     yield w.template(fake);
@@ -185,19 +181,19 @@ describe('Mempool', function() {
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig;
 
-    tx = new MTX()
-      .addOutput(w.getAddress(), 50000)
-      .addOutput(w.getAddress(), 10000);
+    tx = new MTX();
+    tx.addOutput(w.getAddress(), 50000);
+    tx.addOutput(w.getAddress(), 10000);
 
     prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
-    tx.addInput(dummy(prev, prevHash));
+    tx.addCoin(dummy(prev, prevHash));
     tx.setLocktime(200);
 
     chain.tip.height = 200;
 
-    sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
+    sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     tx.inputs[0].script = new Script([sig]),
 
     tx = tx.toTX();
@@ -211,18 +207,18 @@ describe('Mempool', function() {
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig, err;
 
-    tx = new MTX()
-      .addOutput(w.getAddress(), 50000)
-      .addOutput(w.getAddress(), 10000);
+    tx = new MTX();
+    tx.addOutput(w.getAddress(), 50000);
+    tx.addOutput(w.getAddress(), 10000);
 
     prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
-    tx.addInput(dummy(prev, prevHash));
+    tx.addCoin(dummy(prev, prevHash));
     tx.setLocktime(200);
     chain.tip.height = 200 - 1;
 
-    sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
+    sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     tx.inputs[0].script = new Script([sig]),
     tx = tx.toTX();
 
@@ -244,18 +240,18 @@ describe('Mempool', function() {
 
     kp.witness = true;
 
-    tx = new MTX()
-      .addOutput(w.getAddress(), 50000)
-      .addOutput(w.getAddress(), 10000);
+    tx = new MTX();
+    tx.addOutput(w.getAddress(), 50000);
+    tx.addOutput(w.getAddress(), 10000);
 
     prev = new Script([0, kp.getKeyHash()]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
-    tx.addInput(dummy(prev, prevHash));
+    tx.addCoin(dummy(prev, prevHash));
 
     prevs = Script.fromPubkeyhash(kp.getKeyHash());
 
-    sig = tx.signature(0, prevs, 70000, kp.privateKey, 'all', 1);
+    sig = tx.signature(0, prevs, 70000, kp.privateKey, Script.hashType.ALL, 1);
     sig[sig.length - 1] = 0;
 
     tx.inputs[0].witness = new Witness([sig, kp.publicKey]);
@@ -276,16 +272,16 @@ describe('Mempool', function() {
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig, err;
 
-    tx = new MTX()
-      .addOutput(w.getAddress(), 50000)
-      .addOutput(w.getAddress(), 10000);
+    tx = new MTX();
+    tx.addOutput(w.getAddress(), 50000);
+    tx.addOutput(w.getAddress(), 10000);
 
     prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
-    tx.addInput(dummy(prev, prevHash));
+    tx.addCoin(dummy(prev, prevHash));
 
-    sig = tx.signature(0, prev, 70000, kp.privateKey, 'all', 0);
+    sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     tx.inputs[0].script = new Script([sig]);
     tx.inputs[0].witness.push(new Buffer(0));
     tx = tx.toTX();
@@ -307,14 +303,14 @@ describe('Mempool', function() {
 
     kp.witness = true;
 
-    tx = new MTX()
-      .addOutput(w.getAddress(), 50000)
-      .addOutput(w.getAddress(), 10000);
+    tx = new MTX();
+    tx.addOutput(w.getAddress(), 50000);
+    tx.addOutput(w.getAddress(), 10000);
 
     prev = new Script([0, kp.getKeyHash()]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
-    tx.addInput(dummy(prev, prevHash));
+    tx.addCoin(dummy(prev, prevHash));
 
     tx = tx.toTX();
 
@@ -334,14 +330,14 @@ describe('Mempool', function() {
     var kp = KeyRing.generate();
     var tx, prev, prevHash, err;
 
-    tx = new MTX()
-      .addOutput(w.getAddress(), 50000)
-      .addOutput(w.getAddress(), 10000);
+    tx = new MTX();
+    tx.addOutput(w.getAddress(), 50000);
+    tx.addOutput(w.getAddress(), 10000);
 
     prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
     prevHash = crypto.randomBytes(32).toString('hex');
 
-    tx.addInput(dummy(prev, prevHash));
+    tx.addCoin(dummy(prev, prevHash));
 
     tx = tx.toTX();
 
@@ -359,9 +355,10 @@ describe('Mempool', function() {
 
   it('should clear reject cache', cob(function* () {
     var w = wallet;
-    var tx, input, block;
+    var tx, input;
 
-    tx = new MTX().addOutput(w.getAddress(), 50000);
+    tx = new MTX();
+    tx.addOutput(w.getAddress(), 50000);
 
     input = {
       prevout: {
@@ -374,11 +371,8 @@ describe('Mempool', function() {
 
     tx = tx.toTX();
 
-    block = new Block();
-    block.txs.push(tx);
-
     assert(mempool.hasReject(cached.hash()));
-    yield mempool.addBlock({ height: 1 }, block.txs);
+    yield mempool.addBlock({ height: 1 }, [tx]);
     assert(!mempool.hasReject(cached.hash()));
   }));
 

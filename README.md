@@ -415,8 +415,8 @@ cb.addOutput({
 // Create our redeeming transaction.
 var mtx = new bcoin.mtx();
 
-// Add output 0 from our coinbase.
-mtx.addInput(cb, 0);
+// Add output 0 from our coinbase as an input.
+mtx.addTX(cb, 0);
 
 // Send 10,000 satoshis to ourself,
 // creating a fee of 40,000 satoshis.
