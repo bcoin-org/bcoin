@@ -497,7 +497,7 @@ describe('Wallet', function() {
     var view, t1, t2, t3, balance, err;
 
     // Coinbase
-    t1 = new MTX()
+    t1 = new MTX();
     t1.addInput(dummy(encoding.NULL_HASH));
     t1.addOutput(w1.getAddress(), 5460);
     t1.addOutput(w1.getAddress(), 5460);
@@ -508,7 +508,8 @@ describe('Wallet', function() {
     yield walletdb.addTX(t1);
 
     // Create new transaction
-    t2 = new MTX().addOutput(w2.getAddress(), 5460);
+    t2 = new MTX();
+    t2.addOutput(w2.getAddress(), 5460);
     yield w1.fund(t2, { rate: 10000 });
 
     yield w1.sign(t2);
@@ -553,7 +554,7 @@ describe('Wallet', function() {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var to = yield walletdb.create();
-    var t1, t2, tx, cost, total, coins1, coins2, left;
+    var t1, t2, tx, cost, total, coins1, coins2;
 
     // Coinbase
     t1 = new MTX();
@@ -586,19 +587,10 @@ describe('Wallet', function() {
     coins1 = yield w1.getCoins();
     coins2 = yield w2.getCoins();
 
-    // Add dummy output (for `left`) to calculate maximum TX size
-    tx.addOutput(w1.getAddress(), 0);
-
     // Add our unspent inputs to sign
     tx.addCoin(coins1[0]);
     tx.addCoin(coins1[1]);
     tx.addCoin(coins2[0]);
-
-    left = tx.getInputValue() - total;
-    if (left === 0)
-      tx.outputs.pop();
-    else
-      tx.outputs[tx.outputs.length - 1].value = left;
 
     // Sign transaction
     total = yield w1.sign(tx);
@@ -670,19 +662,19 @@ describe('Wallet', function() {
     assert.equal(w2.account[rec].getAddress('base58'), b58);
     assert.equal(w3.account[rec].getAddress('base58'), b58);
 
-    paddr = w1.getNested('base58');
-    assert.equal(w1.getNested('base58'), paddr);
-    assert.equal(w2.getNested('base58'), paddr);
-    assert.equal(w3.getNested('base58'), paddr);
+    paddr = w1.getNested();
+
+    if (witness) {
+      assert(paddr);
+      assert.equal(w1.getNested('base58'), paddr.toBase58());
+      assert.equal(w2.getNested('base58'), paddr.toBase58());
+      assert.equal(w3.getNested('base58'), paddr.toBase58());
+    }
 
     // Add a shared unspent transaction to our wallets
     utx = new MTX();
-    if (bullshitNesting)
-      utx.addOutput({ address: paddr, value: 5460 * 10 });
-    else
-      utx.addOutput({ address: addr, value: 5460 * 10 });
-
     utx.addInput(dummy());
+    utx.addOutput(bullshitNesting ? paddr : addr, 5460 * 10);
     utx = utx.toTX();
 
     // Simulate a confirmation
@@ -704,7 +696,7 @@ describe('Wallet', function() {
 
     // Create a tx requiring 2 signatures
     send = new MTX();
-    send.addOutput({ address: receive.getAddress(), value: 5460 });
+    send.addOutput(receive.getAddress(), 5460);
     assert(!send.verify(flags));
     yield w1.fund(send, { rate: 10000, round: true });
 
