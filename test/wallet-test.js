@@ -734,6 +734,7 @@ describe('Wallet', function() {
 
     if (witness) {
       send.inputs[0].witness.set(2, 0);
+      send.inputs[0].witness.compile();
     } else {
       send.inputs[0].script.set(2, 0);
       send.inputs[0].script.compile();
