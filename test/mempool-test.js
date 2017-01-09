@@ -12,6 +12,7 @@ var MTX = require('../lib/primitives/mtx');
 var Coin = require('../lib/primitives/coin');
 var KeyRing = require('../lib/primitives/keyring');
 var Address = require('../lib/primitives/address');
+var Outpoint = require('../lib/primitives/outpoint');
 var Script = require('../lib/script/script');
 var Witness = require('../lib/script/witness');
 var Block = require('../lib/primitives/block');
@@ -86,7 +87,7 @@ describe('Mempool', function() {
     t1.addOutput(w.getAddress(), 50000);
     t1.addOutput(w.getAddress(), 10000);
 
-    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = Script.fromPubkey(kp.publicKey);
     t1.addCoin(dummy(prev));
     sig = t1.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     t1.inputs[0].script = new Script([sig]);
@@ -185,7 +186,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 50000);
     tx.addOutput(w.getAddress(), 10000);
 
-    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = Script.fromPubkey(kp.publicKey);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
@@ -194,7 +195,7 @@ describe('Mempool', function() {
     chain.tip.height = 200;
 
     sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
-    tx.inputs[0].script = new Script([sig]),
+    tx.inputs[0].script = new Script([sig]);
 
     tx = tx.toTX();
 
@@ -211,7 +212,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 50000);
     tx.addOutput(w.getAddress(), 10000);
 
-    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = Script.fromPubkey(kp.publicKey);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
@@ -219,7 +220,7 @@ describe('Mempool', function() {
     chain.tip.height = 200 - 1;
 
     sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
-    tx.inputs[0].script = new Script([sig]),
+    tx.inputs[0].script = new Script([sig]);
     tx = tx.toTX();
 
     try {
@@ -244,7 +245,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 50000);
     tx.addOutput(w.getAddress(), 10000);
 
-    prev = new Script([0, kp.getKeyHash()]);
+    prev = Script.fromProgram(0, kp.getKeyHash());
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
@@ -276,7 +277,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 50000);
     tx.addOutput(w.getAddress(), 10000);
 
-    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = Script.fromPubkey(kp.publicKey);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
@@ -307,7 +308,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 50000);
     tx.addOutput(w.getAddress(), 10000);
 
-    prev = new Script([0, kp.getKeyHash()]);
+    prev = Script.fromProgram(0, kp.getKeyHash());
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
@@ -334,7 +335,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 50000);
     tx.addOutput(w.getAddress(), 10000);
 
-    prev = new Script([kp.publicKey, opcodes.OP_CHECKSIG]);
+    prev = Script.fromPubkey(kp.publicKey);
     prevHash = crypto.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
@@ -358,17 +359,8 @@ describe('Mempool', function() {
     var tx, input;
 
     tx = new MTX();
+    tx.addOutpoint(new Outpoint());
     tx.addOutput(w.getAddress(), 50000);
-
-    input = {
-      prevout: {
-        hash: encoding.NULL_HASH,
-        index: 0xffffffff
-      }
-    };
-
-    tx.addInput(input);
-
     tx = tx.toTX();
 
     assert(mempool.hasReject(cached.hash()));

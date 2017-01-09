@@ -6,18 +6,12 @@ var encoding = require('../lib/utils/encoding');
 var co = require('../lib/utils/co');
 var Amount = require('../lib/btc/amount');
 var Address = require('../lib/primitives/address');
+var Outpoint = require('../lib/primitives/outpoint');
 var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
 var FullNode = require('../lib/node/fullnode');
 var USER_VERSION = require('../package.json').version;
 var cob = co.cob;
-
-var dummyInput = {
-  prevout: {
-    hash: encoding.NULL_HASH,
-    index: 0
-  }
-};
 
 describe('HTTP', function() {
   var node, wallet, addr, hash;
@@ -70,12 +64,11 @@ describe('HTTP', function() {
 
     // Coinbase
     tx = new MTX();
+    tx.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
     tx.addOutput(addr, 50460);
     tx.addOutput(addr, 50460);
     tx.addOutput(addr, 50460);
     tx.addOutput(addr, 50460);
-
-    tx.addInput(dummyInput);
     tx = tx.toTX();
 
     wallet.once('balance', function(b) {
