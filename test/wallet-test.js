@@ -77,15 +77,17 @@ describe('Wallet', function() {
     var w = yield walletdb.create();
     var addr = w.getAddress('base58');
     assert(addr);
-    assert(Address.validate(addr));
+    assert(Address.fromBase58(addr));
   }));
 
   it('should validate existing address', function() {
-    assert(Address.validate('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
+    assert(Address.fromBase58('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
   });
 
   it('should fail to validate invalid address', function() {
-    assert(!Address.validate('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
+    assert.throws(function() {
+      Address.fromBase58('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc');
+    });
   });
 
   it('should create and get wallet', cob(function* () {

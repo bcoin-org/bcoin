@@ -276,8 +276,8 @@ describe('Script', function() {
               hash: encoding.NULL_HASH,
               index: 0xffffffff
             },
-            script: new Script([opcodes.OP_0, opcodes.OP_0]),
-            witness: new Witness(),
+            script: [opcodes.OP_0, opcodes.OP_0],
+            witness: [],
             sequence: 0xffffffff
           }],
           outputs: [{
@@ -301,7 +301,7 @@ describe('Script', function() {
             sequence: 0xffffffff
           }],
           outputs: [{
-            script: new Script(),
+            script: [],
             value: amount
           }],
           locktime: 0
