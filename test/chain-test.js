@@ -9,7 +9,6 @@ var Script = require('../lib/script/script');
 var FullNode = require('../lib/node/fullnode');
 var MTX = require('../lib/primitives/mtx');
 // var Client = require('../lib/wallet/client');
-var cob = co.cob;
 
 describe('Chain', function() {
   var node = new FullNode({ db: 'memory', apiKey: 'foo', network: 'regtest' });
@@ -48,25 +47,25 @@ describe('Chain', function() {
     return yield attempt.mineAsync();
   });
 
-  it('should open chain and miner', cob(function* () {
+  it('should open chain and miner', co(function* () {
     miner.mempool = null;
     consensus.COINBASE_MATURITY = 0;
     yield node.open();
   }));
 
-  it('should open walletdb', cob(function* () {
+  it('should open walletdb', co(function* () {
     wallet = yield walletdb.create();
     miner.addresses.length = 0;
     miner.addAddress(wallet.getReceive());
   }));
 
-  it('should mine a block', cob(function* () {
+  it('should mine a block', co(function* () {
     var block = yield miner.mineBlock();
     assert(block);
     yield chain.add(block);
   }));
 
-  it('should mine competing chains', cob(function* () {
+  it('should mine competing chains', co(function* () {
     var i, block1, block2;
 
     for (i = 0; i < 10; i++) {
@@ -89,6 +88,8 @@ describe('Chain', function() {
       assert(tip2);
 
       assert(!(yield tip2.isMainChain()));
+
+      yield co.wait();
     }
   }));
 
@@ -98,7 +99,7 @@ describe('Chain', function() {
     assert.equal(chain.db.state.tx, 21);
   });
 
-  it('should have correct balance', cob(function* () {
+  it('should have correct balance', co(function* () {
     var balance;
 
     yield co.timeout(100);
@@ -108,7 +109,7 @@ describe('Chain', function() {
     assert.equal(balance.confirmed, 550 * 1e8);
   }));
 
-  it('should handle a reorg', cob(function* () {
+  it('should handle a reorg', co(function* () {
     var entry, block, forked;
 
     assert.equal(walletdb.state.height, chain.height);
@@ -139,7 +140,7 @@ describe('Chain', function() {
     assert.equal(chain.db.state.tx, 22);
   });
 
-  it('should have correct balance', cob(function* () {
+  it('should have correct balance', co(function* () {
     var balance;
 
     yield co.timeout(100);
@@ -149,12 +150,12 @@ describe('Chain', function() {
     assert.equal(balance.confirmed, 600 * 1e8);
   }));
 
-  it('should check main chain', cob(function* () {
+  it('should check main chain', co(function* () {
     var result = yield tip1.isMainChain();
     assert(!result);
   }));
 
-  it('should mine a block after a reorg', cob(function* () {
+  it('should mine a block after a reorg', co(function* () {
     var block = yield mineBlock(null, cb2);
     var entry, result;
 
@@ -168,7 +169,7 @@ describe('Chain', function() {
     assert(result);
   }));
 
-  it('should prevent double spend on new chain', cob(function* () {
+  it('should prevent double spend on new chain', co(function* () {
     var block = yield mineBlock(null, cb2);
     var tip = chain.tip;
     var err;
@@ -184,7 +185,7 @@ describe('Chain', function() {
     assert(chain.tip === tip);
   }));
 
-  it('should fail to mine a block with coins on an alternate chain', cob(function* () {
+  it('should fail to mine a block with coins on an alternate chain', co(function* () {
     var block = yield mineBlock(null, cb1);
     var tip = chain.tip;
     var err;
@@ -206,7 +207,7 @@ describe('Chain', function() {
     assert.equal(chain.db.state.tx, 24);
   });
 
-  it('should get coin', cob(function* () {
+  it('should get coin', co(function* () {
     var block, tx, output, coin;
 
     block = yield mineBlock();
@@ -223,7 +224,7 @@ describe('Chain', function() {
     assert.deepEqual(coin.toRaw(), output.toRaw());
   }));
 
-  it('should get balance', cob(function* () {
+  it('should get balance', co(function* () {
     var balance, txs;
 
     yield co.timeout(100);
@@ -241,7 +242,7 @@ describe('Chain', function() {
     assert.equal(txs.length, 45);
   }));
 
-  it('should get tips and remove chains', cob(function* () {
+  it('should get tips and remove chains', co(function* () {
     var tips = yield chain.db.getTips();
 
     assert.notEqual(tips.indexOf(chain.tip.hash), -1);
@@ -255,7 +256,7 @@ describe('Chain', function() {
     assert.equal(tips.length, 1);
   }));
 
-  it('should rescan for transactions', cob(function* () {
+  it('should rescan for transactions', co(function* () {
     var total = 0;
 
     yield chain.db.scan(0, walletdb.filter, function(block, txs) {
@@ -266,7 +267,7 @@ describe('Chain', function() {
     assert.equal(total, 26);
   }));
 
-  it('should activate csv', cob(function* () {
+  it('should activate csv', co(function* () {
     var deployments = chain.network.deployments;
     var i, block, prev, state, cache;
 
@@ -330,7 +331,7 @@ describe('Chain', function() {
     return yield attempt.mineAsync();
   });
 
-  it('should test csv', cob(function* () {
+  it('should test csv', co(function* () {
     var tx = (yield chain.db.getBlock(chain.height)).txs[0];
     var block = yield mineCSV(tx);
     var csv, attempt, redeemer;
@@ -361,7 +362,7 @@ describe('Chain', function() {
     yield chain.add(block);
   }));
 
-  it('should fail csv with bad sequence', cob(function* () {
+  it('should fail csv with bad sequence', co(function* () {
     var csv = (yield chain.db.getBlock(chain.height)).txs[1];
     var block, attempt, redeemer, err;
 
@@ -394,13 +395,13 @@ describe('Chain', function() {
     assert(err.reason, 'mandatory-script-verify-flag-failed');
   }));
 
-  it('should mine a block', cob(function* () {
+  it('should mine a block', co(function* () {
     var block = yield miner.mineBlock();
     assert(block);
     yield chain.add(block);
   }));
 
-  it('should fail csv lock checks', cob(function* () {
+  it('should fail csv lock checks', co(function* () {
     var tx = (yield chain.db.getBlock(chain.height)).txs[0];
     var block = yield mineCSV(tx);
     var csv, attempt, redeemer, err;
@@ -438,12 +439,12 @@ describe('Chain', function() {
     assert.equal(err.reason, 'bad-txns-nonfinal');
   }));
 
-  it('should rescan for transactions', cob(function* () {
+  it('should rescan for transactions', co(function* () {
     yield walletdb.rescan(0);
     assert.equal(wallet.txdb.state.confirmed, 1289250000000);
   }));
 
-  it('should cleanup', cob(function* () {
+  it('should cleanup', co(function* () {
     consensus.COINBASE_MATURITY = 100;
     yield node.close();
   }));

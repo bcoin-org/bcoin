@@ -11,7 +11,6 @@ var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
 var FullNode = require('../lib/node/fullnode');
 var USER_VERSION = require('../package.json').version;
-var cob = co.cob;
 
 describe('HTTP', function() {
   var node, wallet, addr, hash;
@@ -32,17 +31,17 @@ describe('HTTP', function() {
 
   this.timeout(15000);
 
-  it('should open node', cob(function* () {
+  it('should open node', co(function* () {
     consensus.COINBASE_MATURITY = 0;
     yield node.open();
   }));
 
-  it('should create wallet', cob(function* () {
+  it('should create wallet', co(function* () {
     var info = yield wallet.create({ id: 'test' });
     assert.equal(info.id, 'test');
   }));
 
-  it('should get info', cob(function* () {
+  it('should get info', co(function* () {
     var info = yield wallet.client.getInfo();
     assert.equal(info.network, node.network.type);
     assert.equal(info.version, USER_VERSION);
@@ -51,7 +50,7 @@ describe('HTTP', function() {
     assert.equal(info.chain.height, 0);
   }));
 
-  it('should get wallet info', cob(function* () {
+  it('should get wallet info', co(function* () {
     var info = yield wallet.getInfo();
     assert.equal(info.id, 'test');
     addr = info.account.receiveAddress;
@@ -59,7 +58,7 @@ describe('HTTP', function() {
     addr = Address.fromBase58(addr);
   }));
 
-  it('should fill with funds', cob(function* () {
+  it('should fill with funds', co(function* () {
     var tx, balance, receive, details;
 
     // Coinbase
@@ -97,13 +96,13 @@ describe('HTTP', function() {
     assert.equal(details.hash, tx.rhash());
   }));
 
-  it('should get balance', cob(function* () {
+  it('should get balance', co(function* () {
     var balance = yield wallet.getBalance();
     assert.equal(Amount.value(balance.confirmed), 0);
     assert.equal(Amount.value(balance.unconfirmed), 201840);
   }));
 
-  it('should send a tx', cob(function* () {
+  it('should send a tx', co(function* () {
     var value = 0;
     var options, tx;
 
@@ -128,30 +127,30 @@ describe('HTTP', function() {
     hash = tx.hash;
   }));
 
-  it('should get a tx', cob(function* () {
+  it('should get a tx', co(function* () {
     var tx = yield wallet.getTX(hash);
     assert(tx);
     assert.equal(tx.hash, hash);
   }));
 
-  it('should generate new api key', cob(function* () {
+  it('should generate new api key', co(function* () {
     var t = wallet.token.toString('hex');
     var token = yield wallet.retoken(null);
     assert(token.length === 64);
     assert.notEqual(token, t);
   }));
 
-  it('should get balance', cob(function* () {
+  it('should get balance', co(function* () {
     var balance = yield wallet.getBalance();
     assert.equal(Amount.value(balance.unconfirmed), 199570);
   }));
 
-  it('should execute an rpc call', cob(function* () {
+  it('should execute an rpc call', co(function* () {
     var info = yield wallet.client.rpc.call('getblockchaininfo', []);
     assert.equal(info.blocks, 0);
   }));
 
-  it('should cleanup', cob(function* () {
+  it('should cleanup', co(function* () {
     consensus.COINBASE_MATURITY = 100;
     yield wallet.close();
     yield node.close();
