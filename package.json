@@ -2,37 +2,22 @@
   "name": "bcoin",
   "version": "1.0.0-alpha",
   "description": "Bitcoin bike-shed",
-  "main": "./lib/bcoin.js",
-  "bin": {
-    "bcoin-node": "./bin/node",
-    "bcoin-spvnode": "./bin/spvnode",
-    "bcoin-cli": "./bin/cli",
-    "bcoin": "./bin/bcoin"
-  },
-  "preferGlobal": true,
-  "scripts": {
-    "test": "mocha --reporter spec test/*-test.js",
-    "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js && browserify --im -o browser/bcoin-master.js lib/workers/master.js",
-    "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js && uglifyjs -m -o browser/bcoin-master.min.js browser/bcoin-master.js",
-    "clean": "rm browser/bcoin.js browser/bcoin.min.js browser/bcoin-master.js browser/bcoin-master.min.js",
-    "lint": "jshint lib/ || exit 0"
-  },
+  "license": "MIT",
   "repository": "git://github.com/bcoin-org/bcoin.git",
+  "homepage": "https://github.com/bcoin-org/bcoin",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bcoin/issues"
+  },
+  "author": "Fedor Indutny <fedor@indutny.com>",
+  "contributors": [
+    "Christopher Jeffrey <chjjeffrey@gmail.com> (https://github.com/chjj)"
+  ],
   "keywords": [
     "bcoin",
     "bitcoin",
     "blockchain",
     "wallet"
   ],
-  "author": "Fedor Indutny <fedor@indutny.com>",
-  "contributors": [
-    "Christopher Jeffrey <chjjeffrey@gmail.com> (https://github.com/chjj)"
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/bcoin-org/bcoin/issues"
-  },
-  "homepage": "https://github.com/bcoin-org/bcoin",
   "engines": {
     "node": ">= 0.11.0"
   },
@@ -61,33 +46,47 @@
     "mocha": "3.0.2",
     "uglify-js": "2.7.3"
   },
+  "main": "./lib/bcoin.js",
+  "preferGlobal": true,
+  "bin": {
+    "bcoin-node": "./bin/node",
+    "bcoin-spvnode": "./bin/spvnode",
+    "bcoin-cli": "./bin/cli",
+    "bcoin": "./bin/bcoin"
+  },
+  "scripts": {
+    "test": "mocha --reporter spec test/*-test.js",
+    "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js && browserify --im -o browser/bcoin-master.js lib/workers/master.js",
+    "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js && uglifyjs -m -o browser/bcoin-master.min.js browser/bcoin-master.js",
+    "clean": "rm browser/bcoin.js browser/bcoin.min.js browser/bcoin-master.js browser/bcoin-master.min.js",
+    "lint": "jshint lib/ || exit 0"
+  },
   "browser": {
+    "./lib/blockchain/layout": "./lib/blockchain/layout-browser.js",
+    "./lib/crypto/backend": "./lib/crypto/backend-browser.js",
+    "./lib/crypto/ec": "./lib/crypto/ec-elliptic.js",
+    "./lib/crypto/pk": "./lib/crypto/pk-browser.js",
+    "./lib/db/backends": "./lib/db/backends-browser.js",
+    "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/http/base": "./browser/empty.js",
     "./lib/http/client": "./browser/empty.js",
     "./lib/http/request": "./browser/empty.js",
     "./lib/http/rpcclient": "./browser/empty.js",
     "./lib/http/server": "./browser/empty.js",
     "./lib/http/wallet": "./browser/empty.js",
-    "./lib/utils/lazy": "./browser/empty.js",
+    "./lib/net/dns": "./lib/net/dns-browser.js",
+    "./lib/net/tcp": "./lib/net/tcp-browser.js",
     "./lib/utils/native": "./browser/empty.js",
     "./lib/utils/nfkd": "./lib/utils/nfkd-browser.js",
     "./lib/utils/nexttick": "./lib/utils/nexttick-browser.js",
     "./lib/utils/lazy": "./lib/utils/lazy-browser.js",
-    "./lib/crypto/backend": "./lib/crypto/backend-browser.js",
-    "./lib/crypto/ec": "./lib/crypto/ec-elliptic.js",
-    "./lib/crypto/pk": "./lib/crypto/pk-browser.js",
-    "./lib/db/backends": "./lib/db/backends-browser.js",
-    "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
-    "./lib/net/tcp": "./lib/net/tcp-browser.js",
-    "./lib/net/dns": "./lib/net/dns-browser.js",
-    "./lib/blockchain/layout": "./lib/blockchain/layout-browser.js",
     "./lib/wallet/layout": "./lib/wallet/layout-browser.js",
-    "fs": "./browser/empty.js",
-    "crypto": "./browser/empty.js",
-    "child_process": "./browser/empty.js",
-    "os": "./browser/empty.js",
-    "net": "./browser/empty.js",
     "bcoin-native": "./browser/empty.js",
+    "child_process": "./browser/empty.js",
+    "crypto": "./browser/empty.js",
+    "fs": "./browser/empty.js",
+    "net": "./browser/empty.js",
+    "os": "./browser/empty.js",
     "secp256k1": "./browser/empty.js"
   },
   "browserify": {
