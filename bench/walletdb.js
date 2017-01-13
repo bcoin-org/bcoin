@@ -22,7 +22,7 @@ walletdb = new WalletDB({
 
 runBench = co(function* runBench() {
   var i, j, wallet, addrs, jobs, end;
-  var result, tx, options;
+  var result, tx, mtx, options;
 
   // Open and Create
   yield walletdb.open();
@@ -41,14 +41,14 @@ runBench = co(function* runBench() {
   for (i = 0; i < result.length; i++)
     addrs.push(result[i].receive.getAddress());
 
-  // Addresses
+  // Keys
   jobs = [];
   for (i = 0; i < 1000; i++) {
     for (j = 0; j < 10; j++)
       jobs.push(wallet.createReceive(i));
   }
 
-  end = bench('addrs');
+  end = bench('keys');
   result = yield Promise.all(jobs);
   end(1000 * 10);
 
@@ -58,13 +58,13 @@ runBench = co(function* runBench() {
   // TX deposit
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = new MTX();
-    tx.addOutpoint(dummy());
-    tx.addOutput(addrs[(i + 0) % addrs.length], 50460);
-    tx.addOutput(addrs[(i + 1) % addrs.length], 50460);
-    tx.addOutput(addrs[(i + 2) % addrs.length], 50460);
-    tx.addOutput(addrs[(i + 3) % addrs.length], 50460);
-    tx = tx.toTX();
+    mtx = new MTX();
+    mtx.addOutpoint(dummy());
+    mtx.addOutput(addrs[(i + 0) % addrs.length], 50460);
+    mtx.addOutput(addrs[(i + 1) % addrs.length], 50460);
+    mtx.addOutput(addrs[(i + 2) % addrs.length], 50460);
+    mtx.addOutput(addrs[(i + 3) % addrs.length], 50460);
+    tx = mtx.toTX();
 
     jobs.push(walletdb.addTX(tx));
   }
@@ -76,16 +76,16 @@ runBench = co(function* runBench() {
   // TX redemption
   jobs = [];
   for (i = 0; i < 10000; i++) {
-    tx = new MTX();
-    tx.addTX(tx, 0);
-    tx.addTX(tx, 1);
-    tx.addTX(tx, 2);
-    tx.addTX(tx, 3);
-    tx.addOutput(addrs[(i + 0) % addrs.length], 50460);
-    tx.addOutput(addrs[(i + 1) % addrs.length], 50460);
-    tx.addOutput(addrs[(i + 2) % addrs.length], 50460);
-    tx.addOutput(addrs[(i + 3) % addrs.length], 50460);
-    tx = tx.toTX();
+    mtx = new MTX();
+    mtx.addTX(tx, 0);
+    mtx.addTX(tx, 1);
+    mtx.addTX(tx, 2);
+    mtx.addTX(tx, 3);
+    mtx.addOutput(addrs[(i + 0) % addrs.length], 50460);
+    mtx.addOutput(addrs[(i + 1) % addrs.length], 50460);
+    mtx.addOutput(addrs[(i + 2) % addrs.length], 50460);
+    mtx.addOutput(addrs[(i + 3) % addrs.length], 50460);
+    tx = mtx.toTX();
 
     jobs.push(walletdb.addTX(tx));
   }
