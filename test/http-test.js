@@ -45,7 +45,7 @@ describe('HTTP', function() {
     var info = yield wallet.client.getInfo();
     assert.equal(info.network, node.network.type);
     assert.equal(info.version, USER_VERSION);
-    assert.equal(info.pool.agent, node.pool.userAgent);
+    assert.equal(info.pool.agent, node.pool.options.agent);
     assert.equal(typeof info.chain, 'object');
     assert.equal(info.chain.height, 0);
   }));
