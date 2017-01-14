@@ -4,10 +4,12 @@
 
 process.title = 'bcoin';
 
-var bcoin = require('../');
 var assert = require('assert');
+var bcoin = require('../');
+var co = bcoin.co;
+var options, node;
 
-var options = bcoin.config({
+options = bcoin.config({
   config: true,
   arg: true,
   env: true,
@@ -19,7 +21,7 @@ var options = bcoin.config({
 
 bcoin.set(options);
 
-var node = new bcoin.fullnode(options);
+node = new bcoin.fullnode(options);
 
 node.on('error', function(err) {
   ;
@@ -31,7 +33,15 @@ process.on('uncaughtException', function(err) {
   process.exit(1);
 });
 
-node.open().then(function() {
-  node.pool.connect();
+co.spawn(function *() {
+  yield node.open();
+
+  if (options.listen)
+    yield node.listen();
+
+  yield node.connect();
+
   node.startSync();
+}).catch(function(err) {
+  throw err;
 });
