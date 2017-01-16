@@ -86,6 +86,12 @@ WSProxy.prototype._handleResolve = function _handleResolve(ws, name, record, cal
     return;
   }
 
+  if (record !== 'A' && record !== 'AAAA') {
+    this.log('Client sent a bad record type: %s.', record);
+    ws.disconnect();
+    return;
+  }
+
   if (!NAME_REGEX.test(name) || name.length > 200) {
     this.log('Client sent a bad domain: %s.', name);
     ws.disconnect();
@@ -143,8 +149,8 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     }
   }
 
-  if (!/^[a-zA-Z0-9\.:\-]+$/.test(host)) {
-    this.log('Client gave a bad host (%s).', state.host);
+  if (IP.version(host) === -1) {
+    this.log('Client gave a bad host: %s (%s).', host, state.host);
     ws.emit('tcp error', {
       message: 'EHOSTUNREACH',
       code: 'EHOSTUNREACH'
