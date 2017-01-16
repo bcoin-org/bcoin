@@ -11,13 +11,13 @@ describe('BIP150', function() {
   var sk = ec.generatePrivateKey();
 
   db.addAuthorized(ec.publicKeyCreate(ck, true));
-  db.addKnown('server', ec.publicKeyCreate(sk, true));
+  db.addKnown('127.0.0.2', ec.publicKeyCreate(sk, true));
 
   var client = new BIP151();
   var server = new BIP151();
 
-  client.bip150 = new BIP150(client, 'server', true, db, ck);
-  server.bip150 = new BIP150(server, 'client', false, db, sk);
+  client.bip150 = new BIP150(client, '127.0.0.2', true, db, ck);
+  server.bip150 = new BIP150(server, '127.0.0.1', false, db, sk);
 
   function payload() {
     return new Buffer('deadbeef', 'hex');
