@@ -33,16 +33,17 @@ function show(obj) {
 
 logger = new bcoin.logger({ level: 'debug' });
 logger.writeConsole = function(level, args) {
+  var name = bcoin.logger.levelsByVal[level];
   var msg = util.format(args, false);
   if (++scrollback > 1000) {
     log.innerHTML = '';
     scrollback = 1;
   }
   log.innerHTML += '<span style="color:blue;">' + util.now() + '</span> ';
-  if (level === 'error')
-    log.innerHTML += '<span style="color:red;">[' + level + ']</span> ';
+  if (name === 'error')
+    log.innerHTML += '<span style="color:red;">[' + name + ']</span> ';
   else
-    log.innerHTML += '[' + level + '] ';
+    log.innerHTML += '[' + name + '] ';
   log.innerHTML += escape(msg) + '\n';
   log.scrollTop = log.scrollHeight;
 };
@@ -212,7 +213,7 @@ function formatWallet(wallet) {
 
 options = bcoin.config({
   query: true,
-  network: 'segnet4',
+  network: 'testnet',
   db: 'leveldb',
   useWorkers: true,
   coinCache: 30000000,
@@ -232,11 +233,13 @@ node.chain.on('block', addItem);
 node.mempool.on('tx', addItem);
 
 node.open().then(function() {
-  node.startSync();
+  node.connect().then(function() {
+    node.startSync();
 
-  formatWallet(node.wallet);
+    node.wallet.on('balance', function() {
+      formatWallet(node.wallet);
+    });
 
-  node.wallet.on('balance', function() {
     formatWallet(node.wallet);
   });
 });
