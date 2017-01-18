@@ -233,6 +233,7 @@ node.chain.on('block', addItem);
 node.mempool.on('tx', addItem);
 
 node.open().then(function() {
+  node.rpc.wallet = node.wallet;
   node.connect().then(function() {
     node.startSync();
 
