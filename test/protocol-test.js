@@ -12,8 +12,6 @@ var Parser = require('../lib/net/parser');
 var packets = require('../lib/net/packets');
 var network = Network.get('main');
 
-var alertData = fs.readFileSync(__dirname + '/data/alertTests.raw');
-
 describe('Protocol', function() {
   var version = require('../package.json').version;
   var agent = '/bcoin:' + version + '/';
@@ -209,21 +207,5 @@ describe('Protocol', function() {
     tx._raw = null;
 
     assert.deepEqual(tx.toRaw(), rawFirstTx);
-  });
-
-  it('should parse, reserialize, and verify alert packets', function() {
-    var br = new BufferReader(alertData);
-    var alert, data;
-
-    while (br.left()) {
-      alert = packets.AlertPacket.fromReader(br);
-      assert(alert.verify(network.alertKey));
-      alert._payload = null;
-      alert._hash = null;
-
-      data = alert.toRaw();
-      alert = packets.AlertPacket.fromRaw(data);
-      assert(alert.verify(network.alertKey));
-    }
   });
 });
