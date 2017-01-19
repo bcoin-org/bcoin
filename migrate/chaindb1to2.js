@@ -190,7 +190,7 @@ var reserializeUndo = co(function* reserializeUndo() {
       injectCoin(undo.top(), Coin.fromReader(br));
     }
 
-    batch.write(item.key, undo.toRaw());
+    batch.put(item.key, undo.toRaw());
 
     if (++total % 10000 === 0)
       console.log('Reserialized %d undo coins.', total);
