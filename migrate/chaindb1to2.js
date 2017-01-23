@@ -30,7 +30,6 @@ db = LDB({
 
 options = {};
 options.spv = process.argv.indexOf('--spv') !== -1;
-options.witness = process.argv.indexOf('--witness') !== -1;
 options.prune = process.argv.indexOf('--prune') !== -1;
 options.indexTX = process.argv.indexOf('--index-tx') !== -1;
 options.indexAddress = process.argv.indexOf('--index-address') !== -1;
