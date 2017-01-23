@@ -273,9 +273,7 @@ pool.open().then(function() {
 var bcoin = require('bcoin').set('main');
 
 var node = bcoin.fullnode({
-  prune: false,
-  useCheckpoints: true,
-  debug: true,
+  checkpoints: true,
   // Primary wallet passphrase
   passsphrase: 'node',
   logLevel: 'info'
