@@ -110,7 +110,7 @@ WSProxy.prototype._handleResolve = function _handleResolve(ws, name, record, cal
 WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce) {
   var self = this;
   var state = this.sockets.get(ws);
-  var socket, pow;
+  var socket, pow, raw;
 
   if (state.socket) {
     this.log('Client is trying to reconnect (%s).', state.host);
@@ -149,7 +149,9 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     }
   }
 
-  if (IP.version(host) === -1) {
+  try {
+    raw = IP.toBuffer(host);
+  } catch (e) {
     this.log('Client gave a bad host: %s (%s).', host, state.host);
     ws.emit('tcp error', {
       message: 'EHOSTUNREACH',
@@ -159,8 +161,10 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     return;
   }
 
-  if (IP.isPrivate(host)) {
-    this.log('Client is trying to connect to a private ip (%s).', state.host);
+  if (!IP.isRoutable(raw)) {
+    this.log(
+      'Client is trying to connect to a bad ip: %s (%s).',
+      host, state.host);
     ws.emit('tcp error', {
       message: 'ENETUNREACH',
       code: 'ENETUNREACH'
