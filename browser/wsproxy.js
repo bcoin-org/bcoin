@@ -151,6 +151,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
 
   try {
     raw = IP.toBuffer(host);
+    host = IP.toString(raw);
   } catch (e) {
     this.log('Client gave a bad host: %s (%s).', host, state.host);
     ws.emit('tcp error', {
@@ -161,7 +162,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     return;
   }
 
-  if (!IP.isRoutable(raw)) {
+  if (!IP.isRoutable(raw) || IP.isTor(raw)) {
     this.log(
       'Client is trying to connect to a bad ip: %s (%s).',
       host, state.host);
@@ -257,7 +258,7 @@ SocketState.prototype.toInfo = function toInfo() {
 
 SocketState.prototype.connect = function connect(port, host) {
   this.socket = net.connect(port, host);
-  this.remoteHost = IP.hostname(host, port);
+  this.remoteHost = IP.toHostname(host, port);
   return this.socket;
 };
 
