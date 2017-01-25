@@ -162,7 +162,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     return;
   }
 
-  if (!IP.isRoutable(raw) || IP.isTor(raw)) {
+  if (!IP.isRoutable(raw) || IP.isOnion(raw)) {
     this.log(
       'Client is trying to connect to a bad ip: %s (%s).',
       host, state.host);
