@@ -11,13 +11,13 @@ var Amount = require('../lib/btc/amount');
 var main;
 
 function CLI() {
-  this.config = config({
+  this.config = config.parseRaw({
     config: true,
     arg: true,
     env: true,
     network: 'main'
-  }).data;
-  this.argv = this.config.args;
+  });
+  this.argv = this.config.argv;
   this.client = null;
   this.wallet = null;
 }
