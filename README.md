@@ -15,6 +15,7 @@ Try it in the browser: http://bcoin.io/browser.html
 - Blockchain database
 - Mempool/Miner
 - Wallet system & wallet database (HD keys w/ bip44 derivation)
+- Tor support for outbound connections and DNS resolution
 - Bitcoind-compatible JSON rpc api
 - REST api
 - Support for: Versionbits, CSV, Segwit, BIP70, BIP151, BIP152, BIP150,
