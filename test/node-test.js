@@ -6,17 +6,21 @@ var consensus = require('../lib/protocol/consensus');
 var co = require('../lib/utils/co');
 var Coin = require('../lib/primitives/coin');
 var Script = require('../lib/script/script');
-var Chain = require('../lib/blockchain/chain');
-var Miner = require('../lib/mining/miner');
+var FullNode = require('../lib/node/fullnode');
 var MTX = require('../lib/primitives/mtx');
-var MemWallet = require('./util/memwallet');
-var util = require('../lib/utils/util');
+// var Client = require('../lib/wallet/client');
 
-describe('Chain', function() {
-  var chain = new Chain({ db: 'memory', network: 'regtest' });
-  var miner = new Miner({ chain: chain });
-  var wallet = new MemWallet({ network: 'regtest' });
-  var tip1, tip2, cb1, cb2, mineBlock;
+describe('Node', function() {
+  var node = new FullNode({ db: 'memory', apiKey: 'foo', network: 'regtest' });
+  var chain = node.chain;
+  var walletdb = node.walletdb;
+  var miner = node.miner;
+  var wallet, tip1, tip2, cb1, cb2, mineBlock;
+
+  // walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
+  walletdb.options.resolution = false;
+
+  node.on('error', function() {});
 
   this.timeout(5000);
 
@@ -36,28 +40,21 @@ describe('Chain', function() {
 
     rtx.setLocktime(chain.height);
 
-    wallet.sign(rtx);
+    yield wallet.sign(rtx);
 
     attempt.addTX(rtx.toTX(), rtx.view);
 
     return yield attempt.mineAsync();
   });
 
-  chain.on('connect', function(entry, block) {
-    wallet.addBlock(entry, block.txs);
-  });
-
-  chain.on('disconnect', function(entry, block) {
-    wallet.removeBlock(entry, block.txs);
-  });
-
   it('should open chain and miner', co(function* () {
+    miner.mempool = null;
     consensus.COINBASE_MATURITY = 0;
-    yield chain.open();
-    yield miner.open();
+    yield node.open();
   }));
 
-  it('should open wallet', co(function* () {
+  it('should open walletdb', co(function* () {
+    wallet = yield walletdb.create();
     miner.addresses.length = 0;
     miner.addAddress(wallet.getReceive());
   }));
@@ -103,15 +100,19 @@ describe('Chain', function() {
   });
 
   it('should have correct balance', co(function* () {
-    assert.equal(wallet.balance, 550 * 1e8);
-    //assert.equal(wallet.unconfirmed, 550 * 1e8);
-    //assert.equal(wallet.confirmed, 550 * 1e8);
+    var balance;
+
+    yield co.timeout(100);
+
+    balance = yield wallet.getBalance();
+    assert.equal(balance.unconfirmed, 550 * 1e8);
+    assert.equal(balance.confirmed, 550 * 1e8);
   }));
 
   it('should handle a reorg', co(function* () {
     var entry, block, forked;
 
-    // assert.equal(wallet.height, chain.height);
+    assert.equal(walletdb.state.height, chain.height);
     assert.equal(chain.height, 11);
 
     entry = yield chain.db.getEntry(tip2.hash);
@@ -140,9 +141,13 @@ describe('Chain', function() {
   });
 
   it('should have correct balance', co(function* () {
-    assert.equal(wallet.balance, 600 * 1e8);
-    // assert.equal(wallet.unconfirmed, 1100 * 1e8);
-    // assert.equal(wallet.confirmed, 600 * 1e8);
+    var balance;
+
+    yield co.timeout(100);
+
+    balance = yield wallet.getBalance();
+    assert.equal(balance.unconfirmed, 1100 * 1e8);
+    assert.equal(balance.confirmed, 600 * 1e8);
   }));
 
   it('should check main chain', co(function* () {
@@ -220,20 +225,21 @@ describe('Chain', function() {
   }));
 
   it('should get balance', co(function* () {
-    var txs;
+    var balance, txs;
 
-    assert.equal(wallet.balance, 750 * 1e8);
-    // assert.equal(wallet.unconfirmed, 1250 * 1e8);
-    // assert.equal(wallet.confirmed, 750 * 1e8);
+    yield co.timeout(100);
 
-    assert(wallet.receiveDepth >= 7);
-    assert(wallet.changeDepth >= 6);
+    balance = yield wallet.getBalance();
+    assert.equal(balance.unconfirmed, 1250 * 1e8);
+    assert.equal(balance.confirmed, 750 * 1e8);
 
-    // assert.equal(wallet.height, chain.height);
+    assert(wallet.account.receiveDepth >= 7);
+    assert(wallet.account.changeDepth >= 6);
 
-    // txs = wallet.getHistory();
-    // assert.equal(txs.length, 45);
-    assert.equal(wallet.txs, 26);
+    assert.equal(walletdb.state.height, chain.height);
+
+    txs = yield wallet.getHistory();
+    assert.equal(txs.length, 45);
   }));
 
   it('should get tips and remove chains', co(function* () {
@@ -253,7 +259,7 @@ describe('Chain', function() {
   it('should rescan for transactions', co(function* () {
     var total = 0;
 
-    yield chain.db.scan(0, wallet.filter, function(block, txs) {
+    yield chain.db.scan(0, walletdb.filter, function(block, txs) {
       total += txs.length;
       return Promise.resolve();
     });
@@ -318,7 +324,7 @@ describe('Chain', function() {
 
     redeemer.setLocktime(chain.height);
 
-    wallet.sign(redeemer);
+    yield wallet.sign(redeemer);
 
     attempt.addTX(redeemer.toTX(), redeemer.view);
 
@@ -433,13 +439,13 @@ describe('Chain', function() {
     assert.equal(err.reason, 'bad-txns-nonfinal');
   }));
 
-  it('should have correct wallet balance', co(function* () {
-    assert.equal(wallet.balance, 1289250000000);
+  it('should rescan for transactions', co(function* () {
+    yield walletdb.rescan(0);
+    assert.equal(wallet.txdb.state.confirmed, 1289250000000);
   }));
 
   it('should cleanup', co(function* () {
     consensus.COINBASE_MATURITY = 100;
-    yield miner.close();
-    yield chain.close();
+    yield node.close();
   }));
 });
