@@ -16,29 +16,16 @@ var Outpoint = require('../lib/primitives/outpoint');
 var Script = require('../lib/script/script');
 var Witness = require('../lib/script/witness');
 var Block = require('../lib/primitives/block');
+var MemWallet = require('./util/memwallet');
 var opcodes = Script.opcodes;
 
 describe('Mempool', function() {
-  var chain, mempool, walletdb, wallet, cached;
+  var chain = new Chain({ db: 'memory' });
+  var mempool = new Mempool({ chain: chain, db: 'memory' });
+  var wallet = new MemWallet();
+  var cached;
 
   this.timeout(5000);
-
-  chain = new Chain({
-    name: 'mp-chain',
-    db: 'memory'
-  });
-
-  mempool = new Mempool({
-    chain: chain,
-    name: 'mempool-test',
-    db: 'memory'
-  });
-
-  walletdb = new WalletDB({
-    name: 'mempool-wallet-test',
-    db: 'memory',
-    verify: true
-  });
 
   function dummy(prev, prevHash) {
     var fund, coin, entry;
@@ -69,14 +56,6 @@ describe('Mempool', function() {
     chain.state.flags |= Script.flags.VERIFY_WITNESS;
   }));
 
-  it('should open walletdb', co(function* () {
-    yield walletdb.open();
-  }));
-
-  it('should open wallet', co(function* () {
-    wallet = yield walletdb.create();
-  }));
-
   it('should handle incoming orphans and TXs', co(function* () {
     var kp = KeyRing.generate();
     var w = wallet;
@@ -92,7 +71,7 @@ describe('Mempool', function() {
     t1.inputs[0].script = new Script([sig]);
 
     // balance: 51000
-    yield w.sign(t1);
+    w.sign(t1);
     t1 = t1.toTX();
 
     t2 = new MTX();
@@ -101,7 +80,7 @@ describe('Mempool', function() {
     t2.addOutput(w.getAddress(), 20000);
 
     // balance: 49000
-    yield w.sign(t2);
+    w.sign(t2);
     t2 = t2.toTX();
 
     t3 = new MTX();
@@ -110,7 +89,7 @@ describe('Mempool', function() {
     t3.addOutput(w.getAddress(), 23000);
 
     // balance: 47000
-    yield w.sign(t3);
+    w.sign(t3);
     t3 = t3.toTX();
 
     t4 = new MTX();
@@ -120,7 +99,7 @@ describe('Mempool', function() {
     t4.addOutput(w.getAddress(), 11000);
 
     // balance: 22000
-    yield w.sign(t4);
+    w.sign(t4);
     t4 = t4.toTX();
 
     f1 = new MTX();
@@ -128,7 +107,7 @@ describe('Mempool', function() {
     f1.addOutput(new Address(), 9000);
 
     // balance: 11000
-    yield w.sign(f1);
+    w.sign(f1);
     f1 = f1.toTX();
 
     fake = new MTX();
@@ -136,7 +115,7 @@ describe('Mempool', function() {
     fake.addOutput(w.getAddress(), 6000); // 6000 instead of 500
 
     // Script inputs but do not sign
-    yield w.template(fake);
+    w.template(fake);
 
     // Fake signature
     fake.inputs[0].script.set(0, encoding.ZERO_SIG);

@@ -177,6 +177,10 @@ MemWallet.prototype.removeCoin = function removeCoin(key) {
   delete this.coins[key];
 };
 
+MemWallet.prototype.getAddress = function getAddress() {
+  return this.receive.getAddress();
+};
+
 MemWallet.prototype.getReceive = function getReceive() {
   return this.receive.getAddress();
 };
@@ -351,6 +355,11 @@ MemWallet.prototype.fund = function fund(mtx, options) {
     rate: options.rate,
     maxFee: options.maxFee
   });
+};
+
+MemWallet.prototype.template = function template(mtx) {
+  var keys = this.deriveInputs(mtx);
+  mtx.template(keys);
 };
 
 MemWallet.prototype.sign = function sign(mtx) {
