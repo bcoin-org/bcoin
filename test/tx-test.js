@@ -107,7 +107,7 @@ function parseTest(data) {
 }
 
 function buildTX(spk, ss, wit, view) {
-  var input, output, fund, spend, tx;
+  var input, output, fund, spend;
 
   input = new Input();
   output = new Output();
@@ -780,8 +780,7 @@ describe('TX', function() {
     var flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     var view = new CoinView();
     var key = KeyRing.generate();
-    var pub = key.publicKey;
-    var txs, p2pk, spk, ss, wit;
+    var txs, spk, ss, wit;
 
     spk = Script.fromProgram(0, key.getKeyHash());
 
@@ -818,7 +817,6 @@ describe('TX', function() {
     var flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     var view = new CoinView();
     var key = KeyRing.generate();
-    var pub = key.publicKey;
     var txs, p2pk, spk, ss, wit;
 
     p2pk = Script.fromProgram(0, key.getKeyHash());

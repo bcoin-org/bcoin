@@ -22,7 +22,7 @@ describe('Chain', function() {
   var miner = new Miner({ chain: chain, version: 4 });
   var wallet = new MemWallet({ network: network });
   var wwallet = new MemWallet({ network: network, witness: true });
-  var tip1, tip2, cb1, cb2, addBlock, mineCSV;
+  var tip1, tip2, addBlock, mineCSV;
 
   this.timeout(45000);
 
@@ -127,8 +127,6 @@ describe('Chain', function() {
       assert(tip2);
 
       assert(!(yield tip2.isMainChain()));
-
-      yield co.wait();
     }
   }));
 
@@ -199,7 +197,7 @@ describe('Chain', function() {
 
   it('should prevent double spend on new chain', co(function* () {
     var attempt = yield miner.createBlock();
-    var mtx, block, tip, err;
+    var mtx, block;
 
     mtx = yield wallet.create({
       outputs: [{
@@ -211,7 +209,8 @@ describe('Chain', function() {
     attempt.addTX(mtx.toTX(), mtx.view);
 
     block = yield attempt.mineAsync();
-    tip = yield chain.add(block);
+
+    yield chain.add(block);
 
     attempt = yield miner.createBlock();
 
@@ -220,25 +219,14 @@ describe('Chain', function() {
 
     attempt.addTX(mtx.toTX(), mtx.view);
 
-    block = yield attempt.mineAsync();
-
-    try {
-      yield chain.add(block);
-    } catch (e) {
-      err = e;
-    }
-
-    assert(err);
-    assert.equal(err.reason, 'bad-txns-inputs-missingorspent');
-    assert(chain.tip === tip);
+    assert.equal(yield addBlock(attempt), 'bad-txns-inputs-missingorspent');
   }));
 
   it('should fail to mine a block with coins on an alternate chain', co(function* () {
-    var tip = chain.tip;
     var block = yield chain.db.getBlock(tip1.hash);
     var cb = block.txs[0];
     var mtx = new MTX();
-    var attempt, block, err;
+    var attempt;
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wallet.getAddress(), 10 * 1e8);
@@ -248,17 +236,7 @@ describe('Chain', function() {
     attempt = yield miner.createBlock();
     attempt.addTX(mtx.toTX(), mtx.view);
 
-    block = yield attempt.mineAsync();
-
-    try {
-      yield chain.add(block);
-    } catch (e) {
-      err = e;
-    }
-
-    assert(err);
-    assert.equal(err.reason, 'bad-txns-inputs-missingorspent');
-    assert(chain.tip === tip);
+    assert.equal(yield addBlock(attempt), 'bad-txns-inputs-missingorspent');
   }));
 
   it('should have correct chain value', function() {
@@ -418,7 +396,7 @@ describe('Chain', function() {
   it('should fail csv with bad sequence', co(function* () {
     var csv = (yield chain.db.getBlock(chain.height - 100)).txs[0];
     var rtx = new MTX();
-    var block, attempt, err;
+    var attempt;
 
     rtx.addOutput({
       script: [
@@ -432,19 +410,9 @@ describe('Chain', function() {
     rtx.setSequence(0, 1, false);
 
     attempt = yield miner.createBlock();
-
     attempt.addTX(rtx.toTX(), rtx.view);
 
-    block = yield attempt.mineAsync();
-
-    try {
-      yield chain.add(block);
-    } catch (e) {
-      err = e;
-    }
-
-    assert(err);
-    assert(err.reason, 'mandatory-script-verify-flag-failed');
+    assert(yield addBlock(attempt), 'mandatory-script-verify-flag-failed');
   }));
 
   it('should mine a block', co(function* () {
@@ -456,7 +424,7 @@ describe('Chain', function() {
   it('should fail csv lock checks', co(function* () {
     var tx = (yield chain.db.getBlock(chain.height - 100)).txs[0];
     var block = yield mineCSV(tx);
-    var csv, attempt, rtx, err;
+    var csv, attempt, rtx;
 
     yield chain.add(block);
 
@@ -476,19 +444,9 @@ describe('Chain', function() {
     rtx.setSequence(0, 2, false);
 
     attempt = yield miner.createBlock();
-
     attempt.addTX(rtx.toTX(), rtx.view);
 
-    block = yield attempt.mineAsync();
-
-    try {
-      yield chain.add(block);
-    } catch (e) {
-      err = e;
-    }
-
-    assert(err);
-    assert.equal(err.reason, 'bad-txns-nonfinal');
+    assert.equal(yield addBlock(attempt), 'bad-txns-nonfinal');
   }));
 
   it('should have correct wallet balance', co(function* () {
@@ -509,7 +467,6 @@ describe('Chain', function() {
   }));
 
   it('should fail to connect bad time', co(function* () {
-    var mtp = yield chain.tip.getMedianTimeAsync();
     var attempt = yield miner.createBlock();
     var now = network.now() + 3 * 60 * 60;
     attempt.block.ts = now;
@@ -609,7 +566,7 @@ describe('Chain', function() {
     var block = yield chain.db.getBlock(chain.height - 2000);
     var cb = block.txs[0];
     var mtx = new MTX();
-    var attempt, block;
+    var attempt;
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wwallet.getAddress(), 1000);
@@ -629,7 +586,7 @@ describe('Chain', function() {
     var end = chain.height - 200;
     var attempt = yield miner.createBlock();
     var mtx = new MTX();
-    var i, j, block, cb, block;
+    var i, j, block, cb;
 
     for (i = start; i <= end; i++) {
       block = yield chain.db.getBlock(i);
@@ -656,7 +613,7 @@ describe('Chain', function() {
     var end = chain.height - 200;
     var attempt = yield miner.createBlock();
     var mtx = new MTX();
-    var i, j, block, cb, block;
+    var i, j, block, cb;
 
     for (i = start; i <= end; i++) {
       block = yield chain.db.getBlock(i);
@@ -683,7 +640,7 @@ describe('Chain', function() {
     var end = chain.height - 200;
     var attempt = yield miner.createBlock();
     var mtx = new MTX();
-    var i, j, block, cb, block;
+    var i, j, block, cb;
 
     for (i = start; i <= end; i++) {
       block = yield chain.db.getBlock(i);
@@ -717,7 +674,6 @@ describe('Chain', function() {
 
   it('should fail to mine bad amount', co(function* () {
     var attempt = yield miner.createBlock();
-    var i;
 
     attempt.block.txs[0].outputs[0].value += 1;
     attempt.updateMerkle();
@@ -729,7 +685,6 @@ describe('Chain', function() {
     var block = yield chain.db.getBlock(chain.height - 98);
     var cb = block.txs[0];
     var mtx = new MTX();
-    var i;
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wwallet.getAddress(), 1);
@@ -747,7 +702,6 @@ describe('Chain', function() {
     var block = yield chain.db.getBlock(chain.height - 99);
     var cb = block.txs[0];
     var mtx = new MTX();
-    var i;
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wwallet.getAddress(), 1e8);
@@ -766,7 +720,6 @@ describe('Chain', function() {
     var block = yield chain.db.getBlock(chain.height - 99);
     var cb = block.txs[0];
     var mtx = new MTX();
-    var i;
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wwallet.getAddress(), Math.floor(consensus.MAX_MONEY / 2));
@@ -825,7 +778,7 @@ describe('Chain', function() {
     var start = chain.height - 110;
     var end = chain.height - 100;
     var attempt = yield miner.createBlock();
-    var i, j, mtx, script, block, cb, block;
+    var i, j, mtx, script, block, cb;
 
     script = new Script();
     script.push(new BN(20));
