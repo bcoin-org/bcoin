@@ -15,6 +15,7 @@ var Bloom = require('../../lib/utils/bloom');
 var KeyRing = require('../../lib/primitives/keyring');
 var Outpoint = require('../../lib/primitives/outpoint');
 var Coin = require('../../lib/primitives/coin');
+var co = require('../../lib/utils/co');
 
 function MemWallet(options) {
   if (!(this instanceof MemWallet))
@@ -23,13 +24,15 @@ function MemWallet(options) {
   this.network = Network.primary;
   this.master = null;
   this.key = null;
+  this.witness = false;
   this.account = 0;
   this.receiveDepth = 1;
   this.changeDepth = 1;
   this.receive = null;
   this.change = null;
+  this.map = {};
   this.coins = {};
-  this.undo = {};
+  this.spent = {};
   this.paths = {};
   this.balance = 0;
   this.txs = 0;
@@ -55,6 +58,11 @@ MemWallet.prototype.fromOptions = function fromOptions(options) {
   if (options.key != null) {
     assert(HD.isPrivate(options.key));
     this.key = options.key;
+  }
+
+  if (options.witness != null) {
+    assert(typeof options.witness === 'boolean');
+    this.witness = options.witness;
   }
 
   if (options.account != null) {
@@ -128,10 +136,13 @@ MemWallet.prototype.derivePath = function derivePath(path) {
 MemWallet.prototype.deriveKey = function deriveKey(branch, index) {
   var key = this.master.deriveAccount44(this.account);
   key = key.derive(branch).derive(index);
-  return new KeyRing({
+  key = new KeyRing({
     network: this.network,
-    privateKey: key.privateKey
+    privateKey: key.privateKey,
+    witness: this.witness
   });
+  key.witness = this.witness;
+  return key;
 };
 
 MemWallet.prototype.getKey = function getKey(hash) {
@@ -150,7 +161,7 @@ MemWallet.prototype.getCoin = function getCoin(key) {
 };
 
 MemWallet.prototype.getUndo = function getUndo(key) {
-  return this.undo[key];
+  return this.spent[key];
 };
 
 MemWallet.prototype.addCoin = function addCoin(coin) {
@@ -159,7 +170,7 @@ MemWallet.prototype.addCoin = function addCoin(coin) {
 
   this.filter.add(op.toRaw());
 
-  delete this.undo[key];
+  delete this.spent[key];
 
   this.coins[key] = coin;
   this.balance += coin.value;
@@ -171,7 +182,7 @@ MemWallet.prototype.removeCoin = function removeCoin(key) {
   if (!coin)
     return;
 
-  this.undo[key] = coin;
+  this.spent[key] = coin;
   this.balance -= coin.value;
 
   delete this.coins[key];
@@ -228,11 +239,15 @@ MemWallet.prototype.removeBlock = function removeBlock(entry, txs) {
 };
 
 MemWallet.prototype.addTX = function addTX(tx, height) {
+  var hash = tx.hash('hex');
   var result = false;
   var i, op, path, addr, coin, input, output;
 
   if (height == null)
     height = -1;
+
+  if (this.map[hash])
+    return true;
 
   for (i = 0; i < tx.inputs.length; i++) {
     input = tx.inputs[i];
@@ -266,8 +281,10 @@ MemWallet.prototype.addTX = function addTX(tx, height) {
     this.syncKey(path);
   }
 
-  if (result)
+  if (result) {
     this.txs++;
+    this.map[hash] = true;
+  }
 
   return result;
 };
@@ -276,6 +293,9 @@ MemWallet.prototype.removeTX = function removeTX(tx, height) {
   var hash = tx.hash('hex');
   var result = false;
   var i, op, coin, input, output;
+
+  if (!this.map[hash])
+    return false;
 
   for (i = 0; i < tx.outputs.length; i++) {
     output = tx.outputs[i];
@@ -305,6 +325,8 @@ MemWallet.prototype.removeTX = function removeTX(tx, height) {
 
   if (result)
     this.txs--;
+
+  delete this.map[hash];
 
   return result;
 };
@@ -368,33 +390,32 @@ MemWallet.prototype.sign = function sign(mtx) {
   mtx.sign(keys);
 };
 
-MemWallet.prototype.send = function send(options) {
-  var self = this;
+MemWallet.prototype.create = co(function* create(options) {
   var mtx = new MTX(options);
   var tx;
 
-  this.fund(mtx, options).then(function() {
-    assert(mtx.getFee() <= MTX.Selector.MAX_FEE, 'TX exceeds MAX_FEE.');
+  yield this.fund(mtx, options);
 
-    mtx.sortMembers();
+  assert(mtx.getFee() <= MTX.Selector.MAX_FEE, 'TX exceeds MAX_FEE.');
 
-    if (options.locktime != null)
-      mtx.setLocktime(options.locktime);
+  mtx.sortMembers();
 
-    self.sign(mtx);
+  if (options.locktime != null)
+    mtx.setLocktime(options.locktime);
 
-    if (!mtx.isSigned())
-      throw new Error('Cannot sign tx.');
+  this.sign(mtx);
 
-    tx = mtx.toTX();
+  if (!mtx.isSigned())
+    throw new Error('Cannot sign tx.');
 
-    self.addTX(tx);
-  }).catch(function(err) {
-    throw err;
-  });
+  return mtx;
+});
 
-  return tx;
-};
+MemWallet.prototype.send = co(function* send(options) {
+  var mtx = yield this.create(options);
+  this.addTX(mtx.toTX());
+  return mtx;
+});
 
 function Path(hash, branch, index) {
   this.hash = hash;
