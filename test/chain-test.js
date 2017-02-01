@@ -222,7 +222,7 @@ describe('Chain', function() {
     assert.equal(yield addBlock(attempt), 'bad-txns-inputs-missingorspent');
   }));
 
-  it('should fail to connect block with coins on an alternate chain', co(function* () {
+  it('should fail to connect coins on an alternate chain', co(function* () {
     var block = yield chain.db.getBlock(tip1.hash);
     var cb = block.txs[0];
     var mtx = new MTX();

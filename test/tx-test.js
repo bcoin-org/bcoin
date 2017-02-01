@@ -16,6 +16,7 @@ var Witness = require('../lib/script/witness');
 var Input = require('../lib/primitives/input');
 var CoinView = require('../lib/coins/coinview');
 var KeyRing = require('../lib/primitives/keyring');
+var parseTX = require('./util/common').parseTX;
 var opcodes = Script.opcodes;
 
 var valid = require('./data/tx_valid.json');
@@ -27,23 +28,6 @@ var tx3 = parseTX('data/tx3.hex');
 var tx4 = parseTX('data/tx4.hex');
 var wtx = parseTX('data/wtx.hex');
 var coolest = parseTX('data/coolest-tx-ever-sent.hex');
-
-function parseTX(file) {
-  var data = fs.readFileSync(__dirname + '/' + file, 'utf8');
-  var parts = data.trim().split(/\n+/);
-  var raw = parts[0];
-  var tx = TX.fromRaw(raw.trim(), 'hex');
-  var view = new CoinView();
-  var i, prev;
-
-  for (i = 1; i < parts.length; i++) {
-    raw = parts[i];
-    prev = TX.fromRaw(raw.trim(), 'hex');
-    view.addTX(prev, -1);
-  }
-
-  return { tx: tx, view: view };
-}
 
 function clearCache(tx, noCache) {
   if (!noCache) {
