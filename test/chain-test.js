@@ -80,7 +80,7 @@ describe('Chain', function() {
     miner.addAddress(wallet.getReceive());
   }));
 
-  it('should mine a 200 blocks', co(function* () {
+  it('should mine 200 blocks', co(function* () {
     var i, block;
 
     for (i = 0; i < 200; i++) {
@@ -222,7 +222,7 @@ describe('Chain', function() {
     assert.equal(yield addBlock(attempt), 'bad-txns-inputs-missingorspent');
   }));
 
-  it('should fail to mine a block with coins on an alternate chain', co(function* () {
+  it('should fail to connect block with coins on an alternate chain', co(function* () {
     var block = yield chain.db.getBlock(tip1.hash);
     var cb = block.txs[0];
     var mtx = new MTX();
@@ -581,7 +581,7 @@ describe('Chain', function() {
     yield chain.add(block);
   }));
 
-  it('should mine fail to mine too much weight', co(function* () {
+  it('should mine fail to connect too much weight', co(function* () {
     var start = chain.height - 2000;
     var end = chain.height - 200;
     var attempt = yield miner.createBlock();
@@ -608,7 +608,7 @@ describe('Chain', function() {
     assert.equal(yield addBlock(attempt), 'bad-blk-weight');
   }));
 
-  it('should mine fail to mine too much size', co(function* () {
+  it('should mine fail to connect too much size', co(function* () {
     var start = chain.height - 2000;
     var end = chain.height - 200;
     var attempt = yield miner.createBlock();
@@ -662,7 +662,7 @@ describe('Chain', function() {
     assert.equal(yield addBlock(attempt), 'OK');
   }));
 
-  it('should fail to mine bad versions', co(function* () {
+  it('should fail to connect bad versions', co(function* () {
     var i, attempt;
 
     for (i = 0; i <= 3; i++) {
@@ -672,7 +672,7 @@ describe('Chain', function() {
     }
   }));
 
-  it('should fail to mine bad amount', co(function* () {
+  it('should fail to connect bad amount', co(function* () {
     var attempt = yield miner.createBlock();
 
     attempt.block.txs[0].outputs[0].value += 1;
@@ -680,7 +680,7 @@ describe('Chain', function() {
     assert.equal(yield addBlock(attempt), 'bad-cb-amount');
   }));
 
-  it('should fail to mine premature cb spend', co(function* () {
+  it('should fail to connect premature cb spend', co(function* () {
     var attempt = yield miner.createBlock();
     var block = yield chain.db.getBlock(chain.height - 98);
     var cb = block.txs[0];
@@ -697,7 +697,7 @@ describe('Chain', function() {
       'bad-txns-premature-spend-of-coinbase');
   }));
 
-  it('should fail to mine vout belowout', co(function* () {
+  it('should fail to connect vout belowout', co(function* () {
     var attempt = yield miner.createBlock();
     var block = yield chain.db.getBlock(chain.height - 99);
     var cb = block.txs[0];
@@ -715,7 +715,7 @@ describe('Chain', function() {
       'bad-txns-in-belowout');
   }));
 
-  it('should fail to mine in out toolarge', co(function* () {
+  it('should fail to connect outtotal toolarge', co(function* () {
     var attempt = yield miner.createBlock();
     var block = yield chain.db.getBlock(chain.height - 99);
     var cb = block.txs[0];
@@ -774,7 +774,7 @@ describe('Chain', function() {
     assert.equal(chain.height, 2749);
   }));
 
-  it('should mine fail to mine too many sigops', co(function* () {
+  it('should fail to connect too many sigops', co(function* () {
     var start = chain.height - 110;
     var end = chain.height - 100;
     var attempt = yield miner.createBlock();
