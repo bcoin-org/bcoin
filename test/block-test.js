@@ -8,6 +8,8 @@ var Headers = require('../lib/primitives/headers');
 var MerkleBlock = require('../lib/primitives/merkleblock');
 var CoinView = require('../lib/coins/coinview');
 var Coin = require('../lib/primitives/coin');
+var Coins = require('../lib/coins/coins');
+var UndoCoins = require('../lib/coins/undocoins');
 var consensus = require('../lib/protocol/consensus');
 var Script = require('../lib/script/script');
 var encoding = require('../lib/utils/encoding');
@@ -20,6 +22,37 @@ var cmpct2block = fs.readFileSync(__dirname + '/data/cmpct2.bin');
 
 cmpct1 = cmpct1.trim().split('\n');
 cmpct2 = cmpct2.trim();
+
+function applyUndo(block, undo) {
+  var view = new CoinView();
+  var i, j, tx, input, prev, coins;
+
+  for (i = block.txs.length - 1; i > 0; i--) {
+    tx = block.txs[i];
+
+    for (j = tx.inputs.length - 1; j >= 0; j--) {
+      input = tx.inputs[j];
+      prev = input.prevout.hash;
+
+      if (!view.has(prev)) {
+        assert(!undo.isEmpty());
+
+        if (undo.top().height === -1) {
+          coins = new Coins();
+          coins.hash = prev;
+          coins.coinbase = false;
+          view.add(coins);
+        }
+      }
+
+      undo.apply(view, input.prevout);
+    }
+  }
+
+  assert(undo.isEmpty(), 'Undo coins data inconsistency.');
+
+  return view;
+}
 
 describe('Block', function() {
   var mblock, raw, block, raw2;
@@ -240,7 +273,7 @@ describe('Block', function() {
     assert(headers.verify());
   });
 
-  it('should handle compact block', function(cb) {
+  it('should handle compact block', function() {
     var block = Block.fromRaw(cmpct1[1], 'hex');
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
@@ -275,11 +308,9 @@ describe('Block', function() {
     assert.equal(
       cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
-
-    cb();
   });
 
-  it('should handle half-full compact block', function(cb) {
+  it('should handle half-full compact block', function() {
     var block = Block.fromRaw(cmpct1[1], 'hex');
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
@@ -331,11 +362,9 @@ describe('Block', function() {
     assert.equal(
       cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
-
-    cb();
   });
 
-  it('should handle compact block', function(cb) {
+  it('should handle compact block', function() {
     var block = Block.fromRaw(cmpct2block);
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
@@ -368,11 +397,9 @@ describe('Block', function() {
     assert.equal(
       cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
-
-    cb();
   });
 
-  it('should handle half-full compact block', function(cb) {
+  it('should handle half-full compact block', function() {
     var block = Block.fromRaw(cmpct2block);
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
@@ -420,7 +447,62 @@ describe('Block', function() {
     assert.equal(
       cblock1.toBlock().toRaw().toString('hex'),
       block.toRaw().toString('hex'));
+  });
 
-    cb();
+  it('should count sigops for block 928828 (testnet)', function() {
+    var blockRaw = fs.readFileSync(__dirname + '/data/block928828.raw');
+    var undoRaw = fs.readFileSync(__dirname + '/data/undo928828.raw');
+    var block = Block.fromRaw(blockRaw);
+    var undo = UndoCoins.fromRaw(undoRaw);
+    var view = applyUndo(block, undo);
+    var sigops = 0;
+    var flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+    var i, tx;
+
+    for (i = 0; i < block.txs.length; i++) {
+      tx = block.txs[i];
+      sigops += tx.getSigopsCost(view, flags);
+    }
+
+    assert.equal(sigops, 23236);
+    assert.equal(block.getWeight(), 2481560);
+  });
+
+  it('should count sigops for block 928927 (testnet)', function() {
+    var blockRaw = fs.readFileSync(__dirname + '/data/block928927.raw');
+    var undoRaw = fs.readFileSync(__dirname + '/data/undo928927.raw');
+    var block = Block.fromRaw(blockRaw);
+    var undo = UndoCoins.fromRaw(undoRaw);
+    var view = applyUndo(block, undo);
+    var sigops = 0;
+    var flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+    var i, tx;
+
+    for (i = 0; i < block.txs.length; i++) {
+      tx = block.txs[i];
+      sigops += tx.getSigopsCost(view, flags);
+    }
+
+    assert.equal(sigops, 10015);
+    assert.equal(block.getWeight(), 3992391);
+  });
+
+  it('should count sigops for block 1087400 (testnet)', function() {
+    var blockRaw = fs.readFileSync(__dirname + '/data/block1087400.raw');
+    var undoRaw = fs.readFileSync(__dirname + '/data/undo1087400.raw');
+    var block = Block.fromRaw(blockRaw);
+    var undo = UndoCoins.fromRaw(undoRaw);
+    var view = applyUndo(block, undo);
+    var sigops = 0;
+    var flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+    var i, tx;
+
+    for (i = 0; i < block.txs.length; i++) {
+      tx = block.txs[i];
+      sigops += tx.getSigopsCost(view, flags);
+    }
+
+    assert.equal(sigops, 1298);
+    assert.equal(block.getWeight(), 193331);
   });
 });
