@@ -213,6 +213,10 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     });
   });
 
+  socket.on('timeout', function() {
+    ws.emit('tcp timeout');
+  });
+
   socket.on('close', function() {
     self.log('Closing %s (%s).', state.remoteHost, state.host);
     ws.emit('tcp close');
@@ -223,6 +227,26 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     if (typeof data !== 'string')
       return;
     socket.write(new Buffer(data, 'hex'));
+  });
+
+  ws.on('tcp keep alive', function(enable, delay) {
+    socket.setKeepAlive(enable, delay);
+  });
+
+  ws.on('tcp no delay', function(enable) {
+    socket.setNoDelay(enable);
+  });
+
+  ws.on('tcp set timeout', function(timeout) {
+    socket.setTimeout(timeout);
+  });
+
+  ws.on('tcp pause', function() {
+    socket.pause();
+  });
+
+  ws.on('tcp resume', function() {
+    socket.resume();
   });
 
   ws.on('disconnect', function() {
