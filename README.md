@@ -31,7 +31,7 @@ $ npm install
 $ bcoin --fast
 ```
 
-Note that the latest BCoin has not been published to NPM yet, as it is still
+Note that the latest Bcoin has not been published to NPM yet, as it is still
 under fairly heavy development (which may involve changing serialization
 formats for the database).
 
@@ -373,7 +373,7 @@ Normal transactions in bcoin are immutable. The primary TX object contains a
 bunch of consensus and policy checking methods. A lot of it is for internal use
 and pretty boring for users of this library.
 
-BCoin also offers a mutable transaction object (MTX). Mutable transactions
+Bcoin also offers a mutable transaction object (MTX). Mutable transactions
 inherit from the TX object, but can also be signed and modified.
 
 ``` js
@@ -446,7 +446,7 @@ assert(tx.getFee(mtx.view) === 40000);
 
 The above method works, but is pretty contrived. In reality, you probably
 wouldn't select inputs and calculate the fee by hand. You would want a
-change output added. BCoin has a nice method of dealing with this.
+change output added. Bcoin has a nice method of dealing with this.
 
 Let's try it more realistically:
 
@@ -575,7 +575,7 @@ output.execute(stack);
 
 ## Wallet usage
 
-BCoin maintains a wallet database which contains every wallet. Wallets are _not
+Bcoin maintains a wallet database which contains every wallet. Wallets are _not
 usable_ without also using a wallet database. For testing, the wallet database
 can be in-memory, but it must be there.
 
@@ -584,7 +584,7 @@ but support was removed to reduce code complexity, and also because bip45
 doesn't seem to add any benefit in practice.
 
 The wallet database can contain many different wallets, with many different
-accounts, with many different addresses for each account. BCoin should
+accounts, with many different addresses for each account. Bcoin should
 theoretically be able to scale to hundreds of thousands of
 wallets/accounts/addresses.
 
@@ -602,7 +602,7 @@ TODO
 
 ## Design
 
-BCoin is thoroughly event driven. It has a fullnode object, but BCoin was
+Bcoin is thoroughly event driven. It has a fullnode object, but Bcoin was
 specifically designed so the mempool, blockchain, p2p pool, and wallet database
 could all be used separately. All the fullnode object does is tie these things
 together. It's essentially a huge proxying of events. The general communication
@@ -638,7 +638,7 @@ well-written.
 
 #### Concurrency
 
-BCoin runs in node.js, so the javascript code is limited to one thread. We
+Bcoin runs in node.js, so the javascript code is limited to one thread. We
 solve this limitation by spinning up persistent worker processes for
 transaction verification (webworkers when in the browser). This ensures the
 blockchain and mempool do not block the master process very much. It also means
@@ -652,7 +652,7 @@ data to another process.
 But of course, there is a benefit to having a multi-process architecture: the
 worker processes can die on their own without disturbing the master process.
 
-BCoin uses [secp256k1-node][secp256k1-node] for ecdsa verification, which is a
+Bcoin uses [secp256k1-node][secp256k1-node] for ecdsa verification, which is a
 node.js binding to Pieter Wuille's blazingly fast [libsecp256k1][libsecp256k1]
 library.
 
@@ -669,7 +669,7 @@ visiting a webpage.
 
 ## Disclaimer
 
-BCoin does not guarantee you against theft or lost funds due to bugs, mishaps,
+Bcoin does not guarantee you against theft or lost funds due to bugs, mishaps,
 or your own incompetence. You and you alone are responsible for securing your
 money.
 
@@ -683,7 +683,7 @@ all code is your original work. `</legalese>`
 
 Copyright (c) 2014-2015, Fedor Indutny (MIT License).
 
-Copyright (c) 2014-2016, Christopher Jeffrey (MIT License).
+Copyright (c) 2014-2017, Christopher Jeffrey (MIT License).
 
 See LICENSE for more info.
 

@@ -6,7 +6,7 @@ cmd='node'
 
 if ! type perl > /dev/null 2>& 1; then
   if uname | grep -i 'darwin' > /dev/null; then
-    echo 'BCoin requires perl to start.' >& 2
+    echo 'Bcoin requires perl to start.' >& 2
     exit 1
   fi
   rl=1
@@ -51,7 +51,7 @@ done
 
 if test $daemon -eq 1; then
   if ! type setsid > /dev/null 2>& 1; then
-    echo 'BCoin requires setsid to start as a daemon.' >& 2
+    echo 'Bcoin requires setsid to start as a daemon.' >& 2
     exit 1
   fi
   (
