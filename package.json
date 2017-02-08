@@ -60,7 +60,8 @@
     "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js && browserify --im -o browser/bcoin-master.js lib/workers/master.js",
     "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js && uglifyjs -m -o browser/bcoin-master.min.js browser/bcoin-master.js",
     "clean": "rm browser/bcoin.js browser/bcoin.min.js browser/bcoin-master.js browser/bcoin-master.min.js",
-    "lint": "jshint lib/ || exit 0"
+    "lint": "jshint lib/ || exit 0",
+    "docs": "jsdoc -c jsdoc.json"
   },
   "browser": {
     "./lib/blockchain/layout": "./lib/blockchain/layout-browser.js",

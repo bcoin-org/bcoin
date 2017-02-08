@@ -6,7 +6,10 @@ all:
 clean:
 	@npm run clean
 
+docs:
+	@npm run docs
+
 test:
 	@npm test
 
-.PHONY: all clean test
+.PHONY: all clean docs test
