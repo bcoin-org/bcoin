@@ -3,3 +3,5 @@ key.key
 node_modules/
 test.js
 docker_data/
+docs/
+browser/bcoin*
