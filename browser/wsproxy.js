@@ -2,11 +2,12 @@
 
 var net = require('net');
 var dns = require('dns');
+var EventEmitter = require('events').EventEmitter;
 var IOServer = require('socket.io');
 var util = require('../lib/utils/util');
+var crypto = require('../lib/crypto/crypto');
 var IP = require('../lib/utils/ip');
 var BufferWriter = require('../lib/utils/writer');
-var EventEmitter = require('events').EventEmitter;
 
 var NAME_REGEX = /^[a-z0-9\-\.]+?\.(?:be|me|org|com|net|ch|de)$/i;
 
@@ -141,7 +142,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     pow.writeString(host, 'ascii');
     pow = pow.render();
 
-    if (util.cmp(util.hash256(pow), this.target) > 0) {
+    if (util.cmp(crypto.hash256(pow), this.target) > 0) {
       this.log('Client did not solve proof of work (%s).', state.host);
       ws.emit('tcp close');
       ws.disconnect();
