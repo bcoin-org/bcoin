@@ -505,7 +505,7 @@ describe('Chain', function() {
     var input = tx.inputs[0];
     input.witness.set(0, new Buffer(33));
     input.witness.compile();
-    assert.equal(yield addBlock(attempt), 'bad-witness-merkle-size');
+    assert.equal(yield addBlock(attempt), 'bad-witness-nonce-size');
   }));
 
   it('should fail to connect bad witness nonce', co(function* () {
