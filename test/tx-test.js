@@ -513,32 +513,6 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(view, 0));
   });
 
-  it('should fail on >51 bit fees from multiple txs', function() {
-    var view = new CoinView();
-    var genesis = Network.get().genesis;
-    var block = new Block(genesis);
-    var i, tx;
-
-    for (i = 0; i < 3; i++) {
-      tx = new TX({
-        version: 1,
-        flag: 1,
-        inputs: [
-          createInput(Math.floor(consensus.MAX_MONEY / 2), view)
-        ],
-        outputs: [{
-          script: [],
-          value: 0
-        }],
-        locktime: 0
-      });
-
-      block.txs.push(tx);
-    }
-
-    assert.equal(block.getReward(view, 0), -1);
-  });
-
   it('should fail to parse >53 bit values', function() {
     var view = new CoinView();
     var tx, raw;
@@ -688,31 +662,6 @@ describe('TX', function() {
       });
       assert.ok(tx.isSane());
       assert.ok(!tx.checkInputs(view, 0));
-    });
-
-    it('should fail on >53 bit fees from multiple txs', function() {
-      var view = new CoinView();
-      var genesis = Network.get().genesis;
-      var block = new Block(genesis);
-      var i, tx;
-
-      for (i = 0; i < 3; i++) {
-        tx = new TX({
-          version: 1,
-          flag: 1,
-          inputs: [
-            createInput(MAX, view)
-          ],
-          outputs: [{
-            script: [],
-            value: 0
-          }],
-          locktime: 0
-        });
-        block.txs.push(tx);
-      }
-
-      assert.equal(block.getReward(view, 0), -1);
     });
   });
 

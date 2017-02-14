@@ -189,6 +189,7 @@ describe('Block', function() {
     var view = new CoinView();
     var height = block300025.height;
     var sigops = 0;
+    var reward = 0;
     var i, j, tx, input, coin, flags;
 
     for (i = 1; i < block300025.txs.length; i++) {
@@ -216,11 +217,14 @@ describe('Block', function() {
       assert(!tx.hasWitness());
       sigops += tx.getSigopsCost(view, flags);
       view.addTX(tx, height);
+      reward += tx.getFee(view);
     }
 
+    reward += consensus.getReward(height, 210000);
+
     assert.equal(sigops, 5280);
-    assert.equal(block.getReward(view, height), 2507773345);
-    assert.equal(block.getReward(view, height), block.txs[0].outputs[0].value);
+    assert.equal(reward, 2507773345);
+    assert.equal(reward, block.txs[0].outputs[0].value);
   });
 
   it('should fail with a bad merkle root', function() {
