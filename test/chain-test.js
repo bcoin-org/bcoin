@@ -460,7 +460,7 @@ describe('Chain', function() {
   }));
 
   it('should fail to connect bad MTP', co(function* () {
-    var mtp = yield chain.tip.getMedianTimeAsync();
+    var mtp = yield chain.tip.getMedianTime();
     var attempt = yield miner.createBlock();
     attempt.block.ts = mtp - 1;
     assert.equal(yield addBlock(attempt), 'time-too-old');
