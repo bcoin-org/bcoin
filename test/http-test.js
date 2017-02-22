@@ -146,7 +146,7 @@ describe('HTTP', function() {
   }));
 
   it('should execute an rpc call', co(function* () {
-    var info = yield wallet.client.rpc.call('getblockchaininfo', []);
+    var info = yield wallet.client.rpc.execute('getblockchaininfo', []);
     assert.equal(info.blocks, 0);
   }));
 

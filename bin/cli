@@ -476,7 +476,15 @@ CLI.prototype.rpc = co(function* rpc() {
     params.push(param);
   }
 
-  result = yield this.client.rpc.call(method, params);
+  try {
+    result = yield this.client.rpc.execute(method, params);
+  } catch (e) {
+    if (e.type === 'RPCError') {
+      this.log(e.message);
+      return;
+    }
+    throw e;
+  }
 
   this.log(result);
 });
