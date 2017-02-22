@@ -301,7 +301,8 @@ CLI.prototype.sendTX = co(function* sendTX() {
   options = {
     account: this.config.account,
     passphrase: this.config.passphrase,
-    outputs: [output]
+    outputs: [output],
+    rate: this.config.rate
   };
 
   tx = yield this.wallet.send(options);
