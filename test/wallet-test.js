@@ -930,7 +930,7 @@ describe('Wallet', function() {
     assert(t2.verify());
   }));
 
-  it('should fill tx with inputs with subtract fee', co(function* () {
+  it('should fill tx with inputs with subtract fee (1)', co(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var t1, t2;
@@ -959,7 +959,7 @@ describe('Wallet', function() {
     assert.equal(t2.getFee(), 10000);
   }));
 
-  it('should fill tx with inputs with subtract fee', co(function* () {
+  it('should fill tx with inputs with subtract fee (2)', co(function* () {
     var w1 = yield walletdb.create();
     var w2 = yield walletdb.create();
     var options, t1, t2;
@@ -991,6 +991,100 @@ describe('Wallet', function() {
     assert.equal(t2.getInputValue(), 5460 * 4);
     assert.equal(t2.getOutputValue(), 21840 - 10000);
     assert.equal(t2.getFee(), 10000);
+  }));
+
+  it('should fill tx with smart coin selection', co(function* () {
+    var w1 = yield walletdb.create();
+    var w2 = yield walletdb.create();
+    var found = false;
+    var total = 0;
+    var i, options, t1, t2, t3, block, coins, coin;
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Coinbase
+    t2 = new MTX();
+    t2.addInput(dummy());
+    t2.addOutput(w1.getAddress(), 5460);
+    t2.addOutput(w1.getAddress(), 5460);
+    t2.addOutput(w1.getAddress(), 5460);
+    t2.addOutput(w1.getAddress(), 5460);
+    t2 = t2.toTX();
+
+    block = nextBlock();
+
+    yield walletdb.addBlock(block, [t2]);
+
+    coins = yield w1.getSmartCoins();
+    assert.equal(coins.length, 4);
+
+    for (i = 0; i < coins.length; i++) {
+      coin = coins[i];
+      assert.equal(coin.height, block.height);
+    }
+
+    // Create a change output for ourselves.
+    yield w1.send({
+      subtractFee: true,
+      rate: 1000,
+      depth: 1,
+      outputs: [{ address: w2.getAddress(), value: 1461 }]
+    });
+
+    coins = yield w1.getSmartCoins();
+    assert.equal(coins.length, 4);
+
+    for (i = 0; i < coins.length; i++) {
+      coin = coins[i];
+      if (coin.height === -1) {
+        assert(!found);
+        assert(coin.value < 5460);
+        found = true;
+      } else {
+        assert.equal(coin.height, block.height);
+      }
+      total += coin.value;
+    }
+
+    assert(found);
+
+    // Use smart selection
+    options = {
+      subtractFee: true,
+      smart: true,
+      rate: 10000,
+      outputs: [{ address: w2.getAddress(), value: total }]
+    };
+
+    t3 = yield w1.createTX(options);
+    assert.equal(t3.inputs.length, 4);
+
+    found = false;
+    for (i = 0; i < t3.inputs.length; i++) {
+      coin = t3.view.getCoin(t3.inputs[i]);
+      if (coin.height === -1) {
+        assert(!found);
+        assert(coin.value < 5460);
+        found = true;
+      } else {
+        assert.equal(coin.height, block.height);
+      }
+    }
+
+    assert(found);
+
+    yield w1.sign(t3);
+
+    assert(t3.verify());
   }));
 
   it('should get range of txs', co(function* () {
