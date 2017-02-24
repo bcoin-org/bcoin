@@ -1,5 +1,12 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.2
+
+### Notable Changes
+
+- __pool__ - Increase max header chain failures to 500 (prevents the initial
+  sync from reverting to getblocks so frequently).
+
 ## v1.0.0-beta.1
 
 ### Notable Changes
