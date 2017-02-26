@@ -1,5 +1,12 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.3
+
+### Notable Changes
+
+- __miner__ - Improved fee rate sorting.
+- __rpc__ - Fix incompatibilities in rpc api (getblocktemplate & submitblock).
+
 ## v1.0.0-beta.2
 
 ### Notable Changes
