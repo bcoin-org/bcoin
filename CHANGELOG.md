@@ -1,5 +1,13 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.4
+
+### Notable Changes
+
+- __miner__ - Optimized TX sorting.
+- __rpc__ - Improved getblocktemplate to provide more
+  accurate results to bitcoind.
+
 ## v1.0.0-beta.3
 
 ### Notable Changes
