@@ -1,5 +1,12 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.5
+
+### Notable Changes
+
+- __miner__ - Better fee rate comparisons.
+- __deps__ - Upgrade deps, fix build on arm and windows.
+
 ## v1.0.0-beta.4
 
 ### Notable Changes
