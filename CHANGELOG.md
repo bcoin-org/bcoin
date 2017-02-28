@@ -1,5 +1,11 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.6
+
+### Notable Changes
+
+- __http__ - Better bitcoind compatability for JSON-RPC.
+
 ## v1.0.0-beta.5
 
 ### Notable Changes
