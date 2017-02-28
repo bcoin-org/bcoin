@@ -76,6 +76,7 @@
     "./lib/http/rpcclient": "./browser/empty.js",
     "./lib/http/server": "./browser/empty.js",
     "./lib/http/wallet": "./browser/empty.js",
+    "./lib/mempool/layout": "./lib/mempool/layout-browser.js",
     "./lib/net/dns": "./lib/net/dns-browser.js",
     "./lib/net/tcp": "./lib/net/tcp-browser.js",
     "./lib/utils/native": "./browser/empty.js",
