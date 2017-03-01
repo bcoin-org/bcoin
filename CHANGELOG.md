@@ -1,5 +1,17 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.7
+
+### Notable Changes
+
+- __http__ - Always display spent coins in tx routes (e.g. `/tx/[txid]`).
+- __mempool__ - An on-disk mempool is now exposed via `--persistent-mempool`
+  (also makes fee data persistent).
+- __chain__ - `chain.add` now takes a `flags` parameter to avoid POW and
+  non-contextual checks if necessary.
+- __net__ - HostList is now potentially persistent with a `hostLocation` option.
+- __net__ - Smarter stall behavior and timeouts.
+
 ## v1.0.0-beta.6
 
 ### Notable Changes
