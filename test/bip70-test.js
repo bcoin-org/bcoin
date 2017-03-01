@@ -202,7 +202,7 @@ describe('BIP70', function() {
 
     testRequest(request.toRaw());
 
-    x509.setTrust(tests.ca.crt);
+    x509.setTrust([tests.ca.crt]);
     assert(request.verifyChain());
     assert.equal(request.getCA().name, 'JJs CA');
 

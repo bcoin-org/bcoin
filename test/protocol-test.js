@@ -13,8 +13,8 @@ var packets = require('../lib/net/packets');
 var network = Network.get('main');
 
 describe('Protocol', function() {
-  var version = require('../package.json').version;
-  var agent = '/bcoin:' + version + '/';
+  var pkg = require('../lib/pkg');
+  var agent = '/bcoin:' + pkg.version + '/';
   var parser, framer, v1, v2, hosts;
 
   beforeEach(function() {

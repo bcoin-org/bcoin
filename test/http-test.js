@@ -10,7 +10,7 @@ var Outpoint = require('../lib/primitives/outpoint');
 var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
 var FullNode = require('../lib/node/fullnode');
-var USER_VERSION = require('../package.json').version;
+var pkg = require('../lib/pkg');
 
 describe('HTTP', function() {
   var node, wallet, addr, hash;
@@ -44,7 +44,7 @@ describe('HTTP', function() {
   it('should get info', co(function* () {
     var info = yield wallet.client.getInfo();
     assert.equal(info.network, node.network.type);
-    assert.equal(info.version, USER_VERSION);
+    assert.equal(info.version, pkg.version);
     assert.equal(info.pool.agent, node.pool.options.agent);
     assert.equal(typeof info.chain, 'object');
     assert.equal(info.chain.height, 0);
