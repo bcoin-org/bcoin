@@ -29,8 +29,8 @@ function parseTX(file) {
 }
 
 raw = Coins.fromTX(tx.tx, 0).toRaw();
-coins = Coins.fromRaw(raw, tx.hash('hex'));
-entry = MempoolEntry.fromTX(tx, tx.view, 1000000);
+coins = Coins.fromRaw(raw, tx.tx.hash('hex'));
+entry = MempoolEntry.fromTX(tx.tx, tx.view, 1000000);
 
 setInterval(function() {
   console.log(tx.hash('hex'));
