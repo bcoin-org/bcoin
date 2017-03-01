@@ -1,5 +1,12 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.8
+
+### Notable Changes
+
+- __mempool__ - Fixed critical fee estimator bug causing throwing in the
+  mempool.
+
 ## v1.0.0-beta.7
 
 ### Notable Changes
