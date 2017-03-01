@@ -191,7 +191,7 @@ describe('BIP70', function() {
     assert(!request.paymentDetails.isExpired());
 
     assert(!request.pkiData);
-    request.sign(tests.ca.priv, tests.ca.crt);
+    request.sign(tests.ca.priv, [tests.ca.crt]);
 
     assert(request.pkiData);
     assert.equal(request.pkiType, 'x509+sha256');
