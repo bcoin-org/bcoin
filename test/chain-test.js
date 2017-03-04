@@ -28,12 +28,18 @@ describe('Chain', function() {
 
   addBlock = co(function* addBlock(attempt) {
     var block = yield attempt.mineAsync();
+    var entry;
+
     try {
-      yield chain.add(block);
+      entry = yield chain.add(block);
     } catch (e) {
       assert(e.type === 'VerifyError');
       return e.reason;
     }
+
+    if (!entry)
+      return 'bad-prevblk';
+
     return 'OK';
   });
 
@@ -86,7 +92,7 @@ describe('Chain', function() {
     for (i = 0; i < 200; i++) {
       block = yield miner.mineBlock();
       assert(block);
-      yield chain.add(block);
+      assert(yield chain.add(block));
     }
 
     assert.equal(chain.height, 200);
@@ -115,8 +121,8 @@ describe('Chain', function() {
       hash1 = blk1.hash('hex');
       hash2 = blk2.hash('hex');
 
-      yield chain.add(blk1);
-      yield chain.add(blk2);
+      assert(yield chain.add(blk1));
+      assert(yield chain.add(blk2));
 
       assert(chain.tip.hash === hash1);
 
@@ -157,7 +163,7 @@ describe('Chain', function() {
       forked = true;
     });
 
-    yield chain.add(block);
+    assert(yield chain.add(block));
 
     assert(forked);
     assert(chain.tip.hash === block.hash('hex'));
@@ -183,7 +189,7 @@ describe('Chain', function() {
     var block = yield miner.mineBlock();
     var hash, entry, result;
 
-    yield chain.add(block);
+    assert(yield chain.add(block));
 
     hash = block.hash('hex');
     entry = yield chain.db.getEntry(hash);
@@ -210,7 +216,7 @@ describe('Chain', function() {
 
     block = yield attempt.mineAsync();
 
-    yield chain.add(block);
+    assert(yield chain.add(block));
 
     attempt = yield miner.createBlock();
 
@@ -269,7 +275,7 @@ describe('Chain', function() {
     attempt.addTX(mtx.toTX(), mtx.view);
 
     block = yield attempt.mineAsync();
-    yield chain.add(block);
+    assert(yield chain.add(block));
 
     tx = block.txs[1];
     output = Coin.fromTX(tx, 2, chain.height);
@@ -325,7 +331,7 @@ describe('Chain', function() {
 
     for (i = 0; i < 417; i++) {
       block = yield miner.mineBlock();
-      yield chain.add(block);
+      assert(yield chain.add(block));
       switch (chain.height) {
         case 288:
           prev = yield chain.tip.getPrevious();
@@ -367,7 +373,7 @@ describe('Chain', function() {
     var block = yield mineCSV(tx);
     var csv, attempt, rtx;
 
-    yield chain.add(block);
+    assert(yield chain.add(block));
 
     csv = block.txs[1];
 
@@ -390,7 +396,7 @@ describe('Chain', function() {
 
     block = yield attempt.mineAsync();
 
-    yield chain.add(block);
+    assert(yield chain.add(block));
   }));
 
   it('should fail csv with bad sequence', co(function* () {
@@ -418,7 +424,7 @@ describe('Chain', function() {
   it('should mine a block', co(function* () {
     var block = yield miner.mineBlock();
     assert(block);
-    yield chain.add(block);
+    assert(yield chain.add(block));
   }));
 
   it('should fail csv lock checks', co(function* () {
@@ -426,7 +432,7 @@ describe('Chain', function() {
     var block = yield mineCSV(tx);
     var csv, attempt, rtx;
 
-    yield chain.add(block);
+    assert(yield chain.add(block));
 
     csv = block.txs[1];
 
@@ -556,7 +562,7 @@ describe('Chain', function() {
     for (i = 0; i < 2001; i++) {
       block = yield miner.mineBlock();
       assert(block);
-      yield chain.add(block);
+      assert(yield chain.add(block));
     }
 
     assert.equal(chain.height, 2636);
@@ -578,7 +584,7 @@ describe('Chain', function() {
 
     block = yield attempt.mineAsync();
 
-    yield chain.add(block);
+    assert(yield chain.add(block));
   }));
 
   it('should mine fail to connect too much weight', co(function* () {
@@ -768,7 +774,7 @@ describe('Chain', function() {
       attempt.updateMerkle();
 
       block = yield attempt.mineAsync();
-      yield chain.add(block);
+      assert(yield chain.add(block));
     }
 
     assert.equal(chain.height, 2749);
