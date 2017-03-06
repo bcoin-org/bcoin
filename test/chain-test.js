@@ -409,7 +409,7 @@ describe('Chain', function() {
         Script.array(new BN(1)),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
-      value: 10 * 1e8
+      value: 1 * 1e8
     });
 
     rtx.addTX(csv, 0);
@@ -418,7 +418,7 @@ describe('Chain', function() {
     attempt = yield miner.createBlock();
     attempt.addTX(rtx.toTX(), rtx.view);
 
-    assert(yield addBlock(attempt), 'mandatory-script-verify-flag-failed');
+    assert.equal(yield addBlock(attempt), 'mandatory-script-verify-flag-failed');
   }));
 
   it('should mine a block', co(function* () {
