@@ -1,5 +1,17 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.9
+
+### Notable Changes
+
+- __mempool__ - Trimming now removes dependency chains by cumulative fee rate.
+- __mempool__ - Cumulative descendant fees are now updated properly when
+  removing a transaction.
+- __net__ - Preliminary upnp support for adding port mappings.
+- __chain/mempool/miner__ - Various atomicity fixes and extra sanity checking.
+- __pool/peer__ - Peer height is now tracked and exposed on the RPC as
+  `bestheight`.
+
 ## v1.0.0-beta.8
 
 ### Notable Changes
