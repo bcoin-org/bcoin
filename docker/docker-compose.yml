@@ -1,0 +1,41 @@
+bcoin_seed1:
+  image: node
+  volumes:
+    - "../:/usr/src/bcoin"
+  working_dir: /usr/src/bcoin
+  command: ./bin/bcoin
+
+bcoin_seed2:
+  image: node
+  volumes:
+    - "../:/usr/src/bcoin"
+  working_dir: /usr/src/bcoin
+  command: ./bin/bcoin
+
+bcoin_peer1:
+  image: node
+  volumes:
+    - "../:/usr/src/bcoin"
+  working_dir: /usr/src/bcoin
+  command: ./bin/bcoin
+
+bcoin_peer2:
+  image: node
+  volumes:
+    - "../:/usr/src/bcoin"
+  working_dir: /usr/src/bcoin
+  command: ./bin/bcoin
+
+bcoin_peer3:
+  image: node
+  volumes:
+    - "../:/usr/src/bcoin"
+  working_dir: /usr/src/bcoin
+  command: ./bin/bcoin
+
+bcoin_peer4:
+  image: node
+  volumes:
+    - "../:/usr/src/bcoin"
+  working_dir: /usr/src/bcoin
+  command: ./bin/bcoin
