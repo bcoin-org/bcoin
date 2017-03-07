@@ -1,14 +1,19 @@
 'use strict';
 
-var bn = require('bn.js');
-var bcoin = require('../').set('main');
 var assert = require('assert');
-var utils = bcoin.utils;
+var BN = require('bn.js');
+var ec = require('../lib/crypto/ec');
+var base58 = require('../lib/utils/base58');
+var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var schnorr = require('../lib/crypto/schnorr');
+var Amount = require('../lib/btc/amount');
+var consensus = require('../lib/protocol/consensus');
 
 describe('Utils', function() {
-  var vectors = [
+  var vectors, signed, unsigned;
+
+  vectors = [
     ['', ''],
     ['61', '2g'],
     ['626262', 'a3gV'],
@@ -24,69 +29,76 @@ describe('Utils', function() {
   ];
 
   it('should encode/decode base58', function() {
-    var arr = new Buffer([ 0, 0, 0, 0xde, 0xad, 0xbe, 0xef ]);
-    var b = utils.toBase58(arr);
+    var buf = new Buffer('000000deadbeef', 'hex');
+    var b = base58.encode(buf);
+    var i, r;
+
     assert.equal(b, '1116h8cQN');
-    assert.deepEqual(utils.fromBase58(b), arr);
-    for (var i = 0; i < vectors.length; i++) {
-      var r = new Buffer(vectors[i][0], 'hex');
-      var b = vectors[i][1];
-      assert.equal(utils.toBase58(r), b);
-      assert.deepEqual(utils.fromBase58(b), r);
+    assert.deepEqual(base58.decode(b), buf);
+
+    for (i = 0; i < vectors.length; i++) {
+      r = new Buffer(vectors[i][0], 'hex');
+      b = vectors[i][1];
+      assert.equal(base58.encode(r), b);
+      assert.deepEqual(base58.decode(b), r);
     }
   });
 
-  it('should translate bits to target', function() {
+  it('should verify proof-of-work', function() {
     var bits = 0x1900896c;
-    var hash = new Buffer(
+    var hash;
+
+    hash = new Buffer(
       '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
       'hex'
     );
-    var target = utils.fromCompact(bits);
-    assert(utils.testTarget(hash, target));
+
+    assert(consensus.verifyPOW(hash, bits));
   });
 
   it('should convert satoshi to btc', function() {
-    var btc = utils.btc(5460);
+    var btc = Amount.btc(5460);
     assert.equal(btc, '0.0000546');
-    btc = utils.btc(54678 * 1000000);
+    btc = Amount.btc(54678 * 1000000);
     assert.equal(btc, '546.78');
-    btc = utils.btc(5460 * 10000000);
+    btc = Amount.btc(5460 * 10000000);
     assert.equal(btc, '546.0');
   });
 
   it('should convert btc to satoshi', function() {
-    var btc = utils.satoshi('0.0000546');
+    var btc = Amount.value('0.0000546');
     assert(btc === 5460);
-    btc = utils.satoshi('546.78');
+    btc = Amount.value('546.78');
     assert(btc === 54678 * 1000000);
-    btc = utils.satoshi('546');
+    btc = Amount.value('546');
     assert(btc === 5460 * 10000000);
-    btc = utils.satoshi('546.0');
+    btc = Amount.value('546.0');
     assert(btc === 5460 * 10000000);
-    btc = utils.satoshi('546.0000');
+    btc = Amount.value('546.0000');
     assert(btc === 5460 * 10000000);
     assert.doesNotThrow(function() {
-      utils.satoshi('546.00000000000000000');
+      Amount.value('546.00000000000000000');
     });
     assert.throws(function() {
-      utils.satoshi('546.00000000000000001');
+      Amount.value('546.00000000000000001');
     });
     assert.doesNotThrow(function() {
-      utils.satoshi('90071992.54740991');
+      Amount.value('90071992.54740991');
     });
     assert.doesNotThrow(function() {
-      utils.satoshi('090071992.547409910');
+      Amount.value('090071992.547409910');
     });
     assert.throws(function() {
-      utils.satoshi('90071992.54740992');
+      Amount.value('90071992.54740992');
     });
     assert.throws(function() {
-      utils.satoshi('190071992.54740991');
+      Amount.value('190071992.54740991');
     });
   });
 
   it('should write/read new varints', function() {
+    var n, b;
+
     /*
      * 0:         [0x00]  256:        [0x81 0x00]
      * 1:         [0x01]  16383:      [0xFE 0x7F]
@@ -96,104 +108,108 @@ describe('Utils', function() {
      * 2^32:           [0x8E 0xFE 0xFE 0xFF 0x00]
      */
 
-    var n = 0;
-    var b = new Buffer(1);
+    n = 0;
+    b = new Buffer(1);
     b.fill(0x00);
-    utils.writeVarint2(b, 0, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 0);
+    encoding.writeVarint2(b, 0, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 0);
     assert.deepEqual(b, [0]);
 
-    var b = new Buffer(1);
+    b = new Buffer(1);
     b.fill(0x00);
-    utils.writeVarint2(b, 1, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 1);
+    encoding.writeVarint2(b, 1, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 1);
     assert.deepEqual(b, [1]);
 
-    var b = new Buffer(1);
+    b = new Buffer(1);
     b.fill(0x00);
-    utils.writeVarint2(b, 127, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 127);
+    encoding.writeVarint2(b, 127, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 127);
     assert.deepEqual(b, [0x7f]);
 
-    var b = new Buffer(2);
+    b = new Buffer(2);
     b.fill(0x00);
-    utils.writeVarint2(b, 128, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 128);
+    encoding.writeVarint2(b, 128, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 128);
     assert.deepEqual(b, [0x80, 0x00]);
 
-    var b = new Buffer(2);
+    b = new Buffer(2);
     b.fill(0x00);
-    utils.writeVarint2(b, 255, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 255);
+    encoding.writeVarint2(b, 255, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 255);
     assert.deepEqual(b, [0x80, 0x7f]);
 
-    var b = new Buffer(2);
+    b = new Buffer(2);
     b.fill(0x00);
-    utils.writeVarint2(b, 16383, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 16383);
+    encoding.writeVarint2(b, 16383, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 16383);
     assert.deepEqual(b, [0xfe, 0x7f]);
 
-    var b = new Buffer(2);
+    b = new Buffer(2);
     b.fill(0x00);
-    utils.writeVarint2(b, 16384, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 16384);
+    encoding.writeVarint2(b, 16384, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 16384);
     assert.deepEqual(b, [0xff, 0x00]);
 
-    var b = new Buffer(3);
+    b = new Buffer(3);
     b.fill(0x00);
-    utils.writeVarint2(b, 16511, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 16511);
+    encoding.writeVarint2(b, 16511, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 16511);
     // assert.deepEqual(b, [0x80, 0xff, 0x7f]);
     assert.deepEqual(b, [0xff, 0x7f, 0x00]);
 
-    var b = new Buffer(3);
+    b = new Buffer(3);
     b.fill(0x00);
-    utils.writeVarint2(b, 65535, 0);
-    assert.equal(utils.readVarint2(b, 0).value, 65535);
+    encoding.writeVarint2(b, 65535, 0);
+    assert.equal(encoding.readVarint2(b, 0).value, 65535);
     // assert.deepEqual(b, [0x82, 0xfd, 0x7f]);
     assert.deepEqual(b, [0x82, 0xfe, 0x7f]);
 
-    var b = new Buffer(5);
+    b = new Buffer(5);
     b.fill(0x00);
-    utils.writeVarint2(b, Math.pow(2, 32), 0);
-    assert.equal(utils.readVarint2(b, 0).value, Math.pow(2, 32));
+    encoding.writeVarint2(b, Math.pow(2, 32), 0);
+    assert.equal(encoding.readVarint2(b, 0).value, Math.pow(2, 32));
     assert.deepEqual(b, [0x8e, 0xfe, 0xfe, 0xff, 0x00]);
   });
 
-  var unsigned = [
-    new bn('ffeeffee'),
-    new bn('001fffeeffeeffee'),
-    new bn('eeffeeff'),
-    new bn('001feeffeeffeeff'),
-    new bn(0),
-    new bn(1)
+  unsigned = [
+    new BN('ffeeffee'),
+    new BN('001fffeeffeeffee'),
+    new BN('eeffeeff'),
+    new BN('001feeffeeffeeff'),
+    new BN(0),
+    new BN(1)
   ];
 
-  var signed = [
-    new bn('ffeeffee'),
-    new bn('001fffeeffeeffee'),
-    new bn('eeffeeff'),
-    new bn('001feeffeeffeeff'),
-    new bn(0),
-    new bn(1),
-    new bn('ffeeffee').ineg(),
-    new bn('001fffeeffeeffee').ineg(),
-    new bn('eeffeeff').ineg(),
-    new bn('001feeffeeffeeff').ineg(),
-    new bn(0).ineg(),
-    new bn(1).ineg()
+  signed = [
+    new BN('ffeeffee'),
+    new BN('001fffeeffeeffee'),
+    new BN('eeffeeff'),
+    new BN('001feeffeeffeeff'),
+    new BN(0),
+    new BN(1),
+    new BN('ffeeffee').ineg(),
+    new BN('001fffeeffeeffee').ineg(),
+    new BN('eeffeeff').ineg(),
+    new BN('001feeffeeffeeff').ineg(),
+    new BN(0).ineg(),
+    new BN(1).ineg()
   ];
 
   unsigned.forEach(function(num) {
     var buf1 = new Buffer(8);
     var buf2 = new Buffer(8);
     var msg = 'should write+read a ' + num.bitLength() + ' bit unsigned int';
+
     it(msg, function() {
-      utils.writeU64(buf1, num, 0);
-      utils.writeU64N(buf2, num.toNumber(), 0);
+      var n1, n2;
+
+      encoding.writeU64BN(buf1, num, 0);
+      encoding.writeU64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
-      var n1 = utils.readU64(buf1, 0);
-      var n2 = utils.readU64N(buf2, 0);
+
+      n1 = encoding.readU64BN(buf1, 0);
+      n2 = encoding.readU64(buf2, 0);
       assert.equal(n1.toNumber(), n2);
     });
   });
@@ -203,27 +219,36 @@ describe('Utils', function() {
     var buf2 = new Buffer(8);
     var msg = 'should write+read a ' + num.bitLength()
       + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int';
+
     it(msg, function() {
-      utils.write64(buf1, num, 0);
-      utils.write64N(buf2, num.toNumber(), 0);
+      var n1, n2;
+
+      encoding.write64BN(buf1, num, 0);
+      encoding.write64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
-      var n1 = utils.read64(buf1, 0);
-      var n2 = utils.read64N(buf2, 0);
+
+      n1 = encoding.read64BN(buf1, 0);
+      n2 = encoding.read64(buf2, 0);
       assert.equal(n1.toNumber(), n2);
     });
-    var msg = 'should write+read a ' + num.bitLength()
+
+    msg = 'should write+read a ' + num.bitLength()
       + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int as unsigned';
+
     it(msg, function() {
-      utils.writeU64(buf1, num, 0);
-      utils.writeU64N(buf2, num.toNumber(), 0);
+      var n1, n2;
+
+      encoding.writeU64BN(buf1, num, 0);
+      encoding.writeU64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
-      var n1 = utils.readU64(buf1, 0);
+
+      n1 = encoding.readU64BN(buf1, 0);
       if (num.isNeg()) {
         assert.throws(function() {
-          utils.readU64N(buf2, 0);
+          encoding.readU64(buf2, 0);
         });
       } else {
-        var n2 = utils.readU64N(buf2, 0);
+        n2 = encoding.readU64(buf2, 0);
         assert.equal(n1.toNumber(), n2);
       }
     });
@@ -231,51 +256,53 @@ describe('Utils', function() {
 
   it('should do proper hkdf', function() {
     // https://tools.ietf.org/html/rfc5869
-    var hash = 'sha256';
+    var alg = 'sha256';
     var ikm = '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b';
     var salt = '000102030405060708090a0b0c';
     var info = 'f0f1f2f3f4f5f6f7f8f9';
     var len = 42;
+    var prkE, okmE, prk, okm;
 
-    var prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5';
-    var okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865';
+    prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5';
+    okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1'
+      + 'a5a4c5db02d56ecc4c5bf34007208d5b887185865';
 
     ikm = new Buffer(ikm, 'hex');
     salt = new Buffer(salt, 'hex');
     info = new Buffer(info, 'hex');
 
-    var prk = crypto.hkdfExtract(ikm, salt, 'sha256');
-    var okm = crypto.hkdfExpand(prk, info, len, 'sha256');
+    prk = crypto.hkdfExtract(ikm, salt, alg);
+    okm = crypto.hkdfExpand(prk, info, len, alg);
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);
 
-    var hash = 'sha256';
+    alg = 'sha256';
 
-    var ikm = '000102030405060708090a0b0c0d0e0f'
+    ikm = '000102030405060708090a0b0c0d0e0f'
       + '101112131415161718191a1b1c1d1e1f'
       + '202122232425262728292a2b2c2d2e2f'
       + '303132333435363738393a3b3c3d3e3f'
       + '404142434445464748494a4b4c4d4e4f';
 
-    var salt = '606162636465666768696a6b6c6d6e6f'
+    salt = '606162636465666768696a6b6c6d6e6f'
       + '707172737475767778797a7b7c7d7e7f'
       + '808182838485868788898a8b8c8d8e8f'
       + '909192939495969798999a9b9c9d9e9f'
       + 'a0a1a2a3a4a5a6a7a8a9aaabacadaeaf';
 
-    var info = 'b0b1b2b3b4b5b6b7b8b9babbbcbdbebf'
+    info = 'b0b1b2b3b4b5b6b7b8b9babbbcbdbebf'
       + 'c0c1c2c3c4c5c6c7c8c9cacbcccdcecf'
       + 'd0d1d2d3d4d5d6d7d8d9dadbdcdddedf'
       + 'e0e1e2e3e4e5e6e7e8e9eaebecedeeef'
       + 'f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff';
 
-    var len = 82;
+    len = 82;
 
-    var prkE = '06a6b88c5853361a06104c9ceb35b45c'
+    prkE = '06a6b88c5853361a06104c9ceb35b45c'
       + 'ef760014904671014a193f40c15fc244';
 
-    var okmE = 'b11e398dc80327a1c8e7f78c596a4934'
+    okmE = 'b11e398dc80327a1c8e7f78c596a4934'
       + '4f012eda2d4efad8a050cc4c19afa97c'
       + '59045a99cac7827271cb41c65e590e09'
       + 'da3275600c2f09b8367793a9aca3db71'
@@ -286,16 +313,16 @@ describe('Utils', function() {
     salt = new Buffer(salt, 'hex');
     info = new Buffer(info, 'hex');
 
-    var prk = crypto.hkdfExtract(ikm, salt, 'sha256');
-    var okm = crypto.hkdfExpand(prk, info, len, 'sha256');
+    prk = crypto.hkdfExtract(ikm, salt, alg);
+    okm = crypto.hkdfExpand(prk, info, len, alg);
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);
   });
 
   it('should do proper schnorr', function() {
-    var key = bcoin.ec.generatePrivateKey();
-    var pub = bcoin.ec.publicKeyCreate(key, true);
+    var key = ec.generatePrivateKey();
+    var pub = ec.publicKeyCreate(key, true);
     var msg = crypto.hash256(new Buffer('foo', 'ascii'));
     var sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));

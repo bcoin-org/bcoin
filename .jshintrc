@@ -1,5 +1,6 @@
 {
   "bitwise": false,
+  "esversion": 6,
   "curly": false,
   "eqeqeq": true,
   "freeze": true,
@@ -38,5 +39,13 @@
   "quotmark": "single",
 
   "laxbreak": true,
-  "laxcomma": true
+  "laxcomma": true,
+
+  "noyield": true,
+
+  "predef": [
+    "it",
+    "describe",
+    "beforeEach"
+  ]
 }

@@ -4,11 +4,13 @@
 
 process.title = 'bcoin';
 
+var assert = require('assert');
 var bcoin = require('../');
-var utils = bcoin.utils;
-var assert = utils.assert;
+var util = bcoin.util;
+var co = bcoin.co;
+var options, node;
 
-var options = bcoin.config({
+options = bcoin.config({
   config: true,
   arg: true,
   env: true,
@@ -19,25 +21,33 @@ var options = bcoin.config({
 
 bcoin.set(options);
 
-var node = bcoin.spvnode(options);
+node = bcoin.spvnode(options);
 
 node.on('error', function(err) {
   ;
 });
 
-node.open(function(err) {
-  if (err)
-    throw err;
+process.on('uncaughtException', function(err) {
+  node.logger.debug(err.stack);
+  node.logger.error(err);
+  process.exit(1);
+});
+
+co.spawn(function *() {
+  yield node.open();
+  yield node.connect();
 
   if (process.argv.indexOf('--test') !== -1) {
     node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
-    node.pool.watch(bcoin.outpoint().toRaw());
+    node.pool.watchOutpoint(new bcoin.outpoint());
     node.on('block', function(block) {
       assert(block.txs.length >= 1);
       if (block.txs.length > 1)
-        utils.log(block.txs[1]);
+        util.log(block.txs[1]);
     });
   }
 
   node.startSync();
+}).catch(function(err) {
+  throw err;
 });

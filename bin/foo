@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+
+'use strict';
+
+process.title = 'bcoin';
+
+var assert = require('assert');
+var bcoin = require('../');
+var co = bcoin.co;
+var options, node;
+
+options = bcoin.config({
+  config: true,
+  arg: true,
+  env: true,
+  logLevel: 'debug',
+  logFile: true,
+  db: 'leveldb',
+  listen: true
+});
+
+bcoin.set(options);
+
+node = new bcoin.foonode(options);
+
+node.on('error', function(err) {
+  ;
+});
+
+process.on('uncaughtException', function(err) {
+  node.logger.debug(err.stack);
+  node.logger.error(err);
+  process.exit(1);
+});
+
+co.spawn(function *() {
+  yield node.open();
+  yield node.connect();
+  node.startSync();
+}).catch(function(err) {
+  throw err;
+});

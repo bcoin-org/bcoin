@@ -13,19 +13,20 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     var plain = options.plain;
     var ciphertext = options.ciphertext;
     var counter = options.counter;
+    var chacha, plainenc;
 
     key = new Buffer(key, 'hex');
     nonce = new Buffer(nonce, 'hex');
     plain = new Buffer(plain, 'hex');
     ciphertext = new Buffer(ciphertext, 'hex');
 
-    var chacha = new ChaCha20();
+    chacha = new ChaCha20();
     chacha.init(key, nonce, counter);
-    var plainenc = new Buffer(plain);
+    plainenc = new Buffer(plain);
     chacha.encrypt(plainenc);
     assert.deepEqual(plainenc, ciphertext);
 
-    var chacha = new ChaCha20();
+    chacha = new ChaCha20();
     chacha.init(key, nonce, counter);
     chacha.encrypt(ciphertext);
     assert.deepEqual(plain, ciphertext);
@@ -39,6 +40,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     var pk = options.pk;
     var ciphertext = options.ciphertext;
     var tag = options.tag;
+    var aead, plainenc;
 
     plain = new Buffer(plain, 'hex');
     aad = new Buffer(aad, 'hex');
@@ -48,17 +50,17 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     ciphertext = new Buffer(ciphertext, 'hex');
     tag = new Buffer(tag, 'hex');
 
-    var aead = new AEAD();
+    aead = new AEAD();
     aead.init(key, nonce);
     assert.equal(aead.chacha20.getCounter(), 1);
     assert.deepEqual(aead.polyKey, pk);
     aead.aad(aad);
-    var plainenc = new Buffer(plain);
+    plainenc = new Buffer(plain);
     aead.encrypt(plainenc);
     assert.deepEqual(plainenc, ciphertext);
     assert.deepEqual(aead.finish(), tag);
 
-    var aead = new AEAD();
+    aead = new AEAD();
     aead.init(key, nonce);
     assert.equal(aead.chacha20.getCounter(), 1);
     assert.deepEqual(aead.polyKey, pk);
@@ -191,8 +193,6 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
 
   it('should create an AEAD and encrypt', function() {
     testAEAD({
-      // 'Ladies and Gentlemen of the class of \'99: If I could'
-      // + ' offer you only one tip for the future, sunscreen would be it.';
       plain: ''
         + '4c616469657320616e642047656e746c656d656e206f662074686520636c6'
         + '17373206f66202739393a204966204920636f756c64206f666665722'

@@ -6,7 +6,7 @@ cmd='node'
 
 if ! type perl > /dev/null 2>& 1; then
   if uname | grep -i 'darwin' > /dev/null; then
-    echo 'BCoin requires perl to start.' >& 2
+    echo 'Bcoin requires perl to start on OSX.' >& 2
     exit 1
   fi
   rl=1
@@ -28,9 +28,13 @@ if test x"$1" = x'cli'; then
   exit 1
 fi
 
+if test x"$1" = x'wallet'; then
+  exec "${dir}/cli" "$@"
+  exit 1
+fi
+
 if test x"$1" = x'rpc'; then
-  shift
-  exec "${dir}/cli" rpc "$@"
+  exec "${dir}/cli" "$@"
   exit 1
 fi
 
@@ -46,9 +50,13 @@ for arg in "$@"; do
 done
 
 if test $daemon -eq 1; then
+  # And yet again, OSX doesn't support something.
   if ! type setsid > /dev/null 2>& 1; then
-    echo 'BCoin requires setsid to start as a daemon.' >& 2
-    exit 1
+    (
+      "${dir}/${cmd}" "$@" > /dev/null 2>& 1 &
+      echo "$!"
+    )
+    exit 0
   fi
   (
     setsid "${dir}/${cmd}" "$@" > /dev/null 2>& 1 &

@@ -1,16 +1,11 @@
 'use strict';
 
-var bn = require('bn.js');
-var bcoin = require('../').set('main');
-var utils = bcoin.utils;
-var crypto = require('../lib/crypto/crypto');
-var constants = bcoin.constants;
-var network = bcoin.networks;
 var assert = require('assert');
+var BIP151 = require('../lib/net/bip151');
 
 describe('BIP151', function() {
-  var client = new bcoin.bip151();
-  var server = new bcoin.bip151();
+  var client = new BIP151();
+  var server = new BIP151();
 
   function payload() {
     return new Buffer('deadbeef', 'hex');
@@ -19,8 +14,10 @@ describe('BIP151', function() {
   it('should do encinit', function() {
     var init = server.toEncinit();
     client.encinit(init.publicKey, init.cipher);
-    var init = client.toEncinit();
+
+    init = client.toEncinit();
     server.encinit(init.publicKey, init.cipher);
+
     assert(!client.handshake);
     assert(!server.handshake);
   });

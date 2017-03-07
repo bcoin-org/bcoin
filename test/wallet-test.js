@@ -1,1127 +1,1394 @@
 'use strict';
 
-var bn = require('bn.js');
-var bcoin = require('../').set('main');
-var constants = bcoin.constants;
-var network = bcoin.networks;
-var utils = bcoin.utils;
-var crypto = require('../lib/crypto/crypto');
 var assert = require('assert');
-var scriptTypes = constants.scriptTypes;
-
-var FAKE_SIG = new Buffer([0,0,0,0,0,0,0,0,0]);
+var consensus = require('../lib/protocol/consensus');
+var util = require('../lib/utils/util');
+var encoding = require('../lib/utils/encoding');
+var crypto = require('../lib/crypto/crypto');
+var co = require('../lib/utils/co');
+var WalletDB = require('../lib/wallet/walletdb');
+var Address = require('../lib/primitives/address');
+var MTX = require('../lib/primitives/mtx');
+var Coin = require('../lib/primitives/coin');
+var KeyRing = require('../lib/primitives/keyring');
+var Address = require('../lib/primitives/address');
+var Input = require('../lib/primitives/input');
+var Outpoint = require('../lib/primitives/outpoint');
+var Script = require('../lib/script/script');
+var HD = require('../lib/hd');
+var scriptTypes = Script.types;
 
 var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
 
-KEY1 = { xprivkey: KEY1 };
-
 var KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
-KEY2 = { xprivkey: KEY2 };
+var globalHeight = 1;
+var globalTime = util.now();
 
-var dummyInput = {
-  prevout: {
-    hash: constants.NULL_HASH,
-    index: 0
-  },
-  coin: {
-    version: 1,
-    height: 0,
-    value: constants.MAX_MONEY,
-    script: new bcoin.script([]),
-    coinbase: false,
-    hash: constants.NULL_HASH,
-    index: 0
-  },
-  script: new bcoin.script([]),
-  witness: new bcoin.witness([]),
-  sequence: 0xffffffff
-};
+function nextBlock(height) {
+  var hash, prev;
 
-assert.range = function range(value, lo, hi, message) {
-  if (!(value >= lo && value <= hi)) {
-    throw new assert.AssertionError({
-      message: message,
-      actual: value,
-      expected: lo + ', ' + hi,
-      operator: '>= && <=',
-      stackStartFunction: range
-    });
-  }
-};
+  if (height == null)
+    height = globalHeight++;
+
+  hash = crypto.hash256(encoding.U32(height)).toString('hex');
+  prev = crypto.hash256(encoding.U32(height - 1)).toString('hex');
+
+  return {
+    hash: hash,
+    height: height,
+    prevBlock: prev,
+    ts: globalTime + height,
+    merkleRoot: encoding.NULL_HASH,
+    nonce: 0,
+    bits: 0
+  };
+}
+
+function dummy(hash) {
+  if (!hash)
+    hash = crypto.randomBytes(32).toString('hex');
+
+  return Input.fromOutpoint(new Outpoint(hash, 0));
+}
 
 describe('Wallet', function() {
-  var walletdb = new bcoin.walletdb({
+  var walletdb, wallet, ewallet, ekey;
+  var doubleSpendWallet, doubleSpend;
+  var testP2PKH, testMultisig;
+
+  walletdb = new WalletDB({
     name: 'wallet-test',
     db: 'memory',
     verify: true
   });
-  var lastW;
 
-  it('should open walletdb', function(cb) {
-    constants.tx.COINBASE_MATURITY = 0;
-    walletdb.open(cb);
-  });
+  this.timeout(5000);
 
-  it('should generate new key and address', function() {
-    walletdb.create(function(err, w) {
-      assert.ifError(err);
-      var addr = w.getAddress('base58');
-      assert(addr);
-      assert(bcoin.address.validate(addr));
-    });
-  });
+  it('should open walletdb', co(function* () {
+    consensus.COINBASE_MATURITY = 0;
+    yield walletdb.open();
+  }));
+
+  it('should generate new key and address', co(function* () {
+    var w = yield walletdb.create();
+    var addr = w.getAddress('base58');
+    assert(addr);
+    assert(Address.fromBase58(addr));
+  }));
 
   it('should validate existing address', function() {
-    assert(bcoin.address.validate('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
+    assert(Address.fromBase58('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
   });
 
   it('should fail to validate invalid address', function() {
-    assert(!bcoin.address.validate('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc'));
-  });
-
-  it('should create and get wallet', function(cb) {
-    walletdb.create(function(err, w1) {
-      assert.ifError(err);
-      w1.destroy();
-      walletdb.get(w1.id, function(err, w1_) {
-        assert.ifError(err);
-        // assert(w1 !== w1_);
-        // assert(w1.master !== w1_.master);
-        assert.equal(w1.master.key.xprivkey, w1.master.key.xprivkey);
-        // assert(w1.account !== w1_.account);
-        assert.equal(w1.account.accountKey.xpubkey, w1.account.accountKey.xpubkey);
-        cb();
-      });
+    assert.throws(function() {
+      Address.fromBase58('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc');
     });
   });
 
-  function p2pkh(witness, bullshitNesting, cb) {
-    var flags = bcoin.constants.flags.STANDARD_VERIFY_FLAGS;
+  it('should create and get wallet', co(function* () {
+    var w1, w2;
+
+    w1 = yield walletdb.create();
+    yield w1.destroy();
+
+    w2 = yield walletdb.get(w1.id);
+
+    assert(w1 !== w2);
+    assert(w1.master !== w2.master);
+    assert.equal(w1.master.key.toBase58(), w2.master.key.toBase58());
+    assert.equal(
+      w1.account.accountKey.toBase58(),
+      w2.account.accountKey.toBase58());
+  }));
+
+  testP2PKH = co(function* testP2PKH(witness, bullshitNesting) {
+    var flags = Script.flags.STANDARD_VERIFY_FLAGS;
+    var w, addr, src, tx;
+
+    w = yield walletdb.create({ witness: witness });
+
+    addr = Address.fromBase58(w.getAddress('base58'));
 
     if (witness)
-      flags |= bcoin.constants.flags.VERIFY_WITNESS;
+      assert.equal(addr.type, scriptTypes.WITNESSPUBKEYHASH);
+    else
+      assert.equal(addr.type, scriptTypes.PUBKEYHASH);
 
-    walletdb.create({ witness: witness }, function(err, w) {
-      assert.ifError(err);
+    src = new MTX();
+    src.addInput(dummy());
+    src.addOutput(bullshitNesting ? w.getNested() : w.getAddress(), 5460 * 2);
+    src.addOutput(new Address(), 2 * 5460);
+    src = src.toTX();
 
-      var ad = bcoin.address.fromBase58(w.getAddress('base58'));
+    tx = new MTX();
+    tx.addTX(src, 0);
+    tx.addOutput(w.getAddress(), 5460);
 
-      if (witness)
-        assert(ad.type === scriptTypes.WITNESSPUBKEYHASH);
-      else
-        assert(ad.type === scriptTypes.PUBKEYHASH);
+    yield w.sign(tx);
 
-      var src = bcoin.mtx({
-        outputs: [{
-          value: 5460 * 2,
-          address: bullshitNesting
-            ? w.getProgramAddress()
-            : w.getAddress()
-        }, {
-          value: 5460 * 2,
-          address: bcoin.address.fromData(new Buffer([])).toBase58()
-        }]
-      });
-
-      src.addInput(dummyInput);
-
-      var tx = bcoin.mtx()
-        .addInput(src, 0)
-        .addOutput(w.getAddress(), 5460);
-
-      w.sign(tx, function(err) {
-        assert.ifError(err);
-        assert(tx.verify(flags));
-        cb();
-      });
-    });
-  }
-
-  it('should sign/verify pubkeyhash tx', function(cb) {
-    p2pkh(false, false, cb);
+    assert(tx.verify(flags));
   });
 
-  it('should sign/verify witnesspubkeyhash tx', function(cb) {
-    p2pkh(true, false, cb);
-  });
+  it('should sign/verify pubkeyhash tx', co(function* () {
+    yield testP2PKH(false, false);
+  }));
 
-  it('should sign/verify witnesspubkeyhash tx with bullshit nesting', function(cb) {
-    p2pkh(true, true, cb);
-  });
+  it('should sign/verify witnesspubkeyhash tx', co(function* () {
+    yield testP2PKH(true, false);
+  }));
 
-  it('should multisign/verify TX', function(cb) {
-    walletdb.create({
+  it('should sign/verify witnesspubkeyhash tx with bullshit nesting', co(function* () {
+    yield testP2PKH(true, true);
+  }));
+
+  it('should multisign/verify TX', co(function* () {
+    var w, k, script, src, tx, maxSize;
+
+    w = yield walletdb.create({
       type: 'multisig',
       m: 1,
       n: 2
-    }, function(err, w) {
-      assert.ifError(err);
-      var k2 = bcoin.hd.fromMnemonic().deriveAccount44(0).hdPublicKey;
-      w.addKey(k2, function(err) {
-        assert.ifError(err);
-        var keys = [
-          w.getPublicKey(),
-          k2.derive('m/0/0').publicKey
-        ];
-        // Input transaction (bare 1-of-2 multisig)
-        var src = bcoin.mtx({
-          outputs: [{
-            value: 5460 * 2,
-            script: bcoin.script.fromMultisig(1, 2, keys)
-          }, {
-            value: 5460 * 2,
-            address: bcoin.address.fromData(new Buffer([])).toBase58()
-          }]
-        });
-        src.addInput(dummyInput);
-
-        var tx = bcoin.mtx()
-          .addInput(src, 0)
-          .addOutput(w.getAddress(), 5460);
-
-        var maxSize = tx.maxSize();
-        w.sign(tx, function(err) {
-          assert.ifError(err);
-          assert(tx.toRaw().length <= maxSize);
-          assert(tx.verify());
-          cb();
-        });
-      });
     });
-  });
 
-  var dw, di;
-  it('should have TX pool and be serializable', function(cb) {
-    walletdb.create(function(err, w) {
-      assert.ifError(err);
-      walletdb.create(function(err, f) {
-        assert.ifError(err);
-        dw = w;
+    k = HD.fromMnemonic().deriveAccount44(0).toPublic();
 
-        // Coinbase
-        var t1 = bcoin.mtx().addOutput(w, 50000).addOutput(w, 1000);
-        t1.addInput(dummyInput);
-        // balance: 51000
-        w.sign(t1, function(err) {
-          assert.ifError(err);
-          t1 = t1.toTX();
-          var t2 = bcoin.mtx().addInput(t1, 0) // 50000
-                             .addOutput(w, 24000)
-                             .addOutput(w, 24000);
-          di = t2.inputs[0];
-          // balance: 49000
-          w.sign(t2, function(err) {
-            assert.ifError(err);
-            t2 = t2.toTX();
-            var t3 = bcoin.mtx().addInput(t1, 1) // 1000
-                               .addInput(t2, 0) // 24000
-                               .addOutput(w, 23000);
-            // balance: 47000
-            w.sign(t3, function(err) {
-              assert.ifError(err);
-              t3 = t3.toTX();
-              var t4 = bcoin.mtx().addInput(t2, 1) // 24000
-                                 .addInput(t3, 0) // 23000
-                                 .addOutput(w, 11000)
-                                 .addOutput(w, 11000);
-              // balance: 22000
-              w.sign(t4, function(err) {
-                assert.ifError(err);
-                t4 = t4.toTX();
-                var f1 = bcoin.mtx().addInput(t4, 1) // 11000
-                                   .addOutput(f, 10000);
-                // balance: 11000
-                w.sign(f1, function(err) {
-                  assert.ifError(err);
-                  f1 = f1.toTX();
-                  var fake = bcoin.mtx().addInput(t1, 1) // 1000 (already redeemed)
-                                       .addOutput(w, 500);
-                  // Script inputs but do not sign
-                  w.template(fake, function(err) {
-                    assert.ifError(err);
-                    // Fake signature
-                    fake.inputs[0].script.set(0, FAKE_SIG);
-                    fake.inputs[0].script.compile();
-                    // balance: 11000
-                    fake = fake.toTX();
+    yield w.addSharedKey(k);
 
-                    // Fake TX should temporarly change output
-                    walletdb.addTX(fake, function(err) {
-                      assert.ifError(err);
-                      walletdb.addTX(t4, function(err) {
-                        assert.ifError(err);
-                        w.getBalance(function(err, balance) {
-                          assert.ifError(err);
-                          assert.equal(balance.total, 22500);
-                          walletdb.addTX(t1, function(err) {
-                            w.getBalance(function(err, balance) {
-                              assert.ifError(err);
-                              assert.equal(balance.total, 73000);
-                              walletdb.addTX(t2, function(err) {
-                                assert.ifError(err);
-                                w.getBalance(function(err, balance) {
-                                  assert.ifError(err);
-                                  assert.equal(balance.total, 47000);
-                                  walletdb.addTX(t3, function(err) {
-                                    assert.ifError(err);
-                                    w.getBalance(function(err, balance) {
-                                      assert.ifError(err);
-                                      assert.equal(balance.total, 22000);
-                                      walletdb.addTX(f1, function(err) {
-                                        assert.ifError(err);
-                                        w.getBalance(function(err, balance) {
-                                          assert.ifError(err);
-                                          assert.equal(balance.total, 11000);
-                                          w.getHistory(function(err, txs) {
-                                            assert(txs.some(function(tx) {
-                                              return tx.hash('hex') === f1.hash('hex');
-                                            }));
-                                            f.getBalance(function(err, balance) {
-                                              assert.ifError(err);
-                                              assert.equal(balance.total, 10000);
-                                              f.getHistory(function(err, txs) {
-                                                assert.ifError(err);
-                                                assert(txs.some(function(tx) {
-                                                  return tx.hash('hex') === f1.hash('hex');
-                                                }));
-                                                cb();
-                                              });
-                                            });
-                                          });
-                                        });
-                                      });
-                                    });
-                                  });
-                                });
-                              });
-                            });
-                          });
-                        });
-                      });
-                    });
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
+    script = Script.fromMultisig(1, 2, [
+      w.account.receive.getPublicKey(),
+      k.derive('m/0/0').publicKey
+    ]);
+
+    // Input transaction (bare 1-of-2 multisig)
+    src = new MTX();
+    src.addInput(dummy());
+    src.addOutput(script, 5460 * 2);
+    src.addOutput(new Address(), 5460 * 2);
+    src = src.toTX();
+
+    tx = new MTX();
+    tx.addTX(src, 0)
+    tx.addOutput(w.getAddress(), 5460);
+
+    maxSize = yield tx.estimateSize();
+
+    yield w.sign(tx);
+
+    assert(tx.toRaw().length <= maxSize);
+    assert(tx.verify());
+  }));
+
+  it('should handle missed and invalid txs', co(function* () {
+    var w = yield walletdb.create();
+    var f = yield walletdb.create();
+    var t1, t2, t3, t4, f1, fake, balance, txs;
+
+    // Coinbase
+    // balance: 51000
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w.getAddress(), 50000);
+    t1.addOutput(w.getAddress(), 1000);
+    t1 = t1.toTX();
+
+    t2 = new MTX();
+    t2.addTX(t1, 0); // 50000
+    t2.addOutput(w.getAddress(), 24000);
+    t2.addOutput(w.getAddress(), 24000);
+
+    // Save for later.
+    doubleSpendWallet = w;
+    doubleSpend = Coin.fromTX(t1, 0, -1);
+
+    // balance: 49000
+    yield w.sign(t2);
+    t2 = t2.toTX();
+    t3 = new MTX();
+    t3.addTX(t1, 1); // 1000
+    t3.addTX(t2, 0); // 24000
+    t3.addOutput(w.getAddress(), 23000);
+
+    // balance: 47000
+    yield w.sign(t3);
+    t3 = t3.toTX();
+    t4 = new MTX();
+    t4.addTX(t2, 1); // 24000
+    t4.addTX(t3, 0); // 23000
+    t4.addOutput(w.getAddress(), 11000);
+    t4.addOutput(w.getAddress(), 11000);
+
+    // balance: 22000
+    yield w.sign(t4);
+    t4 = t4.toTX();
+    f1 = new MTX();
+    f1.addTX(t4, 1); // 11000
+    f1.addOutput(f.getAddress(), 10000);
+
+    // balance: 11000
+    yield w.sign(f1);
+    f1 = f1.toTX();
+
+    fake = new MTX();
+    fake.addTX(t1, 1); // 1000 (already redeemed)
+    fake.addOutput(w.getAddress(), 500);
+
+    // Script inputs but do not sign
+    yield w.template(fake);
+    // Fake signature
+    fake.inputs[0].script.set(0, encoding.ZERO_SIG);
+    fake.inputs[0].script.compile();
+    // balance: 11000
+    fake = fake.toTX();
+
+    // Fake TX should temporarily change output.
+    yield walletdb.addTX(fake);
+
+    yield walletdb.addTX(t4);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 22500);
+
+    yield walletdb.addTX(t1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 72500);
+
+    yield walletdb.addTX(t2);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 46500);
+
+    yield walletdb.addTX(t3);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 22000);
+
+    yield walletdb.addTX(f1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 11000);
+
+    txs = yield w.getHistory();
+    assert(txs.some(function(wtx) {
+      return wtx.hash === f1.hash('hex');
+    }));
+
+    balance = yield f.getBalance();
+    assert.equal(balance.unconfirmed, 10000);
+
+    txs = yield f.getHistory();
+    assert(txs.some(function(wtx) {
+      return wtx.tx.hash('hex') === f1.hash('hex');
+    }));
+  }));
+
+  it('should cleanup spenders after double-spend', co(function* () {
+    var w = doubleSpendWallet;
+    var tx, txs, total, balance;
+
+    tx = new MTX();
+    tx.addCoin(doubleSpend);
+    tx.addOutput(w.getAddress(), 5000);
+
+    txs = yield w.getHistory();
+    assert.equal(txs.length, 5);
+    total = txs.reduce(function(t, wtx) {
+      return t + wtx.tx.getOutputValue();
+    }, 0);
+
+    assert.equal(total, 154000);
+
+    yield w.sign(tx);
+    tx = tx.toTX();
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 11000);
+
+    yield walletdb.addTX(tx);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 6000);
+
+    txs = yield w.getHistory();
+    assert.equal(txs.length, 2);
+
+    total = txs.reduce(function(t, wtx) {
+      return t + wtx.tx.getOutputValue();
+    }, 0);
+    assert.equal(total, 56000);
+  }));
+
+  it('should handle missed txs without resolution', co(function* () {
+    var walletdb, w, f, t1, t2, t3, t4, f1, balance, txs;
+
+    walletdb = new WalletDB({
+      name: 'wallet-test',
+      db: 'memory',
+      verify: false
     });
-  });
 
-  it('should cleanup spenders after double-spend', function(cb) {
-    var t1 = bcoin.mtx().addOutput(dw, 5000);
-    t1.addInput(di.coin);
-    dw.getHistory(function(err, txs) {
-      assert.ifError(err);
-      assert.equal(txs.length, 5);
-      var total = txs.reduce(function(t, tx) {
-        return t + tx.getOutputValue();
-      }, 0);
-      assert.equal(total, 154000);
-      dw.getCoins(function(err, coins) {
-        assert.ifError(err);
-        dw.sign(t1, function(err) {
-          assert.ifError(err);
-          t1 = t1.toTX();
-          dw.getBalance(function(err, balance) {
-            assert.ifError(err);
-            assert.equal(balance.total, 11000);
-            walletdb.addTX(t1, function(err) {
-              assert.ifError(err);
-              dw.getCoins(function(err, coins) {
-                assert.ifError(err);
-                dw.getBalance(function(err, balance) {
-                  assert.ifError(err);
-                  assert.equal(balance.total, 6000);
-                  dw.getHistory(function(err, txs) {
-                    assert.ifError(err);
-                    assert.equal(txs.length, 2);
-                    var total = txs.reduce(function(t, tx) {
-                      return t + tx.getOutputValue();
-                    }, 0);
-                    assert.equal(total, 56000);
-                    cb();
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
+    yield walletdb.open();
+
+    w = yield walletdb.create();
+    f = yield walletdb.create();
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w.getAddress(), 50000);
+    t1.addOutput(w.getAddress(), 1000);
+
+    // balance: 51000
+    // yield w.sign(t1);
+    t1 = t1.toTX();
+
+    t2 = new MTX();
+    t2.addTX(t1, 0); // 50000
+    t2.addOutput(w.getAddress(), 24000);
+    t2.addOutput(w.getAddress(), 24000);
+
+    // balance: 49000
+    yield w.sign(t2);
+    t2 = t2.toTX();
+    t3 = new MTX();
+    t3.addTX(t1, 1); // 1000
+    t3.addTX(t2, 0); // 24000
+    t3.addOutput(w.getAddress(), 23000);
+
+    // balance: 47000
+    yield w.sign(t3);
+    t3 = t3.toTX();
+    t4 = new MTX();
+    t4.addTX(t2, 1); // 24000
+    t4.addTX(t3, 0); // 23000
+    t4.addOutput(w.getAddress(), 11000);
+    t4.addOutput(w.getAddress(), 11000);
+
+    // balance: 22000
+    yield w.sign(t4);
+    t4 = t4.toTX();
+    f1 = new MTX();
+    f1.addTX(t4, 1); // 11000
+    f1.addOutput(f.getAddress(), 10000);
+
+    // balance: 11000
+    yield w.sign(f1);
+    f1 = f1.toTX();
+
+    // fake = new MTX();
+    // fake.addTX(t1, 1); // 1000 (already redeemed)
+    // fake.addOutput(w.getAddress(), 500);
+
+    // Script inputs but do not sign
+    // yield w.template(fake);
+    // Fake signature
+    // fake.inputs[0].script.set(0, encoding.ZERO_SIG);
+    // fake.inputs[0].script.compile();
+    // balance: 11000
+    // fake = fake.toTX();
+
+    // Fake TX should temporarly change output
+    // yield walletdb.addTX(fake);
+
+    yield walletdb.addTX(t4);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 22000);
+
+    yield walletdb.addTX(t1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 73000);
+
+    yield walletdb.addTX(t2);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 47000);
+
+    yield walletdb.addTX(t3);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 22000);
+
+    yield walletdb.addTX(f1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 11000);
+
+    txs = yield w.getHistory();
+    assert(txs.some(function(wtx) {
+      return wtx.tx.hash('hex') === f1.hash('hex');
+    }));
+
+    balance = yield f.getBalance();
+    assert.equal(balance.unconfirmed, 10000);
+
+    txs = yield f.getHistory();
+    assert(txs.some(function(wtx) {
+      return wtx.tx.hash('hex') === f1.hash('hex');
+    }));
+
+    yield walletdb.addTX(t2);
+
+    yield walletdb.addTX(t3);
+
+    yield walletdb.addTX(t4);
+
+    yield walletdb.addTX(f1);
+
+    balance = yield w.getBalance();
+    assert.equal(balance.unconfirmed, 11000);
+
+    balance = yield f.getBalance();
+    assert.equal(balance.unconfirmed, 10000);
+  }));
+
+  it('should fill tx with inputs', co(function* () {
+    var w1 = yield walletdb.create();
+    var w2 = yield walletdb.create();
+    var view, t1, t2, t3, err;
+
+    // Coinbase
+    t1 = new MTX()
+    t1.addInput(dummy());
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Create new transaction
+    t2 = new MTX();
+    t2.addOutput(w2.getAddress(), 5460);
+    yield w1.fund(t2, { rate: 10000, round: true });
+    yield w1.sign(t2);
+    view = t2.view;
+    t2 = t2.toTX();
+
+    assert(t2.verify(view));
+
+    assert.equal(t2.getInputValue(view), 16380);
+    assert.equal(t2.getOutputValue(), 6380);
+    assert.equal(t2.getFee(view), 10000);
+
+    // Create new transaction
+    t3 = new MTX();
+    t3.addOutput(w2.getAddress(), 15000);
+
+    try {
+      yield w1.fund(t3, { rate: 10000, round: true });
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert.equal(err.requiredFunds, 25000);
+  }));
+
+  it('should fill tx with inputs with accurate fee', co(function* () {
+    var w1 = yield walletdb.create({ master: KEY1 });
+    var w2 = yield walletdb.create({ master: KEY2 });
+    var view, t1, t2, t3, balance, err;
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy(encoding.NULL_HASH));
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Create new transaction
+    t2 = new MTX();
+    t2.addOutput(w2.getAddress(), 5460);
+    yield w1.fund(t2, { rate: 10000 });
+
+    yield w1.sign(t2);
+    view = t2.view;
+    t2 = t2.toTX();
+    assert(t2.verify(view));
+
+    assert.equal(t2.getInputValue(view), 16380);
+
+    // Should now have a change output:
+    assert.equal(t2.getOutputValue(), 11130);
+
+    assert.equal(t2.getFee(view), 5250);
+
+    assert.equal(t2.getWeight(), 2084);
+    assert.equal(t2.getBaseSize(), 521);
+    assert.equal(t2.getSize(), 521);
+    assert.equal(t2.getVirtualSize(), 521);
+
+    w2.once('balance', function(b) {
+      balance = b;
     });
-  });
 
-  it('should fill tx with inputs', function(cb) {
-    walletdb.create(function(err, w1) {
-      assert.ifError(err);
-      walletdb.create(function(err, w2) {
-        assert.ifError(err);
+    yield walletdb.addTX(t2);
 
-        // Coinbase
-        var t1 = bcoin.mtx()
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460);
+    // Create new transaction
+    t3 = new MTX();
+    t3.addOutput(w2.getAddress(), 15000);
 
-        t1.addInput(dummyInput);
-        t1 = t1.toTX();
+    try {
+      yield w1.fund(t3, { rate: 10000 });
+    } catch (e) {
+      err = e;
+    }
 
-        walletdb.addTX(t1, function(err) {
-          assert.ifError(err);
+    assert(err);
+    assert(balance);
+    assert(balance.unconfirmed === 5460);
+  }));
 
-          // Create new transaction
-          var t2 = bcoin.mtx().addOutput(w2, 5460);
-          w1.fund(t2, { rate: 10000, round: true }, function(err) {
-            assert.ifError(err);
-            w1.sign(t2, function(err) {
-              assert.ifError(err);
-              t2 = t2.toTX();
+  it('should sign multiple inputs using different keys', co(function* () {
+    var w1 = yield walletdb.create();
+    var w2 = yield walletdb.create();
+    var to = yield walletdb.create();
+    var t1, t2, tx, cost, total, coins1, coins2;
 
-              assert(t2.verify());
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1 = t1.toTX();
 
-              assert.equal(t2.getInputValue(), 16380);
-              // If change < dust and is added to outputs:
-              // assert.equal(t2.getOutputValue(), 6380);
-              // If change > dust and is added to fee:
-              assert.equal(t2.getOutputValue(), 5460);
-              assert.equal(t2.getFee(), 10920);
+    // Coinbase
+    t2 = new MTX();
+    t2.addInput(dummy());
+    t2.addOutput(w2.getAddress(), 5460);
+    t2.addOutput(w2.getAddress(), 5460);
+    t2.addOutput(w2.getAddress(), 5460);
+    t2.addOutput(w2.getAddress(), 5460);
+    t2 = t2.toTX();
 
-              // Create new transaction
-              var t3 = bcoin.mtx().addOutput(w2, 15000);
-              w1.fund(t3, { rate: 10000, round: true }, function(err) {
-                assert(err);
-                assert.equal(err.requiredFunds, 25000);
-                cb();
-              });
-            });
-          });
-        });
-      });
-    });
-  });
+    yield walletdb.addTX(t1);
+    yield walletdb.addTX(t2);
 
-  it('should fill tx with inputs with accurate fee', function(cb) {
-    walletdb.create({ master: KEY1 }, function(err, w1) {
-      assert.ifError(err);
-      walletdb.create({ master: KEY2 }, function(err, w2) {
-        assert.ifError(err);
+    // Create our tx with an output
+    tx = new MTX();
+    tx.addOutput(to.getAddress(), 5460);
 
-        // Coinbase
-        var t1 = bcoin.mtx()
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460);
+    cost = tx.getOutputValue();
+    total = cost * 10000;
 
-        t1.addInput(dummyInput);
-        t1 = t1.toTX();
+    coins1 = yield w1.getCoins();
+    coins2 = yield w2.getCoins();
 
-        walletdb.addTX(t1, function(err) {
-          assert.ifError(err);
+    // Add our unspent inputs to sign
+    tx.addCoin(coins1[0]);
+    tx.addCoin(coins1[1]);
+    tx.addCoin(coins2[0]);
 
-          // Create new transaction
-          var t2 = bcoin.mtx().addOutput(w2, 5460);
-          w1.fund(t2, { rate: 10000 }, function(err) {
-            assert.ifError(err);
-            w1.sign(t2, function(err) {
-              assert.ifError(err);
-              t2 = t2.toTX();
-              assert(t2.verify());
+    // Sign transaction
+    total = yield w1.sign(tx);
+    assert.equal(total, 2);
 
-              assert.equal(t2.getInputValue(), 16380);
+    total = yield w2.sign(tx);
+    assert.equal(total, 1);
 
-              // Should now have a change output:
-              assert.equal(t2.getOutputValue(), 11130);
+    // Verify
+    assert.equal(tx.verify(), true);
 
-              assert.equal(t2.getFee(), 5250);
+    tx.inputs.length = 0;
+    tx.addCoin(coins1[1]);
+    tx.addCoin(coins1[2]);
+    tx.addCoin(coins2[1]);
 
-              assert.equal(t2.getWeight(), 2084);
-              assert.equal(t2.getBaseSize(), 521);
-              assert.equal(t2.getSize(), 521);
-              assert.equal(t2.getVirtualSize(), 521);
+    total = yield w1.sign(tx);
+    assert.equal(total, 2);
 
-              var balance;
-              w2.once('balance', function(b) {
-                balance = b;
-              });
+    total = yield w2.sign(tx);
+    assert.equal(total, 1);
 
-              // Create new transaction
-              walletdb.addTX(t2, function(err) {
-                assert.ifError(err);
-                var t3 = bcoin.mtx().addOutput(w2, 15000);
-                w1.fund(t3, { rate: 10000 }, function(err) {
-                  assert(err);
-                  assert(balance);
-                  assert(balance.total === 5460);
-                  cb();
-                });
-              });
-            });
-          });
-        });
-      });
-    });
-  });
+    // Verify
+    assert.equal(tx.verify(), true);
+  }));
 
-  it('should sign multiple inputs using different keys', function(cb) {
-    walletdb.create(function(err, w1) {
-      assert.ifError(err);
-      walletdb.create(function(err, w2) {
-        assert.ifError(err);
-        walletdb.create(function(err, to) {
-          assert.ifError(err);
-
-          // Coinbase
-          var t1 = bcoin.mtx()
-            .addOutput(w1, 5460)
-            .addOutput(w1, 5460)
-            .addOutput(w1, 5460)
-            .addOutput(w1, 5460);
-
-          t1.addInput(dummyInput);
-          t1 = t1.toTX();
-
-          // Coinbase
-          var t2 = bcoin.mtx()
-            .addOutput(w2, 5460)
-            .addOutput(w2, 5460)
-            .addOutput(w2, 5460)
-            .addOutput(w2, 5460);
-
-          t2.addInput(dummyInput);
-          t2 = t2.toTX();
-
-          walletdb.addTX(t1, function(err) {
-            assert.ifError(err);
-            walletdb.addTX(t2, function(err) {
-              assert.ifError(err);
-
-              // Create our tx with an output
-              var tx = bcoin.mtx();
-              tx.addOutput(to, 5460);
-
-              var cost = tx.getOutputValue();
-              var total = cost * constants.tx.MIN_FEE;
-
-              w1.getCoins(function(err, coins1) {
-                assert.ifError(err);
-                w2.getCoins(function(err, coins2) {
-                  assert.ifError(err);
-
-                  // Add dummy output (for `left`) to calculate maximum TX size
-                  tx.addOutput(w1, 0);
-
-                  // Add our unspent inputs to sign
-                  tx.addInput(coins1[0]);
-                  tx.addInput(coins1[1]);
-                  tx.addInput(coins2[0]);
-
-                  var left = tx.getInputValue() - total;
-                  if (left < constants.tx.DUST_THRESHOLD) {
-                    tx.outputs[tx.outputs.length - 2].value += left;
-                    left = 0;
-                  }
-                  if (left === 0)
-                    tx.outputs.pop();
-                  else
-                    tx.outputs[tx.outputs.length - 1].value = left;
-
-                  // Sign transaction
-                  w1.sign(tx, function(err, total) {
-                    assert.ifError(err);
-                    assert.equal(total, 2);
-                    w2.sign(tx, function(err, total) {
-                      assert.ifError(err);
-                      assert.equal(total, 1);
-
-                      // Verify
-                      assert.equal(tx.verify(), true);
-
-                      // Sign transaction using `inputs` and `off` params.
-                      tx.inputs.length = 0;
-                      tx.addInput(coins1[1]);
-                      tx.addInput(coins1[2]);
-                      tx.addInput(coins2[1]);
-                      w1.sign(tx, function(err, total) {
-                        assert.ifError(err);
-                        assert.equal(total, 2);
-                        w2.sign(tx, function(err, total) {
-                          assert.ifError(err);
-                          assert.equal(total, 1);
-
-                          // Verify
-                          assert.equal(tx.verify(), true);
-
-                          cb();
-                        });
-                      });
-                    });
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
-    });
-  });
-
-  function multisig(witness, bullshitNesting, cb) {
-    var flags = bcoin.constants.flags.STANDARD_VERIFY_FLAGS;
-
-    if (witness)
-      flags |= bcoin.constants.flags.VERIFY_WITNESS;
+  testMultisig = co(function* testMultisig(witness, bullshitNesting, cb) {
+    var flags = Script.flags.STANDARD_VERIFY_FLAGS;
+    var rec = bullshitNesting ? 'nested' : 'receive';
+    var depth = bullshitNesting ? 'nestedDepth' : 'receiveDepth';
+    var options, w1, w2, w3, receive, b58;
+    var addr, paddr, utx, send, change;
+    var view, block;
 
     // Create 3 2-of-3 wallets with our pubkeys as "shared keys"
-    var options = {
+    options = {
       witness: witness,
       type: 'multisig',
       m: 2,
       n: 3
     };
 
-    var w1, w2, w3, receive;
+    w1 = yield walletdb.create(options);
+    w2 = yield walletdb.create(options);
+    w3 = yield walletdb.create(options);
+    receive = yield walletdb.create();
 
-    utils.serial([
-      function(next) {
-        walletdb.create(options, function(err, w1_) {
-          assert.ifError(err);
-          w1 = w1_;
-          next();
-        });
-      },
-      function(next) {
-        walletdb.create(options, function(err, w2_) {
-          assert.ifError(err);
-          w2 = w2_;
-          next();
-        });
-      },
-      function(next) {
-        walletdb.create(options, function(err, w3_) {
-          assert.ifError(err);
-          w3 = w3_;
-          next();
-        });
-      },
-      function(next) {
-        walletdb.create(function(err, receive_) {
-          assert.ifError(err);
-          receive = receive_;
-          next();
-        });
+    yield w1.addSharedKey(w2.account.accountKey);
+    yield w1.addSharedKey(w3.account.accountKey);
+    yield w2.addSharedKey(w1.account.accountKey);
+    yield w2.addSharedKey(w3.account.accountKey);
+    yield w3.addSharedKey(w1.account.accountKey);
+    yield w3.addSharedKey(w2.account.accountKey);
+
+    // Our p2sh address
+    b58 = w1.account[rec].getAddress('base58');
+    addr = Address.fromBase58(b58);
+
+    if (witness) {
+      if (bullshitNesting)
+        assert.equal(addr.type, scriptTypes.SCRIPTHASH);
+      else
+        assert.equal(addr.type, scriptTypes.WITNESSSCRIPTHASH);
+    } else {
+      assert.equal(addr.type, scriptTypes.SCRIPTHASH);
+    }
+
+    assert.equal(w1.account[rec].getAddress('base58'), b58);
+    assert.equal(w2.account[rec].getAddress('base58'), b58);
+    assert.equal(w3.account[rec].getAddress('base58'), b58);
+
+    paddr = w1.getNested();
+
+    if (witness) {
+      assert(paddr);
+      assert.equal(w1.getNested('base58'), paddr.toBase58());
+      assert.equal(w2.getNested('base58'), paddr.toBase58());
+      assert.equal(w3.getNested('base58'), paddr.toBase58());
+    }
+
+    // Add a shared unspent transaction to our wallets
+    utx = new MTX();
+    utx.addInput(dummy());
+    utx.addOutput(bullshitNesting ? paddr : addr, 5460 * 10);
+    utx = utx.toTX();
+
+    // Simulate a confirmation
+    block = nextBlock();
+
+    assert.equal(w1.account[depth], 1);
+
+    yield walletdb.addBlock(block, [utx]);
+
+    assert.equal(w1.account[depth], 2);
+
+    assert.equal(w1.account.changeDepth, 1);
+
+    assert(w1.account[rec].getAddress('base58') !== b58);
+    b58 = w1.account[rec].getAddress('base58');
+    assert.equal(w1.account[rec].getAddress('base58'), b58);
+    assert.equal(w2.account[rec].getAddress('base58'), b58);
+    assert.equal(w3.account[rec].getAddress('base58'), b58);
+
+    // Create a tx requiring 2 signatures
+    send = new MTX();
+    send.addOutput(receive.getAddress(), 5460);
+    assert(!send.verify(flags));
+    yield w1.fund(send, { rate: 10000, round: true });
+
+    yield w1.sign(send);
+
+    assert(!send.verify(flags));
+
+    yield w2.sign(send);
+
+    view = send.view;
+    send = send.toTX();
+    assert(send.verify(view, flags));
+
+    assert.equal(w1.account.changeDepth, 1);
+
+    change = w1.account.change.getAddress('base58');
+    assert.equal(w1.account.change.getAddress('base58'), change);
+    assert.equal(w2.account.change.getAddress('base58'), change);
+    assert.equal(w3.account.change.getAddress('base58'), change);
+
+    // Simulate a confirmation
+    block = nextBlock();
+
+    yield walletdb.addBlock(block, [send]);
+
+    assert.equal(w1.account[depth], 2);
+    assert.equal(w1.account.changeDepth, 2);
+
+    assert(w1.account[rec].getAddress('base58') === b58);
+    assert(w1.account.change.getAddress('base58') !== change);
+    change = w1.account.change.getAddress('base58');
+    assert.equal(w1.account.change.getAddress('base58'), change);
+    assert.equal(w2.account.change.getAddress('base58'), change);
+    assert.equal(w3.account.change.getAddress('base58'), change);
+
+    if (witness) {
+      send.inputs[0].witness.set(2, 0);
+      send.inputs[0].witness.compile();
+    } else {
+      send.inputs[0].script.set(2, 0);
+      send.inputs[0].script.compile();
+    }
+
+    assert(!send.verify(view, flags));
+    assert.equal(send.getFee(view), 10000);
+  });
+
+  it('should verify 2-of-3 scripthash tx', co(function* () {
+    yield testMultisig(false, false);
+  }));
+
+  it('should verify 2-of-3 witnessscripthash tx', co(function* () {
+    yield testMultisig(true, false);
+  }));
+
+  it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', co(function* () {
+    yield testMultisig(true, true);
+  }));
+
+  it('should fill tx with account 1', co(function* () {
+    var w1 = yield walletdb.create();
+    var w2 = yield walletdb.create();
+    var account, accounts, rec, t1, t2, t3, err;
+
+    account = yield w1.createAccount({ name: 'foo' });
+    assert.equal(account.name, 'foo');
+    assert.equal(account.accountIndex, 1);
+
+    account = yield w1.getAccount('foo');
+    assert.equal(account.name, 'foo');
+    assert.equal(account.accountIndex, 1);
+    rec = account.receive;
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addOutput(rec.getAddress(), 5460);
+    t1.addOutput(rec.getAddress(), 5460);
+    t1.addOutput(rec.getAddress(), 5460);
+    t1.addOutput(rec.getAddress(), 5460);
+
+    t1.addInput(dummy());
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Create new transaction
+    t2 = new MTX();
+    t2.addOutput(w2.getAddress(), 5460);
+    yield w1.fund(t2, { rate: 10000, round: true });
+    yield w1.sign(t2);
+
+    assert(t2.verify());
+
+    assert.equal(t2.getInputValue(), 16380);
+    assert.equal(t2.getOutputValue(), 6380);
+    assert.equal(t2.getFee(), 10000);
+
+    // Create new transaction
+    t3 = new MTX();
+    t3.addOutput(w2.getAddress(), 15000);
+
+    try {
+      yield w1.fund(t3, { rate: 10000, round: true });
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert.equal(err.requiredFunds, 25000);
+
+    accounts = yield w1.getAccounts();
+    assert.deepEqual(accounts, ['default', 'foo']);
+  }));
+
+  it('should fail to fill tx with account 1', co(function* () {
+    var w = yield walletdb.create();
+    var acc, account, t1, t2, err;
+
+    wallet = w;
+
+    acc = yield w.createAccount({ name: 'foo' });
+    assert.equal(acc.name, 'foo');
+    assert.equal(acc.accountIndex, 1);
+
+    account = yield w.getAccount('foo');
+    assert.equal(account.name, 'foo');
+    assert.equal(account.accountIndex, 1);
+    assert(account.accountKey.toBase58() === acc.accountKey.toBase58());
+    assert(w.account.accountIndex === 0);
+
+    assert.notEqual(
+      account.receive.getAddress('base58'),
+      w.account.receive.getAddress('base58'));
+
+    assert.equal(w.getAddress('base58'),
+      w.account.receive.getAddress('base58'));
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addOutput(w.getAddress(), 5460);
+    t1.addOutput(w.getAddress(), 5460);
+    t1.addOutput(w.getAddress(), 5460);
+    t1.addOutput(account.receive.getAddress(), 5460);
+
+    t1.addInput(dummy());
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Should fill from `foo` and fail
+    t2 = new MTX();
+    t2.addOutput(w.getAddress(), 5460);
+    try {
+      yield w.fund(t2, { rate: 10000, round: true, account: 'foo' });
+    } catch (e) {
+      err = e;
+    }
+    assert(err);
+
+    // Should fill from whole wallet and succeed
+    t2 = new MTX();
+    t2.addOutput(w.getAddress(), 5460);
+    yield w.fund(t2, { rate: 10000, round: true });
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(account.receive.getAddress(), 5460);
+    t1.addOutput(account.receive.getAddress(), 5460);
+    t1.addOutput(account.receive.getAddress(), 5460);
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Should fill from `foo` and succeed
+    t2 = new MTX();
+    t2.addOutput(w.getAddress(), 5460);
+    yield w.fund(t2, { rate: 10000, round: true, account: 'foo' });
+  }));
+
+  it('should create two accounts (multiple encryption)', co(function* () {
+    var w = yield walletdb.create({ id: 'foobar', passphrase: 'foo' });
+    var account;
+
+    yield w.destroy();
+
+    w = yield walletdb.get('foobar');
+
+    account = yield w.createAccount({ name: 'foo1' }, 'foo');
+    assert(account);
+
+    yield w.lock();
+  }));
+
+  it('should fill tx with inputs when encrypted', co(function* () {
+    var w = yield walletdb.create({ passphrase: 'foo' });
+    var t1, t2, err;
+
+    w.master.stop();
+    w.master.key = null;
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w.getAddress(), 5460);
+    t1.addOutput(w.getAddress(), 5460);
+    t1.addOutput(w.getAddress(), 5460);
+    t1.addOutput(w.getAddress(), 5460);
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Create new transaction
+    t2 = new MTX();
+    t2.addOutput(w.getAddress(), 5460);
+    yield w.fund(t2, { rate: 10000, round: true });
+
+    // Should fail
+    try {
+      yield w.sign(t2, 'bar');
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert(!t2.verify());
+
+    // Should succeed
+    yield w.sign(t2, 'foo');
+    assert(t2.verify());
+  }));
+
+  it('should fill tx with inputs with subtract fee (1)', co(function* () {
+    var w1 = yield walletdb.create();
+    var w2 = yield walletdb.create();
+    var t1, t2;
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Create new transaction
+    t2 = new MTX();
+    t2.addOutput(w2.getAddress(), 21840);
+    yield w1.fund(t2, { rate: 10000, round: true, subtractFee: true });
+    yield w1.sign(t2);
+
+    assert(t2.verify());
+
+    assert.equal(t2.getInputValue(), 5460 * 4);
+    assert.equal(t2.getOutputValue(), 21840 - 10000);
+    assert.equal(t2.getFee(), 10000);
+  }));
+
+  it('should fill tx with inputs with subtract fee (2)', co(function* () {
+    var w1 = yield walletdb.create();
+    var w2 = yield walletdb.create();
+    var options, t1, t2;
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    options = {
+      subtractFee: true,
+      rate: 10000,
+      round: true,
+      outputs: [{ address: w2.getAddress(), value: 21840 }]
+    };
+
+    // Create new transaction
+    t2 = yield w1.createTX(options);
+    yield w1.sign(t2);
+
+    assert(t2.verify());
+
+    assert.equal(t2.getInputValue(), 5460 * 4);
+    assert.equal(t2.getOutputValue(), 21840 - 10000);
+    assert.equal(t2.getFee(), 10000);
+  }));
+
+  it('should fill tx with smart coin selection', co(function* () {
+    var w1 = yield walletdb.create();
+    var w2 = yield walletdb.create();
+    var found = false;
+    var total = 0;
+    var i, options, t1, t2, t3, block, coins, coin;
+
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1.addOutput(w1.getAddress(), 5460);
+    t1 = t1.toTX();
+
+    yield walletdb.addTX(t1);
+
+    // Coinbase
+    t2 = new MTX();
+    t2.addInput(dummy());
+    t2.addOutput(w1.getAddress(), 5460);
+    t2.addOutput(w1.getAddress(), 5460);
+    t2.addOutput(w1.getAddress(), 5460);
+    t2.addOutput(w1.getAddress(), 5460);
+    t2 = t2.toTX();
+
+    block = nextBlock();
+
+    yield walletdb.addBlock(block, [t2]);
+
+    coins = yield w1.getSmartCoins();
+    assert.equal(coins.length, 4);
+
+    for (i = 0; i < coins.length; i++) {
+      coin = coins[i];
+      assert.equal(coin.height, block.height);
+    }
+
+    // Create a change output for ourselves.
+    yield w1.send({
+      subtractFee: true,
+      rate: 1000,
+      depth: 1,
+      outputs: [{ address: w2.getAddress(), value: 1461 }]
+    });
+
+    coins = yield w1.getSmartCoins();
+    assert.equal(coins.length, 4);
+
+    for (i = 0; i < coins.length; i++) {
+      coin = coins[i];
+      if (coin.height === -1) {
+        assert(!found);
+        assert(coin.value < 5460);
+        found = true;
+      } else {
+        assert.equal(coin.height, block.height);
       }
-    ], function(err) {
-      assert.ifError(err);
+      total += coin.value;
+    }
 
-      utils.serial([
-        w1.addKey.bind(w1, w2.accountKey),
-        w1.addKey.bind(w1, w3.accountKey),
-        w2.addKey.bind(w2, w1.accountKey),
-        w2.addKey.bind(w2, w3.accountKey),
-        w3.addKey.bind(w3, w1.accountKey),
-        w3.addKey.bind(w3, w2.accountKey)
-      ], function(err) {
-        assert.ifError(err);
+    assert(found);
 
-        // w3 = bcoin.wallet.fromJSON(w3.toJSON());
+    // Use smart selection
+    options = {
+      subtractFee: true,
+      smart: true,
+      rate: 10000,
+      outputs: [{ address: w2.getAddress(), value: total }]
+    };
 
-        // Our p2sh address
-        var addr = w1.getAddress('base58');
+    t3 = yield w1.createTX(options);
+    assert.equal(t3.inputs.length, 4);
 
-        var ad = bcoin.address.fromBase58(addr);
+    found = false;
+    for (i = 0; i < t3.inputs.length; i++) {
+      coin = t3.view.getCoin(t3.inputs[i]);
+      if (coin.height === -1) {
+        assert(!found);
+        assert(coin.value < 5460);
+        found = true;
+      } else {
+        assert.equal(coin.height, block.height);
+      }
+    }
 
-        if (witness)
-          assert(ad.type === scriptTypes.WITNESSSCRIPTHASH);
-        else
-          assert(ad.type === scriptTypes.SCRIPTHASH);
+    assert(found);
 
-        assert.equal(w1.getAddress('base58'), addr);
-        assert.equal(w2.getAddress('base58'), addr);
-        assert.equal(w3.getAddress('base58'), addr);
+    yield w1.sign(t3);
 
-        var paddr = w1.getProgramAddress('base58');
-        assert.equal(w1.getProgramAddress('base58'), paddr);
-        assert.equal(w2.getProgramAddress('base58'), paddr);
-        assert.equal(w3.getProgramAddress('base58'), paddr);
+    assert(t3.verify());
+  }));
 
-        // Add a shared unspent transaction to our wallets
-        var utx = bcoin.mtx();
-        if (bullshitNesting)
-          utx.addOutput({ address: paddr, value: 5460 * 10 });
-        else
-          utx.addOutput({ address: addr, value: 5460 * 10 });
+  it('should get range of txs', co(function* () {
+    var w = wallet;
+    var txs = yield w.getRange({ start: util.now() - 1000 });
+    assert.equal(txs.length, 2);
+  }));
 
-        utx.addInput(dummyInput);
-        utx = utx.toTX();
+  it('should get range of txs from account', co(function* () {
+    var w = wallet;
+    var txs = yield w.getRange('foo', { start: util.now() - 1000 });
+    assert.equal(txs.length, 2);
+  }));
 
-        // Simulate a confirmation
-        utx.ps = 0;
-        utx.ts = 1;
-        utx.height = 1;
+  it('should not get range of txs from non-existent account', co(function* () {
+    var w = wallet;
+    var txs, err;
 
-        assert.equal(w1.receiveDepth, 1);
+    try {
+      txs = yield w.getRange('bad', { start: 0xdeadbeef - 1000 });
+    } catch (e) {
+      err = e;
+    }
 
-        walletdb.addTX(utx, function(err) {
-          assert.ifError(err);
-          walletdb.addTX(utx, function(err) {
-            assert.ifError(err);
-            walletdb.addTX(utx, function(err) {
-              assert.ifError(err);
+    assert(err);
+    assert.equal(err.message, 'Account not found.');
+  }));
 
-              assert.equal(w1.receiveDepth, 2);
-              assert.equal(w1.changeDepth, 1);
+  it('should get account balance', co(function* () {
+    var w = wallet;
+    var balance = yield w.getBalance('foo');
+    assert.equal(balance.unconfirmed, 21840);
+  }));
 
-              assert(w1.getAddress('base58') !== addr);
-              addr = w1.getAddress('base58');
-              assert.equal(w1.getAddress('base58'), addr);
-              assert.equal(w2.getAddress('base58'), addr);
-              assert.equal(w3.getAddress('base58'), addr);
+  it('should import privkey', co(function* () {
+    var key = KeyRing.generate();
+    var w = yield walletdb.create({ passphrase: 'test' });
+    var options, k, t1, t2, wtx;
 
-              // Create a tx requiring 2 signatures
-              var send = bcoin.mtx();
-              send.addOutput({ address: receive.getAddress(), value: 5460 });
-              assert(!send.verify(flags));
-              w1.fund(send, { rate: 10000, round: true }, function(err) {
-                assert.ifError(err);
+    yield w.importKey('default', key, 'test');
 
-                w1.sign(send, function(err) {
-                  assert.ifError(err);
+    k = yield w.getKey(key.getHash('hex'));
 
-                  assert(!send.verify(flags));
-                  w2.sign(send, function(err) {
-                    assert.ifError(err);
+    assert.equal(k.getHash('hex'), key.getHash('hex'));
 
-                    send = send.toTX();
-                    assert(send.verify(flags));
+    // Coinbase
+    t1 = new MTX();
+    t1.addOutput(key.getAddress(), 5460);
+    t1.addOutput(key.getAddress(), 5460);
+    t1.addOutput(key.getAddress(), 5460);
+    t1.addOutput(key.getAddress(), 5460);
 
-                    assert.equal(w1.changeDepth, 1);
-                    var change = w1.changeAddress.getAddress('base58');
-                    assert.equal(w1.changeAddress.getAddress('base58'), change);
-                    assert.equal(w2.changeAddress.getAddress('base58'), change);
-                    assert.equal(w3.changeAddress.getAddress('base58'), change);
+    t1.addInput(dummy());
+    t1 = t1.toTX();
 
-                    // Simulate a confirmation
-                    send.ps = 0;
-                    send.ts = 1;
-                    send.height = 1;
+    yield walletdb.addTX(t1);
 
-                    walletdb.addTX(send, function(err) {
-                      assert.ifError(err);
-                      walletdb.addTX(send, function(err) {
-                        assert.ifError(err);
-                        walletdb.addTX(send, function(err) {
-                          assert.ifError(err);
+    wtx = yield w.getTX(t1.hash('hex'));
+    assert(wtx);
+    assert.equal(t1.hash('hex'), wtx.hash);
 
-                          assert.equal(w1.receiveDepth, 2);
-                          assert.equal(w1.changeDepth, 2);
+    options = {
+      rate: 10000,
+      round: true,
+      outputs: [{ address: w.getAddress(), value: 7000 }]
+    };
 
-                          assert(w1.getAddress('base58') === addr);
-                          assert(w1.changeAddress.getAddress('base58') !== change);
-                          change = w1.changeAddress.getAddress('base58');
-                          assert.equal(w1.changeAddress.getAddress('base58'), change);
-                          assert.equal(w2.changeAddress.getAddress('base58'), change);
-                          assert.equal(w3.changeAddress.getAddress('base58'), change);
+    // Create new transaction
+    t2 = yield w.createTX(options);
+    yield w.sign(t2);
+    assert(t2.verify());
+    assert(t2.inputs[0].prevout.hash === wtx.hash);
 
-                          if (witness) {
-                            send.inputs[0].witness.items[2] = new Buffer([]);
-                          } else {
-                            send.inputs[0].script.code[2] = new bcoin.opcode(0);
-                            send.inputs[0].script.compile();
-                          }
+    ewallet = w;
+    ekey = key;
+  }));
 
-                          assert(!send.verify(flags));
-                          assert.equal(send.getFee(), 10000);
+  it('should import pubkey', co(function* () {
+    var priv = KeyRing.generate();
+    var key = new KeyRing(priv.publicKey);
+    var w = yield walletdb.create({ watchOnly: true });
+    var k;
 
-                          // w3 = bcoin.wallet.fromJSON(w3.toJSON());
-                          // assert.equal(w3.receiveDepth, 2);
-                          // assert.equal(w3.changeDepth, 2);
-                          //assert.equal(w3.getAddress('base58'), addr);
-                          //assert.equal(w3.changeAddress.getAddress('base58'), change);
+    yield w.importKey('default', key);
 
-                          cb();
-                        });
-                      });
-                    });
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
+    k = yield w.getPath(key.getHash('hex'));
+
+    assert.equal(k.hash, key.getHash('hex'));
+
+    k = yield w.getKey(key.getHash('hex'));
+    assert(k);
+  }));
+
+  it('should import address', co(function* () {
+    var key = KeyRing.generate();
+    var w = yield walletdb.create({ watchOnly: true });
+    var k;
+
+    yield w.importAddress('default', key.getAddress());
+
+    k = yield w.getPath(key.getHash('hex'));
+
+    assert.equal(k.hash, key.getHash('hex'));
+
+    k = yield w.getKey(key.getHash('hex'));
+    assert(!k);
+  }));
+
+  it('should get details', co(function* () {
+    var w = wallet;
+    var txs = yield w.getRange('foo', { start: util.now() - 1000 });
+    var details = yield w.toDetails(txs);
+    assert(details.some(function(tx) {
+      return tx.toJSON().outputs[0].path.name === 'foo';
+    }));
+  }));
+
+  it('should rename wallet', co(function* () {
+    var w = wallet;
+    yield wallet.rename('test');
+    var txs = yield w.getRange('foo', { start: util.now() - 1000 });
+    var details = yield w.toDetails(txs);
+    assert.equal(details[0].toJSON().id, 'test');
+  }));
+
+  it('should change passphrase with encrypted imports', co(function* () {
+    var w = ewallet;
+    var addr = ekey.getAddress();
+    var path, d1, d2, k;
+
+    assert(w.master.encrypted);
+
+    path = yield w.getPath(addr);
+    assert(path);
+    assert(path.data && path.encrypted);
+    d1 = path.data;
+
+    yield w.decrypt('test');
+
+    path = yield w.getPath(addr);
+    assert(path);
+    assert(path.data && !path.encrypted);
+
+    k = yield w.getKey(addr);
+    assert(k);
+
+    yield w.encrypt('foo');
+
+    path = yield w.getPath(addr);
+    assert(path);
+    assert(path.data && path.encrypted);
+    d2 = path.data;
+
+    assert(!util.equal(d1, d2));
+
+    k = yield w.getKey(addr);
+    assert(!k);
+
+    yield w.unlock('foo');
+    k = yield w.getKey(addr);
+    assert(k);
+    assert.equal(k.getHash('hex'), addr.getHash('hex'));
+  }));
+
+  it('should recover from a missed tx', co(function* () {
+    var walletdb, alice, addr, bob, t1, t2, t3;
+
+    walletdb = new WalletDB({
+      name: 'wallet-test',
+      db: 'memory',
+      verify: false
     });
-  }
 
-  it('should verify 2-of-3 scripthash tx', function(cb) {
-    multisig(false, false, cb);
-  });
+    yield walletdb.open();
 
-  it('should verify 2-of-3 witnessscripthash tx', function(cb) {
-    multisig(true, false, cb);
-  });
+    alice = yield walletdb.create({ master: KEY1 });
+    bob = yield walletdb.create({ master: KEY1 });
+    addr = alice.getAddress();
 
-  it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', function(cb) {
-    multisig(true, true, cb);
-  });
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(addr, 50000);
+    t1 = t1.toTX();
 
-  it('should fill tx with account 1', function(cb) {
-    walletdb.create({}, function(err, w1) {
-      assert.ifError(err);
-      walletdb.create({}, function(err, w2) {
-        assert.ifError(err);
-        w1.createAccount({ name: 'foo' }, function(err, account) {
-          assert.ifError(err);
-          assert.equal(account.name, 'foo');
-          assert.equal(account.accountIndex, 1);
-          w1.getAccount('foo', function(err, account) {
-            assert.ifError(err);
-            assert.equal(account.name, 'foo');
-            assert.equal(account.accountIndex, 1);
+    yield alice.add(t1);
+    yield bob.add(t1);
 
-            // Coinbase
-            var t1 = bcoin.mtx()
-              .addOutput(account.receiveAddress, 5460)
-              .addOutput(account.receiveAddress, 5460)
-              .addOutput(account.receiveAddress, 5460)
-              .addOutput(account.receiveAddress, 5460);
+    // Bob misses this tx!
+    t2 = new MTX();
+    t2.addTX(t1, 0);
+    t2.addOutput(addr, 24000);
+    t2.addOutput(addr, 24000);
 
-            t1.addInput(dummyInput);
-            t1 = t1.toTX();
+    yield alice.sign(t2);
+    t2 = t2.toTX();
 
-            walletdb.addTX(t1, function(err) {
-              assert.ifError(err);
+    yield alice.add(t2);
 
-              // Create new transaction
-              var t2 = bcoin.mtx().addOutput(w2, 5460);
-              w1.fund(t2, { rate: 10000, round: true }, function(err) {
-                assert.ifError(err);
-                w1.sign(t2, function(err) {
-                  assert.ifError(err);
+    assert.notEqual(
+      (yield alice.getBalance()).unconfirmed,
+      (yield bob.getBalance()).unconfirmed);
 
-                  assert(t2.verify());
+    // Bob sees this one.
+    t3 = new MTX();
+    t3.addTX(t2, 0);
+    t3.addTX(t2, 1);
+    t3.addOutput(addr, 30000);
 
-                  assert.equal(t2.getInputValue(), 16380);
-                  // If change < dust and is added to outputs:
-                  // assert.equal(t2.getOutputValue(), 6380);
-                  // If change > dust and is added to fee:
-                  assert.equal(t2.getOutputValue(), 5460);
-                  assert.equal(t2.getFee(), 10920);
+    yield alice.sign(t3);
+    t3 = t3.toTX();
 
-                  // Create new transaction
-                  var t3 = bcoin.mtx().addOutput(w2, 15000);
-                  w1.fund(t3, { rate: 10000, round: true }, function(err) {
-                    assert(err);
-                    assert.equal(err.requiredFunds, 25000);
-                    w1.getAccounts(function(err, accounts) {
-                      assert.ifError(err);
-                      assert.deepEqual(accounts, ['default', 'foo']);
-                      cb();
-                    });
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
+    assert.equal((yield bob.getBalance()).unconfirmed, 50000);
+
+    yield alice.add(t3);
+    yield bob.add(t3);
+
+    assert.equal((yield alice.getBalance()).unconfirmed, 30000);
+
+    // Bob sees t2 on the chain.
+    yield bob.add(t2);
+
+    // Bob sees t3 on the chain.
+    yield bob.add(t3);
+
+    assert.equal((yield bob.getBalance()).unconfirmed, 30000);
+  }));
+
+  it('should recover from a missed tx and double spend', co(function* () {
+    var walletdb, alice, addr, bob, t1, t2, t3, t2a;
+
+    walletdb = new WalletDB({
+      name: 'wallet-test',
+      db: 'memory',
+      verify: false
     });
-  });
 
-  it('should fail to fill tx with account 1', function(cb) {
-    walletdb.create({}, function(err, w1) {
-      assert.ifError(err);
-      lastW = w1;
-      w1.createAccount({ name: 'foo' }, function(err, acc) {
-        assert.ifError(err);
-        assert.equal(acc.name, 'foo');
-        assert.equal(acc.accountIndex, 1);
-        w1.getAccount('foo', function(err, account) {
-          assert.ifError(err);
-          assert.equal(account.name, 'foo');
-          assert.equal(account.accountIndex, 1);
-          // assert(account !== w1.account);
-          // assert(account !== acc);
-          assert(account.accountKey.xpubkey === acc.accountKey.xpubkey);
-          assert(w1.account.accountIndex === 0);
-          assert(account.receiveAddress.getAddress('base58') !== w1.account.receiveAddress.getAddress('base58'));
-          assert(w1.getAddress('base58') === w1.account.receiveAddress.getAddress('base58'));
+    yield walletdb.open();
 
-          // Coinbase
-          var t1 = bcoin.mtx()
-            .addOutput(w1, 5460)
-            .addOutput(w1, 5460)
-            .addOutput(w1, 5460)
-            .addOutput(account.receiveAddress, 5460);
+    alice = yield walletdb.create({ master: KEY1 });
+    bob = yield walletdb.create({ master: KEY1 });
+    addr = alice.getAddress();
 
-          t1.addInput(dummyInput);
-          t1 = t1.toTX();
+    // Coinbase
+    t1 = new MTX();
+    t1.addInput(dummy());
+    t1.addOutput(addr, 50000);
+    t1 = t1.toTX();
 
-          walletdb.addTX(t1, function(err) {
-            assert.ifError(err);
+    yield alice.add(t1);
+    yield bob.add(t1);
 
-            // Should fill from `foo` and fail
-            var t2 = bcoin.mtx().addOutput(w1, 5460);
-            w1.fund(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
-              assert(err);
-              // Should fill from whole wallet and succeed
-              var t2 = bcoin.mtx().addOutput(w1, 5460);
-              w1.fund(t2, { rate: 10000, round: true }, function(err) {
-                assert.ifError(err);
+    // Bob misses this tx!
+    t2 = new MTX();
+    t2.addTX(t1, 0);
+    t2.addOutput(addr, 24000);
+    t2.addOutput(addr, 24000);
 
-                // Coinbase
-                var t1 = bcoin.mtx()
-                  .addOutput(account.receiveAddress, 5460)
-                  .addOutput(account.receiveAddress, 5460)
-                  .addOutput(account.receiveAddress, 5460);
+    yield alice.sign(t2);
+    t2 = t2.toTX();
 
-                t1.ps = 0xdeadbeef;
-                t1.addInput(dummyInput);
-                t1 = t1.toTX();
+    yield alice.add(t2);
 
-                walletdb.addTX(t1, function(err) {
-                  assert.ifError(err);
-                  var t2 = bcoin.mtx().addOutput(w1, 5460);
-                  // Should fill from `foo` and succeed
-                  w1.fund(t2, { rate: 10000, round: true, account: 'foo' }, function(err) {
-                    assert.ifError(err);
-                    cb();
-                  });
-                });
-              });
-            });
-          });
-        });
-      });
-    });
-  });
+    assert.notEqual(
+      (yield alice.getBalance()).unconfirmed,
+      (yield bob.getBalance()).unconfirmed);
 
-  it('should fill tx with inputs when encrypted', function(cb) {
-    walletdb.create({ passphrase: 'foo' }, function(err, w1) {
-      assert.ifError(err);
-      w1.master.stop();
-      w1.master.key = null;
+    // Bob doublespends.
+    t2a = new MTX();
+    t2a.addTX(t1, 0);
+    t2a.addOutput(addr, 10000);
+    t2a.addOutput(addr, 10000);
 
-      // Coinbase
-      var t1 = bcoin.mtx()
-        .addOutput(w1, 5460)
-        .addOutput(w1, 5460)
-        .addOutput(w1, 5460)
-        .addOutput(w1, 5460);
+    yield bob.sign(t2a);
+    t2a = t2a.toTX();
 
-      t1.addInput(dummyInput);
-      t1 = t1.toTX();
+    yield bob.add(t2a);
 
-      walletdb.addTX(t1, function(err) {
-        assert.ifError(err);
+    // Bob sees this one.
+    t3 = new MTX();
+    t3.addTX(t2, 0);
+    t3.addTX(t2, 1);
+    t3.addOutput(addr, 30000);
 
-        // Create new transaction
-        var t2 = bcoin.mtx().addOutput(w1, 5460);
-        w1.fund(t2, { rate: 10000, round: true }, function(err) {
-          assert.ifError(err);
-          // Should fail
-          w1.sign(t2, 'bar', function(err) {
-            assert(err);
-            assert(!t2.verify());
-            // Should succeed
-            w1.sign(t2, 'foo', function(err) {
-              assert.ifError(err);
-              assert(t2.verify());
-              cb();
-            });
-          });
-        });
-      });
-    });
-  });
+    yield alice.sign(t3);
+    t3 = t3.toTX();
 
-  it('should fill tx with inputs with subtract fee', function(cb) {
-    walletdb.create(function(err, w1) {
-      assert.ifError(err);
-      walletdb.create(function(err, w2) {
-        assert.ifError(err);
+    assert.equal((yield bob.getBalance()).unconfirmed, 20000);
 
-        // Coinbase
-        var t1 = bcoin.mtx()
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460);
+    yield alice.add(t3);
+    yield bob.add(t3);
 
-        t1.addInput(dummyInput);
-        t1 = t1.toTX();
+    assert.equal((yield alice.getBalance()).unconfirmed, 30000);
 
-        walletdb.addTX(t1, function(err) {
-          assert.ifError(err);
+    // Bob sees t2 on the chain.
+    yield bob.add(t2);
 
-          // Create new transaction
-          var t2 = bcoin.mtx().addOutput(w2, 21840);
-          w1.fund(t2, { rate: 10000, round: true, subtractFee: true }, function(err) {
-            assert.ifError(err);
-            w1.sign(t2, function(err) {
-              assert.ifError(err);
+    // Bob sees t3 on the chain.
+    yield bob.add(t3);
 
-              assert(t2.verify());
+    assert.equal((yield bob.getBalance()).unconfirmed, 30000);
+  }));
 
-              assert.equal(t2.getInputValue(), 5460 * 4);
-              assert.equal(t2.getOutputValue(), 21840 - 10000);
-              assert.equal(t2.getFee(), 10000);
-
-              cb();
-            });
-          });
-        });
-      });
-    });
-  });
-
-  it('should fill tx with inputs with subtract fee with create tx', function(cb) {
-    walletdb.create(function(err, w1) {
-      assert.ifError(err);
-      walletdb.create(function(err, w2) {
-        assert.ifError(err);
-
-        // Coinbase
-        var t1 = bcoin.mtx()
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460)
-          .addOutput(w1, 5460);
-
-        t1.addInput(dummyInput);
-        t1 = t1.toTX();
-
-        walletdb.addTX(t1, function(err) {
-          assert.ifError(err);
-
-          var options = {
-            subtractFee: true,
-            rate: 10000,
-            round: true,
-            outputs: [{ address: w2.getAddress(), value: 21840 }]
-          };
-
-          // Create new transaction
-          w1.createTX(options, function(err, t2) {
-            assert.ifError(err);
-            w1.sign(t2, function(err) {
-              assert.ifError(err);
-
-              assert(t2.verify());
-
-              assert.equal(t2.getInputValue(), 5460 * 4);
-              assert.equal(t2.getOutputValue(), 21840 - 10000);
-              assert.equal(t2.getFee(), 10000);
-
-              cb();
-            });
-          });
-        });
-      });
-    });
-  });
-
-  it('should get range of txs', function(cb) {
-    var w1 = lastW;
-    w1.getRange({ start: 0xdeadbeef - 1000 }, function(err, txs) {
-      if (err)
-        return callback(err);
-      assert.equal(txs.length, 1);
-      cb();
-    });
-  });
-
-  it('should get range of txs from account', function(cb) {
-    var w1 = lastW;
-    w1.getRange('foo', { start: 0xdeadbeef - 1000 }, function(err, txs) {
-      if (err)
-        return callback(err);
-      assert.equal(txs.length, 1);
-      cb();
-    });
-  });
-
-  it('should not get range of txs from non-existent account', function(cb) {
-    var w1 = lastW;
-    w1.getRange('bad', { start: 0xdeadbeef - 1000 }, function(err, txs) {
-      assert(err);
-      assert.equal(err.message, 'Account not found.');
-      cb();
-    });
-  });
-
-  it('should get account balance', function(cb) {
-    var w1 = lastW;
-    w1.getBalance('foo', function(err, balance) {
-      assert.ifError(err);
-      assert.equal(balance.total, 21840);
-      cb();
-    });
-  });
-
-  it('should import key', function(cb) {
-    var key = bcoin.keyring.generate();
-    walletdb.create({ passphrase: 'test' }, function(err, w1) {
-      assert.ifError(err);
-      w1.importKey('default', key, 'test', function(err) {
-        assert.ifError(err);
-        w1.getKeyRing(key.getHash('hex'), function(err, k) {
-          if (err)
-            return callback(err);
-
-          assert.equal(k.getHash('hex'), key.getHash('hex'));
-
-          // Coinbase
-          var t1 = bcoin.mtx()
-            .addOutput(key.getAddress(), 5460)
-            .addOutput(key.getAddress(), 5460)
-            .addOutput(key.getAddress(), 5460)
-            .addOutput(key.getAddress(), 5460);
-
-          t1.addInput(dummyInput);
-          t1 = t1.toTX();
-
-          walletdb.addTX(t1, function(err) {
-            assert.ifError(err);
-
-            w1.getTX(t1.hash('hex'), function(err, tx) {
-              assert.ifError(err);
-              assert(tx);
-              assert.equal(t1.hash('hex'), tx.hash('hex'));
-
-              var options = {
-                rate: 10000,
-                round: true,
-                outputs: [{ address: w1.getAddress(), value: 7000 }]
-              };
-
-              // Create new transaction
-              w1.createTX(options, function(err, t2) {
-                assert.ifError(err);
-                w1.sign(t2, function(err) {
-                  assert.ifError(err);
-                  assert(t2.verify());
-                  assert(t2.inputs[0].prevout.hash === tx.hash('hex'));
-                  cb();
-                });
-              });
-            });
-          });
-        });
-      });
-    });
-  });
-
-  it('should cleanup', function(cb) {
-    walletdb.dump(function(err, records) {
-      assert.ifError(err);
-      constants.tx.COINBASE_MATURITY = 100;
-      cb();
-    });
+  it('should cleanup', function() {
+    consensus.COINBASE_MATURITY = 100;
   });
 });

@@ -45,17 +45,16 @@ gethashes() {
   done
 }
 
-tojson() {
+tojs() {
   local data=$(cat)
   local body=$(echo "$data" | head -n -1)
   local last=$(echo "$data" | tail -n 1)
-  echo '['
+  echo 'module.exports = ['
   echo "$body" | while read line; do
-    echo '  "'"${line}"'",'
+    echo "  '${line}',"
   done
-  echo '  "'"${last}"'"'
-  echo ']'
+  echo "  '${last}'"
+  echo '];'
 }
 
-# getcerts | tojson > "${dir}/../etc/certs.json"
-gethashes | tojson > "${dir}/../etc/certs.json"
+gethashes | tojs > "${dir}/../lib/bip70/certs.js"

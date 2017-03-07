@@ -1,15 +1,12 @@
 'use strict';
 
-var bn = require('bn.js');
-var bcoin = require('../').set('main');
-var utils = bcoin.utils;
-var crypto = require('../lib/crypto/crypto');
-var constants = bcoin.constants;
-var network = bcoin.networks;
 var assert = require('assert');
+var util = require('../lib/utils/util');
+var bip70 = require('../lib/bip70');
+var Address = require('../lib/primitives/address');
+var x509 = bip70.x509;
+
 var tests = require('./data/bip70.json');
-var bip70 = require('../lib/bip70/bip70');
-var x509 = require('../lib/bip70/x509');
 
 tests.valid = new Buffer(tests.valid, 'hex');
 tests.invalid = new Buffer(tests.invalid, 'hex');
@@ -27,13 +24,16 @@ x509.trusted = {};
 describe('BIP70', function() {
   function testRequest(data) {
     var request = bip70.PaymentRequest.fromRaw(data);
+    var ser;
+
     assert.equal(request.pkiType, 'x509+sha256');
     assert(request.pkiData);
     assert(request.getChain());
     assert(request.paymentDetails);
     assert(request.paymentDetails.memo.length !== 0);
     assert(request.paymentDetails.paymentUrl.length !== 0);
-    var ser = request.toRaw();
+
+    ser = request.toRaw();
     assert.equal(ser.toString('hex'), data.toString('hex'));
     assert(request.verify());
   }
@@ -62,7 +62,7 @@ describe('BIP70', function() {
 
     assert(request.verifyChain());
 
-    var request = bip70.PaymentRequest.fromRaw(tests.invalid);
+    request = bip70.PaymentRequest.fromRaw(tests.invalid);
 
     assert.equal(request.version, 1);
     assert.equal(request.getChain().length, 3);
@@ -83,7 +83,7 @@ describe('BIP70', function() {
     assert.deepStrictEqual(request.paymentDetails.getData('json'), {foo:1});
     assert(!request.verify());
 
-    var request = bip70.PaymentRequest.fromRaw(tests.untrusted);
+    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
 
     assert.equal(request.version, -1);
     assert.equal(request.getChain().length, 2);
@@ -102,12 +102,17 @@ describe('BIP70', function() {
   });
 
   it('should fail to verify cert signatures when enforcing trust', function() {
+    var request;
+
     x509.allowUntrusted = false;
-    var request = bip70.PaymentRequest.fromRaw(tests.valid);
+
+    request = bip70.PaymentRequest.fromRaw(tests.valid);
     assert(!request.verifyChain());
-    var request = bip70.PaymentRequest.fromRaw(tests.invalid);
+
+    request = bip70.PaymentRequest.fromRaw(tests.invalid);
     assert(!request.verifyChain());
-    var request = bip70.PaymentRequest.fromRaw(tests.untrusted);
+
+    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
     assert(!request.verifyChain());
   });
 
@@ -115,7 +120,8 @@ describe('BIP70', function() {
     var request = bip70.PaymentRequest.fromRaw(tests.valid);
     x509.setTrust([request.getChain().pop()]);
     assert(request.verifyChain());
-    var request = bip70.PaymentRequest.fromRaw(tests.untrusted);
+
+    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
     assert(!request.verifyChain());
   });
 
@@ -134,7 +140,8 @@ describe('BIP70', function() {
   it('should validate untrusted once again', function() {
     var request = bip70.PaymentRequest.fromRaw(tests.untrusted);
     x509.setTrust([request.getChain().pop()]);
-    var request = bip70.PaymentRequest.fromRaw(tests.untrusted);
+
+    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
     assert(request.verifyChain());
     assert.equal(request.getCA().name,
       'DigiCert SHA2 Extended Validation Server CA');
@@ -155,11 +162,11 @@ describe('BIP70', function() {
         network: 'testnet',
         paymentUrl: 'http://bcoin.io/payme',
         memo: 'foobar',
-        time: utils.now(),
-        expires: utils.now() + 3600,
+        time: util.now(),
+        expires: util.now() + 3600,
         outputs: [
-          { value: 10000, address: bcoin.address() },
-          { value: 50000, address: bcoin.address() }
+          { value: 10000, address: new Address() },
+          { value: 50000, address: new Address() }
         ],
         merchantData: { foo: 'bar' }
       }
@@ -176,7 +183,7 @@ describe('BIP70', function() {
     assert.equal(request.version, 25);
     assert.equal(request.paymentDetails.paymentUrl, 'http://bcoin.io/payme');
     assert.equal(request.paymentDetails.network, 'testnet');
-    assert(request.paymentDetails.time <= utils.now());
+    assert(request.paymentDetails.time <= util.now());
     assert.equal(request.paymentDetails.expires,
       request.paymentDetails.time + 3600);
     assert.equal(request.paymentDetails.outputs.length, 2);
@@ -184,7 +191,7 @@ describe('BIP70', function() {
     assert(!request.paymentDetails.isExpired());
 
     assert(!request.pkiData);
-    request.sign(tests.ca.priv, tests.ca.crt);
+    request.sign(tests.ca.priv, [tests.ca.crt]);
 
     assert(request.pkiData);
     assert.equal(request.pkiType, 'x509+sha256');
@@ -195,7 +202,7 @@ describe('BIP70', function() {
 
     testRequest(request.toRaw());
 
-    x509.setTrust(tests.ca.crt);
+    x509.setTrust([tests.ca.crt]);
     assert(request.verifyChain());
     assert.equal(request.getCA().name, 'JJs CA');
 
