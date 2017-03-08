@@ -297,6 +297,8 @@ describe('Block', function() {
     var map = {};
     var i, tx, mempool, result;
 
+    assert(cblock1.init());
+
     assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
 
@@ -333,6 +335,8 @@ describe('Block', function() {
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     var map = {};
     var i, tx, mid, keys, mempool, result, req, res;
+
+    assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
@@ -388,6 +392,8 @@ describe('Block', function() {
     var map = {};
     var i, tx, result, mempool;
 
+    assert(cblock1.init());
+
     assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
@@ -422,6 +428,8 @@ describe('Block', function() {
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     var map = {};
     var i, tx, mid, keys, mempool, result, req, res;
+
+    assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
