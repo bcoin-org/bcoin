@@ -1,7 +1,6 @@
 'use strict';
 
 var net = require('net');
-var dns = require('dns');
 var EventEmitter = require('events').EventEmitter;
 var IOServer = require('socket.io');
 var util = require('../lib/utils/util');
@@ -64,47 +63,6 @@ WSProxy.prototype._handleSocket = function _handleSocket(ws) {
 
   ws.on('tcp connect', function(port, host, nonce) {
     self._handleConnect(ws, port, host, nonce);
-  });
-
-  ws.on('dns resolve', function(name, record, callback) {
-    self._handleResolve(ws, name, record, callback);
-  });
-};
-
-WSProxy.prototype._handleResolve = function _handleResolve(ws, name, record, callback) {
-  if (typeof name !== 'string') {
-    ws.disconnect();
-    return;
-  }
-
-  if (typeof record !== 'string') {
-    ws.disconnect();
-    return;
-  }
-
-  if (typeof callback !== 'function') {
-    ws.disconnect();
-    return;
-  }
-
-  if (record !== 'A' && record !== 'AAAA') {
-    this.log('Client sent a bad record type: %s.', record);
-    ws.disconnect();
-    return;
-  }
-
-  if (!NAME_REGEX.test(name) || name.length > 200) {
-    this.log('Client sent a bad domain: %s.', name);
-    ws.disconnect();
-    return;
-  }
-
-  dns.resolve(name, record, function(err, result) {
-    if (err) {
-      callback({ message: err.message, code: err.code });
-      return;
-    }
-    callback(null, result);
   });
 };
 
