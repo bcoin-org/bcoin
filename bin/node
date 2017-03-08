@@ -4,33 +4,20 @@
 
 process.title = 'bcoin';
 
-var assert = require('assert');
 var bcoin = require('../');
 var co = bcoin.co;
-var options, node;
+var node;
 
-options = bcoin.config({
-  config: true,
-  arg: true,
-  env: true,
-  logLevel: 'debug',
+node = new bcoin.fullnode({
   logFile: true,
+  logLevel: 'debug',
   db: 'leveldb',
-  listen: true
+  listen: true,
+  loader: require
 });
-
-bcoin.set(options);
-
-node = new bcoin.fullnode(options);
 
 node.on('error', function(err) {
   ;
-});
-
-process.on('uncaughtException', function(err) {
-  node.logger.debug(err.stack);
-  node.logger.error(err);
-  process.exit(1);
 });
 
 co.spawn(function *() {

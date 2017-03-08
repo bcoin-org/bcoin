@@ -8,36 +8,25 @@ var assert = require('assert');
 var bcoin = require('../');
 var util = bcoin.util;
 var co = bcoin.co;
-var options, node;
+var node;
 
-options = bcoin.config({
-  config: true,
-  arg: true,
-  env: true,
-  logLevel: 'debug',
+node = bcoin.spvnode({
   logFile: true,
-  db: 'leveldb'
+  logLevel: 'debug',
+  db: 'leveldb',
+  listen: true,
+  loader: require
 });
-
-bcoin.set(options);
-
-node = bcoin.spvnode(options);
 
 node.on('error', function(err) {
   ;
-});
-
-process.on('uncaughtException', function(err) {
-  node.logger.debug(err.stack);
-  node.logger.error(err);
-  process.exit(1);
 });
 
 co.spawn(function *() {
   yield node.open();
   yield node.connect();
 
-  if (process.argv.indexOf('--test') !== -1) {
+  if (node.config.bool('test')) {
     node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
     node.pool.watchOutpoint(new bcoin.outpoint());
     node.on('block', function(block) {
