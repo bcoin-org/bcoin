@@ -367,7 +367,7 @@ MemWallet.prototype.fund = function fund(mtx, options) {
     options = {};
 
   return mtx.fund(coins, {
-    selection: options.selection,
+    selection: options.selection || 'age',
     round: options.round,
     depth: options.depth,
     hardFee: options.hardFee,
