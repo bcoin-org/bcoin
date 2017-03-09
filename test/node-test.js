@@ -11,14 +11,19 @@ var MTX = require('../lib/primitives/mtx');
 // var Client = require('../lib/wallet/client');
 
 describe('Node', function() {
-  var node = new FullNode({ db: 'memory', apiKey: 'foo', network: 'regtest' });
+  var node = new FullNode({
+    db: 'memory',
+    apiKey: 'foo',
+    network: 'regtest',
+    loader: require,
+    plugins: ['../lib/wallet/walletdb']
+  });
   var chain = node.chain;
-  var walletdb = node.walletdb;
+  var walletdb = node.require('walletdb');
   var miner = node.miner;
   var wallet, tip1, tip2, cb1, cb2, mineBlock;
 
   // walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
-  walletdb.options.resolution = false;
 
   node.on('error', function() {});
 

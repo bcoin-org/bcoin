@@ -13,19 +13,23 @@ var FullNode = require('../lib/node/fullnode');
 var pkg = require('../lib/pkg');
 
 describe('HTTP', function() {
-  var node, wallet, addr, hash;
+  var node, wallet, walletdb, addr, hash;
 
   node = new FullNode({
     network: 'regtest',
     apiKey: 'foo',
     walletAuth: true,
-    db: 'memory'
+    db: 'memory',
+    loader: require,
+    plugins: ['walletdb']
   });
 
   wallet = new HTTP.Wallet({
     network: 'regtest',
     apiKey: 'foo'
   });
+
+  walletdb = node.require('walletdb');
 
   node.on('error', function() {});
 
@@ -82,7 +86,7 @@ describe('HTTP', function() {
       details = d;
     });
 
-    yield node.walletdb.addTX(tx);
+    yield walletdb.addTX(tx);
     yield co.timeout(300);
 
     assert(receive);
