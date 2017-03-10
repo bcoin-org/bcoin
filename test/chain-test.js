@@ -707,7 +707,7 @@ describe('Chain', function() {
   it('should fail to connect bad amount', co(function* () {
     var job = yield cpu.createJob();
 
-    job.attempt.reward += 1;
+    job.attempt.fees += 1;
     job.refresh();
     assert.equal(yield mineBlock(job), 'bad-cb-amount');
   }));
