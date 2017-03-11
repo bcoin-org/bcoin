@@ -11,6 +11,9 @@ var co = bcoin.co;
 var node;
 
 node = bcoin.spvnode({
+  config: true,
+  argv: true,
+  env: true,
   logFile: true,
   logLevel: 'debug',
   db: 'leveldb',

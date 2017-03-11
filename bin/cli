@@ -11,9 +11,15 @@ var Amount = require('../lib/btc/amount');
 var main;
 
 function CLI() {
-  this.config = new Config({
-    network: 'main'
+  this.config = new Config('bcoin');
+
+  this.config.load({
+    argv: true,
+    env: true
   });
+
+  this.config.open('bcoin.conf');
+
   this.argv = this.config.argv;
   this.client = null;
   this.wallet = null;

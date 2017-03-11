@@ -15,7 +15,7 @@ describe('Node', function() {
     apiKey: 'foo',
     network: 'regtest',
     loader: require,
-    plugins: ['../lib/wallet/walletdb']
+    plugins: ['../lib/wallet/plugin']
   });
   var chain = node.chain;
   var walletdb = node.require('walletdb');
