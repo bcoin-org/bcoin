@@ -9,6 +9,9 @@ var co = bcoin.co;
 var node;
 
 node = new bcoin.fullnode({
+  config: true,
+  argv: true,
+  env: true,
   logFile: true,
   logLevel: 'debug',
   db: 'leveldb',
