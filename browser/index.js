@@ -15,7 +15,7 @@ var rpc = document.getElementById('rpc');
 var cmd = document.getElementById('cmd');
 var items = [];
 var scrollback = 0;
-var logger, node, options;
+var logger, node, wdb;
 
 body.onmouseup = function() {
   floating.style.display = 'none';
@@ -87,9 +87,9 @@ send.onsubmit = function(ev) {
     }]
   };
 
-  node.wallet.createTX(options).then(function(mtx) {
+  wdb.primary.createTX(options).then(function(mtx) {
     tx = mtx;
-    return node.wallet.sign(tx);
+    return wdb.primary.sign(tx);
   }).then(function() {
     return node.sendTX(tx);
   }).then(function() {
@@ -103,8 +103,8 @@ send.onsubmit = function(ev) {
 };
 
 newaddr.onmouseup = function() {
-  node.wallet.createReceive().then(function() {
-    formatWallet(node.wallet);
+  wdb.primary.createReceive().then(function() {
+    formatWallet(wdb.primary);
   });
 };
 
@@ -211,19 +211,17 @@ function formatWallet(wallet) {
   });
 }
 
-options = bcoin.config({
+node = new bcoin.fullnode({
+  hash: true,
   query: true,
+  prune: true,
   network: 'testnet',
   db: 'leveldb',
-  useWorkers: true,
   coinCache: 30000000,
   logger: logger
 });
 
-bcoin.set(options);
-
-node = new bcoin.fullnode(options);
-node.rpc = new bcoin.rpc(node);
+wdb = node.use(bcoin.walletdb);
 
 node.on('error', function(err) {
   ;
@@ -233,15 +231,14 @@ node.chain.on('block', addItem);
 node.mempool.on('tx', addItem);
 
 node.open().then(function() {
-  node.rpc.wallet = node.wallet;
   node.connect().then(function() {
     node.startSync();
 
-    node.wallet.on('balance', function() {
-      formatWallet(node.wallet);
+    wdb.primary.on('balance', function() {
+      formatWallet(wdb.primary);
     });
 
-    formatWallet(node.wallet);
+    formatWallet(wdb.primary);
   });
 });
 

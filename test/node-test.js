@@ -8,28 +8,30 @@ var Coin = require('../lib/primitives/coin');
 var Script = require('../lib/script/script');
 var FullNode = require('../lib/node/fullnode');
 var MTX = require('../lib/primitives/mtx');
-// var Client = require('../lib/wallet/client');
 
 describe('Node', function() {
-  var node = new FullNode({ db: 'memory', apiKey: 'foo', network: 'regtest' });
+  var node = new FullNode({
+    db: 'memory',
+    apiKey: 'foo',
+    network: 'regtest',
+    loader: require,
+    plugins: ['../lib/wallet/plugin']
+  });
   var chain = node.chain;
-  var walletdb = node.walletdb;
+  var walletdb = node.require('walletdb');
   var miner = node.miner;
   var wallet, tip1, tip2, cb1, cb2, mineBlock;
-
-  // walletdb.client = new Client({ apiKey: 'foo', network: 'regtest' });
-  walletdb.options.resolution = false;
 
   node.on('error', function() {});
 
   this.timeout(5000);
 
   mineBlock = co(function* mineBlock(tip, tx) {
-    var attempt = yield miner.createBlock(tip);
+    var job = yield miner.createJob(tip);
     var rtx;
 
     if (!tx)
-      return yield attempt.mineAsync();
+      return yield job.mineAsync();
 
     rtx = new MTX();
 
@@ -42,9 +44,10 @@ describe('Node', function() {
 
     yield wallet.sign(rtx);
 
-    attempt.addTX(rtx.toTX(), rtx.view);
+    job.addTX(rtx.toTX(), rtx.view);
+    job.refresh();
 
-    return yield attempt.mineAsync();
+    return yield job.mineAsync();
   });
 
   it('should open chain and miner', co(function* () {
@@ -307,7 +310,7 @@ describe('Node', function() {
   }));
 
   var mineCSV = co(function* mineCSV(tx) {
-    var attempt = yield miner.createBlock();
+    var job = yield miner.createJob();
     var redeemer;
 
     redeemer = new MTX();
@@ -326,15 +329,16 @@ describe('Node', function() {
 
     yield wallet.sign(redeemer);
 
-    attempt.addTX(redeemer.toTX(), redeemer.view);
+    job.addTX(redeemer.toTX(), redeemer.view);
+    job.refresh();
 
-    return yield attempt.mineAsync();
+    return yield job.mineAsync();
   });
 
   it('should test csv', co(function* () {
     var tx = (yield chain.db.getBlock(chain.height)).txs[0];
     var block = yield mineCSV(tx);
-    var csv, attempt, redeemer;
+    var csv, job, redeemer;
 
     yield chain.add(block);
 
@@ -353,18 +357,19 @@ describe('Node', function() {
     redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 1, false);
 
-    attempt = yield miner.createBlock();
+    job = yield miner.createJob();
 
-    attempt.addTX(redeemer.toTX(), redeemer.view);
+    job.addTX(redeemer.toTX(), redeemer.view);
+    job.refresh();
 
-    block = yield attempt.mineAsync();
+    block = yield job.mineAsync();
 
     yield chain.add(block);
   }));
 
   it('should fail csv with bad sequence', co(function* () {
     var csv = (yield chain.db.getBlock(chain.height)).txs[1];
-    var block, attempt, redeemer, err;
+    var block, job, redeemer, err;
 
     redeemer = new MTX();
 
@@ -379,11 +384,12 @@ describe('Node', function() {
     redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 1, false);
 
-    attempt = yield miner.createBlock();
+    job = yield miner.createJob();
 
-    attempt.addTX(redeemer.toTX(), redeemer.view);
+    job.addTX(redeemer.toTX(), redeemer.view);
+    job.refresh();
 
-    block = yield attempt.mineAsync();
+    block = yield job.mineAsync();
 
     try {
       yield chain.add(block);
@@ -404,7 +410,7 @@ describe('Node', function() {
   it('should fail csv lock checks', co(function* () {
     var tx = (yield chain.db.getBlock(chain.height)).txs[0];
     var block = yield mineCSV(tx);
-    var csv, attempt, redeemer, err;
+    var csv, job, redeemer, err;
 
     yield chain.add(block);
 
@@ -423,11 +429,12 @@ describe('Node', function() {
     redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 2, false);
 
-    attempt = yield miner.createBlock();
+    job = yield miner.createJob();
 
-    attempt.addTX(redeemer.toTX(), redeemer.view);
+    job.addTX(redeemer.toTX(), redeemer.view);
+    job.refresh();
 
-    block = yield attempt.mineAsync();
+    block = yield job.mineAsync();
 
     try {
       yield chain.add(block);

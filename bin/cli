@@ -2,7 +2,7 @@
 
 'use strict';
 
-var config = require('../lib/node/config');
+var Config = require('../lib/node/config');
 var util = require('../lib/utils/util');
 var co = require('../lib/utils/co');
 var Client = require('../lib/http/client');
@@ -11,12 +11,15 @@ var Amount = require('../lib/btc/amount');
 var main;
 
 function CLI() {
-  this.config = config.parseRaw({
-    config: true,
-    arg: true,
-    env: true,
-    network: 'main'
+  this.config = new Config('bcoin');
+
+  this.config.load({
+    argv: true,
+    env: true
   });
+
+  this.config.open('bcoin.conf');
+
   this.argv = this.config.argv;
   this.client = null;
   this.wallet = null;
@@ -39,36 +42,24 @@ CLI.prototype.getWallets = co(function* getWallets() {
 });
 
 CLI.prototype.createWallet = co(function* createWallet() {
-  var options = { id: this.argv[0] };
+  var options = { id: this.config.str(0) };
   var wallet;
 
-  if (this.config.type)
-    options.type = this.config.type;
+  options.type = this.config.str('type');
+  options.master = this.config.str('master');
+  options.mnemonic = this.config.str('mnemonic');
+  options.m = this.config.num('m');
+  options.n = this.config.num('n');
+  options.witness = this.config.bool('witness');
+  options.passphrase = this.config.str('passphrase');
 
-  if (this.config.master)
-    options.master = this.config.master;
-
-  if (this.config.mnemonic)
-    options.master = this.config.mnemonic;
-
-  if (this.config.m)
-    options.m = this.config.m >>> 0;
-
-  if (this.config.n)
-    options.n = this.config.n >>> 0;
-
-  if (this.config.witness != null)
-    options.witness = !!this.config.witness;
-
-  if (this.config.passphrase)
-    options.passphrase = this.config.passphrase;
-
-  if (this.config.watch) {
+  if (this.config.has('watch')) {
     options.watchOnly = true;
-    options.accountKey = this.config.watch;
+    options.accountKey = this.config.str('watch');
   }
 
   wallet = yield this.client.createWallet(options);
+
   this.log(wallet);
 });
 
@@ -78,59 +69,50 @@ CLI.prototype.getMaster = co(function* getMaster() {
 });
 
 CLI.prototype.getKey = co(function* getKey() {
-  var address = this.argv[0];
+  var address = this.config.str(0);
   var key = yield this.wallet.getKey(address);
   this.log(key);
 });
 
 CLI.prototype.getWIF = co(function* getWIF() {
-  var address = this.argv[0];
-  var key = yield this.wallet.getWIF(address, this.config.passphrase);
+  var address = this.config.str(0);
+  var key = yield this.wallet.getWIF(address, this.config.str('passphrase'));
   this.log(key.privateKey);
 });
 
 CLI.prototype.addSharedKey = co(function* addSharedKey() {
-  var key = this.argv[0];
-  yield this.wallet.addSharedKey(this.config.account, key);
+  var key = this.config.str(0);
+  yield this.wallet.addSharedKey(this.config.str('account'), key);
   this.log('Added key.');
 });
 
 CLI.prototype.removeSharedKey = co(function* removeSharedKey() {
-  var key = this.argv[0];
-  yield this.wallet.removeSharedKey(this.config.account, key);
+  var key = this.config.str(0);
+  yield this.wallet.removeSharedKey(this.config.str('account'), key);
   this.log('Removed key.');
 });
 
 CLI.prototype.getSharedKeys = co(function* getSharedKeys() {
-  var acct = this.argv[0] || this.config.account;
+  var acct = this.config.str([0, 'account']);
   var account = yield this.wallet.getAccount(acct);
   this.log(account.keys);
 });
 
 CLI.prototype.getAccount = co(function* getAccount() {
-  var acct = this.argv[0] || this.config.account;
+  var acct = this.config.str([0, 'account']);
   var account = yield this.wallet.getAccount(acct);
   this.log(account);
 });
 
 CLI.prototype.createAccount = co(function* createAccount() {
-  var options = { name: this.argv[0] };
+  var options = { name: this.config.str(0) };
   var account;
 
-  if (this.config.type)
-    options.type = this.config.type;
-
-  if (this.config.m)
-    options.m = this.config.m >>> 0;
-
-  if (this.config.n)
-    options.n = this.config.n >>> 0;
-
-  if (this.config.witness != null)
-    options.witness = !!this.config.witness;
-
-  if (this.config.watch)
-    options.accountKey = this.config.watch;
+  options.type = this.config.str('type');
+  options.m = this.config.num('m');
+  options.n = this.config.num('n');
+  options.witness = this.config.bool('witness');
+  options.accountKey = this.config.str('watch');
 
   account = yield this.wallet.createAccount(options);
 
@@ -138,19 +120,19 @@ CLI.prototype.createAccount = co(function* createAccount() {
 });
 
 CLI.prototype.createAddress = co(function* createAddress() {
-  var account = this.argv[0];
+  var account = this.config.str(0);
   var addr = yield this.wallet.createAddress(account);
   this.log(addr);
 });
 
 CLI.prototype.createChange = co(function* createChange() {
-  var account = this.argv[0];
+  var account = this.config.str(0);
   var addr = yield this.wallet.createChange(account);
   this.log(addr);
 });
 
 CLI.prototype.createNested = co(function* createNested() {
-  var account = this.argv[0];
+  var account = this.config.str(0);
   var addr = yield this.wallet.createNested(account);
   this.log(addr);
 });
@@ -166,7 +148,7 @@ CLI.prototype.getWallet = co(function* getWallet() {
 });
 
 CLI.prototype.getTX = co(function* getTX() {
-  var hash = this.argv[0];
+  var hash = this.config.str(0);
   var txs, tx;
 
   if (util.isBase58(hash)) {
@@ -186,7 +168,7 @@ CLI.prototype.getTX = co(function* getTX() {
 });
 
 CLI.prototype.getBlock = co(function* getBlock() {
-  var hash = this.argv[0];
+  var hash = this.config.str(0);
   var block;
 
   if (hash.length !== 64)
@@ -203,8 +185,8 @@ CLI.prototype.getBlock = co(function* getBlock() {
 });
 
 CLI.prototype.getCoin = co(function* getCoin() {
-  var hash = this.argv[0];
-  var index = this.argv[1];
+  var hash = this.config.str(0);
+  var index = this.config.num(1);
   var coins, coin;
 
   if (util.isBase58(hash)) {
@@ -224,17 +206,17 @@ CLI.prototype.getCoin = co(function* getCoin() {
 });
 
 CLI.prototype.getWalletHistory = co(function* getWalletHistory() {
-  var txs = yield this.wallet.getHistory(this.config.account);
+  var txs = yield this.wallet.getHistory(this.config.str('account'));
   this.log(txs);
 });
 
 CLI.prototype.getWalletPending = co(function* getWalletPending() {
-  var txs = yield this.wallet.getPending(this.config.account);
+  var txs = yield this.wallet.getPending(this.config.str('account'));
   this.log(txs);
 });
 
 CLI.prototype.getWalletCoins = co(function* getWalletCoins() {
-  var coins = yield this.wallet.getCoins(this.config.account);
+  var coins = yield this.wallet.getCoins(this.config.str('account'));
   this.log(coins);
 });
 
@@ -277,7 +259,7 @@ CLI.prototype.listenWallet = co(function* listenWallet() {
 });
 
 CLI.prototype.getBalance = co(function* getBalance() {
-  var balance = yield this.wallet.getBalance(this.config.account);
+  var balance = yield this.wallet.getBalance(this.config.str('account'));
   this.log(balance);
 });
 
@@ -290,19 +272,19 @@ CLI.prototype.sendTX = co(function* sendTX() {
   var output = {};
   var options, tx;
 
-  if (this.config.script) {
-    output.script = this.config.script;
-    output.value = Amount.value(this.config.value || this.argv[0]);
+  if (this.config.has('script')) {
+    output.script = this.config.str('script');
+    output.value = Amount.value(this.config.num(['value', 0]));
   } else {
-    output.address = this.config.address || this.argv[0];
-    output.value = Amount.value(this.config.value || this.argv[1]);
+    output.address = this.config.str(['address', 0]);
+    output.value = Amount.value(this.config.num(['value', 1]));
   }
 
   options = {
-    account: this.config.account,
-    passphrase: this.config.passphrase,
+    account: this.config.str('account'),
+    passphrase: this.config.str('passphrase'),
     outputs: [output],
-    rate: this.config.rate
+    rate: this.config.str('rate')
   };
 
   tx = yield this.wallet.send(options);
@@ -314,17 +296,17 @@ CLI.prototype.createTX = co(function* createTX() {
   var output = {};
   var options, tx;
 
-  if (this.config.script) {
-    output.script = this.config.script;
-    output.value = Amount.value(this.config.value || this.argv[0]);
+  if (this.config.has('script')) {
+    output.script = this.config.str('script');
+    output.value = Amount.value(this.config.str(['value', 0]));
   } else {
-    output.address = this.config.address || this.argv[0];
-    output.value = Amount.value(this.config.value || this.argv[1]);
+    output.address = this.config.str(['address', 0]);
+    output.value = Amount.value(this.config.num(['value', 1]));
   }
 
   options = {
-    account: this.config.account,
-    passphrase: this.config.passphrase,
+    account: this.config.str('account'),
+    passphrase: this.config.str('passphrase'),
     outputs: [output]
   };
 
@@ -334,33 +316,37 @@ CLI.prototype.createTX = co(function* createTX() {
 });
 
 CLI.prototype.signTX = co(function* signTX() {
-  var options = { passphrase: this.config.passphrase };
-  var raw = options.tx || this.argv[0];
-  var tx = yield this.wallet.sign(raw, options);
+  var options = {};
+  var raw = this.config.str(['tx', 0]);
+
+  options.passphrase = this.config.str('passphrase');
+
+  tx = yield this.wallet.sign(raw, options);
+
   this.log(tx);
 });
 
 CLI.prototype.zapWallet = co(function* zapWallet() {
-  var age = (this.config.age >>> 0) || 72 * 60 * 60;
-  yield this.wallet.zap(this.config.account, age);
+  var age = this.config.num('age', 72 * 60 * 60);
+  yield this.wallet.zap(this.config.str('account'), age);
   this.log('Zapped!');
 });
 
 CLI.prototype.broadcast = co(function* broadcast() {
-  var raw = this.argv[0] || this.config.tx;
+  var raw = this.config.str([0, 'tx']);
   var tx = yield this.client.broadcast(raw);
   this.log('Broadcasted:');
   this.log(tx);
 });
 
 CLI.prototype.viewTX = co(function* viewTX() {
-  var raw = this.argv[0] || this.config.tx;
+  var raw = this.config.str([0, 'tx']);
   var tx = yield this.wallet.fill(raw);
   this.log(tx);
 });
 
 CLI.prototype.getDetails = co(function* getDetails() {
-  var hash = this.argv[0];
+  var hash = this.config.str(0);
   var details = yield this.wallet.getTX(hash);
   this.log(details);
 });
@@ -371,7 +357,7 @@ CLI.prototype.getWalletBlocks = co(function* getWalletBlocks() {
 });
 
 CLI.prototype.getWalletBlock = co(function* getWalletBlock() {
-  var height = this.argv[0] | 0;
+  var height = this.config.num(0);
   var block = yield this.wallet.getBlock(height);
   this.log(block);
 });
@@ -382,7 +368,7 @@ CLI.prototype.retoken = co(function* retoken() {
 });
 
 CLI.prototype.rescan = co(function* rescan() {
-  var height = this.argv[0];
+  var height = this.config.num(0);
 
   if (!util.isUInt32(height))
     height = null;
@@ -393,7 +379,7 @@ CLI.prototype.rescan = co(function* rescan() {
 });
 
 CLI.prototype.reset = co(function* reset() {
-  var hash = this.argv[0];
+  var hash = this.config.str(0);
 
   if (hash.length !== 64)
     hash = +hash;
@@ -414,7 +400,7 @@ CLI.prototype.resendWallet = co(function* resendWallet() {
 });
 
 CLI.prototype.backup = co(function* backup() {
-  var path = this.argv[0];
+  var path = this.config.str(0);
 
   yield this.client.backup(path);
 
@@ -422,8 +408,8 @@ CLI.prototype.backup = co(function* backup() {
 });
 
 CLI.prototype.importKey = co(function* importKey() {
-  var key = this.argv[0];
-  var account = this.config.account;
+  var key = this.config.str(0);
+  var account = this.config.str('account');
 
   if (!key)
     throw new Error('No key for import.');
@@ -444,8 +430,8 @@ CLI.prototype.importKey = co(function* importKey() {
 });
 
 CLI.prototype.importAddress = co(function* importKey() {
-  var address = this.argv[0];
-  var account = this.config.account;
+  var address = this.config.str(0);
+  var account = this.config.str('account');
   yield this.wallet.importAddress(account, address);
   this.log('Imported address.');
 });
@@ -456,8 +442,8 @@ CLI.prototype.lock = co(function* lock() {
 });
 
 CLI.prototype.unlock = co(function* unlock() {
-  var passphrase = this.argv[0];
-  var timeout = +this.argv[1] || null;
+  var passphrase = this.config.str(0);
+  var timeout = this.config.num(1);
   yield this.wallet.unlock(passphrase, timeout);
   this.log('Unlocked.');
 });
@@ -492,11 +478,11 @@ CLI.prototype.rpc = co(function* rpc() {
 
 CLI.prototype.handleWallet = co(function* handleWallet() {
   this.wallet = new Wallet({
-    uri: this.config.url || this.config.uri,
-    apiKey: this.config.apikey,
-    network: this.config.network,
-    id: this.config.id || 'primary',
-    token: this.config.token
+    uri: this.config.str(['url', 'uri']),
+    apiKey: this.config.str('api-key'),
+    network: this.config.str('network'),
+    id: this.config.str('id', 'primary'),
+    token: this.config.str('token')
   });
 
   switch (this.argv.shift()) {
@@ -619,9 +605,9 @@ CLI.prototype.handleWallet = co(function* handleWallet() {
 
 CLI.prototype.handleNode = co(function* handleNode() {
   this.client = new Client({
-    uri: this.config.url || this.config.uri,
-    apiKey: this.config.apikey,
-    network: this.config.network
+    uri: this.config.str(['url', 'uri']),
+    apiKey: this.config.str('api-key'),
+    network: this.config.str('network')
   });
 
   switch (this.argv.shift()) {

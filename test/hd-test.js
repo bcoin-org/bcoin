@@ -87,7 +87,7 @@ describe('HD', function() {
   });
 
   it('should deserialize and reserialize', function() {
-    var key = HD.fromMnemonic();
+    var key = HD.generate();
     assert.equal(HD.fromJSON(key.toJSON()).toBase58(), key.toBase58());
   });
 

@@ -87,7 +87,7 @@ MemWallet.prototype.init = function init() {
   var i;
 
   if (!this.master)
-    this.master = HD.PrivateKey.fromMnemonic(null, this.network);
+    this.master = HD.PrivateKey.generate();
 
   if (!this.key)
     this.key = this.master.deriveAccount44(this.account);
@@ -367,7 +367,7 @@ MemWallet.prototype.fund = function fund(mtx, options) {
     options = {};
 
   return mtx.fund(coins, {
-    selection: options.selection,
+    selection: options.selection || 'age',
     round: options.round,
     depth: options.depth,
     hardFee: options.hardFee,
