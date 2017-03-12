@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+
+'use strict';
+
+process.title = 'bcoin-wallet';
+
+var server = require('../lib/wallet/server');
+
+var wdb = server.create({
+  config: true,
+  argv: true,
+  env: true
+});
+
+wdb.on('error', function(err) {
+  ;
+});
+
+wdb.open().catch(function(err) {
+  throw err;
+});
