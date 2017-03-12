@@ -87,7 +87,7 @@ MemWallet.prototype.init = function init() {
   var i;
 
   if (!this.master)
-    this.master = HD.PrivateKey.fromMnemonic(null, this.network);
+    this.master = HD.PrivateKey.generate();
 
   if (!this.key)
     this.key = this.master.deriveAccount44(this.account);

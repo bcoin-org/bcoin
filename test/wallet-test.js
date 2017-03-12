@@ -154,7 +154,7 @@ describe('Wallet', function() {
       n: 2
     });
 
-    k = HD.fromMnemonic().deriveAccount44(0).toPublic();
+    k = HD.generate().deriveAccount44(0).toPublic();
 
     yield w.addSharedKey(k);
 
