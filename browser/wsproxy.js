@@ -225,7 +225,7 @@ WSProxy.prototype.attach = function attach(server) {
 function SocketState(server, socket) {
   this.pow = server.pow;
   this.target = server.target;
-  this.snonce = util.nonce(true);
+  this.snonce = util.nonce();
   this.socket = null;
   this.host = IP.normalize(socket.conn.remoteAddress);
   this.remoteHost = null;

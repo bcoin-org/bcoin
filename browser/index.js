@@ -31,8 +31,8 @@ function show(obj) {
   floating.style.display = 'block';
 }
 
-logger = new bcoin.logger({ level: 'debug' });
-logger.writeConsole = function(level, args) {
+logger = new bcoin.logger({ level: 'debug', console: true });
+logger.writeConsole = function(level, module, args) {
   var name = bcoin.logger.levelsByVal[level];
   var msg = util.format(args, false);
   if (++scrollback > 1000) {
@@ -40,10 +40,21 @@ logger.writeConsole = function(level, args) {
     scrollback = 1;
   }
   log.innerHTML += '<span style="color:blue;">' + util.now() + '</span> ';
-  if (name === 'error')
-    log.innerHTML += '<span style="color:red;">[' + name + ']</span> ';
-  else
-    log.innerHTML += '[' + name + '] ';
+  if (name === 'error') {
+    log.innerHTML += '<span style="color:red;">';
+    log.innerHTML += '[';
+    log.innerHTML += name
+    log.innerHTML += '] ';
+    if (module)
+      log.innerHTML += '(' + module + ') ';
+    log.innerHTML += '</span>';
+  } else {
+    log.innerHTML += '[';
+    log.innerHTML += name
+    log.innerHTML += '] ';
+    if (module)
+      log.innerHTML += '(' + module + ') ';
+  }
   log.innerHTML += escape(msg) + '\n';
   log.scrollTop = log.scrollHeight;
 };
@@ -163,7 +174,7 @@ function setMouseup(el, obj) {
 
 function formatWallet(wallet) {
   var html = '';
-  var key = wallet.master.toJSON(true).key;
+  var json = wallet.master.toJSON(true);
   var i, tx, el;
 
   html += '<b>Wallet</b><br>';
@@ -179,8 +190,8 @@ function formatWallet(wallet) {
     html += 'Current Address: <b>' + wallet.getAddress() + '</b><br>';
   }
 
-  html += 'Extended Private Key: <b>' + key.xprivkey + '</b><br>';
-  html += 'Mnemonic: <b>' + key.mnemonic.phrase + '</b><br>';
+  html += 'Extended Private Key: <b>' + json.key.xprivkey + '</b><br>';
+  html += 'Mnemonic: <b>' + json.mnemonic.phrase + '</b><br>';
 
   wallet.getBalance().then(function(balance) {
     html += 'Confirmed Balance: <b>'
@@ -215,13 +226,14 @@ node = new bcoin.fullnode({
   hash: true,
   query: true,
   prune: true,
-  network: 'testnet',
+  network: 'main',
   db: 'leveldb',
   coinCache: 30000000,
+  logConsole: true,
   logger: logger
 });
 
-wdb = node.use(bcoin.walletdb);
+wdb = node.use(bcoin.walletplugin);
 
 node.on('error', function(err) {
   ;
@@ -231,15 +243,17 @@ node.chain.on('block', addItem);
 node.mempool.on('tx', addItem);
 
 node.open().then(function() {
-  node.connect().then(function() {
-    node.startSync();
+  return node.connect();
+}).then(function() {
+  node.startSync();
 
-    wdb.primary.on('balance', function() {
-      formatWallet(wdb.primary);
-    });
-
+  wdb.primary.on('balance', function() {
     formatWallet(wdb.primary);
   });
+
+  formatWallet(wdb.primary);
+}).catch(function(err) {
+  throw err;
 });
 
 })();

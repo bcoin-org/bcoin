@@ -20,7 +20,10 @@ proxy.on('error', function(err) {
   console.error(err.stack + '');
 });
 
-server = new HTTPBase();
+server = new HTTPBase({
+  port: +process.argv[2] || 8080,
+  sockets: false
+});
 
 server.get('/favicon.ico', function(req, res) {
   res.send(404, '', 'txt');
@@ -52,4 +55,4 @@ server.on('error', function(err) {
 
 proxy.attach(server.server);
 
-server.listen(+process.argv[2] || 8080);
+server.open();

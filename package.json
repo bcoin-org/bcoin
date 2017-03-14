@@ -80,6 +80,7 @@
     "./lib/net/dns": "./lib/net/dns-browser.js",
     "./lib/net/tcp": "./lib/net/tcp-browser.js",
     "./lib/net/upnp": "./lib/net/upnp-browser.js",
+    "./lib/utils/fs": "./browser/empty.js",
     "./lib/utils/native": "./browser/empty.js",
     "./lib/utils/nfkd": "./lib/utils/nfkd-browser.js",
     "./lib/utils/nexttick": "./lib/utils/nexttick-browser.js",
