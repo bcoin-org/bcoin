@@ -274,16 +274,17 @@ CLI.prototype.sendTX = co(function* sendTX() {
 
   if (this.config.has('script')) {
     output.script = this.config.str('script');
-    output.value = Amount.value(this.config.num(['value', 0]));
+    output.value = this.config.str(['value', 0]);
   } else {
     output.address = this.config.str(['address', 0]);
-    output.value = Amount.value(this.config.num(['value', 1]));
+    output.value = this.config.str(['value', 1]);
   }
 
   options = {
     account: this.config.str('account'),
     passphrase: this.config.str('passphrase'),
     outputs: [output],
+    smart: this.config.bool('smart'),
     rate: this.config.str('rate')
   };
 
@@ -298,16 +299,18 @@ CLI.prototype.createTX = co(function* createTX() {
 
   if (this.config.has('script')) {
     output.script = this.config.str('script');
-    output.value = Amount.value(this.config.str(['value', 0]));
+    output.value = this.config.str(['value', 0]);
   } else {
     output.address = this.config.str(['address', 0]);
-    output.value = Amount.value(this.config.num(['value', 1]));
+    output.value = this.config.str(['value', 1]));
   }
 
   options = {
     account: this.config.str('account'),
     passphrase: this.config.str('passphrase'),
-    outputs: [output]
+    outputs: [output],
+    smart: this.config.bool('smart'),
+    rate: this.config.str('rate')
   };
 
   tx = yield this.wallet.createTX(options);
