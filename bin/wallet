@@ -9,7 +9,11 @@ var server = require('../lib/wallet/server');
 var wdb = server.create({
   config: true,
   argv: true,
-  env: true
+  env: true,
+  logFile: true,
+  logConsole: true,
+  logLevel: 'debug',
+  db: 'leveldb'
 });
 
 wdb.on('error', function(err) {
