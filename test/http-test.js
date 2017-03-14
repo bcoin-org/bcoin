@@ -11,6 +11,7 @@ var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
 var FullNode = require('../lib/node/fullnode');
 var pkg = require('../lib/pkg');
+var plugin = require('../lib/wallet/plugin');
 
 describe('HTTP', function() {
   var node, wallet, walletdb, addr, hash;
@@ -19,9 +20,7 @@ describe('HTTP', function() {
     network: 'regtest',
     apiKey: 'foo',
     walletAuth: true,
-    db: 'memory',
-    loader: require,
-    plugins: ['walletdb']
+    db: 'memory'
   });
 
   wallet = new HTTP.Wallet({
@@ -29,7 +28,7 @@ describe('HTTP', function() {
     apiKey: 'foo'
   });
 
-  walletdb = node.require('walletdb');
+  walletdb = node.use(plugin);
 
   node.on('error', function() {});
 

@@ -8,17 +8,16 @@ var Coin = require('../lib/primitives/coin');
 var Script = require('../lib/script/script');
 var FullNode = require('../lib/node/fullnode');
 var MTX = require('../lib/primitives/mtx');
+var plugin = require('../lib/wallet/plugin');
 
 describe('Node', function() {
   var node = new FullNode({
     db: 'memory',
     apiKey: 'foo',
-    network: 'regtest',
-    loader: require,
-    plugins: ['../lib/wallet/plugin']
+    network: 'regtest'
   });
   var chain = node.chain;
-  var walletdb = node.require('walletdb');
+  var walletdb = node.use(plugin);
   var miner = node.miner;
   var wallet, tip1, tip2, cb1, cb2, mineBlock;
 
