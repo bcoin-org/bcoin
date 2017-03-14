@@ -6,6 +6,7 @@ process.title = 'bcoin';
 
 var assert = require('assert');
 var bcoin = require('../');
+var plugin = require('../lib/wallet/plugin');
 var util = bcoin.util;
 var co = bcoin.co;
 var node;
@@ -22,6 +23,10 @@ node = bcoin.spvnode({
   listen: true,
   loader: require
 });
+
+// Temporary hack
+if (!node.has('walletdb'))
+  node.use(plugin);
 
 node.on('error', function(err) {
   ;

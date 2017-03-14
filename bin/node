@@ -5,6 +5,7 @@
 process.title = 'bcoin';
 
 var bcoin = require('../');
+var plugin = require('../lib/wallet/plugin');
 var co = bcoin.co;
 var node;
 
@@ -20,6 +21,10 @@ node = new bcoin.fullnode({
   listen: true,
   loader: require
 });
+
+// Temporary hack
+if (!node.has('walletdb'))
+  node.use(plugin);
 
 node.on('error', function(err) {
   ;
