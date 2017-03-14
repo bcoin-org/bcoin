@@ -16,6 +16,7 @@ node = new bcoin.fullnode({
   logConsole: true,
   logLevel: 'debug',
   db: 'leveldb',
+  persistent: true,
   listen: true,
   loader: require
 });
@@ -25,6 +26,7 @@ node.on('error', function(err) {
 });
 
 co.spawn(function *() {
+  yield node.ensure();
   yield node.open();
   yield node.connect();
   node.startSync();
