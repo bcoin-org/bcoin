@@ -302,7 +302,7 @@ CLI.prototype.createTX = co(function* createTX() {
     output.value = this.config.str(['value', 0]);
   } else {
     output.address = this.config.str(['address', 0]);
-    output.value = this.config.str(['value', 1]));
+    output.value = this.config.str(['value', 1]);
   }
 
   options = {
