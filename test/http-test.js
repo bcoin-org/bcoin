@@ -6,6 +6,7 @@ var encoding = require('../lib/utils/encoding');
 var co = require('../lib/utils/co');
 var Amount = require('../lib/btc/amount');
 var Address = require('../lib/primitives/address');
+var Script = require('../lib/script/script');
 var Outpoint = require('../lib/primitives/outpoint');
 var MTX = require('../lib/primitives/mtx');
 var HTTP = require('../lib/http');
@@ -151,6 +152,56 @@ describe('HTTP', function() {
   it('should execute an rpc call', co(function* () {
     var info = yield wallet.client.rpc.execute('getblockchaininfo', []);
     assert.equal(info.blocks, 0);
+  }));
+
+  it('should get a block template', co(function* () {
+    var json = yield wallet.client.rpc.execute('getblocktemplate', []);
+    assert.deepStrictEqual(json, {
+      capabilities: [ 'proposal' ],
+      mutable: [ 'time', 'transactions', 'prevblock' ],
+      version: 536870912,
+      rules: [],
+      vbavailable: {},
+      vbrequired: 0,
+      height: 1,
+      previousblockhash: '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206',
+      target: '7fffff0000000000000000000000000000000000000000000000000000000000',
+      bits: '207fffff',
+      noncerange: '00000000ffffffff',
+      curtime: json.curtime,
+      mintime: 1296688603,
+      maxtime: json.maxtime,
+      expires: json.expires,
+      sigoplimit: 20000,
+      sizelimit: 1000000,
+      longpollid: '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e22060000000000',
+      submitold: false,
+      coinbaseaux: { flags: '6d696e65642062792062636f696e' },
+      coinbasevalue: 5000000000,
+      transactions: []
+    });
+  }));
+
+  it('should send a block template proposal', co(function* () {
+    var attempt = yield node.miner.createBlock();
+    var block = attempt.toBlock();
+    var hex = block.toRaw().toString('hex');
+    var json = yield wallet.client.rpc.execute('getblocktemplate', [{
+      mode: 'proposal',
+      data: hex
+    }]);
+    assert.strictEqual(json, null);
+  }));
+
+  it('should validate an address', co(function* () {
+    var json = yield wallet.client.rpc.execute('validateaddress', [addr.toBase58()]);
+    assert.deepStrictEqual(json, {
+       isvalid: true,
+       address: addr.toBase58(),
+       scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
+       ismine: false,
+       iswatchonly: false
+     });
   }));
 
   it('should cleanup', co(function* () {
