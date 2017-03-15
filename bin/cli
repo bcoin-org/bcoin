@@ -285,7 +285,8 @@ CLI.prototype.sendTX = co(function* sendTX() {
     passphrase: this.config.str('passphrase'),
     outputs: [output],
     smart: this.config.bool('smart'),
-    rate: this.config.str('rate')
+    rate: this.config.str('rate'),
+    subtractFee: this.config.bool('subtract-fee')
   };
 
   tx = yield this.wallet.send(options);
