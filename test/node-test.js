@@ -8,6 +8,8 @@ var Coin = require('../lib/primitives/coin');
 var Script = require('../lib/script/script');
 var FullNode = require('../lib/node/fullnode');
 var MTX = require('../lib/primitives/mtx');
+var TX = require('../lib/primitives/tx');
+var Address = require('../lib/primitives/address');
 var plugin = require('../lib/wallet/plugin');
 
 describe('Node', function() {
@@ -20,6 +22,7 @@ describe('Node', function() {
   var walletdb = node.use(plugin);
   var miner = node.miner;
   var wallet, tip1, tip2, cb1, cb2, mineBlock;
+  var tx1, tx2;
 
   node.on('error', function() {});
 
@@ -448,6 +451,271 @@ describe('Node', function() {
   it('should rescan for transactions', co(function* () {
     yield walletdb.rescan(0);
     assert.equal(wallet.txdb.state.confirmed, 1289250000000);
+  }));
+
+  it('should reset miner mempool', co(function* () {
+    miner.mempool = node.mempool;
+  }));
+
+  it('should not get a block template', co(function* () {
+    var json = yield node.rpc.call({
+      method: 'getblocktemplate'
+    }, {});
+    assert(json.error);
+    assert.equal(json.error.code, -8);
+  }));
+
+  it('should get a block template', co(function* () {
+    var json;
+
+    json = yield node.rpc.call({
+      method: 'getblocktemplate',
+      params: [
+        {rules: ['segwit']}
+      ],
+      id: '1'
+    }, {});
+
+    assert(typeof json.result.curtime === 'number');
+    assert(typeof json.result.mintime === 'number');
+    assert(typeof json.result.maxtime === 'number');
+    assert(typeof json.result.expires === 'number');
+
+    assert.deepStrictEqual(json, {
+      result: {
+        capabilities: [ 'proposal' ],
+        mutable: [ 'time', 'transactions', 'prevblock' ],
+        version: 536870912,
+        rules: [ 'csv', '!segwit', 'testdummy' ],
+        vbavailable: {},
+        vbrequired: 0,
+        height: 437,
+        previousblockhash: node.chain.tip.rhash(),
+        target: '7fffff0000000000000000000000000000000000000000000000000000000000',
+        bits: '207fffff',
+        noncerange: '00000000ffffffff',
+        curtime: json.result.curtime,
+        mintime: json.result.mintime,
+        maxtime: json.result.maxtime,
+        expires: json.result.expires,
+        sigoplimit: 80000,
+        sizelimit: 4000000,
+        weightlimit: 4000000,
+        longpollid: node.chain.tip.rhash() + '0000000000',
+        submitold: false,
+        coinbaseaux: { flags: '6d696e65642062792062636f696e' },
+        coinbasevalue: 1250000000,
+        coinbasetxn: undefined,
+        default_witness_commitment: '6a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf9',
+        transactions: []
+      },
+      error: null,
+      id: '1'
+    });
+  }));
+
+  it('should send a block template proposal', co(function* () {
+    var attempt = yield node.miner.createBlock();
+    var block, hex, json;
+
+    attempt.refresh();
+
+    block = attempt.toBlock();
+
+    hex = block.toRaw().toString('hex');
+
+    json = yield node.rpc.call({
+      method: 'getblocktemplate',
+      params: [{
+        mode: 'proposal',
+        data: hex
+      }]
+    }, {});
+
+    assert(!json.error);
+    assert(json.result === null);
+  }));
+
+  it('should submit a block', co(function* () {
+    var block = yield node.miner.mineBlock();
+    var hex = block.toRaw().toString('hex');
+    var json;
+
+    json = yield node.rpc.call({
+      method: 'submitblock',
+      params: [hex]
+    }, {});
+
+    assert(!json.error);
+    assert(json.result === null);
+    assert.equal(node.chain.tip.hash, block.hash('hex'));
+  }));
+
+  it('should validate an address', co(function* () {
+    var addr = new Address();
+    var json;
+
+    addr.network = node.network;
+
+    json = yield node.rpc.call({
+      method: 'validateaddress',
+      params: [addr.toBase58()]
+    }, {});
+
+    assert.deepStrictEqual(json.result, {
+       isvalid: true,
+       address: addr.toBase58(),
+       scriptPubKey: Script.fromAddress(addr).toJSON(),
+       ismine: false,
+       iswatchonly: false
+     });
+  }));
+
+  it('should add transaction to mempool', co(function* () {
+    var mtx, tx, missing;
+
+    mtx = yield wallet.createTX({
+      rate: 100000,
+      outputs: [{
+        value: 100000,
+        address: wallet.getAddress()
+      }]
+    });
+
+    yield wallet.sign(mtx);
+
+    assert(mtx.isSigned());
+
+    tx1 = mtx;
+    tx = mtx.toTX();
+
+    yield wallet.db.addTX(tx);
+
+    missing = yield node.mempool.addTX(tx);
+    assert(!missing || missing.length === 0);
+
+    assert.equal(node.mempool.totalTX, 1);
+  }));
+
+  it('should add lesser transaction to mempool', co(function* () {
+    var mtx, tx, missing;
+
+    mtx = yield wallet.createTX({
+      rate: 1000,
+      outputs: [{
+        value: 50000,
+        address: wallet.getAddress()
+      }]
+    });
+
+    yield wallet.sign(mtx);
+
+    assert(mtx.isSigned());
+
+    tx2 = mtx;
+    tx = mtx.toTX();
+
+    yield wallet.db.addTX(tx);
+
+    missing = yield node.mempool.addTX(tx);
+    assert(!missing || missing.length === 0);
+
+    assert.equal(node.mempool.totalTX, 2);
+  }));
+
+  it('should get a block template', co(function* () {
+    var fees = 0;
+    var weight = 0;
+    var i, item, json, result;
+
+    node.rpc.refreshBlock();
+
+    json = yield node.rpc.call({
+      method: 'getblocktemplate',
+      params: [
+        {rules: ['segwit']}
+      ],
+      id: '1'
+    }, {});
+
+    assert(!json.error);
+    assert(json.result);
+
+    result = json.result;
+
+    for (i = 0; i < result.transactions.length; i++) {
+      item = result.transactions[i];
+      fees += item.fee;
+      weight += item.weight;
+    }
+
+    assert.equal(result.transactions.length, 2);
+    assert.equal(fees, tx1.getFee() + tx2.getFee());
+    assert.equal(weight, tx1.getWeight() + tx2.getWeight());
+    assert.equal(result.transactions[0].hash, tx1.txid());
+    assert.equal(result.transactions[1].hash, tx2.txid());
+    assert.equal(result.coinbasevalue, 125e7 + fees);
+  }));
+
+  it('should get raw transaction', co(function* () {
+    var json, tx;
+
+    json = yield node.rpc.call({
+      method: 'getrawtransaction',
+      params: [tx2.txid()],
+      id: '1'
+    }, {});
+
+    assert(!json.error);
+    tx = TX.fromRaw(json.result, 'hex');
+    assert.equal(tx.txid(), tx2.txid());
+  }));
+
+  it('should prioritise transaction', co(function* () {
+    var json;
+
+    json = yield node.rpc.call({
+      method: 'prioritisetransaction',
+      params: [tx2.txid(), 0, 10000000],
+      id: '1'
+    }, {});
+
+    assert(!json.error);
+    assert(json.result === true);
+  }));
+
+  it('should get a block template', co(function* () {
+    var fees = 0;
+    var weight = 0;
+    var i, item, json, result;
+
+    node.rpc.refreshBlock();
+
+    json = yield node.rpc.call({
+      method: 'getblocktemplate',
+      params: [
+        {rules: ['segwit']}
+      ],
+      id: '1'
+    }, {});
+
+    assert(!json.error);
+    assert(json.result);
+
+    result = json.result;
+
+    for (i = 0; i < result.transactions.length; i++) {
+      item = result.transactions[i];
+      fees += item.fee;
+      weight += item.weight;
+    }
+
+    assert.equal(result.transactions.length, 2);
+    assert.equal(fees, tx1.getFee() + tx2.getFee());
+    assert.equal(weight, tx1.getWeight() + tx2.getWeight());
+    assert.equal(result.transactions[0].hash, tx2.txid());
+    assert.equal(result.transactions[1].hash, tx1.txid());
+    assert.equal(result.coinbasevalue, 125e7 + fees);
   }));
 
   it('should cleanup', co(function* () {
