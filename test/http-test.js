@@ -154,6 +154,30 @@ describe('HTTP', function() {
     assert.equal(info.blocks, 0);
   }));
 
+  it('should create account', co(function* () {
+    var info = yield wallet.createAccount('foo1');
+    assert(info);
+    assert(info.initialized);
+    assert.equal(info.name, 'foo1');
+    assert.equal(info.accountIndex, 1);
+    assert.equal(info.m, 1);
+    assert.equal(info.n, 1);
+  }));
+
+  it('should create account', co(function* () {
+    var info = yield wallet.createAccount('foo2', {
+      type: 'multisig',
+      m: 1,
+      n: 2
+    });
+    assert(info);
+    assert(!info.initialized);
+    assert.equal(info.name, 'foo2');
+    assert.equal(info.accountIndex, 2);
+    assert.equal(info.m, 1);
+    assert.equal(info.n, 2);
+  }));
+
   it('should get a block template', co(function* () {
     var json = yield wallet.client.rpc.execute('getblocktemplate', []);
     assert.deepStrictEqual(json, {
