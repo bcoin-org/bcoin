@@ -1,5 +1,41 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.10
+
+### Notable Changes
+
+- __wallet/http__ - Create wallet route modified
+  (`POST /wallet/:id?` changed to `PUT /wallet/:id`).
+- __wallet/http__ - Create account route modified
+  (`POST /wallet/:id/account/:account?` changed to
+  `PUT /wallet/:id/account/:account`).
+- __wallet/http__ - `auth` socket.io event name for wallet auth changed to
+  `wallet auth`.
+- __config__ - `payout-address` option was changed to `coinbase-address`.
+- __node__ - Plugin system is now exposed.
+  See https://github.com/bcoin-org/bcoin/pull/156.
+- __config__ - The internal API for the config object has been rewritten
+  and is now more reusable, particularly by node plugins.
+- __http/rpc__ - Both the HTTPBase and RPCBase objects now allow "mounting" by
+  other rpc and http servers.
+- __wallet__ - The wallet code has been completely removed from the node, and
+  now resides entirely within one module. The wallet is exposed only as a
+  plugin or a separate server.
+- __rpc__ - `prioritisetransaction` is now exposed properly (`deltaFee`s are
+  now tracked on mempool entries).
+- __rpc__ - Proper `id` and error codes are now implemented.
+- __rpc__ - Several `getblocktemplate` improvements have been implemented for
+  more accuracy. e.g. `curtime` will now be updated each call.
+- __mining__ - The internal miner API has been rewritten, and now mimics
+  stratum in a sense.
+- __chain__ - Faster verification with checkpoints.
+- __net__ - Fixed a potential block stalling issue.
+- __net__ - Hardcoded seeds for main added. Makes
+  for better shipping with browsers.
+- __wsproxy/proxysocket__ - DNS resolution is no longer exposed.
+- __logger__ - Log files now trim to 20mb on boot.
+- __hostlist__ - A persistent `hosts` file is now written by default.
+
 ## v1.0.0-beta.9
 
 ### Notable Changes
