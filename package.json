@@ -30,6 +30,7 @@
   "optionalDependencies": {
     "bcoin-native": "0.0.19",
     "leveldown": "1.7.0-0",
+    "level-js": "2.2.4",
     "secp256k1": "3.2.5",
     "socket.io": "2.0.1",
     "socket.io-client": "2.0.1"
@@ -45,7 +46,6 @@
     "eslint": "^4.1.0",
     "hash.js": "^1.0.3",
     "jsdoc": "^3.4.3",
-    "level-js": "^2.2.4",
     "mocha": "^3.4.1",
     "uglify-js": "^3.0.5"
   },
@@ -71,7 +71,8 @@
     "./lib/crypto/backend": "./lib/crypto/backend-browser.js",
     "./lib/crypto/ec": "./lib/crypto/ec-elliptic.js",
     "./lib/crypto/pk": "./lib/crypto/pk-browser.js",
-    "./lib/db/backends": "./lib/db/backends-browser.js",
+    "./lib/db/backends.js": "./lib/db/backends-browser.js",
+    "./lib/env.js": "./lib/env-browser.js",
     "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/http/base": "./browser/empty.js",
     "./lib/http/client": "./browser/empty.js",
@@ -95,7 +96,9 @@
     "bcoin-native": "./browser/empty.js",
     "child_process": "./browser/empty.js",
     "crypto": "./browser/empty.js",
+    "ec":"./lib/crypto/ec-elliptic.js",
     "dgram": "./browser/empty.js",
+    "dns": "./lib/net/dns-browser.js",
     "fs": "./browser/empty.js",
     "net": "./browser/empty.js",
     "os": "./browser/empty.js",
