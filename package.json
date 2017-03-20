@@ -28,6 +28,7 @@
   "optionalDependencies": {
     "bcoin-native": "0.0.14",
     "leveldown": "1.5.0",
+    "level-js": "2.2.4",
     "secp256k1": "3.2.5",
     "socket.io": "1.4.8",
     "socket.io-client": "1.4.8"
@@ -42,7 +43,6 @@
     "hash.js": "1.0.3",
     "jsdoc": "3.4.0",
     "jshint": "2.9.4",
-    "level-js": "2.2.4",
     "mocha": "3.0.2",
     "uglify-js": "2.7.3"
   },
@@ -68,7 +68,8 @@
     "./lib/crypto/backend": "./lib/crypto/backend-browser.js",
     "./lib/crypto/ec": "./lib/crypto/ec-elliptic.js",
     "./lib/crypto/pk": "./lib/crypto/pk-browser.js",
-    "./lib/db/backends": "./lib/db/backends-browser.js",
+    "./lib/db/backends.js": "./lib/db/backends-browser.js",
+    "./lib/env.js": "./lib/env-browser.js",
     "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/http/base": "./browser/empty.js",
     "./lib/http/client": "./browser/empty.js",
@@ -77,7 +78,6 @@
     "./lib/http/server": "./browser/empty.js",
     "./lib/http/wallet": "./browser/empty.js",
     "./lib/mempool/layout": "./lib/mempool/layout-browser.js",
-    "./lib/net/dns": "./lib/net/dns-browser.js",
     "./lib/net/tcp": "./lib/net/tcp-browser.js",
     "./lib/net/upnp": "./lib/net/upnp-browser.js",
     "./lib/utils/fs": "./browser/empty.js",
@@ -91,7 +91,9 @@
     "bcoin-native": "./browser/empty.js",
     "child_process": "./browser/empty.js",
     "crypto": "./browser/empty.js",
+    "ec":"./lib/crypto/ec-elliptic.js",
     "dgram": "./browser/empty.js",
+    "dns": "./lib/net/dns-browser.js",
     "fs": "./browser/empty.js",
     "net": "./browser/empty.js",
     "os": "./browser/empty.js",
