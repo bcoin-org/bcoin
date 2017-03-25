@@ -1,5 +1,12 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.11
+
+### Notable Changes
+
+- __networks__ - Simnet params have been fixed.
+- __cli__ - Chain reset call has been fixed.
+
 ## v1.0.0-beta.10
 
 ### Notable Changes
