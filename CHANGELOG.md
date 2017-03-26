@@ -1,5 +1,13 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.12
+
+### Notable Changes
+
+- __networks__ - Fixed simnet wpkh prefix.
+- __http__ - `wallet join` without wallet auth has been fixed for responses.
+  This was causing a hanging issue with the client.
+
 ## v1.0.0-beta.11
 
 ### Notable Changes
