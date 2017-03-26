@@ -98,7 +98,7 @@
     "crypto": "./browser/empty.js",
     "ec":"./lib/crypto/ec-elliptic.js",
     "dgram": "./browser/empty.js",
-    "dns": "./lib/net/dns-browser.js",
+    "dns": "./browser/empty.js",
     "fs": "./browser/empty.js",
     "net": "./browser/empty.js",
     "os": "./browser/empty.js",
