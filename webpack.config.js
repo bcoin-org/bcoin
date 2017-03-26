@@ -1,14 +1,15 @@
 const webpack = require('webpack')
-const PATHS = {
+const paths = {
   bcoin: './lib/bcoin',
   master: './lib/workers/master'
 }
+
 module.exports = {
   entry: {
-    'bcoin': PATHS.bcoin,
-    'bcoin.min': PATHS.bcoin,
-    'bcoin-master': PATHS.master,
-    'bcoin-master.min': PATHS.master
+    'bcoin': paths.bcoin,
+    'bcoin.min': paths.bcoin,
+    'bcoin-master': paths.master,
+    'bcoin-master.min': paths.master
   },
   output: {
     path: './browser',
