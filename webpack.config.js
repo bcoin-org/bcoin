@@ -1,15 +1,9 @@
 const webpack = require('webpack')
-const paths = {
-  bcoin: './lib/bcoin',
-  master: './lib/workers/master'
-}
 
 module.exports = {
   entry: {
-    'bcoin': paths.bcoin,
-    'bcoin.min': paths.bcoin,
-    'bcoin-master': paths.master,
-    'bcoin-master.min': paths.master
+    'bcoin.min': './lib/bcoin',
+    'bcoin-master.min': './lib/workers/master'
   },
   output: {
     path: './browser',
@@ -30,11 +24,9 @@ module.exports = {
   },
   plugins: [
     new webpack.optimize.UglifyJsPlugin({
-        compress: {
-          warnings: false
-        },
-        include: /\.min\.js$/,
-        minimize: true
+      compress: {
+        warnings: false
+      }
     })
   ]
 }
