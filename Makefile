@@ -1,6 +1,5 @@
 all:
-	@npm run browserify
-	@npm run uglify
+	@npm run webpack
 	@cp -f lib/workers/worker-browser.js browser/bcoin-worker.js
 
 clean:
