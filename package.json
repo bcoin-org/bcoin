@@ -56,7 +56,7 @@
     "bcoin": "./bin/bcoin"
   },
   "scripts": {
-    "clean": "rm browser/bcoin.js browser/bcoin.min.js browser/bcoin-master.js browser/bcoin-master.min.js",
+    "clean": "rm browser/bcoin.min.js browser/bcoin-master.min.js",
     "docs": "jsdoc -c jsdoc.json",
     "lint": "jshint lib/ || exit 0",
     "test": "mocha --reporter spec test/*-test.js",
