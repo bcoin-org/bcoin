@@ -43,6 +43,7 @@
     "hash.js": "1.0.3",
     "jsdoc": "3.4.0",
     "jshint": "2.9.4",
+    "json-loader": "^0.5.4",
     "mocha": "3.0.2",
     "uglify-js": "2.7.3",
     "webpack": "^1.13.3"
