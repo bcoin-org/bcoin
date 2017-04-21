@@ -154,6 +154,11 @@ describe('HTTP', function() {
     assert.equal(info.blocks, 0);
   }));
 
+  it('should execute an rpc call with bool parameter', co(function* () {
+    var info = yield wallet.client.rpc.execute('getrawmempool', [true]);
+    assert.deepStrictEqual(info, {});
+  }));
+
   it('should create account', co(function* () {
     var info = yield wallet.createAccount('foo1');
     assert(info);

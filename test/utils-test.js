@@ -9,6 +9,7 @@ var crypto = require('../lib/crypto/crypto');
 var schnorr = require('../lib/crypto/schnorr');
 var Amount = require('../lib/btc/amount');
 var consensus = require('../lib/protocol/consensus');
+var Validator = require('../lib/utils/validator');
 
 describe('Utils', function() {
   var vectors, signed, unsigned;
@@ -327,5 +328,11 @@ describe('Utils', function() {
     var sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
     assert.deepEqual(schnorr.recover(sig, msg), pub);
+  });
+
+  it('should validate integers 0 and 1 as booleans', function() {
+    var validator = new Validator({shouldBeTrue: 1, shouldBeFalse: 0});
+    assert(validator.bool('shouldBeTrue') === true);
+    assert(validator.bool('shouldBeFalse') === false);
   });
 });
