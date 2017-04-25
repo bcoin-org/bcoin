@@ -121,19 +121,19 @@ CLI.prototype.createAccount = co(function* createAccount() {
 });
 
 CLI.prototype.createAddress = co(function* createAddress() {
-  var account = this.config.str(0);
+  var account = this.config.str([0, 'account']);
   var addr = yield this.wallet.createAddress(account);
   this.log(addr);
 });
 
 CLI.prototype.createChange = co(function* createChange() {
-  var account = this.config.str(0);
+  var account = this.config.str([0, 'account']);
   var addr = yield this.wallet.createChange(account);
   this.log(addr);
 });
 
 CLI.prototype.createNested = co(function* createNested() {
-  var account = this.config.str(0);
+  var account = this.config.str([0, 'account']);
   var addr = yield this.wallet.createNested(account);
   this.log(addr);
 });
