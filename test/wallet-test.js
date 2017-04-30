@@ -74,18 +74,18 @@ describe('Wallet', function() {
 
   it('should generate new key and address', co(function* () {
     var w = yield walletdb.create();
-    var addr = w.getAddress('base58');
+    var addr = w.getAddress('string');
     assert(addr);
-    assert(Address.fromBase58(addr));
+    assert(Address.fromString(addr));
   }));
 
   it('should validate existing address', function() {
-    assert(Address.fromBase58('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
+    assert(Address.fromString('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
   });
 
   it('should fail to validate invalid address', function() {
     assert.throws(function() {
-      Address.fromBase58('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc');
+      Address.fromString('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc');
     });
   });
 
@@ -111,7 +111,7 @@ describe('Wallet', function() {
 
     w = yield walletdb.create({ witness: witness });
 
-    addr = Address.fromBase58(w.getAddress('base58'));
+    addr = Address.fromString(w.getAddress('string'));
 
     if (witness)
       assert.equal(addr.type, scriptTypes.WITNESSPUBKEYHASH);
@@ -647,8 +647,8 @@ describe('Wallet', function() {
     yield w3.addSharedKey(w2.account.accountKey);
 
     // Our p2sh address
-    b58 = w1.account[rec].getAddress('base58');
-    addr = Address.fromBase58(b58);
+    b58 = w1.account[rec].getAddress('string');
+    addr = Address.fromString(b58);
 
     if (witness) {
       if (bullshitNesting)
@@ -659,17 +659,17 @@ describe('Wallet', function() {
       assert.equal(addr.type, scriptTypes.SCRIPTHASH);
     }
 
-    assert.equal(w1.account[rec].getAddress('base58'), b58);
-    assert.equal(w2.account[rec].getAddress('base58'), b58);
-    assert.equal(w3.account[rec].getAddress('base58'), b58);
+    assert.equal(w1.account[rec].getAddress('string'), b58);
+    assert.equal(w2.account[rec].getAddress('string'), b58);
+    assert.equal(w3.account[rec].getAddress('string'), b58);
 
     paddr = w1.getNested();
 
     if (witness) {
       assert(paddr);
-      assert.equal(w1.getNested('base58'), paddr.toBase58());
-      assert.equal(w2.getNested('base58'), paddr.toBase58());
-      assert.equal(w3.getNested('base58'), paddr.toBase58());
+      assert.equal(w1.getNested('string'), paddr.toString());
+      assert.equal(w2.getNested('string'), paddr.toString());
+      assert.equal(w3.getNested('string'), paddr.toString());
     }
 
     // Add a shared unspent transaction to our wallets
@@ -689,11 +689,11 @@ describe('Wallet', function() {
 
     assert.equal(w1.account.changeDepth, 1);
 
-    assert(w1.account[rec].getAddress('base58') !== b58);
-    b58 = w1.account[rec].getAddress('base58');
-    assert.equal(w1.account[rec].getAddress('base58'), b58);
-    assert.equal(w2.account[rec].getAddress('base58'), b58);
-    assert.equal(w3.account[rec].getAddress('base58'), b58);
+    assert(w1.account[rec].getAddress('string') !== b58);
+    b58 = w1.account[rec].getAddress('string');
+    assert.equal(w1.account[rec].getAddress('string'), b58);
+    assert.equal(w2.account[rec].getAddress('string'), b58);
+    assert.equal(w3.account[rec].getAddress('string'), b58);
 
     // Create a tx requiring 2 signatures
     send = new MTX();
@@ -713,10 +713,10 @@ describe('Wallet', function() {
 
     assert.equal(w1.account.changeDepth, 1);
 
-    change = w1.account.change.getAddress('base58');
-    assert.equal(w1.account.change.getAddress('base58'), change);
-    assert.equal(w2.account.change.getAddress('base58'), change);
-    assert.equal(w3.account.change.getAddress('base58'), change);
+    change = w1.account.change.getAddress('string');
+    assert.equal(w1.account.change.getAddress('string'), change);
+    assert.equal(w2.account.change.getAddress('string'), change);
+    assert.equal(w3.account.change.getAddress('string'), change);
 
     // Simulate a confirmation
     block = nextBlock();
@@ -726,12 +726,12 @@ describe('Wallet', function() {
     assert.equal(w1.account[depth], 2);
     assert.equal(w1.account.changeDepth, 2);
 
-    assert(w1.account[rec].getAddress('base58') === b58);
-    assert(w1.account.change.getAddress('base58') !== change);
-    change = w1.account.change.getAddress('base58');
-    assert.equal(w1.account.change.getAddress('base58'), change);
-    assert.equal(w2.account.change.getAddress('base58'), change);
-    assert.equal(w3.account.change.getAddress('base58'), change);
+    assert(w1.account[rec].getAddress('string') === b58);
+    assert(w1.account.change.getAddress('string') !== change);
+    change = w1.account.change.getAddress('string');
+    assert.equal(w1.account.change.getAddress('string'), change);
+    assert.equal(w2.account.change.getAddress('string'), change);
+    assert.equal(w3.account.change.getAddress('string'), change);
 
     if (witness) {
       send.inputs[0].witness.set(2, 0);
@@ -829,11 +829,11 @@ describe('Wallet', function() {
     assert(w.account.accountIndex === 0);
 
     assert.notEqual(
-      account.receive.getAddress('base58'),
-      w.account.receive.getAddress('base58'));
+      account.receive.getAddress('string'),
+      w.account.receive.getAddress('string'));
 
-    assert.equal(w.getAddress('base58'),
-      w.account.receive.getAddress('base58'));
+    assert.equal(w.getAddress('string'),
+      w.account.receive.getAddress('string'));
 
     // Coinbase
     t1 = new MTX();

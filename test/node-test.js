@@ -559,12 +559,12 @@ describe('Node', function() {
 
     json = yield node.rpc.call({
       method: 'validateaddress',
-      params: [addr.toBase58()]
+      params: [addr.toString()]
     }, {});
 
     assert.deepStrictEqual(json.result, {
        isvalid: true,
-       address: addr.toBase58(),
+       address: addr.toString(),
        scriptPubKey: Script.fromAddress(addr).toJSON(),
        ismine: false,
        iswatchonly: false

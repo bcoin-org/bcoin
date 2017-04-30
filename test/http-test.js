@@ -59,7 +59,7 @@ describe('HTTP', function() {
     assert.equal(info.id, 'test');
     addr = info.account.receiveAddress;
     assert.equal(typeof addr, 'string');
-    addr = Address.fromBase58(addr);
+    addr = Address.fromString(addr);
   }));
 
   it('should fill with funds', co(function* () {
@@ -114,7 +114,7 @@ describe('HTTP', function() {
       rate: 10000,
       outputs: [{
         value: 10000,
-        address: addr.toBase58()
+        address: addr.toString()
       }]
     };
 
@@ -218,10 +218,10 @@ describe('HTTP', function() {
   }));
 
   it('should validate an address', co(function* () {
-    var json = yield wallet.client.rpc.execute('validateaddress', [addr.toBase58()]);
+    var json = yield wallet.client.rpc.execute('validateaddress', [addr.toString()]);
     assert.deepStrictEqual(json, {
        isvalid: true,
-       address: addr.toBase58(),
+       address: addr.toString(),
        scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
        ismine: false,
        iswatchonly: false
