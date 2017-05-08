@@ -29,8 +29,8 @@
     "bcoin-native": "0.0.14",
     "leveldown": "1.5.0",
     "secp256k1": "3.2.5",
-    "socket.io": "1.4.8",
-    "socket.io-client": "1.4.8"
+    "socket.io": "1.7.3",
+    "socket.io-client": "1.7.3"
   },
   "devDependencies": {
     "babelify": "7.3.0",
