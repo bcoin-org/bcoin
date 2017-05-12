@@ -37,8 +37,7 @@ See the [Beginner's Guide][guide] for more in-depth installation instructions.
 
 ## Support
 
-Join us on freenode in the [#bcoin][irc] channel, or on the [bitcoin core
-slack][slack].
+Join us on freenode in the [#bcoin][irc] channel.
 
 ## Disclaimer
 
