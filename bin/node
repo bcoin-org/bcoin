@@ -4,6 +4,21 @@
 
 process.title = 'bcoin';
 
+if (process.argv.indexOf('--help') !== -1
+    || process.argv.indexOf('-h') !== -1) {
+  console.error('See the bcoin wiki at: https://github.com/bcoin-org/bcoin/wiki.');
+  process.exit(1);
+  throw new Error('Could not exit.');
+}
+
+if (process.argv.indexOf('--version') !== -1
+    || process.argv.indexOf('-v') !== -1) {
+  var pkg = require('../package.json');
+  console.log(pkg.version);
+  process.exit(0);
+  throw new Error('Could not exit.');
+}
+
 var bcoin = require('../');
 var plugin = require('../lib/wallet/plugin');
 var co = bcoin.co;
@@ -23,7 +38,7 @@ node = new bcoin.fullnode({
 });
 
 // Temporary hack
-if (!node.has('walletdb'))
+if (!node.config.bool('no-wallet') && !node.has('walletdb'))
   node.use(plugin);
 
 node.on('error', function(err) {
