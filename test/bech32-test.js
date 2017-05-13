@@ -99,13 +99,13 @@ describe('Bech32', function() {
   ];
 
   function fromAddress(hrp, addr) {
-    var dec = bech32.decode(addr);
+    var dec = bech32.deserialize(addr);
     var data;
 
     if (dec.hrp !== hrp || dec.data.length < 1 || dec.data[0] > 16)
       throw new Error('Invalid bech32 prefix or data length.');
 
-    data = bech32.bitsify(dec.data, 84, 5, 8, -1, 1);
+    data = bech32.convert(dec.data, 84, 5, 8, -1, 1);
 
     if (data.length < 2 || data.length > 40)
       throw new Error('Invalid witness program size.');
@@ -120,8 +120,8 @@ describe('Bech32', function() {
   }
 
   function toAddress(hrp, version, program) {
-    var data = bech32.bitsify(program, 65, 8, 5, version, 0);
-    var ret = bech32.encode(hrp, data);
+    var data = bech32.convert(program, 65, 8, 5, version, 0);
+    var ret = bech32.serialize(hrp, data);
 
     fromAddress(hrp, ret);
 
@@ -135,7 +135,7 @@ describe('Bech32', function() {
 
   VALID_CHECKSUM.forEach(function(test) {
     it('should have valid checksum for ' + test, function() {
-      var ret = bech32.decode(test);
+      var ret = bech32.deserialize(test);
       assert(ret);
     });
   });
