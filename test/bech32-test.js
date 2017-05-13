@@ -105,7 +105,7 @@ describe('Bech32', function() {
     if (dec.hrp !== hrp || dec.data.length < 1 || dec.data[0] > 16)
       throw new Error('Invalid bech32 prefix or data length.');
 
-    data = bech32.convert(dec.data, 84, 5, 8, -1, 1);
+    data = bech32.convert(dec.data, new Buffer(84), 5, 8, -1, 1);
 
     if (data.length < 2 || data.length > 40)
       throw new Error('Invalid witness program size.');
@@ -120,7 +120,7 @@ describe('Bech32', function() {
   }
 
   function toAddress(hrp, version, program) {
-    var data = bech32.convert(program, 65, 8, 5, version, 0);
+    var data = bech32.convert(program, new Buffer(65), 8, 5, version, 0);
     var ret = bech32.serialize(hrp, data);
 
     fromAddress(hrp, ret);
