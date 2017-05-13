@@ -578,7 +578,7 @@ describe('Chain', function() {
   it('should add wit addrs to miner', co(function* () {
     miner.addresses.length = 0;
     miner.addAddress(wwallet.getReceive());
-    assert.equal(wwallet.getReceive().getType(), 'witnesspubkeyhash');
+    assert.equal(wwallet.getReceive().getType(), 'witness');
   }));
 
   it('should mine 2000 witness blocks', co(function* () {

@@ -16,7 +16,6 @@ var Input = require('../lib/primitives/input');
 var Outpoint = require('../lib/primitives/outpoint');
 var Script = require('../lib/script/script');
 var HD = require('../lib/hd');
-var scriptTypes = Script.types;
 
 var KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -114,9 +113,9 @@ describe('Wallet', function() {
     addr = Address.fromString(w.getAddress('string'));
 
     if (witness)
-      assert.equal(addr.type, scriptTypes.WITNESSPUBKEYHASH);
+      assert.equal(addr.type, Address.types.WITNESS);
     else
-      assert.equal(addr.type, scriptTypes.PUBKEYHASH);
+      assert.equal(addr.type, Address.types.PUBKEYHASH);
 
     src = new MTX();
     src.addInput(dummy());
@@ -652,11 +651,11 @@ describe('Wallet', function() {
 
     if (witness) {
       if (bullshitNesting)
-        assert.equal(addr.type, scriptTypes.SCRIPTHASH);
+        assert.equal(addr.type, Address.types.SCRIPTHASH);
       else
-        assert.equal(addr.type, scriptTypes.WITNESSSCRIPTHASH);
+        assert.equal(addr.type, Address.types.WITNESS);
     } else {
-      assert.equal(addr.type, scriptTypes.SCRIPTHASH);
+      assert.equal(addr.type, Address.types.SCRIPTHASH);
     }
 
     assert.equal(w1.account[rec].getAddress('string'), b58);

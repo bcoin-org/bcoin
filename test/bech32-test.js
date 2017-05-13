@@ -257,8 +257,7 @@ describe('Bech32', function() {
         ok2 = null;
       }
 
-      ok = ok1 === null && ok2 === null;
-      assert(ok);
+      assert(!ok2);
     });
   });
 });
