@@ -2,7 +2,7 @@
 
 'use strict';
 
-process.title = 'bcoin';
+process.title = 'lcoin';
 
 if (process.argv.indexOf('--help') !== -1
     || process.argv.indexOf('-h') !== -1) {

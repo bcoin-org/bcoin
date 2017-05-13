@@ -13,7 +13,7 @@ var worker = fs.readFileSync(__dirname + '/bcoin-worker.js');
 
 proxy = new WSProxy({
   pow: process.argv.indexOf('--pow') !== -1,
-  ports: [8333, 18333, 18444, 28333, 28901]
+  ports: [8333, 18333, 18444, 28333, 28901, 9333, 19335]
 });
 
 proxy.on('error', function(err) {

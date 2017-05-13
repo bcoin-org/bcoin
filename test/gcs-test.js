@@ -75,8 +75,8 @@ describe('GCS', function() {
     'b7c3c4bce1a23baef2da05f9b7e4bff813449ec7e80f980ec7e4cacfadcd3314',
     300);
 
-  addr1 = new Address('bc1qmyrddmxglk49ye2wd29wefaavw7es8k5d555lx');
-  addr2 = new Address('bc1q4645ycu0l9pnvxaxnhemushv0w4cd9flkqh95j');
+  addr1 = new Address('lc1qt2fqd23zetsucrlgz6q5mn5k4ax58h2mhz34z9');
+  addr2 = new Address('lc1qane4673nzk5zq2p6mzdx7hx269h8zm9974cn43');
 
   it('should test GCS filter build', function() {
     filter1 = GCSFilter.fromItems(P, key, contents1);

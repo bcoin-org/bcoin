@@ -21,6 +21,7 @@ describe('HTTP', function() {
     network: 'regtest',
     apiKey: 'foo',
     walletAuth: true,
+    walletWitness: false,
     db: 'memory'
   });
 
@@ -193,7 +194,7 @@ describe('HTTP', function() {
       vbavailable: {},
       vbrequired: 0,
       height: 1,
-      previousblockhash: '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206',
+      previousblockhash: '530827f38f93b43ed12af0b3ad25a288dc02ed74d6d7857862df51fc56c416f9',
       target: '7fffff0000000000000000000000000000000000000000000000000000000000',
       bits: '207fffff',
       noncerange: '00000000ffffffff',
@@ -203,7 +204,7 @@ describe('HTTP', function() {
       expires: json.expires,
       sigoplimit: 20000,
       sizelimit: 1000000,
-      longpollid: '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e22060000000000',
+      longpollid: '530827f38f93b43ed12af0b3ad25a288dc02ed74d6d7857862df51fc56c416f90000000000',
       submitold: false,
       coinbaseaux: { flags: '6d696e65642062792062636f696e' },
       coinbasevalue: 5000000000,

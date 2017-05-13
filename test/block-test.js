@@ -102,9 +102,9 @@ describe('Block', function() {
   it('should parse partial merkle tree', function() {
     var tree;
 
-    assert(mblock.verifyPOW());
+    assert(!mblock.verifyPOW());
     assert(mblock.verifyBody());
-    assert(mblock.verify());
+    assert(!mblock.verify());
 
     tree = mblock.getTree();
 
@@ -129,21 +129,24 @@ describe('Block', function() {
 
   it('should be verifiable', function() {
     var b = MerkleBlock.fromRaw(raw, 'hex');
-    assert(b.verify());
+    assert(b.verifyBody());
+    assert(!b.verify());
   });
 
   it('should be serialized and deserialized and still verify', function() {
     var raw = mblock.toRaw();
     var b = MerkleBlock.fromRaw(raw);
     assert.deepEqual(b.toRaw(), raw);
-    assert(b.verify());
+    assert(b.verifyBody());
+    assert(!b.verify());
   });
 
   it('should be jsonified and unjsonified and still verify', function() {
     var raw = mblock.toJSON();
     var b = MerkleBlock.fromJSON(raw);
     assert.deepEqual(b.toJSON(), raw);
-    assert(b.verify());
+    assert(b.verifyBody());
+    assert(!b.verify());
   });
 
   it('should calculate reward properly', function() {
@@ -208,7 +211,8 @@ describe('Block', function() {
       }
     }
 
-    assert(block.verify());
+    assert(!block.verify());
+    assert(block.verifyBody());
     assert(block.txs[0].isCoinbase());
     assert(block.txs[0].isSane());
     assert(!block.hasWitness());
@@ -245,7 +249,8 @@ describe('Block', function() {
     assert.equal(ret.reason, 'bad-txnmrklroot');
     block2.merkleRoot = block.merkleRoot;
     block2.refresh();
-    assert(block2.verify());
+    assert(block2.verifyBody());
+    assert(!block2.verify());
   });
 
   it('should fail on merkle block with a bad merkle root', function() {
@@ -259,7 +264,8 @@ describe('Block', function() {
     assert.equal(ret.reason, 'bad-txnmrklroot');
     mblock2.merkleRoot = mblock.merkleRoot;
     mblock2.refresh();
-    assert(mblock2.verify());
+    assert(mblock2.verifyBody());
+    assert(!mblock2.verify());
   });
 
   it('should fail with a low target', function() {
@@ -271,7 +277,8 @@ describe('Block', function() {
     assert(!block2.verify());
     block2.bits = block.bits;
     block2.refresh();
-    assert(block2.verify());
+    assert(block2.verifyBody());
+    assert(!block2.verify());
   });
 
   it('should fail on duplicate txs', function() {
@@ -285,9 +292,9 @@ describe('Block', function() {
 
   it('should verify with headers', function() {
     var headers = new Headers(block);
-    assert(headers.verifyPOW());
+    assert(!headers.verifyPOW());
     assert(headers.verifyBody());
-    assert(headers.verify());
+    assert(!headers.verify());
   });
 
   it('should handle compact block', function() {

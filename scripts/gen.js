@@ -9,7 +9,7 @@ var Block = require('../lib/primitives/block');
 var Script = require('../lib/script/script');
 var Opcode = require('../lib/script/opcode');
 var opcodes = Script.opcodes;
-var main, testnet, regtest, segnet3, segnet4, btcd;
+var main, testnet, regtest;
 
 function createGenesisBlock(options) {
   var flags = options.flags;
@@ -57,6 +57,11 @@ function createGenesisBlock(options) {
     locktime: 0
   });
 
+  tx.inputs[0].script = Script.fromRaw(Buffer.from(
+    '04ffff001d0104404e592054696d65732030352f4f63742f323031312053746576'
+    + '65204a6f62732c204170706c65e280997320566973696f6e6172792c20446965'
+    + '73206174203536', 'hex'));
+
   block = new Block({
     version: options.version,
     prevBlock: encoding.NULL_HASH,
@@ -74,45 +79,45 @@ function createGenesisBlock(options) {
 
 main = createGenesisBlock({
   version: 1,
-  ts: 1231006505,
-  bits: 486604799,
-  nonce: 2083236893
-};
+  ts: 1317972665,
+  bits: 504365040,
+  nonce: 2084524493,
+  flags: new Buffer(
+    'NY Times 05/Oct/2011 Steve Jobs, Apple’s Visionary, Dies at 56',
+    'ascii'),
+  script: Script.fromArray([
+    new Buffer('040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9', 'hex'),
+    opcodes.OP_CHECKSIG
+  ])
+});
 
 testnet = createGenesisBlock({
+  ts: 1486949366,
+  nonce: 293345,
+  bits: 0x1e0ffff0,
   version: 1,
-  ts: 1296688602,
-  bits: 486604799,
-  nonce: 414098458
-};
+  flags: new Buffer(
+    'NY Times 05/Oct/2011 Steve Jobs, Apple’s Visionary, Dies at 56',
+    'ascii'),
+  script: Script.fromArray([
+    new Buffer('040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9', 'hex'),
+    opcodes.OP_CHECKSIG
+  ])
+});
 
 regtest = createGenesisBlock({
-  version: 1,
   ts: 1296688602,
-  bits: 545259519,
-  nonce: 2
-};
-
-segnet3 = createGenesisBlock({
+  nonce: 0,
+  bits: 0x207fffff,
   version: 1,
-  ts: 1452831101,
-  bits: 486604799,
-  nonce: 0
-};
-
-segnet4 = createGenesisBlock({
-  version: 1,
-  ts: 1452831101,
-  bits: 503447551,
-  nonce: 0
-};
-
-btcd = createGenesisBlock({
-  version: 1,
-  ts: 1401292357,
-  bits: 545259519,
-  nonce: 2
-};
+  flags: new Buffer(
+    'NY Times 05/Oct/2011 Steve Jobs, Apple’s Visionary, Dies at 56',
+    'ascii'),
+  script: Script.fromArray([
+    new Buffer('040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9', 'hex'),
+    opcodes.OP_CHECKSIG
+  ])
+});
 
 util.log(main);
 util.log('');
@@ -120,25 +125,12 @@ util.log(testnet);
 util.log('');
 util.log(regtest);
 util.log('');
-util.log(segnet3);
-util.log('');
-util.log(segnet4);
-util.log('');
-util.log('');
-util.log('main hash: %s', main.rhash());
+util.log('main hash: %s', main.hash('hex'));
 util.log('main raw: %s', main.toRaw().toString('hex'));
 util.log('');
-util.log('testnet hash: %s', testnet.rhash());
+util.log('testnet hash: %s', testnet.hash('hex'));
 util.log('testnet raw: %s', testnet.toRaw().toString('hex'));
 util.log('');
-util.log('regtest hash: %s', regtest.rhash());
+util.log('regtest hash: %s', regtest.hash('hex'));
 util.log('regtest raw: %s', regtest.toRaw().toString('hex'));
 util.log('');
-util.log('segnet3 hash: %s', segnet3.rhash());
-util.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
-util.log('');
-util.log('segnet4 hash: %s', segnet4.rhash());
-util.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
-util.log('');
-util.log('btcd simnet hash: %s', btcd.rhash());
-util.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));

@@ -1,8 +1,7 @@
 #!/bin/bash
 
 dir=$(dirname "$(which "$0")")
-url_main='https://raw.githubusercontent.com/bitcoin/bitcoin/master/contrib/seeds/nodes_main.txt'
-url_testnet='https://raw.githubusercontent.com/bitcoin/bitcoin/master/contrib/seeds/nodes_test.txt'
+url_main='https://raw.githubusercontent.com/litecoin-project/litecoin/master/contrib/seeds/nodes_main.txt'
 
 getseeds() {
   echo "$(curl -s "$1")"
@@ -29,4 +28,4 @@ tojs() {
 }
 
 getseeds "$url_main" | tojs > "${dir}/../lib/net/seeds/main.js"
-getseeds "$url_testnet" | tojs > "${dir}/../lib/net/seeds/testnet.js"
+echo 'module.exports = [];' > "${dir}/../lib/net/seeds/testnet.js"

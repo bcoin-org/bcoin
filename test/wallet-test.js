@@ -58,7 +58,8 @@ describe('Wallet', function() {
   walletdb = new WalletDB({
     name: 'wallet-test',
     db: 'memory',
-    verify: true
+    verify: true,
+    witness: false
   });
 
   this.timeout(5000);
@@ -73,10 +74,6 @@ describe('Wallet', function() {
     var addr = w.getAddress('string');
     assert(addr);
     assert(Address.fromString(addr));
-  });
-
-  it('should validate existing address', function() {
-    assert(Address.fromString('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
   });
 
   it('should fail to validate invalid address', function() {
