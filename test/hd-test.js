@@ -107,7 +107,7 @@ describe('HD', function() {
         return;
 
       it('should derive ' + path + ' from master', function() {
-        var key = master.derive(path);
+        var key = master.derivePath(path);
         equal(key.toBase58(), kp.prv);
         equal(key.toPublic().toBase58(), kp.pub);
       });

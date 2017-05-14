@@ -159,7 +159,7 @@ describe('Wallet', function() {
 
     script = Script.fromMultisig(1, 2, [
       w.account.receive.getPublicKey(),
-      k.derive('m/0/0').publicKey
+      k.derivePath('m/0/0').publicKey
     ]);
 
     // Input transaction (bare 1-of-2 multisig)
