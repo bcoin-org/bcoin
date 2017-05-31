@@ -20,7 +20,7 @@
     "wallet"
   ],
   "engines": {
-    "node": ">= 0.11.0"
+    "node": "^4.5.0 || >=5.10.0"
   },
   "dependencies": {
     "bn.js": "4.11.6",
