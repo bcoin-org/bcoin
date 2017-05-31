@@ -523,7 +523,7 @@ describe('Chain', function() {
     var block = yield cpu.mineBlock();
     var tx = block.txs[0];
     var input = tx.inputs[0];
-    input.witness.set(0, new Buffer(33));
+    input.witness.set(0, Buffer.allocUnsafe(33));
     input.witness.compile();
     block.refresh(true);
     assert.equal(yield addBlock(block), 'bad-witness-nonce-size');

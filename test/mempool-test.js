@@ -262,7 +262,7 @@ describe('Mempool', function() {
 
     sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     tx.inputs[0].script = new Script([sig]);
-    tx.inputs[0].witness.push(new Buffer(0));
+    tx.inputs[0].witness.push(Buffer.alloc(0));
     tx = tx.toTX();
 
     try {

@@ -21,10 +21,10 @@ describe('AES', function() {
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
-      data = new Buffer(data, 'utf8');
+      data = Buffer.from(data, 'utf8');
 
     if (typeof passphrase === 'string')
-      passphrase = new Buffer(passphrase, 'utf8');
+      passphrase = Buffer.from(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
     cipher = nativeCrypto.createCipheriv('aes-256-cbc', key.key, key.iv);
@@ -42,10 +42,10 @@ describe('AES', function() {
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
-      data = new Buffer(data, 'hex');
+      data = Buffer.from(data, 'hex');
 
     if (typeof passphrase === 'string')
-      passphrase = new Buffer(passphrase, 'utf8');
+      passphrase = Buffer.from(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
     decipher = nativeCrypto.createDecipheriv('aes-256-cbc', key.key, key.iv);
@@ -63,10 +63,10 @@ describe('AES', function() {
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
-      data = new Buffer(data, 'utf8');
+      data = Buffer.from(data, 'utf8');
 
     if (typeof passphrase === 'string')
-      passphrase = new Buffer(passphrase, 'utf8');
+      passphrase = Buffer.from(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
     return crypto.encipher(data, key.key, key.iv);
@@ -79,10 +79,10 @@ describe('AES', function() {
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
-      data = new Buffer(data, 'hex');
+      data = Buffer.from(data, 'hex');
 
     if (typeof passphrase === 'string')
-      passphrase = new Buffer(passphrase, 'utf8');
+      passphrase = Buffer.from(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
     return crypto.decipher(data, key.key, key.iv);
@@ -95,10 +95,10 @@ describe('AES', function() {
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
-      data = new Buffer(data, 'utf8');
+      data = Buffer.from(data, 'utf8');
 
     if (typeof passphrase === 'string')
-      passphrase = new Buffer(passphrase, 'utf8');
+      passphrase = Buffer.from(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
 
@@ -112,10 +112,10 @@ describe('AES', function() {
     assert(passphrase, 'No passphrase.');
 
     if (typeof data === 'string')
-      data = new Buffer(data, 'hex');
+      data = Buffer.from(data, 'hex');
 
     if (typeof passphrase === 'string')
-      passphrase = new Buffer(passphrase, 'utf8');
+      passphrase = Buffer.from(passphrase, 'utf8');
 
     key = pbkdf2key(passphrase, 2048, 32, 16);
 
@@ -123,15 +123,15 @@ describe('AES', function() {
   }
 
   it('should encrypt and decrypt a hash with 2 blocks', function() {
-    var hash = crypto.sha256(new Buffer([]));
+    var hash = crypto.sha256(Buffer.alloc(0));
     var enchash = encrypt(hash, 'foo');
     var dechash = decrypt(enchash, 'foo');
 
-    var hash2 = crypto.sha256(new Buffer([]));
+    var hash2 = crypto.sha256(Buffer.alloc(0));
     var enchash2 = nencrypt(hash2, 'foo');
     var dechash2 = ndecrypt(enchash2, 'foo');
 
-    var hash3 = crypto.sha256(new Buffer([]));
+    var hash3 = crypto.sha256(Buffer.alloc(0));
     var enchash3 = bencrypt(hash3, 'foo');
     var dechash3 = bdecrypt(enchash3, 'foo');
 
@@ -142,11 +142,11 @@ describe('AES', function() {
   });
 
   it('should encrypt and decrypt a hash with uneven blocks', function() {
-    var hash = Buffer.concat([crypto.sha256(new Buffer([])), new Buffer([1,2,3])]);
+    var hash = Buffer.concat([crypto.sha256(Buffer.alloc(0)), Buffer.from([1,2,3])]);
     var enchash = encrypt(hash, 'foo');
     var dechash = decrypt(enchash, 'foo');
 
-    var hash2 = Buffer.concat([crypto.sha256(new Buffer([])), new Buffer([1,2,3])]);
+    var hash2 = Buffer.concat([crypto.sha256(Buffer.alloc(0)), Buffer.from([1,2,3])]);
     var enchash2 = nencrypt(hash2, 'foo');
     var dechash2 = ndecrypt(enchash2, 'foo');
 

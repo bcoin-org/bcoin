@@ -38,7 +38,7 @@ var updateVersion = co(function* updateVersion() {
 
   yield db.backup(bak);
 
-  ver = new Buffer(4);
+  ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(5, 0, true);
   batch.put('V', ver);
 });
@@ -47,8 +47,8 @@ var updateTXDB = co(function* updateTXDB() {
   var i, keys, key;
 
   keys = yield db.keys({
-    gte: new Buffer([0x00]),
-    lte: new Buffer([0xff])
+    gte: Buffer.from([0x00]),
+    lte: Buffer.from([0xff])
   });
 
   for (i = 0; i < keys.length; i++) {

@@ -44,7 +44,7 @@ var updateVersion = co(function* updateVersion() {
 
   yield db.backup(bak);
 
-  ver = new Buffer(4);
+  ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(3, 0, true);
   batch.put('V', ver);
 });
@@ -123,7 +123,7 @@ var updateAccounts = co(function* updateAccounts() {
 
     if (account._old) {
       batch.del(layout.i(account.wid, account._old));
-      buf = new Buffer(4);
+      buf = Buffer.allocUnsafe(4);
       buf.writeUInt32LE(account.accountIndex, 0, true);
       batch.put(layout.i(account.wid, account.name), buf);
     }
@@ -157,7 +157,7 @@ var updateWallets = co(function* updateWallets() {
 
     if (wallet._old) {
       batch.del(layout.l(wallet._old));
-      buf = new Buffer(4);
+      buf = Buffer.allocUnsafe(4);
       buf.writeUInt32LE(wallet.wid, 0, true);
       batch.put(layout.l(wallet.id), buf);
     }

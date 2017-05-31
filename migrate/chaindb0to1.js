@@ -19,7 +19,7 @@ var db = bcoin.ldb({
 
 function makeKey(data) {
   var height = data.readUInt32LE(1, true);
-  var key = new Buffer(5);
+  var key = Buffer.allocUnsafe(5);
   key[0] = 0x48;
   key.writeUInt32BE(height, 1, true);
   return key;
@@ -64,7 +64,7 @@ var updateState = co(function* updateState() {
 
   batch.put('R', p);
 
-  ver = new Buffer(4);
+  ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(1, 0, true);
   batch.put('V', ver);
 
@@ -82,8 +82,8 @@ var updateEndian = co(function* updateEndian() {
   console.log('Iterating...');
 
   iter = db.iterator({
-    gte: new Buffer('4800000000', 'hex'),
-    lte: new Buffer('48ffffffff', 'hex'),
+    gte: Buffer.from('4800000000', 'hex'),
+    lte: Buffer.from('48ffffffff', 'hex'),
     values: true
   });
 

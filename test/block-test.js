@@ -77,7 +77,7 @@ describe('Block', function() {
       '1f5e46b9da3a8b1241f4a1501741d3453bafddf6135b600b926e3f4056c6d564',
       '33825657ba32afe269819f01993bd77baba86379043168c94845d32370e53562'
     ],
-    flags: new Buffer([245, 122, 0])
+    flags: Buffer.from([245, 122, 0])
   });
   raw = mblock.toRaw().toString('hex');
 

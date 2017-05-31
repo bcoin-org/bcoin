@@ -720,8 +720,8 @@ describe('TX', function() {
     input = new Script();
 
     witness = new Witness([
-      new Buffer([0]),
-      new Buffer([0])
+      Buffer.from([0]),
+      Buffer.from([0])
     ]);
 
     ctx = sigopContext(input, witness, output);
@@ -759,8 +759,8 @@ describe('TX', function() {
     ]);
 
     witness = new Witness([
-      new Buffer([0]),
-      new Buffer([0])
+      Buffer.from([0]),
+      Buffer.from([0])
     ]);
 
     ctx = sigopContext(input, witness, output);
@@ -780,8 +780,8 @@ describe('TX', function() {
     input = new Script();
 
     witness = new Witness([
-      new Buffer([0]),
-      new Buffer([0]),
+      Buffer.from([0]),
+      Buffer.from([0]),
       redeem.toRaw()
     ]);
 
@@ -808,8 +808,8 @@ describe('TX', function() {
     ]);
 
     witness = new Witness([
-      new Buffer([0]),
-      new Buffer([0]),
+      Buffer.from([0]),
+      Buffer.from([0]),
       wscript.toRaw()
     ]);
 

@@ -10,7 +10,7 @@ var BufferWriter = require('../lib/utils/writer');
 
 var NAME_REGEX = /^[a-z0-9\-\.]+?\.(?:be|me|org|com|net|ch|de)$/i;
 
-var TARGET = new Buffer(
+var TARGET = Buffer.from(
   '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
   'hex');
 
@@ -185,7 +185,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
   ws.on('tcp data', function(data) {
     if (typeof data !== 'string')
       return;
-    socket.write(new Buffer(data, 'hex'));
+    socket.write(Buffer.from(data, 'hex'));
   });
 
   ws.on('tcp keep alive', function(enable, delay) {

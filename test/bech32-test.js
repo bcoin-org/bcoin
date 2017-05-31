@@ -39,14 +39,14 @@ describe('Bech32', function() {
   var VALID_ADDRESS = [
     [
       'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4',
-      new Buffer([
+      Buffer.from([
         0x00, 0x14, 0x75, 0x1e, 0x76, 0xe8, 0x19, 0x91, 0x96, 0xd4, 0x54,
         0x94, 0x1c, 0x45, 0xd1, 0xb3, 0xa3, 0x23, 0xf1, 0x43, 0x3b, 0xd6
       ])
     ],
     [
       'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7',
-      new Buffer([
+      Buffer.from([
         0x00, 0x20, 0x18, 0x63, 0x14, 0x3c, 0x14, 0xc5, 0x16, 0x68, 0x04,
         0xbd, 0x19, 0x20, 0x33, 0x56, 0xda, 0x13, 0x6c, 0x98, 0x56, 0x78,
         0xcd, 0x4d, 0x27, 0xa1, 0xb8, 0xc6, 0x32, 0x96, 0x04, 0x90, 0x32,
@@ -55,7 +55,7 @@ describe('Bech32', function() {
     ],
     [
       'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx',
-      new Buffer([
+      Buffer.from([
         0x81, 0x28, 0x75, 0x1e, 0x76, 0xe8, 0x19, 0x91, 0x96, 0xd4, 0x54,
         0x94, 0x1c, 0x45, 0xd1, 0xb3, 0xa3, 0x23, 0xf1, 0x43, 0x3b, 0xd6,
         0x75, 0x1e, 0x76, 0xe8, 0x19, 0x91, 0x96, 0xd4, 0x54, 0x94, 0x1c,
@@ -64,20 +64,20 @@ describe('Bech32', function() {
     ],
     [
       'BC1SW50QA3JX3S',
-      new Buffer([
+      Buffer.from([
         0x90, 0x02, 0x75, 0x1e
       ])
     ],
     [
       'bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj',
-      new Buffer([
+      Buffer.from([
         0x82, 0x10, 0x75, 0x1e, 0x76, 0xe8, 0x19, 0x91, 0x96, 0xd4, 0x54,
         0x94, 0x1c, 0x45, 0xd1, 0xb3, 0xa3, 0x23
       ])
     ],
     [
       'tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy',
-      new Buffer([
+      Buffer.from([
         0x00, 0x20, 0x00, 0x00, 0x00, 0xc4, 0xa5, 0xca, 0xd4, 0x62, 0x21,
         0xb2, 0xa1, 0x87, 0x90, 0x5e, 0x52, 0x66, 0x36, 0x2b, 0x99, 0xd5,
         0xe9, 0x1c, 0x6c, 0xe2, 0x4d, 0x16, 0x5d, 0xab, 0x93, 0xe8, 0x64,
@@ -105,7 +105,7 @@ describe('Bech32', function() {
     if (dec.hrp !== hrp || dec.data.length < 1 || dec.data[0] > 16)
       throw new Error('Invalid bech32 prefix or data length.');
 
-    data = bech32.convert(dec.data, new Buffer(84), 5, 8, -1, 1);
+    data = bech32.convert(dec.data, Buffer.allocUnsafe(84), 5, 8, -1, 1);
 
     if (data.length < 2 || data.length > 40)
       throw new Error('Invalid witness program size.');
@@ -120,7 +120,7 @@ describe('Bech32', function() {
   }
 
   function toAddress(hrp, version, program) {
-    var data = bech32.convert(program, new Buffer(65), 8, 5, version, 0);
+    var data = bech32.convert(program, Buffer.allocUnsafe(65), 8, 5, version, 0);
     var ret = bech32.serialize(hrp, data);
 
     fromAddress(hrp, ret);
@@ -129,7 +129,7 @@ describe('Bech32', function() {
   }
 
   function createProgram(version, program) {
-    var ver = new Buffer([version ? version + 0x80 : 0, program.length]);
+    var ver = Buffer.from([version ? version + 0x80 : 0, program.length]);
     return Buffer.concat([ver, program]);
   }
 

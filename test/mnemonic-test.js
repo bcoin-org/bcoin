@@ -8,9 +8,9 @@ var mnemonic2 = require('./data/mnemonic2');
 
 describe('Mnemonic', function() {
   mnemonic1.forEach(function(data, i) {
-    var entropy = new Buffer(data[0], 'hex');
+    var entropy = Buffer.from(data[0], 'hex');
     var phrase = data[1];
-    var seed = new Buffer(data[2], 'hex');
+    var seed = Buffer.from(data[2], 'hex');
     var xpriv = data[3];
     it('should create an english mnemonic (' + i + ')', function() {
       var mnemonic, key;
@@ -30,9 +30,9 @@ describe('Mnemonic', function() {
   });
 
   mnemonic2.forEach(function(data, i) {
-    var entropy = new Buffer(data.entropy, 'hex');
+    var entropy = Buffer.from(data.entropy, 'hex');
     var phrase = data.mnemonic;
-    var seed = new Buffer(data.seed, 'hex');
+    var seed = Buffer.from(data.seed, 'hex');
     var passphrase = data.passphrase;
     var xpriv = data.bip32_xprv;
     it('should create a japanese mnemonic (' + i + ')', function() {

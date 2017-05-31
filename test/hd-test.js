@@ -26,7 +26,7 @@ describe('HD', function() {
   });
 
   it('should create master private key', function() {
-    master = HD.PrivateKey.fromSeed(new Buffer(vectors.seed, 'hex'));
+    master = HD.PrivateKey.fromSeed(Buffer.from(vectors.seed, 'hex'));
     assert.equal(master.toBase58(), vectors.master_priv);
     assert.equal(master.toPublic().toBase58(), vectors.master_pub);
   });
@@ -95,7 +95,7 @@ describe('HD', function() {
     var master;
 
     it('should create from a seed', function() {
-      master = HD.PrivateKey.fromSeed(new Buffer(vector.seed, 'hex'));
+      master = HD.PrivateKey.fromSeed(Buffer.from(vector.seed, 'hex'));
       equal(master.toBase58(), vector.m.prv);
       equal(master.toPublic().toBase58(), vector.m.pub);
     });

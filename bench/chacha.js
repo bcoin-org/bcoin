@@ -8,11 +8,11 @@ var i, chacha, iv, poly, key, data, end;
 console.log('note: rate measured in kb/s');
 
 chacha = new chachapoly.ChaCha20();
-key = new Buffer(32);
+key = Buffer.allocUnsafe(32);
 key.fill(2);
-iv = new Buffer('0102030405060708', 'hex');
+iv = Buffer.from('0102030405060708', 'hex');
 chacha.init(key, iv, 0);
-data = new Buffer(32);
+data = Buffer.allocUnsafe(32);
 for (i = 0; i < 32; i++)
   data[i] = i;
 end = bench('encrypt');
@@ -21,11 +21,11 @@ for (i = 0; i < 1000000; i++)
 end(i * 32 / 1024);
 
 poly = new chachapoly.Poly1305();
-key = new Buffer(32);
+key = Buffer.allocUnsafe(32);
 key.fill(2);
 poly.init(key);
 
-data = new Buffer(32);
+data = Buffer.allocUnsafe(32);
 for (i = 0; i < 32; i++)
   data[i] = i & 0xff;
 

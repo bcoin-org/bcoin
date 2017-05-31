@@ -15,14 +15,14 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     var counter = options.counter;
     var chacha, plainenc;
 
-    key = new Buffer(key, 'hex');
-    nonce = new Buffer(nonce, 'hex');
-    plain = new Buffer(plain, 'hex');
-    ciphertext = new Buffer(ciphertext, 'hex');
+    key = Buffer.from(key, 'hex');
+    nonce = Buffer.from(nonce, 'hex');
+    plain = Buffer.from(plain, 'hex');
+    ciphertext = Buffer.from(ciphertext, 'hex');
 
     chacha = new ChaCha20();
     chacha.init(key, nonce, counter);
-    plainenc = new Buffer(plain);
+    plainenc = Buffer.from(plain);
     chacha.encrypt(plainenc);
     assert.deepEqual(plainenc, ciphertext);
 
@@ -42,20 +42,20 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     var tag = options.tag;
     var aead, plainenc;
 
-    plain = new Buffer(plain, 'hex');
-    aad = new Buffer(aad, 'hex');
-    key = new Buffer(key, 'hex');
-    nonce = new Buffer(nonce, 'hex');
-    pk = new Buffer(pk, 'hex');
-    ciphertext = new Buffer(ciphertext, 'hex');
-    tag = new Buffer(tag, 'hex');
+    plain = Buffer.from(plain, 'hex');
+    aad = Buffer.from(aad, 'hex');
+    key = Buffer.from(key, 'hex');
+    nonce = Buffer.from(nonce, 'hex');
+    pk = Buffer.from(pk, 'hex');
+    ciphertext = Buffer.from(ciphertext, 'hex');
+    tag = Buffer.from(tag, 'hex');
 
     aead = new AEAD();
     aead.init(key, nonce);
     assert.equal(aead.chacha20.getCounter(), 1);
     assert.deepEqual(aead.polyKey, pk);
     aead.aad(aad);
-    plainenc = new Buffer(plain);
+    plainenc = Buffer.from(plain);
     aead.encrypt(plainenc);
     assert.deepEqual(plainenc, ciphertext);
     assert.deepEqual(aead.finish(), tag);
@@ -160,9 +160,9 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
   });
 
   it('should perform poly1305', function() {
-    var expected = new Buffer('ddb9da7ddd5e52792730ed5cda5f90a4', 'hex');
-    var key = new Buffer(32);
-    var msg = new Buffer(73);
+    var expected = Buffer.from('ddb9da7ddd5e52792730ed5cda5f90a4', 'hex');
+    var key = Buffer.allocUnsafe(32);
+    var msg = Buffer.allocUnsafe(73);
     var mac;
     var i;
 
@@ -183,9 +183,9 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     var tag = 'a8061dc1305136c6c22b8baf0c0127a9';
     var mac;
 
-    key = new Buffer(key, 'hex');
-    msg = new Buffer(msg, 'ascii');
-    tag = new Buffer(tag, 'hex');
+    key = Buffer.from(key, 'hex');
+    msg = Buffer.from(msg, 'ascii');
+    tag = Buffer.from(tag, 'hex');
 
     mac = Poly1305.auth(msg, key);
     assert(Poly1305.verify(mac, tag));

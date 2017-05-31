@@ -39,7 +39,7 @@ var updateVersion = co(function* updateVersion() {
 
   yield db.backup(bak);
 
-  ver = new Buffer(4);
+  ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(6, 0, true);
   batch.put('V', ver);
 });
@@ -49,8 +49,8 @@ var wipeTXDB = co(function* wipeTXDB() {
   var i, keys, key;
 
   keys = yield db.keys({
-    gte: new Buffer([0x00]),
-    lte: new Buffer([0xff])
+    gte: Buffer.from([0x00]),
+    lte: Buffer.from([0xff])
   });
 
   for (i = 0; i < keys.length; i++) {
@@ -68,7 +68,7 @@ var wipeTXDB = co(function* wipeTXDB() {
     }
   }
 
-  batch.del(new Buffer([0x52])); // R
+  batch.del(Buffer.from([0x52])); // R
 
   console.log('Wiped %d txdb records.', total);
 });
@@ -77,8 +77,8 @@ var patchAccounts = co(function* patchAccounts() {
   var i, items, item, wid, index, account;
 
   items = yield db.range({
-    gte: new Buffer('610000000000000000', 'hex'), // a
-    lte: new Buffer('61ffffffffffffffff', 'hex')  // a
+    gte: Buffer.from('610000000000000000', 'hex'), // a
+    lte: Buffer.from('61ffffffffffffffff', 'hex')  // a
   });
 
   for (i = 0; i < items.length; i++) {
@@ -89,7 +89,7 @@ var patchAccounts = co(function* patchAccounts() {
     console.log('a[%d][%d] -> lookahead=%d', wid, index, account.lookahead);
     batch.put(item.key, accountToRaw(account));
     console.log('n[%d][%d] -> %s', wid, index, account.name);
-    batch.put(n(wid, index), new Buffer(account.name, 'ascii'));
+    batch.put(n(wid, index), Buffer.from(account.name, 'ascii'));
   }
 });
 
@@ -97,8 +97,8 @@ var indexPaths = co(function* indexPaths() {
   var i, items, item, wid, index, hash;
 
   items = yield db.range({
-    gte: new Buffer('5000000000' + encoding.NULL_HASH, 'hex'), // P
-    lte: new Buffer('50ffffffff' + encoding.HIGH_HASH, 'hex')  // P
+    gte: Buffer.from('5000000000' + encoding.NULL_HASH, 'hex'), // P
+    lte: Buffer.from('50ffffffff' + encoding.HIGH_HASH, 'hex')  // P
   });
 
   for (i = 0; i < items.length; i++) {
@@ -107,7 +107,7 @@ var indexPaths = co(function* indexPaths() {
     hash = item.key.toString('hex', 5);
     index = item.value.readUInt32LE(0, true);
     console.log('r[%d][%d][%s] -> NUL', wid, index, hash);
-    batch.put(r(wid, index, hash), new Buffer([0]));
+    batch.put(r(wid, index, hash), Buffer.from([0]));
   }
 });
 
@@ -115,8 +115,8 @@ var patchPathMaps = co(function* patchPathMaps() {
   var i, items, item, hash, wids;
 
   items = yield db.range({
-    gte: new Buffer('70' + encoding.NULL_HASH, 'hex'), // p
-    lte: new Buffer('70' + encoding.HIGH_HASH, 'hex')  // p
+    gte: Buffer.from('70' + encoding.NULL_HASH, 'hex'), // p
+    lte: Buffer.from('70' + encoding.HIGH_HASH, 'hex')  // p
   });
 
   for (i = 0; i < items.length; i++) {
@@ -208,7 +208,7 @@ function accountFromRaw(data) {
 }
 
 function n(wid, index) {
-  var key = new Buffer(9);
+  var key = Buffer.allocUnsafe(9);
   key[0] = 0x6e;
   key.writeUInt32BE(wid, 1, true);
   key.writeUInt32BE(index, 5, true);
@@ -216,7 +216,7 @@ function n(wid, index) {
 }
 
 function r(wid, index, hash) {
-  var key = new Buffer(1 + 4 + 4 + (hash.length / 2));
+  var key = Buffer.allocUnsafe(1 + 4 + 4 + (hash.length / 2));
   key[0] = 0x72;
   key.writeUInt32BE(wid, 1, true);
   key.writeUInt32BE(index, 5, true);

@@ -12,7 +12,7 @@ describe('Bloom', function() {
     + '0000000001000000800000080000000';
 
   function mm(str, seed, expect, enc) {
-    assert.equal(murmur3(new Buffer(str, enc || 'ascii'), seed), expect);
+    assert.equal(murmur3(Buffer.from(str, enc || 'ascii'), seed), expect);
   }
 
   this.timeout(20000);

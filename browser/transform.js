@@ -31,13 +31,13 @@ function transformer(file, process) {
   stream._transform = function(chunk, encoding, callback) {
     assert(Buffer.isBuffer(chunk));
     str += decoder.write(chunk);
-    callback(null, new Buffer(0));
+    callback(null, Buffer.allocUnsafe(0));
   };
 
   stream._flush = function(callback) {
     str = process(str);
 
-    stream.push(new Buffer(str, 'utf8'));
+    stream.push(Buffer.from(str, 'utf8'));
 
     callback();
   };

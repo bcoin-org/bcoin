@@ -11,7 +11,7 @@ var tx3 = parseTX('../test/data/tx3.hex');
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
 var i, tx, end, raw;
 
-wtx = new Buffer(wtx.trim(), 'hex');
+wtx = Buffer.from(wtx.trim(), 'hex');
 tx = TX.fromRaw(wtx);
 
 function parseTX(file) {

@@ -30,7 +30,7 @@ describe('Utils', function() {
   ];
 
   it('should encode/decode base58', function() {
-    var buf = new Buffer('000000deadbeef', 'hex');
+    var buf = Buffer.from('000000deadbeef', 'hex');
     var b = base58.encode(buf);
     var i, r;
 
@@ -38,7 +38,7 @@ describe('Utils', function() {
     assert.deepEqual(base58.decode(b), buf);
 
     for (i = 0; i < vectors.length; i++) {
-      r = new Buffer(vectors[i][0], 'hex');
+      r = Buffer.from(vectors[i][0], 'hex');
       b = vectors[i][1];
       assert.equal(base58.encode(r), b);
       assert.deepEqual(base58.decode(b), r);
@@ -49,7 +49,7 @@ describe('Utils', function() {
     var bits = 0x1900896c;
     var hash;
 
-    hash = new Buffer(
+    hash = Buffer.from(
       '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
       'hex'
     );
@@ -110,63 +110,63 @@ describe('Utils', function() {
      */
 
     n = 0;
-    b = new Buffer(1);
+    b = Buffer.allocUnsafe(1);
     b.fill(0x00);
     encoding.writeVarint2(b, 0, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 0);
     assert.deepEqual(b, [0]);
 
-    b = new Buffer(1);
+    b = Buffer.allocUnsafe(1);
     b.fill(0x00);
     encoding.writeVarint2(b, 1, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 1);
     assert.deepEqual(b, [1]);
 
-    b = new Buffer(1);
+    b = Buffer.allocUnsafe(1);
     b.fill(0x00);
     encoding.writeVarint2(b, 127, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 127);
     assert.deepEqual(b, [0x7f]);
 
-    b = new Buffer(2);
+    b = Buffer.allocUnsafe(2);
     b.fill(0x00);
     encoding.writeVarint2(b, 128, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 128);
     assert.deepEqual(b, [0x80, 0x00]);
 
-    b = new Buffer(2);
+    b = Buffer.allocUnsafe(2);
     b.fill(0x00);
     encoding.writeVarint2(b, 255, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 255);
     assert.deepEqual(b, [0x80, 0x7f]);
 
-    b = new Buffer(2);
+    b = Buffer.allocUnsafe(2);
     b.fill(0x00);
     encoding.writeVarint2(b, 16383, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 16383);
     assert.deepEqual(b, [0xfe, 0x7f]);
 
-    b = new Buffer(2);
+    b = Buffer.allocUnsafe(2);
     b.fill(0x00);
     encoding.writeVarint2(b, 16384, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 16384);
     assert.deepEqual(b, [0xff, 0x00]);
 
-    b = new Buffer(3);
+    b = Buffer.allocUnsafe(3);
     b.fill(0x00);
     encoding.writeVarint2(b, 16511, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 16511);
     // assert.deepEqual(b, [0x80, 0xff, 0x7f]);
     assert.deepEqual(b, [0xff, 0x7f, 0x00]);
 
-    b = new Buffer(3);
+    b = Buffer.allocUnsafe(3);
     b.fill(0x00);
     encoding.writeVarint2(b, 65535, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 65535);
     // assert.deepEqual(b, [0x82, 0xfd, 0x7f]);
     assert.deepEqual(b, [0x82, 0xfe, 0x7f]);
 
-    b = new Buffer(5);
+    b = Buffer.allocUnsafe(5);
     b.fill(0x00);
     encoding.writeVarint2(b, Math.pow(2, 32), 0);
     assert.equal(encoding.readVarint2(b, 0).value, Math.pow(2, 32));
@@ -198,8 +198,8 @@ describe('Utils', function() {
   ];
 
   unsigned.forEach(function(num) {
-    var buf1 = new Buffer(8);
-    var buf2 = new Buffer(8);
+    var buf1 = Buffer.allocUnsafe(8);
+    var buf2 = Buffer.allocUnsafe(8);
     var msg = 'should write+read a ' + num.bitLength() + ' bit unsigned int';
 
     it(msg, function() {
@@ -216,8 +216,8 @@ describe('Utils', function() {
   });
 
   signed.forEach(function(num) {
-    var buf1 = new Buffer(8);
-    var buf2 = new Buffer(8);
+    var buf1 = Buffer.allocUnsafe(8);
+    var buf2 = Buffer.allocUnsafe(8);
     var msg = 'should write+read a ' + num.bitLength()
       + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int';
 
@@ -268,9 +268,9 @@ describe('Utils', function() {
     okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1'
       + 'a5a4c5db02d56ecc4c5bf34007208d5b887185865';
 
-    ikm = new Buffer(ikm, 'hex');
-    salt = new Buffer(salt, 'hex');
-    info = new Buffer(info, 'hex');
+    ikm = Buffer.from(ikm, 'hex');
+    salt = Buffer.from(salt, 'hex');
+    info = Buffer.from(info, 'hex');
 
     prk = crypto.hkdfExtract(ikm, salt, alg);
     okm = crypto.hkdfExpand(prk, info, len, alg);
@@ -310,9 +310,9 @@ describe('Utils', function() {
       + 'cc30c58179ec3e87c14c01d5c1f3434f'
       + '1d87';
 
-    ikm = new Buffer(ikm, 'hex');
-    salt = new Buffer(salt, 'hex');
-    info = new Buffer(info, 'hex');
+    ikm = Buffer.from(ikm, 'hex');
+    salt = Buffer.from(salt, 'hex');
+    info = Buffer.from(info, 'hex');
 
     prk = crypto.hkdfExtract(ikm, salt, alg);
     okm = crypto.hkdfExpand(prk, info, len, alg);
@@ -324,7 +324,7 @@ describe('Utils', function() {
   it('should do proper schnorr', function() {
     var key = ec.generatePrivateKey();
     var pub = ec.publicKeyCreate(key, true);
-    var msg = crypto.hash256(new Buffer('foo', 'ascii'));
+    var msg = crypto.hash256(Buffer.from('foo', 'ascii'));
     var sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
     assert.deepEqual(schnorr.recover(sig, msg), pub);

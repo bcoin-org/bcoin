@@ -20,7 +20,7 @@ var tx3 = parseTX('../test/data/tx3.hex');
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
 var i, tx, raw, end, flags, input;
 
-wtx = new Buffer(wtx.trim(), 'hex');
+wtx = Buffer.from(wtx.trim(), 'hex');
 
 tx = json.txs[397];
 for (i = 0; i < tx.inputs.length; i++) {
@@ -116,7 +116,7 @@ for (i = 0; i < 100; i++) {
       index: 0
     },
     script: [
-      new Buffer(9),
+      Buffer.allocUnsafe(9),
       crypto.randomBytes(33)
     ]
   });

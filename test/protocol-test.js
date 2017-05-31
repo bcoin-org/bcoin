@@ -24,7 +24,7 @@ describe('Protocol', function() {
 
   function packetTest(command, payload, test) {
     it('should encode/decode ' + command, function(cb) {
-      var ver = new Buffer(framer.packet(command, payload.toRaw()));
+      var ver = Buffer.from(framer.packet(command, payload.toRaw()));
       parser.once('packet', function(packet) {
         assert.equal(packet.cmd, command);
         test(packet);
@@ -109,7 +109,7 @@ describe('Protocol', function() {
      'parsed transaction', function() {
     var tx, rawTwoTxs, rawFirstTx;
 
-    rawTwoTxs = new Buffer(
+    rawTwoTxs = Buffer.from(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +
@@ -161,7 +161,7 @@ describe('Protocol', function() {
       'dc5c0500000017a9149eb21980dc9d413d8eac27314938b9da920ee53e8' +
       '700000000', 'hex');
 
-    rawFirstTx = new Buffer(
+    rawFirstTx = Buffer.from(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +

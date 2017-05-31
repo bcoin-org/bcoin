@@ -57,7 +57,7 @@ var updateVersion = co(function* updateVersion() {
   if (ver !== 1)
     throw Error('DB is version ' + ver + '.');
 
-  ver = new Buffer(4);
+  ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(2, 0, true);
   batch.put('V', ver);
 });
@@ -205,7 +205,7 @@ function write(data, str, off) {
 }
 
 function pair(prefix, hash) {
-  var key = new Buffer(33);
+  var key = Buffer.allocUnsafe(33);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
@@ -214,7 +214,7 @@ function pair(prefix, hash) {
 }
 
 function ipair(prefix, num) {
-  var key = new Buffer(5);
+  var key = Buffer.allocUnsafe(5);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;

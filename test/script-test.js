@@ -165,14 +165,14 @@ describe('Script', function() {
     var input, output, stack;
 
     input = new Script([
-      new Buffer('ffffff7f', 'hex'),
+      Buffer.from('ffffff7f', 'hex'),
       opcodes.OP_NEGATE,
       opcodes.OP_DUP,
       opcodes.OP_ADD
     ]);
 
     output = new Script([
-      new Buffer('feffffff80', 'hex'),
+      Buffer.from('feffffff80', 'hex'),
       opcodes.OP_EQUAL
     ]);
 
@@ -207,15 +207,15 @@ describe('Script', function() {
     var input, output, stack;
 
     input = new Script([
-      new Buffer([0x16]),
-      new Buffer([0x15]),
-      new Buffer([0x14])
+      Buffer.from([0x16]),
+      Buffer.from([0x15]),
+      Buffer.from([0x14])
     ]);
 
     output = new Script([
       opcodes.OP_0,
       opcodes.OP_ROLL,
-      new Buffer([0x14]),
+      Buffer.from([0x14]),
       opcodes.OP_EQUALVERIFY,
       opcodes.OP_DEPTH,
       opcodes.OP_2,

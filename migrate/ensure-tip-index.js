@@ -7,7 +7,7 @@ var crypto = require('../lib/crypto/crypto');
 var util = require('../lib/utils/util');
 var LDB = require('../lib/db/ldb');
 var BN = require('bn.js');
-var DUMMY = new Buffer([0]);
+var DUMMY = Buffer.from([0]);
 var file = process.argv[2];
 var db, batch;
 
@@ -128,7 +128,7 @@ function write(data, str, off) {
 }
 
 function pair(prefix, hash) {
-  var key = new Buffer(33);
+  var key = Buffer.allocUnsafe(33);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
@@ -137,7 +137,7 @@ function pair(prefix, hash) {
 }
 
 function ipair(prefix, num) {
-  var key = new Buffer(5);
+  var key = Buffer.allocUnsafe(5);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;

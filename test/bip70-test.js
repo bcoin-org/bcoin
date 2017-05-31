@@ -8,14 +8,14 @@ var x509 = bip70.x509;
 
 var tests = require('./data/bip70.json');
 
-tests.valid = new Buffer(tests.valid, 'hex');
-tests.invalid = new Buffer(tests.invalid, 'hex');
-tests.untrusted = new Buffer(tests.untrusted, 'hex');
-tests.ack = new Buffer(tests.ack, 'hex');
+tests.valid = Buffer.from(tests.valid, 'hex');
+tests.invalid = Buffer.from(tests.invalid, 'hex');
+tests.untrusted = Buffer.from(tests.untrusted, 'hex');
+tests.ack = Buffer.from(tests.ack, 'hex');
 tests.ca = {
-  crt: new Buffer(tests.ca.crt, 'hex'),
-  priv: new Buffer(tests.ca.priv, 'hex'),
-  pub: new Buffer(tests.ca.pub, 'hex')
+  crt: Buffer.from(tests.ca.crt, 'hex'),
+  priv: Buffer.from(tests.ca.priv, 'hex'),
+  pub: Buffer.from(tests.ca.pub, 'hex')
 };
 
 x509.allowUntrusted = true;

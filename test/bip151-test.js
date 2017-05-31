@@ -8,7 +8,7 @@ describe('BIP151', function() {
   var server = new BIP151();
 
   function payload() {
-    return new Buffer('deadbeef', 'hex');
+    return Buffer.from('deadbeef', 'hex');
   }
 
   it('should do encinit', function() {

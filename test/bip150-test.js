@@ -20,7 +20,7 @@ describe('BIP150', function() {
   server.bip150 = new BIP150(server, '127.0.0.1', false, db, sk);
 
   function payload() {
-    return new Buffer('deadbeef', 'hex');
+    return Buffer.from('deadbeef', 'hex');
   }
 
   it('should do encinit', function() {
