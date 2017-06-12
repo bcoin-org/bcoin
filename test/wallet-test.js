@@ -1237,7 +1237,7 @@ describe('Wallet', function() {
     assert(path.data && path.encrypted);
     d2 = path.data;
 
-    assert(!util.equal(d1, d2));
+    assert(!d1.equals(d2));
 
     k = yield w.getKey(addr);
     assert(!k);

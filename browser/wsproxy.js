@@ -100,7 +100,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     pow.writeString(host, 'ascii');
     pow = pow.render();
 
-    if (util.cmp(crypto.hash256(pow), this.target) > 0) {
+    if (crypto.hash256(pow).compare(this.target) > 0) {
       this.log('Client did not solve proof of work (%s).', state.host);
       ws.emit('tcp close');
       ws.disconnect();
