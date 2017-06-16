@@ -80,7 +80,7 @@ describe('GCS', function() {
   addr2 = new Address('bc1q4645ycu0l9pnvxaxnhemushv0w4cd9flkqh95j');
 
   it('should test GCS filter build', function() {
-    filter1 = GCSFilter.fromData(P, key, contents1);
+    filter1 = GCSFilter.fromItems(P, key, contents1);
     assert(filter1);
   });
 
