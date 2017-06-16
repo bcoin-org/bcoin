@@ -222,6 +222,10 @@ function formatWallet(wallet) {
   });
 }
 
+bcoin.set({
+  useWorkers: true
+});
+
 node = new bcoin.fullnode({
   hash: true,
   query: true,

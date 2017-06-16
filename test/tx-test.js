@@ -29,6 +29,9 @@ var tx4 = parseTX('data/tx4.hex');
 var wtx = parseTX('data/wtx.hex');
 var coolest = parseTX('data/coolest-tx-ever-sent.hex');
 
+var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
+var MAX_SAFE_ADDITION = 0xfffffffffffff;
+
 function clearCache(tx, noCache) {
   if (!noCache) {
     assert.equal(tx.hash('hex'), tx.clone().hash('hex'));
@@ -554,7 +557,7 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(util.MAX_SAFE_INTEGER, view)],
+      inputs: [createInput(MAX_SAFE_INTEGER, view)],
       outputs: [{
         script: [],
         value: consensus.MAX_MONEY
@@ -573,7 +576,7 @@ describe('TX', function() {
       inputs: [createInput(consensus.MAX_MONEY, view)],
       outputs: [{
         script: [],
-        value: util.MAX_SAFE_INTEGER
+        value: MAX_SAFE_INTEGER
       }],
       locktime: 0
     });
@@ -586,7 +589,7 @@ describe('TX', function() {
     var tx = new TX({
       version: 1,
       flag: 1,
-      inputs: [createInput(util.MAX_SAFE_INTEGER, view)],
+      inputs: [createInput(MAX_SAFE_INTEGER, view)],
       outputs: [{
         script: [],
         value: 0
@@ -597,7 +600,7 @@ describe('TX', function() {
     assert.ok(!tx.checkInputs(view, 0));
   });
 
-  [util.MAX_SAFE_ADDITION, util.MAX_SAFE_INTEGER].forEach(function(MAX) {
+  [MAX_SAFE_ADDITION, MAX_SAFE_INTEGER].forEach(function(MAX) {
     it('should fail on >53 bit values from multiple', function() {
       var view = new CoinView();
       var tx = new TX({
