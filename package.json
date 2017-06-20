@@ -1,6 +1,6 @@
 {
   "name": "lcoin",
-  "version": "1.0.0-beta.13",
+  "version": "1.0.0-beta.14",
   "description": "Litecoin bike-shed",
   "license": "MIT",
   "repository": "git://github.com/bcoin-org/lcoin.git",
