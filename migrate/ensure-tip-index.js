@@ -6,7 +6,7 @@ var BufferReader = require('../lib/utils/reader');
 var crypto = require('../lib/crypto/crypto');
 var util = require('../lib/utils/util');
 var LDB = require('../lib/db/ldb');
-var BN = require('bn.js');
+var BN = require('../lib/crypto/bn');
 var DUMMY = Buffer.from([0]);
 var file = process.argv[2];
 var db, batch;

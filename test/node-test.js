@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var BN = require('bn.js');
+var BN = require('../lib/crypto/bn');
 var consensus = require('../lib/protocol/consensus');
 var co = require('../lib/utils/co');
 var Coin = require('../lib/primitives/coin');
