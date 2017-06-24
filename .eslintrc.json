@@ -1,0 +1,39 @@
+{
+  "extends": "eslint:recommended",
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 8
+  },
+  "rules": {
+    "indent": ["error", 2, {
+      "SwitchCase": 1,
+      "CallExpression": {
+        "arguments": "off"
+      },
+      "ArrayExpression": "off"
+    }],
+    "linebreak-style": ["error", "unix"],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "no-console": 0,
+    "no-unused-vars": ["error", {
+      "vars": "all",
+      "args": "none",
+      "ignoreRestSiblings": false
+    }],
+    "no-func-assign": 0,
+    "no-cond-assign": 0,
+    "no-unreachable": 0,
+    "no-fallthrough": 0,
+    "no-useless-escape": 0,
+    "no-unsafe-finally": 0,
+    "no-extra-semi": 0,
+    "handle-callback-err": 0,
+    "no-buffer-constructor": 2,
+    "no-tabs": 2
+  }
+}

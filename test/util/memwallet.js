@@ -390,11 +390,11 @@ MemWallet.prototype.sign = function sign(mtx) {
   mtx.sign(keys);
 };
 
-MemWallet.prototype.create = co(function* create(options) {
+MemWallet.prototype.create = async function create(options) {
   var mtx = new MTX(options);
   var tx;
 
-  yield this.fund(mtx, options);
+  await this.fund(mtx, options);
 
   assert(mtx.getFee() <= MTX.Selector.MAX_FEE, 'TX exceeds MAX_FEE.');
 
@@ -409,13 +409,13 @@ MemWallet.prototype.create = co(function* create(options) {
     throw new Error('Cannot sign tx.');
 
   return mtx;
-});
+};
 
-MemWallet.prototype.send = co(function* send(options) {
-  var mtx = yield this.create(options);
+MemWallet.prototype.send = async function send(options) {
+  var mtx = await this.create(options);
   this.addTX(mtx.toTX());
   return mtx;
-});
+};
 
 function Path(hash, branch, index) {
   this.hash = hash;

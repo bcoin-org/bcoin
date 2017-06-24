@@ -6,7 +6,7 @@ var crypto = require('../lib/crypto/crypto');
 var WalletDB = require('../lib/wallet/walletdb');
 var MTX = require('../lib/primitives/mtx');
 var Outpoint = require('../lib/primitives/outpoint');
-var walletdb, runBench;
+var walletdb;
 
 function dummy() {
   var hash = crypto.randomBytes(32).toString('hex');
@@ -20,7 +20,7 @@ walletdb = new WalletDB({
   verify: false
 });
 
-runBench = co(function* runBench() {
+async function runBench() {
   var i, j, wallet, addrs, jobs, end;
   var result, tx, mtx, options;
 
@@ -115,6 +115,6 @@ runBench = co(function* runBench() {
   };
   yield wallet.createTX(options);
   end(1);
-});
+}
 
 runBench().then(process.exit);

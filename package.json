@@ -41,9 +41,9 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-plugin-transform-regenerator": "^6.24.1",
     "browserify": "^14.3.0",
+    "eslint": "^4.1.0",
     "hash.js": "^1.0.3",
     "jsdoc": "^3.4.3",
-    "jshint": "^2.9.4",
     "level-js": "^2.2.4",
     "mocha": "^3.4.1",
     "uglify-js": "^3.0.5"
@@ -62,7 +62,7 @@
     "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js && browserify --im -o browser/bcoin-master.js lib/workers/master.js",
     "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js && uglifyjs -m -o browser/bcoin-master.min.js browser/bcoin-master.js",
     "clean": "rm browser/bcoin.js browser/bcoin.min.js browser/bcoin-master.js browser/bcoin-master.min.js",
-    "lint": "jshint lib/ || exit 0",
+    "lint": "eslint lib/ || exit 0",
     "docs": "jsdoc -c jsdoc.json"
   },
   "browser": {

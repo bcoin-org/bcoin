@@ -81,23 +81,23 @@ NodeContext.prototype.close = function close() {
   return Promise.all(jobs);
 };
 
-NodeContext.prototype.connect = co(function* connect() {
+NodeContext.prototype.connect = async function connect() {
   var i, node;
 
   for (i = 0; i < this.nodes.length; i++) {
     node = this.nodes[i];
-    yield node.connect();
-    yield co.timeout(1000);
+    await node.connect();
+    await co.timeout(1000);
   }
-});
+};
 
-NodeContext.prototype.disconnect = co(function* disconnect() {
+NodeContext.prototype.disconnect = async function disconnect() {
   var i, node;
 
   for (i = this.nodes.length - 1; i >= 0; i--) {
     node = this.nodes[i];
-    yield node.disconnect();
-    yield co.timeout(1000);
+    await node.disconnect();
+    await co.timeout(1000);
   }
 });
 
@@ -123,17 +123,17 @@ NodeContext.prototype.stopSync = function stopSync() {
   }
 };
 
-NodeContext.prototype.generate = co(function* generate(index, blocks) {
+NodeContext.prototype.generate = async function generate(index, blocks) {
   var node = this.nodes[index];
   var i, block;
 
   assert(node);
 
   for (i = 0; i < blocks; i++) {
-    block = yield node.miner.mineBlock();
-    yield node.chain.add(block);
+    block = await node.miner.mineBlock();
+    await node.chain.add(block);
   }
-});
+};
 
 NodeContext.prototype.height = function height(index) {
   var node = this.nodes[index];
@@ -143,8 +143,8 @@ NodeContext.prototype.height = function height(index) {
   return node.chain.height;
 };
 
-NodeContext.prototype.sync = co(function* sync() {
-  yield co.timeout(3000);
-});
+NodeContext.prototype.sync = async function sync() {
+  await co.timeout(3000);
+};
 
 module.exports = NodeContext;
