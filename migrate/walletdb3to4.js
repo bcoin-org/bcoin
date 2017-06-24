@@ -4,15 +4,10 @@ var assert = require('assert');
 var bcoin = require('../');
 var encoding = require('../lib/utils/encoding');
 var WalletDB = require('../lib/wallet/walletdb');
-var TXDB = require('../lib/wallet/txdb');
-var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
 var TX = require('../lib/primitives/tx');
 var Coin = require('../lib/primitives/coin');
 var util = require('../lib/utils/util');
-var co = bcoin.co;
-var layout = WalletDB.layout;
-var tlayout = TXDB.layout;
 var file = process.argv[2];
 var db, batch;
 

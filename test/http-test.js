@@ -225,12 +225,12 @@ describe('HTTP', function() {
   it('should validate an address', async function() {
     var json = await wallet.client.rpc.execute('validateaddress', [addr.toString()]);
     assert.deepStrictEqual(json, {
-       isvalid: true,
-       address: addr.toString(),
-       scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
-       ismine: false,
-       iswatchonly: false
-     });
+      isvalid: true,
+      address: addr.toString(),
+      scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
+      ismine: false,
+      iswatchonly: false
+    });
   });
 
   it('should cleanup', async function() {

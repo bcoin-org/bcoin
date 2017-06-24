@@ -4,11 +4,8 @@
 
 var Config = require('../lib/node/config');
 var util = require('../lib/utils/util');
-var co = require('../lib/utils/co');
 var Client = require('../lib/http/client');
 var Wallet = require('../lib/http/wallet');
-var Amount = require('../lib/btc/amount');
-var main;
 
 function CLI() {
   this.config = new Config('bcoin');
@@ -323,6 +320,7 @@ CLI.prototype.createTX = async function createTX() {
 CLI.prototype.signTX = async function signTX() {
   var options = {};
   var raw = this.config.str(['tx', 0]);
+  var tx;
 
   options.passphrase = this.config.str('passphrase');
 

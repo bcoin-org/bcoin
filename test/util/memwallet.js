@@ -15,7 +15,6 @@ var Bloom = require('../../lib/utils/bloom');
 var KeyRing = require('../../lib/primitives/keyring');
 var Outpoint = require('../../lib/primitives/outpoint');
 var Coin = require('../../lib/primitives/coin');
-var co = require('../../lib/utils/co');
 
 function MemWallet(options) {
   if (!(this instanceof MemWallet))
@@ -292,13 +291,12 @@ MemWallet.prototype.addTX = function addTX(tx, height) {
 MemWallet.prototype.removeTX = function removeTX(tx, height) {
   var hash = tx.hash('hex');
   var result = false;
-  var i, op, coin, input, output;
+  var i, op, coin, input;
 
   if (!this.map[hash])
     return false;
 
   for (i = 0; i < tx.outputs.length; i++) {
-    output = tx.outputs[i];
     op = Outpoint(hash, i).toKey();
     coin = this.getCoin(op);
 
@@ -392,7 +390,6 @@ MemWallet.prototype.sign = function sign(mtx) {
 
 MemWallet.prototype.create = async function create(options) {
   var mtx = new MTX(options);
-  var tx;
 
   await this.fund(mtx, options);
 

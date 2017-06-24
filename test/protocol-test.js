@@ -1,10 +1,8 @@
 'use strict';
 
-var fs = require('fs');
 var assert = require('assert');
 var Network = require('../lib/protocol/network');
 var util = require('../lib/utils/util');
-var BufferReader = require('../lib/utils/reader');
 var NetAddress = require('../lib/primitives/netaddress');
 var TX = require('../lib/primitives/tx');
 var Framer = require('../lib/net/framer');
@@ -75,6 +73,7 @@ describe('Protocol', function() {
   packetTest('verack', new packets.VerackPacket(), function(payload) {
   });
 
+  /* eslint indent: 0 */
   hosts = [
     new NetAddress({
       services: 1,

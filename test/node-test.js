@@ -563,12 +563,12 @@ describe('Node', function() {
     }, {});
 
     assert.deepStrictEqual(json.result, {
-       isvalid: true,
-       address: addr.toString(),
-       scriptPubKey: Script.fromAddress(addr).toJSON(),
-       ismine: false,
-       iswatchonly: false
-     });
+      isvalid: true,
+      address: addr.toString(),
+      scriptPubKey: Script.fromAddress(addr).toJSON(),
+      ismine: false,
+      iswatchonly: false
+    });
   });
 
   it('should add transaction to mempool', async function() {

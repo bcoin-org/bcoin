@@ -2,10 +2,6 @@
 
 var assert = require('assert');
 var bcoin = require('../');
-var BufferWriter = require('../lib/utils/writer');
-var BufferReader = require('../lib/utils/reader');
-var util = require('../lib/utils/util');
-var co = bcoin.co;
 var file = process.argv[2];
 var db, batch;
 

@@ -1,27 +1,14 @@
 'use strict';
 
 var assert = require('assert');
-var util = require('../lib/utils/util');
-var encoding = require('../lib/utils/encoding');
-var crypto = require('../lib/crypto/crypto');
-var consensus = require('../lib/protocol/consensus');
-var Network = require('../lib/protocol/network');
-var TX = require('../lib/primitives/tx');
-var Block = require('../lib/primitives/block');
-var Coin = require('../lib/primitives/coin');
 var Output = require('../lib/primitives/output');
-var Script = require('../lib/script/script');
-var Witness = require('../lib/script/witness');
 var Input = require('../lib/primitives/input');
 var Outpoint = require('../lib/primitives/outpoint');
 var CoinView = require('../lib/coins/coinview');
 var Coins = require('../lib/coins/coins');
-var UndoCoins = require('../lib/coins/undocoins');
 var StaticWriter = require('../lib/utils/staticwriter');
 var BufferReader = require('../lib/utils/reader');
-var KeyRing = require('../lib/primitives/keyring');
 var parseTX = require('./util/common').parseTX;
-var opcodes = Script.opcodes;
 
 var data = parseTX('data/tx1.hex');
 var tx1 = data.tx;
@@ -115,7 +102,6 @@ describe('Coins', function() {
   });
 
   it('should handle coin view', function() {
-    var hash = tx1.hash('hex');
     var view = new CoinView();
     var i, tx, size, bw, br;
     var raw, res, prev, coins;

@@ -18,7 +18,7 @@ var btx = { tx: block.txs[397], view: new CoinView() };
 
 var tx3 = parseTX('../test/data/tx3.hex');
 var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
-var i, tx, raw, end, flags, input;
+var i, tx, end, flags, input;
 
 wtx = Buffer.from(wtx.trim(), 'hex');
 
@@ -53,7 +53,7 @@ end(i);
 end = bench('serialize');
 for (i = 0; i < 1000; i++) {
   tx._raw = null;
-  raw = tx.toRaw();
+  tx.toRaw();
 }
 end(i);
 

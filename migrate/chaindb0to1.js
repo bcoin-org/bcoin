@@ -1,7 +1,6 @@
 'use strict';
 
 var bcoin = require('../');
-var co = bcoin.co;
 var assert = require('assert');
 var file = process.argv[2];
 var BufferWriter = require('../lib/utils/writer');

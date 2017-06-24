@@ -1,7 +1,6 @@
 'use strict';
 
 var bench = require('./bench');
-var co = require('../lib/utils/co');
 var crypto = require('../lib/crypto/crypto');
 var WalletDB = require('../lib/wallet/walletdb');
 var MTX = require('../lib/primitives/mtx');
@@ -25,8 +24,8 @@ async function runBench() {
   var result, tx, mtx, options;
 
   // Open and Create
-  yield walletdb.open();
-  wallet = yield walletdb.create();
+  await walletdb.open();
+  wallet = await walletdb.create();
   addrs = [];
 
   // Accounts
@@ -35,7 +34,7 @@ async function runBench() {
     jobs.push(wallet.createAccount({}));
 
   end = bench('accounts');
-  result = yield Promise.all(jobs);
+  result = await Promise.all(jobs);
   end(1000);
 
   for (i = 0; i < result.length; i++)
@@ -49,7 +48,7 @@ async function runBench() {
   }
 
   end = bench('keys');
-  result = yield Promise.all(jobs);
+  result = await Promise.all(jobs);
   end(1000 * 10);
 
   for (i = 0; i < result.length; i++)
@@ -70,7 +69,7 @@ async function runBench() {
   }
 
   end = bench('deposit');
-  result = yield Promise.all(jobs);
+  result = await Promise.all(jobs);
   end(10000);
 
   // TX redemption
@@ -91,17 +90,17 @@ async function runBench() {
   }
 
   end = bench('redemption');
-  result = yield Promise.all(jobs);
+  result = await Promise.all(jobs);
   end(10000);
 
   // Balance
   end = bench('balance');
-  result = yield wallet.getBalance();
+  result = await wallet.getBalance();
   end(1);
 
   // Coins
   end = bench('coins');
-  result = yield wallet.getCoins();
+  result = await wallet.getCoins();
   end(1);
 
   // Create
@@ -113,7 +112,7 @@ async function runBench() {
       address: addrs[0]
     }]
   };
-  yield wallet.createTX(options);
+  await wallet.createTX(options);
   end(1);
 }
 

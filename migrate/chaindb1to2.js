@@ -11,7 +11,6 @@ var Coins = require('../lib/coins/coins');
 var UndoCoins = require('../lib/coins/undocoins');
 var Coin = require('../lib/primitives/coin');
 var Output = require('../lib/primitives/output');
-var util = require('../lib/utils/util');
 var LDB = require('../lib/db/ldb');
 var file = process.argv[2];
 var options = {};
@@ -212,15 +211,6 @@ function pair(prefix, hash) {
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
   write(key, hash, 1);
-  return key;
-}
-
-function ipair(prefix, num) {
-  var key = Buffer.allocUnsafe(5);
-  if (typeof prefix === 'string')
-    prefix = prefix.charCodeAt(0);
-  key[0] = prefix;
-  key.writeUInt32BE(num, 1, true);
   return key;
 }
 

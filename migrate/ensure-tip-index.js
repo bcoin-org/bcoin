@@ -2,8 +2,6 @@
 
 var assert = require('assert');
 var encoding = require('../lib/utils/encoding');
-var co = require('../lib/utils/co');
-var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
 var crypto = require('../lib/crypto/crypto');
 var util = require('../lib/utils/util');
@@ -135,15 +133,6 @@ function pair(prefix, hash) {
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
   write(key, hash, 1);
-  return key;
-}
-
-function ipair(prefix, num) {
-  var key = Buffer.allocUnsafe(5);
-  if (typeof prefix === 'string')
-    prefix = prefix.charCodeAt(0);
-  key[0] = prefix;
-  key.writeUInt32BE(num, 1, true);
   return key;
 }
 

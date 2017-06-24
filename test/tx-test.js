@@ -1,14 +1,11 @@
 'use strict';
 
-var fs = require('fs');
 var assert = require('assert');
 var util = require('../lib/utils/util');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
 var consensus = require('../lib/protocol/consensus');
-var Network = require('../lib/protocol/network');
 var TX = require('../lib/primitives/tx');
-var Block = require('../lib/primitives/block');
 var Coin = require('../lib/primitives/coin');
 var Output = require('../lib/primitives/output');
 var Script = require('../lib/script/script');

@@ -32,7 +32,6 @@ NodeContext.prototype.init = function() {
     node = new FullNode({
       network: this.network,
       db: 'memory',
-      network: 'regtest',
       logger: new Logger({
         level: 'debug',
         file: false,
@@ -99,10 +98,9 @@ NodeContext.prototype.disconnect = async function disconnect() {
     await node.disconnect();
     await co.timeout(1000);
   }
-});
+};
 
 NodeContext.prototype.startSync = function startSync() {
-  var jobs = [];
   var i, node;
 
   for (i = 0; i < this.nodes.length; i++) {
@@ -114,7 +112,6 @@ NodeContext.prototype.startSync = function startSync() {
 };
 
 NodeContext.prototype.stopSync = function stopSync() {
-  var jobs = [];
   var i, node;
 
   for (i = 0; i < this.nodes.length; i++) {

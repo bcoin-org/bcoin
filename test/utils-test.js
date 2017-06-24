@@ -98,7 +98,7 @@ describe('Utils', function() {
   });
 
   it('should write/read new varints', function() {
-    var n, b;
+    var b;
 
     /*
      * 0:         [0x00]  256:        [0x81 0x00]
@@ -109,7 +109,6 @@ describe('Utils', function() {
      * 2^32:           [0x8E 0xFE 0xFE 0xFF 0x00]
      */
 
-    n = 0;
     b = Buffer.allocUnsafe(1);
     b.fill(0x00);
     encoding.writeVarint2(b, 0, 0);

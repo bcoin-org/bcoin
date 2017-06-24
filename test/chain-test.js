@@ -4,7 +4,6 @@ var assert = require('assert');
 var BN = require('../lib/crypto/bn');
 var consensus = require('../lib/protocol/consensus');
 var encoding = require('../lib/utils/encoding');
-var co = require('../lib/utils/co');
 var Coin = require('../lib/primitives/coin');
 var Script = require('../lib/script/script');
 var Chain = require('../lib/blockchain/chain');
@@ -770,7 +769,7 @@ describe('Chain', function() {
 
   it('should mine 111 multisig blocks', async function() {
     var flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
-    var i, j, script, job, cb, output, val, block;
+    var i, j, script, cb, output, val, block;
 
     script = new Script();
     script.push(new BN(20));

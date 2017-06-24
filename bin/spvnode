@@ -8,7 +8,6 @@ var assert = require('assert');
 var bcoin = require('../');
 var plugin = require('../lib/wallet/plugin');
 var util = bcoin.util;
-var co = bcoin.co;
 var node;
 
 node = bcoin.spvnode({

@@ -6,7 +6,8 @@ var HD = require('../lib/hd');
 var Mnemonic = require('../lib/hd/mnemonic');
 
 var mnemonic = new Mnemonic();
-var key = HD.fromMnemonic(mnemonic);
+HD.fromMnemonic(mnemonic);
+
 var phrase = mnemonic.getPhrase();
 var i, end;
 

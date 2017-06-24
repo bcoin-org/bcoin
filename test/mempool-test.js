@@ -3,11 +3,9 @@
 var assert = require('assert');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
-var co = require('../lib/utils/co');
 var MempoolEntry = require('../lib/mempool/mempoolentry');
 var Mempool = require('../lib/mempool/mempool');
 var Chain = require('../lib/blockchain/chain');
-var WalletDB = require('../lib/wallet/walletdb');
 var MTX = require('../lib/primitives/mtx');
 var Coin = require('../lib/primitives/coin');
 var KeyRing = require('../lib/primitives/keyring');
@@ -15,9 +13,7 @@ var Address = require('../lib/primitives/address');
 var Outpoint = require('../lib/primitives/outpoint');
 var Script = require('../lib/script/script');
 var Witness = require('../lib/script/witness');
-var Block = require('../lib/primitives/block');
 var MemWallet = require('./util/memwallet');
-var opcodes = Script.opcodes;
 
 describe('Mempool', function() {
   var chain = new Chain({ db: 'memory' });
@@ -334,7 +330,7 @@ describe('Mempool', function() {
 
   it('should clear reject cache', async function() {
     var w = wallet;
-    var tx, input;
+    var tx;
 
     tx = new MTX();
     tx.addOutpoint(new Outpoint());

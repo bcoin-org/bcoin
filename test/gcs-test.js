@@ -1,9 +1,8 @@
 'use strict';
 
 var assert = require('assert');
-var fs = require('fs');
+var fs = require('../lib/utils/fs');
 var GCSFilter = require('../lib/utils/gcs');
-var util = require('../lib/utils/util');
 var crypto = require('../lib/crypto/crypto');
 var Block = require('../lib/primitives/block');
 var Outpoint = require('../lib/primitives/outpoint');

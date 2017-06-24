@@ -2,13 +2,12 @@
 
 var encoding = require('bcoin/lib/utils/encoding');
 var co = require('bcoin/lib/utils/co');
-var Address = require('bcoin/lib/primitives/address');
 var Outpoint = require('bcoin/lib/primitives/outpoint');
 var MTX = require('bcoin/lib/primitives/mtx');
 var HTTP = require('bcoin/lib/http');
 var FullNode = require('bcoin/lib/node/fullnode');
 var plugin = require('bcoin/lib/wallet/plugin');
-var node, wallet, walletdb, addr, hash;
+var node, wallet;
 
 node = new FullNode({
   network: 'regtest',
@@ -26,7 +25,7 @@ wallet = new HTTP.Wallet({
 
 async function main() {
   var wdb = node.require('walletdb');
-  var w, acct, info, hash, balance, tx;
+  var w, acct, hash, balance, tx;
 
   await node.open();
 
@@ -63,7 +62,7 @@ async function main() {
 }
 
 async function fundWallet(wdb, addr) {
-  var tx, balance, receive, details;
+  var tx;
 
   // Coinbase
   tx = new MTX();

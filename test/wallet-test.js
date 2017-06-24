@@ -5,13 +5,11 @@ var consensus = require('../lib/protocol/consensus');
 var util = require('../lib/utils/util');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
-var co = require('../lib/utils/co');
 var WalletDB = require('../lib/wallet/walletdb');
 var Address = require('../lib/primitives/address');
 var MTX = require('../lib/primitives/mtx');
 var Coin = require('../lib/primitives/coin');
 var KeyRing = require('../lib/primitives/keyring');
-var Address = require('../lib/primitives/address');
 var Input = require('../lib/primitives/input');
 var Outpoint = require('../lib/primitives/outpoint');
 var Script = require('../lib/script/script');
@@ -169,7 +167,7 @@ describe('Wallet', function() {
     src = src.toTX();
 
     tx = new MTX();
-    tx.addTX(src, 0)
+    tx.addTX(src, 0);
     tx.addOutput(w.getAddress(), 5460);
 
     maxSize = await tx.estimateSize();
@@ -451,7 +449,7 @@ describe('Wallet', function() {
     var view, t1, t2, t3, err;
 
     // Coinbase
-    t1 = new MTX()
+    t1 = new MTX();
     t1.addInput(dummy());
     t1.addOutput(w1.getAddress(), 5460);
     t1.addOutput(w1.getAddress(), 5460);
@@ -1107,6 +1105,7 @@ describe('Wallet', function() {
       err = e;
     }
 
+    assert(!txs);
     assert(err);
     assert.equal(err.message, 'Account not found.');
   });

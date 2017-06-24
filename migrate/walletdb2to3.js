@@ -1,5 +1,6 @@
 'use strict';
 
+var assert = require('assert');
 var bcoin = require('../');
 var walletdb = require('../lib/wallet/walletdb');
 var encoding = require('../lib/utils/encoding');
@@ -7,12 +8,10 @@ var Path = require('../lib/wallet/path');
 var MasterKey = require('../lib/wallet/masterkey');
 var Account = require('../lib/wallet/account');
 var Wallet = require('../lib/wallet/wallet');
-var layout = walletdb.layout;
-var co = bcoin.co;
-var assert = require('assert');
-var file = process.argv[2];
 var BufferReader = require('../lib/utils/reader');
 var BufferWriter = require('../lib/utils/writer');
+var layout = walletdb.layout;
+var file = process.argv[2];
 var db, batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');

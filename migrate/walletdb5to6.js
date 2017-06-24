@@ -5,8 +5,6 @@ var bcoin = require('../');
 var encoding = require('../lib/utils/encoding');
 var BufferWriter = require('../lib/utils/writer');
 var BufferReader = require('../lib/utils/reader');
-var util = require('../lib/utils/util');
-var co = bcoin.co;
 var file = process.argv[2];
 var db, batch;
 
@@ -273,8 +271,10 @@ async function unstate() {
   await patchPathMaps();
   await batch.write();
   await db.close();
-  // await updateLookahead();
-  // await unstate();
+
+  // Do not use:
+  await updateLookahead();
+  await unstate();
 })().then(function() {
   console.log('Migration complete.');
   console.log('Rescan is required...');

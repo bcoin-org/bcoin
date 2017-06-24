@@ -21,7 +21,6 @@ if (process.argv.indexOf('--version') !== -1
 
 var bcoin = require('../');
 var plugin = require('../lib/wallet/plugin');
-var co = bcoin.co;
 var node;
 
 node = new bcoin.fullnode({

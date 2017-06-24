@@ -243,7 +243,7 @@ describe('Bech32', function() {
 
   INVALID_ADDRESS.forEach(function(test) {
     it('should have invalid address for ' + test, function() {
-      var ok1, ok2, ok;
+      var ok1, ok2;
 
       try {
         ok1 = Address.fromBech32(test, 'main');
@@ -257,7 +257,7 @@ describe('Bech32', function() {
         ok2 = null;
       }
 
-      assert(!ok2);
+      assert(!ok1 && !ok2);
     });
   });
 });
