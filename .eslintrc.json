@@ -9,6 +9,7 @@
     "ecmaVersion": 8
   },
   "rules": {
+    "strict": 2,
     "indent": ["error", 2, {
       "SwitchCase": 1,
       "CallExpression": {

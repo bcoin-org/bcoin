@@ -49,6 +49,8 @@ tojs() {
   local data=$(cat)
   local body=$(echo "$data" | head -n -1)
   local last=$(echo "$data" | tail -n 1)
+  echo "'use strict';"
+  echo ''
   echo 'module.exports = ['
   echo "$body" | while read line; do
     echo "  '${line}',"
