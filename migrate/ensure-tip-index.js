@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert');
 var encoding = require('../lib/utils/encoding');
 var co = require('../lib/utils/co');
@@ -24,12 +26,12 @@ db = LDB({
   bufferKeys: true
 });
 
-var checkVersion = co(function* checkVersion() {
+async function checkVersion() {
   var data, ver;
 
   console.log('Checking version.');
 
-  data = yield db.get('V');
+  data = await db.get('V');
 
   if (!data)
     return;
@@ -38,7 +40,7 @@ var checkVersion = co(function* checkVersion() {
 
   if (ver !== 1)
     throw Error('DB is version ' + ver + '.');
-});
+}
 
 function entryFromRaw(data) {
   var p = new BufferReader(data, true);
@@ -68,30 +70,30 @@ function getEntries() {
   });
 }
 
-var getTip = co(function* getTip(entry) {
-  var state = yield db.get('R');
+async function getTip(entry) {
+  var state = await db.get('R');
   assert(state);
   var tip = state.toString('hex', 0, 32);
-  var data = yield db.get(pair('e', tip));
+  var data = await db.get(pair('e', tip));
   assert(data);
   return entryFromRaw(data);
-});
+}
 
-var isMainChain = co(function* isMainChain(entry, tip) {
+async function isMainChain(entry, tip) {
   if (entry.hash === tip)
     return true;
 
-  if (yield db.get(pair('n', entry.hash)))
+  if (await db.get(pair('n', entry.hash)))
     return true;
 
   return false;
-});
+}
 
 // And this insane function is why we should
 // be indexing tips in the first place!
-var indexTips = co(function* indexTips() {
-  var entries = yield getEntries();
-  var tip = yield getTip();
+async function indexTips() {
+  var entries = await getEntries();
+  var tip = await getTip();
   var tips = [];
   var orphans = [];
   var prevs = {};
@@ -99,7 +101,7 @@ var indexTips = co(function* indexTips() {
 
   for (i = 0; i < entries.length; i++) {
     entry = entries[i];
-    main = yield isMainChain(entry, tip.hash);
+    main = await isMainChain(entry, tip.hash);
     if (!main) {
       orphans.push(entry);
       prevs[entry.prevBlock] = true;
@@ -119,7 +121,7 @@ var indexTips = co(function* indexTips() {
     console.log('Indexing chain tip: %s.', util.revHex(tip));
     batch.put(pair('p', tip), DUMMY);
   }
-});
+}
 
 function write(data, str, off) {
   if (Buffer.isBuffer(str))
@@ -145,14 +147,14 @@ function ipair(prefix, num) {
   return key;
 }
 
-co.spawn(function* () {
-  yield db.open();
+(async function() {
+  await db.open();
   console.log('Opened %s.', file);
   batch = db.batch();
-  yield checkVersion();
-  yield indexTips();
-  yield batch.write();
-}).then(function() {
+  await checkVersion();
+  await indexTips();
+  await batch.write();
+})().then(function() {
   console.log('Migration complete.');
   process.exit(0);
 });

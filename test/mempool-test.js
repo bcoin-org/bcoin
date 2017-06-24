@@ -51,12 +51,12 @@ describe('Mempool', function() {
     return Coin.fromTX(fund, 0, -1);
   }
 
-  it('should open mempool', co(function* () {
-    yield mempool.open();
+  it('should open mempool', async function() {
+    await mempool.open();
     chain.state.flags |= Script.flags.VERIFY_WITNESS;
-  }));
+  });
 
-  it('should handle incoming orphans and TXs', co(function* () {
+  it('should handle incoming orphans and TXs', async function() {
     var kp = KeyRing.generate();
     var w = wallet;
     var t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
@@ -123,28 +123,28 @@ describe('Mempool', function() {
     fake = fake.toTX();
     // balance: 11000
 
-    yield mempool.addTX(fake);
-    yield mempool.addTX(t4);
+    await mempool.addTX(fake);
+    await mempool.addTX(t4);
 
     balance = mempool.getBalance();
     assert.equal(balance, 70000); // note: funding balance
 
-    yield mempool.addTX(t1);
+    await mempool.addTX(t1);
 
     balance = mempool.getBalance();
     assert.equal(balance, 60000);
 
-    yield mempool.addTX(t2);
+    await mempool.addTX(t2);
 
     balance = mempool.getBalance();
     assert.equal(balance, 50000);
 
-    yield mempool.addTX(t3);
+    await mempool.addTX(t3);
 
     balance = mempool.getBalance();
     assert.equal(balance, 22000);
 
-    yield mempool.addTX(f1);
+    await mempool.addTX(f1);
 
     balance = mempool.getBalance();
     assert.equal(balance, 20000);
@@ -153,9 +153,9 @@ describe('Mempool', function() {
     assert(txs.some(function(tx) {
       return tx.hash('hex') === f1.hash('hex');
     }));
-  }));
+  });
 
-  it('should handle locktime', co(function* () {
+  it('should handle locktime', async function() {
     var w = wallet;
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig;
@@ -177,11 +177,11 @@ describe('Mempool', function() {
 
     tx = tx.toTX();
 
-    yield mempool.addTX(tx);
+    await mempool.addTX(tx);
     chain.tip.height = 0;
-  }));
+  });
 
-  it('should handle invalid locktime', co(function* () {
+  it('should handle invalid locktime', async function() {
     var w = wallet;
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig, err;
@@ -202,7 +202,7 @@ describe('Mempool', function() {
     tx = tx.toTX();
 
     try {
-      yield mempool.addTX(tx);
+      await mempool.addTX(tx);
     } catch (e) {
       err = e;
     }
@@ -210,9 +210,9 @@ describe('Mempool', function() {
     assert(err);
 
     chain.tip.height = 0;
-  }));
+  });
 
-  it('should not cache a malleated wtx with mutated sig', co(function* () {
+  it('should not cache a malleated wtx with mutated sig', async function() {
     var w = wallet;
     var kp = KeyRing.generate();
     var tx, prev, prevHash, prevs, sig, err;
@@ -237,16 +237,16 @@ describe('Mempool', function() {
     tx = tx.toTX();
 
     try {
-      yield mempool.addTX(tx);
+      await mempool.addTX(tx);
     } catch (e) {
       err = e;
     }
 
     assert(err);
     assert(!mempool.hasReject(tx.hash()));
-  }));
+  });
 
-  it('should not cache a malleated tx with unnecessary witness', co(function* () {
+  it('should not cache a malleated tx with unnecessary witness', async function() {
     var w = wallet;
     var kp = KeyRing.generate();
     var tx, prev, prevHash, sig, err;
@@ -266,16 +266,16 @@ describe('Mempool', function() {
     tx = tx.toTX();
 
     try {
-      yield mempool.addTX(tx);
+      await mempool.addTX(tx);
     } catch (e) {
       err = e;
     }
 
     assert(err);
     assert(!mempool.hasReject(tx.hash()));
-  }));
+  });
 
-  it('should not cache a malleated wtx with wit removed', co(function* () {
+  it('should not cache a malleated wtx with wit removed', async function() {
     var w = wallet;
     var kp = KeyRing.generate();
     var tx, prev, prevHash, err;
@@ -294,7 +294,7 @@ describe('Mempool', function() {
     tx = tx.toTX();
 
     try {
-      yield mempool.addTX(tx);
+      await mempool.addTX(tx);
     } catch (e) {
       err = e;
     }
@@ -302,9 +302,9 @@ describe('Mempool', function() {
     assert(err);
     assert(err.malleated);
     assert(!mempool.hasReject(tx.hash()));
-  }));
+  });
 
-  it('should cache non-malleated tx without sig', co(function* () {
+  it('should cache non-malleated tx without sig', async function() {
     var w = wallet;
     var kp = KeyRing.generate();
     var tx, prev, prevHash, err;
@@ -321,7 +321,7 @@ describe('Mempool', function() {
     tx = tx.toTX();
 
     try {
-      yield mempool.addTX(tx);
+      await mempool.addTX(tx);
     } catch (e) {
       err = e;
     }
@@ -330,9 +330,9 @@ describe('Mempool', function() {
     assert(!err.malleated);
     assert(mempool.hasReject(tx.hash()));
     cached = tx;
-  }));
+  });
 
-  it('should clear reject cache', co(function* () {
+  it('should clear reject cache', async function() {
     var w = wallet;
     var tx, input;
 
@@ -342,11 +342,11 @@ describe('Mempool', function() {
     tx = tx.toTX();
 
     assert(mempool.hasReject(cached.hash()));
-    yield mempool.addBlock({ height: 1 }, [tx]);
+    await mempool.addBlock({ height: 1 }, [tx]);
     assert(!mempool.hasReject(cached.hash()));
-  }));
+  });
 
-  it('should destroy mempool', co(function* () {
-    yield mempool.close();
-  }));
+  it('should destroy mempool', async function() {
+    await mempool.close();
+  });
 });

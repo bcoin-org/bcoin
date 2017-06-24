@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert');
 var bcoin = require('../');
 var encoding = require('../lib/utils/encoding');
@@ -21,13 +23,13 @@ db = bcoin.ldb({
   bufferKeys: true
 });
 
-var updateVersion = co(function* updateVersion() {
+async function updateVersion() {
   var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
   var data, ver;
 
   console.log('Checking version.');
 
-  data = yield db.get('V');
+  data = await db.get('V');
   assert(data, 'No version.');
 
   ver = data.readUInt32LE(0, true);
@@ -37,18 +39,18 @@ var updateVersion = co(function* updateVersion() {
 
   console.log('Backing up DB to: %s.', bak);
 
-  yield db.backup(bak);
+  await db.backup(bak);
 
   ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(6, 0, true);
   batch.put('V', ver);
-});
+}
 
-var wipeTXDB = co(function* wipeTXDB() {
+async function wipeTXDB() {
   var total = 0;
   var i, keys, key;
 
-  keys = yield db.keys({
+  keys = await db.keys({
     gte: Buffer.from([0x00]),
     lte: Buffer.from([0xff])
   });
@@ -71,12 +73,12 @@ var wipeTXDB = co(function* wipeTXDB() {
   batch.del(Buffer.from([0x52])); // R
 
   console.log('Wiped %d txdb records.', total);
-});
+}
 
-var patchAccounts = co(function* patchAccounts() {
+async function patchAccounts() {
   var i, items, item, wid, index, account;
 
-  items = yield db.range({
+  items = await db.range({
     gte: Buffer.from('610000000000000000', 'hex'), // a
     lte: Buffer.from('61ffffffffffffffff', 'hex')  // a
   });
@@ -91,12 +93,12 @@ var patchAccounts = co(function* patchAccounts() {
     console.log('n[%d][%d] -> %s', wid, index, account.name);
     batch.put(n(wid, index), Buffer.from(account.name, 'ascii'));
   }
-});
+}
 
-var indexPaths = co(function* indexPaths() {
+async function indexPaths() {
   var i, items, item, wid, index, hash;
 
-  items = yield db.range({
+  items = await db.range({
     gte: Buffer.from('5000000000' + encoding.NULL_HASH, 'hex'), // P
     lte: Buffer.from('50ffffffff' + encoding.HIGH_HASH, 'hex')  // P
   });
@@ -109,12 +111,12 @@ var indexPaths = co(function* indexPaths() {
     console.log('r[%d][%d][%s] -> NUL', wid, index, hash);
     batch.put(r(wid, index, hash), Buffer.from([0]));
   }
-});
+}
 
-var patchPathMaps = co(function* patchPathMaps() {
+async function patchPathMaps() {
   var i, items, item, hash, wids;
 
-  items = yield db.range({
+  items = await db.range({
     gte: Buffer.from('70' + encoding.NULL_HASH, 'hex'), // p
     lte: Buffer.from('70' + encoding.HIGH_HASH, 'hex')  // p
   });
@@ -126,7 +128,7 @@ var patchPathMaps = co(function* patchPathMaps() {
     console.log('p[%s] -> u32(%d)', hash, wids.length);
     batch.put(item.key, serializeWallets(wids));
   }
-});
+}
 
 function parseWallets(data) {
   var p = new BufferReader(data);
@@ -224,7 +226,7 @@ function r(wid, index, hash) {
   return key;
 }
 
-var updateLookahead = co(function* updateLookahead() {
+async function updateLookahead() {
   var WalletDB = require('../lib/wallet/walletdb');
   var i, j, db, wallet;
 
@@ -239,41 +241,41 @@ var updateLookahead = co(function* updateLookahead() {
     verify: false
   });
 
-  yield db.open();
+  await db.open();
 
   for (i = 1; i < db.depth; i++) {
-    wallet = yield db.get(i);
+    wallet = await db.get(i);
     assert(wallet);
     console.log('Updating wallet lookahead: %s', wallet.id);
     for (j = 0; j < wallet.accountDepth; j++)
-      yield wallet.setLookahead(j, 20);
+      await wallet.setLookahead(j, 20);
   }
 
-  yield db.close();
-});
+  await db.close();
+}
 
-var unstate = co(function* unstate() {
-  yield db.open();
+async function unstate() {
+  await db.open();
   batch = db.batch();
-  yield wipeTXDB();
-  yield batch.write();
-  yield db.close();
-});
+  await wipeTXDB();
+  await batch.write();
+  await db.close();
+}
 
-co.spawn(function* () {
-  yield db.open();
+(async function() {
+  await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
-  yield updateVersion();
-  yield wipeTXDB();
-  yield patchAccounts();
-  yield indexPaths();
-  yield patchPathMaps();
-  yield batch.write();
-  yield db.close();
-  // yield updateLookahead();
-  // yield unstate();
-}).then(function() {
+  await updateVersion();
+  await wipeTXDB();
+  await patchAccounts();
+  await indexPaths();
+  await patchPathMaps();
+  await batch.write();
+  await db.close();
+  // await updateLookahead();
+  // await unstate();
+})().then(function() {
   console.log('Migration complete.');
   console.log('Rescan is required...');
   console.log('Start bcoin with `--start-height=[wallet-creation-height]`.');

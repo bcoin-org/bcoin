@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert');
 var bcoin = require('../');
 var encoding = require('../lib/utils/encoding');
@@ -27,13 +29,13 @@ db = bcoin.ldb({
   bufferKeys: true
 });
 
-var updateVersion = co(function* updateVersion() {
+async function updateVersion() {
   var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
   var data, ver;
 
   console.log('Checking version.');
 
-  data = yield db.get('V');
+  data = await db.get('V');
   assert(data, 'No version.');
 
   ver = data.readUInt32LE(0, true);
@@ -43,18 +45,18 @@ var updateVersion = co(function* updateVersion() {
 
   console.log('Backing up DB to: %s.', bak);
 
-  yield db.backup(bak);
+  await db.backup(bak);
 
   ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(4, 0, true);
   batch.put('V', ver);
-});
+}
 
-var updateTXDB = co(function* updateTXDB() {
+async function updateTXDB() {
   var txs = {};
   var i, keys, key, hash, tx, walletdb;
 
-  keys = yield db.keys({
+  keys = await db.keys({
     gte: Buffer.from([0x00]),
     lte: Buffer.from([0xff])
   });
@@ -62,7 +64,7 @@ var updateTXDB = co(function* updateTXDB() {
   for (i = 0; i < keys.length; i++) {
     key = keys[i];
     if (key[0] === 0x74 && key[5] === 0x74) {
-      tx = yield db.get(key);
+      tx = await db.get(key);
       tx = fromExtended(tx);
       hash = tx.hash('hex');
       txs[hash] = tx;
@@ -73,8 +75,8 @@ var updateTXDB = co(function* updateTXDB() {
 
   txs = util.values(txs);
 
-  yield batch.write();
-  yield db.close();
+  await batch.write();
+  await db.close();
 
   walletdb = new WalletDB({
     location: file,
@@ -84,15 +86,15 @@ var updateTXDB = co(function* updateTXDB() {
     network: process.argv[3]
   });
 
-  yield walletdb.open();
+  await walletdb.open();
 
   for (i = 0; i < txs.length; i++) {
     tx = txs[i];
-    yield walletdb.addTX(tx);
+    await walletdb.addTX(tx);
   }
 
-  yield walletdb.close();
-});
+  await walletdb.close();
+}
 
 function fromExtended(data, saveCoins) {
   var tx = new TX();
@@ -132,13 +134,13 @@ function fromExtended(data, saveCoins) {
   return tx;
 }
 
-co.spawn(function* () {
-  yield db.open();
+(async function() {
+  await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
-  yield updateVersion();
-  yield updateTXDB();
-}).then(function() {
+  await updateVersion();
+  await updateTXDB();
+})().then(function() {
   console.log('Migration complete.');
   process.exit(0);
 });

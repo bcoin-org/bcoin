@@ -14,12 +14,12 @@ var wdb = server.create({
   logConsole: true,
   logLevel: 'debug',
   db: 'leveldb'
-});
+};
 
 wdb.on('error', function(err) {
   ;
-});
+};
 
 wdb.open().catch(function(err) {
   throw err;
-});
+};

@@ -1,3 +1,5 @@
+'use strict';
+
 var bcoin = require('../');
 var walletdb = require('../lib/wallet/walletdb');
 var encoding = require('../lib/utils/encoding');
@@ -26,13 +28,13 @@ db = bcoin.ldb({
   bufferKeys: true
 });
 
-var updateVersion = co(function* updateVersion() {
+async function updateVersion() {
   var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
   var data, ver;
 
   console.log('Checking version.');
 
-  data = yield db.get('V');
+  data = await db.get('V');
   assert(data, 'No version.');
 
   ver = data.readUInt32LE(0, true);
@@ -42,14 +44,14 @@ var updateVersion = co(function* updateVersion() {
 
   console.log('Backing up DB to: %s.', bak);
 
-  yield db.backup(bak);
+  await db.backup(bak);
 
   ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(3, 0, true);
   batch.put('V', ver);
-});
+}
 
-var updatePathMap = co(function* updatePathMap() {
+async function updatePathMap() {
   var total = 0;
   var i, iter, item, oldPaths, oldPath;
   var hash, path, keys, key, ring;
@@ -63,7 +65,7 @@ var updatePathMap = co(function* updatePathMap() {
   console.log('Migrating path map.');
 
   for (;;) {
-    item = yield iter.next();
+    item = await iter.next();
 
     if (!item)
       break;
@@ -96,9 +98,9 @@ var updatePathMap = co(function* updatePathMap() {
   }
 
   console.log('Migrated %d paths.', total);
-});
+}
 
-var updateAccounts = co(function* updateAccounts() {
+async function updateAccounts() {
   var total = 0;
   var iter, item, account, buf;
 
@@ -111,7 +113,7 @@ var updateAccounts = co(function* updateAccounts() {
   console.log('Migrating accounts.');
 
   for (;;) {
-    item = yield iter.next();
+    item = await iter.next();
 
     if (!item)
       break;
@@ -130,9 +132,9 @@ var updateAccounts = co(function* updateAccounts() {
   }
 
   console.log('Migrated %d accounts.', total);
-});
+}
 
-var updateWallets = co(function* updateWallets() {
+async function updateWallets() {
   var total = 0;
   var iter, item, wallet, buf;
 
@@ -145,7 +147,7 @@ var updateWallets = co(function* updateWallets() {
   console.log('Migrating wallets.');
 
   for (;;) {
-    item = yield iter.next();
+    item = await iter.next();
 
     if (!item)
       break;
@@ -164,9 +166,9 @@ var updateWallets = co(function* updateWallets() {
   }
 
   console.log('Migrated %d wallets.', total);
-});
+}
 
-var updateTXMap = co(function* updateTXMap() {
+async function updateTXMap() {
   var total = 0;
   var iter, item, wallets;
 
@@ -179,7 +181,7 @@ var updateTXMap = co(function* updateTXMap() {
   console.log('Migrating tx map.');
 
   for (;;) {
-    item = yield iter.next();
+    item = await iter.next();
 
     if (!item)
       break;
@@ -190,7 +192,7 @@ var updateTXMap = co(function* updateTXMap() {
   }
 
   console.log('Migrated %d tx maps.', total);
-});
+}
 
 function pathFromRaw(data) {
   var path = {};
@@ -360,17 +362,17 @@ function keyFromRaw(data, network) {
   return ring;
 }
 
-co.spawn(function* () {
-  yield db.open();
+(async function() {
+  await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
-  yield updateVersion();
-  yield updatePathMap();
-  yield updateAccounts();
-  yield updateWallets();
-  yield updateTXMap();
-  yield batch.write();
-}).then(function() {
+  await updateVersion();
+  await updatePathMap();
+  await updateAccounts();
+  await updateWallets();
+  await updateTXMap();
+  await batch.write();
+})().then(function() {
   console.log('Migration complete.');
   process.exit(0);
 });

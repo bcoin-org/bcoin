@@ -77,42 +77,42 @@ main = createGenesisBlock({
   ts: 1231006505,
   bits: 486604799,
   nonce: 2083236893
-});
+};
 
 testnet = createGenesisBlock({
   version: 1,
   ts: 1296688602,
   bits: 486604799,
   nonce: 414098458
-});
+};
 
 regtest = createGenesisBlock({
   version: 1,
   ts: 1296688602,
   bits: 545259519,
   nonce: 2
-});
+};
 
 segnet3 = createGenesisBlock({
   version: 1,
   ts: 1452831101,
   bits: 486604799,
   nonce: 0
-});
+};
 
 segnet4 = createGenesisBlock({
   version: 1,
   ts: 1452831101,
   bits: 503447551,
   nonce: 0
-});
+};
 
 btcd = createGenesisBlock({
   version: 1,
   ts: 1401292357,
   bits: 545259519,
   nonce: 2
-});
+};
 
 util.log(main);
 util.log('');

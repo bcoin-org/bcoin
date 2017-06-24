@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert');
 var encoding = require('../lib/utils/encoding');
 var networks = require('../lib/protocol/networks');
@@ -42,12 +44,12 @@ if (index !== -1) {
   assert(options.network, 'Invalid network.');
 }
 
-var updateVersion = co(function* updateVersion() {
+async function updateVersion() {
   var data, ver;
 
   console.log('Checking version.');
 
-  data = yield db.get('V');
+  data = await db.get('V');
 
   if (!data)
     throw new Error('No DB version found!');
@@ -60,10 +62,10 @@ var updateVersion = co(function* updateVersion() {
   ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(2, 0, true);
   batch.put('V', ver);
-});
+}
 
-var checkTipIndex = co(function* checkTipIndex() {
-  var keys = yield db.keys({
+async function checkTipIndex() {
+  var keys = await db.keys({
     gte: pair('p', encoding.ZERO_HASH),
     lte: pair('p', encoding.MAX_HASH)
   });
@@ -77,13 +79,13 @@ var checkTipIndex = co(function* checkTipIndex() {
 
   if (keys.length < 3) {
     console.log('Note: please run ensure-tip-index.js if you haven\'t yet.');
-    yield co.timeout(2000);
+    await co.timeout(2000);
     return;
   }
-});
+}
 
-var updateOptions = co(function* updateOptions() {
-  if (yield db.has('O'))
+async function updateOptions() {
+  if (await db.has('O'))
     return;
 
   if (process.argv.indexOf('--network') === -1) {
@@ -93,27 +95,27 @@ var updateOptions = co(function* updateOptions() {
     console.log('`--network [name]`, `--spv`, `--witness`,');
     console.log('`--prune`, `--index-tx`, and `--index-address`.');
     console.log('Continuing migration in 5 seconds...');
-    yield co.timeout(5000);
+    await co.timeout(5000);
   }
 
   batch.put('O', defaultOptions());
-});
+}
 
-var updateDeployments = co(function* updateDeployments() {
-  if (yield db.has('v'))
+async function updateDeployments() {
+  if (await db.has('v'))
     return;
 
   if (process.argv.indexOf('--network') === -1) {
     console.log('Warning: no deployment table found.');
     console.log('Make sure `--network` is set properly.');
     console.log('Continuing migration in 5 seconds...');
-    yield co.timeout(5000);
+    await co.timeout(5000);
   }
 
   batch.put('v', defaultDeployments());
-});
+}
 
-var reserializeCoins = co(function* reserializeCoins() {
+async function reserializeCoins() {
   var total = 0;
   var i, iter, item, hash, old, coins, coin, output;
 
@@ -124,7 +126,7 @@ var reserializeCoins = co(function* reserializeCoins() {
   });
 
   for (;;) {
-    item = yield iter.next();
+    item = await iter.next();
 
     if (!item)
       break;
@@ -163,9 +165,9 @@ var reserializeCoins = co(function* reserializeCoins() {
   }
 
   console.log('Reserialized %d coins.', total);
-});
+}
 
-var reserializeUndo = co(function* reserializeUndo() {
+async function reserializeUndo() {
   var total = 0;
   var iter, item, br, undo;
 
@@ -176,7 +178,7 @@ var reserializeUndo = co(function* reserializeUndo() {
   });
 
   for (;;) {
-    item = yield iter.next();
+    item = await iter.next();
 
     if (!item)
       break;
@@ -196,7 +198,7 @@ var reserializeUndo = co(function* reserializeUndo() {
   }
 
   console.log('Reserialized %d undo coins.', total);
-});
+}
 
 function write(data, str, off) {
   if (Buffer.isBuffer(str))
@@ -275,18 +277,18 @@ function defaultDeployments() {
   return bw.render();
 }
 
-co.spawn(function* () {
-  yield db.open();
+(async function() {
+  await db.open();
   console.log('Opened %s.', file);
   batch = db.batch();
-  yield updateVersion();
-  yield checkTipIndex();
-  yield updateOptions();
-  yield updateDeployments();
-  yield reserializeCoins();
-  yield reserializeUndo();
-  yield batch.write();
-}).then(function() {
+  await updateVersion();
+  await checkTipIndex();
+  await updateOptions();
+  await updateDeployments();
+  await reserializeCoins();
+  await reserializeUndo();
+  await batch.write();
+})().then(function() {
   console.log('Migration complete.');
   process.exit(0);
 });

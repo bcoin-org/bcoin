@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require('assert');
 var bcoin = require('../');
 var BufferWriter = require('../lib/utils/writer');
@@ -20,13 +22,13 @@ db = bcoin.ldb({
   bufferKeys: true
 });
 
-var updateVersion = co(function* updateVersion() {
+async function updateVersion() {
   var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
   var data, ver;
 
   console.log('Checking version.');
 
-  data = yield db.get('V');
+  data = await db.get('V');
   assert(data, 'No version.');
 
   ver = data.readUInt32LE(0, true);
@@ -36,17 +38,17 @@ var updateVersion = co(function* updateVersion() {
 
   console.log('Backing up DB to: %s.', bak);
 
-  yield db.backup(bak);
+  await db.backup(bak);
 
   ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(5, 0, true);
   batch.put('V', ver);
-});
+}
 
-var updateTXDB = co(function* updateTXDB() {
+async function updateTXDB() {
   var i, keys, key;
 
-  keys = yield db.keys({
+  keys = await db.keys({
     gte: Buffer.from([0x00]),
     lte: Buffer.from([0xff])
   });
@@ -63,17 +65,17 @@ var updateTXDB = co(function* updateTXDB() {
     }
   }
 
-  yield batch.write();
-});
+  await batch.write();
+}
 
-co.spawn(function* () {
-  yield db.open();
+(async function() {
+  await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
-  yield updateVersion();
-  yield updateTXDB();
-  yield db.close();
-}).then(function() {
+  await updateVersion();
+  await updateTXDB();
+  await db.close();
+})().then(function() {
   console.log('Migration complete.');
   process.exit(0);
 });

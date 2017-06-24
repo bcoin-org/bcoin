@@ -35,34 +35,34 @@ describe('HTTP', function() {
 
   this.timeout(15000);
 
-  it('should open node', co(function* () {
+  it('should open node', async function() {
     consensus.COINBASE_MATURITY = 0;
-    yield node.open();
-  }));
+    await node.open();
+  });
 
-  it('should create wallet', co(function* () {
-    var info = yield wallet.create({ id: 'test' });
+  it('should create wallet', async function() {
+    var info = await wallet.create({ id: 'test' });
     assert.equal(info.id, 'test');
-  }));
+  });
 
-  it('should get info', co(function* () {
-    var info = yield wallet.client.getInfo();
+  it('should get info', async function() {
+    var info = await wallet.client.getInfo();
     assert.equal(info.network, node.network.type);
     assert.equal(info.version, pkg.version);
     assert.equal(info.pool.agent, node.pool.options.agent);
     assert.equal(typeof info.chain, 'object');
     assert.equal(info.chain.height, 0);
-  }));
+  });
 
-  it('should get wallet info', co(function* () {
-    var info = yield wallet.getInfo();
+  it('should get wallet info', async function() {
+    var info = await wallet.getInfo();
     assert.equal(info.id, 'test');
     addr = info.account.receiveAddress;
     assert.equal(typeof addr, 'string');
     addr = Address.fromString(addr);
-  }));
+  });
 
-  it('should fill with funds', co(function* () {
+  it('should fill with funds', async function() {
     var tx, balance, receive, details;
 
     // Coinbase
@@ -86,8 +86,8 @@ describe('HTTP', function() {
       details = d;
     });
 
-    yield walletdb.addTX(tx);
-    yield co.timeout(300);
+    await walletdb.addTX(tx);
+    await co.timeout(300);
 
     assert(receive);
     assert.equal(receive.id, 'test');
@@ -98,15 +98,15 @@ describe('HTTP', function() {
     assert.equal(Amount.value(balance.unconfirmed), 201840);
     assert(details);
     assert.equal(details.hash, tx.rhash());
-  }));
+  });
 
-  it('should get balance', co(function* () {
-    var balance = yield wallet.getBalance();
+  it('should get balance', async function() {
+    var balance = await wallet.getBalance();
     assert.equal(Amount.value(balance.confirmed), 0);
     assert.equal(Amount.value(balance.unconfirmed), 201840);
-  }));
+  });
 
-  it('should send a tx', co(function* () {
+  it('should send a tx', async function() {
     var value = 0;
     var options, tx;
 
@@ -118,7 +118,7 @@ describe('HTTP', function() {
       }]
     };
 
-    tx = yield wallet.send(options);
+    tx = await wallet.send(options);
 
     assert(tx);
     assert.equal(tx.inputs.length, 1);
@@ -129,48 +129,48 @@ describe('HTTP', function() {
     assert.equal(value, 48190);
 
     hash = tx.hash;
-  }));
+  });
 
-  it('should get a tx', co(function* () {
-    var tx = yield wallet.getTX(hash);
+  it('should get a tx', async function() {
+    var tx = await wallet.getTX(hash);
     assert(tx);
     assert.equal(tx.hash, hash);
-  }));
+  });
 
-  it('should generate new api key', co(function* () {
+  it('should generate new api key', async function() {
     var t = wallet.token.toString('hex');
-    var token = yield wallet.retoken(null);
+    var token = await wallet.retoken(null);
     assert(token.length === 64);
     assert.notEqual(token, t);
-  }));
+  });
 
-  it('should get balance', co(function* () {
-    var balance = yield wallet.getBalance();
+  it('should get balance', async function() {
+    var balance = await wallet.getBalance();
     assert.equal(Amount.value(balance.unconfirmed), 199570);
-  }));
+  });
 
-  it('should execute an rpc call', co(function* () {
-    var info = yield wallet.client.rpc.execute('getblockchaininfo', []);
+  it('should execute an rpc call', async function() {
+    var info = await wallet.client.rpc.execute('getblockchaininfo', []);
     assert.equal(info.blocks, 0);
-  }));
+  });
 
-  it('should execute an rpc call with bool parameter', co(function* () {
-    var info = yield wallet.client.rpc.execute('getrawmempool', [true]);
+  it('should execute an rpc call with bool parameter', async function() {
+    var info = await wallet.client.rpc.execute('getrawmempool', [true]);
     assert.deepStrictEqual(info, {});
-  }));
+  });
 
-  it('should create account', co(function* () {
-    var info = yield wallet.createAccount('foo1');
+  it('should create account', async function() {
+    var info = await wallet.createAccount('foo1');
     assert(info);
     assert(info.initialized);
     assert.equal(info.name, 'foo1');
     assert.equal(info.accountIndex, 1);
     assert.equal(info.m, 1);
     assert.equal(info.n, 1);
-  }));
+  });
 
-  it('should create account', co(function* () {
-    var info = yield wallet.createAccount('foo2', {
+  it('should create account', async function() {
+    var info = await wallet.createAccount('foo2', {
       type: 'multisig',
       m: 1,
       n: 2
@@ -181,10 +181,10 @@ describe('HTTP', function() {
     assert.equal(info.accountIndex, 2);
     assert.equal(info.m, 1);
     assert.equal(info.n, 2);
-  }));
+  });
 
-  it('should get a block template', co(function* () {
-    var json = yield wallet.client.rpc.execute('getblocktemplate', []);
+  it('should get a block template', async function() {
+    var json = await wallet.client.rpc.execute('getblocktemplate', []);
     assert.deepStrictEqual(json, {
       capabilities: [ 'proposal' ],
       mutable: [ 'time', 'transactions', 'prevblock' ],
@@ -209,21 +209,21 @@ describe('HTTP', function() {
       coinbasevalue: 5000000000,
       transactions: []
     });
-  }));
+  });
 
-  it('should send a block template proposal', co(function* () {
-    var attempt = yield node.miner.createBlock();
+  it('should send a block template proposal', async function() {
+    var attempt = await node.miner.createBlock();
     var block = attempt.toBlock();
     var hex = block.toRaw().toString('hex');
-    var json = yield wallet.client.rpc.execute('getblocktemplate', [{
+    var json = await wallet.client.rpc.execute('getblocktemplate', [{
       mode: 'proposal',
       data: hex
     }]);
     assert.strictEqual(json, null);
-  }));
+  });
 
-  it('should validate an address', co(function* () {
-    var json = yield wallet.client.rpc.execute('validateaddress', [addr.toString()]);
+  it('should validate an address', async function() {
+    var json = await wallet.client.rpc.execute('validateaddress', [addr.toString()]);
     assert.deepStrictEqual(json, {
        isvalid: true,
        address: addr.toString(),
@@ -231,11 +231,11 @@ describe('HTTP', function() {
        ismine: false,
        iswatchonly: false
      });
-  }));
+  });
 
-  it('should cleanup', co(function* () {
+  it('should cleanup', async function() {
     consensus.COINBASE_MATURITY = 100;
-    yield wallet.close();
-    yield node.close();
-  }));
+    await wallet.close();
+    await node.close();
+  });
 });

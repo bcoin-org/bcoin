@@ -45,11 +45,11 @@ node.on('error', function(err) {
   ;
 });
 
-co.spawn(function *() {
-  yield node.ensure();
-  yield node.open();
-  yield node.connect();
+(async function() {
+  await node.ensure();
+  await node.open();
+  await node.connect();
   node.startSync();
-}).catch(function(err) {
+})().catch(function(err) {
   throw err;
 });

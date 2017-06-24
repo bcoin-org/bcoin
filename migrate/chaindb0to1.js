@@ -1,3 +1,5 @@
+'use strict';
+
 var bcoin = require('../');
 var co = bcoin.co;
 var assert = require('assert');
@@ -25,12 +27,12 @@ function makeKey(data) {
   return key;
 }
 
-var checkVersion = co(function* checkVersion() {
+async function checkVersion() {
   var data, ver;
 
   console.log('Checking version.');
 
-  data = yield db.get('V');
+  data = await db.get('V');
 
   if (!data)
     return;
@@ -39,14 +41,14 @@ var checkVersion = co(function* checkVersion() {
 
   if (ver !== 0)
     throw Error('DB is version ' + ver + '.');
-});
+}
 
-var updateState = co(function* updateState() {
+async function updateState() {
   var data, hash, batch, ver, p;
 
   console.log('Updating chain state.');
 
-  data = yield db.get('R');
+  data = await db.get('R');
 
   if (!data || data.length < 32)
     throw new Error('No chain state.');
@@ -68,12 +70,12 @@ var updateState = co(function* updateState() {
   ver.writeUInt32LE(1, 0, true);
   batch.put('V', ver);
 
-  yield batch.write();
+  await batch.write();
 
   console.log('Updated chain state.');
-});
+}
 
-var updateEndian = co(function* updateEndian() {
+async function updateEndian() {
   var batch = db.batch();
   var total = 0;
   var iter, item;
@@ -88,7 +90,7 @@ var updateEndian = co(function* updateEndian() {
   });
 
   for (;;) {
-    item = yield iter.next();
+    item = await iter.next();
 
     if (!item)
       break;
@@ -100,18 +102,18 @@ var updateEndian = co(function* updateEndian() {
 
   console.log('Migrating %d items.', total);
 
-  yield batch.write();
+  await batch.write();
 
   console.log('Migrated endianness.');
-});
+}
 
-co.spawn(function* () {
-  yield db.open();
+(async function() {
+  await db.open();
   console.log('Opened %s.', file);
-  yield checkVersion();
-  yield updateState();
-  yield updateEndian();
-}).then(function() {
+  await checkVersion();
+  await updateState();
+  await updateEndian();
+})().then(function() {
   console.log('Migration complete.');
   process.exit(0);
 });
