@@ -2,6 +2,7 @@
 
 var assert = require('assert');
 var Bloom = require('../lib/utils/bloom');
+var RollingFilter = require('../lib/utils/rollingfilter');
 var murmur3 = require('../lib/utils/murmur3');
 
 describe('Bloom', function() {
@@ -88,7 +89,7 @@ describe('Bloom', function() {
   });
 
   it('should handle 1m ops with rolling filter', function() {
-    var filter = new Bloom.Rolling(210000, 0.00001);
+    var filter = new RollingFilter(210000, 0.00001);
     var i, j, str;
 
     filter.tweak = 0xdeadbeef;
@@ -107,7 +108,7 @@ describe('Bloom', function() {
   });
 
   it('should handle rolling generations', function() {
-    var filter = new Bloom.Rolling(50, 0.00001);
+    var filter = new RollingFilter(50, 0.00001);
     var i, j, str;
 
     filter.tweak = 0xdeadbeee;
