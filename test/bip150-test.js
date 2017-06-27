@@ -1,17 +1,17 @@
 'use strict';
 
 var assert = require('assert');
-var ec = require('../lib/crypto/ec');
+var secp256k1 = require('../lib/crypto/secp256k1');
 var BIP150 = require('../lib/net/bip150');
 var BIP151 = require('../lib/net/bip151');
 
 describe('BIP150', function() {
   var db = new BIP150.AuthDB();
-  var ck = ec.generatePrivateKey();
-  var sk = ec.generatePrivateKey();
+  var ck = secp256k1.generatePrivateKey();
+  var sk = secp256k1.generatePrivateKey();
 
-  db.addAuthorized(ec.publicKeyCreate(ck, true));
-  db.addKnown('127.0.0.2', ec.publicKeyCreate(sk, true));
+  db.addAuthorized(secp256k1.publicKeyCreate(ck, true));
+  db.addKnown('127.0.0.2', secp256k1.publicKeyCreate(sk, true));
 
   var client = new BIP151();
   var server = new BIP151();

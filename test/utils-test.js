@@ -2,7 +2,7 @@
 
 var assert = require('assert');
 var BN = require('../lib/crypto/bn');
-var ec = require('../lib/crypto/ec');
+var secp256k1 = require('../lib/crypto/secp256k1');
 var base58 = require('../lib/utils/base58');
 var encoding = require('../lib/utils/encoding');
 var crypto = require('../lib/crypto/crypto');
@@ -321,8 +321,8 @@ describe('Utils', function() {
   });
 
   it('should do proper schnorr', function() {
-    var key = ec.generatePrivateKey();
-    var pub = ec.publicKeyCreate(key, true);
+    var key = secp256k1.generatePrivateKey();
+    var pub = secp256k1.publicKeyCreate(key, true);
     var msg = crypto.hash256(Buffer.from('foo', 'ascii'));
     var sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));

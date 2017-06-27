@@ -348,7 +348,7 @@ function keyFromRaw(data, network) {
 
   if (key.length === 32) {
     ring.privateKey = key;
-    ring.publicKey = bcoin.ec.publicKeyCreate(key, true);
+    ring.publicKey = bcoin.secp256k1.publicKeyCreate(key, true);
   } else {
     ring.publicKey = key;
   }

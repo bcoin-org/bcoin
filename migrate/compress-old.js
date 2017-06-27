@@ -7,7 +7,7 @@
 'use strict';
 
 var assert = require('assert');
-var ec = require('../lib/crypto/ec');
+var secp256k1 = require('../lib/crypto/secp256k1');
 
 /*
  * Compression
@@ -51,7 +51,7 @@ function compressScript(script, bw) {
   // Saves up to 34 bytes.
   if (script.isPubkey(true)) {
     data = script.code[0].data;
-    if (ec.publicKeyVerify(data)) {
+    if (secp256k1.publicKeyVerify(data)) {
       data = compressKey(data);
       bw.writeU8(3);
       bw.writeBytes(data);
@@ -184,7 +184,7 @@ function compressKey(key) {
     case 0x06:
     case 0x07:
       // Compress the key normally.
-      out = ec.publicKeyConvert(key, true);
+      out = secp256k1.publicKeyConvert(key, true);
       // Store the original format (which
       // may be a hybrid byte) in the hi
       // 3 bits so we can restore it later.
@@ -223,7 +223,7 @@ function decompressKey(key) {
   // low bits so publicKeyConvert
   // actually understands it.
   key[0] &= 0x03;
-  out = ec.publicKeyConvert(key, false);
+  out = secp256k1.publicKeyConvert(key, false);
 
   // Reset the hi bits so as not to
   // mutate the original buffer.
