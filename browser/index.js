@@ -222,9 +222,7 @@ function formatWallet(wallet) {
   });
 }
 
-bcoin.set({
-  useWorkers: true
-});
+bcoin.workerpool.enable();
 
 node = new bcoin.fullnode({
   hash: true,

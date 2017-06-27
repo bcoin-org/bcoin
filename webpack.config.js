@@ -6,7 +6,7 @@ var path = require('path');
 module.exports = {
   target: 'web',
   entry: {
-    'bcoin': './lib/bcoin',
+    'bcoin': './lib/bcoin-browser',
     'bcoin-master': './lib/workers/master'
   },
   output: {
