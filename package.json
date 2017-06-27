@@ -67,14 +67,13 @@
     "webpack": "webpack"
   },
   "browser": {
-    "bcoin-native": "./browser/empty.js",
     "child_process": "./browser/empty.js",
     "crypto": "./browser/empty.js",
     "dgram": "./browser/empty.js",
     "dns": "./browser/empty.js",
     "fs": "./browser/empty.js",
     "net": "./browser/empty.js",
-    "os": "./browser/empty.js",
+    "bcoin-native": "./browser/empty.js",
     "secp256k1": "./browser/empty.js",
     "socket.io": "./browser/empty.js",
     "./lib/bcoin": "./lib/bcoin-browser.js",
