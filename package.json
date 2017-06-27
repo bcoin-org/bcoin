@@ -80,7 +80,7 @@
     "./lib/blockchain/layout.js": "./lib/blockchain/layout-browser.js",
     "./lib/crypto/backend.js": "./lib/crypto/backend-browser.js",
     "./lib/crypto/ec.js": "./lib/crypto/ec-elliptic.js",
-    "./lib/crypto/pk.js": "./lib/crypto/pk-browser.js",
+    "./lib/crypto/rsa.js": "./lib/crypto/rsa-browser.js",
     "./lib/db/backends.js": "./lib/db/backends-browser.js",
     "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/http/base": "./browser/empty.js",
