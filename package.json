@@ -98,7 +98,6 @@
     "./lib/utils/fs": "./browser/empty.js",
     "./lib/utils/native": "./browser/empty.js",
     "./lib/utils/nfkd": "./lib/utils/nfkd-browser.js",
-    "./lib/utils/nexttick": "./lib/utils/nexttick-browser.js",
     "./lib/wallet/http": "./browser/empty.js",
     "./lib/wallet/layout": "./lib/wallet/layout-browser.js",
     "./lib/wallet/server": "./browser/empty.js"
