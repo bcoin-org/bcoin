@@ -1,7 +1,7 @@
 'use strict';
 
 var Address = require('../lib/primitives/address');
-var crypto = require('../lib/crypto/crypto');
+var random = require('../lib/crypto/random');
 var bench = require('./bench');
 
 var i, end, addr;
@@ -10,7 +10,7 @@ var addrs = [];
 
 end = bench('serialize');
 for (i = 0; i < 100000; i++) {
-  addr = Address.fromProgram(0, crypto.randomBytes(20));
+  addr = Address.fromProgram(0, random.randomBytes(20));
   addrs.push(addr.toBech32());
 }
 end(i);

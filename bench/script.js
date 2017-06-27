@@ -1,7 +1,7 @@
 'use strict';
 
 var assert = require('assert');
-var crypto = require('../lib/crypto/crypto');
+var random = require('../lib/crypto/random');
 var Script = require('../lib/script/script');
 var bench = require('./bench');
 var opcodes = Script.opcodes;
@@ -24,7 +24,7 @@ Script.fromPubkeyhashOld = function fromScripthash(hash) {
 
 hashes = [];
 for (i = 0; i < 100000; i++)
-  hashes.push(crypto.randomBytes(20));
+  hashes.push(random.randomBytes(20));
 
 end = bench('old');
 for (i = 0; i < hashes.length; i++)

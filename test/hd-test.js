@@ -3,7 +3,7 @@
 var assert = require('assert');
 var HD = require('../lib/hd');
 var base58 = require('../lib/utils/base58');
-var crypto = require('../lib/crypto/crypto');
+var pbkdf2 = require('../lib/crypto/pbkdf2');
 var vectors = require('./data/hd.json');
 var vector1 = vectors.vector1;
 var vector2 = vectors.vector2;
@@ -21,7 +21,7 @@ describe('HD', function() {
   var master, child1, child2, child3, child4, child5, child6;
 
   it('should create a pbkdf2 seed', function() {
-    var seed = crypto.pbkdf2(vectors.phrase, 'mnemonicfoo', 2048, 64, 'sha512');
+    var seed = pbkdf2.derive(vectors.phrase, 'mnemonicfoo', 2048, 64, 'sha512');
     assert.equal(seed.toString('hex'), vectors.seed);
   });
 

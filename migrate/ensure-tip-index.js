@@ -3,7 +3,7 @@
 var assert = require('assert');
 var encoding = require('../lib/utils/encoding');
 var BufferReader = require('../lib/utils/reader');
-var crypto = require('../lib/crypto/crypto');
+var digest = require('../lib/crypto/digest');
 var util = require('../lib/utils/util');
 var LDB = require('../lib/db/ldb');
 var BN = require('../lib/crypto/bn');
@@ -42,7 +42,7 @@ async function checkVersion() {
 
 function entryFromRaw(data) {
   var p = new BufferReader(data, true);
-  var hash = crypto.hash256(p.readBytes(80));
+  var hash = digest.hash256(p.readBytes(80));
   var entry = {};
 
   p.seek(-80);

@@ -4,7 +4,8 @@ var assert = require('assert');
 var consensus = require('../lib/protocol/consensus');
 var util = require('../lib/utils/util');
 var encoding = require('../lib/utils/encoding');
-var crypto = require('../lib/crypto/crypto');
+var digest = require('../lib/crypto/digest');
+var random = require('../lib/crypto/random');
 var WalletDB = require('../lib/wallet/walletdb');
 var Address = require('../lib/primitives/address');
 var MTX = require('../lib/primitives/mtx');
@@ -30,8 +31,8 @@ function nextBlock(height) {
   if (height == null)
     height = globalHeight++;
 
-  hash = crypto.hash256(encoding.U32(height)).toString('hex');
-  prev = crypto.hash256(encoding.U32(height - 1)).toString('hex');
+  hash = digest.hash256(encoding.U32(height)).toString('hex');
+  prev = digest.hash256(encoding.U32(height - 1)).toString('hex');
 
   return {
     hash: hash,
@@ -46,7 +47,7 @@ function nextBlock(height) {
 
 function dummy(hash) {
   if (!hash)
-    hash = crypto.randomBytes(32).toString('hex');
+    hash = random.randomBytes(32).toString('hex');
 
   return Input.fromOutpoint(new Outpoint(hash, 0));
 }

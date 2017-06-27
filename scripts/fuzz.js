@@ -1,21 +1,22 @@
 var assert = require('assert');
 var bcoin = require('../');
-var util = bcoin.util;
-var Script = bcoin.script;
-var Stack = bcoin.stack;
-var Witness = bcoin.witness;
-var Input = bcoin.input;
-var Output = bcoin.output;
-var Outpoint = bcoin.outpoint;
-var TX = bcoin.tx;
-var crypto = bcoin.crypto;
-var consensus = bcoin.consensus;
+var util = require('../lib/utils/util');
+var Script = require('../lib/script/script');
+var Stack = require('../lib/script/stack');
+var Witness = require('../lib/script/witness');
+var Input = require('../lib/primitives/input');
+var Output = require('../lib/primitives/output');
+var Outpoint = require('../lib/primitives/outpoint');
+var TX = require('../lib/primitives/tx');
+var digest = require('../lib/crypto/digest');
+var random = require('../lib/crypto/random');
+var consensus = require('../lib/protocol/consensus');
 
 var MANDATORY = Script.flags.MANDATORY_VERIFY_FLAGS | Script.flags.VERIFY_WITNESS;
 var STANDARD = Script.flags.STANDARD_VERIFY_FLAGS;
 
 function randomOutpoint() {
-  var hash = crypto.randomBytes(32).toString('hex');
+  var hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, util.random(0, 0xffffffff));
 }
 
@@ -61,7 +62,7 @@ function randomWitness(redeem) {
 
   for (i = 0; i < size; i++) {
     len = util.random(0, 100);
-    witness.push(crypto.randomBytes(len));
+    witness.push(random.randomBytes(len));
   }
 
   if (redeem)
@@ -79,7 +80,7 @@ function randomInputScript(redeem) {
 
   for (i = 0; i < size; i++) {
     len = util.random(0, 100);
-    script.push(crypto.randomBytes(len));
+    script.push(random.randomBytes(len));
   }
 
   if (redeem)
@@ -92,7 +93,7 @@ function randomInputScript(redeem) {
 
 function randomOutputScript() {
   var size = util.random(1, 10000);
-  return Script.fromRaw(crypto.randomBytes(size));
+  return Script.fromRaw(random.randomBytes(size));
 }
 
 function isPushOnly(script) {
@@ -121,11 +122,11 @@ function isPushOnly(script) {
 
 function randomPubkey() {
   var len = util.random(0, 2) === 0 ? 33 : 65;
-  return Script.fromPubkey(crypto.randomBytes(len));
+  return Script.fromPubkey(random.randomBytes(len));
 }
 
 function randomPubkeyhash() {
-  return Script.fromPubkeyhash(crypto.randomBytes(20));
+  return Script.fromPubkeyhash(random.randomBytes(20));
 }
 
 function randomMultisig() {
@@ -136,28 +137,28 @@ function randomMultisig() {
 
   for (i = 0; i < n; i++) {
     len = util.random(0, 2) === 0 ? 33 : 65;
-    keys.push(crypto.randomBytes(len));
+    keys.push(random.randomBytes(len));
   }
 
   return Script.fromMultisig(m, n, keys);
 }
 
 function randomScripthash() {
-  return Script.fromScripthash(crypto.randomBytes(20));
+  return Script.fromScripthash(random.randomBytes(20));
 }
 
 function randomWitnessPubkeyhash() {
-  return Script.fromProgram(0, crypto.randomBytes(20));
+  return Script.fromProgram(0, random.randomBytes(20));
 }
 
 function randomWitnessScripthash() {
-  return Script.fromProgram(0, crypto.randomBytes(32));
+  return Script.fromProgram(0, random.randomBytes(32));
 }
 
 function randomProgram() {
   var version = util.random(0, 16);
   var size = util.random(2, 41);
-  return Script.fromProgram(version, crypto.randomBytes(size));
+  return Script.fromProgram(version, random.randomBytes(size));
 }
 
 function randomRedeem() {

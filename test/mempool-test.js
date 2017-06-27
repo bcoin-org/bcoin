@@ -2,7 +2,7 @@
 
 var assert = require('assert');
 var encoding = require('../lib/utils/encoding');
-var crypto = require('../lib/crypto/crypto');
+var random = require('../lib/crypto/random');
 var MempoolEntry = require('../lib/mempool/mempoolentry');
 var Mempool = require('../lib/mempool/mempool');
 var Chain = require('../lib/blockchain/chain');
@@ -161,7 +161,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 10000);
 
     prev = Script.fromPubkey(kp.publicKey);
-    prevHash = crypto.randomBytes(32).toString('hex');
+    prevHash = random.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
     tx.setLocktime(200);
@@ -187,7 +187,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 10000);
 
     prev = Script.fromPubkey(kp.publicKey);
-    prevHash = crypto.randomBytes(32).toString('hex');
+    prevHash = random.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
     tx.setLocktime(200);
@@ -220,7 +220,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 10000);
 
     prev = Script.fromProgram(0, kp.getKeyHash());
-    prevHash = crypto.randomBytes(32).toString('hex');
+    prevHash = random.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
 
@@ -252,7 +252,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 10000);
 
     prev = Script.fromPubkey(kp.publicKey);
-    prevHash = crypto.randomBytes(32).toString('hex');
+    prevHash = random.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
 
@@ -283,7 +283,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 10000);
 
     prev = Script.fromProgram(0, kp.getKeyHash());
-    prevHash = crypto.randomBytes(32).toString('hex');
+    prevHash = random.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
 
@@ -310,7 +310,7 @@ describe('Mempool', function() {
     tx.addOutput(w.getAddress(), 10000);
 
     prev = Script.fromPubkey(kp.publicKey);
-    prevHash = crypto.randomBytes(32).toString('hex');
+    prevHash = random.randomBytes(32).toString('hex');
 
     tx.addCoin(dummy(prev, prevHash));
 

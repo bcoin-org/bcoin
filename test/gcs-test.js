@@ -3,7 +3,7 @@
 var assert = require('assert');
 var fs = require('../lib/utils/fs');
 var GCSFilter = require('../lib/utils/gcs');
-var crypto = require('../lib/crypto/crypto');
+var random = require('../lib/crypto/random');
 var Block = require('../lib/primitives/block');
 var Outpoint = require('../lib/primitives/outpoint');
 var Address = require('../lib/primitives/address');
@@ -12,7 +12,7 @@ var raw = fs.readFileSync(__dirname + '/data/block928927.raw');
 var block = Block.fromRaw(raw);
 
 describe('GCS', function() {
-  var key = crypto.randomBytes(16);
+  var key = random.randomBytes(16);
   var P = 20;
   var filter1, filter2, filter3, filter4, filter5;
   var contents1, contents2;

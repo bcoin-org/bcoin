@@ -1,14 +1,14 @@
 'use strict';
 
 var bench = require('./bench');
-var crypto = require('../lib/crypto/crypto');
+var random = require('../lib/crypto/random');
 var WalletDB = require('../lib/wallet/walletdb');
 var MTX = require('../lib/primitives/mtx');
 var Outpoint = require('../lib/primitives/outpoint');
 var walletdb;
 
 function dummy() {
-  var hash = crypto.randomBytes(32).toString('hex');
+  var hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, 0);
 }
 

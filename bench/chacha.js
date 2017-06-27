@@ -1,13 +1,14 @@
 'use strict';
 
-var chachapoly = require('../lib/crypto/chachapoly');
-var crypto = require('../lib/crypto/crypto');
+var ChaCha20 = require('../lib/crypto/chacha20');
+var Poly1305 = require('../lib/crypto/poly1305');
+var digest = require('../lib/crypto/digest');
 var bench = require('./bench');
 var i, chacha, iv, poly, key, data, end;
 
 console.log('note: rate measured in kb/s');
 
-chacha = new chachapoly.ChaCha20();
+chacha = new ChaCha20();
 key = Buffer.allocUnsafe(32);
 key.fill(2);
 iv = Buffer.from('0102030405060708', 'hex');
@@ -20,7 +21,7 @@ for (i = 0; i < 1000000; i++)
   chacha.encrypt(data);
 end(i * 32 / 1024);
 
-poly = new chachapoly.Poly1305();
+poly = new Poly1305();
 key = Buffer.allocUnsafe(32);
 key.fill(2);
 poly.init(key);
@@ -45,5 +46,5 @@ end(i * 32 / 1024);
 // For reference:
 end = bench('sha256');
 for (i = 0; i < 1000000; i++)
-  crypto.hash256(data);
+  digest.hash256(data);
 end(i * 32 / 1024);

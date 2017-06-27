@@ -3,7 +3,7 @@
 var assert = require('assert');
 var util = require('../lib/utils/util');
 var encoding = require('../lib/utils/encoding');
-var crypto = require('../lib/crypto/crypto');
+var random = require('../lib/crypto/random');
 var consensus = require('../lib/protocol/consensus');
 var TX = require('../lib/primitives/tx');
 var Coin = require('../lib/primitives/coin');
@@ -355,7 +355,7 @@ describe('TX', function() {
   });
 
   function createInput(value, view) {
-    var hash = crypto.randomBytes(32).toString('hex');
+    var hash = random.randomBytes(32).toString('hex');
     var output = new Output();
     output.value = value;
     view.addOutput(hash, 0, output);

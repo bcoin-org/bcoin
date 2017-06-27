@@ -1,10 +1,9 @@
 'use strict';
 
 var assert = require('assert');
-var chachapoly = require('../lib/crypto/chachapoly');
-var ChaCha20 = chachapoly.ChaCha20;
-var Poly1305 = chachapoly.Poly1305;
-var AEAD = chachapoly.AEAD;
+var ChaCha20 = require('../lib/crypto/chacha20');
+var Poly1305 = require('../lib/crypto/poly1305');
+var AEAD = require('../lib/crypto/aead');
 
 describe('ChaCha20 / Poly1305 / AEAD', function() {
   function testChaCha(options) {

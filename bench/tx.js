@@ -9,7 +9,7 @@ var MTX = require('../lib/primitives/mtx');
 var Coin = require('../lib/primitives/coin');
 var CoinView = require('../lib/coins/coinview');
 var encoding = require('../lib/utils/encoding');
-var crypto = require('../lib/crypto/crypto');
+var random = require('../lib/crypto/random');
 var bench = require('./bench');
 
 var json = require('../test/data/block300025.json');
@@ -117,11 +117,11 @@ for (i = 0; i < 100; i++) {
     },
     script: [
       Buffer.allocUnsafe(9),
-      crypto.randomBytes(33)
+      random.randomBytes(33)
     ]
   });
   tx.addOutput({
-    address: Address.fromHash(crypto.randomBytes(20)),
+    address: Address.fromHash(random.randomBytes(20)),
     value: 0
   });
 }

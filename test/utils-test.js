@@ -5,7 +5,8 @@ var BN = require('../lib/crypto/bn');
 var secp256k1 = require('../lib/crypto/secp256k1');
 var base58 = require('../lib/utils/base58');
 var encoding = require('../lib/utils/encoding');
-var crypto = require('../lib/crypto/crypto');
+var digest = require('../lib/crypto/digest');
+var hkdf = require('../lib/crypto/hkdf');
 var schnorr = require('../lib/crypto/schnorr');
 var Amount = require('../lib/btc/amount');
 var consensus = require('../lib/protocol/consensus');
@@ -271,8 +272,8 @@ describe('Utils', function() {
     salt = Buffer.from(salt, 'hex');
     info = Buffer.from(info, 'hex');
 
-    prk = crypto.hkdfExtract(ikm, salt, alg);
-    okm = crypto.hkdfExpand(prk, info, len, alg);
+    prk = hkdf.extract(ikm, salt, alg);
+    okm = hkdf.expand(prk, info, len, alg);
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);
@@ -313,8 +314,8 @@ describe('Utils', function() {
     salt = Buffer.from(salt, 'hex');
     info = Buffer.from(info, 'hex');
 
-    prk = crypto.hkdfExtract(ikm, salt, alg);
-    okm = crypto.hkdfExpand(prk, info, len, alg);
+    prk = hkdf.extract(ikm, salt, alg);
+    okm = hkdf.expand(prk, info, len, alg);
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);
@@ -323,7 +324,7 @@ describe('Utils', function() {
   it('should do proper schnorr', function() {
     var key = secp256k1.generatePrivateKey();
     var pub = secp256k1.publicKeyCreate(key, true);
-    var msg = crypto.hash256(Buffer.from('foo', 'ascii'));
+    var msg = digest.hash256(Buffer.from('foo', 'ascii'));
     var sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
     assert.deepEqual(schnorr.recover(sig, msg), pub);

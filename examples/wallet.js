@@ -1,13 +1,13 @@
 'use strict';
 
-var crypto = require('bcoin/lib/crypto/crypto');
+var random = require('bcoin/lib/crypto/random');
 var WalletDB = require('bcoin/lib/wallet/walletdb');
 var MTX = require('bcoin/lib/primitives/mtx');
 var Outpoint = require('bcoin/lib/primitives/outpoint');
 var walletdb;
 
 function dummy() {
-  var hash = crypto.randomBytes(32).toString('hex');
+  var hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, 0);
 }
 

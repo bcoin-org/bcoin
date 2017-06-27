@@ -4,7 +4,7 @@ var net = require('net');
 var EventEmitter = require('events').EventEmitter;
 var IOServer = require('socket.io');
 var util = require('../lib/utils/util');
-var crypto = require('../lib/crypto/crypto');
+var digest = require('../lib/crypto/digest');
 var IP = require('../lib/utils/ip');
 var BufferWriter = require('../lib/utils/writer');
 
@@ -100,7 +100,7 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     pow.writeString(host, 'ascii');
     pow = pow.render();
 
-    if (crypto.hash256(pow).compare(this.target) > 0) {
+    if (digest.hash256(pow).compare(this.target) > 0) {
       this.log('Client did not solve proof of work (%s).', state.host);
       ws.emit('tcp close');
       ws.disconnect();
