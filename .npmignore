@@ -1,9 +1,7 @@
 .git*
 bench/
 docs/
+docker_data/
 test/
 node_modules/
 browser/bcoin*
-.jshintrc
-.jscsrc
-jsdoc.json
