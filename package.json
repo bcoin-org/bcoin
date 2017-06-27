@@ -35,19 +35,19 @@
     "socket.io-client": "2.0.1"
   },
   "devDependencies": {
-    "babelify": "^7.3.0",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-polyfill": "^6.23.0",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^7.1.0",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-plugin-transform-regenerator": "^6.24.1",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "browserify": "^14.3.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
     "eslint": "^4.1.0",
     "hash.js": "^1.0.3",
     "jsdoc": "^3.4.3",
-    "level-js": "^2.2.4",
+    "level-js": "2.2.4",
     "mocha": "^3.4.1",
-    "uglify-js": "^3.0.5"
+    "webpack": "^3.0.0"
   },
   "main": "./lib/bcoin.js",
   "bin": {
@@ -57,21 +57,32 @@
     "bcoin": "./bin/bcoin"
   },
   "scripts": {
-    "test": "mocha --reporter spec test/*-test.js",
-    "test-file": "mocha --reporter spec ",
-    "test-browser": "BCOIN_NO_NATIVE=1 BCOIN_USE_ELLIPTIC=1 mocha --reporter spec test/*-test.js",
-    "browserify": "browserify --im -o browser/bcoin.js lib/bcoin.js && browserify --im -o browser/bcoin-master.js lib/workers/master.js",
-    "uglify": "uglifyjs -m -o browser/bcoin.min.js browser/bcoin.js && uglifyjs -m -o browser/bcoin-master.min.js browser/bcoin-master.js",
-    "clean": "rm browser/bcoin.js browser/bcoin.min.js browser/bcoin-master.js browser/bcoin-master.min.js",
+    "clean": "rm browser/bcoin.js browser/bcoin-master.js browser/bcoin-worker.js",
+    "docs": "jsdoc -c jsdoc.json",
     "lint": "eslint lib/ test/ migrate/ examples/ bench/ bin/cli bin/node bin/spvnode || exit 0",
-    "docs": "jsdoc -c jsdoc.json"
+    "lint-file": "eslint",
+    "test": "mocha --reporter spec test/*-test.js",
+    "test-browser": "BCOIN_NO_NATIVE=1 BCOIN_USE_ELLIPTIC=1 mocha --reporter spec test/*-test.js",
+    "test-file": "mocha --reporter spec",
+    "webpack": "webpack"
   },
   "browser": {
-    "./lib/blockchain/layout": "./lib/blockchain/layout-browser.js",
-    "./lib/crypto/backend": "./lib/crypto/backend-browser.js",
-    "./lib/crypto/ec": "./lib/crypto/ec-elliptic.js",
-    "./lib/crypto/pk": "./lib/crypto/pk-browser.js",
-    "./lib/db/backends": "./lib/db/backends-browser.js",
+    "bcoin-native": "./browser/empty.js",
+    "child_process": "./browser/empty.js",
+    "crypto": "./browser/empty.js",
+    "dgram": "./browser/empty.js",
+    "dns": "./browser/empty.js",
+    "fs": "./browser/empty.js",
+    "net": "./browser/empty.js",
+    "os": "./browser/empty.js",
+    "secp256k1": "./browser/empty.js",
+    "socket.io": "./browser/empty.js",
+    "./lib/blockchain/layout.js": "./lib/blockchain/layout-browser.js",
+    "./lib/crypto/backend.js": "./lib/crypto/backend-browser.js",
+    "./lib/crypto/ec.js": "./lib/crypto/ec-elliptic.js",
+    "./lib/crypto/pk.js": "./lib/crypto/pk-browser.js",
+    "./lib/db/backends.js": "./lib/db/backends-browser.js",
+    "./lib/env.js": "./lib/env-browser.js",
     "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/http/base": "./browser/empty.js",
     "./lib/http/client": "./browser/empty.js",
@@ -88,20 +99,8 @@
     "./lib/utils/native": "./browser/empty.js",
     "./lib/utils/nfkd": "./lib/utils/nfkd-browser.js",
     "./lib/utils/nexttick": "./lib/utils/nexttick-browser.js",
-    "./lib/utils/lazy": "./lib/utils/lazy-browser.js",
     "./lib/wallet/http": "./browser/empty.js",
     "./lib/wallet/layout": "./lib/wallet/layout-browser.js",
-    "./lib/wallet/server": "./browser/empty.js",
-    "bcoin-native": "./browser/empty.js",
-    "child_process": "./browser/empty.js",
-    "crypto": "./browser/empty.js",
-    "dgram": "./browser/empty.js",
-    "fs": "./browser/empty.js",
-    "net": "./browser/empty.js",
-    "os": "./browser/empty.js",
-    "secp256k1": "./browser/empty.js"
-  },
-  "browserify": {
-    "transform": ["./browser/transform.js", "babelify"]
+    "./lib/wallet/server": "./browser/empty.js"
   }
 }

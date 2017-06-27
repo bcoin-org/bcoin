@@ -1,6 +1,5 @@
 all:
-	@npm run browserify
-	@npm run uglify
+	@npm run webpack
 	@cp -f lib/workers/worker-browser.js browser/bcoin-worker.js
 
 clean:
@@ -9,7 +8,10 @@ clean:
 docs:
 	@npm run docs
 
+lint:
+	@npm run lint
+
 test:
 	@npm test
 
-.PHONY: all clean docs test
+.PHONY: all clean docs lint test
