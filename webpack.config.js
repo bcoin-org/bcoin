@@ -1,26 +1,30 @@
-const webpack = require('webpack')
+'use strict';
+
+var webpack = require('webpack')
+var path = require('path');
 
 module.exports = {
+  target: 'web',
   entry: {
-    'bcoin.min': './lib/bcoin',
-    'bcoin-master.min': './lib/workers/master'
+    'bcoin': './lib/bcoin',
+    'bcoin-master': './lib/workers/master'
   },
   output: {
-    path: './browser',
+    path: path.resolve(__dirname, 'browser'),
     filename: '[name].js'
   },
   resolve: {
-    extensions: ['', '.js', '.json'],
-    packageAlias: 'browser'
+    descriptionFiles: ['package.json'],
+    modules: ['node_modules'],
+    extensions: ['.js', '.json'],
+    aliasFields: ['browser']
   },
   module: {
-    loaders: [
-      { test: /\.js$/, loader: 'babel', exclude: /node_modules/ },
-      { test: /\.json$/, loader: 'json' }
-    ]
-  },
-  node: {
-    fs: 'empty'
+    rules: [{
+      test: /\.js$/,
+      exclude: path.resolve(__dirname, 'node_modules'),
+      loader: 'babel-loader'
+    }]
   },
   plugins: [
     new webpack.optimize.UglifyJsPlugin({
@@ -29,4 +33,4 @@ module.exports = {
       }
     })
   ]
-}
+};
