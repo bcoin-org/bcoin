@@ -99,29 +99,23 @@ describe('Bech32', function() {
   ];
 
   function fromAddress(hrp, addr) {
-    var dec = bech32.deserialize(addr);
+    var dec = bech32.decode(addr);
     var data;
 
-    if (dec.hrp !== hrp || dec.data.length < 1 || dec.data[0] > 16)
+    if (dec.hrp !== hrp)
       throw new Error('Invalid bech32 prefix or data length.');
 
-    data = bech32.convert(dec.data, Buffer.allocUnsafe(84), 5, 8, -1, 1);
-
-    if (data.length < 2 || data.length > 40)
-      throw new Error('Invalid witness program size.');
-
-    if (dec.data[0] === 0 && data.length !== 20 && data.length !== 32)
+    if (dec.version === 0 && dec.hash.length !== 20 && dec.hash.length !== 32)
       throw new Error('Malformed witness program.');
 
     return {
-      version: dec.data[0],
-      program: data
+      version: dec.version,
+      program: dec.hash
     };
   }
 
   function toAddress(hrp, version, program) {
-    var data = bech32.convert(program, Buffer.allocUnsafe(65), 8, 5, version, 0);
-    var ret = bech32.serialize(hrp, data);
+    var ret = bech32.encode(hrp, version, program);
 
     fromAddress(hrp, ret);
 
