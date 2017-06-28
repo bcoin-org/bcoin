@@ -14,10 +14,8 @@ module.exports = {
     filename: '[name].js'
   },
   resolve: {
-    descriptionFiles: ['package.json'],
     modules: ['node_modules'],
-    extensions: ['-browser.js', '.js', '.json'],
-    aliasFields: ['browser']
+    extensions: ['-browser.js', '.js', '.json']
   },
   module: {
     rules: [{
