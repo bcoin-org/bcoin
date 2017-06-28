@@ -100,7 +100,6 @@ describe('Bech32', function() {
 
   function fromAddress(hrp, addr) {
     var dec = bech32.decode(addr);
-    var data;
 
     if (dec.hrp !== hrp)
       throw new Error('Invalid bech32 prefix or data length.');
