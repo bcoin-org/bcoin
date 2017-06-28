@@ -16,7 +16,7 @@ module.exports = {
   resolve: {
     descriptionFiles: ['package.json'],
     modules: ['node_modules'],
-    extensions: ['.js', '.json'],
+    extensions: ['-browser.js', '.js', '.json'],
     aliasFields: ['browser']
   },
   module: {
