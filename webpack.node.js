@@ -36,7 +36,7 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.BCOIN_WORKER_FILE':
-        str(env.BCOIN_WORKER_FILE || "path.join(__dirname, 'bcoin-worker.js')")
+        str(env.BCOIN_WORKER_FILE || 'bcoin-worker.js')
     })
   ]
 };
