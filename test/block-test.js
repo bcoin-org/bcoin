@@ -236,13 +236,13 @@ describe('Block', function() {
 
   it('should fail with a bad merkle root', function() {
     var block2 = new Block(block);
-    var ret = {};
+    var reason;
     block2.merkleRoot = encoding.NULL_HASH;
     block2.refresh();
     assert(!block2.verifyPOW());
-    assert(!block2.verifyBody(ret));
+    [, reason] = block2.checkBody();
+    assert.equal(reason, 'bad-txnmrklroot');
     assert(!block2.verify());
-    assert.equal(ret.reason, 'bad-txnmrklroot');
     block2.merkleRoot = block.merkleRoot;
     block2.refresh();
     assert(block2.verify());
@@ -250,13 +250,13 @@ describe('Block', function() {
 
   it('should fail on merkle block with a bad merkle root', function() {
     var mblock2 = new MerkleBlock(mblock);
-    var ret = {};
+    var reason;
     mblock2.merkleRoot = encoding.NULL_HASH;
     mblock2.refresh();
     assert(!mblock2.verifyPOW());
-    assert(!mblock2.verifyBody(ret));
+    [, reason] = mblock2.checkBody();
+    assert.equal(reason, 'bad-txnmrklroot');
     assert(!mblock2.verify());
-    assert.equal(ret.reason, 'bad-txnmrklroot');
     mblock2.merkleRoot = mblock.merkleRoot;
     mblock2.refresh();
     assert(mblock2.verify());
@@ -276,11 +276,11 @@ describe('Block', function() {
 
   it('should fail on duplicate txs', function() {
     var block2 = new Block(block);
-    var ret = {};
+    var reason;
     block2.txs.push(block2.txs[block2.txs.length - 1]);
     block2.refresh();
-    assert(!block2.verifyBody(ret));
-    assert.equal(ret.reason, 'bad-txns-duplicate');
+    [, reason] = block2.checkBody();
+    assert.equal(reason, 'bad-txns-duplicate');
   });
 
   it('should verify with headers', function() {
