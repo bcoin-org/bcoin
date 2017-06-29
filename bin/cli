@@ -454,10 +454,9 @@ CLI.prototype.unlock = async function unlock() {
 CLI.prototype.rpc = async function rpc() {
   var method = this.argv.shift();
   var params = [];
-  var i, arg, param, result;
+  var arg, param, result;
 
-  for (i = 0; i < this.argv.length; i++) {
-    arg = this.argv[i];
+  for (arg of this.argv) {
     try {
       param = JSON.parse(arg);
     } catch (e) {
