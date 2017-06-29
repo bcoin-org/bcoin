@@ -594,7 +594,7 @@ describe('Node', function() {
     missing = await node.mempool.addTX(tx);
     assert(!missing || missing.length === 0);
 
-    assert.equal(node.mempool.totalTX, 1);
+    assert.equal(node.mempool.map.size, 1);
   });
 
   it('should add lesser transaction to mempool', async function() {
@@ -620,7 +620,7 @@ describe('Node', function() {
     missing = await node.mempool.addTX(tx);
     assert(!missing || missing.length === 0);
 
-    assert.equal(node.mempool.totalTX, 2);
+    assert.equal(node.mempool.map.size, 2);
   });
 
   it('should get a block template', async function() {
