@@ -294,7 +294,7 @@ describe('Block', function() {
     var block = Block.fromRaw(cmpct1[1], 'hex');
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    var map = {};
+    var map = new Map();
     var i, tx, mempool, result;
 
     assert(cblock1.init());
@@ -304,16 +304,11 @@ describe('Block', function() {
 
     for (i = 0; i < block.txs.length; i++) {
       tx = block.txs[i];
-      map[tx.hash('hex')] = tx;
+      map.set(tx.hash('hex'), { tx: tx });
     }
 
     mempool = {
-      getSnapshot: function() {
-        return Object.keys(map);
-      },
-      getTX: function(hash) {
-        return map[hash];
-      }
+      map: map
     };
 
     assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
@@ -333,29 +328,21 @@ describe('Block', function() {
     var block = Block.fromRaw(cmpct1[1], 'hex');
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    var map = {};
-    var i, tx, mid, keys, mempool, result, req, res;
+    var map = new Map();
+    var i, tx, mempool, result, req, res;
 
     assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
 
-    for (i = 0; i < block.txs.length; i++) {
+    for (i = 0; i < block.txs.length >>> 1; i++) {
       tx = block.txs[i];
-      map[tx.hash('hex')] = tx;
+      map.set(tx.hash('hex'), { tx: tx });
     }
 
-    mid = block.txs.length >>> 1;
-    keys = Object.keys(map).slice(0, mid);
-
     mempool = {
-      getSnapshot: function() {
-        return keys;
-      },
-      getTX: function(hash) {
-        return map[hash];
-      }
+      map: map
     };
 
     assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
@@ -389,7 +376,7 @@ describe('Block', function() {
     var block = Block.fromRaw(cmpct2block);
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    var map = {};
+    var map = new Map();
     var i, tx, result, mempool;
 
     assert(cblock1.init());
@@ -399,16 +386,11 @@ describe('Block', function() {
 
     for (i = 0; i < block.txs.length; i++) {
       tx = block.txs[i];
-      map[tx.hash('hex')] = tx;
+      map.set(tx.hash('hex'), { tx: tx });
     }
 
     mempool = {
-      getSnapshot: function() {
-        return Object.keys(map);
-      },
-      getTX: function(hash) {
-        return map[hash];
-      }
+      map: map
     };
 
     result = cblock1.fillMempool(false, mempool);
@@ -426,29 +408,21 @@ describe('Block', function() {
     var block = Block.fromRaw(cmpct2block);
     var cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     var cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    var map = {};
-    var i, tx, mid, keys, mempool, result, req, res;
+    var map = new Map();
+    var i, tx, mempool, result, req, res;
 
     assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
-    for (i = 0; i < block.txs.length; i++) {
+    for (i = 0; i < block.txs.length >>> 1; i++) {
       tx = block.txs[i];
-      map[tx.hash('hex')] = tx;
+      map.set(tx.hash('hex'), { tx: tx });
     }
 
-    mid = block.txs.length >>> 1;
-    keys = Object.keys(map).slice(0, mid);
-
     mempool = {
-      getSnapshot: function() {
-        return keys;
-      },
-      getTX: function(hash) {
-        return map[hash];
-      }
+      map: map
     };
 
     result = cblock1.fillMempool(false, mempool);
