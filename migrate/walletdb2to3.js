@@ -1,18 +1,18 @@
 'use strict';
 
-var assert = require('assert');
-var bcoin = require('../');
-var walletdb = require('../lib/wallet/walletdb');
-var encoding = require('../lib/utils/encoding');
-var Path = require('../lib/wallet/path');
-var MasterKey = require('../lib/wallet/masterkey');
-var Account = require('../lib/wallet/account');
-var Wallet = require('../lib/wallet/wallet');
-var BufferReader = require('../lib/utils/reader');
-var BufferWriter = require('../lib/utils/writer');
-var layout = walletdb.layout;
-var file = process.argv[2];
-var db, batch;
+const assert = require('assert');
+const bcoin = require('../');
+const walletdb = require('../lib/wallet/walletdb');
+const encoding = require('../lib/utils/encoding');
+const Path = require('../lib/wallet/path');
+const MasterKey = require('../lib/wallet/masterkey');
+const Account = require('../lib/wallet/account');
+const Wallet = require('../lib/wallet/wallet');
+const BufferReader = require('../lib/utils/reader');
+const BufferWriter = require('../lib/utils/writer');
+let layout = walletdb.layout;
+let file = process.argv[2];
+let db, batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
@@ -28,8 +28,8 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
-  var data, ver;
+  let bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
+  let data, ver;
 
   console.log('Checking version.');
 
@@ -51,9 +51,9 @@ async function updateVersion() {
 }
 
 async function updatePathMap() {
-  var total = 0;
-  var i, iter, item, oldPaths, oldPath;
-  var hash, path, keys, key, ring;
+  let total = 0;
+  let i, iter, item, oldPaths, oldPath;
+  let hash, path, keys, key, ring;
 
   iter = db.iterator({
     gte: layout.p(encoding.NULL_HASH),
@@ -100,8 +100,8 @@ async function updatePathMap() {
 }
 
 async function updateAccounts() {
-  var total = 0;
-  var iter, item, account, buf;
+  let total = 0;
+  let iter, item, account, buf;
 
   iter = db.iterator({
     gte: layout.a(0, 0),
@@ -134,8 +134,8 @@ async function updateAccounts() {
 }
 
 async function updateWallets() {
-  var total = 0;
-  var iter, item, wallet, buf;
+  let total = 0;
+  let iter, item, wallet, buf;
 
   iter = db.iterator({
     gte: layout.w(0),
@@ -168,8 +168,8 @@ async function updateWallets() {
 }
 
 async function updateTXMap() {
-  var total = 0;
-  var iter, item, wallets;
+  let total = 0;
+  let iter, item, wallets;
 
   iter = db.iterator({
     gte: layout.e(encoding.NULL_HASH),
@@ -194,8 +194,8 @@ async function updateTXMap() {
 }
 
 function pathFromRaw(data) {
-  var path = {};
-  var p = new BufferReader(data);
+  let path = {};
+  let p = new BufferReader(data);
 
   path.wid = p.readU32();
   path.name = p.readVarString('utf8');
@@ -228,9 +228,9 @@ function pathFromRaw(data) {
 }
 
 function parsePaths(data, hash) {
-  var p = new BufferReader(data);
-  var out = {};
-  var path;
+  let p = new BufferReader(data);
+  let out = {};
+  let path;
 
   while (p.left()) {
     path = pathFromRaw(p);
@@ -243,16 +243,16 @@ function parsePaths(data, hash) {
 }
 
 function parseWallets(data) {
-  var p = new BufferReader(data);
-  var wallets = [];
+  let p = new BufferReader(data);
+  let wallets = [];
   while (p.left())
     wallets.push(p.readU32());
   return wallets;
 }
 
 function serializeWallets(wallets) {
-  var p = new BufferWriter();
-  var i, wid;
+  let p = new BufferWriter();
+  let i, wid;
 
   for (i = 0; i < wallets.length; i++) {
     wid = wallets[i];
@@ -270,9 +270,9 @@ function readAccountKey(key) {
 }
 
 function accountFromRaw(data, dbkey) {
-  var account = {};
-  var p = new BufferReader(data);
-  var i, count, key, name;
+  let account = {};
+  let p = new BufferReader(data);
+  let i, count, key, name;
 
   dbkey = readAccountKey(dbkey);
   account.wid = dbkey.wid;
@@ -311,9 +311,9 @@ function accountFromRaw(data, dbkey) {
 }
 
 function walletFromRaw(data) {
-  var wallet = {};
-  var p = new BufferReader(data);
-  var id;
+  let wallet = {};
+  let p = new BufferReader(data);
+  let id;
 
   wallet.network = bcoin.network.fromMagic(p.readU32());
   wallet.wid = p.readU32();
@@ -337,9 +337,9 @@ function walletFromRaw(data) {
 }
 
 function keyFromRaw(data, network) {
-  var ring = {};
-  var p = new BufferReader(data);
-  var key, script;
+  let ring = {};
+  let p = new BufferReader(data);
+  let key, script;
 
   ring.network = bcoin.network.get(network);
   ring.witness = p.readU8() === 1;
@@ -361,7 +361,7 @@ function keyFromRaw(data, network) {
   return ring;
 }
 
-(async function() {
+(async () => {
   await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
@@ -371,7 +371,7 @@ function keyFromRaw(data, network) {
   await updateWallets();
   await updateTXMap();
   await batch.write();
-})().then(function() {
+})().then(() => {
   console.log('Migration complete.');
   process.exit(0);
 });

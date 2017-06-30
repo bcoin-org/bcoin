@@ -1,12 +1,12 @@
 'use strict';
 
-var assert = require('assert');
-var Bloom = require('../lib/utils/bloom');
-var RollingFilter = require('../lib/utils/rollingfilter');
-var murmur3 = require('../lib/utils/murmur3');
+const assert = require('assert');
+const Bloom = require('../lib/utils/bloom');
+const RollingFilter = require('../lib/utils/rollingfilter');
+const murmur3 = require('../lib/utils/murmur3');
 
 describe('Bloom', function() {
-  var filterHex = ''
+  const filterHex = ''
     + '000000000000000000000000000000000000000000000000088004000000000000000'
     + '000000000200000000000000000000000000000000800000000000000000002000000'
     + '000000000000002000000000000000000000000000000000000000000040000200000'
@@ -18,7 +18,7 @@ describe('Bloom', function() {
 
   this.timeout(20000);
 
-  it('should do proper murmur3', function() {
+  it('should do proper murmur3', () => {
     mm('', 0, 0);
     mm('', 0xfba4c795, 0x6a396f08);
     mm('00', 0xfba4c795, 0x2a101837);
@@ -42,8 +42,8 @@ describe('Bloom', function() {
     mm('001122334455667788', 0x00000000, 0xb4698def, 'hex');
   });
 
-  it('should test and add stuff', function() {
-    var b = new Bloom(512, 10, 156);
+  it('should test and add stuff', () => {
+    let b = new Bloom(512, 10, 156);
 
     b.add('hello', 'ascii');
     assert(b.test('hello', 'ascii'));
@@ -58,10 +58,10 @@ describe('Bloom', function() {
     assert(b.test('ping', 'ascii'));
   });
 
-  it('should serialize to the correct format', function() {
-    var filter = new Bloom(952, 6, 3624314491, Bloom.flags.NONE);
-    var item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
-    var item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+  it('should serialize to the correct format', () => {
+    let filter = new Bloom(952, 6, 3624314491, Bloom.flags.NONE);
+    let item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
+    let item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
       + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
     filter.add(item1, 'hex');
@@ -69,9 +69,9 @@ describe('Bloom', function() {
     assert.equal(filter.filter.toString('hex'), filterHex);
   });
 
-  it('should handle 1m ops with regular filter', function() {
-    var filter = Bloom.fromRate(210000, 0.00001, -1);
-    var i, j, str;
+  it('should handle 1m ops with regular filter', () => {
+    let filter = Bloom.fromRate(210000, 0.00001, -1);
+    let i, j, str;
 
     filter.tweak = 0xdeadbeef;
 
@@ -88,9 +88,9 @@ describe('Bloom', function() {
     }
   });
 
-  it('should handle 1m ops with rolling filter', function() {
-    var filter = new RollingFilter(210000, 0.00001);
-    var i, j, str;
+  it('should handle 1m ops with rolling filter', () => {
+    let filter = new RollingFilter(210000, 0.00001);
+    let i, j, str;
 
     filter.tweak = 0xdeadbeef;
 
@@ -107,9 +107,9 @@ describe('Bloom', function() {
     }
   });
 
-  it('should handle rolling generations', function() {
-    var filter = new RollingFilter(50, 0.00001);
-    var i, j, str;
+  it('should handle rolling generations', () => {
+    let filter = new RollingFilter(50, 0.00001);
+    let i, j, str;
 
     filter.tweak = 0xdeadbeee;
 

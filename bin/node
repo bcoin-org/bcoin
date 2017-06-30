@@ -13,17 +13,16 @@ if (process.argv.indexOf('--help') !== -1
 
 if (process.argv.indexOf('--version') !== -1
     || process.argv.indexOf('-v') !== -1) {
-  var pkg = require('../package.json');
+  const pkg = require('../package.json');
   console.log(pkg.version);
   process.exit(0);
   throw new Error('Could not exit.');
 }
 
-var bcoin = require('../');
-var plugin = require('../lib/wallet/plugin');
-var node;
+const bcoin = require('../');
+const plugin = require('../lib/wallet/plugin');
 
-node = new bcoin.fullnode({
+const node = new bcoin.fullnode({
   config: true,
   argv: true,
   env: true,
@@ -40,15 +39,15 @@ node = new bcoin.fullnode({
 if (!node.config.bool('no-wallet') && !node.has('walletdb'))
   node.use(plugin);
 
-node.on('error', function(err) {
-  ;
+process.on('unhandledRejection', (err, promise) => {
+  throw err;
 });
 
-(async function() {
+(async () => {
   await node.ensure();
   await node.open();
   await node.connect();
   node.startSync();
-})().catch(function(err) {
+})().catch((err) => {
   throw err;
 });

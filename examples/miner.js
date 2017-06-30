@@ -1,20 +1,20 @@
 'use strict';
 
-var Chain = require('bcoin/lib/blockchain/chain');
-var Miner = require('bcoin/lib/mining/miner');
+const Chain = require('bcoin/lib/blockchain/chain');
+const Miner = require('bcoin/lib/mining/miner');
 
-var chain = new Chain({
+const chain = new Chain({
   network: 'regtest'
 });
 
-var miner = new Miner({
+const miner = new Miner({
   chain: chain,
   addresses: ['mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8'],
   coinbaseFlags: 'my-miner'
 });
 
 async function main() {
-  var tmpl, job, block;
+  let tmpl, job, block;
 
   await miner.open();
 

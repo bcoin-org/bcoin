@@ -1,12 +1,12 @@
 'use strict';
 
-var bcoin = require('bcoin');
-var assert = require('assert');
+const bcoin = require('bcoin');
+const assert = require('assert');
 
-var master = bcoin.hd.generate();
-var key = master.derive('m/44/0/0/0/0');
-var keyring = new bcoin.keyring(key.privateKey);
-var cb = new bcoin.mtx();
+let master = bcoin.hd.generate();
+let key = master.derive('m/44/0/0/0/0');
+let keyring = new bcoin.keyring(key.privateKey);
+let cb = new bcoin.mtx();
 
 cb.addInput({
   prevout: new bcoin.outpoint(),
@@ -21,16 +21,16 @@ cb.addOutput({
 });
 
 // Our available coins.
-var coins = [];
+let coins = [];
 
 // Convert the coinbase output to a Coin
 // object and add it to our available coins.
 // In reality you might get these coins from a wallet.
-var coin = bcoin.coin.fromTX(cb, 0, -1);
+let coin = bcoin.coin.fromTX(cb, 0, -1);
 coins.push(coin);
 
 // Create our redeeming transaction.
-var mtx = new bcoin.mtx();
+let mtx = new bcoin.mtx();
 
 // Send 10,000 satoshis to ourself.
 mtx.addOutput({
@@ -52,7 +52,7 @@ mtx.fund(coins, {
   rate: 10000,
   // Send the change back to ourselves.
   changeAddress: keyring.getAddress()
-}).then(function() {
+}).then(() => {
   // Sign input 0
   mtx.sign(keyring);
 
@@ -61,7 +61,7 @@ mtx.fund(coins, {
 
   // Commit our transaction and make it immutable.
   // This turns it from an MTX into a TX.
-  var tx = mtx.toTX();
+  let tx = mtx.toTX();
 
   // The transaction should still verify.
   // Regular transactions require a coin

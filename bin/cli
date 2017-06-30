@@ -2,10 +2,10 @@
 
 'use strict';
 
-var Config = require('../lib/node/config');
-var util = require('../lib/utils/util');
-var Client = require('../lib/http/client');
-var Wallet = require('../lib/http/wallet');
+const Config = require('../lib/node/config');
+const util = require('../lib/utils/util');
+const Client = require('../lib/http/client');
+const Wallet = require('../lib/http/wallet');
 
 function CLI() {
   this.config = new Config('bcoin');
@@ -29,18 +29,18 @@ CLI.prototype.log = function log(json) {
 };
 
 CLI.prototype.getInfo = async function getInfo() {
-  var info = await this.client.getInfo();
+  let info = await this.client.getInfo();
   this.log(info);
 };
 
 CLI.prototype.getWallets = async function getWallets() {
-  var wallets = await this.client.getWallets();
+  let wallets = await this.client.getWallets();
   this.log(wallets);
 };
 
 CLI.prototype.createWallet = async function createWallet() {
-  var options = { id: this.config.str(0) };
-  var wallet;
+  let options = { id: this.config.str(0) };
+  let wallet;
 
   options.type = this.config.str('type');
   options.master = this.config.str('master');
@@ -61,50 +61,50 @@ CLI.prototype.createWallet = async function createWallet() {
 };
 
 CLI.prototype.getMaster = async function getMaster() {
-  var master = await this.wallet.getMaster();
+  let master = await this.wallet.getMaster();
   this.log(master);
 };
 
 CLI.prototype.getKey = async function getKey() {
-  var address = this.config.str(0);
-  var key = await this.wallet.getKey(address);
+  let address = this.config.str(0);
+  let key = await this.wallet.getKey(address);
   this.log(key);
 };
 
 CLI.prototype.getWIF = async function getWIF() {
-  var address = this.config.str(0);
-  var key = await this.wallet.getWIF(address, this.config.str('passphrase'));
+  let address = this.config.str(0);
+  let key = await this.wallet.getWIF(address, this.config.str('passphrase'));
   this.log(key.privateKey);
 };
 
 CLI.prototype.addSharedKey = async function addSharedKey() {
-  var key = this.config.str(0);
+  let key = this.config.str(0);
   await this.wallet.addSharedKey(this.config.str('account'), key);
   this.log('Added key.');
 };
 
 CLI.prototype.removeSharedKey = async function removeSharedKey() {
-  var key = this.config.str(0);
+  let key = this.config.str(0);
   await this.wallet.removeSharedKey(this.config.str('account'), key);
   this.log('Removed key.');
 };
 
 CLI.prototype.getSharedKeys = async function getSharedKeys() {
-  var acct = this.config.str([0, 'account']);
-  var account = await this.wallet.getAccount(acct);
+  let acct = this.config.str([0, 'account']);
+  let account = await this.wallet.getAccount(acct);
   this.log(account.keys);
 };
 
 CLI.prototype.getAccount = async function getAccount() {
-  var acct = this.config.str([0, 'account']);
-  var account = await this.wallet.getAccount(acct);
+  let acct = this.config.str([0, 'account']);
+  let account = await this.wallet.getAccount(acct);
   this.log(account);
 };
 
 CLI.prototype.createAccount = async function createAccount() {
-  var name = this.config.str(0);
-  var options = {};
-  var account;
+  let name = this.config.str(0);
+  let options = {};
+  let account;
 
   options.type = this.config.str('type');
   options.m = this.config.num('m');
@@ -118,36 +118,36 @@ CLI.prototype.createAccount = async function createAccount() {
 };
 
 CLI.prototype.createAddress = async function createAddress() {
-  var account = this.config.str([0, 'account']);
-  var addr = await this.wallet.createAddress(account);
+  let account = this.config.str([0, 'account']);
+  let addr = await this.wallet.createAddress(account);
   this.log(addr);
 };
 
 CLI.prototype.createChange = async function createChange() {
-  var account = this.config.str([0, 'account']);
-  var addr = await this.wallet.createChange(account);
+  let account = this.config.str([0, 'account']);
+  let addr = await this.wallet.createChange(account);
   this.log(addr);
 };
 
 CLI.prototype.createNested = async function createNested() {
-  var account = this.config.str([0, 'account']);
-  var addr = await this.wallet.createNested(account);
+  let account = this.config.str([0, 'account']);
+  let addr = await this.wallet.createNested(account);
   this.log(addr);
 };
 
 CLI.prototype.getAccounts = async function getAccounts() {
-  var accounts = await this.wallet.getAccounts();
+  let accounts = await this.wallet.getAccounts();
   this.log(accounts);
 };
 
 CLI.prototype.getWallet = async function getWallet() {
-  var info = await this.wallet.getInfo();
+  let info = await this.wallet.getInfo();
   this.log(info);
 };
 
 CLI.prototype.getTX = async function getTX() {
-  var hash = this.config.str(0);
-  var txs, tx;
+  let hash = this.config.str(0);
+  let txs, tx;
 
   if (util.isBase58(hash)) {
     txs = await this.client.getTXByAddress(hash);
@@ -166,8 +166,8 @@ CLI.prototype.getTX = async function getTX() {
 };
 
 CLI.prototype.getBlock = async function getBlock() {
-  var hash = this.config.str(0);
-  var block;
+  let hash = this.config.str(0);
+  let block;
 
   if (hash.length !== 64)
     hash = +hash;
@@ -183,9 +183,9 @@ CLI.prototype.getBlock = async function getBlock() {
 };
 
 CLI.prototype.getCoin = async function getCoin() {
-  var hash = this.config.str(0);
-  var index = this.config.num(1);
-  var coins, coin;
+  let hash = this.config.str(0);
+  let index = this.config.num(1);
+  let coins, coin;
 
   if (util.isBase58(hash)) {
     coins = await this.client.getCoinsByAddress(hash);
@@ -204,71 +204,69 @@ CLI.prototype.getCoin = async function getCoin() {
 };
 
 CLI.prototype.getWalletHistory = async function getWalletHistory() {
-  var txs = await this.wallet.getHistory(this.config.str('account'));
+  let txs = await this.wallet.getHistory(this.config.str('account'));
   this.log(txs);
 };
 
 CLI.prototype.getWalletPending = async function getWalletPending() {
-  var txs = await this.wallet.getPending(this.config.str('account'));
+  let txs = await this.wallet.getPending(this.config.str('account'));
   this.log(txs);
 };
 
 CLI.prototype.getWalletCoins = async function getWalletCoins() {
-  var coins = await this.wallet.getCoins(this.config.str('account'));
+  let coins = await this.wallet.getCoins(this.config.str('account'));
   this.log(coins);
 };
 
 CLI.prototype.listenWallet = async function listenWallet() {
-  var self = this;
-
   await this.wallet.open();
 
-  this.wallet.on('tx', function(details) {
-    self.log('TX:');
-    self.log(details);
+  this.wallet.on('tx', (details) => {
+    this.log('TX:');
+    this.log(details);
   });
 
-  this.wallet.on('confirmed', function(details) {
-    self.log('TX confirmed:');
-    self.log(details);
+  this.wallet.on('confirmed', (details) => {
+    this.log('TX confirmed:');
+    this.log(details);
   });
 
-  this.wallet.on('unconfirmed', function(details) {
-    self.log('TX unconfirmed:');
-    self.log(details);
+  this.wallet.on('unconfirmed', (details) => {
+    this.log('TX unconfirmed:');
+    this.log(details);
   });
 
-  this.wallet.on('conflict', function(details) {
-    self.log('TX conflict:');
-    self.log(details);
+  this.wallet.on('conflict', (details) => {
+    this.log('TX conflict:');
+    this.log(details);
   });
 
-  this.wallet.on('address', function(receive) {
-    self.log('New addresses allocated:');
-    self.log(receive);
+  this.wallet.on('address', (receive) => {
+    this.log('New addresses allocated:');
+    this.log(receive);
   });
 
-  this.wallet.on('balance', function(balance) {
-    self.log('Balance:');
-    self.log(balance);
+  this.wallet.on('balance', (balance) => {
+    this.log('Balance:');
+    this.log(balance);
   });
 
   return await this.wallet.onDisconnect();
 };
 
 CLI.prototype.getBalance = async function getBalance() {
-  var balance = await this.wallet.getBalance(this.config.str('account'));
+  let balance = await this.wallet.getBalance(this.config.str('account'));
   this.log(balance);
 };
 
 CLI.prototype.getMempool = async function getMempool() {
-  var txs = await this.client.getMempool();
+  let txs = await this.client.getMempool();
   this.log(txs);
 };
 
 CLI.prototype.sendTX = async function sendTX() {
-  var output = {};
-  var options, tx;
+  let output = {};
+  let options, tx;
 
   if (this.config.has('script')) {
     output.script = this.config.str('script');
@@ -293,8 +291,8 @@ CLI.prototype.sendTX = async function sendTX() {
 };
 
 CLI.prototype.createTX = async function createTX() {
-  var output = {};
-  var options, tx;
+  let output = {};
+  let options, tx;
 
   if (this.config.has('script')) {
     output.script = this.config.str('script');
@@ -318,9 +316,9 @@ CLI.prototype.createTX = async function createTX() {
 };
 
 CLI.prototype.signTX = async function signTX() {
-  var options = {};
-  var raw = this.config.str(['tx', 0]);
-  var tx;
+  let options = {};
+  let raw = this.config.str(['tx', 0]);
+  let tx;
 
   options.passphrase = this.config.str('passphrase');
 
@@ -330,48 +328,48 @@ CLI.prototype.signTX = async function signTX() {
 };
 
 CLI.prototype.zapWallet = async function zapWallet() {
-  var age = this.config.num('age', 72 * 60 * 60);
+  let age = this.config.num('age', 72 * 60 * 60);
   await this.wallet.zap(this.config.str('account'), age);
   this.log('Zapped!');
 };
 
 CLI.prototype.broadcast = async function broadcast() {
-  var raw = this.config.str([0, 'tx']);
-  var tx = await this.client.broadcast(raw);
+  let raw = this.config.str([0, 'tx']);
+  let tx = await this.client.broadcast(raw);
   this.log('Broadcasted:');
   this.log(tx);
 };
 
 CLI.prototype.viewTX = async function viewTX() {
-  var raw = this.config.str([0, 'tx']);
-  var tx = await this.wallet.fill(raw);
+  let raw = this.config.str([0, 'tx']);
+  let tx = await this.wallet.fill(raw);
   this.log(tx);
 };
 
 CLI.prototype.getDetails = async function getDetails() {
-  var hash = this.config.str(0);
-  var details = await this.wallet.getTX(hash);
+  let hash = this.config.str(0);
+  let details = await this.wallet.getTX(hash);
   this.log(details);
 };
 
 CLI.prototype.getWalletBlocks = async function getWalletBlocks() {
-  var blocks = await this.wallet.getBlocks();
+  let blocks = await this.wallet.getBlocks();
   this.log(blocks);
 };
 
 CLI.prototype.getWalletBlock = async function getWalletBlock() {
-  var height = this.config.num(0);
-  var block = await this.wallet.getBlock(height);
+  let height = this.config.num(0);
+  let block = await this.wallet.getBlock(height);
   this.log(block);
 };
 
 CLI.prototype.retoken = async function retoken() {
-  var result = await this.wallet.retoken();
+  let result = await this.wallet.retoken();
   this.log(result);
 };
 
 CLI.prototype.rescan = async function rescan() {
-  var height = this.config.num(0);
+  let height = this.config.num(0);
 
   if (!util.isUInt32(height))
     height = null;
@@ -382,7 +380,7 @@ CLI.prototype.rescan = async function rescan() {
 };
 
 CLI.prototype.reset = async function reset() {
-  var hash = this.config.str(0);
+  let hash = this.config.str(0);
 
   if (hash.length !== 64)
     hash = +hash;
@@ -403,7 +401,7 @@ CLI.prototype.resendWallet = async function resendWallet() {
 };
 
 CLI.prototype.backup = async function backup() {
-  var path = this.config.str(0);
+  let path = this.config.str(0);
 
   await this.client.backup(path);
 
@@ -411,8 +409,8 @@ CLI.prototype.backup = async function backup() {
 };
 
 CLI.prototype.importKey = async function importKey() {
-  var key = this.config.str(0);
-  var account = this.config.str('account');
+  let key = this.config.str(0);
+  let account = this.config.str('account');
 
   if (!key)
     throw new Error('No key for import.');
@@ -433,8 +431,8 @@ CLI.prototype.importKey = async function importKey() {
 };
 
 CLI.prototype.importAddress = async function importKey() {
-  var address = this.config.str(0);
-  var account = this.config.str('account');
+  let address = this.config.str(0);
+  let account = this.config.str('account');
   await this.wallet.importAddress(account, address);
   this.log('Imported address.');
 };
@@ -445,16 +443,16 @@ CLI.prototype.lock = async function lock() {
 };
 
 CLI.prototype.unlock = async function unlock() {
-  var passphrase = this.config.str(0);
-  var timeout = this.config.num(1);
+  let passphrase = this.config.str(0);
+  let timeout = this.config.num(1);
   await this.wallet.unlock(passphrase, timeout);
   this.log('Unlocked.');
 };
 
 CLI.prototype.rpc = async function rpc() {
-  var method = this.argv.shift();
-  var params = [];
-  var arg, param, result;
+  let method = this.argv.shift();
+  let params = [];
+  let arg, param, result;
 
   for (arg of this.argv) {
     try {
@@ -683,12 +681,12 @@ CLI.prototype.destroy = function destroy() {
 };
 
 async function main() {
-  var cli = new CLI();
+  let cli = new CLI();
   await cli.open();
   await cli.destroy();
 }
 
-main().then(process.exit).catch(function(err) {
+main().then(process.exit).catch((err) => {
   console.error(err.stack + '');
   return process.exit(1);
 });

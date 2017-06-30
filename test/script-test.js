@@ -1,14 +1,14 @@
 'use strict';
 
-var assert = require('assert');
-var Script = require('../lib/script/script');
-var Witness = require('../lib/script/witness');
-var Stack = require('../lib/script/stack');
-var TX = require('../lib/primitives/tx');
-var encoding = require('../lib/utils/encoding');
-var opcodes = Script.opcodes;
+const assert = require('assert');
+const Script = require('../lib/script/script');
+const Witness = require('../lib/script/witness');
+const Stack = require('../lib/script/stack');
+const TX = require('../lib/primitives/tx');
+const encoding = require('../lib/utils/encoding');
+const opcodes = Script.opcodes;
 
-var scripts = require('./data/script_tests');
+const scripts = require('./data/script_tests');
 
 function success(res, stack) {
   if (!res)
@@ -24,8 +24,8 @@ function success(res, stack) {
 }
 
 describe('Script', function() {
-  it('should encode/decode script', function() {
-    var src, decoded, dst;
+  it('should encode/decode script', () => {
+    let src, decoded, dst;
 
     src = '20'
       + '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
@@ -45,28 +45,28 @@ describe('Script', function() {
     assert.equal(dst.toString('hex'), src);
   });
 
-  it('should encode/decode numbers', function() {
-    var script = [0, 0x51, 0x52, 0x60];
-    var encoded = Script.fromArray(script).raw;
-    var decoded = Script(encoded).toArray();
+  it('should encode/decode numbers', () => {
+    let script = [0, 0x51, 0x52, 0x60];
+    let encoded = Script.fromArray(script).raw;
+    let decoded = Script(encoded).toArray();
     assert.deepEqual(decoded, script);
   });
 
-  it('should recognize a P2SH output', function() {
-    var hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
-    var decoded = Script.fromRaw(hex, 'hex');
+  it('should recognize a P2SH output', () => {
+    let hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
+    let decoded = Script.fromRaw(hex, 'hex');
     assert(decoded.isScripthash());
   });
 
-  it('should recognize a Null Data output', function() {
-    var hex = '6a28590c080112220a1b353930632e6f7267282a5f'
+  it('should recognize a Null Data output', () => {
+    let hex = '6a28590c080112220a1b353930632e6f7267282a5f'
       + '5e294f7665726c6179404f7261636c65103b1a010c';
-    var decoded = Script.fromRaw(hex, 'hex');
+    let decoded = Script.fromRaw(hex, 'hex');
     assert(decoded.isNulldata());
   });
 
-  it('should handle if statements correctly', function() {
-    var input, output, stack, res;
+  it('should handle if statements correctly', () => {
+    let input, output, stack, res;
 
     input = new Script([opcodes.OP_1, opcodes.OP_2]);
 
@@ -161,8 +161,8 @@ describe('Script', function() {
     assert.deepEqual(stack.items, [[1], [3], [5]]);
   });
 
-  it('should handle CScriptNums correctly', function() {
-    var input, output, stack;
+  it('should handle CScriptNums correctly', () => {
+    let input, output, stack;
 
     input = new Script([
       Buffer.from('ffffff7f', 'hex'),
@@ -182,8 +182,8 @@ describe('Script', function() {
     assert(success(output.execute(stack), stack));
   });
 
-  it('should handle CScriptNums correctly', function() {
-    var input, output, stack;
+  it('should handle CScriptNums correctly', () => {
+    let input, output, stack;
 
     input = new Script([
       opcodes.OP_11,
@@ -203,8 +203,8 @@ describe('Script', function() {
     assert(success(output.execute(stack), stack));
   });
 
-  it('should handle OP_ROLL correctly', function() {
-    var input, output, stack;
+  it('should handle OP_ROLL correctly', () => {
+    let input, output, stack;
 
     input = new Script([
       Buffer.from([0x16]),
@@ -228,16 +228,16 @@ describe('Script', function() {
     assert(success(output.execute(stack), stack));
   });
 
-  scripts.forEach(function(data) {
-    var witness = Array.isArray(data[0]) ? data.shift() : [];
-    var input = data[0] ? data[0].trim() : data[0] || '';
-    var output = data[1] ? data[1].trim() : data[1] || '';
-    var flags = data[2] ? data[2].trim().split(/,\s*/) : [];
-    var expected = data[3] || '';
-    var comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
-    var amount = 0;
-    var flag = 0;
-    var i, name;
+  scripts.forEach((data) => {
+    let witness = Array.isArray(data[0]) ? data.shift() : [];
+    let input = data[0] ? data[0].trim() : data[0] || '';
+    let output = data[1] ? data[1].trim() : data[1] || '';
+    let flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+    let expected = data[3] || '';
+    let comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
+    let amount = 0;
+    let flag = 0;
+    let i, name;
 
     if (data.length === 1)
       return;
@@ -262,10 +262,10 @@ describe('Script', function() {
 
     flags = flag;
 
-    [false, true].forEach(function(noCache) {
-      var suffix = noCache ? ' without cache' : ' with cache';
-      it('should handle script test' + suffix + ': ' + comments, function() {
-        var prev, tx, err, res;
+    [false, true].forEach((noCache) => {
+      let suffix = noCache ? ' without cache' : ' with cache';
+      it('should handle script test' + suffix + ': ' + comments, () => {
+        let prev, tx, err, res;
 
         // Funding transaction.
         prev = new TX({

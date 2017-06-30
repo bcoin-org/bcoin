@@ -1,13 +1,13 @@
 'use strict';
 
-var random = require('bcoin/lib/crypto/random');
-var WalletDB = require('bcoin/lib/wallet/walletdb');
-var MTX = require('bcoin/lib/primitives/mtx');
-var Outpoint = require('bcoin/lib/primitives/outpoint');
-var walletdb;
+const random = require('bcoin/lib/crypto/random');
+const WalletDB = require('bcoin/lib/wallet/walletdb');
+const MTX = require('bcoin/lib/primitives/mtx');
+const Outpoint = require('bcoin/lib/primitives/outpoint');
+let walletdb;
 
 function dummy() {
-  var hash = random.randomBytes(32).toString('hex');
+  let hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, 0);
 }
 
@@ -17,7 +17,7 @@ walletdb = new WalletDB({
 });
 
 async function main() {
-  var wallet, acct, mtx, tx, wtx;
+  let wallet, acct, mtx, tx, wtx;
 
   await walletdb.open();
 

@@ -1,18 +1,18 @@
 'use strict';
 
-var assert = require('assert');
-var ChaCha20 = require('../lib/crypto/chacha20');
-var Poly1305 = require('../lib/crypto/poly1305');
-var AEAD = require('../lib/crypto/aead');
+const assert = require('assert');
+const ChaCha20 = require('../lib/crypto/chacha20');
+const Poly1305 = require('../lib/crypto/poly1305');
+const AEAD = require('../lib/crypto/aead');
 
 describe('ChaCha20 / Poly1305 / AEAD', function() {
   function testChaCha(options) {
-    var key = options.key;
-    var nonce = options.nonce;
-    var plain = options.plain;
-    var ciphertext = options.ciphertext;
-    var counter = options.counter;
-    var chacha, plainenc;
+    let key = options.key;
+    let nonce = options.nonce;
+    let plain = options.plain;
+    let ciphertext = options.ciphertext;
+    let counter = options.counter;
+    let chacha, plainenc;
 
     key = Buffer.from(key, 'hex');
     nonce = Buffer.from(nonce, 'hex');
@@ -32,14 +32,14 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
   }
 
   function testAEAD(options) {
-    var plain = options.plain;
-    var aad = options.aad;
-    var key = options.key;
-    var nonce = options.nonce;
-    var pk = options.pk;
-    var ciphertext = options.ciphertext;
-    var tag = options.tag;
-    var aead, plainenc;
+    let plain = options.plain;
+    let aad = options.aad;
+    let key = options.key;
+    let nonce = options.nonce;
+    let pk = options.pk;
+    let ciphertext = options.ciphertext;
+    let tag = options.tag;
+    let aead, plainenc;
 
     plain = Buffer.from(plain, 'hex');
     aad = Buffer.from(aad, 'hex');
@@ -69,7 +69,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     assert.deepEqual(aead.finish(), tag);
   }
 
-  it('should perform chacha20', function() {
+  it('should perform chacha20', () => {
     testChaCha({
       key: '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
       nonce: '000000000000004a00000000',
@@ -87,7 +87,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     });
   });
 
-  it('should perform chacha20', function() {
+  it('should perform chacha20', () => {
     testChaCha({
       key: '0000000000000000000000000000000000000000000000000000000000000000',
       nonce: '000000000000000000000000',
@@ -101,7 +101,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     });
   });
 
-  it('should perform chacha20', function() {
+  it('should perform chacha20', () => {
     testChaCha({
       key: '0000000000000000000000000000000000000000000000000000000000000001',
       nonce: '000000000000000000000002',
@@ -138,7 +138,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     });
   });
 
-  it('should perform chacha20', function() {
+  it('should perform chacha20', () => {
     testChaCha({
       key: '1c9240a5eb55d38af333888604f6b5f0473917c1402b80099dca5cbc207075c0',
       nonce: '000000000000000000000002',
@@ -158,12 +158,12 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     });
   });
 
-  it('should perform poly1305', function() {
-    var expected = Buffer.from('ddb9da7ddd5e52792730ed5cda5f90a4', 'hex');
-    var key = Buffer.allocUnsafe(32);
-    var msg = Buffer.allocUnsafe(73);
-    var mac;
-    var i;
+  it('should perform poly1305', () => {
+    let expected = Buffer.from('ddb9da7ddd5e52792730ed5cda5f90a4', 'hex');
+    let key = Buffer.allocUnsafe(32);
+    let msg = Buffer.allocUnsafe(73);
+    let mac;
+    let i;
 
     for (i = 0; i < key.length; i++)
       key[i] = i + 221;
@@ -176,11 +176,11 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     assert.deepEqual(mac, expected);
   });
 
-  it('should perform poly1305', function() {
-    var key = '85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b';
-    var msg = 'Cryptographic Forum Research Group';
-    var tag = 'a8061dc1305136c6c22b8baf0c0127a9';
-    var mac;
+  it('should perform poly1305', () => {
+    let key = '85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b';
+    let msg = 'Cryptographic Forum Research Group';
+    let tag = 'a8061dc1305136c6c22b8baf0c0127a9';
+    let mac;
 
     key = Buffer.from(key, 'hex');
     msg = Buffer.from(msg, 'ascii');
@@ -190,7 +190,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     assert(Poly1305.verify(mac, tag));
   });
 
-  it('should create an AEAD and encrypt', function() {
+  it('should create an AEAD and encrypt', () => {
     testAEAD({
       plain: ''
         + '4c616469657320616e642047656e746c656d656e206f662074686520636c6'
@@ -210,7 +210,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     });
   });
 
-  it('should create an AEAD and encrypt', function() {
+  it('should create an AEAD and encrypt', () => {
     testAEAD({
       key: '1c9240a5eb55d38af333888604f6b5f0473917c1402b80099dca5cbc207075c0',
       ciphertext: ''

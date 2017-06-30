@@ -1,15 +1,15 @@
 'use strict';
 
-var fs = require('fs');
-var bench = require('./bench');
-var Coins = require('../migrate/coins-old');
-var TX = require('../lib/primitives/tx');
+const fs = require('fs');
+const bench = require('./bench');
+const Coins = require('../migrate/coins-old');
+const TX = require('../lib/primitives/tx');
 
-var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+let wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
 wtx = TX.fromRaw(wtx.trim(), 'hex');
 
-var coins = Coins.fromTX(wtx);
-var i, j, end, raw, hash;
+let coins = Coins.fromTX(wtx);
+let i, j, end, raw, hash;
 
 //raw = coins.toRaw();
 //console.log(Coins.fromRaw(raw));

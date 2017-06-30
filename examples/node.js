@@ -1,8 +1,8 @@
 'use strict';
 
-var FullNode = require('bcoin/lib/node/fullnode');
+const FullNode = require('bcoin/lib/node/fullnode');
 
-var node = new FullNode({
+const node = new FullNode({
   network: 'testnet',
   db: 'memory'
 });
@@ -12,11 +12,11 @@ async function main() {
 
   await node.connect();
 
-  node.on('connect', function(entry, block) {
+  node.on('connect', (entry, block) => {
     console.log('%s (%d) added to chain.', entry.rhash(), entry.height);
   });
 
-  node.on('tx', function(tx) {
+  node.on('tx', (tx) => {
     console.log('%s added to mempool.', tx.txid());
   });
 

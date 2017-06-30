@@ -1,21 +1,21 @@
 'use strict';
 
-var assert = require('assert');
-var Output = require('../lib/primitives/output');
-var Input = require('../lib/primitives/input');
-var Outpoint = require('../lib/primitives/outpoint');
-var CoinView = require('../lib/coins/coinview');
-var Coins = require('../lib/coins/coins');
-var StaticWriter = require('../lib/utils/staticwriter');
-var BufferReader = require('../lib/utils/reader');
-var parseTX = require('./util/common').parseTX;
+const assert = require('assert');
+const Output = require('../lib/primitives/output');
+const Input = require('../lib/primitives/input');
+const Outpoint = require('../lib/primitives/outpoint');
+const CoinView = require('../lib/coins/coinview');
+const Coins = require('../lib/coins/coins');
+const StaticWriter = require('../lib/utils/staticwriter');
+const BufferReader = require('../lib/utils/reader');
+const parseTX = require('./util/common').parseTX;
 
-var data = parseTX('data/tx1.hex');
-var tx1 = data.tx;
+let data = parseTX('data/tx1.hex');
+let tx1 = data.tx;
 
 function collect(coins) {
-  var outputs = [];
-  var i;
+  let outputs = [];
+  let i;
 
   for (i = 0; i < coins.outputs.length; i++) {
     if (!coins.isUnspent(i))
@@ -27,7 +27,7 @@ function collect(coins) {
 }
 
 function reserialize(coins) {
-  var raw = coins.toRaw();
+  let raw = coins.toRaw();
   return Coins.fromRaw(raw);
 }
 
@@ -43,12 +43,12 @@ function deepCoinsEqual(a, b) {
 }
 
 describe('Coins', function() {
-  it('should instantiate coinview from tx', function() {
-    var hash = tx1.hash('hex');
-    var view = new CoinView();
-    var prevout = new Outpoint(hash, 0);
-    var input = Input.fromOutpoint(prevout);
-    var coins, entry, output;
+  it('should instantiate coinview from tx', () => {
+    let hash = tx1.hash('hex');
+    let view = new CoinView();
+    let prevout = new Outpoint(hash, 0);
+    let input = Input.fromOutpoint(prevout);
+    let coins, entry, output;
 
     view.addTX(tx1, 1);
 
@@ -75,10 +75,10 @@ describe('Coins', function() {
     deepCoinsEqual(coins, reserialize(coins));
   });
 
-  it('should spend an output', function() {
-    var hash = tx1.hash('hex');
-    var view = new CoinView();
-    var coins, entry, length;
+  it('should spend an output', () => {
+    let hash = tx1.hash('hex');
+    let view = new CoinView();
+    let coins, entry, length;
 
     view.addTX(tx1, 1);
 
@@ -101,10 +101,10 @@ describe('Coins', function() {
     assert.equal(view.undo.items.length, 1);
   });
 
-  it('should handle coin view', function() {
-    var view = new CoinView();
-    var i, tx, size, bw, br;
-    var raw, res, prev, coins;
+  it('should handle coin view', () => {
+    let view = new CoinView();
+    let i, tx, size, bw, br;
+    let raw, res, prev, coins;
 
     for (i = 1; i < data.txs.length; i++) {
       tx = data.txs[i];

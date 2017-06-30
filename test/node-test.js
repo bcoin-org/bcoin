@@ -1,36 +1,36 @@
 'use strict';
 
-var assert = require('assert');
-var BN = require('../lib/crypto/bn');
-var consensus = require('../lib/protocol/consensus');
-var co = require('../lib/utils/co');
-var Coin = require('../lib/primitives/coin');
-var Script = require('../lib/script/script');
-var FullNode = require('../lib/node/fullnode');
-var MTX = require('../lib/primitives/mtx');
-var TX = require('../lib/primitives/tx');
-var Address = require('../lib/primitives/address');
-var plugin = require('../lib/wallet/plugin');
+const assert = require('assert');
+const BN = require('../lib/crypto/bn');
+const consensus = require('../lib/protocol/consensus');
+const co = require('../lib/utils/co');
+const Coin = require('../lib/primitives/coin');
+const Script = require('../lib/script/script');
+const FullNode = require('../lib/node/fullnode');
+const MTX = require('../lib/primitives/mtx');
+const TX = require('../lib/primitives/tx');
+const Address = require('../lib/primitives/address');
+const plugin = require('../lib/wallet/plugin');
 
 describe('Node', function() {
-  var node = new FullNode({
+  let node = new FullNode({
     db: 'memory',
     apiKey: 'foo',
     network: 'regtest'
   });
-  var chain = node.chain;
-  var walletdb = node.use(plugin);
-  var miner = node.miner;
-  var wallet, tip1, tip2, cb1, cb2;
-  var tx1, tx2;
+  let chain = node.chain;
+  let walletdb = node.use(plugin);
+  let miner = node.miner;
+  let wallet, tip1, tip2, cb1, cb2;
+  let tx1, tx2;
 
-  node.on('error', function() {});
+  node.on('error', () => {});
 
   this.timeout(5000);
 
   async function mineBlock(tip, tx) {
-    var job = await miner.createJob(tip);
-    var rtx;
+    let job = await miner.createJob(tip);
+    let rtx;
 
     if (!tx)
       return await job.mineAsync();
@@ -52,26 +52,26 @@ describe('Node', function() {
     return await job.mineAsync();
   }
 
-  it('should open chain and miner', async function() {
+  it('should open chain and miner', async () => {
     miner.mempool = null;
     consensus.COINBASE_MATURITY = 0;
     await node.open();
   });
 
-  it('should open walletdb', async function() {
+  it('should open walletdb', async () => {
     wallet = await walletdb.create();
     miner.addresses.length = 0;
     miner.addAddress(wallet.getReceive());
   });
 
-  it('should mine a block', async function() {
-    var block = await miner.mineBlock();
+  it('should mine a block', async () => {
+    let block = await miner.mineBlock();
     assert(block);
     await chain.add(block);
   });
 
-  it('should mine competing chains', async function() {
-    var i, block1, block2;
+  it('should mine competing chains', async () => {
+    let i, block1, block2;
 
     for (i = 0; i < 10; i++) {
       block1 = await mineBlock(tip1, cb1);
@@ -98,14 +98,14 @@ describe('Node', function() {
     }
   });
 
-  it('should have correct chain value', function() {
+  it('should have correct chain value', () => {
     assert.equal(chain.db.state.value, 55000000000);
     assert.equal(chain.db.state.coin, 20);
     assert.equal(chain.db.state.tx, 21);
   });
 
-  it('should have correct balance', async function() {
-    var balance;
+  it('should have correct balance', async () => {
+    let balance;
 
     await co.timeout(100);
 
@@ -114,8 +114,8 @@ describe('Node', function() {
     assert.equal(balance.confirmed, 550 * 1e8);
   });
 
-  it('should handle a reorg', async function() {
-    var entry, block, forked;
+  it('should handle a reorg', async () => {
+    let entry, block, forked;
 
     assert.equal(walletdb.state.height, chain.height);
     assert.equal(chain.height, 11);
@@ -128,7 +128,7 @@ describe('Node', function() {
     assert(block);
 
     forked = false;
-    chain.once('reorganize', function() {
+    chain.once('reorganize', () => {
       forked = true;
     });
 
@@ -139,14 +139,14 @@ describe('Node', function() {
     assert(chain.tip.chainwork.cmp(tip1.chainwork) > 0);
   });
 
-  it('should have correct chain value', function() {
+  it('should have correct chain value', () => {
     assert.equal(chain.db.state.value, 60000000000);
     assert.equal(chain.db.state.coin, 21);
     assert.equal(chain.db.state.tx, 22);
   });
 
-  it('should have correct balance', async function() {
-    var balance;
+  it('should have correct balance', async () => {
+    let balance;
 
     await co.timeout(100);
 
@@ -155,14 +155,14 @@ describe('Node', function() {
     assert.equal(balance.confirmed, 600 * 1e8);
   });
 
-  it('should check main chain', async function() {
-    var result = await tip1.isMainChain();
+  it('should check main chain', async () => {
+    let result = await tip1.isMainChain();
     assert(!result);
   });
 
-  it('should mine a block after a reorg', async function() {
-    var block = await mineBlock(null, cb2);
-    var entry, result;
+  it('should mine a block after a reorg', async () => {
+    let block = await mineBlock(null, cb2);
+    let entry, result;
 
     await chain.add(block);
 
@@ -174,10 +174,10 @@ describe('Node', function() {
     assert(result);
   });
 
-  it('should prevent double spend on new chain', async function() {
-    var block = await mineBlock(null, cb2);
-    var tip = chain.tip;
-    var err;
+  it('should prevent double spend on new chain', async () => {
+    let block = await mineBlock(null, cb2);
+    let tip = chain.tip;
+    let err;
 
     try {
       await chain.add(block);
@@ -190,10 +190,10 @@ describe('Node', function() {
     assert(chain.tip === tip);
   });
 
-  it('should fail to mine a block with coins on an alternate chain', async function() {
-    var block = await mineBlock(null, cb1);
-    var tip = chain.tip;
-    var err;
+  it('should fail to mine a block with coins on an alternate chain', async () => {
+    let block = await mineBlock(null, cb1);
+    let tip = chain.tip;
+    let err;
 
     try {
       await chain.add(block);
@@ -206,14 +206,14 @@ describe('Node', function() {
     assert(chain.tip === tip);
   });
 
-  it('should have correct chain value', function() {
+  it('should have correct chain value', () => {
     assert.equal(chain.db.state.value, 65000000000);
     assert.equal(chain.db.state.coin, 23);
     assert.equal(chain.db.state.tx, 24);
   });
 
-  it('should get coin', async function() {
-    var block, tx, output, coin;
+  it('should get coin', async () => {
+    let block, tx, output, coin;
 
     block = await mineBlock();
     await chain.add(block);
@@ -229,8 +229,8 @@ describe('Node', function() {
     assert.deepEqual(coin.toRaw(), output.toRaw());
   });
 
-  it('should get balance', async function() {
-    var balance, txs;
+  it('should get balance', async () => {
+    let balance, txs;
 
     await co.timeout(100);
 
@@ -247,8 +247,8 @@ describe('Node', function() {
     assert.equal(txs.length, 45);
   });
 
-  it('should get tips and remove chains', async function() {
-    var tips = await chain.db.getTips();
+  it('should get tips and remove chains', async () => {
+    let tips = await chain.db.getTips();
 
     assert.notEqual(tips.indexOf(chain.tip.hash), -1);
     assert.equal(tips.length, 2);
@@ -261,10 +261,10 @@ describe('Node', function() {
     assert.equal(tips.length, 1);
   });
 
-  it('should rescan for transactions', async function() {
-    var total = 0;
+  it('should rescan for transactions', async () => {
+    let total = 0;
 
-    await chain.db.scan(0, walletdb.filter, function(block, txs) {
+    await chain.db.scan(0, walletdb.filter, (block, txs) => {
       total += txs.length;
       return Promise.resolve();
     });
@@ -272,9 +272,9 @@ describe('Node', function() {
     assert.equal(total, 26);
   });
 
-  it('should activate csv', async function() {
-    var deployments = chain.network.deployments;
-    var i, block, prev, state, cache;
+  it('should activate csv', async () => {
+    let deployments = chain.network.deployments;
+    let i, block, prev, state, cache;
 
     prev = await chain.tip.getPrevious();
     state = await chain.getState(prev, deployments.csv);
@@ -312,8 +312,8 @@ describe('Node', function() {
   });
 
   async function mineCSV(tx) {
-    var job = await miner.createJob();
-    var redeemer;
+    let job = await miner.createJob();
+    let redeemer;
 
     redeemer = new MTX();
 
@@ -337,10 +337,10 @@ describe('Node', function() {
     return await job.mineAsync();
   }
 
-  it('should test csv', async function() {
-    var tx = (await chain.db.getBlock(chain.height)).txs[0];
-    var block = await mineCSV(tx);
-    var csv, job, redeemer;
+  it('should test csv', async () => {
+    let tx = (await chain.db.getBlock(chain.height)).txs[0];
+    let block = await mineCSV(tx);
+    let csv, job, redeemer;
 
     await chain.add(block);
 
@@ -369,9 +369,9 @@ describe('Node', function() {
     await chain.add(block);
   });
 
-  it('should fail csv with bad sequence', async function() {
-    var csv = (await chain.db.getBlock(chain.height)).txs[1];
-    var block, job, redeemer, err;
+  it('should fail csv with bad sequence', async () => {
+    let csv = (await chain.db.getBlock(chain.height)).txs[1];
+    let block, job, redeemer, err;
 
     redeemer = new MTX();
 
@@ -403,16 +403,16 @@ describe('Node', function() {
     assert(err.reason, 'mandatory-script-verify-flag-failed');
   });
 
-  it('should mine a block', async function() {
-    var block = await miner.mineBlock();
+  it('should mine a block', async () => {
+    let block = await miner.mineBlock();
     assert(block);
     await chain.add(block);
   });
 
-  it('should fail csv lock checks', async function() {
-    var tx = (await chain.db.getBlock(chain.height)).txs[0];
-    var block = await mineCSV(tx);
-    var csv, job, redeemer, err;
+  it('should fail csv lock checks', async () => {
+    let tx = (await chain.db.getBlock(chain.height)).txs[0];
+    let block = await mineCSV(tx);
+    let csv, job, redeemer, err;
 
     await chain.add(block);
 
@@ -448,25 +448,25 @@ describe('Node', function() {
     assert.equal(err.reason, 'bad-txns-nonfinal');
   });
 
-  it('should rescan for transactions', async function() {
+  it('should rescan for transactions', async () => {
     await walletdb.rescan(0);
     assert.equal(wallet.txdb.state.confirmed, 1289250000000);
   });
 
-  it('should reset miner mempool', async function() {
+  it('should reset miner mempool', async () => {
     miner.mempool = node.mempool;
   });
 
-  it('should not get a block template', async function() {
-    var json = await node.rpc.call({
+  it('should not get a block template', async () => {
+    let json = await node.rpc.call({
       method: 'getblocktemplate'
     }, {});
     assert(json.error);
     assert.equal(json.error.code, -8);
   });
 
-  it('should get a block template', async function() {
-    var json;
+  it('should get a block template', async () => {
+    let json;
 
     json = await node.rpc.call({
       method: 'getblocktemplate',
@@ -514,9 +514,9 @@ describe('Node', function() {
     });
   });
 
-  it('should send a block template proposal', async function() {
-    var attempt = await node.miner.createBlock();
-    var block, hex, json;
+  it('should send a block template proposal', async () => {
+    let attempt = await node.miner.createBlock();
+    let block, hex, json;
 
     attempt.refresh();
 
@@ -536,10 +536,10 @@ describe('Node', function() {
     assert(json.result === null);
   });
 
-  it('should submit a block', async function() {
-    var block = await node.miner.mineBlock();
-    var hex = block.toRaw().toString('hex');
-    var json;
+  it('should submit a block', async () => {
+    let block = await node.miner.mineBlock();
+    let hex = block.toRaw().toString('hex');
+    let json;
 
     json = await node.rpc.call({
       method: 'submitblock',
@@ -551,9 +551,9 @@ describe('Node', function() {
     assert.equal(node.chain.tip.hash, block.hash('hex'));
   });
 
-  it('should validate an address', async function() {
-    var addr = new Address();
-    var json;
+  it('should validate an address', async () => {
+    let addr = new Address();
+    let json;
 
     addr.network = node.network;
 
@@ -571,8 +571,8 @@ describe('Node', function() {
     });
   });
 
-  it('should add transaction to mempool', async function() {
-    var mtx, tx, missing;
+  it('should add transaction to mempool', async () => {
+    let mtx, tx, missing;
 
     mtx = await wallet.createTX({
       rate: 100000,
@@ -597,8 +597,8 @@ describe('Node', function() {
     assert.equal(node.mempool.map.size, 1);
   });
 
-  it('should add lesser transaction to mempool', async function() {
-    var mtx, tx, missing;
+  it('should add lesser transaction to mempool', async () => {
+    let mtx, tx, missing;
 
     mtx = await wallet.createTX({
       rate: 1000,
@@ -623,10 +623,10 @@ describe('Node', function() {
     assert.equal(node.mempool.map.size, 2);
   });
 
-  it('should get a block template', async function() {
-    var fees = 0;
-    var weight = 0;
-    var i, item, json, result;
+  it('should get a block template', async () => {
+    let fees = 0;
+    let weight = 0;
+    let i, item, json, result;
 
     node.rpc.refreshBlock();
 
@@ -657,8 +657,8 @@ describe('Node', function() {
     assert.equal(result.coinbasevalue, 125e7 + fees);
   });
 
-  it('should get raw transaction', async function() {
-    var json, tx;
+  it('should get raw transaction', async () => {
+    let json, tx;
 
     json = await node.rpc.call({
       method: 'getrawtransaction',
@@ -671,8 +671,8 @@ describe('Node', function() {
     assert.equal(tx.txid(), tx2.txid());
   });
 
-  it('should prioritise transaction', async function() {
-    var json;
+  it('should prioritise transaction', async () => {
+    let json;
 
     json = await node.rpc.call({
       method: 'prioritisetransaction',
@@ -684,10 +684,10 @@ describe('Node', function() {
     assert(json.result === true);
   });
 
-  it('should get a block template', async function() {
-    var fees = 0;
-    var weight = 0;
-    var i, item, json, result;
+  it('should get a block template', async () => {
+    let fees = 0;
+    let weight = 0;
+    let i, item, json, result;
 
     node.rpc.refreshBlock();
 
@@ -718,7 +718,7 @@ describe('Node', function() {
     assert.equal(result.coinbasevalue, 125e7 + fees);
   });
 
-  it('should cleanup', async function() {
+  it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await node.close();
   });

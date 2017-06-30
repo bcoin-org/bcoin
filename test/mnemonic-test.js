@@ -1,19 +1,19 @@
 'use strict';
 
-var assert = require('assert');
-var HD = require('../lib/hd');
+const assert = require('assert');
+const HD = require('../lib/hd');
 
-var mnemonic1 = require('./data/mnemonic1').english;
-var mnemonic2 = require('./data/mnemonic2');
+const mnemonic1 = require('./data/mnemonic1').english;
+const mnemonic2 = require('./data/mnemonic2');
 
 describe('Mnemonic', function() {
-  mnemonic1.forEach(function(data, i) {
-    var entropy = Buffer.from(data[0], 'hex');
-    var phrase = data[1];
-    var seed = Buffer.from(data[2], 'hex');
-    var xpriv = data[3];
-    it('should create an english mnemonic (' + i + ')', function() {
-      var mnemonic, key;
+  mnemonic1.forEach((data, i) => {
+    let entropy = Buffer.from(data[0], 'hex');
+    let phrase = data[1];
+    let seed = Buffer.from(data[2], 'hex');
+    let xpriv = data[3];
+    it('should create an english mnemonic (' + i + ')', () => {
+      let mnemonic, key;
 
       mnemonic = new HD.Mnemonic({
         language: 'english',
@@ -29,14 +29,14 @@ describe('Mnemonic', function() {
     });
   });
 
-  mnemonic2.forEach(function(data, i) {
-    var entropy = Buffer.from(data.entropy, 'hex');
-    var phrase = data.mnemonic;
-    var seed = Buffer.from(data.seed, 'hex');
-    var passphrase = data.passphrase;
-    var xpriv = data.bip32_xprv;
-    it('should create a japanese mnemonic (' + i + ')', function() {
-      var mnemonic, key;
+  mnemonic2.forEach((data, i) => {
+    let entropy = Buffer.from(data.entropy, 'hex');
+    let phrase = data.mnemonic;
+    let seed = Buffer.from(data.seed, 'hex');
+    let passphrase = data.passphrase;
+    let xpriv = data.bip32_xprv;
+    it('should create a japanese mnemonic (' + i + ')', () => {
+      let mnemonic, key;
 
       mnemonic = new HD.Mnemonic({
         language: 'japanese',
@@ -52,9 +52,9 @@ describe('Mnemonic', function() {
     });
   });
 
-  it('should verify phrase', function() {
-    var m1 = new HD.Mnemonic();
-    var m2 = HD.Mnemonic.fromPhrase(m1.getPhrase());
+  it('should verify phrase', () => {
+    let m1 = new HD.Mnemonic();
+    let m2 = HD.Mnemonic.fromPhrase(m1.getPhrase());
     assert.deepEqual(m2.getEntropy(), m1.getEntropy());
     assert.equal(m2.bits, m1.bits);
     assert.equal(m2.language, m1.language);

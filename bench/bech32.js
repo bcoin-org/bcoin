@@ -1,12 +1,12 @@
 'use strict';
 
-var Address = require('../lib/primitives/address');
-var random = require('../lib/crypto/random');
-var bench = require('./bench');
+const Address = require('../lib/primitives/address');
+const random = require('../lib/crypto/random');
+const bench = require('./bench');
 
-var i, end, addr;
+let i, end, addr;
 
-var addrs = [];
+let addrs = [];
 
 end = bench('serialize');
 for (i = 0; i < 100000; i++) {

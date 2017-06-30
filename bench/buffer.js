@@ -1,13 +1,13 @@
 'use strict';
 
-var fs = require('fs');
-var TX = require('../lib/primitives/tx');
-var BufferWriter = require('../lib/utils/writer');
-var StaticWriter = require('../lib/utils/staticwriter');
-var bench = require('./bench');
+const fs = require('fs');
+const TX = require('../lib/primitives/tx');
+const BufferWriter = require('../lib/utils/writer');
+const StaticWriter = require('../lib/utils/staticwriter');
+const bench = require('./bench');
 
-var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
-var i, tx, end;
+let wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+let i, tx, end;
 
 wtx = Buffer.from(wtx.trim(), 'hex');
 tx = TX.fromRaw(wtx);

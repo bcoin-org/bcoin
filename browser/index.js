@@ -17,6 +17,10 @@ var items = [];
 var scrollback = 0;
 var logger, node, wdb;
 
+window.onunhandledrejection = function(event) {
+  throw event.reason;
+};
+
 body.onmouseup = function() {
   floating.style.display = 'none';
 };

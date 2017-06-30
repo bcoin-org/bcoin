@@ -1,15 +1,15 @@
 'use strict';
 
-var assert = require('assert');
-var bench = require('./bench');
-var HD = require('../lib/hd');
-var Mnemonic = require('../lib/hd/mnemonic');
+const assert = require('assert');
+const bench = require('./bench');
+const HD = require('../lib/hd');
+const Mnemonic = require('../lib/hd/mnemonic');
 
-var mnemonic = new Mnemonic();
+let mnemonic = new Mnemonic();
 HD.fromMnemonic(mnemonic);
 
-var phrase = mnemonic.getPhrase();
-var i, end;
+let phrase = mnemonic.getPhrase();
+let i, end;
 
 assert.equal(Mnemonic.fromPhrase(phrase).getPhrase(), phrase);
 

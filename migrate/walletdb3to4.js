@@ -1,15 +1,15 @@
 'use strict';
 
-var assert = require('assert');
-var bcoin = require('../');
-var encoding = require('../lib/utils/encoding');
-var WalletDB = require('../lib/wallet/walletdb');
-var BufferReader = require('../lib/utils/reader');
-var TX = require('../lib/primitives/tx');
-var Coin = require('../lib/primitives/coin');
-var util = require('../lib/utils/util');
-var file = process.argv[2];
-var db, batch;
+const assert = require('assert');
+const bcoin = require('../');
+const encoding = require('../lib/utils/encoding');
+const WalletDB = require('../lib/wallet/walletdb');
+const BufferReader = require('../lib/utils/reader');
+const TX = require('../lib/primitives/tx');
+const Coin = require('../lib/primitives/coin');
+const util = require('../lib/utils/util');
+let file = process.argv[2];
+let db, batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
@@ -25,8 +25,8 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
-  var data, ver;
+  let bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
+  let data, ver;
 
   console.log('Checking version.');
 
@@ -48,8 +48,8 @@ async function updateVersion() {
 }
 
 async function updateTXDB() {
-  var txs = {};
-  var i, keys, key, hash, tx, walletdb;
+  let txs = {};
+  let i, keys, key, hash, tx, walletdb;
 
   keys = await db.keys({
     gte: Buffer.from([0x00]),
@@ -92,9 +92,9 @@ async function updateTXDB() {
 }
 
 function fromExtended(data, saveCoins) {
-  var tx = new TX();
-  var p = BufferReader(data);
-  var i, coinCount, coin;
+  let tx = new TX();
+  let p = BufferReader(data);
+  let i, coinCount, coin;
 
   tx.fromRaw(p);
 
@@ -129,13 +129,13 @@ function fromExtended(data, saveCoins) {
   return tx;
 }
 
-(async function() {
+(async () => {
   await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
   await updateVersion();
   await updateTXDB();
-})().then(function() {
+})().then(() => {
   console.log('Migration complete.');
   process.exit(0);
 });

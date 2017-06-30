@@ -1,11 +1,11 @@
 'use strict';
 
-var assert = require('assert');
-var random = require('../lib/crypto/random');
-var Script = require('../lib/script/script');
-var bench = require('./bench');
-var opcodes = Script.opcodes;
-var i, hashes, end;
+const assert = require('assert');
+const random = require('../lib/crypto/random');
+const Script = require('../lib/script/script');
+const bench = require('./bench');
+const opcodes = Script.opcodes;
+let i, hashes, end;
 
 Script.prototype.fromPubkeyhashOld = function fromScripthash(hash) {
   assert(Buffer.isBuffer(hash) && hash.length === 20);

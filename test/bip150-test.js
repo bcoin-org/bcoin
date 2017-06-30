@@ -1,20 +1,20 @@
 'use strict';
 
-var assert = require('assert');
-var secp256k1 = require('../lib/crypto/secp256k1');
-var BIP150 = require('../lib/net/bip150');
-var BIP151 = require('../lib/net/bip151');
+const assert = require('assert');
+const secp256k1 = require('../lib/crypto/secp256k1');
+const BIP150 = require('../lib/net/bip150');
+const BIP151 = require('../lib/net/bip151');
 
 describe('BIP150', function() {
-  var db = new BIP150.AuthDB();
-  var ck = secp256k1.generatePrivateKey();
-  var sk = secp256k1.generatePrivateKey();
+  let db = new BIP150.AuthDB();
+  let ck = secp256k1.generatePrivateKey();
+  let sk = secp256k1.generatePrivateKey();
 
   db.addAuthorized(secp256k1.publicKeyCreate(ck, true));
   db.addKnown('127.0.0.2', secp256k1.publicKeyCreate(sk, true));
 
-  var client = new BIP151();
-  var server = new BIP151();
+  let client = new BIP151();
+  let server = new BIP151();
 
   client.bip150 = new BIP150(client, '127.0.0.2', true, db, ck);
   server.bip150 = new BIP150(server, '127.0.0.1', false, db, sk);
@@ -23,8 +23,8 @@ describe('BIP150', function() {
     return Buffer.from('deadbeef', 'hex');
   }
 
-  it('should do encinit', function() {
-    var init = server.toEncinit();
+  it('should do encinit', () => {
+    let init = server.toEncinit();
     client.encinit(init.publicKey, init.cipher);
 
     init = client.toEncinit();
@@ -34,22 +34,22 @@ describe('BIP150', function() {
     assert(!server.handshake);
   });
 
-  it('should do encack', function() {
+  it('should do encack', () => {
     client.encack(server.toEncack().publicKey);
     server.encack(client.toEncack().publicKey);
     assert(client.handshake);
     assert(server.handshake);
   });
 
-  it('should have completed ECDH handshake', function() {
+  it('should have completed ECDH handshake', () => {
     assert(client.isReady());
     assert(server.isReady());
     assert(client.handshake);
     assert(server.handshake);
   });
 
-  it('should do BIP150 handshake', function() {
-    var challenge, reply, propose, result;
+  it('should do BIP150 handshake', () => {
+    let challenge, reply, propose, result;
 
     challenge = client.bip150.toChallenge();
     reply = server.bip150.challenge(challenge.hash);
@@ -63,10 +63,10 @@ describe('BIP150', function() {
     assert(server.bip150.auth);
   });
 
-  it('should encrypt payload from client to server', function() {
-    var packet = client.packet('fake', payload());
-    var emitted = false;
-    server.once('packet', function(cmd, body) {
+  it('should encrypt payload from client to server', () => {
+    let packet = client.packet('fake', payload());
+    let emitted = false;
+    server.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -75,10 +75,10 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('should encrypt payload from server to client', function() {
-    var packet = server.packet('fake', payload());
-    var emitted = false;
-    client.once('packet', function(cmd, body) {
+  it('should encrypt payload from server to client', () => {
+    let packet = server.packet('fake', payload());
+    let emitted = false;
+    client.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -87,10 +87,10 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('should encrypt payload from client to server (2)', function() {
-    var packet = client.packet('fake', payload());
-    var emitted = false;
-    server.once('packet', function(cmd, body) {
+  it('should encrypt payload from client to server (2)', () => {
+    let packet = client.packet('fake', payload());
+    let emitted = false;
+    server.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -99,10 +99,10 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('should encrypt payload from server to client (2)', function() {
-    var packet = server.packet('fake', payload());
-    var emitted = false;
-    client.once('packet', function(cmd, body) {
+  it('should encrypt payload from server to client (2)', () => {
+    let packet = server.packet('fake', payload());
+    let emitted = false;
+    client.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -111,15 +111,15 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('client should rekey', function() {
-    var rekeyed = false;
-    var bytes = client.output.processed;
+  it('client should rekey', () => {
+    let rekeyed = false;
+    let bytes = client.output.processed;
 
-    client.once('rekey', function() {
+    client.once('rekey', () => {
       rekeyed = true;
-      var packet = client.packet('encack', client.toRekey().toRaw());
-      var emitted = false;
-      server.once('packet', function(cmd, body) {
+      let packet = client.packet('encack', client.toRekey().toRaw());
+      let emitted = false;
+      server.once('packet', (cmd, body) => {
         emitted = true;
         assert.equal(cmd, 'encack');
         server.encack(body);
@@ -138,10 +138,10 @@ describe('BIP150', function() {
     client.output.processed = bytes + 33 + 31;
   });
 
-  it('should encrypt payload from client to server after rekey', function() {
-    var packet = client.packet('fake', payload());
-    var emitted = false;
-    server.once('packet', function(cmd, body) {
+  it('should encrypt payload from client to server after rekey', () => {
+    let packet = client.packet('fake', payload());
+    let emitted = false;
+    server.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -150,10 +150,10 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('should encrypt payload from server to client after rekey', function() {
-    var packet = server.packet('fake', payload());
-    var emitted = false;
-    client.once('packet', function(cmd, body) {
+  it('should encrypt payload from server to client after rekey', () => {
+    let packet = server.packet('fake', payload());
+    let emitted = false;
+    client.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -162,10 +162,10 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('should encrypt payload from client to server after rekey (2)', function() {
-    var packet = client.packet('fake', payload());
-    var emitted = false;
-    server.once('packet', function(cmd, body) {
+  it('should encrypt payload from client to server after rekey (2)', () => {
+    let packet = client.packet('fake', payload());
+    let emitted = false;
+    server.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -174,10 +174,10 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('should encrypt payload from server to client after rekey (2)', function() {
-    var packet = server.packet('fake', payload());
-    var emitted = false;
-    client.once('packet', function(cmd, body) {
+  it('should encrypt payload from server to client after rekey (2)', () => {
+    let packet = server.packet('fake', payload());
+    let emitted = false;
+    client.once('packet', (cmd, body) => {
       emitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
@@ -186,17 +186,17 @@ describe('BIP150', function() {
     assert(emitted);
   });
 
-  it('should encrypt payloads both ways asynchronously', function() {
-    var spacket = server.packet('fake', payload());
-    var cpacket = client.packet('fake', payload());
-    var cemitted = false;
-    var semitted = false;
-    client.once('packet', function(cmd, body) {
+  it('should encrypt payloads both ways asynchronously', () => {
+    let spacket = server.packet('fake', payload());
+    let cpacket = client.packet('fake', payload());
+    let cemitted = false;
+    let semitted = false;
+    client.once('packet', (cmd, body) => {
       cemitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
     });
-    server.once('packet', function(cmd, body) {
+    server.once('packet', (cmd, body) => {
       semitted = true;
       assert.equal(cmd, 'fake');
       assert.equal(body.toString('hex'), 'deadbeef');
