@@ -6,15 +6,15 @@
 
 'use strict';
 
-var assert = require('assert');
-var Network = require('../../lib/protocol/network');
-var util = require('../../lib/utils/util');
-var MTX = require('../../lib/primitives/mtx');
-var HD = require('../../lib/hd/hd');
-var Bloom = require('../../lib/utils/bloom');
-var KeyRing = require('../../lib/primitives/keyring');
-var Outpoint = require('../../lib/primitives/outpoint');
-var Coin = require('../../lib/primitives/coin');
+const assert = require('assert');
+const Network = require('../../lib/protocol/network');
+const util = require('../../lib/utils/util');
+const MTX = require('../../lib/primitives/mtx');
+const HD = require('../../lib/hd/hd');
+const Bloom = require('../../lib/utils/bloom');
+const KeyRing = require('../../lib/primitives/keyring');
+const Outpoint = require('../../lib/primitives/outpoint');
+const Coin = require('../../lib/primitives/coin');
 
 function MemWallet(options) {
   if (!(this instanceof MemWallet))
@@ -83,7 +83,7 @@ MemWallet.prototype.fromOptions = function fromOptions(options) {
 };
 
 MemWallet.prototype.init = function init() {
-  var i;
+  let i;
 
   if (!this.master)
     this.master = HD.PrivateKey.generate();
@@ -101,9 +101,9 @@ MemWallet.prototype.init = function init() {
 };
 
 MemWallet.prototype.createReceive = function createReceive() {
-  var index = this.receiveDepth++;
-  var key = this.deriveReceive(index);
-  var hash = key.getHash('hex');
+  let index = this.receiveDepth++;
+  let key = this.deriveReceive(index);
+  let hash = key.getHash('hex');
   this.filter.add(hash, 'hex');
   this.paths[hash] = new Path(hash, 0, index);
   this.receive = key;
@@ -111,9 +111,9 @@ MemWallet.prototype.createReceive = function createReceive() {
 };
 
 MemWallet.prototype.createChange = function createChange() {
-  var index = this.changeDepth++;
-  var key = this.deriveChange(index);
-  var hash = key.getHash('hex');
+  let index = this.changeDepth++;
+  let key = this.deriveChange(index);
+  let hash = key.getHash('hex');
   this.filter.add(hash, 'hex');
   this.paths[hash] = new Path(hash, 1, index);
   this.change = key;
@@ -133,7 +133,7 @@ MemWallet.prototype.derivePath = function derivePath(path) {
 };
 
 MemWallet.prototype.deriveKey = function deriveKey(branch, index) {
-  var key = this.master.deriveAccount44(this.account);
+  let key = this.master.deriveAccount44(this.account);
   key = key.derive(branch).derive(index);
   key = new KeyRing({
     network: this.network,
@@ -145,7 +145,7 @@ MemWallet.prototype.deriveKey = function deriveKey(branch, index) {
 };
 
 MemWallet.prototype.getKey = function getKey(hash) {
-  var path = this.paths[hash];
+  let path = this.paths[hash];
   if (!path)
     return;
   return this.derivePath(path);
@@ -164,8 +164,8 @@ MemWallet.prototype.getUndo = function getUndo(key) {
 };
 
 MemWallet.prototype.addCoin = function addCoin(coin) {
-  var op = Outpoint(coin.hash, coin.index);
-  var key = op.toKey();
+  let op = Outpoint(coin.hash, coin.index);
+  let key = op.toKey();
 
   this.filter.add(op.toRaw());
 
@@ -176,7 +176,7 @@ MemWallet.prototype.addCoin = function addCoin(coin) {
 };
 
 MemWallet.prototype.removeCoin = function removeCoin(key) {
-  var coin = this.coins[key];
+  let coin = this.coins[key];
 
   if (!coin)
     return;
@@ -220,7 +220,7 @@ MemWallet.prototype.syncKey = function syncKey(path) {
 };
 
 MemWallet.prototype.addBlock = function addBlock(entry, txs) {
-  var i, tx;
+  let i, tx;
 
   for (i = 0; i < txs.length; i++) {
     tx = txs[i];
@@ -229,7 +229,7 @@ MemWallet.prototype.addBlock = function addBlock(entry, txs) {
 };
 
 MemWallet.prototype.removeBlock = function removeBlock(entry, txs) {
-  var i, tx;
+  let i, tx;
 
   for (i = txs.length - 1; i >= 0; i--) {
     tx = txs[i];
@@ -238,9 +238,9 @@ MemWallet.prototype.removeBlock = function removeBlock(entry, txs) {
 };
 
 MemWallet.prototype.addTX = function addTX(tx, height) {
-  var hash = tx.hash('hex');
-  var result = false;
-  var i, op, path, addr, coin, input, output;
+  let hash = tx.hash('hex');
+  let result = false;
+  let i, op, path, addr, coin, input, output;
 
   if (height == null)
     height = -1;
@@ -289,9 +289,9 @@ MemWallet.prototype.addTX = function addTX(tx, height) {
 };
 
 MemWallet.prototype.removeTX = function removeTX(tx, height) {
-  var hash = tx.hash('hex');
-  var result = false;
-  var i, op, coin, input;
+  let hash = tx.hash('hex');
+  let result = false;
+  let i, op, coin, input;
 
   if (!this.map[hash])
     return false;
@@ -330,8 +330,8 @@ MemWallet.prototype.removeTX = function removeTX(tx, height) {
 };
 
 MemWallet.prototype.deriveInputs = function deriveInputs(mtx) {
-  var keys = [];
-  var i, input, coin, addr, path, key;
+  let keys = [];
+  let i, input, coin, addr, path, key;
 
   for (i = 0; i < mtx.inputs.length; i++) {
     input = mtx.inputs[i];
@@ -359,7 +359,7 @@ MemWallet.prototype.deriveInputs = function deriveInputs(mtx) {
 };
 
 MemWallet.prototype.fund = function fund(mtx, options) {
-  var coins = this.getCoins();
+  let coins = this.getCoins();
 
   if (!options)
     options = {};
@@ -378,18 +378,18 @@ MemWallet.prototype.fund = function fund(mtx, options) {
 };
 
 MemWallet.prototype.template = function template(mtx) {
-  var keys = this.deriveInputs(mtx);
+  let keys = this.deriveInputs(mtx);
   mtx.template(keys);
 };
 
 MemWallet.prototype.sign = function sign(mtx) {
-  var keys = this.deriveInputs(mtx);
+  let keys = this.deriveInputs(mtx);
   mtx.template(keys);
   mtx.sign(keys);
 };
 
 MemWallet.prototype.create = async function create(options) {
-  var mtx = new MTX(options);
+  let mtx = new MTX(options);
 
   await this.fund(mtx, options);
 
@@ -409,7 +409,7 @@ MemWallet.prototype.create = async function create(options) {
 };
 
 MemWallet.prototype.send = async function send(options) {
-  var mtx = await this.create(options);
+  let mtx = await this.create(options);
   this.addTX(mtx.toTX());
   return mtx;
 };

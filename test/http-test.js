@@ -1,21 +1,21 @@
 'use strict';
 
-var assert = require('assert');
-var consensus = require('../lib/protocol/consensus');
-var encoding = require('../lib/utils/encoding');
-var co = require('../lib/utils/co');
-var Amount = require('../lib/btc/amount');
-var Address = require('../lib/primitives/address');
-var Script = require('../lib/script/script');
-var Outpoint = require('../lib/primitives/outpoint');
-var MTX = require('../lib/primitives/mtx');
-var HTTP = require('../lib/http');
-var FullNode = require('../lib/node/fullnode');
-var pkg = require('../lib/pkg');
-var plugin = require('../lib/wallet/plugin');
+const assert = require('assert');
+const consensus = require('../lib/protocol/consensus');
+const encoding = require('../lib/utils/encoding');
+const co = require('../lib/utils/co');
+const Amount = require('../lib/btc/amount');
+const Address = require('../lib/primitives/address');
+const Script = require('../lib/script/script');
+const Outpoint = require('../lib/primitives/outpoint');
+const MTX = require('../lib/primitives/mtx');
+const HTTP = require('../lib/http');
+const FullNode = require('../lib/node/fullnode');
+const pkg = require('../lib/pkg');
+const plugin = require('../lib/wallet/plugin');
 
 describe('HTTP', function() {
-  var node, wallet, walletdb, addr, hash;
+  let node, wallet, walletdb, addr, hash;
 
   node = new FullNode({
     network: 'regtest',
@@ -31,22 +31,22 @@ describe('HTTP', function() {
 
   walletdb = node.use(plugin);
 
-  node.on('error', function() {});
+  node.on('error', () => {});
 
   this.timeout(15000);
 
-  it('should open node', async function() {
+  it('should open node', async () => {
     consensus.COINBASE_MATURITY = 0;
     await node.open();
   });
 
-  it('should create wallet', async function() {
-    var info = await wallet.create({ id: 'test' });
+  it('should create wallet', async () => {
+    let info = await wallet.create({ id: 'test' });
     assert.equal(info.id, 'test');
   });
 
-  it('should get info', async function() {
-    var info = await wallet.client.getInfo();
+  it('should get info', async () => {
+    let info = await wallet.client.getInfo();
     assert.equal(info.network, node.network.type);
     assert.equal(info.version, pkg.version);
     assert.equal(info.pool.agent, node.pool.options.agent);
@@ -54,16 +54,16 @@ describe('HTTP', function() {
     assert.equal(info.chain.height, 0);
   });
 
-  it('should get wallet info', async function() {
-    var info = await wallet.getInfo();
+  it('should get wallet info', async () => {
+    let info = await wallet.getInfo();
     assert.equal(info.id, 'test');
     addr = info.account.receiveAddress;
     assert.equal(typeof addr, 'string');
     addr = Address.fromString(addr);
   });
 
-  it('should fill with funds', async function() {
-    var tx, balance, receive, details;
+  it('should fill with funds', async () => {
+    let tx, balance, receive, details;
 
     // Coinbase
     tx = new MTX();
@@ -74,15 +74,15 @@ describe('HTTP', function() {
     tx.addOutput(addr, 50460);
     tx = tx.toTX();
 
-    wallet.once('balance', function(b) {
+    wallet.once('balance', (b) => {
       balance = b;
     });
 
-    wallet.once('address', function(r) {
+    wallet.once('address', (r) => {
       receive = r[0];
     });
 
-    wallet.once('tx', function(d) {
+    wallet.once('tx', (d) => {
       details = d;
     });
 
@@ -100,15 +100,15 @@ describe('HTTP', function() {
     assert.equal(details.hash, tx.rhash());
   });
 
-  it('should get balance', async function() {
-    var balance = await wallet.getBalance();
+  it('should get balance', async () => {
+    let balance = await wallet.getBalance();
     assert.equal(Amount.value(balance.confirmed), 0);
     assert.equal(Amount.value(balance.unconfirmed), 201840);
   });
 
-  it('should send a tx', async function() {
-    var value = 0;
-    var options, tx;
+  it('should send a tx', async () => {
+    let value = 0;
+    let options, tx;
 
     options = {
       rate: 10000,
@@ -131,36 +131,36 @@ describe('HTTP', function() {
     hash = tx.hash;
   });
 
-  it('should get a tx', async function() {
-    var tx = await wallet.getTX(hash);
+  it('should get a tx', async () => {
+    let tx = await wallet.getTX(hash);
     assert(tx);
     assert.equal(tx.hash, hash);
   });
 
-  it('should generate new api key', async function() {
-    var t = wallet.token.toString('hex');
-    var token = await wallet.retoken(null);
+  it('should generate new api key', async () => {
+    let t = wallet.token.toString('hex');
+    let token = await wallet.retoken(null);
     assert(token.length === 64);
     assert.notEqual(token, t);
   });
 
-  it('should get balance', async function() {
-    var balance = await wallet.getBalance();
+  it('should get balance', async () => {
+    let balance = await wallet.getBalance();
     assert.equal(Amount.value(balance.unconfirmed), 199570);
   });
 
-  it('should execute an rpc call', async function() {
-    var info = await wallet.client.rpc.execute('getblockchaininfo', []);
+  it('should execute an rpc call', async () => {
+    let info = await wallet.client.rpc.execute('getblockchaininfo', []);
     assert.equal(info.blocks, 0);
   });
 
-  it('should execute an rpc call with bool parameter', async function() {
-    var info = await wallet.client.rpc.execute('getrawmempool', [true]);
+  it('should execute an rpc call with bool parameter', async () => {
+    let info = await wallet.client.rpc.execute('getrawmempool', [true]);
     assert.deepStrictEqual(info, {});
   });
 
-  it('should create account', async function() {
-    var info = await wallet.createAccount('foo1');
+  it('should create account', async () => {
+    let info = await wallet.createAccount('foo1');
     assert(info);
     assert(info.initialized);
     assert.equal(info.name, 'foo1');
@@ -169,8 +169,8 @@ describe('HTTP', function() {
     assert.equal(info.n, 1);
   });
 
-  it('should create account', async function() {
-    var info = await wallet.createAccount('foo2', {
+  it('should create account', async () => {
+    let info = await wallet.createAccount('foo2', {
       type: 'multisig',
       m: 1,
       n: 2
@@ -183,8 +183,8 @@ describe('HTTP', function() {
     assert.equal(info.n, 2);
   });
 
-  it('should get a block template', async function() {
-    var json = await wallet.client.rpc.execute('getblocktemplate', []);
+  it('should get a block template', async () => {
+    let json = await wallet.client.rpc.execute('getblocktemplate', []);
     assert.deepStrictEqual(json, {
       capabilities: [ 'proposal' ],
       mutable: [ 'time', 'transactions', 'prevblock' ],
@@ -211,19 +211,19 @@ describe('HTTP', function() {
     });
   });
 
-  it('should send a block template proposal', async function() {
-    var attempt = await node.miner.createBlock();
-    var block = attempt.toBlock();
-    var hex = block.toRaw().toString('hex');
-    var json = await wallet.client.rpc.execute('getblocktemplate', [{
+  it('should send a block template proposal', async () => {
+    let attempt = await node.miner.createBlock();
+    let block = attempt.toBlock();
+    let hex = block.toRaw().toString('hex');
+    let json = await wallet.client.rpc.execute('getblocktemplate', [{
       mode: 'proposal',
       data: hex
     }]);
     assert.strictEqual(json, null);
   });
 
-  it('should validate an address', async function() {
-    var json = await wallet.client.rpc.execute('validateaddress', [addr.toString()]);
+  it('should validate an address', async () => {
+    let json = await wallet.client.rpc.execute('validateaddress', [addr.toString()]);
     assert.deepStrictEqual(json, {
       isvalid: true,
       address: addr.toString(),
@@ -233,7 +233,7 @@ describe('HTTP', function() {
     });
   });
 
-  it('should cleanup', async function() {
+  it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await wallet.close();
     await node.close();

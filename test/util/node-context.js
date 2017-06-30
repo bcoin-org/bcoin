@@ -1,10 +1,10 @@
 'use strict';
 
-var assert = require('assert');
-var FullNode = require('../../lib/node/fullnode');
-var Network = require('../../lib/protocol/network');
-var co = require('../../lib/utils/co');
-var Logger = require('../../lib/node/logger');
+const assert = require('assert');
+const FullNode = require('../../lib/node/fullnode');
+const Network = require('../../lib/protocol/network');
+const co = require('../../lib/utils/co');
+const Logger = require('../../lib/node/logger');
 
 function NodeContext(network, size) {
   if (!(this instanceof NodeContext))
@@ -18,7 +18,7 @@ function NodeContext(network, size) {
 };
 
 NodeContext.prototype.init = function() {
-  var i, port, last, node;
+  let i, port, last, node;
 
   for (i = 0; i < this.size; i++) {
     port = this.network.port + i;
@@ -57,8 +57,8 @@ NodeContext.prototype.init = function() {
 };
 
 NodeContext.prototype.open = function open() {
-  var jobs = [];
-  var i, node;
+  let jobs = [];
+  let i, node;
 
   for (i = 0; i < this.nodes.length; i++) {
     node = this.nodes[i];
@@ -69,8 +69,8 @@ NodeContext.prototype.open = function open() {
 };
 
 NodeContext.prototype.close = function close() {
-  var jobs = [];
-  var i, node;
+  let jobs = [];
+  let i, node;
 
   for (i = 0; i < this.nodes.length; i++) {
     node = this.nodes[i];
@@ -81,7 +81,7 @@ NodeContext.prototype.close = function close() {
 };
 
 NodeContext.prototype.connect = async function connect() {
-  var i, node;
+  let i, node;
 
   for (i = 0; i < this.nodes.length; i++) {
     node = this.nodes[i];
@@ -91,7 +91,7 @@ NodeContext.prototype.connect = async function connect() {
 };
 
 NodeContext.prototype.disconnect = async function disconnect() {
-  var i, node;
+  let i, node;
 
   for (i = this.nodes.length - 1; i >= 0; i--) {
     node = this.nodes[i];
@@ -101,7 +101,7 @@ NodeContext.prototype.disconnect = async function disconnect() {
 };
 
 NodeContext.prototype.startSync = function startSync() {
-  var i, node;
+  let i, node;
 
   for (i = 0; i < this.nodes.length; i++) {
     node = this.nodes[i];
@@ -112,7 +112,7 @@ NodeContext.prototype.startSync = function startSync() {
 };
 
 NodeContext.prototype.stopSync = function stopSync() {
-  var i, node;
+  let i, node;
 
   for (i = 0; i < this.nodes.length; i++) {
     node = this.nodes[i];
@@ -121,8 +121,8 @@ NodeContext.prototype.stopSync = function stopSync() {
 };
 
 NodeContext.prototype.generate = async function generate(index, blocks) {
-  var node = this.nodes[index];
-  var i, block;
+  let node = this.nodes[index];
+  let i, block;
 
   assert(node);
 
@@ -133,7 +133,7 @@ NodeContext.prototype.generate = async function generate(index, blocks) {
 };
 
 NodeContext.prototype.height = function height(index) {
-  var node = this.nodes[index];
+  let node = this.nodes[index];
 
   assert(node);
 

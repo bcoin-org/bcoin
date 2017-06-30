@@ -1,16 +1,16 @@
 'use strict';
 
-var net = require('net');
-var EventEmitter = require('events').EventEmitter;
-var IOServer = require('socket.io');
-var util = require('../lib/utils/util');
-var digest = require('../lib/crypto/digest');
-var IP = require('../lib/utils/ip');
-var BufferWriter = require('../lib/utils/writer');
+const net = require('net');
+const EventEmitter = require('events').EventEmitter;
+const IOServer = require('socket.io');
+const util = require('../lib/utils/util');
+const digest = require('../lib/crypto/digest');
+const IP = require('../lib/utils/ip');
+const BufferWriter = require('../lib/utils/writer');
 
-var NAME_REGEX = /^[a-z0-9\-\.]+?\.(?:be|me|org|com|net|ch|de)$/i;
+const NAME_REGEX = /^[a-z0-9\-\.]+?\.(?:be|me|org|com|net|ch|de)$/i;
 
-var TARGET = Buffer.from(
+const TARGET = Buffer.from(
   '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
   'hex');
 
@@ -36,20 +36,17 @@ function WSProxy(options) {
 util.inherits(WSProxy, EventEmitter);
 
 WSProxy.prototype._init = function _init() {
-  var self = this;
-
-  this.io.on('error', function(err) {
-    self.emit('error', err);
+  this.io.on('error', (err) => {
+    this.emit('error', err);
   });
 
-  this.io.on('connection', function(ws) {
-    self._handleSocket(ws);
+  this.io.on('connection', (ws) => {
+    this._handleSocket(ws);
   });
 };
 
 WSProxy.prototype._handleSocket = function _handleSocket(ws) {
-  var self = this;
-  var state = new SocketState(this, ws);
+  let state = new SocketState(this, ws);
 
   // Use a weak map to avoid
   // mutating the websocket object.
@@ -57,19 +54,18 @@ WSProxy.prototype._handleSocket = function _handleSocket(ws) {
 
   ws.emit('info', state.toInfo());
 
-  ws.on('error', function(err) {
-    self.emit('error', err);
+  ws.on('error', (err) => {
+    this.emit('error', err);
   });
 
-  ws.on('tcp connect', function(port, host, nonce) {
-    self._handleConnect(ws, port, host, nonce);
+  ws.on('tcp connect', (port, host, nonce) => {
+    this._handleConnect(ws, port, host, nonce);
   });
 };
 
 WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce) {
-  var self = this;
-  var state = this.sockets.get(ws);
-  var socket, pow, raw;
+  let state = this.sockets.get(ws);
+  let socket, pow, raw;
 
   if (state.socket) {
     this.log('Client is trying to reconnect (%s).', state.host);
@@ -157,58 +153,58 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
     return;
   }
 
-  socket.on('connect', function() {
+  socket.on('connect', () => {
     ws.emit('tcp connect', socket.remoteAddress, socket.remotePort);
   });
 
-  socket.on('data', function(data) {
+  socket.on('data', (data) => {
     ws.emit('tcp data', data.toString('hex'));
   });
 
-  socket.on('error', function(err) {
+  socket.on('error', (err) => {
     ws.emit('tcp error', {
       message: err.message,
       code: err.code || null
     });
   });
 
-  socket.on('timeout', function() {
+  socket.on('timeout', () => {
     ws.emit('tcp timeout');
   });
 
-  socket.on('close', function() {
-    self.log('Closing %s (%s).', state.remoteHost, state.host);
+  socket.on('close', () => {
+    this.log('Closing %s (%s).', state.remoteHost, state.host);
     ws.emit('tcp close');
     ws.disconnect();
   });
 
-  ws.on('tcp data', function(data) {
+  ws.on('tcp data', (data) => {
     if (typeof data !== 'string')
       return;
     socket.write(Buffer.from(data, 'hex'));
   });
 
-  ws.on('tcp keep alive', function(enable, delay) {
+  ws.on('tcp keep alive', (enable, delay) => {
     socket.setKeepAlive(enable, delay);
   });
 
-  ws.on('tcp no delay', function(enable) {
+  ws.on('tcp no delay', (enable) => {
     socket.setNoDelay(enable);
   });
 
-  ws.on('tcp set timeout', function(timeout) {
+  ws.on('tcp set timeout', (timeout) => {
     socket.setTimeout(timeout);
   });
 
-  ws.on('tcp pause', function() {
+  ws.on('tcp pause', () => {
     socket.pause();
   });
 
-  ws.on('tcp resume', function() {
+  ws.on('tcp resume', () => {
     socket.resume();
   });
 
-  ws.on('disconnect', function() {
+  ws.on('disconnect', () => {
     socket.destroy();
   });
 };

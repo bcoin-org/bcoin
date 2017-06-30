@@ -6,8 +6,8 @@
 
 'use strict';
 
-var assert = require('assert');
-var secp256k1 = require('../lib/crypto/secp256k1');
+const assert = require('assert');
+const secp256k1 = require('../lib/crypto/secp256k1');
 
 /*
  * Compression
@@ -20,7 +20,7 @@ var secp256k1 = require('../lib/crypto/secp256k1');
  */
 
 function compressScript(script, bw) {
-  var data;
+  let data;
 
   // Attempt to compress the output scripts.
   // We can _only_ ever compress them if
@@ -73,7 +73,7 @@ function compressScript(script, bw) {
  */
 
 function decompressScript(script, br) {
-  var data;
+  let data;
 
   // Decompress the script.
   switch (br.readU8()) {
@@ -112,7 +112,7 @@ function decompressScript(script, br) {
  */
 
 function compressValue(value) {
-  var exp, last;
+  let exp, last;
 
   if (value === 0)
     return 0;
@@ -139,7 +139,7 @@ function compressValue(value) {
  */
 
 function decompressValue(value) {
-  var exp, n, last;
+  let exp, n, last;
 
   if (value === 0)
     return 0;
@@ -172,7 +172,7 @@ function decompressValue(value) {
  */
 
 function compressKey(key) {
-  var out;
+  let out;
 
   switch (key[0]) {
     case 0x02:
@@ -209,8 +209,8 @@ function compressKey(key) {
  */
 
 function decompressKey(key) {
-  var format = key[0] >>> 2;
-  var out;
+  let format = key[0] >>> 2;
+  let out;
 
   assert(key.length === 33);
 

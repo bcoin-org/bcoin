@@ -1,15 +1,15 @@
 'use strict';
 
-var assert = require('assert');
-var encoding = require('../lib/utils/encoding');
-var BufferReader = require('../lib/utils/reader');
-var digest = require('../lib/crypto/digest');
-var util = require('../lib/utils/util');
-var LDB = require('../lib/db/ldb');
-var BN = require('../lib/crypto/bn');
-var DUMMY = Buffer.from([0]);
-var file = process.argv[2];
-var db, batch;
+const assert = require('assert');
+const encoding = require('../lib/utils/encoding');
+const BufferReader = require('../lib/utils/reader');
+const digest = require('../lib/crypto/digest');
+const util = require('../lib/utils/util');
+const LDB = require('../lib/db/ldb');
+const BN = require('../lib/crypto/bn');
+const DUMMY = Buffer.from([0]);
+let file = process.argv[2];
+let db, batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
@@ -25,7 +25,7 @@ db = LDB({
 });
 
 async function checkVersion() {
-  var data, ver;
+  let data, ver;
 
   console.log('Checking version.');
 
@@ -41,9 +41,9 @@ async function checkVersion() {
 }
 
 function entryFromRaw(data) {
-  var p = new BufferReader(data, true);
-  var hash = digest.hash256(p.readBytes(80));
-  var entry = {};
+  let p = new BufferReader(data, true);
+  let hash = digest.hash256(p.readBytes(80));
+  let entry = {};
 
   p.seek(-80);
 
@@ -69,10 +69,10 @@ function getEntries() {
 }
 
 async function getTip(entry) {
-  var state = await db.get('R');
+  let state = await db.get('R');
   assert(state);
-  var tip = state.toString('hex', 0, 32);
-  var data = await db.get(pair('e', tip));
+  let tip = state.toString('hex', 0, 32);
+  let data = await db.get(pair('e', tip));
   assert(data);
   return entryFromRaw(data);
 }
@@ -90,12 +90,12 @@ async function isMainChain(entry, tip) {
 // And this insane function is why we should
 // be indexing tips in the first place!
 async function indexTips() {
-  var entries = await getEntries();
-  var tip = await getTip();
-  var tips = [];
-  var orphans = [];
-  var prevs = {};
-  var i, orphan, entry, main;
+  let entries = await getEntries();
+  let tip = await getTip();
+  let tips = [];
+  let orphans = [];
+  let prevs = {};
+  let i, orphan, entry, main;
 
   for (i = 0; i < entries.length; i++) {
     entry = entries[i];
@@ -128,7 +128,7 @@ function write(data, str, off) {
 }
 
 function pair(prefix, hash) {
-  var key = Buffer.allocUnsafe(33);
+  let key = Buffer.allocUnsafe(33);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
@@ -136,14 +136,14 @@ function pair(prefix, hash) {
   return key;
 }
 
-(async function() {
+(async () => {
   await db.open();
   console.log('Opened %s.', file);
   batch = db.batch();
   await checkVersion();
   await indexTips();
   await batch.write();
-})().then(function() {
+})().then(() => {
   console.log('Migration complete.');
   process.exit(0);
 });

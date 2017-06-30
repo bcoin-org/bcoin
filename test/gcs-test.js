@@ -1,23 +1,23 @@
 'use strict';
 
-var assert = require('assert');
-var fs = require('../lib/utils/fs');
-var GCSFilter = require('../lib/utils/gcs');
-var random = require('../lib/crypto/random');
-var Block = require('../lib/primitives/block');
-var Outpoint = require('../lib/primitives/outpoint');
-var Address = require('../lib/primitives/address');
+const assert = require('assert');
+const fs = require('../lib/utils/fs');
+const GCSFilter = require('../lib/utils/gcs');
+const random = require('../lib/crypto/random');
+const Block = require('../lib/primitives/block');
+const Outpoint = require('../lib/primitives/outpoint');
+const Address = require('../lib/primitives/address');
 
-var raw = fs.readFileSync(__dirname + '/data/block928927.raw');
-var block = Block.fromRaw(raw);
+let raw = fs.readFileSync(__dirname + '/data/block928927.raw');
+let block = Block.fromRaw(raw);
 
 describe('GCS', function() {
-  var key = random.randomBytes(16);
-  var P = 20;
-  var filter1, filter2, filter3, filter4, filter5;
-  var contents1, contents2;
-  var op1, op2, op3, op4;
-  var addr1, addr2;
+  let key = random.randomBytes(16);
+  let P = 20;
+  let filter1, filter2, filter3, filter4, filter5;
+  let contents1, contents2;
+  let op1, op2, op3, op4;
+  let addr1, addr2;
 
   contents1 = [
     Buffer.from('Alex', 'ascii'),
@@ -78,12 +78,12 @@ describe('GCS', function() {
   addr1 = new Address('bc1qmyrddmxglk49ye2wd29wefaavw7es8k5d555lx');
   addr2 = new Address('bc1q4645ycu0l9pnvxaxnhemushv0w4cd9flkqh95j');
 
-  it('should test GCS filter build', function() {
+  it('should test GCS filter build', () => {
     filter1 = GCSFilter.fromItems(P, key, contents1);
     assert(filter1);
   });
 
-  it('should test GCS filter copy', function() {
+  it('should test GCS filter copy', () => {
     filter2 = GCSFilter.fromBytes(filter1.n, P, filter1.toBytes());
     assert(filter2);
     filter3 = GCSFilter.fromNBytes(P, filter1.toNBytes());
@@ -94,7 +94,7 @@ describe('GCS', function() {
     assert(filter5);
   });
 
-  it('should test GCS filter metadata', function() {
+  it('should test GCS filter metadata', () => {
     assert.equal(filter1.p, P);
     assert.equal(filter1.n, contents1.length);
     assert.equal(filter1.p, filter2.p);
@@ -111,8 +111,8 @@ describe('GCS', function() {
     assert.deepEqual(filter1.data, filter5.data);
   });
 
-  it('should test GCS filter match', function() {
-    var match = filter1.match(key, Buffer.from('Nate'));
+  it('should test GCS filter match', () => {
+    let match = filter1.match(key, Buffer.from('Nate'));
     assert(match);
     match = filter2.match(key, Buffer.from('Nate'));
     assert(match);
@@ -131,8 +131,8 @@ describe('GCS', function() {
     assert(!match);
   });
 
-  it('should test GCS filter matchAny', function() {
-    var c, match;
+  it('should test GCS filter matchAny', () => {
+    let c, match;
 
     match = filter1.matchAny(key, contents2);
     assert(!match);
@@ -148,9 +148,9 @@ describe('GCS', function() {
     assert(match);
   });
 
-  it('should test GCS filter fromBlock', function() {
-    var key = block.hash().slice(0, 16);
-    var filter = GCSFilter.fromBlock(block);
+  it('should test GCS filter fromBlock', () => {
+    let key = block.hash().slice(0, 16);
+    let filter = GCSFilter.fromBlock(block);
     assert(filter.match(key, op1.toRaw()));
     assert(filter.match(key, op2.toRaw()));
     assert(!filter.match(key, op3.toRaw()));
@@ -162,9 +162,9 @@ describe('GCS', function() {
     assert(!filter.matchAny(key, [op3.toRaw(), op4.toRaw()]));
   });
 
-  it('should test GCS filter fromExtended', function() {
-    var key = block.hash().slice(0, 16);
-    var filter = GCSFilter.fromExtended(block);
+  it('should test GCS filter fromExtended', () => {
+    let key = block.hash().slice(0, 16);
+    let filter = GCSFilter.fromExtended(block);
     assert(!filter.match(key, op1.toRaw()));
     assert(filter.match(key, block.txs[0].hash()));
     assert(filter.match(key, block.txs[1].hash()));

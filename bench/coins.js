@@ -1,14 +1,14 @@
 'use strict';
 
-var fs = require('fs');
-var Coins = require('../lib/coins/coins');
-var TX = require('../lib/primitives/tx');
-var bench = require('./bench');
+const fs = require('fs');
+const Coins = require('../lib/coins/coins');
+const TX = require('../lib/primitives/tx');
+const bench = require('./bench');
 
-var raw = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
-var wtx = TX.fromRaw(raw.trim(), 'hex');
-var coins = Coins.fromTX(wtx, 1);
-var i, j, end, hash;
+let raw = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+let wtx = TX.fromRaw(raw.trim(), 'hex');
+let coins = Coins.fromTX(wtx, 1);
+let i, j, end, hash;
 
 end = bench('serialize');
 for (i = 0; i < 10000; i++)

@@ -1,24 +1,24 @@
 'use strict';
 
-var fs = require('fs');
-var Block = require('../lib/primitives/block');
-var Address = require('../lib/primitives/address');
-var TX = require('../lib/primitives/tx');
-var Script = require('../lib/script/script');
-var MTX = require('../lib/primitives/mtx');
-var Coin = require('../lib/primitives/coin');
-var CoinView = require('../lib/coins/coinview');
-var encoding = require('../lib/utils/encoding');
-var random = require('../lib/crypto/random');
-var bench = require('./bench');
+const fs = require('fs');
+const Block = require('../lib/primitives/block');
+const Address = require('../lib/primitives/address');
+const TX = require('../lib/primitives/tx');
+const Script = require('../lib/script/script');
+const MTX = require('../lib/primitives/mtx');
+const Coin = require('../lib/primitives/coin');
+const CoinView = require('../lib/coins/coinview');
+const encoding = require('../lib/utils/encoding');
+const random = require('../lib/crypto/random');
+const bench = require('./bench');
 
-var json = require('../test/data/block300025.json');
-var block = Block.fromJSON(json);
-var btx = { tx: block.txs[397], view: new CoinView() };
+let json = require('../test/data/block300025.json');
+let block = Block.fromJSON(json);
+let btx = { tx: block.txs[397], view: new CoinView() };
 
-var tx3 = parseTX('../test/data/tx3.hex');
-var wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
-var i, tx, end, flags, input;
+let tx3 = parseTX('../test/data/tx3.hex');
+let wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+let i, tx, end, flags, input;
 
 wtx = Buffer.from(wtx.trim(), 'hex');
 
@@ -29,12 +29,12 @@ for (i = 0; i < tx.inputs.length; i++) {
 }
 
 function parseTX(file) {
-  var data = fs.readFileSync(__dirname + '/' + file, 'utf8');
-  var parts = data.trim().split(/\n+/);
-  var raw = parts[0];
-  var tx = TX.fromRaw(raw.trim(), 'hex');
-  var view = new CoinView();
-  var i, prev;
+  let data = fs.readFileSync(__dirname + '/' + file, 'utf8');
+  let parts = data.trim().split(/\n+/);
+  let raw = parts[0];
+  let tx = TX.fromRaw(raw.trim(), 'hex');
+  let view = new CoinView();
+  let i, prev;
 
   for (i = 1; i < parts.length; i++) {
     raw = parts[i];

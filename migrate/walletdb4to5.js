@@ -1,9 +1,9 @@
 'use strict';
 
-var assert = require('assert');
-var bcoin = require('../');
-var file = process.argv[2];
-var db, batch;
+const assert = require('assert');
+const bcoin = require('../');
+let file = process.argv[2];
+let db, batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
@@ -19,8 +19,8 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
-  var data, ver;
+  let bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
+  let data, ver;
 
   console.log('Checking version.');
 
@@ -42,7 +42,7 @@ async function updateVersion() {
 }
 
 async function updateTXDB() {
-  var i, keys, key;
+  let i, keys, key;
 
   keys = await db.keys({
     gte: Buffer.from([0x00]),
@@ -64,14 +64,14 @@ async function updateTXDB() {
   await batch.write();
 }
 
-(async function() {
+(async () => {
   await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
   await updateVersion();
   await updateTXDB();
   await db.close();
-})().then(function() {
+})().then(() => {
   console.log('Migration complete.');
   process.exit(0);
 });

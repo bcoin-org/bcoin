@@ -1,29 +1,29 @@
 'use strict';
 
-var assert = require('assert');
-var Network = require('../lib/protocol/network');
-var util = require('../lib/utils/util');
-var NetAddress = require('../lib/primitives/netaddress');
-var TX = require('../lib/primitives/tx');
-var Framer = require('../lib/net/framer');
-var Parser = require('../lib/net/parser');
-var packets = require('../lib/net/packets');
-var network = Network.get('main');
+const assert = require('assert');
+const Network = require('../lib/protocol/network');
+const util = require('../lib/utils/util');
+const NetAddress = require('../lib/primitives/netaddress');
+const TX = require('../lib/primitives/tx');
+const Framer = require('../lib/net/framer');
+const Parser = require('../lib/net/parser');
+const packets = require('../lib/net/packets');
+const network = Network.get('main');
 
 describe('Protocol', function() {
-  var pkg = require('../lib/pkg');
-  var agent = '/bcoin:' + pkg.version + '/';
-  var parser, framer, v1, v2, hosts;
+  let pkg = require('../lib/pkg');
+  let agent = '/bcoin:' + pkg.version + '/';
+  let parser, framer, v1, v2, hosts;
 
-  beforeEach(function() {
+  beforeEach(() => {
     parser = new Parser();
     framer = new Framer();
   });
 
   function packetTest(command, payload, test) {
-    it('should encode/decode ' + command, function(cb) {
-      var ver = Buffer.from(framer.packet(command, payload.toRaw()));
-      parser.once('packet', function(packet) {
+    it('should encode/decode ' + command, (cb) => {
+      let ver = Buffer.from(framer.packet(command, payload.toRaw()));
+      parser.once('packet', (packet) => {
         assert.equal(packet.cmd, command);
         test(packet);
         cb();
@@ -44,7 +44,7 @@ describe('Protocol', function() {
     noRelay: false
   });
 
-  packetTest('version', v1, function(payload) {
+  packetTest('version', v1, (payload) => {
     assert.equal(payload.version, 300);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 0);
@@ -63,14 +63,14 @@ describe('Protocol', function() {
     noRelay: true
   });
 
-  packetTest('version', v2, function(payload) {
+  packetTest('version', v2, (payload) => {
     assert.equal(payload.version, 300);
     assert.equal(payload.agent, agent);
     assert.equal(payload.height, 10);
     assert.equal(payload.noRelay, true);
   });
 
-  packetTest('verack', new packets.VerackPacket(), function(payload) {
+  packetTest('verack', new packets.VerackPacket(), (payload) => {
   });
 
   /* eslint indent: 0 */
@@ -89,7 +89,7 @@ describe('Protocol', function() {
     })
   ];
 
-  packetTest('addr', new packets.AddrPacket(hosts), function(payload) {
+  packetTest('addr', new packets.AddrPacket(hosts), (payload) => {
     assert.equal(typeof payload.items.length, 'number');
     assert.equal(payload.items.length, 2);
 
@@ -105,8 +105,8 @@ describe('Protocol', function() {
   });
 
   it('should include the raw data of only one transaction in a ' +
-     'parsed transaction', function() {
-    var tx, rawTwoTxs, rawFirstTx;
+     'parsed transaction', () => {
+    let tx, rawTwoTxs, rawFirstTx;
 
     rawTwoTxs = Buffer.from(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +

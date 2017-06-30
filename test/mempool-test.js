@@ -1,30 +1,30 @@
 'use strict';
 
-var assert = require('assert');
-var encoding = require('../lib/utils/encoding');
-var random = require('../lib/crypto/random');
-var MempoolEntry = require('../lib/mempool/mempoolentry');
-var Mempool = require('../lib/mempool/mempool');
-var Chain = require('../lib/blockchain/chain');
-var MTX = require('../lib/primitives/mtx');
-var Coin = require('../lib/primitives/coin');
-var KeyRing = require('../lib/primitives/keyring');
-var Address = require('../lib/primitives/address');
-var Outpoint = require('../lib/primitives/outpoint');
-var Script = require('../lib/script/script');
-var Witness = require('../lib/script/witness');
-var MemWallet = require('./util/memwallet');
+const assert = require('assert');
+const encoding = require('../lib/utils/encoding');
+const random = require('../lib/crypto/random');
+const MempoolEntry = require('../lib/mempool/mempoolentry');
+const Mempool = require('../lib/mempool/mempool');
+const Chain = require('../lib/blockchain/chain');
+const MTX = require('../lib/primitives/mtx');
+const Coin = require('../lib/primitives/coin');
+const KeyRing = require('../lib/primitives/keyring');
+const Address = require('../lib/primitives/address');
+const Outpoint = require('../lib/primitives/outpoint');
+const Script = require('../lib/script/script');
+const Witness = require('../lib/script/witness');
+const MemWallet = require('./util/memwallet');
 
 describe('Mempool', function() {
-  var chain = new Chain({ db: 'memory' });
-  var mempool = new Mempool({ chain: chain, db: 'memory' });
-  var wallet = new MemWallet();
-  var cached;
+  let chain = new Chain({ db: 'memory' });
+  let mempool = new Mempool({ chain: chain, db: 'memory' });
+  let wallet = new MemWallet();
+  let cached;
 
   this.timeout(5000);
 
   function dummy(prev, prevHash) {
-    var fund, coin, entry;
+    let fund, coin, entry;
 
     if (!prevHash)
       prevHash = encoding.ONE_HASH.toString('hex');
@@ -47,15 +47,15 @@ describe('Mempool', function() {
     return Coin.fromTX(fund, 0, -1);
   }
 
-  it('should open mempool', async function() {
+  it('should open mempool', async () => {
     await mempool.open();
     chain.state.flags |= Script.flags.VERIFY_WITNESS;
   });
 
-  it('should handle incoming orphans and TXs', async function() {
-    var kp = KeyRing.generate();
-    var w = wallet;
-    var t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
+  it('should handle incoming orphans and TXs', async () => {
+    let kp = KeyRing.generate();
+    let w = wallet;
+    let t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
 
     t1 = new MTX();
     t1.addOutput(w.getAddress(), 50000);
@@ -146,15 +146,15 @@ describe('Mempool', function() {
     assert.equal(balance, 20000);
 
     txs = mempool.getHistory();
-    assert(txs.some(function(tx) {
+    assert(txs.some((tx) => {
       return tx.hash('hex') === f1.hash('hex');
     }));
   });
 
-  it('should handle locktime', async function() {
-    var w = wallet;
-    var kp = KeyRing.generate();
-    var tx, prev, prevHash, sig;
+  it('should handle locktime', async () => {
+    let w = wallet;
+    let kp = KeyRing.generate();
+    let tx, prev, prevHash, sig;
 
     tx = new MTX();
     tx.addOutput(w.getAddress(), 50000);
@@ -177,10 +177,10 @@ describe('Mempool', function() {
     chain.tip.height = 0;
   });
 
-  it('should handle invalid locktime', async function() {
-    var w = wallet;
-    var kp = KeyRing.generate();
-    var tx, prev, prevHash, sig, err;
+  it('should handle invalid locktime', async () => {
+    let w = wallet;
+    let kp = KeyRing.generate();
+    let tx, prev, prevHash, sig, err;
 
     tx = new MTX();
     tx.addOutput(w.getAddress(), 50000);
@@ -208,10 +208,10 @@ describe('Mempool', function() {
     chain.tip.height = 0;
   });
 
-  it('should not cache a malleated wtx with mutated sig', async function() {
-    var w = wallet;
-    var kp = KeyRing.generate();
-    var tx, prev, prevHash, prevs, sig, err;
+  it('should not cache a malleated wtx with mutated sig', async () => {
+    let w = wallet;
+    let kp = KeyRing.generate();
+    let tx, prev, prevHash, prevs, sig, err;
 
     kp.witness = true;
 
@@ -242,10 +242,10 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(tx.hash()));
   });
 
-  it('should not cache a malleated tx with unnecessary witness', async function() {
-    var w = wallet;
-    var kp = KeyRing.generate();
-    var tx, prev, prevHash, sig, err;
+  it('should not cache a malleated tx with unnecessary witness', async () => {
+    let w = wallet;
+    let kp = KeyRing.generate();
+    let tx, prev, prevHash, sig, err;
 
     tx = new MTX();
     tx.addOutput(w.getAddress(), 50000);
@@ -271,10 +271,10 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(tx.hash()));
   });
 
-  it('should not cache a malleated wtx with wit removed', async function() {
-    var w = wallet;
-    var kp = KeyRing.generate();
-    var tx, prev, prevHash, err;
+  it('should not cache a malleated wtx with wit removed', async () => {
+    let w = wallet;
+    let kp = KeyRing.generate();
+    let tx, prev, prevHash, err;
 
     kp.witness = true;
 
@@ -300,10 +300,10 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(tx.hash()));
   });
 
-  it('should cache non-malleated tx without sig', async function() {
-    var w = wallet;
-    var kp = KeyRing.generate();
-    var tx, prev, prevHash, err;
+  it('should cache non-malleated tx without sig', async () => {
+    let w = wallet;
+    let kp = KeyRing.generate();
+    let tx, prev, prevHash, err;
 
     tx = new MTX();
     tx.addOutput(w.getAddress(), 50000);
@@ -328,9 +328,9 @@ describe('Mempool', function() {
     cached = tx;
   });
 
-  it('should clear reject cache', async function() {
-    var w = wallet;
-    var tx;
+  it('should clear reject cache', async () => {
+    let w = wallet;
+    let tx;
 
     tx = new MTX();
     tx.addOutpoint(new Outpoint());
@@ -342,7 +342,7 @@ describe('Mempool', function() {
     assert(!mempool.hasReject(cached.hash()));
   });
 
-  it('should destroy mempool', async function() {
+  it('should destroy mempool', async () => {
     await mempool.close();
   });
 });

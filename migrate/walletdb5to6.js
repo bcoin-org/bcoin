@@ -1,12 +1,12 @@
 'use strict';
 
-var assert = require('assert');
-var bcoin = require('../');
-var encoding = require('../lib/utils/encoding');
-var BufferWriter = require('../lib/utils/writer');
-var BufferReader = require('../lib/utils/reader');
-var file = process.argv[2];
-var db, batch;
+const assert = require('assert');
+const bcoin = require('../');
+const encoding = require('../lib/utils/encoding');
+const BufferWriter = require('../lib/utils/writer');
+const BufferReader = require('../lib/utils/reader');
+let file = process.argv[2];
+let db, batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
@@ -22,8 +22,8 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  var bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
-  var data, ver;
+  let bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
+  let data, ver;
 
   console.log('Checking version.');
 
@@ -45,8 +45,8 @@ async function updateVersion() {
 }
 
 async function wipeTXDB() {
-  var total = 0;
-  var i, keys, key;
+  let total = 0;
+  let i, keys, key;
 
   keys = await db.keys({
     gte: Buffer.from([0x00]),
@@ -74,7 +74,7 @@ async function wipeTXDB() {
 }
 
 async function patchAccounts() {
-  var i, items, item, wid, index, account;
+  let i, items, item, wid, index, account;
 
   items = await db.range({
     gte: Buffer.from('610000000000000000', 'hex'), // a
@@ -94,7 +94,7 @@ async function patchAccounts() {
 }
 
 async function indexPaths() {
-  var i, items, item, wid, index, hash;
+  let i, items, item, wid, index, hash;
 
   items = await db.range({
     gte: Buffer.from('5000000000' + encoding.NULL_HASH, 'hex'), // P
@@ -112,7 +112,7 @@ async function indexPaths() {
 }
 
 async function patchPathMaps() {
-  var i, items, item, hash, wids;
+  let i, items, item, hash, wids;
 
   items = await db.range({
     gte: Buffer.from('70' + encoding.NULL_HASH, 'hex'), // p
@@ -129,8 +129,8 @@ async function patchPathMaps() {
 }
 
 function parseWallets(data) {
-  var p = new BufferReader(data);
-  var wids = [];
+  let p = new BufferReader(data);
+  let wids = [];
 
   while (p.left())
     wids.push(p.readU32());
@@ -139,8 +139,8 @@ function parseWallets(data) {
 }
 
 function serializeWallets(wids) {
-  var p = new BufferWriter();
-  var i, wid;
+  let p = new BufferWriter();
+  let i, wid;
 
   p.writeU32(wids.length);
 
@@ -153,8 +153,8 @@ function serializeWallets(wids) {
 }
 
 function accountToRaw(account) {
-  var p = new BufferWriter();
-  var i, key;
+  let p = new BufferWriter();
+  let i, key;
 
   p.writeVarString(account.name, 'ascii');
   p.writeU8(account.initialized ? 1 : 0);
@@ -179,9 +179,9 @@ function accountToRaw(account) {
 };
 
 function accountFromRaw(data) {
-  var account = {};
-  var p = new BufferReader(data);
-  var i, count, key;
+  let account = {};
+  let p = new BufferReader(data);
+  let i, count, key;
 
   account.name = p.readVarString('ascii');
   account.initialized = p.readU8() === 1;
@@ -208,7 +208,7 @@ function accountFromRaw(data) {
 }
 
 function n(wid, index) {
-  var key = Buffer.allocUnsafe(9);
+  let key = Buffer.allocUnsafe(9);
   key[0] = 0x6e;
   key.writeUInt32BE(wid, 1, true);
   key.writeUInt32BE(index, 5, true);
@@ -216,7 +216,7 @@ function n(wid, index) {
 }
 
 function r(wid, index, hash) {
-  var key = Buffer.allocUnsafe(1 + 4 + 4 + (hash.length / 2));
+  let key = Buffer.allocUnsafe(1 + 4 + 4 + (hash.length / 2));
   key[0] = 0x72;
   key.writeUInt32BE(wid, 1, true);
   key.writeUInt32BE(index, 5, true);
@@ -225,8 +225,8 @@ function r(wid, index, hash) {
 }
 
 async function updateLookahead() {
-  var WalletDB = require('../lib/wallet/walletdb');
-  var i, j, db, wallet;
+  let WalletDB = require('../lib/wallet/walletdb');
+  let i, j, db, wallet;
 
   db = new WalletDB({
     network: process.argv[3],
@@ -260,7 +260,7 @@ async function unstate() {
   await db.close();
 }
 
-(async function() {
+(async () => {
   await db.open();
   batch = db.batch();
   console.log('Opened %s.', file);
@@ -275,7 +275,7 @@ async function unstate() {
   // Do not use:
   await updateLookahead();
   await unstate();
-})().then(function() {
+})().then(() => {
   console.log('Migration complete.');
   console.log('Rescan is required...');
   console.log('Start bcoin with `--start-height=[wallet-creation-height]`.');

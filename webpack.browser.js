@@ -1,9 +1,9 @@
 'use strict';
 
-var webpack = require('webpack')
-var path = require('path');
-var str = JSON.stringify;
-var env = process.env;
+const webpack = require('webpack')
+const path = require('path');
+const str = JSON.stringify;
+const env = process.env;
 
 module.exports = {
   target: 'web',
@@ -22,7 +22,7 @@ module.exports = {
   module: {
     rules: [{
       test: /\.js$/,
-      exclude: path.join(__dirname, 'node_modules'),
+      exclude: /node_modules\/(bn.js|elliptic|n64)/,
       loader: 'babel-loader'
     }]
   },

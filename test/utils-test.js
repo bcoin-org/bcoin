@@ -1,19 +1,19 @@
 'use strict';
 
-var assert = require('assert');
-var BN = require('../lib/crypto/bn');
-var secp256k1 = require('../lib/crypto/secp256k1');
-var base58 = require('../lib/utils/base58');
-var encoding = require('../lib/utils/encoding');
-var digest = require('../lib/crypto/digest');
-var hkdf = require('../lib/crypto/hkdf');
-var schnorr = require('../lib/crypto/schnorr');
-var Amount = require('../lib/btc/amount');
-var consensus = require('../lib/protocol/consensus');
-var Validator = require('../lib/utils/validator');
+const assert = require('assert');
+const BN = require('../lib/crypto/bn');
+const secp256k1 = require('../lib/crypto/secp256k1');
+const base58 = require('../lib/utils/base58');
+const encoding = require('../lib/utils/encoding');
+const digest = require('../lib/crypto/digest');
+const hkdf = require('../lib/crypto/hkdf');
+const schnorr = require('../lib/crypto/schnorr');
+const Amount = require('../lib/btc/amount');
+const consensus = require('../lib/protocol/consensus');
+const Validator = require('../lib/utils/validator');
 
 describe('Utils', function() {
-  var vectors, signed, unsigned;
+  let vectors, signed, unsigned;
 
   vectors = [
     ['', ''],
@@ -30,10 +30,10 @@ describe('Utils', function() {
     ['00000000000000000000', '1111111111']
   ];
 
-  it('should encode/decode base58', function() {
-    var buf = Buffer.from('000000deadbeef', 'hex');
-    var b = base58.encode(buf);
-    var i, r;
+  it('should encode/decode base58', () => {
+    let buf = Buffer.from('000000deadbeef', 'hex');
+    let b = base58.encode(buf);
+    let i, r;
 
     assert.equal(b, '1116h8cQN');
     assert.deepEqual(base58.decode(b), buf);
@@ -46,9 +46,9 @@ describe('Utils', function() {
     }
   });
 
-  it('should verify proof-of-work', function() {
-    var bits = 0x1900896c;
-    var hash;
+  it('should verify proof-of-work', () => {
+    let bits = 0x1900896c;
+    let hash;
 
     hash = Buffer.from(
       '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
@@ -58,8 +58,8 @@ describe('Utils', function() {
     assert(consensus.verifyPOW(hash, bits));
   });
 
-  it('should convert satoshi to btc', function() {
-    var btc = Amount.btc(5460);
+  it('should convert satoshi to btc', () => {
+    let btc = Amount.btc(5460);
     assert.equal(btc, '0.0000546');
     btc = Amount.btc(54678 * 1000000);
     assert.equal(btc, '546.78');
@@ -67,8 +67,8 @@ describe('Utils', function() {
     assert.equal(btc, '546.0');
   });
 
-  it('should convert btc to satoshi', function() {
-    var btc = Amount.value('0.0000546');
+  it('should convert btc to satoshi', () => {
+    let btc = Amount.value('0.0000546');
     assert(btc === 5460);
     btc = Amount.value('546.78');
     assert(btc === 54678 * 1000000);
@@ -78,28 +78,28 @@ describe('Utils', function() {
     assert(btc === 5460 * 10000000);
     btc = Amount.value('546.0000');
     assert(btc === 5460 * 10000000);
-    assert.doesNotThrow(function() {
+    assert.doesNotThrow(() => {
       Amount.value('546.00000000000000000');
     });
-    assert.throws(function() {
+    assert.throws(() => {
       Amount.value('546.00000000000000001');
     });
-    assert.doesNotThrow(function() {
+    assert.doesNotThrow(() => {
       Amount.value('90071992.54740991');
     });
-    assert.doesNotThrow(function() {
+    assert.doesNotThrow(() => {
       Amount.value('090071992.547409910');
     });
-    assert.throws(function() {
+    assert.throws(() => {
       Amount.value('90071992.54740992');
     });
-    assert.throws(function() {
+    assert.throws(() => {
       Amount.value('190071992.54740991');
     });
   });
 
-  it('should write/read new varints', function() {
-    var b;
+  it('should write/read new varints', () => {
+    let b;
 
     /*
      * 0:         [0x00]  256:        [0x81 0x00]
@@ -197,13 +197,13 @@ describe('Utils', function() {
     new BN(1).ineg()
   ];
 
-  unsigned.forEach(function(num) {
-    var buf1 = Buffer.allocUnsafe(8);
-    var buf2 = Buffer.allocUnsafe(8);
-    var msg = 'should write+read a ' + num.bitLength() + ' bit unsigned int';
+  unsigned.forEach((num) => {
+    let buf1 = Buffer.allocUnsafe(8);
+    let buf2 = Buffer.allocUnsafe(8);
+    let msg = 'should write+read a ' + num.bitLength() + ' bit unsigned int';
 
-    it(msg, function() {
-      var n1, n2;
+    it(msg, () => {
+      let n1, n2;
 
       encoding.writeU64BN(buf1, num, 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
@@ -215,14 +215,14 @@ describe('Utils', function() {
     });
   });
 
-  signed.forEach(function(num) {
-    var buf1 = Buffer.allocUnsafe(8);
-    var buf2 = Buffer.allocUnsafe(8);
-    var msg = 'should write+read a ' + num.bitLength()
+  signed.forEach((num) => {
+    let buf1 = Buffer.allocUnsafe(8);
+    let buf2 = Buffer.allocUnsafe(8);
+    let msg = 'should write+read a ' + num.bitLength()
       + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int';
 
-    it(msg, function() {
-      var n1, n2;
+    it(msg, () => {
+      let n1, n2;
 
       encoding.write64BN(buf1, num, 0);
       encoding.write64(buf2, num.toNumber(), 0);
@@ -236,8 +236,8 @@ describe('Utils', function() {
     msg = 'should write+read a ' + num.bitLength()
       + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int as unsigned';
 
-    it(msg, function() {
-      var n1, n2;
+    it(msg, () => {
+      let n1, n2;
 
       encoding.writeU64BN(buf1, num, 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
@@ -245,7 +245,7 @@ describe('Utils', function() {
 
       n1 = encoding.readU64BN(buf1, 0);
       if (num.isNeg()) {
-        assert.throws(function() {
+        assert.throws(() => {
           encoding.readU64(buf2, 0);
         });
       } else {
@@ -255,14 +255,14 @@ describe('Utils', function() {
     });
   });
 
-  it('should do proper hkdf', function() {
+  it('should do proper hkdf', () => {
     // https://tools.ietf.org/html/rfc5869
-    var alg = 'sha256';
-    var ikm = '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b';
-    var salt = '000102030405060708090a0b0c';
-    var info = 'f0f1f2f3f4f5f6f7f8f9';
-    var len = 42;
-    var prkE, okmE, prk, okm;
+    let alg = 'sha256';
+    let ikm = '0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b';
+    let salt = '000102030405060708090a0b0c';
+    let info = 'f0f1f2f3f4f5f6f7f8f9';
+    let len = 42;
+    let prkE, okmE, prk, okm;
 
     prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5';
     okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1'
@@ -321,17 +321,17 @@ describe('Utils', function() {
     assert.equal(okm.toString('hex'), okmE);
   });
 
-  it('should do proper schnorr', function() {
-    var key = secp256k1.generatePrivateKey();
-    var pub = secp256k1.publicKeyCreate(key, true);
-    var msg = digest.hash256(Buffer.from('foo', 'ascii'));
-    var sig = schnorr.sign(msg, key);
+  it('should do proper schnorr', () => {
+    let key = secp256k1.generatePrivateKey();
+    let pub = secp256k1.publicKeyCreate(key, true);
+    let msg = digest.hash256(Buffer.from('foo', 'ascii'));
+    let sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
     assert.deepEqual(schnorr.recover(sig, msg), pub);
   });
 
-  it('should validate integers 0 and 1 as booleans', function() {
-    var validator = new Validator({shouldBeTrue: 1, shouldBeFalse: 0});
+  it('should validate integers 0 and 1 as booleans', () => {
+    let validator = new Validator({shouldBeTrue: 1, shouldBeFalse: 0});
     assert(validator.bool('shouldBeTrue') === true);
     assert(validator.bool('shouldBeFalse') === false);
   });

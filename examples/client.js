@@ -1,13 +1,13 @@
 'use strict';
 
-var encoding = require('bcoin/lib/utils/encoding');
-var co = require('bcoin/lib/utils/co');
-var Outpoint = require('bcoin/lib/primitives/outpoint');
-var MTX = require('bcoin/lib/primitives/mtx');
-var HTTP = require('bcoin/lib/http');
-var FullNode = require('bcoin/lib/node/fullnode');
-var plugin = require('bcoin/lib/wallet/plugin');
-var node, wallet;
+const encoding = require('bcoin/lib/utils/encoding');
+const co = require('bcoin/lib/utils/co');
+const Outpoint = require('bcoin/lib/primitives/outpoint');
+const MTX = require('bcoin/lib/primitives/mtx');
+const HTTP = require('bcoin/lib/http');
+const FullNode = require('bcoin/lib/node/fullnode');
+const plugin = require('bcoin/lib/wallet/plugin');
+let node, wallet;
 
 node = new FullNode({
   network: 'regtest',
@@ -24,8 +24,8 @@ wallet = new HTTP.Wallet({
 });
 
 async function main() {
-  var wdb = node.require('walletdb');
-  var w, acct, hash, balance, tx;
+  let wdb = node.require('walletdb');
+  let w, acct, hash, balance, tx;
 
   await node.open();
 
@@ -62,7 +62,7 @@ async function main() {
 }
 
 async function fundWallet(wdb, addr) {
-  var tx;
+  let tx;
 
   // Coinbase
   tx = new MTX();
@@ -73,17 +73,17 @@ async function fundWallet(wdb, addr) {
   tx.addOutput(addr, 50460);
   tx = tx.toTX();
 
-  wallet.once('balance', function(balance) {
+  wallet.once('balance', (balance) => {
     console.log('New Balance:');
     console.log(balance);
   });
 
-  wallet.once('address', function(receive) {
+  wallet.once('address', (receive) => {
     console.log('New Receiving Address:');
     console.log(receive);
   });
 
-  wallet.once('tx', function(details) {
+  wallet.once('tx', (details) => {
     console.log('New Wallet TX:');
     console.log(details);
   });
@@ -93,7 +93,7 @@ async function fundWallet(wdb, addr) {
 }
 
 async function sendTX(addr, value) {
-  var options, tx;
+  let options, tx;
 
   options = {
     rate: 10000,
@@ -109,8 +109,8 @@ async function sendTX(addr, value) {
 }
 
 async function callNodeApi() {
-  var info = await wallet.client.getInfo();
-  var json;
+  let info = await wallet.client.getInfo();
+  let json;
 
   console.log('Server Info:');
   console.log(info);

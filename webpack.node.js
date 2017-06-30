@@ -1,9 +1,9 @@
 'use strict';
 
-var webpack = require('webpack')
-var path = require('path');
-var str = JSON.stringify;
-var env = process.env;
+const webpack = require('webpack')
+const path = require('path');
+const str = JSON.stringify;
+const env = process.env;
 
 module.exports = {
   target: 'node',

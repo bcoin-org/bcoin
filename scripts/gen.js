@@ -1,21 +1,22 @@
 'use strict';
 
-var BN = require('../lib/crypto/bn');
-var util = require('../lib/utils/util');
-var consensus = require('../lib/protocol/consensus');
-var encoding = require('../lib/utils/encoding');
-var TX = require('../lib/primitives/tx');
-var Block = require('../lib/primitives/block');
-var Script = require('../lib/script/script');
-var Opcode = require('../lib/script/opcode');
-var opcodes = Script.opcodes;
-var main, testnet, regtest, segnet3, segnet4, btcd;
+const BN = require('../lib/crypto/bn');
+const util = require('../lib/utils/util');
+const consensus = require('../lib/protocol/consensus');
+const encoding = require('../lib/utils/encoding');
+const TX = require('../lib/primitives/tx');
+const Block = require('../lib/primitives/block');
+const Script = require('../lib/script/script');
+const Opcode = require('../lib/script/opcode');
+const opcodes = Script.opcodes;
+
+let main, testnet, regtest, segnet3, segnet4, btcd;
 
 function createGenesisBlock(options) {
-  var flags = options.flags;
-  var script = options.script;
-  var reward = options.reward;
-  var tx, block;
+  let flags = options.flags;
+  let script = options.script;
+  let reward = options.reward;
+  let tx, block;
 
   if (!flags) {
     flags = Buffer.from(
@@ -77,42 +78,42 @@ main = createGenesisBlock({
   ts: 1231006505,
   bits: 486604799,
   nonce: 2083236893
-};
+});
 
 testnet = createGenesisBlock({
   version: 1,
   ts: 1296688602,
   bits: 486604799,
   nonce: 414098458
-};
+});
 
 regtest = createGenesisBlock({
   version: 1,
   ts: 1296688602,
   bits: 545259519,
   nonce: 2
-};
+});
 
 segnet3 = createGenesisBlock({
   version: 1,
   ts: 1452831101,
   bits: 486604799,
   nonce: 0
-};
+});
 
 segnet4 = createGenesisBlock({
   version: 1,
   ts: 1452831101,
   bits: 503447551,
   nonce: 0
-};
+});
 
 btcd = createGenesisBlock({
   version: 1,
   ts: 1401292357,
   bits: 545259519,
   nonce: 2
-};
+});
 
 util.log(main);
 util.log('');

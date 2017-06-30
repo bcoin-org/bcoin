@@ -1,12 +1,12 @@
 'use strict';
 
-var assert = require('assert');
-var util = require('../lib/utils/util');
-var bip70 = require('../lib/bip70');
-var Address = require('../lib/primitives/address');
-var x509 = bip70.x509;
+const assert = require('assert');
+const util = require('../lib/utils/util');
+const bip70 = require('../lib/bip70');
+const Address = require('../lib/primitives/address');
+const x509 = bip70.x509;
 
-var tests = require('./data/bip70.json');
+const tests = require('./data/bip70.json');
 
 tests.valid = Buffer.from(tests.valid, 'hex');
 tests.invalid = Buffer.from(tests.invalid, 'hex');
@@ -23,8 +23,8 @@ x509.trusted = {};
 
 describe('BIP70', function() {
   function testRequest(data) {
-    var request = bip70.PaymentRequest.fromRaw(data);
-    var ser;
+    let request = bip70.PaymentRequest.fromRaw(data);
+    let ser;
 
     assert.equal(request.pkiType, 'x509+sha256');
     assert(request.pkiData);
@@ -40,14 +40,14 @@ describe('BIP70', function() {
 
   x509.verifyTime = function() { return true; };
 
-  it('should parse and verify a payment request', function() {
+  it('should parse and verify a payment request', () => {
     testRequest(tests.valid);
     testRequest(tests.invalid);
     testRequest(tests.untrusted);
   });
 
-  it('should verify cert chain', function() {
-    var request = bip70.PaymentRequest.fromRaw(tests.valid);
+  it('should verify cert chain', () => {
+    let request = bip70.PaymentRequest.fromRaw(tests.valid);
 
     assert.equal(request.version, 1);
     assert.equal(request.getChain().length, 4);
@@ -101,8 +101,8 @@ describe('BIP70', function() {
     assert(request.verifyChain());
   });
 
-  it('should fail to verify cert signatures when enforcing trust', function() {
-    var request;
+  it('should fail to verify cert signatures when enforcing trust', () => {
+    let request;
 
     x509.allowUntrusted = false;
 
@@ -116,8 +116,8 @@ describe('BIP70', function() {
     assert(!request.verifyChain());
   });
 
-  it('should verify cert signatures once root cert is added', function() {
-    var request = bip70.PaymentRequest.fromRaw(tests.valid);
+  it('should verify cert signatures once root cert is added', () => {
+    let request = bip70.PaymentRequest.fromRaw(tests.valid);
     x509.setTrust([request.getChain().pop()]);
     assert(request.verifyChain());
 
@@ -125,20 +125,20 @@ describe('BIP70', function() {
     assert(!request.verifyChain());
   });
 
-  it('should still fail to verify cert signatures for invalid', function() {
-    var request = bip70.PaymentRequest.fromRaw(tests.invalid);
+  it('should still fail to verify cert signatures for invalid', () => {
+    let request = bip70.PaymentRequest.fromRaw(tests.invalid);
     assert(!request.verifyChain());
   });
 
-  it('should get chain and ca for request', function() {
-    var request = bip70.PaymentRequest.fromRaw(tests.valid);
+  it('should get chain and ca for request', () => {
+    let request = bip70.PaymentRequest.fromRaw(tests.valid);
     assert.equal(request.getChain().length, 4);
     assert.equal(request.getCA().name,
       'Go Daddy Class 2 Certification Authority');
   });
 
-  it('should validate untrusted once again', function() {
-    var request = bip70.PaymentRequest.fromRaw(tests.untrusted);
+  it('should validate untrusted once again', () => {
+    let request = bip70.PaymentRequest.fromRaw(tests.untrusted);
     x509.setTrust([request.getChain().pop()]);
 
     request = bip70.PaymentRequest.fromRaw(tests.untrusted);
@@ -147,16 +147,16 @@ describe('BIP70', function() {
       'DigiCert SHA2 Extended Validation Server CA');
   });
 
-  it('should parse a payment ack', function() {
-    var ack = bip70.PaymentACK.fromRaw(tests.ack);
+  it('should parse a payment ack', () => {
+    let ack = bip70.PaymentACK.fromRaw(tests.ack);
     assert.equal(ack.memo.length, 95);
     assert.equal(ack.memo, 'Transaction received by BitPay.'
       + ' Invoice will be marked as paid if the transaction is confirmed.');
     assert.equal(ack.toRaw().toString('hex'), tests.ack.toString('hex'));
   });
 
-  it('should create a payment request, sign, and verify', function() {
-    var request = new bip70.PaymentRequest({
+  it('should create a payment request, sign, and verify', () => {
+    let request = new bip70.PaymentRequest({
       version: 25,
       paymentDetails: {
         network: 'testnet',

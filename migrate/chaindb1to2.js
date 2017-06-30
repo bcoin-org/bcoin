@@ -1,20 +1,20 @@
 'use strict';
 
-var assert = require('assert');
-var encoding = require('../lib/utils/encoding');
-var networks = require('../lib/protocol/networks');
-var co = require('../lib/utils/co');
-var BufferWriter = require('../lib/utils/writer');
-var BufferReader = require('../lib/utils/reader');
-var OldCoins = require('./coins-old');
-var Coins = require('../lib/coins/coins');
-var UndoCoins = require('../lib/coins/undocoins');
-var Coin = require('../lib/primitives/coin');
-var Output = require('../lib/primitives/output');
-var LDB = require('../lib/db/ldb');
-var file = process.argv[2];
-var options = {};
-var db, batch, index;
+const assert = require('assert');
+const encoding = require('../lib/utils/encoding');
+const networks = require('../lib/protocol/networks');
+const co = require('../lib/utils/co');
+const BufferWriter = require('../lib/utils/writer');
+const BufferReader = require('../lib/utils/reader');
+const OldCoins = require('./coins-old');
+const Coins = require('../lib/coins/coins');
+const UndoCoins = require('../lib/coins/undocoins');
+const Coin = require('../lib/primitives/coin');
+const Output = require('../lib/primitives/output');
+const LDB = require('../lib/db/ldb');
+let file = process.argv[2];
+let options = {};
+let db, batch, index;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
@@ -44,7 +44,7 @@ if (index !== -1) {
 }
 
 async function updateVersion() {
-  var data, ver;
+  let data, ver;
 
   console.log('Checking version.');
 
@@ -64,7 +64,7 @@ async function updateVersion() {
 }
 
 async function checkTipIndex() {
-  var keys = await db.keys({
+  let keys = await db.keys({
     gte: pair('p', encoding.ZERO_HASH),
     lte: pair('p', encoding.MAX_HASH)
   });
@@ -115,8 +115,8 @@ async function updateDeployments() {
 }
 
 async function reserializeCoins() {
-  var total = 0;
-  var i, iter, item, hash, old, coins, coin, output;
+  let total = 0;
+  let i, iter, item, hash, old, coins, coin, output;
 
   iter = db.iterator({
     gte: pair('c', encoding.ZERO_HASH),
@@ -167,8 +167,8 @@ async function reserializeCoins() {
 }
 
 async function reserializeUndo() {
-  var total = 0;
-  var iter, item, br, undo;
+  let total = 0;
+  let iter, item, br, undo;
 
   iter = db.iterator({
     gte: pair('u', encoding.ZERO_HASH),
@@ -206,7 +206,7 @@ function write(data, str, off) {
 }
 
 function pair(prefix, hash) {
-  var key = Buffer.allocUnsafe(33);
+  let key = Buffer.allocUnsafe(33);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
@@ -215,7 +215,7 @@ function pair(prefix, hash) {
 }
 
 function injectCoin(undo, coin) {
-  var output = new Output();
+  let output = new Output();
 
   output.value = coin.value;
   output.script = coin.script;
@@ -227,8 +227,8 @@ function injectCoin(undo, coin) {
 }
 
 function defaultOptions() {
-  var bw = new BufferWriter();
-  var flags = 0;
+  let bw = new BufferWriter();
+  let flags = 0;
 
   if (options.spv)
     flags |= 1 << 0;
@@ -252,8 +252,8 @@ function defaultOptions() {
 }
 
 function defaultDeployments() {
-  var bw = new BufferWriter();
-  var i, deployment;
+  let bw = new BufferWriter();
+  let i, deployment;
 
   bw.writeU8(options.network.deploys.length);
 
@@ -267,7 +267,7 @@ function defaultDeployments() {
   return bw.render();
 }
 
-(async function() {
+(async () => {
   await db.open();
   console.log('Opened %s.', file);
   batch = db.batch();
@@ -278,7 +278,7 @@ function defaultDeployments() {
   await reserializeCoins();
   await reserializeUndo();
   await batch.write();
-})().then(function() {
+})().then(() => {
   console.log('Migration complete.');
   process.exit(0);
 });

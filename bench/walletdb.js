@@ -1,14 +1,14 @@
 'use strict';
 
-var bench = require('./bench');
-var random = require('../lib/crypto/random');
-var WalletDB = require('../lib/wallet/walletdb');
-var MTX = require('../lib/primitives/mtx');
-var Outpoint = require('../lib/primitives/outpoint');
-var walletdb;
+const bench = require('./bench');
+const random = require('../lib/crypto/random');
+const WalletDB = require('../lib/wallet/walletdb');
+const MTX = require('../lib/primitives/mtx');
+const Outpoint = require('../lib/primitives/outpoint');
+let walletdb;
 
 function dummy() {
-  var hash = random.randomBytes(32).toString('hex');
+  let hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, 0);
 }
 
@@ -20,8 +20,8 @@ walletdb = new WalletDB({
 });
 
 async function runBench() {
-  var i, j, wallet, addrs, jobs, end;
-  var result, tx, mtx, options;
+  let i, j, wallet, addrs, jobs, end;
+  let result, tx, mtx, options;
 
   // Open and Create
   await walletdb.open();

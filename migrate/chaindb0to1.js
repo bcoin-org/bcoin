@@ -1,15 +1,15 @@
 'use strict';
 
-var bcoin = require('../');
-var assert = require('assert');
-var file = process.argv[2];
-var BufferWriter = require('../lib/utils/writer');
+const bcoin = require('../');
+const assert = require('assert');
+const BufferWriter = require('../lib/utils/writer');
+let file = process.argv[2];
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
 file = file.replace(/\.ldb\/?$/, '');
 
-var db = bcoin.ldb({
+const db = bcoin.ldb({
   location: file,
   db: 'leveldb',
   compression: true,
@@ -19,15 +19,15 @@ var db = bcoin.ldb({
 });
 
 function makeKey(data) {
-  var height = data.readUInt32LE(1, true);
-  var key = Buffer.allocUnsafe(5);
+  let height = data.readUInt32LE(1, true);
+  let key = Buffer.allocUnsafe(5);
   key[0] = 0x48;
   key.writeUInt32BE(height, 1, true);
   return key;
 }
 
 async function checkVersion() {
-  var data, ver;
+  let data, ver;
 
   console.log('Checking version.');
 
@@ -43,7 +43,7 @@ async function checkVersion() {
 }
 
 async function updateState() {
-  var data, hash, batch, ver, p;
+  let data, hash, batch, ver, p;
 
   console.log('Updating chain state.');
 
@@ -75,9 +75,9 @@ async function updateState() {
 }
 
 async function updateEndian() {
-  var batch = db.batch();
-  var total = 0;
-  var iter, item;
+  let batch = db.batch();
+  let total = 0;
+  let iter, item;
 
   console.log('Updating endianness.');
   console.log('Iterating...');
@@ -106,13 +106,13 @@ async function updateEndian() {
   console.log('Migrated endianness.');
 }
 
-(async function() {
+(async () => {
   await db.open();
   console.log('Opened %s.', file);
   await checkVersion();
   await updateState();
   await updateEndian();
-})().then(function() {
+})().then(() => {
   console.log('Migration complete.');
   process.exit(0);
 });

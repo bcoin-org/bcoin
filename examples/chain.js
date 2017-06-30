@@ -1,13 +1,13 @@
 'use strict';
 
-var Chain = require('bcoin/lib/blockchain/chain');
+const Chain = require('bcoin/lib/blockchain/chain');
 
-var chain = new Chain({
+const chain = new Chain({
   network: 'testnet'
 });
 
 async function main() {
-  var entry;
+  let entry;
 
   await chain.open();
 
