@@ -17,7 +17,7 @@ let block = Block.fromJSON(json);
 let btx = { tx: block.txs[397], view: new CoinView() };
 
 let tx3 = parseTX('../test/data/tx3.hex');
-let wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+let wtx = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
 let i, tx, end, flags, input;
 
 wtx = Buffer.from(wtx.trim(), 'hex');
@@ -29,7 +29,7 @@ for (i = 0; i < tx.inputs.length; i++) {
 }
 
 function parseTX(file) {
-  let data = fs.readFileSync(__dirname + '/' + file, 'utf8');
+  let data = fs.readFileSync(`${__dirname}/${file}`, 'utf8');
   let parts = data.trim().split(/\n+/);
   let raw = parts[0];
   let tx = TX.fromRaw(raw.trim(), 'hex');

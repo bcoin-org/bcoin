@@ -39,7 +39,7 @@ async function checkVersion() {
   ver = data.readUInt32LE(0, true);
 
   if (ver !== 0)
-    throw Error('DB is version ' + ver + '.');
+    throw Error(`DB is version ${ver}.`);
 }
 
 async function updateState() {

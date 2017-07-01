@@ -24,10 +24,8 @@ NodeContext.prototype.init = function() {
     port = this.network.port + i;
     last = port - 1;
 
-    if (last < this.network.port) {
-      // last = this.network.port + this.size - 1;
+    if (last < this.network.port)
       last = port;
-    }
 
     node = new FullNode({
       network: this.network,
@@ -44,7 +42,7 @@ NodeContext.prototype.init = function() {
       host: '127.0.0.1',
       port: port,
       seeds: [
-        '127.0.0.1:' + last
+        `127.0.0.1:${last}`
       ]
     });
 
@@ -58,33 +56,24 @@ NodeContext.prototype.init = function() {
 
 NodeContext.prototype.open = function open() {
   let jobs = [];
-  let i, node;
 
-  for (i = 0; i < this.nodes.length; i++) {
-    node = this.nodes[i];
+  for (let node of this.nodes)
     jobs.push(node.open());
-  }
 
   return Promise.all(jobs);
 };
 
 NodeContext.prototype.close = function close() {
   let jobs = [];
-  let i, node;
 
-  for (i = 0; i < this.nodes.length; i++) {
-    node = this.nodes[i];
+  for (let node of this.nodes)
     jobs.push(node.close());
-  }
 
   return Promise.all(jobs);
 };
 
 NodeContext.prototype.connect = async function connect() {
-  let i, node;
-
-  for (i = 0; i < this.nodes.length; i++) {
-    node = this.nodes[i];
+  for (let node of this.nodes) {
     await node.connect();
     await co.timeout(1000);
   }
@@ -101,10 +90,7 @@ NodeContext.prototype.disconnect = async function disconnect() {
 };
 
 NodeContext.prototype.startSync = function startSync() {
-  let i, node;
-
-  for (i = 0; i < this.nodes.length; i++) {
-    node = this.nodes[i];
+  for (let node of this.nodes) {
     node.chain.synced = true;
     node.chain.emit('full');
     node.startSync();
@@ -112,12 +98,8 @@ NodeContext.prototype.startSync = function startSync() {
 };
 
 NodeContext.prototype.stopSync = function stopSync() {
-  let i, node;
-
-  for (i = 0; i < this.nodes.length; i++) {
-    node = this.nodes[i];
+  for (let node of this.nodes)
     node.stopSync();
-  }
 };
 
 NodeContext.prototype.generate = async function generate(index, blocks) {

@@ -12,7 +12,7 @@ describe('Mnemonic', function() {
     let phrase = data[1];
     let seed = Buffer.from(data[2], 'hex');
     let xpriv = data[3];
-    it('should create an english mnemonic (' + i + ')', () => {
+    it(`should create an english mnemonic (${i})`, () => {
       let mnemonic, key;
 
       mnemonic = new HD.Mnemonic({
@@ -35,7 +35,7 @@ describe('Mnemonic', function() {
     let seed = Buffer.from(data.seed, 'hex');
     let passphrase = data.passphrase;
     let xpriv = data.bip32_xprv;
-    it('should create a japanese mnemonic (' + i + ')', () => {
+    it(`should create a japanese mnemonic (${i})`, () => {
       let mnemonic, key;
 
       mnemonic = new HD.Mnemonic({

@@ -127,7 +127,7 @@ describe('Bech32', function() {
   }
 
   VALID_CHECKSUM.forEach((test) => {
-    it('should have valid checksum for ' + test, () => {
+    it(`should have valid checksum for ${test}`, () => {
       let ret = bech32.deserialize(test);
       assert(ret);
     });
@@ -136,7 +136,7 @@ describe('Bech32', function() {
   VALID_ADDRESS.forEach((test) => {
     let address = test[0];
     let scriptpubkey = test[1];
-    it('should have valid address for ' + address, () => {
+    it(`should have valid address for ${address}`, () => {
       let hrp = 'bc';
       let ret, ok, output, recreate;
 
@@ -172,7 +172,7 @@ describe('Bech32', function() {
   });
 
   INVALID_ADDRESS.forEach((test) => {
-    it('should have invalid address for ' + test, () => {
+    it(`should have invalid address for ${test}`, () => {
       let ok1, ok2, ok;
 
       try {
@@ -201,7 +201,7 @@ describe('Bech32', function() {
     if (i >= 2 && i <= 4)
       return;
 
-    it('should have valid address for ' + address, () => {
+    it(`should have valid address for ${address}`, () => {
       let ret, ok, output, recreate;
 
       try {
@@ -235,7 +235,7 @@ describe('Bech32', function() {
   });
 
   INVALID_ADDRESS.forEach((test) => {
-    it('should have invalid address for ' + test, () => {
+    it(`should have invalid address for ${test}`, () => {
       let ok1, ok2;
 
       try {

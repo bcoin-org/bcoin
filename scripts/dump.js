@@ -7,12 +7,12 @@ const Coins = require('../lib/coins/coins');
 const TX = require('../lib/primitives/tx');
 const CoinView = require('../lib/coins/coinview');
 
-let SNAPSHOT = __dirname + '/../dump.heapsnapshot';
+let SNAPSHOT = `${__dirname}/../dump.heapsnapshot`;
 let tx = parseTX('../test/data/tx4.hex');
 let raw, coins, entry;
 
 function parseTX(file) {
-  let data = fs.readFileSync(__dirname + '/' + file, 'utf8');
+  let data = fs.readFileSync(`${__dirname}/${file}`, 'utf8');
   let parts = data.trim().split(/\n+/);
   let raw = parts[0];
   let tx = TX.fromRaw(raw.trim(), 'hex');

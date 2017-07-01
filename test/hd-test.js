@@ -106,7 +106,7 @@ describe('HD', function() {
       if (path === 'seed' || path === 'm')
         return;
 
-      it('should derive ' + path + ' from master', () => {
+      it(`should derive ${path} from master`, () => {
         let key = master.derivePath(path);
         equal(key.toBase58(), kp.prv);
         equal(key.toPublic().toBase58(), kp.pub);

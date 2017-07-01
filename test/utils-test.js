@@ -20,8 +20,14 @@ describe('Utils', function() {
     ['61', '2g'],
     ['626262', 'a3gV'],
     ['636363', 'aPEr'],
-    ['73696d706c792061206c6f6e6720737472696e67', '2cFupjhnEsSn59qHXstmK2ffpLv2'],
-    ['00eb15231dfceb60925886b67d065299925915aeb172c06647', '1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L'],
+    [
+      '73696d706c792061206c6f6e6720737472696e67',
+      '2cFupjhnEsSn59qHXstmK2ffpLv2'
+    ],
+    [
+      '00eb15231dfceb60925886b67d065299925915aeb172c06647',
+      '1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L'
+    ],
     ['516b6fcd0f', 'ABnLTmg'],
     ['bf4f89001e670274dd', '3SEo3LWLoPntC'],
     ['572e4794', '3EFU7m'],
@@ -200,9 +206,9 @@ describe('Utils', function() {
   unsigned.forEach((num) => {
     let buf1 = Buffer.allocUnsafe(8);
     let buf2 = Buffer.allocUnsafe(8);
-    let msg = 'should write+read a ' + num.bitLength() + ' bit unsigned int';
+    let bits = num.bitLength();
 
-    it(msg, () => {
+    it(`should write+read a ${bits} bit unsigned int`, () => {
       let n1, n2;
 
       encoding.writeU64BN(buf1, num, 0);
@@ -218,10 +224,10 @@ describe('Utils', function() {
   signed.forEach((num) => {
     let buf1 = Buffer.allocUnsafe(8);
     let buf2 = Buffer.allocUnsafe(8);
-    let msg = 'should write+read a ' + num.bitLength()
-      + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int';
+    let bits = num.bitLength();
+    let sign = num.isNeg() ? 'negative' : 'positive';
 
-    it(msg, () => {
+    it(`should write+read a ${bits} bit ${sign} int`, () => {
       let n1, n2;
 
       encoding.write64BN(buf1, num, 0);
@@ -233,10 +239,7 @@ describe('Utils', function() {
       assert.equal(n1.toNumber(), n2);
     });
 
-    msg = 'should write+read a ' + num.bitLength()
-      + ' bit ' + (num.isNeg() ? 'negative' : 'positive') + ' int as unsigned';
-
-    it(msg, () => {
+    it(`should write+read a ${bits} bit ${sign} int as unsigned`, () => {
       let n1, n2;
 
       encoding.writeU64BN(buf1, num, 0);
@@ -245,9 +248,7 @@ describe('Utils', function() {
 
       n1 = encoding.readU64BN(buf1, 0);
       if (num.isNeg()) {
-        assert.throws(() => {
-          encoding.readU64(buf2, 0);
-        });
+        assert.throws(() => encoding.readU64(buf2, 0));
       } else {
         n2 = encoding.readU64(buf2, 0);
         assert.equal(n1.toNumber(), n2);

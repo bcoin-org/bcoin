@@ -56,7 +56,7 @@ async function updateVersion() {
   ver = data.readUInt32LE(0, true);
 
   if (ver !== 1)
-    throw Error('DB is version ' + ver + '.');
+    throw Error(`DB is version ${ver}.`);
 
   ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(2, 0, true);

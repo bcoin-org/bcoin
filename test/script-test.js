@@ -232,12 +232,11 @@ describe('Script', function() {
     let witness = Array.isArray(data[0]) ? data.shift() : [];
     let input = data[0] ? data[0].trim() : data[0] || '';
     let output = data[1] ? data[1].trim() : data[1] || '';
-    let flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+    let names = data[2] ? data[2].trim().split(/,\s*/) : [];
     let expected = data[3] || '';
     let comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
     let amount = 0;
-    let flag = 0;
-    let i, name;
+    let flags = 0;
 
     if (data.length === 1)
       return;
@@ -245,7 +244,7 @@ describe('Script', function() {
     if (!comments)
       comments = output.slice(0, 60);
 
-    comments += ' (' + expected + ')';
+    comments += ` (${expected})`;
 
     if (witness.length !== 0)
       amount = witness.pop() * 100000000;
@@ -254,17 +253,15 @@ describe('Script', function() {
     input = Script.fromString(input);
     output = Script.fromString(output);
 
-    for (i = 0; i < flags.length; i++) {
-      name = 'VERIFY_' + flags[i];
+    for (let name of names) {
+      name = `VERIFY_${name}`;
       assert(Script.flags[name] != null, 'Unknown flag.');
-      flag |= Script.flags[name];
+      flags |= Script.flags[name];
     }
 
-    flags = flag;
-
     [false, true].forEach((noCache) => {
-      let suffix = noCache ? ' without cache' : ' with cache';
-      it('should handle script test' + suffix + ': ' + comments, () => {
+      let suffix = noCache ? 'without cache' : 'with cache';
+      it(`should handle script test ${suffix}:${comments}`, () => {
         let prev, tx, err, res;
 
         // Funding transaction.
