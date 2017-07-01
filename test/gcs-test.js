@@ -8,7 +8,7 @@ const Block = require('../lib/primitives/block');
 const Outpoint = require('../lib/primitives/outpoint');
 const Address = require('../lib/primitives/address');
 
-let raw = fs.readFileSync(__dirname + '/data/block928927.raw');
+let raw = fs.readFileSync(`${__dirname}/data/block928927.raw`);
 let block = Block.fromRaw(raw);
 
 describe('GCS', function() {

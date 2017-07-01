@@ -16,10 +16,10 @@ const encoding = require('../lib/utils/encoding');
 const bip152 = require('../lib/net/bip152');
 
 const block300025 = require('./data/block300025.json');
-const cmpct2block = fs.readFileSync(__dirname + '/data/cmpct2.bin');
+const cmpct2block = fs.readFileSync(`${__dirname}/data/cmpct2.bin`);
 
-let cmpct1 = fs.readFileSync(__dirname + '/data/compactblock.hex', 'utf8');
-let cmpct2 = fs.readFileSync(__dirname + '/data/cmpct2', 'utf8');
+let cmpct1 = fs.readFileSync(`${__dirname}/data/compactblock.hex`, 'utf8');
+let cmpct2 = fs.readFileSync(`${__dirname}/data/cmpct2`, 'utf8');
 
 cmpct1 = cmpct1.trim().split('\n');
 cmpct2 = cmpct2.trim();
@@ -448,8 +448,8 @@ describe('Block', function() {
   });
 
   it('should count sigops for block 928828 (testnet)', () => {
-    let blockRaw = fs.readFileSync(__dirname + '/data/block928828.raw');
-    let undoRaw = fs.readFileSync(__dirname + '/data/undo928828.raw');
+    let blockRaw = fs.readFileSync(`${__dirname}/data/block928828.raw`);
+    let undoRaw = fs.readFileSync(`${__dirname}/data/undo928828.raw`);
     let block = Block.fromRaw(blockRaw);
     let undo = UndoCoins.fromRaw(undoRaw);
     let view = applyUndo(block, undo);
@@ -467,8 +467,8 @@ describe('Block', function() {
   });
 
   it('should count sigops for block 928927 (testnet)', () => {
-    let blockRaw = fs.readFileSync(__dirname + '/data/block928927.raw');
-    let undoRaw = fs.readFileSync(__dirname + '/data/undo928927.raw');
+    let blockRaw = fs.readFileSync(`${__dirname}/data/block928927.raw`);
+    let undoRaw = fs.readFileSync(`${__dirname}/data/undo928927.raw`);
     let block = Block.fromRaw(blockRaw);
     let undo = UndoCoins.fromRaw(undoRaw);
     let view = applyUndo(block, undo);
@@ -486,8 +486,8 @@ describe('Block', function() {
   });
 
   it('should count sigops for block 1087400 (testnet)', () => {
-    let blockRaw = fs.readFileSync(__dirname + '/data/block1087400.raw');
-    let undoRaw = fs.readFileSync(__dirname + '/data/undo1087400.raw');
+    let blockRaw = fs.readFileSync(`${__dirname}/data/block1087400.raw`);
+    let undoRaw = fs.readFileSync(`${__dirname}/data/undo1087400.raw`);
     let block = Block.fromRaw(blockRaw);
     let undo = UndoCoins.fromRaw(undoRaw);
     let view = applyUndo(block, undo);

@@ -5,7 +5,7 @@ const bench = require('./bench');
 const Coins = require('../migrate/coins-old');
 const TX = require('../lib/primitives/tx');
 
-let wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+let wtx = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
 wtx = TX.fromRaw(wtx.trim(), 'hex');
 
 let coins = Coins.fromTX(wtx);

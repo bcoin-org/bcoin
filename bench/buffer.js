@@ -6,7 +6,7 @@ const BufferWriter = require('../lib/utils/writer');
 const StaticWriter = require('../lib/utils/staticwriter');
 const bench = require('./bench');
 
-let wtx = fs.readFileSync(__dirname + '/../test/data/wtx.hex', 'utf8');
+let wtx = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
 let i, tx, end;
 
 wtx = Buffer.from(wtx.trim(), 'hex');

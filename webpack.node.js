@@ -20,7 +20,7 @@ module.exports = {
     modules: ['node_modules'],
     extensions: ['.node', '.js', '.json'],
     alias: {
-      'bindings': __dirname + '/webpack/bindings.js'
+      'bindings': path.resolve(__dirname, 'webpack', 'bindings.js')
     }
   },
   node: {

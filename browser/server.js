@@ -5,11 +5,11 @@ const WSProxy = require('./wsproxy');
 const fs = require('fs');
 const server, proxy;
 
-const index = fs.readFileSync(__dirname + '/index.html');
-const indexjs = fs.readFileSync(__dirname + '/index.js');
-const bcoin = fs.readFileSync(__dirname + '/bcoin.js');
-const master = fs.readFileSync(__dirname + '/bcoin-master.js');
-const worker = fs.readFileSync(__dirname + '/bcoin-worker.js');
+const index = fs.readFileSync(`${__dirname}/index.html`);
+const indexjs = fs.readFileSync(`${__dirname}/index.js`);
+const bcoin = fs.readFileSync(`${__dirname}/bcoin.js`);
+const master = fs.readFileSync(`${__dirname}/bcoin-master.js`);
+const worker = fs.readFileSync(`${__dirname}/bcoin-worker.js`);
 
 proxy = new WSProxy({
   pow: process.argv.indexOf('--pow') !== -1,

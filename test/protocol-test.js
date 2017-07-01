@@ -12,7 +12,7 @@ const network = Network.get('main');
 
 describe('Protocol', function() {
   let pkg = require('../lib/pkg');
-  let agent = '/bcoin:' + pkg.version + '/';
+  let agent = `/bcoin:${pkg.version}/`;
   let parser, framer, v1, v2, hosts;
 
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe('Protocol', function() {
   });
 
   function packetTest(command, payload, test) {
-    it('should encode/decode ' + command, (cb) => {
+    it(`should encode/decode ${command}`, (cb) => {
       let ver = Buffer.from(framer.packet(command, payload.toRaw()));
       parser.once('packet', (packet) => {
         assert.equal(packet.cmd, command);

@@ -9,5 +9,5 @@ module.exports = function bindings(name) {
     case 'secp256k1':
       return require('secp256k1/build/Release/secp256k1.node');
   }
-  throw new Error('Cannot find module "' + name + '".');
+  throw new Error(`Cannot find module "${name}".`);
 };

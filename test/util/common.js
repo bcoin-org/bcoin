@@ -5,7 +5,7 @@ const TX = require('../../lib/primitives/tx');
 const CoinView = require('../../lib/coins/coinview');
 
 exports.parseTX = function parseTX(file) {
-  let data = fs.readFileSync(__dirname + '/../' + file, 'utf8');
+  let data = fs.readFileSync(`${__dirname}/../${file}`, 'utf8');
   let parts = data.trim().split(/\n+/);
   let raw = parts[0];
   let tx = TX.fromRaw(raw.trim(), 'hex');

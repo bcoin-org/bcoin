@@ -38,29 +38,27 @@ function clearCache(tx, noCache) {
 }
 
 function parseTest(data) {
-  let coins = data[0];
-  let tx = TX.fromRaw(data[1], 'hex');
-  let flags = data[2] ? data[2].trim().split(/,\s*/) : [];
+  let [coins, tx, names] = data;
   let view = new CoinView();
-  let flag = 0;
-  let i, name, coin, hash, index;
-  let item, script, amount, value;
+  let flags = 0;
+  let coin;
 
-  for (i = 0; i < flags.length; i++) {
-    name = 'VERIFY_' + flags[i];
+  if (!names)
+    names = '';
+
+  tx = TX.fromRaw(tx, 'hex');
+  names = names.trim().split(/,\s*/);
+
+  for (let name of names) {
+    name = `VERIFY_${name}`;
     assert(Script.flags[name] != null, 'Unknown flag.');
-    flag |= Script.flags[name];
+    flags |= Script.flags[name];
   }
 
-  flags = flag;
-
-  for (i = 0; i < coins.length; i++) {
-    item = coins[i];
-    hash = util.revHex(item[0]);
-    index = item[1];
-    script = Script.fromString(item[2]);
-    amount = item[3] != null ? item[3] : '0';
-    value = parseInt(amount, 10);
+  for (let [hash, index, script, value] of coins) {
+    hash = util.revHex(hash);
+    script = Script.fromString(script);
+    value = parseInt(value || '0', 10);
 
     if (index === -1)
       continue;
@@ -169,15 +167,15 @@ describe('TX', function() {
             '2e88ac00000000';
 
   [false, true].forEach((noCache) => {
-    let suffix = noCache ? ' without cache' : ' with cache';
+    let suffix = noCache ? 'without cache' : 'with cache';
 
-    it('should decode/encode with parser/framer' + suffix, () => {
+    it(`should decode/encode with parser/framer ${suffix}`, () => {
       let tx = TX.fromRaw(raw, 'hex');
       clearCache(tx, noCache);
       assert.equal(tx.toRaw().toString('hex'), raw);
     });
 
-    it('should be verifiable' + suffix, () => {
+    it(`should be verifiable ${suffix}`, () => {
       let tx = TX.fromRaw(raw, 'hex');
       let p = TX.fromRaw(inp, 'hex');
       let view = new CoinView();
@@ -189,34 +187,34 @@ describe('TX', function() {
       assert(tx.verify(view));
     });
 
-    it('should verify non-minimal output' + suffix, () => {
+    it(`should verify non-minimal output ${suffix}`, () => {
       clearCache(tx1.tx, noCache);
       assert(tx1.tx.verify(tx1.view, Script.flags.VERIFY_P2SH));
     });
 
-    it('should verify tx.version == 0' + suffix, () => {
+    it(`should verify tx.version == 0 ${suffix}`, () => {
       clearCache(tx2.tx, noCache);
       assert(tx2.tx.verify(tx2.view, Script.flags.VERIFY_P2SH));
     });
 
-    it('should verify sighash_single bug w/ findanddelete' + suffix, () => {
+    it(`should verify sighash_single bug w/ findanddelete ${suffix}`, () => {
       clearCache(tx3.tx, noCache);
       assert(tx3.tx.verify(tx3.view, Script.flags.VERIFY_P2SH));
     });
 
-    it('should verify high S value with only DERSIG enabled' + suffix, () => {
+    it(`should verify high S value with only DERSIG enabled ${suffix}`, () => {
       let coin = tx4.view.getOutput(tx4.tx.inputs[0]);
       let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx4.tx, noCache);
       assert(tx4.tx.verifyInput(0, coin, flags));
     });
 
-    it('should verify the coolest tx ever sent' + suffix, () => {
+    it(`should verify the coolest tx ever sent ${suffix}`, () => {
       clearCache(coolest.tx, noCache);
       assert(coolest.tx.verify(coolest.view, Script.flags.VERIFY_NONE));
     });
 
-    it('should parse witness tx properly' + suffix, () => {
+    it(`should parse witness tx properly ${suffix}`, () => {
       let raw1, raw2, wtx2;
 
       clearCache(wtx.tx, noCache);
@@ -245,8 +243,7 @@ describe('TX', function() {
     });
 
     [[valid, true], [invalid, false]].forEach((test) => {
-      let arr = test[0];
-      let valid = test[1];
+      let [arr, valid] = test;
       let comment = '';
 
       arr.forEach((json, i) => {
@@ -276,19 +273,19 @@ describe('TX', function() {
 
         if (valid) {
           if (comments.indexOf('Coinbase') === 0) {
-            it('should handle valid coinbase' + suffix + ': ' + comments, () => {
+            it(`should handle valid coinbase ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(tx.isSane());
             });
             return;
           }
-          it('should handle valid tx test' + suffix + ': ' + comments, () => {
+          it(`should handle valid tx test ${suffix}: ${comments}`, () => {
             clearCache(tx, noCache);
             assert.ok(tx.verify(view, flags));
           });
         } else {
           if (comments === 'Duplicate inputs') {
-            it('should handle duplicate input test' + suffix + ': ' + comments, () => {
+            it(`should handle duplicate input test ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
@@ -296,7 +293,7 @@ describe('TX', function() {
             return;
           }
           if (comments === 'Negative output') {
-            it('should handle invalid tx (negative)' + suffix + ': ' + comments, () => {
+            it(`should handle invalid tx (negative) ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
@@ -304,13 +301,13 @@ describe('TX', function() {
             return;
           }
           if (comments.indexOf('Coinbase') === 0) {
-            it('should handle invalid coinbase' + suffix + ': ' + comments, () => {
+            it(`should handle invalid coinbase ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(!tx.isSane());
             });
             return;
           }
-          it('should handle invalid tx test' + suffix + ': ' + comments, () => {
+          it(`should handle invalid tx test ${suffix}: ${comments}`, () => {
             clearCache(tx, noCache);
             assert.ok(!tx.verify(view, flags));
           });
@@ -319,34 +316,28 @@ describe('TX', function() {
     });
 
     sighash.forEach((data) => {
-      let name, tx, script, index;
-      let type, expected, hexType;
+      let [tx, script, index, type, hash] = data;
+      let expected, hex;
 
       if (data.length === 1)
         return;
 
-      tx = TX.fromRaw(data[0], 'hex');
-      clearCache(tx, noCache);
-
-      script = Script.fromRaw(data[1], 'hex');
-
-      index = data[2];
-      type = data[3];
-      expected = util.revHex(data[4]);
-      hexType = type & 3;
+      tx = TX.fromRaw(tx, 'hex');
+      script = Script.fromRaw(script, 'hex');
+      expected = util.revHex(hash);
+      hex = type & 3;
 
       if (type & 0x80)
-        hexType |= 0x80;
+        hex |= 0x80;
 
-      hexType = hexType.toString(16);
+      hex = hex.toString(16);
 
-      if (hexType.length % 2 !== 0)
-        hexType = '0' + hexType;
+      if (hex.length % 2 !== 0)
+        hex = '0' + hex;
 
-      name = 'should get signature hash of '
-        + data[4] + ' (' + hexType + ')' + suffix;
+      clearCache(tx, noCache);
 
-      it(name, () => {
+      it(`should get sighash of ${hash} (${hex}) ${suffix}`, () => {
         let subscript = script.getSubscript(0).removeSeparators();
         let hash = tx.signatureHash(index, subscript, 0, type, 0);
         assert.equal(hash.toString('hex'), expected);

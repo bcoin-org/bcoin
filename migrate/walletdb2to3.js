@@ -28,7 +28,7 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  let bak = process.env.HOME + '/walletdb-bak-' + Date.now() + '.ldb';
+  let bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
   let data, ver;
 
   console.log('Checking version.');
@@ -39,7 +39,7 @@ async function updateVersion() {
   ver = data.readUInt32LE(0, true);
 
   if (ver !== 2)
-    throw Error('DB is version ' + ver + '.');
+    throw Error(`DB is version ${ver}.`);
 
   console.log('Backing up DB to: %s.', bak);
 
