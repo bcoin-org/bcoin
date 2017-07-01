@@ -218,7 +218,7 @@ describe('Block', function() {
     for (let i = 1; i < block.txs.length; i++) {
       let tx = block.txs[i];
       assert(tx.isSane());
-      assert(tx.checkInputs(view, height));
+      assert(tx.verifyInputs(view, height));
       assert(tx.verify(view, flags));
       assert(!tx.hasWitness());
       sigops += tx.getSigopsCost(view, flags);
