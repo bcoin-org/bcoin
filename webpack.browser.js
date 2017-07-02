@@ -30,8 +30,6 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.BCOIN_NETWORK':
         str(env.BCOIN_NETWORK || 'main'),
-      'process.env.BCOIN_WORKERS_ENABLED':
-        str(env.BCOIN_WORKERS_ENABLED || '0'),
       'process.env.BCOIN_WORKER_URL':
         str(env.BCOIN_WORKER_URL || '/bcoin-worker.js'),
       'process.env.BCOIN_MASTER_URL':
