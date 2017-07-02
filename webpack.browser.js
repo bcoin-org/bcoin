@@ -22,7 +22,7 @@ module.exports = {
   module: {
     rules: [{
       test: /\.js$/,
-      exclude: /node_modules\/(bn.js|elliptic|n64)/,
+      exclude: /node_modules\/(?!bcoin|elliptic|bn\.js|n64)/,
       loader: 'babel-loader'
     }]
   },
