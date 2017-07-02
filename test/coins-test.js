@@ -111,11 +111,11 @@ describe('Coins', function() {
       view.addTX(tx, 1);
     }
 
-    size = view.getFastSize(tx1);
+    size = view.getSize(tx1);
     bw = new StaticWriter(size);
-    raw = view.toFast(bw, tx1).render();
+    raw = view.toWriter(bw, tx1).render();
     br = new BufferReader(raw);
-    res = CoinView.fromFast(br, tx1);
+    res = CoinView.fromReader(br, tx1);
 
     prev = tx1.inputs[0].prevout;
     coins = res.get(prev.hash);
