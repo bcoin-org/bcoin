@@ -226,8 +226,6 @@ function formatWallet(wallet) {
   });
 }
 
-bcoin.workerpool.enable();
-
 node = new bcoin.fullnode({
   hash: true,
   query: true,
@@ -236,14 +234,11 @@ node = new bcoin.fullnode({
   db: 'leveldb',
   coinCache: 30000000,
   logConsole: true,
+  workers: true,
   logger: logger
 });
 
-wdb = node.use(bcoin.walletplugin);
-
-node.on('error', function(err) {
-  ;
-});
+wdb = node.use(bcoin.wallet.plugin);
 
 node.chain.on('block', addItem);
 node.mempool.on('tx', addItem);
