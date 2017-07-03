@@ -70,7 +70,7 @@ async function readJournal() {
   state = data.readUInt8(1, true);
   hash = data.toString('hex', 2, 34);
 
-  console.log('Read journal.');
+  console.log('Reading journal.');
   console.log('Recovering from state %d.', state);
 
   return [state, hash];
@@ -117,14 +117,17 @@ async function reserializeUndo(hash) {
   if (hash !== encoding.NULL_HASH)
     tip = await getEntry(hash);
 
-  console.log('Reserializing undo coins from tip %s.', tip.rhash());
+  console.log('Reserializing undo coins from tip %s.', util.revHex(tip.hash));
 
   while (tip.height !== 0) {
     let undoData = await db.get(pair('u', tip.hash));
     let blockData = await db.get(pair('b', tip.hash));
     let block, old, undo;
 
-    assert(undoData);
+    if (!undoData) {
+      tip = await getEntry(tip.prevBlock);
+      continue;
+    }
 
     if (!blockData) {
       if (!(await isPruned()))
@@ -154,7 +157,7 @@ async function reserializeUndo(hash) {
         item.coinbase = coin.coinbase;
         item.output.script = output.script;
         item.output.value = output.value;
-        item.spent = false;
+        item.spent = true;
         item.raw = null;
 
         // Store an index of heights and versions for later.
@@ -231,7 +234,7 @@ async function cleanupIndex() {
 
 async function reserializeCoins(hash) {
   let batch = db.batch();
-  let start = false;
+  let start = true;
   let total = 0;
 
   let iter = db.iterator({
@@ -539,6 +542,6 @@ function bpair(prefix, hash, index) {
 
   console.log('Migration complete.');
   process.exit(0);
-}).catch((err) => {
+})().catch((err) => {
   throw err;
 });
