@@ -11,8 +11,8 @@ const BufferReader = require('../../lib/utils/reader');
 const StaticWriter = require('../../lib/utils/staticwriter');
 const encoding = require('../../lib/utils/encoding');
 const Output = require('../../lib/primitives/output');
-const Coins = require('../../lib/coins');
-const compressor = require('../../lib/compress');
+const Coins = require('./coins');
+const compressor = require('./compress');
 const compress = compressor.compress;
 const decompress = compressor.decompress;
 
