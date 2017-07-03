@@ -24,7 +24,7 @@ let cmpct2 = fs.readFileSync(`${__dirname}/data/cmpct2`, 'utf8');
 cmpct1 = cmpct1.trim().split('\n');
 cmpct2 = cmpct2.trim();
 
-function readUndo(data) {
+function parseUndo(data) {
   let br = new BufferReader(data);
   let undo = [];
 
@@ -446,11 +446,11 @@ describe('Block', function() {
       block.toRaw().toString('hex'));
   });
 
-  it('should count sigops for block 928828 (testnet)', () => {
-    let blockRaw = fs.readFileSync(`${__dirname}/data/block928828.raw`);
-    let undoRaw = fs.readFileSync(`${__dirname}/data/undo928828.raw`);
+  it('should count sigops for block 928828 (testnet)', async () => {
+    let blockRaw = await fs.readFile(`${__dirname}/data/block928828.raw`);
+    let undoRaw = await fs.readFile(`${__dirname}/data/undo928828.raw`);
     let block = Block.fromRaw(blockRaw);
-    let undo = readUndo(undoRaw);
+    let undo = parseUndo(undoRaw);
     let view = applyUndo(block, undo);
     let sigops = 0;
     let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
@@ -465,11 +465,11 @@ describe('Block', function() {
     assert.equal(block.getWeight(), 2481560);
   });
 
-  it('should count sigops for block 928927 (testnet)', () => {
-    let blockRaw = fs.readFileSync(`${__dirname}/data/block928927.raw`);
-    let undoRaw = fs.readFileSync(`${__dirname}/data/undo928927.raw`);
+  it('should count sigops for block 928927 (testnet)', async () => {
+    let blockRaw = await fs.readFile(`${__dirname}/data/block928927.raw`);
+    let undoRaw = await fs.readFile(`${__dirname}/data/undo928927.raw`);
     let block = Block.fromRaw(blockRaw);
-    let undo = readUndo(undoRaw);
+    let undo = parseUndo(undoRaw);
     let view = applyUndo(block, undo);
     let sigops = 0;
     let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
@@ -484,11 +484,11 @@ describe('Block', function() {
     assert.equal(block.getWeight(), 3992391);
   });
 
-  it('should count sigops for block 1087400 (testnet)', () => {
-    let blockRaw = fs.readFileSync(`${__dirname}/data/block1087400.raw`);
-    let undoRaw = fs.readFileSync(`${__dirname}/data/undo1087400.raw`);
+  it('should count sigops for block 1087400 (testnet)', async () => {
+    let blockRaw = await fs.readFile(`${__dirname}/data/block1087400.raw`);
+    let undoRaw = await fs.readFile(`${__dirname}/data/undo1087400.raw`);
     let block = Block.fromRaw(blockRaw);
-    let undo = readUndo(undoRaw);
+    let undo = parseUndo(undoRaw);
     let view = applyUndo(block, undo);
     let sigops = 0;
     let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
