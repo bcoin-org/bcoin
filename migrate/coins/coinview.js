@@ -7,8 +7,8 @@
 'use strict';
 
 const assert = require('assert');
-const Coins = require('../../lib/coins/coins');
-const UndoCoins = require('../../lib/coins/undocoins');
+const Coins = require('./coins');
+const UndoCoins = require('./undocoins');
 const BufferReader = require('../../lib/utils/reader');
 const BufferWriter = require('../../lib/utils/writer');
 const CoinEntry = Coins.CoinEntry;
