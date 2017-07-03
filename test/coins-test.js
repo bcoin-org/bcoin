@@ -38,7 +38,7 @@ describe('Coins', function() {
     view.addTX(tx1, 1);
 
     coins = view.get(hash);
-    assert.equal(coins.outputs.length, tx1.outputs.length);
+    assert.equal(coins.outputs.size, tx1.outputs.length);
 
     entry = coins.get(0);
     assert(entry);
@@ -103,7 +103,7 @@ describe('Coins', function() {
     coins = res.get(prev.hash);
 
     assert.strictEqual(coins.length(), 2);
-    assert.strictEqual(coins.get(0), null);
+    assert.strictEqual(coins.get(0), undefined);
     deepCoinsEqual(coins.get(1), reserialize(coins.get(1)));
   });
 });
