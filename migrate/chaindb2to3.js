@@ -543,5 +543,6 @@ function bpair(prefix, hash, index) {
   console.log('Migration complete.');
   process.exit(0);
 })().catch((err) => {
-  throw err;
+  console.error(err.stack);
+  process.exit(1);
 });
