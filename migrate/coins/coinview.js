@@ -9,8 +9,6 @@
 const assert = require('assert');
 const Coins = require('./coins');
 const UndoCoins = require('./undocoins');
-const BufferReader = require('../../lib/utils/reader');
-const BufferWriter = require('../../lib/utils/writer');
 const CoinEntry = Coins.CoinEntry;
 
 /**
