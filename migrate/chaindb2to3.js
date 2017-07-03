@@ -3,6 +3,7 @@
 const assert = require('assert');
 const encoding = require('../lib/utils/encoding');
 const co = require('../lib/utils/co');
+const util = require('../lib/utils/util');
 const digest = require('../lib/crypto/digest');
 const BN = require('../lib/crypto/bn');
 const StaticWriter = require('../lib/utils/staticwriter');
@@ -14,13 +15,9 @@ const UndoCoins = require('../lib/coins/undocoins');
 const Block = require('../lib/primitives/block');
 const LDB = require('../lib/db/ldb');
 
-const MIGRATION_ID = 0;
+assert(process.argv.length > 2, 'Please pass in a database path.');
 
-let file = process.argv[2];
-
-assert(typeof file === 'string', 'Please pass in a database path.');
-
-file = file.replace(/\.ldb\/?$/, '');
+const file = process.argv[2].replace(/\.ldb\/?$/, '');
 
 const db = LDB({
   location: file,
@@ -33,6 +30,7 @@ const db = LDB({
 
 // \0\0migrate
 const JOURNAL_KEY = Buffer.from('00006d696772617465', 'hex');
+const MIGRATION_ID = 0;
 const STATE_VERSION = -1;
 const STATE_UNDO = 0;
 const STATE_CLEANUP = 1;
@@ -72,6 +70,9 @@ async function readJournal() {
   state = data.readUInt8(1, true);
   hash = data.toString('hex', 2, 34);
 
+  console.log('Read journal.');
+  console.log('Recovering from state %d.', state);
+
   return [state, hash];
 }
 
@@ -93,11 +94,15 @@ async function updateVersion() {
 
   data = Buffer.allocUnsafe(4);
 
-  // Set to 255 temporarily.
-  data.writeUInt32LE(255, 0, true);
+  // Set to uint32_max temporarily.
+  // This is to prevent bcoin from
+  // trying to access this chain.
+  data.writeUInt32LE(-1 >>> 0, 0, true);
   batch.put('V', data);
 
   writeJournal(batch, STATE_UNDO);
+
+  console.log('Updating version.');
 
   await batch.write();
 
@@ -112,10 +117,12 @@ async function reserializeUndo(hash) {
   if (hash !== encoding.NULL_HASH)
     tip = await getEntry(hash);
 
+  console.log('Reserializing undo coins from tip %s.', tip.rhash());
+
   while (tip.height !== 0) {
     let undoData = await db.get(pair('u', tip.hash));
     let blockData = await db.get(pair('b', tip.hash));
-    let block, undo, newUndo;
+    let block, old, undo;
 
     assert(undoData);
 
@@ -126,21 +133,20 @@ async function reserializeUndo(hash) {
     }
 
     block = Block.fromRaw(blockData);
-
-    newUndo = new UndoCoins();
-    undo = OldUndoCoins.fromRaw(undoData);
+    old = OldUndoCoins.fromRaw(undoData);
+    undo = new UndoCoins();
 
     for (let i = block.txs.length - 1; i >= 1; i--) {
       let tx = block.txs[i];
       for (let j = tx.inputs.length - 1; j >= 0; j--) {
         let {prevout} = tx.inputs[j];
-        let coin = undo.items.pop();
+        let coin = old.items.pop();
         let output = coin.toOutput();
         let version, height, write, item;
 
         assert(coin);
 
-        [version, height, write] = await getProps(coin, prevout);
+        [version, height, write] = await getMeta(coin, prevout);
 
         item = new CoinEntry();
         item.version = version;
@@ -160,11 +166,11 @@ async function reserializeUndo(hash) {
           heightCache.set(prevout.hash, [version, height]);
         }
 
-        newUndo.items.push(item);
+        undo.items.push(item);
       }
     }
 
-    batch.put(pair('u', tip.hash), newUndo.toRaw());
+    batch.put(pair('u', tip.hash), undo.toRaw());
 
     if (++total % 10000 === 0) {
       console.log('Reserialized %d undo coins.', total);
@@ -175,7 +181,6 @@ async function reserializeUndo(hash) {
     }
 
     tip = await getEntry(tip.prevBlock);
-    assert(tip);
   }
 
   writeJournal(batch, STATE_CLEANUP);
@@ -197,6 +202,8 @@ async function cleanupIndex() {
     lte: pair(0x01, encoding.MAX_HASH),
     keys: true
   });
+
+  console.log('Removing txid->height undo index.');
 
   for (;;) {
     let item = await iter.next();
@@ -240,6 +247,8 @@ async function reserializeCoins(hash) {
       start = false;
   }
 
+  console.log('Reserializing coins from %s.', util.revHex(hash));
+
   while (start) {
     let item = await iter.next();
     let update = false;
@@ -280,7 +289,7 @@ async function reserializeCoins(hash) {
 
     if (update) {
       console.log('Reserialized %d coins.', total);
-      writeJournal(batch, STATE_COINS);
+      writeJournal(batch, STATE_COINS, hash);
       await batch.write();
       batch = db.batch();
     }
@@ -314,6 +323,8 @@ async function reserializeEntries(hash) {
       assert(item.key.equals(pair('e', hash)));
   }
 
+  console.log('Reserializing entries from %s.', util.revHex(hash));
+
   while (start) {
     let item = await iter.next();
     let entry, main;
@@ -345,19 +356,24 @@ async function reserializeEntries(hash) {
 async function finalize() {
   let batch = db.batch();
   let data = Buffer.allocUnsafe(4);
+
   data.writeUInt32LE(3, 0, true);
 
   batch.del(JOURNAL_KEY);
   batch.put('V', data);
 
-  console.log('Finalizing...');
+  console.log('Finalizing database.');
 
   await batch.write();
+
+  console.log('Compacting database...');
+
+  await db.compactRange();
 
   return [STATE_DONE, encoding.NULL_HASH];
 }
 
-async function getProps(coin, prevout) {
+async function getMeta(coin, prevout) {
   let item, data, coins;
 
   if (coin.height !== -1)
@@ -487,7 +503,8 @@ function bpair(prefix, hash, index) {
 
   console.log('Opened %s.', file);
 
-  console.log('Starting migration. If you crash you can start over.');
+  console.log('Starting migration in 3 seconds...');
+  console.log('If you crash you can start over.');
 
   await co.timeout(3000);
 
@@ -515,7 +532,11 @@ function bpair(prefix, hash, index) {
     [state, hash] = await finalize();
 
   assert(state === STATE_DONE);
-})().then(() => {
+
+  console.log('Closing %s.', file);
+
+  await db.close();
+
   console.log('Migration complete.');
   process.exit(0);
 }).catch((err) => {
