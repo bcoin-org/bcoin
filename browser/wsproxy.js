@@ -209,9 +209,9 @@ WSProxy.prototype._handleConnect = function _handleConnect(ws, port, host, nonce
   });
 };
 
-WSProxy.prototype.log = function log() {
+WSProxy.prototype.log = function log(...args) {
   process.stdout.write('wsproxy: ');
-  console.log.apply(console, arguments);
+  console.log(...args);
 };
 
 WSProxy.prototype.attach = function attach(server) {
