@@ -11,8 +11,10 @@ const Coin = require('../lib/primitives/coin');
 const UndoCoins = require('../lib/coins/undocoins');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
+const Output = require('../lib/primitives/output');
 const encoding = require('../lib/utils/encoding');
 const bip152 = require('../lib/net/bip152');
+const BufferReader = require('../lib/utils/reader');
 
 const block300025 = require('./data/block300025.json');
 const cmpct2block = fs.readFileSync(`${__dirname}/data/cmpct2.bin`);
@@ -23,19 +25,31 @@ let cmpct2 = fs.readFileSync(`${__dirname}/data/cmpct2`, 'utf8');
 cmpct1 = cmpct1.trim().split('\n');
 cmpct2 = cmpct2.trim();
 
-function applyUndo(block, undo) {
-  let view = new CoinView();
+function readUndo(data) {
+  let br = new BufferReader(data);
+  let undo = [];
 
-  for (let i = block.txs.length - 1; i > 0; i--) {
-    let tx = block.txs[i];
-
-    for (let j = tx.inputs.length - 1; j >= 0; j--) {
-      let input = tx.inputs[j];
-      undo.apply(view, input.prevout);
-    }
+  while (br.left()) {
+    let output = Output.fromReader(br);
+    undo.push(output);
   }
 
-  assert(undo.isEmpty(), 'Undo coins data inconsistency.');
+  return undo;
+}
+
+function applyUndo(block, undo) {
+  let view = new CoinView();
+  let i = 0;
+
+  for (let tx of block.txs) {
+    if (tx.isCoinbase())
+      continue;
+
+    for (let {prevout} of tx.inputs)
+      view.addOutput(prevout, undo[i++]);
+  }
+
+  assert(i === undo.length, 'Undo coins data inconsistency.');
 
   return view;
 }
@@ -437,7 +451,7 @@ describe('Block', function() {
     let blockRaw = fs.readFileSync(`${__dirname}/data/block928828.raw`);
     let undoRaw = fs.readFileSync(`${__dirname}/data/undo928828.raw`);
     let block = Block.fromRaw(blockRaw);
-    let undo = UndoCoins.fromRaw(undoRaw);
+    let undo = readUndo(undoRaw);
     let view = applyUndo(block, undo);
     let sigops = 0;
     let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
@@ -456,7 +470,7 @@ describe('Block', function() {
     let blockRaw = fs.readFileSync(`${__dirname}/data/block928927.raw`);
     let undoRaw = fs.readFileSync(`${__dirname}/data/undo928927.raw`);
     let block = Block.fromRaw(blockRaw);
-    let undo = UndoCoins.fromRaw(undoRaw);
+    let undo = readUndo(undoRaw);
     let view = applyUndo(block, undo);
     let sigops = 0;
     let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
@@ -475,7 +489,7 @@ describe('Block', function() {
     let blockRaw = fs.readFileSync(`${__dirname}/data/block1087400.raw`);
     let undoRaw = fs.readFileSync(`${__dirname}/data/undo1087400.raw`);
     let block = Block.fromRaw(blockRaw);
-    let undo = UndoCoins.fromRaw(undoRaw);
+    let undo = readUndo(undoRaw);
     let view = applyUndo(block, undo);
     let sigops = 0;
     let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
