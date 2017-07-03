@@ -8,7 +8,6 @@ const Headers = require('../lib/primitives/headers');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const CoinView = require('../lib/coins/coinview');
 const Coin = require('../lib/primitives/coin');
-const UndoCoins = require('../lib/coins/undocoins');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
 const Output = require('../lib/primitives/output');
