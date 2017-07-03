@@ -8,6 +8,7 @@ const consensus = require('../lib/protocol/consensus');
 const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
+const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const Input = require('../lib/primitives/input');
@@ -349,7 +350,7 @@ describe('TX', function() {
     let hash = random.randomBytes(32).toString('hex');
     let output = new Output();
     output.value = value;
-    view.addOutput(hash, 0, output);
+    view.addOutput(new Outpoint(hash, 0), output);
     return {
       prevout: {
         hash: hash,

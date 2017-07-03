@@ -8,7 +8,6 @@ const Headers = require('../lib/primitives/headers');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const CoinView = require('../lib/coins/coinview');
 const Coin = require('../lib/primitives/coin');
-const Coins = require('../lib/coins/coins');
 const UndoCoins = require('../lib/coins/undocoins');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
@@ -32,19 +31,6 @@ function applyUndo(block, undo) {
 
     for (let j = tx.inputs.length - 1; j >= 0; j--) {
       let input = tx.inputs[j];
-      let prev = input.prevout.hash;
-
-      if (!view.has(prev)) {
-        assert(!undo.isEmpty());
-
-        if (undo.top().height === -1) {
-          let coins = new Coins();
-          coins.hash = prev;
-          coins.coinbase = false;
-          view.add(coins);
-        }
-      }
-
       undo.apply(view, input.prevout);
     }
   }
