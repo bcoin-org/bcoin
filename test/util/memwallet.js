@@ -335,7 +335,7 @@ MemWallet.prototype.deriveInputs = function deriveInputs(mtx) {
 
   for (i = 0; i < mtx.inputs.length; i++) {
     input = mtx.inputs[i];
-    coin = mtx.view.getOutput(input);
+    coin = mtx.view.getOutputFor(input);
 
     if (!coin)
       continue;

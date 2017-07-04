@@ -1067,7 +1067,7 @@ describe('Wallet', function() {
 
     found = false;
     for (i = 0; i < t3.inputs.length; i++) {
-      coin = t3.view.getCoin(t3.inputs[i]);
+      coin = t3.view.getCoinFor(t3.inputs[i]);
       if (coin.height === -1) {
         assert(!found);
         assert(coin.value < 5460);

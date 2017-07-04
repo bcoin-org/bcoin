@@ -51,7 +51,7 @@ describe('Coins', function() {
     assert(entry.output instanceof Output);
     assert.equal(entry.spent, false);
 
-    output = view.getOutput(input);
+    output = view.getOutputFor(input);
     assert(output);
 
     deepCoinsEqual(entry, reserialize(entry));
