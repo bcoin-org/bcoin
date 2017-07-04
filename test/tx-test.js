@@ -77,7 +77,7 @@ function parseTest(data) {
     view.addCoin(coin);
   }
 
-  coin = view.getOutput(tx.inputs[0]);
+  coin = view.getOutputFor(tx.inputs[0]);
 
   return {
     tx: tx,
@@ -204,7 +204,7 @@ describe('TX', function() {
     });
 
     it(`should verify high S value with only DERSIG enabled ${suffix}`, () => {
-      let coin = tx4.view.getOutput(tx4.tx.inputs[0]);
+      let coin = tx4.view.getOutputFor(tx4.tx.inputs[0]);
       let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx4.tx, noCache);
       assert(tx4.tx.verifyInput(0, coin, flags));
