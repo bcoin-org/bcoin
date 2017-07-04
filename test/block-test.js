@@ -1,6 +1,5 @@
 'use strict';
 
-const fs = require('fs');
 const assert = require('assert');
 const Bloom = require('../lib/utils/bloom');
 const Block = require('../lib/primitives/block');
@@ -14,6 +13,7 @@ const Output = require('../lib/primitives/output');
 const encoding = require('../lib/utils/encoding');
 const bip152 = require('../lib/net/bip152');
 const BufferReader = require('../lib/utils/reader');
+const fs = require('../lib/utils/fs');
 
 const block300025 = require('./data/block300025.json');
 const cmpct2block = fs.readFileSync(`${__dirname}/data/cmpct2.bin`);
