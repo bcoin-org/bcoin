@@ -2,6 +2,7 @@
 
 const webpack = require('webpack')
 const path = require('path');
+const UglifyEsPlugin = require('uglify-es-webpack-plugin');
 const str = JSON.stringify;
 const env = process.env;
 
@@ -37,6 +38,7 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.BCOIN_WORKER_FILE':
         str(env.BCOIN_WORKER_FILE || 'bcoin-worker.js')
-    })
+    }),
+    new UglifyEsPlugin()
   ]
 };
