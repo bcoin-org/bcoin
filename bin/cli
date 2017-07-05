@@ -39,16 +39,20 @@ CLI.prototype.getWallets = async function getWallets() {
 };
 
 CLI.prototype.createWallet = async function createWallet() {
-  let options = { id: this.config.str(0) };
-  let wallet;
+  let options, wallet;
 
-  options.type = this.config.str('type');
-  options.master = this.config.str('master');
-  options.mnemonic = this.config.str('mnemonic');
-  options.m = this.config.num('m');
-  options.n = this.config.num('n');
-  options.witness = this.config.bool('witness');
-  options.passphrase = this.config.str('passphrase');
+  options = {
+    id: this.config.str([0, 'id']),
+    type: this.config.str('type'),
+    master: this.config.str('master'),
+    mnemonic: this.config.str('mnemonic'),
+    m: this.config.num('m'),
+    n: this.config.num('n'),
+    witness: this.config.bool('witness'),
+    passphrase: this.config.str('passphrase'),
+    watchOnly: false,
+    accountKey: null
+  };
 
   if (this.config.has('watch')) {
     options.watchOnly = true;
@@ -73,19 +77,22 @@ CLI.prototype.getKey = async function getKey() {
 
 CLI.prototype.getWIF = async function getWIF() {
   let address = this.config.str(0);
-  let key = await this.wallet.getWIF(address, this.config.str('passphrase'));
+  let passphrase = this.config.str('passphrase');
+  let key = await this.wallet.getWIF(address, passphrase);
   this.log(key.privateKey);
 };
 
 CLI.prototype.addSharedKey = async function addSharedKey() {
   let key = this.config.str(0);
-  await this.wallet.addSharedKey(this.config.str('account'), key);
+  let account = this.config.str('account');
+  await this.wallet.addSharedKey(account, key);
   this.log('Added key.');
 };
 
 CLI.prototype.removeSharedKey = async function removeSharedKey() {
   let key = this.config.str(0);
-  await this.wallet.removeSharedKey(this.config.str('account'), key);
+  let account = this.config.str('account');
+  await this.wallet.removeSharedKey(account, key);
   this.log('Removed key.');
 };
 
@@ -102,15 +109,16 @@ CLI.prototype.getAccount = async function getAccount() {
 };
 
 CLI.prototype.createAccount = async function createAccount() {
-  let name = this.config.str(0);
-  let options = {};
-  let account;
+  let name = this.config.str([0, 'name']);
+  let options, account;
 
-  options.type = this.config.str('type');
-  options.m = this.config.num('m');
-  options.n = this.config.num('n');
-  options.witness = this.config.bool('witness');
-  options.accountKey = this.config.str('watch');
+  options = {
+    type: this.config.str('type'),
+    m: this.config.num('m'),
+    n: this.config.num('n'),
+    witness: this.config.bool('witness'),
+    accountKey: this.config.str('watch')
+  };
 
   account = await this.wallet.createAccount(name, options);
 
@@ -204,17 +212,20 @@ CLI.prototype.getCoin = async function getCoin() {
 };
 
 CLI.prototype.getWalletHistory = async function getWalletHistory() {
-  let txs = await this.wallet.getHistory(this.config.str('account'));
+  let account = this.config.str('account');
+  let txs = await this.wallet.getHistory(account);
   this.log(txs);
 };
 
 CLI.prototype.getWalletPending = async function getWalletPending() {
-  let txs = await this.wallet.getPending(this.config.str('account'));
+  let account = this.config.str('account');
+  let txs = await this.wallet.getPending(account);
   this.log(txs);
 };
 
 CLI.prototype.getWalletCoins = async function getWalletCoins() {
-  let coins = await this.wallet.getCoins(this.config.str('account'));
+  let account = this.config.str('account');
+  let coins = await this.wallet.getCoins(account);
   this.log(coins);
 };
 
@@ -255,7 +266,8 @@ CLI.prototype.listenWallet = async function listenWallet() {
 };
 
 CLI.prototype.getBalance = async function getBalance() {
-  let balance = await this.wallet.getBalance(this.config.str('account'));
+  let account = this.config.str('account');
+  let balance = await this.wallet.getBalance(account);
   this.log(balance);
 };
 
@@ -265,15 +277,18 @@ CLI.prototype.getMempool = async function getMempool() {
 };
 
 CLI.prototype.sendTX = async function sendTX() {
-  let output = {};
-  let options, tx;
+  let option, options, tx;
 
   if (this.config.has('script')) {
-    output.script = this.config.str('script');
-    output.value = this.config.str(['value', 0]);
+    output = {
+      script: this.config.str('script'),
+      value: this.config.str([0, 'value'])
+    };
   } else {
-    output.address = this.config.str(['address', 0]);
-    output.value = this.config.str(['value', 1]);
+    output = {
+      address: this.config.str([0, 'address']),
+      value: this.config.str([1, 'value'])
+    };
   }
 
   options = {
@@ -291,15 +306,18 @@ CLI.prototype.sendTX = async function sendTX() {
 };
 
 CLI.prototype.createTX = async function createTX() {
-  let output = {};
-  let options, tx;
+  let output, options, tx;
 
   if (this.config.has('script')) {
-    output.script = this.config.str('script');
-    output.value = this.config.str(['value', 0]);
+    output = {
+      script: this.config.str('script'),
+      value: this.config.str([0, 'value'])
+    };
   } else {
-    output.address = this.config.str(['address', 0]);
-    output.value = this.config.str(['value', 1]);
+    output = {
+      address: this.config.str([0, 'address']),
+      value: this.config.str([1, 'value'])
+    };
   }
 
   options = {
@@ -316,19 +334,15 @@ CLI.prototype.createTX = async function createTX() {
 };
 
 CLI.prototype.signTX = async function signTX() {
-  let options = {};
-  let raw = this.config.str(['tx', 0]);
-  let tx;
-
-  options.passphrase = this.config.str('passphrase');
-
-  tx = await this.wallet.sign(raw, options);
+  let passphrase = this.config.str('passphrase');
+  let raw = this.config.str([0, 'tx']);
+  let tx = await this.wallet.sign(raw, { passphrase });
 
   this.log(tx);
 };
 
 CLI.prototype.zapWallet = async function zapWallet() {
-  let age = this.config.num('age', 72 * 60 * 60);
+  let age = this.config.num([0, 'age'], 72 * 60 * 60);
   await this.wallet.zap(this.config.str('account'), age);
   this.log('Zapped!');
 };
@@ -370,12 +384,7 @@ CLI.prototype.retoken = async function retoken() {
 
 CLI.prototype.rescan = async function rescan() {
   let height = this.config.num(0);
-
-  if (!util.isUInt32(height))
-    height = null;
-
   await this.client.rescan(height);
-
   this.log('Rescanning...');
 };
 
@@ -452,9 +461,10 @@ CLI.prototype.unlock = async function unlock() {
 CLI.prototype.rpc = async function rpc() {
   let method = this.argv.shift();
   let params = [];
-  let arg, param, result;
+  let result;
 
-  for (arg of this.argv) {
+  for (let arg of this.argv) {
+    let param;
     try {
       param = JSON.parse(arg);
     } catch (e) {
