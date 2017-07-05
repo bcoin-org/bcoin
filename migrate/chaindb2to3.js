@@ -39,7 +39,7 @@ const STATE_ENTRY = 3;
 const STATE_FINAL = 4;
 const STATE_DONE = 5;
 
-const heightCache = new Map();
+const metaCache = new Map();
 
 function writeJournal(batch, state, hash) {
   let data = Buffer.allocUnsafe(34);
@@ -166,7 +166,7 @@ async function reserializeUndo(hash) {
           data.writeUInt32LE(version, 0, true);
           data.writeUInt32LE(height, 4, true);
           batch.put(pair(0x01, prevout.hash), data);
-          heightCache.set(prevout.hash, [version, height]);
+          metaCache.set(prevout.hash, [version, height]);
         }
 
         undo.items.push(item);
@@ -175,11 +175,11 @@ async function reserializeUndo(hash) {
 
     batch.put(pair('u', tip.hash), undo.toRaw());
 
-    if (++total % 10000 === 0) {
+    if (++total % 1000 === 0) {
       console.log('Reserialized %d undo coins.', total);
       writeJournal(batch, STATE_UNDO, tip.prevBlock);
       await batch.write();
-      heightCache.clear();
+      metaCache.clear();
       batch = db.batch();
     }
 
@@ -189,7 +189,7 @@ async function reserializeUndo(hash) {
   writeJournal(batch, STATE_CLEANUP);
   await batch.write();
 
-  heightCache.clear();
+  metaCache.clear();
 
   console.log('Reserialized %d undo coins.', total);
 
@@ -216,7 +216,7 @@ async function cleanupIndex() {
 
     batch.del(item.key);
 
-    if (++total % 100000 === 0) {
+    if (++total % 10000 === 0) {
       console.log('Cleaned up %d undo records.', total);
       writeJournal(batch, STATE_CLEANUP);
       await batch.write();
@@ -284,7 +284,7 @@ async function reserializeCoins(hash) {
 
       batch.put(bpair('c', hash, i), item.toRaw());
 
-      if (++total % 100000 === 0)
+      if (++total % 10000 === 0)
         update = true;
     }
 
@@ -382,7 +382,7 @@ async function getMeta(coin, prevout) {
   if (coin.height !== -1)
     return [coin.version, coin.height, true];
 
-  item = heightCache.get(prevout.hash);
+  item = metaCache.get(prevout.hash);
 
   if (item) {
     let [version, height] = item;
@@ -426,6 +426,12 @@ async function isPruned() {
   let data = await db.get('O');
   assert(data);
   return (data.readUInt32LE(4) & 4) !== 0;
+}
+
+async function isSPV() {
+  let data = await db.get('O');
+  assert(data);
+  return (data.readUInt32LE(4) & 1) !== 0;
 }
 
 async function isMainChain(entry, tip) {
@@ -505,6 +511,9 @@ function bpair(prefix, hash, index) {
   await db.open();
 
   console.log('Opened %s.', file);
+
+  if (await isSPV())
+    throw new Error('Cannot migrate SPV database.');
 
   console.log('Starting migration in 3 seconds...');
   console.log('If you crash you can start over.');
