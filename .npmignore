@@ -5,3 +5,5 @@ docker_data/
 test/
 node_modules/
 browser/bcoin*
+bcoin*
+npm-debug.log
