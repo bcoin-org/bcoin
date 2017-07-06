@@ -96,6 +96,12 @@ for (i = 0; i < 3000; i++)
   tx3.tx.verify(tx3.view, Script.flags.VERIFY_P2SH);
 end(i * tx3.tx.inputs.length);
 
+end = bench('verify2');
+let script = tx3.view.getOutputFor(tx3.tx.inputs[0]).script;
+for (i = 0; i < 100000; i++)
+  tx3.tx.signatureHashV0(0, script, Script.hashType.ALL);
+end(i);
+
 end = bench('fee');
 for (i = 0; i < 1000; i++)
   tx3.tx.getFee(tx3.view);
