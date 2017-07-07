@@ -8,7 +8,6 @@ const index = fs.readFileSync(`${__dirname}/index.html`);
 const indexjs = fs.readFileSync(`${__dirname}/index.js`);
 const debug = fs.readFileSync(`${__dirname}/debug.html`);
 const bcoin = fs.readFileSync(`${__dirname}/bcoin.js`);
-const master = fs.readFileSync(`${__dirname}/bcoin-master.js`);
 const worker = fs.readFileSync(`${__dirname}/bcoin-worker.js`);
 
 let proxy = new WSProxy({
@@ -47,10 +46,6 @@ server.get('/debug', (req, res) => {
 
 server.get('/bcoin.js', (req, res) => {
   res.send(200, bcoin, 'js');
-});
-
-server.get('/bcoin-master.js', (req, res) => {
-  res.send(200, master, 'js');
 });
 
 server.get('/bcoin-worker.js', (req, res) => {

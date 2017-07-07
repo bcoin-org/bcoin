@@ -58,7 +58,7 @@
     "bcoin": "./bin/bcoin"
   },
   "scripts": {
-    "clean": "rm -f {browser/,}{bcoin.js,bcoin-master.js,bcoin-worker.js}",
+    "clean": "rm -f {browser/,}{bcoin.js,bcoin-worker.js}",
     "docs": "jsdoc -c jsdoc.json",
     "lint": "eslint lib/ test/ migrate/ examples/ bench/ scripts/*.js bin/cli bin/node bin/spvnode || exit 0",
     "lint-file": "eslint",
