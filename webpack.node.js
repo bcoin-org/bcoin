@@ -2,7 +2,7 @@
 
 const webpack = require('webpack')
 const path = require('path');
-const UglifyEsPlugin = require('uglify-es-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const str = JSON.stringify;
 const env = process.env;
 
@@ -39,6 +39,7 @@ module.exports = {
       'process.env.BCOIN_WORKER_FILE':
         str(env.BCOIN_WORKER_FILE || 'bcoin-worker.js')
     }),
-    new UglifyEsPlugin()
+    new webpack.IgnorePlugin(/^utf-8-validate|bufferutil$/),
+    new UglifyJsPlugin()
   ]
 };

@@ -2,7 +2,7 @@
 
 const webpack = require('webpack')
 const path = require('path');
-const UglifyEsPlugin = require('uglify-es-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const str = JSON.stringify;
 const env = process.env;
 
@@ -29,6 +29,6 @@ module.exports = {
       'process.env.BCOIN_MASTER_URL':
         str(env.BCOIN_MASTER_URL || '/bcoin-master.js')
     }),
-    new UglifyEsPlugin()
+    new UglifyJsPlugin()
   ]
 };
