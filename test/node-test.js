@@ -16,7 +16,8 @@ describe('Node', function() {
   let node = new FullNode({
     db: 'memory',
     apiKey: 'foo',
-    network: 'regtest'
+    network: 'regtest',
+    workers: true
   });
   let chain = node.chain;
   let walletdb = node.use(plugin);
