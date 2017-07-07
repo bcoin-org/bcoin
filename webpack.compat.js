@@ -9,7 +9,7 @@ module.exports = {
   target: 'web',
   entry: {
     'bcoin': './lib/bcoin-browser',
-    'bcoin-worker': './lib/workers/worker-browser'
+    'bcoin-worker': './lib/workers/worker'
   },
   output: {
     path: path.join(__dirname, 'browser'),
