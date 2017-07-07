@@ -1,11 +1,12 @@
 'use strict';
 
+const fs = require('fs');
 const HTTPBase = require('../lib/http/base');
 const WSProxy = require('./wsproxy');
-const fs = require('fs');
 
 const index = fs.readFileSync(`${__dirname}/index.html`);
 const indexjs = fs.readFileSync(`${__dirname}/index.js`);
+const debug = fs.readFileSync(`${__dirname}/debug.html`);
 const bcoin = fs.readFileSync(`${__dirname}/bcoin.js`);
 const master = fs.readFileSync(`${__dirname}/bcoin-master.js`);
 const worker = fs.readFileSync(`${__dirname}/bcoin-worker.js`);
@@ -38,6 +39,10 @@ server.get('/', (req, res) => {
 
 server.get('/index.js', (req, res) => {
   res.send(200, indexjs, 'js');
+});
+
+server.get('/debug', (req, res) => {
+  res.send(200, debug, 'html');
 });
 
 server.get('/bcoin.js', (req, res) => {
