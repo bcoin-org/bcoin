@@ -18,6 +18,7 @@ const node = bcoin.spvnode({
   logLevel: 'debug',
   db: 'leveldb',
   persistent: true,
+  workers: true,
   listen: true,
   loader: require
 });
