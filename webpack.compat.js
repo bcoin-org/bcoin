@@ -9,7 +9,7 @@ module.exports = {
   target: 'web',
   entry: {
     'bcoin': './lib/bcoin-browser',
-    'bcoin-master': './lib/workers/master'
+    'bcoin-worker': './lib/workers/worker-browser'
   },
   output: {
     path: path.join(__dirname, 'browser'),
@@ -30,10 +30,8 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.BCOIN_NETWORK':
         str(env.BCOIN_NETWORK || 'main'),
-      'process.env.BCOIN_WORKER_URL':
-        str(env.BCOIN_WORKER_URL || '/bcoin-worker.js'),
-      'process.env.BCOIN_MASTER_URL':
-        str(env.BCOIN_MASTER_URL || '/bcoin-master.js')
+      'process.env.BCOIN_WORKER_FILE':
+        str(env.BCOIN_WORKER_FILE || '/bcoin-worker.js')
     }),
     new webpack.optimize.UglifyJsPlugin({
       compress: {

@@ -235,8 +235,7 @@ node = new bcoin.fullnode({
   coinCache: 30000000,
   logConsole: true,
   workers: true,
-  workerURL: '/bcoin-worker.js',
-  masterURL: '/bcoin-master.js',
+  workerFile: '/bcoin-worker.js',
   logger: logger
 });
 
