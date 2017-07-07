@@ -277,7 +277,7 @@ CLI.prototype.getMempool = async function getMempool() {
 };
 
 CLI.prototype.sendTX = async function sendTX() {
-  let option, options, tx;
+  let output, options, tx;
 
   if (this.config.has('script')) {
     output = {
