@@ -1,0 +1,21 @@
+name: bcoin
+version: git
+summary: A fullnode Bitcoin implementation for miners, wallets, and exchanges
+description: |
+  Bcoin is an alternative implementation of the bitcoin protocol, written in
+  node.js.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: strict
+
+apps:
+  bcoin:
+    command: bcoin
+    plugs: [network, network-bind]
+
+parts:
+  bcoin:
+    source: .
+    plugin: nodejs
+    build-packages: [python, gcc]
+    node-engine: 7.9.0
