@@ -4,8 +4,8 @@ var assert = require('assert');
 var keyring = require('../lib/primitives/keyring');
 
 describe('Keyring Address', function() {
-  var ukey = keyring.fromSecret('5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss');
-  var ckey = keyring.fromSecret('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1');
+  var ukey = keyring.fromSecret('6vrJ6bnKwaSuimkkRLpNNziSjqwZCG59kfFC9P2kjbUUs5Y6Cw9');
+  var ckey = keyring.fromSecret('TAgaTiX4btdMhNY6eSU5N5jvc71o6hXKdhoeBzEk31AHykGDou8i');
 
   it('check uncompressed public key', function() {
     assert.equal(
@@ -16,13 +16,13 @@ describe('Keyring Address', function() {
 
   it('check uncompressed public key to address', function() {
     assert.equal(
-      '1HZwkjkeaoZfTSaJxDw6aKkxp45agDiEzN',
+      'Lbnu1x4UfToiiFGU8MvPrLpj2GSrtUrxFH',
       ukey.getKeyAddress('base58'));
   });
 
   it('check uncompressed secret', function() {
     assert.equal(
-      '5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss',
+      '6vrJ6bnKwaSuimkkRLpNNziSjqwZCG59kfFC9P2kjbUUs5Y6Cw9',
       ukey.toSecret());
   });
 
@@ -34,13 +34,13 @@ describe('Keyring Address', function() {
 
   it('check compressed public key to address', function() {
     assert.equal(
-      '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV',
+      'LZGpRyQPybaDjbRGoB87YH2ebFnmKYmRui',
       ckey.getKeyAddress('base58'));
   });
 
   it('check compressed secret', function() {
     assert.equal(
-      'L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1',
+      'TAgaTiX4btdMhNY6eSU5N5jvc71o6hXKdhoeBzEk31AHykGDou8i',
       ckey.toSecret());
   });
 });
