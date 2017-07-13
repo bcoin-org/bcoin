@@ -12,7 +12,6 @@ const MTX = require('../lib/primitives/mtx');
 const MemWallet = require('./util/memwallet');
 const Network = require('../lib/protocol/network');
 const Output = require('../lib/primitives/output');
-const util = require('../lib/utils/util');
 const common = require('../lib/blockchain/common');
 const opcodes = Script.opcodes;
 
@@ -547,7 +546,7 @@ describe('Chain', function() {
 
     assert(output.script.isCommitment());
 
-    commit = util.copy(output.script.get(1));
+    commit = Buffer.from(output.script.get(1));
     commit.fill(0, 10);
     output.script.set(1, commit);
     output.script.compile();
