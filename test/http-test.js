@@ -4,7 +4,6 @@ const assert = require('assert');
 const consensus = require('../lib/protocol/consensus');
 const encoding = require('../lib/utils/encoding');
 const co = require('../lib/utils/co');
-const Amount = require('../lib/btc/amount');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
 const Outpoint = require('../lib/primitives/outpoint');
@@ -94,16 +93,16 @@ describe('HTTP', function() {
     assert.equal(receive.type, 'pubkeyhash');
     assert.equal(receive.branch, 0);
     assert(balance);
-    assert.equal(Amount.value(balance.confirmed), 0);
-    assert.equal(Amount.value(balance.unconfirmed), 201840);
+    assert.equal(balance.confirmed, 0);
+    assert.equal(balance.unconfirmed, 201840);
     assert(details);
     assert.equal(details.hash, tx.rhash());
   });
 
   it('should get balance', async () => {
     let balance = await wallet.getBalance();
-    assert.equal(Amount.value(balance.confirmed), 0);
-    assert.equal(Amount.value(balance.unconfirmed), 201840);
+    assert.equal(balance.confirmed, 0);
+    assert.equal(balance.unconfirmed, 201840);
   });
 
   it('should send a tx', async () => {
@@ -124,8 +123,8 @@ describe('HTTP', function() {
     assert.equal(tx.inputs.length, 1);
     assert.equal(tx.outputs.length, 2);
 
-    value += Amount.value(tx.outputs[0].value);
-    value += Amount.value(tx.outputs[1].value);
+    value += tx.outputs[0].value;
+    value += tx.outputs[1].value;
     assert.equal(value, 48190);
 
     hash = tx.hash;
@@ -146,7 +145,7 @@ describe('HTTP', function() {
 
   it('should get balance', async () => {
     let balance = await wallet.getBalance();
-    assert.equal(Amount.value(balance.unconfirmed), 199570);
+    assert.equal(balance.unconfirmed, 199570);
   });
 
   it('should execute an rpc call', async () => {
