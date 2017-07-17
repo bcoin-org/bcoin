@@ -6,7 +6,7 @@ const chain = new Chain({
   network: 'testnet'
 });
 
-async function main() {
+(async () => {
   let entry;
 
   await chain.open();
@@ -14,6 +14,4 @@ async function main() {
   entry = await chain.getEntry(0);
 
   console.log(entry);
-}
-
-main();
+})();

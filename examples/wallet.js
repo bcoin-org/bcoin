@@ -4,19 +4,18 @@ const random = require('bcoin/lib/crypto/random');
 const WalletDB = require('bcoin/lib/wallet/walletdb');
 const MTX = require('bcoin/lib/primitives/mtx');
 const Outpoint = require('bcoin/lib/primitives/outpoint');
-let walletdb;
 
 function dummy() {
   let hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, 0);
 }
 
-walletdb = new WalletDB({
+const walletdb = new WalletDB({
   network: 'testnet',
   db: 'memory'
 });
 
-async function main() {
+(async () => {
   let wallet, acct, mtx, tx, wtx;
 
   await walletdb.open();
@@ -44,6 +43,4 @@ async function main() {
 
   console.log('Added transaction');
   console.log(wtx);
-}
-
-main();
+})();

@@ -23,44 +23,6 @@ wallet = new HTTP.Wallet({
   apiKey: 'foo'
 });
 
-async function main() {
-  let wdb = node.require('walletdb');
-  let w, acct, hash, balance, tx;
-
-  await node.open();
-
-  w = await wallet.create({ id: 'test' });
-
-  console.log('Wallet:');
-  console.log(w);
-
-  // Fund default account.
-  await fundWallet(wdb, w.account.receiveAddress);
-
-  balance = await wallet.getBalance();
-
-  console.log('Balance:');
-  console.log(balance);
-
-  acct = await wallet.createAccount('foo');
-
-  console.log('Account:');
-  console.log(acct);
-
-  // Send to our new account.
-  hash = await sendTX(acct.receiveAddress, 10000);
-
-  console.log('Sent TX:');
-  console.log(hash);
-
-  tx = await wallet.getTX(hash);
-
-  console.log('Sent TX details:');
-  console.log(tx);
-
-  await callNodeApi();
-}
-
 async function fundWallet(wdb, addr) {
   let tx;
 
@@ -121,4 +83,40 @@ async function callNodeApi() {
   console.log(json);
 }
 
-main();
+(async () => {
+  let wdb = node.require('walletdb');
+  let w, acct, hash, balance, tx;
+
+  await node.open();
+
+  w = await wallet.create({ id: 'test' });
+
+  console.log('Wallet:');
+  console.log(w);
+
+  // Fund default account.
+  await fundWallet(wdb, w.account.receiveAddress);
+
+  balance = await wallet.getBalance();
+
+  console.log('Balance:');
+  console.log(balance);
+
+  acct = await wallet.createAccount('foo');
+
+  console.log('Account:');
+  console.log(acct);
+
+  // Send to our new account.
+  hash = await sendTX(acct.receiveAddress, 10000);
+
+  console.log('Sent TX:');
+  console.log(hash);
+
+  tx = await wallet.getTX(hash);
+
+  console.log('Sent TX details:');
+  console.log(tx);
+
+  await callNodeApi();
+})();

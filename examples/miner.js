@@ -23,7 +23,7 @@ const miner = new Miner({
   workers: workers
 });
 
-async function main() {
+(async () => {
   let tmpl, job, block;
 
   await miner.open();
@@ -44,6 +44,4 @@ async function main() {
 
   console.log('New tip:');
   console.log(chain.tip);
-}
-
-main();
+})();

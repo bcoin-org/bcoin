@@ -28,12 +28,13 @@ MyPlugin.prototype.sayPeers = function sayPeers() {
 
 const node = new FullNode({
   network: 'testnet',
-  db: 'memory'
+  db: 'memory',
+  workers: true
 });
 
 node.use(MyPlugin);
 
-async function main() {
+(async () => {
   let plugin = node.require('my-plugin');
 
   await node.open();
@@ -49,6 +50,6 @@ async function main() {
   node.on('tx', (tx) => {
     console.log('%s added to mempool.', tx.txid());
   });
-}
 
-main();
+  node.startSync();
+})();

@@ -4,12 +4,12 @@ const FullNode = require('bcoin/lib/node/fullnode');
 
 const node = new FullNode({
   network: 'testnet',
-  db: 'memory'
+  db: 'memory',
+  workers: true
 });
 
-async function main() {
+(async () => {
   await node.open();
-
   await node.connect();
 
   node.on('connect', (entry, block) => {
@@ -21,6 +21,4 @@ async function main() {
   });
 
   node.startSync();
-}
-
-main();
+})();
