@@ -50,5 +50,6 @@ process.on('unhandledRejection', (err, promise) => {
   await node.connect();
   node.startSync();
 })().catch((err) => {
-  throw err;
+  console.error(err.stack);
+  process.exit(1);
 });
