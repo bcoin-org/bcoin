@@ -68,7 +68,7 @@ describe('Coins', function() {
     assert(coins);
     length = coins.outputs.size;
 
-    view.spendOutput(new Outpoint(hash, 0));
+    view.spendEntry(new Outpoint(hash, 0));
 
     coins = view.get(hash);
     assert(coins);
