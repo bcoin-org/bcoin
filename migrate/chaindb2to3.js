@@ -173,6 +173,9 @@ async function reserializeUndo(hash) {
       }
     }
 
+    // We need to reverse everything.
+    undo.items.reverse();
+
     batch.put(pair('u', tip.hash), undo.toRaw());
 
     if (++total % 1000 === 0) {
@@ -377,11 +380,17 @@ async function finalize() {
 }
 
 async function getMeta(coin, prevout) {
-  let item, data, coins;
+  let item, data, br, version, height;
 
-  if (coin.height !== -1)
+  // Case 1: Undo coin is the last spend.
+  if (coin.height !== -1) {
+    assert(coin.version !== -1);
     return [coin.version, coin.height, true];
+  }
 
+  // Case 2: We have previously cached
+  // this coin's metadata, but it's not
+  // written yet.
   item = metaCache.get(prevout.hash);
 
   if (item) {
@@ -389,6 +398,9 @@ async function getMeta(coin, prevout) {
     return [version, height, false];
   }
 
+  // Case 3: We have previously cached
+  // this coin's metadata, and it is
+  // written.
   data = await db.get(pair(0x01, prevout.hash));
 
   if (data) {
@@ -397,12 +409,16 @@ async function getMeta(coin, prevout) {
     return [version, height, false];
   }
 
+  // Case 4: The coin's metadata is
+  // still in the top-level UTXO set.
   data = await db.get(pair('c', prevout.hash));
   assert(data);
 
-  coins = OldCoins.fromRaw(data, prevout.hash);
+  br = new BufferReader(data);
+  version = br.readVarint();
+  height = br.readU32();
 
-  return [coins.version, coins.height, true];
+  return [version, height, true];
 }
 
 async function getTip() {
