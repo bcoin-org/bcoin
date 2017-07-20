@@ -28,7 +28,7 @@
     "n64": "0.0.12"
   },
   "optionalDependencies": {
-    "bcoin-native": "0.0.21",
+    "bcoin-native": "0.0.23",
     "leveldown": "1.7.2",
     "secp256k1": "3.2.5",
     "socket.io": "2.0.1",
