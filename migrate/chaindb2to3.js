@@ -404,6 +404,9 @@ async function finalize() {
   batch.del(JOURNAL_KEY);
   batch.put('V', data);
 
+  // This has bugged me for a while.
+  batch.del(pair('n', encoding.ZERO_HASH));
+
   if (shouldPrune) {
     let data = await db.get('O');
     let flags;
