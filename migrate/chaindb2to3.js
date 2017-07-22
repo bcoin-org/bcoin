@@ -1,5 +1,20 @@
 'use strict';
 
+if (process.argv.indexOf('-h') !== -1
+    || process.argv.indexOf('--help') !== -1
+    || process.argv.length < 3) {
+  console.error('Bcoin database migration (chaindb v2->v3).');
+  console.error('');
+  console.error('Usage:');
+  console.error('  $ node migrate/chaindb2to3.js [database-path] [--prune]');
+  console.error('');
+  console.error('Note: use --prune to convert your database to a pruned DB');
+  console.error('in the process. This results in a faster migration, but');
+  console.error('a pruning of the chain.');
+  process.exit(1);
+  throw new Error('Exit failed.');
+}
+
 const assert = require('assert');
 const encoding = require('../lib/utils/encoding');
 const co = require('../lib/utils/co');
@@ -15,9 +30,8 @@ const UndoCoins = require('../lib/coins/undocoins');
 const Block = require('../lib/primitives/block');
 const LDB = require('../lib/db/ldb');
 
-assert(process.argv.length > 2, 'Please pass in a database path.');
-
 const file = process.argv[2].replace(/\.ldb\/?$/, '');
+const shouldPrune = process.argv.indexOf('--prune') !== -1;
 
 const db = LDB({
   location: file,
@@ -112,6 +126,8 @@ async function updateVersion() {
 async function reserializeUndo(hash) {
   let batch = db.batch();
   let tip = await getTip();
+  let height = tip.height;
+  let pruning = false;
   let total = 0;
 
   if (hash !== encoding.NULL_HASH)
@@ -120,12 +136,32 @@ async function reserializeUndo(hash) {
   console.log('Reserializing undo coins from tip %s.', util.revHex(tip.hash));
 
   while (tip.height !== 0) {
-    let undoData = await db.get(pair('u', tip.hash));
-    let blockData = await db.get(pair('b', tip.hash));
-    let block, old, undo;
+    let undoData, blockData, block, old, undo;
+
+    if (shouldPrune) {
+      if (tip.height < height - 288) {
+        batch.del(pair('u', tip.hash));
+        batch.del(pair('b', tip.hash));
+        if (!pruning) {
+          console.log('Reserialized %d undo coins.', total);
+          writeJournal(batch, STATE_UNDO, tip.prevBlock);
+          await batch.write();
+          metaCache.clear();
+          batch = db.batch();
+          pruning = true;
+        }
+        tip = await getEntry(tip.prevBlock);
+        assert(tip);
+        continue;
+      }
+    }
+
+    undoData = await db.get(pair('u', tip.hash));
+    blockData = await db.get(pair('b', tip.hash));
 
     if (!undoData) {
       tip = await getEntry(tip.prevBlock);
+      assert(tip);
       continue;
     }
 
@@ -368,6 +404,20 @@ async function finalize() {
   batch.del(JOURNAL_KEY);
   batch.put('V', data);
 
+  if (shouldPrune) {
+    let data = await db.get('O');
+    let flags;
+
+    assert(data);
+
+    flags = data.readUInt32LE(4, true);
+    flags |= 1 << 2;
+
+    data.writeUInt32LE(flags, 4, true);
+
+    batch.put('O', data);
+  }
+
   console.log('Finalizing database.');
 
   await batch.write();
@@ -530,6 +580,9 @@ function bpair(prefix, hash, index) {
 
   if (await isSPV())
     throw new Error('Cannot migrate SPV database.');
+
+  if ((await isPruned()) && shouldPrune)
+    throw new Error('Database is already pruned.');
 
   console.log('Starting migration in 3 seconds...');
   console.log('If you crash you can start over.');
