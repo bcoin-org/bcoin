@@ -1,5 +1,12 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0-beta.14
+
+### Notable Changes
+
+- __pkg__ - Ignored `bcoin*` files in npmignore have been removed. This fixes
+  the npm install.
+
 ## v1.0.0-beta.13
 
 ### Notable Changes
