@@ -1,5 +1,11 @@
 # Bcoin
 
+__NOTE__: The latest release of bcoin contains a non-backward compatible change
+to the rest API. Please read the [changelog]'s "migrating" section for more
+details.
+
+---
+
 **Bcoin** is an alternative implementation of the bitcoin protocol, written in
 node.js.
 
@@ -59,6 +65,7 @@ all code is your original work. `</legalese>`
 See LICENSE for more info.
 
 [purse]: https://purse.io
-[guide]: docs/Beginner's-Guide.md
+[guide]: https://github.com/bcoin-org/bcoin/blob/master/docs/Beginner's-Guide.md
 [freenode]: https://freenode.net/
 [irc]: irc://irc.freenode.net/bcoin
+[changelog]: https://github.com/bcoin-org/bcoin/blob/master/CHANGELOG.md
