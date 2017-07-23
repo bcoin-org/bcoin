@@ -2,5 +2,4 @@ node_modules/
 docs/reference/
 docker_data/
 browser/bcoin*
-bcoin*
 npm-debug.log
