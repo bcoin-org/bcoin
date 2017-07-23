@@ -6,7 +6,6 @@ const Config = require('../lib/node/config');
 const util = require('../lib/utils/util');
 const Client = require('../lib/http/client');
 const Wallet = require('../lib/http/wallet');
-const Amount = require('../lib/btc/amount');
 
 function CLI() {
   this.config = new Config('bcoin');
@@ -61,8 +60,6 @@ CLI.prototype.createWallet = async function createWallet() {
   }
 
   wallet = await this.client.createWallet(options);
-  wallet.state.confirmed = Amount.btc(wallet.state.confirmed);
-  wallet.state.unconfirmed = Amount.btc(wallet.state.unconfirmed);
 
   this.log(wallet);
 };
@@ -153,8 +150,6 @@ CLI.prototype.getAccounts = async function getAccounts() {
 
 CLI.prototype.getWallet = async function getWallet() {
   let info = await this.wallet.getInfo();
-  info.state.confirmed = Amount.btc(info.state.confirmed);
-  info.state.unconfirmed = Amount.btc(info.state.unconfirmed);
   this.log(info);
 };
 
@@ -273,8 +268,6 @@ CLI.prototype.listenWallet = async function listenWallet() {
 CLI.prototype.getBalance = async function getBalance() {
   let account = this.config.str('account');
   let balance = await this.wallet.getBalance(account);
-  balance.confirmed = Amount.btc(balance.confirmed);
-  balance.unconfirmed = Amount.btc(balance.unconfirmed);
   this.log(balance);
 };
 
