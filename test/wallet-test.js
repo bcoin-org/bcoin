@@ -151,7 +151,7 @@ describe('Wallet', function() {
       n: 2
     });
 
-    k = HD.generate().deriveAccount44(0).toPublic();
+    k = HD.generate().deriveBIP44(0).toPublic();
 
     await w.addSharedKey(k);
 
