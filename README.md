@@ -32,8 +32,8 @@ See the [Beginner's Guide][guide] for more in-depth installation instructions.
 ## Documentation
 
 - API Docs: http://bcoin.io/docs/
-- REST Docs: https://github.com/bcoin-org/bcoin/wiki/REST-&-RPC-API
-- Wiki: https://github.com/bcoin-org/bcoin/wiki
+- REST Docs: [docs/REST-RPC-API](docs/REST-RPC-API.md)
+- Docs: [docs/](docs/README.md)
 
 ## Support
 
@@ -59,6 +59,6 @@ all code is your original work. `</legalese>`
 See LICENSE for more info.
 
 [purse]: https://purse.io
-[guide]: https://github.com/bcoin-org/bcoin/wiki/Beginner's-Guide
+[guide]: docs/Beginner's-Guide.md
 [freenode]: https://freenode.net/
 [irc]: irc://irc.freenode.net/bcoin

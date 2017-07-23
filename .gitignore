@@ -1,5 +1,5 @@
 node_modules/
-docs/
+docs/reference/
 docker_data/
 browser/bcoin*
 bcoin*
