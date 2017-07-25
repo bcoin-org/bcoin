@@ -478,8 +478,8 @@ Example:
   "hash": "0de09025e68b78e13f5543f46a9516fa37fcc06409bf03eda0e85ed34018f822",
   "height": -1,
   "block": null,
-  "ts": 0,
-  "ps": 1486685530,
+  "time": 0,
+  "mtime": 1486685530,
   "date": "2017-02-10T00:12:10Z",
   "index": -1,
   "size": 226,
@@ -549,7 +549,7 @@ Do not broadcast or add to wallet.
   "witnessHash": "0799a1d3ebfd108d2578a60e1b685350d42e1ef4d5cd326f99b8bf794c81ed17",
   "fee": "0.0000454",
   "rate": "0.00020088",
-  "ps": 1486686322,
+  "mtime": 1486686322,
   "version": 1,
   "flag": 1,
   "inputs": [
@@ -626,7 +626,7 @@ Example:
 {
   "hash": "39864ce2f29635638bbdc3e943b3a182040fdceb6679fa3dabc8c827e05ff6a7",
   "height": 3,
-  "ts": 1485471341,
+  "time": 1485471341,
   "hashes": [
     "dd1a110edcdcbb3110a1cbe0a545e4b0a7813ffa5e77df691478205191dad66f"
   ]
@@ -846,8 +846,8 @@ Example:
   "hash": "0de09025e68b78e13f5543f46a9516fa37fcc06409bf03eda0e85ed34018f822",
   "height": -1,
   "block": null,
-  "ts": 0,
-  "ps": 1486685530,
+  "time": 0,
+  "mtime": 1486685530,
   "date": "2017-02-10T00:12:10Z",
   "index": -1,
   "size": 226,

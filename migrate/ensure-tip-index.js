@@ -51,7 +51,7 @@ function entryFromRaw(data) {
   entry.version = p.readU32(); // Technically signed
   entry.prevBlock = p.readHash('hex');
   entry.merkleRoot = p.readHash('hex');
-  entry.ts = p.readU32();
+  entry.time = p.readU32();
   entry.bits = p.readU32();
   entry.nonce = p.readU32();
   entry.height = p.readU32();

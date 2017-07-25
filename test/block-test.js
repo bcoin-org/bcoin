@@ -61,7 +61,7 @@ describe('Block', function() {
     version: 2,
     prevBlock: 'd1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0000000000000000',
     merkleRoot: '28bec1d35af480ba3884553d72694f6ba6c163a5c081d7e6edaec15f373f19af',
-    ts: 1399713634,
+    time: 1399713634,
     bits: 419465580,
     nonce: 1186968784,
     totalTX: 461,

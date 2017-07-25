@@ -62,7 +62,7 @@ function createGenesisBlock(options) {
     version: options.version,
     prevBlock: encoding.NULL_HASH,
     merkleRoot: tx.hash('hex'),
-    ts: options.ts,
+    time: options.time,
     bits: options.bits,
     nonce: options.nonce,
     height: 0
@@ -75,42 +75,42 @@ function createGenesisBlock(options) {
 
 main = createGenesisBlock({
   version: 1,
-  ts: 1231006505,
+  time: 1231006505,
   bits: 486604799,
   nonce: 2083236893
 });
 
 testnet = createGenesisBlock({
   version: 1,
-  ts: 1296688602,
+  time: 1296688602,
   bits: 486604799,
   nonce: 414098458
 });
 
 regtest = createGenesisBlock({
   version: 1,
-  ts: 1296688602,
+  time: 1296688602,
   bits: 545259519,
   nonce: 2
 });
 
 segnet3 = createGenesisBlock({
   version: 1,
-  ts: 1452831101,
+  time: 1452831101,
   bits: 486604799,
   nonce: 0
 });
 
 segnet4 = createGenesisBlock({
   version: 1,
-  ts: 1452831101,
+  time: 1452831101,
   bits: 503447551,
   nonce: 0
 });
 
 btcd = createGenesisBlock({
   version: 1,
-  ts: 1401292357,
+  time: 1401292357,
   bits: 545259519,
   nonce: 2
 });

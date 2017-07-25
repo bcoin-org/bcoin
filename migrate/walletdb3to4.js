@@ -100,8 +100,8 @@ function fromExtended(data, saveCoins) {
   tx.height = p.readU32();
   tx.block = p.readHash('hex');
   tx.index = p.readU32();
-  tx.ts = p.readU32();
-  tx.ps = p.readU32();
+  tx.time = p.readU32();
+  tx.mtime = p.readU32();
 
   if (tx.block === encoding.NULL_HASH)
     tx.block = null;

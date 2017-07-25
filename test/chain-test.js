@@ -483,14 +483,14 @@ describe('Chain', function() {
   it('should fail to connect bad MTP', async () => {
     let mtp = await chain.tip.getMedianTime();
     let job = await cpu.createJob();
-    job.attempt.ts = mtp - 1;
+    job.attempt.time = mtp - 1;
     assert.equal(await mineBlock(job), 'time-too-old');
   });
 
   it('should fail to connect bad time', async () => {
     let job = await cpu.createJob();
     let now = network.now() + 3 * 60 * 60;
-    job.attempt.ts = now;
+    job.attempt.time = now;
     assert.equal(await mineBlock(job), 'time-too-new');
   });
 

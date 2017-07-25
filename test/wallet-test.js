@@ -38,7 +38,7 @@ function nextBlock(height) {
     hash: hash,
     height: height,
     prevBlock: prev,
-    ts: globalTime + height,
+    time: globalTime + height,
     merkleRoot: encoding.NULL_HASH,
     nonce: 0,
     bits: 0

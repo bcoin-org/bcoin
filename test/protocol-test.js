@@ -35,7 +35,7 @@ describe('Protocol', function() {
   v1 = packets.VersionPacket.fromOptions({
     version: 300,
     services: 1,
-    ts: network.now(),
+    time: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
     nonce: util.nonce(),
@@ -54,7 +54,7 @@ describe('Protocol', function() {
   v2 = packets.VersionPacket.fromOptions({
     version: 300,
     services: 1,
-    ts: network.now(),
+    time: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
     nonce: util.nonce(),
@@ -79,13 +79,13 @@ describe('Protocol', function() {
       services: 1,
       host: '127.0.0.1',
       port: 8333,
-      ts: util.now()
+      time: util.now()
     }),
     new NetAddress({
       services: 1,
       host: '::123:456:789a',
       port: 18333,
-      ts: util.now()
+      time: util.now()
     })
   ];
 
@@ -93,12 +93,12 @@ describe('Protocol', function() {
     assert.equal(typeof payload.items.length, 'number');
     assert.equal(payload.items.length, 2);
 
-    assert.equal(typeof payload.items[0].ts, 'number');
+    assert.equal(typeof payload.items[0].time, 'number');
     assert.equal(payload.items[0].services, 1);
     assert.equal(payload.items[0].host, hosts[0].host);
     assert.equal(payload.items[0].port, hosts[0].port);
 
-    assert.equal(typeof payload.items[1].ts, 'number');
+    assert.equal(typeof payload.items[1].time, 'number');
     assert.equal(payload.items[1].services, 1);
     assert.equal(payload.items[1].host, hosts[1].host);
     assert.equal(payload.items[1].port, hosts[1].port);
