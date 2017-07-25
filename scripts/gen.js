@@ -68,7 +68,7 @@ function createGenesisBlock(options) {
     height: 0
   });
 
-  block.addTX(tx);
+  block.txs.push(tx);
 
   return block;
 }
