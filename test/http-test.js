@@ -11,16 +11,16 @@ const MTX = require('../lib/primitives/mtx');
 const HTTP = require('../lib/http');
 const FullNode = require('../lib/node/fullnode');
 const pkg = require('../lib/pkg');
-const plugin = require('../lib/wallet/plugin');
 
 describe('HTTP', function() {
-  let node, wallet, walletdb, addr, hash;
+  let node, wallet, wdb, addr, hash;
 
   node = new FullNode({
     network: 'regtest',
     apiKey: 'foo',
     walletAuth: true,
-    db: 'memory'
+    db: 'memory',
+    plugins: [require('../lib/wallet/plugin')]
   });
 
   wallet = new HTTP.Wallet({
@@ -28,9 +28,7 @@ describe('HTTP', function() {
     apiKey: 'foo'
   });
 
-  walletdb = node.use(plugin);
-
-  node.on('error', () => {});
+  wdb = node.require('walletdb');
 
   this.timeout(15000);
 
@@ -85,7 +83,7 @@ describe('HTTP', function() {
       details = d;
     });
 
-    await walletdb.addTX(tx);
+    await wdb.addTX(tx);
     await co.timeout(300);
 
     assert(receive);

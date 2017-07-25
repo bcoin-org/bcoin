@@ -10,22 +10,23 @@ const FullNode = require('../lib/node/fullnode');
 const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const Address = require('../lib/primitives/address');
-const plugin = require('../lib/wallet/plugin');
 
 describe('Node', function() {
-  let node = new FullNode({
-    db: 'memory',
-    apiKey: 'foo',
-    network: 'regtest',
-    workers: true
-  });
-  let chain = node.chain;
-  let walletdb = node.use(plugin);
-  let miner = node.miner;
+  let node, chain, wdb, miner;
   let wallet, tip1, tip2, cb1, cb2;
   let tx1, tx2;
 
-  node.on('error', () => {});
+  node = new FullNode({
+    db: 'memory',
+    apiKey: 'foo',
+    network: 'regtest',
+    workers: true,
+    plugins: [require('../lib/wallet/plugin')]
+  });
+
+  chain = node.chain;
+  miner = node.miner;
+  wdb = node.require('walletdb');
 
   this.timeout(5000);
 
@@ -60,7 +61,7 @@ describe('Node', function() {
   });
 
   it('should open walletdb', async () => {
-    wallet = await walletdb.create();
+    wallet = await wdb.create();
     miner.addresses.length = 0;
     miner.addAddress(wallet.getReceive());
   });
@@ -118,7 +119,7 @@ describe('Node', function() {
   it('should handle a reorg', async () => {
     let entry, block, forked;
 
-    assert.equal(walletdb.state.height, chain.height);
+    assert.equal(wdb.state.height, chain.height);
     assert.equal(chain.height, 11);
 
     entry = await chain.db.getEntry(tip2.hash);
@@ -242,7 +243,7 @@ describe('Node', function() {
     assert(wallet.account.receiveDepth >= 7);
     assert(wallet.account.changeDepth >= 6);
 
-    assert.equal(walletdb.state.height, chain.height);
+    assert.equal(wdb.state.height, chain.height);
 
     txs = await wallet.getHistory();
     assert.equal(txs.length, 45);
@@ -265,7 +266,7 @@ describe('Node', function() {
   it('should rescan for transactions', async () => {
     let total = 0;
 
-    await chain.db.scan(0, walletdb.filter, (block, txs) => {
+    await chain.db.scan(0, wdb.filter, (block, txs) => {
       total += txs.length;
       return Promise.resolve();
     });
@@ -450,7 +451,7 @@ describe('Node', function() {
   });
 
   it('should rescan for transactions', async () => {
-    await walletdb.rescan(0);
+    await wdb.rescan(0);
     assert.equal(wallet.txdb.state.confirmed, 1289250000000);
   });
 
