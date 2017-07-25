@@ -19,7 +19,7 @@ tests.ca = {
 };
 
 x509.allowUntrusted = true;
-x509.trusted = {};
+x509.trusted.clear();
 
 describe('BIP70', function() {
   function testRequest(data) {

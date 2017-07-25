@@ -68,7 +68,7 @@ async function updateTXDB() {
       batch.del(key);
   }
 
-  txs = util.values(txs);
+  txs = getValues(txs);
 
   await batch.write();
   await db.close();
@@ -127,6 +127,15 @@ function fromExtended(data, saveCoins) {
   }
 
   return tx;
+}
+
+function getValues(map) {
+  let items = [];
+
+  for (let key of Object.keys(map))
+    items.push(map[key]);
+
+  return items;
 }
 
 (async () => {
