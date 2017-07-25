@@ -7,7 +7,6 @@ const WalletDB = require('../lib/wallet/walletdb');
 const BufferReader = require('../lib/utils/reader');
 const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
-const util = require('../lib/utils/util');
 let file = process.argv[2];
 let db, batch;
 

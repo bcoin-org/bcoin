@@ -8,7 +8,6 @@
 
 const assert = require('assert');
 const Network = require('../../lib/protocol/network');
-const util = require('../../lib/utils/util');
 const MTX = require('../../lib/primitives/mtx');
 const HD = require('../../lib/hd/hd');
 const Bloom = require('../../lib/utils/bloom');
