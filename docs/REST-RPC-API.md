@@ -80,6 +80,8 @@ Example:
 
 Get coins by address. Returns coins in bcoin coin json format.
 
+*Note: Without `index-address` option, it won't return from chain(only mempool).*
+
 ### GET /coin/:hash/:index
 
 Get coin by outpoint (hash and index). Returns coin in bcoin coin json format.
@@ -95,7 +97,9 @@ Example:
 
 ### GET /tx/:hash
 
-Get transaction by TXID. Returns TX in bcoin transaction json format.
+Get transaction by TXID from Chain or Mempool. Returns TX in bcoin transaction json format.
+
+*Note: Without `index-tx` option, it won't return from chain.*
 
 ### GET /tx/address/:address
 
@@ -173,29 +177,29 @@ POST /wallet/:id/send
 GET /wallet/:id/tx/:hash?token=[64 character hex string]
 ```
 
-### POST /rescan
+### POST /wallet/_admin/rescan
 
 Initiates a blockchain rescan for the walletdb. Wallets will be rolled back to the specified height (transactions above this height will be unconfirmed).
 
 Example:
 
-- Request: POST /rescan?height=100000
+- Request: POST /wallet/_admin/rescan?height=100000
 - Response Body: `{"success":true}`
 
-### POST /resend
+### POST /wallet/_admin/resend
 
 Rebroadcast all pending transactions in all wallets.
 
-### POST /backup
+### POST /wallet/_admin/backup
 
 Safely backup the wallet database to specified path (creates a clone of the database).
 
 Example:
 
-- Request: POST /backup?path=/home/user/walletdb-backup.ldb
+- Request: POST /wallet/_admin/backup?path=/home/user/walletdb-backup.ldb
 - Response Body: `{"success":true}`
 
-### GET /wallets
+### GET /wallet/_admin/wallets
 
 List all wallet IDs. Returns an array of strings.
 
@@ -716,7 +720,7 @@ Example:
 
 List all wallet coins available.
 
-### GET /wallet/:id/coin/locked
+### GET /wallet/:id/locked
 
 Get all locked outpoints.
 
@@ -728,11 +732,11 @@ Example:
 [{"hash":"dd1a110edcdcbb3110a1cbe0a545e4b0a7813ffa5e77df691478205191dad66f","index":0}]
 ```
 
-### PUT /wallet/:id/coin/locked
+### PUT /wallet/:id/locked/:hash/:index
 
 Lock outpoints.
 
-### DEL /wallet/:id/coin/locked
+### DEL /wallet/:id/locked/:hash/:index
 
 Unlock outpoints.
 
