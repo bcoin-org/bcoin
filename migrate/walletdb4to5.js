@@ -3,13 +3,13 @@
 const assert = require('assert');
 const bcoin = require('../');
 let file = process.argv[2];
-let db, batch;
+let batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
 file = file.replace(/\.ldb\/?$/, '');
 
-db = bcoin.ldb({
+const db = bcoin.ldb({
   location: file,
   db: 'leveldb',
   compression: true,
@@ -20,11 +20,10 @@ db = bcoin.ldb({
 
 async function updateVersion() {
   const bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
-  let data, ver;
 
   console.log('Checking version.');
 
-  data = await db.get('V');
+  const data = await db.get('V');
   assert(data, 'No version.');
 
   ver = data.readUInt32LE(0, true);
@@ -36,21 +35,19 @@ async function updateVersion() {
 
   await db.backup(bak);
 
-  ver = Buffer.allocUnsafe(4);
+  let ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(5, 0, true);
   batch.put('V', ver);
 }
 
 async function updateTXDB() {
-  let i, keys, key;
-
-  keys = await db.keys({
+  const keys = await db.keys({
     gte: Buffer.from([0x00]),
     lte: Buffer.from([0xff])
   });
 
-  for (i = 0; i < keys.length; i++) {
-    key = keys[i];
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
     switch (key[0]) {
       case 0x62: // b
       case 0x63: // c

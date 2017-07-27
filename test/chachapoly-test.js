@@ -12,16 +12,15 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     let plain = options.plain;
     let ciphertext = options.ciphertext;
     const counter = options.counter;
-    let chacha, plainenc;
 
     key = Buffer.from(key, 'hex');
     nonce = Buffer.from(nonce, 'hex');
     plain = Buffer.from(plain, 'hex');
     ciphertext = Buffer.from(ciphertext, 'hex');
 
-    chacha = new ChaCha20();
+    let chacha = new ChaCha20();
     chacha.init(key, nonce, counter);
-    plainenc = Buffer.from(plain);
+    const plainenc = Buffer.from(plain);
     chacha.encrypt(plainenc);
     assert.deepEqual(plainenc, ciphertext);
 
@@ -39,7 +38,6 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     let pk = options.pk;
     let ciphertext = options.ciphertext;
     let tag = options.tag;
-    let aead, plainenc;
 
     plain = Buffer.from(plain, 'hex');
     aad = Buffer.from(aad, 'hex');
@@ -49,12 +47,12 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     ciphertext = Buffer.from(ciphertext, 'hex');
     tag = Buffer.from(tag, 'hex');
 
-    aead = new AEAD();
+    let aead = new AEAD();
     aead.init(key, nonce);
     assert.equal(aead.chacha20.getCounter(), 1);
     assert.deepEqual(aead.polyKey, pk);
     aead.aad(aad);
-    plainenc = Buffer.from(plain);
+    const plainenc = Buffer.from(plain);
     aead.encrypt(plainenc);
     assert.deepEqual(plainenc, ciphertext);
     assert.deepEqual(aead.finish(), tag);
@@ -162,16 +160,14 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     const expected = Buffer.from('ddb9da7ddd5e52792730ed5cda5f90a4', 'hex');
     const key = Buffer.allocUnsafe(32);
     const msg = Buffer.allocUnsafe(73);
-    let mac;
-    let i;
 
-    for (i = 0; i < key.length; i++)
+    for (let i = 0; i < key.length; i++)
       key[i] = i + 221;
 
-    for (i = 0; i < msg.length; i++)
+    for (let i = 0; i < msg.length; i++)
       msg[i] = i + 121;
 
-    mac = Poly1305.auth(msg, key);
+    const mac = Poly1305.auth(msg, key);
     assert(Poly1305.verify(mac, expected));
     assert.deepEqual(mac, expected);
   });
@@ -180,13 +176,12 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     let key = '85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b';
     let msg = 'Cryptographic Forum Research Group';
     let tag = 'a8061dc1305136c6c22b8baf0c0127a9';
-    let mac;
 
     key = Buffer.from(key, 'hex');
     msg = Buffer.from(msg, 'ascii');
     tag = Buffer.from(tag, 'hex');
 
-    mac = Poly1305.auth(msg, key);
+    const mac = Poly1305.auth(msg, key);
     assert(Poly1305.verify(mac, tag));
   });
 

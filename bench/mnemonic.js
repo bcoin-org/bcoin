@@ -9,11 +9,12 @@ const mnemonic = new Mnemonic();
 HD.fromMnemonic(mnemonic);
 
 const phrase = mnemonic.getPhrase();
-let i, end;
 
 assert.equal(Mnemonic.fromPhrase(phrase).getPhrase(), phrase);
 
-end = bench('fromPhrase');
-for (i = 0; i < 10000; i++)
-  Mnemonic.fromPhrase(phrase);
-end(i);
+{
+  const end = bench('fromPhrase');
+  for (let i = 0; i < 10000; i++)
+    Mnemonic.fromPhrase(phrase);
+  end(10000);
+}

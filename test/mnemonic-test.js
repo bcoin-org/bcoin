@@ -13,9 +13,7 @@ describe('Mnemonic', function() {
     const seed = Buffer.from(data[2], 'hex');
     const xpriv = data[3];
     it(`should create an english mnemonic (${i})`, () => {
-      let mnemonic, key;
-
-      mnemonic = new HD.Mnemonic({
+      const mnemonic = new HD.Mnemonic({
         language: 'english',
         entropy: entropy,
         passphrase: 'TREZOR'
@@ -24,7 +22,7 @@ describe('Mnemonic', function() {
       assert.equal(mnemonic.getPhrase(), phrase);
       assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
 
-      key = HD.fromMnemonic(mnemonic);
+      const key = HD.fromMnemonic(mnemonic);
       assert.equal(key.toBase58(), xpriv);
     });
   });
@@ -36,9 +34,7 @@ describe('Mnemonic', function() {
     const passphrase = data.passphrase;
     const xpriv = data.bip32_xprv;
     it(`should create a japanese mnemonic (${i})`, () => {
-      let mnemonic, key;
-
-      mnemonic = new HD.Mnemonic({
+      const mnemonic = new HD.Mnemonic({
         language: 'japanese',
         entropy: entropy,
         passphrase: passphrase
@@ -47,7 +43,7 @@ describe('Mnemonic', function() {
       assert.equal(mnemonic.getPhrase(), phrase);
       assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
 
-      key = HD.fromMnemonic(mnemonic);
+      const key = HD.fromMnemonic(mnemonic);
       assert.equal(key.toBase58(), xpriv);
     });
   });

@@ -42,7 +42,6 @@ function parseTest(data) {
   let [coins, tx, names] = data;
   const view = new CoinView();
   let flags = 0;
-  let coin;
 
   if (!names)
     names = '';
@@ -64,7 +63,7 @@ function parseTest(data) {
     if (index === -1)
       continue;
 
-    coin = new Coin({
+    const coin = new Coin({
       version: 1,
       height: -1,
       coinbase: false,
@@ -77,7 +76,7 @@ function parseTest(data) {
     view.addCoin(coin);
   }
 
-  coin = view.getOutputFor(tx.inputs[0]);
+  const coin = view.getOutputFor(tx.inputs[0]);
 
   return {
     tx: tx,
@@ -92,14 +91,13 @@ function parseTest(data) {
 
 function sigopContext(scriptSig, witness, scriptPubkey) {
   const view = new CoinView();
-  let input, output, fund, spend;
 
-  input = new Input();
-  output = new Output();
+  let input = new Input();
+  let output = new Output();
   output.value = 1;
   output.script = scriptPubkey;
 
-  fund = new TX();
+  const fund = new TX();
   fund.version = 1;
   fund.inputs.push(input);
   fund.outputs.push(output);
@@ -114,7 +112,7 @@ function sigopContext(scriptSig, witness, scriptPubkey) {
   output = new Output();
   output.value = 1;
 
-  spend = new TX();
+  const spend = new TX();
   spend.version = 1;
   spend.inputs.push(input);
   spend.outputs.push(output);
@@ -216,8 +214,6 @@ describe('TX', function() {
     });
 
     it(`should parse witness tx properly ${suffix}`, () => {
-      let raw1, raw2, wtx2;
-
       clearCache(wtx.tx, noCache);
 
       assert.equal(wtx.tx.inputs.length, 5);
@@ -230,13 +226,13 @@ describe('TX', function() {
       assert.equal(wtx.tx.getVirtualSize(), 61813);
       assert.equal(wtx.tx.getWeight(), 247250);
 
-      raw1 = wtx.tx.toRaw();
+      const raw1 = wtx.tx.toRaw();
       clearCache(wtx.tx, true);
 
-      raw2 = wtx.tx.toRaw();
+      const raw2 = wtx.tx.toRaw();
       assert.deepEqual(raw1, raw2);
 
-      wtx2 = TX.fromRaw(raw2);
+      const wtx2 = TX.fromRaw(raw2);
       clearCache(wtx2, noCache);
 
       assert.equal(wtx.tx.hash('hex'), wtx2.hash('hex'));
@@ -248,24 +244,22 @@ describe('TX', function() {
       let comment = '';
 
       arr.forEach((json, i) => {
-        let data, tx, view, flags, comments;
-
         if (json.length === 1) {
           comment += ' ' + json[0];
           return;
         }
 
-        data = parseTest(json);
+        const data = parseTest(json);
 
         if (!data) {
           comment = '';
           return;
         }
 
-        tx = data.tx;
-        view = data.view;
-        flags = data.flags;
-        comments = comment.trim();
+        const tx = data.tx;
+        const view = data.view;
+        const flags = data.flags;
+        let comments = comment.trim();
 
         if (!comments)
           comments = data.comments;
@@ -318,15 +312,15 @@ describe('TX', function() {
 
     sighash.forEach((data) => {
       let [tx, script, index, type, hash] = data;
-      let expected, hex;
 
       if (data.length === 1)
         return;
 
       tx = TX.fromRaw(tx, 'hex');
       script = Script.fromRaw(script, 'hex');
-      expected = util.revHex(hash);
-      hex = type & 3;
+
+      const expected = util.revHex(hash);
+      let hex = type & 3;
 
       if (type & 0x80)
         hex |= 0x80;
@@ -507,9 +501,8 @@ describe('TX', function() {
 
   it('should fail to parse >53 bit values', () => {
     const view = new CoinView();
-    let tx, raw;
 
-    tx = new TX({
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [
@@ -522,7 +515,7 @@ describe('TX', function() {
       locktime: 0
     });
 
-    raw = tx.toRaw();
+    let raw = tx.toRaw();
     assert(encoding.readU64(raw, 47) === 0xdeadbeef);
     raw[54] = 0x7f;
 
@@ -661,18 +654,17 @@ describe('TX', function() {
     const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     const key = KeyRing.generate();
     const pub = key.publicKey;
-    let ctx, output, input, witness;
 
-    output = Script.fromMultisig(1, 2, [pub, pub]);
+    const output = Script.fromMultisig(1, 2, [pub, pub]);
 
-    input = new Script([
+    const input = new Script([
       opcodes.OP_0,
       opcodes.OP_0
     ]);
 
-    witness = new Witness();
+    const witness = new Witness();
 
-    ctx = sigopContext(input, witness, output);
+    const ctx = sigopContext(input, witness, output);
 
     assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 0);
     assert.equal(ctx.fund.getSigopsCost(ctx.view, flags),
@@ -683,20 +675,19 @@ describe('TX', function() {
     const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     const key = KeyRing.generate();
     const pub = key.publicKey;
-    let ctx, redeem, output, input, witness;
 
-    redeem = Script.fromMultisig(1, 2, [pub, pub]);
-    output = Script.fromScripthash(redeem.hash160());
+    const redeem = Script.fromMultisig(1, 2, [pub, pub]);
+    const output = Script.fromScripthash(redeem.hash160());
 
-    input = new Script([
+    const input = new Script([
       opcodes.OP_0,
       opcodes.OP_0,
       redeem.toRaw()
     ]);
 
-    witness = new Witness();
+    const witness = new Witness();
 
-    ctx = sigopContext(input, witness, output);
+    const ctx = sigopContext(input, witness, output);
 
     assert.equal(ctx.spend.getSigopsCost(ctx.view, flags),
       2 * consensus.WITNESS_SCALE_FACTOR);
@@ -705,18 +696,17 @@ describe('TX', function() {
   it('should count sigops for p2wpkh', () => {
     const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     const key = KeyRing.generate();
-    let ctx, output, input, witness;
 
-    output = Script.fromProgram(0, key.getKeyHash());
+    let output = Script.fromProgram(0, key.getKeyHash());
 
-    input = new Script();
+    const input = new Script();
 
-    witness = new Witness([
+    const witness = new Witness([
       Buffer.from([0]),
       Buffer.from([0])
     ]);
 
-    ctx = sigopContext(input, witness, output);
+    let ctx = sigopContext(input, witness, output);
 
     assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 1);
     assert.equal(
@@ -741,21 +731,20 @@ describe('TX', function() {
   it('should count sigops for nested p2wpkh', () => {
     const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     const key = KeyRing.generate();
-    let ctx, redeem, output, input, witness;
 
-    redeem = Script.fromProgram(0, key.getKeyHash());
-    output = Script.fromScripthash(redeem.hash160());
+    const redeem = Script.fromProgram(0, key.getKeyHash());
+    const output = Script.fromScripthash(redeem.hash160());
 
-    input = new Script([
+    const input = new Script([
       redeem.toRaw()
     ]);
 
-    witness = new Witness([
+    const witness = new Witness([
       Buffer.from([0]),
       Buffer.from([0])
     ]);
 
-    ctx = sigopContext(input, witness, output);
+    const ctx = sigopContext(input, witness, output);
 
     assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 1);
   });
@@ -764,20 +753,19 @@ describe('TX', function() {
     const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     const key = KeyRing.generate();
     const pub = key.publicKey;
-    let ctx, redeem, output, input, witness;
 
-    redeem = Script.fromMultisig(1, 2, [pub, pub]);
-    output = Script.fromProgram(0, redeem.sha256());
+    const redeem = Script.fromMultisig(1, 2, [pub, pub]);
+    const output = Script.fromProgram(0, redeem.sha256());
 
-    input = new Script();
+    const input = new Script();
 
-    witness = new Witness([
+    const witness = new Witness([
       Buffer.from([0]),
       Buffer.from([0]),
       redeem.toRaw()
     ]);
 
-    ctx = sigopContext(input, witness, output);
+    const ctx = sigopContext(input, witness, output);
 
     assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 2);
     assert.equal(
@@ -789,23 +777,22 @@ describe('TX', function() {
     const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
     const key = KeyRing.generate();
     const pub = key.publicKey;
-    let ctx, wscript, redeem, output, input, witness;
 
-    wscript = Script.fromMultisig(1, 2, [pub, pub]);
-    redeem = Script.fromProgram(0, wscript.sha256());
-    output = Script.fromScripthash(redeem.hash160());
+    const wscript = Script.fromMultisig(1, 2, [pub, pub]);
+    const redeem = Script.fromProgram(0, wscript.sha256());
+    const output = Script.fromScripthash(redeem.hash160());
 
-    input = new Script([
+    const input = new Script([
       redeem.toRaw()
     ]);
 
-    witness = new Witness([
+    const witness = new Witness([
       Buffer.from([0]),
       Buffer.from([0]),
       wscript.toRaw()
     ]);
 
-    ctx = sigopContext(input, witness, output);
+    const ctx = sigopContext(input, witness, output);
 
     assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 2);
   });

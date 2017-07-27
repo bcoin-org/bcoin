@@ -16,8 +16,6 @@ describe('AES', function() {
   }
 
   function nencrypt(data, passphrase) {
-    let key, cipher;
-
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
@@ -27,8 +25,8 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = Buffer.from(passphrase, 'utf8');
 
-    key = pbkdf2key(passphrase, 2048, 32, 16);
-    cipher = nativeCrypto.createCipheriv('aes-256-cbc', key.key, key.iv);
+    const key = pbkdf2key(passphrase, 2048, 32, 16);
+    const cipher = nativeCrypto.createCipheriv('aes-256-cbc', key.key, key.iv);
 
     return Buffer.concat([
       cipher.update(data),
@@ -37,8 +35,6 @@ describe('AES', function() {
   }
 
   function ndecrypt(data, passphrase) {
-    let key, decipher;
-
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
@@ -48,8 +44,8 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = Buffer.from(passphrase, 'utf8');
 
-    key = pbkdf2key(passphrase, 2048, 32, 16);
-    decipher = nativeCrypto.createDecipheriv('aes-256-cbc', key.key, key.iv);
+    const key = pbkdf2key(passphrase, 2048, 32, 16);
+    const decipher = nativeCrypto.createDecipheriv('aes-256-cbc', key.key, key.iv);
 
     return Buffer.concat([
       decipher.update(data),
@@ -58,8 +54,6 @@ describe('AES', function() {
   }
 
   function bencrypt(data, passphrase) {
-    let key;
-
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
@@ -69,13 +63,11 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = Buffer.from(passphrase, 'utf8');
 
-    key = pbkdf2key(passphrase, 2048, 32, 16);
+    const key = pbkdf2key(passphrase, 2048, 32, 16);
     return aes.encipher(data, key.key, key.iv);
   }
 
   function bdecrypt(data, passphrase) {
-    let key;
-
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
@@ -85,13 +77,11 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = Buffer.from(passphrase, 'utf8');
 
-    key = pbkdf2key(passphrase, 2048, 32, 16);
+    const key = pbkdf2key(passphrase, 2048, 32, 16);
     return aes.decipher(data, key.key, key.iv);
   }
 
   function encrypt(data, passphrase) {
-    let key;
-
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
@@ -101,14 +91,12 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = Buffer.from(passphrase, 'utf8');
 
-    key = pbkdf2key(passphrase, 2048, 32, 16);
+    const key = pbkdf2key(passphrase, 2048, 32, 16);
 
     return aes.encipher(data, key.key, key.iv);
   }
 
   function decrypt(data, passphrase) {
-    let key;
-
     assert(nativeCrypto, 'No crypto module available.');
     assert(passphrase, 'No passphrase.');
 
@@ -118,7 +106,7 @@ describe('AES', function() {
     if (typeof passphrase === 'string')
       passphrase = Buffer.from(passphrase, 'utf8');
 
-    key = pbkdf2key(passphrase, 2048, 32, 16);
+    const key = pbkdf2key(passphrase, 2048, 32, 16);
 
     return aes.decipher(data, key.key, key.iv);
   }

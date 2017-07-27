@@ -12,11 +12,10 @@ const TX = require('../lib/primitives/tx');
 const Address = require('../lib/primitives/address');
 
 describe('Node', function() {
-  let node, chain, wdb, miner;
   let wallet, tip1, tip2, cb1, cb2;
   let tx1, tx2;
 
-  node = new FullNode({
+  const node = new FullNode({
     db: 'memory',
     apiKey: 'foo',
     network: 'regtest',
@@ -24,20 +23,19 @@ describe('Node', function() {
     plugins: [require('../lib/wallet/plugin')]
   });
 
-  chain = node.chain;
-  miner = node.miner;
-  wdb = node.require('walletdb');
+  const chain = node.chain;
+  const miner = node.miner;
+  const wdb = node.require('walletdb');
 
   this.timeout(5000);
 
   async function mineBlock(tip, tx) {
     const job = await miner.createJob(tip);
-    let rtx;
 
     if (!tx)
       return await job.mineAsync();
 
-    rtx = new MTX();
+    const rtx = new MTX();
 
     rtx.addTX(tx, 0);
 
@@ -73,13 +71,11 @@ describe('Node', function() {
   });
 
   it('should mine competing chains', async () => {
-    let i, block1, block2;
-
-    for (i = 0; i < 10; i++) {
-      block1 = await mineBlock(tip1, cb1);
+    for (let i = 0; i < 10; i++) {
+      const block1 = await mineBlock(tip1, cb1);
       cb1 = block1.txs[0];
 
-      block2 = await mineBlock(tip2, cb2);
+      const block2 = await mineBlock(tip2, cb2);
       cb2 = block2.txs[0];
 
       await chain.add(block1);
@@ -107,29 +103,25 @@ describe('Node', function() {
   });
 
   it('should have correct balance', async () => {
-    let balance;
-
     await co.timeout(100);
 
-    balance = await wallet.getBalance();
+    const balance = await wallet.getBalance();
     assert.equal(balance.unconfirmed, 550 * 1e8);
     assert.equal(balance.confirmed, 550 * 1e8);
   });
 
   it('should handle a reorg', async () => {
-    let entry, block, forked;
-
     assert.equal(wdb.state.height, chain.height);
     assert.equal(chain.height, 11);
 
-    entry = await chain.db.getEntry(tip2.hash);
+    const entry = await chain.db.getEntry(tip2.hash);
     assert(entry);
     assert(chain.height === entry.height);
 
-    block = await miner.mineBlock(entry);
+    const block = await miner.mineBlock(entry);
     assert(block);
 
-    forked = false;
+    let forked = false;
     chain.once('reorganize', () => {
       forked = true;
     });
@@ -148,11 +140,9 @@ describe('Node', function() {
   });
 
   it('should have correct balance', async () => {
-    let balance;
-
     await co.timeout(100);
 
-    balance = await wallet.getBalance();
+    const balance = await wallet.getBalance();
     assert.equal(balance.unconfirmed, 1100 * 1e8);
     assert.equal(balance.confirmed, 600 * 1e8);
   });
@@ -164,15 +154,14 @@ describe('Node', function() {
 
   it('should mine a block after a reorg', async () => {
     const block = await mineBlock(null, cb2);
-    let entry, result;
 
     await chain.add(block);
 
-    entry = await chain.db.getEntry(block.hash('hex'));
+    const entry = await chain.db.getEntry(block.hash('hex'));
     assert(entry);
     assert(chain.tip.hash === entry.hash);
 
-    result = await entry.isMainChain();
+    const result = await entry.isMainChain();
     assert(result);
   });
 
@@ -215,28 +204,24 @@ describe('Node', function() {
   });
 
   it('should get coin', async () => {
-    let block, tx, output, coin;
-
-    block = await mineBlock();
+    let block = await mineBlock();
     await chain.add(block);
 
     block = await mineBlock(null, block.txs[0]);
     await chain.add(block);
 
-    tx = block.txs[1];
-    output = Coin.fromTX(tx, 1, chain.height);
+    const tx = block.txs[1];
+    const output = Coin.fromTX(tx, 1, chain.height);
 
-    coin = await chain.db.getCoin(tx.hash('hex'), 1);
+    const coin = await chain.db.getCoin(tx.hash('hex'), 1);
 
     assert.deepEqual(coin.toRaw(), output.toRaw());
   });
 
   it('should get balance', async () => {
-    let balance, txs;
-
     await co.timeout(100);
 
-    balance = await wallet.getBalance();
+    const balance = await wallet.getBalance();
     assert.equal(balance.unconfirmed, 1250 * 1e8);
     assert.equal(balance.confirmed, 750 * 1e8);
 
@@ -245,7 +230,7 @@ describe('Node', function() {
 
     assert.equal(wdb.state.height, chain.height);
 
-    txs = await wallet.getHistory();
+    const txs = await wallet.getHistory();
     assert.equal(txs.length, 45);
   });
 
@@ -266,9 +251,8 @@ describe('Node', function() {
   it('should rescan for transactions', async () => {
     let total = 0;
 
-    await chain.db.scan(0, wdb.filter, (block, txs) => {
+    await chain.db.scan(0, wdb.filter, async (block, txs) => {
       total += txs.length;
-      return Promise.resolve();
     });
 
     assert.equal(total, 26);
@@ -276,38 +260,40 @@ describe('Node', function() {
 
   it('should activate csv', async () => {
     const deployments = chain.network.deployments;
-    let i, block, prev, state, cache;
 
-    prev = await chain.tip.getPrevious();
-    state = await chain.getState(prev, deployments.csv);
+    const prev = await chain.tip.getPrevious();
+    const state = await chain.getState(prev, deployments.csv);
     assert(state === 0);
 
-    for (i = 0; i < 417; i++) {
-      block = await miner.mineBlock();
+    for (let i = 0; i < 417; i++) {
+      const block = await miner.mineBlock();
       await chain.add(block);
       switch (chain.height) {
-        case 144:
-          prev = await chain.tip.getPrevious();
-          state = await chain.getState(prev, deployments.csv);
+        case 144: {
+          const prev = await chain.tip.getPrevious();
+          const state = await chain.getState(prev, deployments.csv);
           assert(state === 1);
           break;
-        case 288:
-          prev = await chain.tip.getPrevious();
-          state = await chain.getState(prev, deployments.csv);
+        }
+        case 288: {
+          const prev = await chain.tip.getPrevious();
+          const state = await chain.getState(prev, deployments.csv);
           assert(state === 2);
           break;
-        case 432:
-          prev = await chain.tip.getPrevious();
-          state = await chain.getState(prev, deployments.csv);
+        }
+        case 432: {
+          const prev = await chain.tip.getPrevious();
+          const state = await chain.getState(prev, deployments.csv);
           assert(state === 3);
           break;
+        }
       }
     }
 
     assert(chain.height === 432);
     assert(chain.state.hasCSV());
 
-    cache = await chain.db.getStateCache();
+    const cache = await chain.db.getStateCache();
     assert.deepEqual(cache, chain.db.stateCache);
     assert.equal(chain.db.stateCache.updates.length, 0);
     assert(await chain.db.verifyDeployments());
@@ -315,9 +301,7 @@ describe('Node', function() {
 
   async function mineCSV(tx) {
     const job = await miner.createJob();
-    let redeemer;
-
-    redeemer = new MTX();
+    const redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
@@ -342,13 +326,12 @@ describe('Node', function() {
   it('should test csv', async () => {
     const tx = (await chain.db.getBlock(chain.height)).txs[0];
     let block = await mineCSV(tx);
-    let csv, job, redeemer;
 
     await chain.add(block);
 
-    csv = block.txs[1];
+    const csv = block.txs[1];
 
-    redeemer = new MTX();
+    const redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
@@ -361,7 +344,7 @@ describe('Node', function() {
     redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 1, false);
 
-    job = await miner.createJob();
+    const job = await miner.createJob();
 
     job.addTX(redeemer.toTX(), redeemer.view);
     job.refresh();
@@ -373,9 +356,7 @@ describe('Node', function() {
 
   it('should fail csv with bad sequence', async () => {
     const csv = (await chain.db.getBlock(chain.height)).txs[1];
-    let block, job, redeemer, err;
-
-    redeemer = new MTX();
+    const redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
@@ -388,13 +369,14 @@ describe('Node', function() {
     redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 1, false);
 
-    job = await miner.createJob();
+    const job = await miner.createJob();
 
     job.addTX(redeemer.toTX(), redeemer.view);
     job.refresh();
 
-    block = await job.mineAsync();
+    const block = await job.mineAsync();
 
+    let err;
     try {
       await chain.add(block);
     } catch (e) {
@@ -414,13 +396,12 @@ describe('Node', function() {
   it('should fail csv lock checks', async () => {
     const tx = (await chain.db.getBlock(chain.height)).txs[0];
     let block = await mineCSV(tx);
-    let csv, job, redeemer, err;
 
     await chain.add(block);
 
-    csv = block.txs[1];
+    const csv = block.txs[1];
 
-    redeemer = new MTX();
+    const redeemer = new MTX();
 
     redeemer.addOutput({
       script: [
@@ -433,13 +414,14 @@ describe('Node', function() {
     redeemer.addTX(csv, 0);
     redeemer.setSequence(0, 2, false);
 
-    job = await miner.createJob();
+    const job = await miner.createJob();
 
     job.addTX(redeemer.toTX(), redeemer.view);
     job.refresh();
 
     block = await job.mineAsync();
 
+    let err;
     try {
       await chain.add(block);
     } catch (e) {
@@ -468,9 +450,7 @@ describe('Node', function() {
   });
 
   it('should get a block template', async () => {
-    let json;
-
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'getblocktemplate',
       params: [
         {rules: ['segwit']}
@@ -518,15 +498,14 @@ describe('Node', function() {
 
   it('should send a block template proposal', async () => {
     const attempt = await node.miner.createBlock();
-    let block, hex, json;
 
     attempt.refresh();
 
-    block = attempt.toBlock();
+    const block = attempt.toBlock();
 
-    hex = block.toRaw().toString('hex');
+    const hex = block.toRaw().toString('hex');
 
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'getblocktemplate',
       params: [{
         mode: 'proposal',
@@ -541,9 +520,8 @@ describe('Node', function() {
   it('should submit a block', async () => {
     const block = await node.miner.mineBlock();
     const hex = block.toRaw().toString('hex');
-    let json;
 
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'submitblock',
       params: [hex]
     }, {});
@@ -555,11 +533,10 @@ describe('Node', function() {
 
   it('should validate an address', async () => {
     const addr = new Address();
-    let json;
 
     addr.network = node.network;
 
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'validateaddress',
       params: [addr.toString()]
     }, {});
@@ -574,9 +551,7 @@ describe('Node', function() {
   });
 
   it('should add transaction to mempool', async () => {
-    let mtx, tx, missing;
-
-    mtx = await wallet.createTX({
+    const mtx = await wallet.createTX({
       rate: 100000,
       outputs: [{
         value: 100000,
@@ -589,20 +564,18 @@ describe('Node', function() {
     assert(mtx.isSigned());
 
     tx1 = mtx;
-    tx = mtx.toTX();
+    const tx = mtx.toTX();
 
     await wallet.db.addTX(tx);
 
-    missing = await node.mempool.addTX(tx);
+    const missing = await node.mempool.addTX(tx);
     assert(!missing || missing.length === 0);
 
     assert.equal(node.mempool.map.size, 1);
   });
 
   it('should add lesser transaction to mempool', async () => {
-    let mtx, tx, missing;
-
-    mtx = await wallet.createTX({
+    const mtx = await wallet.createTX({
       rate: 1000,
       outputs: [{
         value: 50000,
@@ -615,11 +588,11 @@ describe('Node', function() {
     assert(mtx.isSigned());
 
     tx2 = mtx;
-    tx = mtx.toTX();
+    const tx = mtx.toTX();
 
     await wallet.db.addTX(tx);
 
-    missing = await node.mempool.addTX(tx);
+    const missing = await node.mempool.addTX(tx);
     assert(!missing || missing.length === 0);
 
     assert.equal(node.mempool.map.size, 2);
@@ -628,11 +601,10 @@ describe('Node', function() {
   it('should get a block template', async () => {
     let fees = 0;
     let weight = 0;
-    let i, item, json, result;
 
     node.rpc.refreshBlock();
 
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'getblocktemplate',
       params: [
         {rules: ['segwit']}
@@ -643,10 +615,10 @@ describe('Node', function() {
     assert(!json.error);
     assert(json.result);
 
-    result = json.result;
+    const result = json.result;
 
-    for (i = 0; i < result.transactions.length; i++) {
-      item = result.transactions[i];
+    for (let i = 0; i < result.transactions.length; i++) {
+      const item = result.transactions[i];
       fees += item.fee;
       weight += item.weight;
     }
@@ -660,23 +632,19 @@ describe('Node', function() {
   });
 
   it('should get raw transaction', async () => {
-    let json, tx;
-
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'getrawtransaction',
       params: [tx2.txid()],
       id: '1'
     }, {});
 
     assert(!json.error);
-    tx = TX.fromRaw(json.result, 'hex');
+    const tx = TX.fromRaw(json.result, 'hex');
     assert.equal(tx.txid(), tx2.txid());
   });
 
   it('should prioritise transaction', async () => {
-    let json;
-
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'prioritisetransaction',
       params: [tx2.txid(), 0, 10000000],
       id: '1'
@@ -689,11 +657,10 @@ describe('Node', function() {
   it('should get a block template', async () => {
     let fees = 0;
     let weight = 0;
-    let i, item, json, result;
 
     node.rpc.refreshBlock();
 
-    json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'getblocktemplate',
       params: [
         {rules: ['segwit']}
@@ -704,10 +671,10 @@ describe('Node', function() {
     assert(!json.error);
     assert(json.result);
 
-    result = json.result;
+    const result = json.result;
 
-    for (i = 0; i < result.transactions.length; i++) {
-      item = result.transactions[i];
+    for (let i = 0; i < result.transactions.length; i++) {
+      const item = result.transactions[i];
       fees += item.fee;
       weight += item.weight;
     }

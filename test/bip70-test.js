@@ -24,7 +24,6 @@ x509.trusted.clear();
 describe('BIP70', function() {
   function testRequest(data) {
     const request = bip70.PaymentRequest.fromRaw(data);
-    let ser;
 
     assert.equal(request.pkiType, 'x509+sha256');
     assert(request.pkiData);
@@ -33,7 +32,7 @@ describe('BIP70', function() {
     assert(request.paymentDetails.memo.length !== 0);
     assert(request.paymentDetails.paymentUrl.length !== 0);
 
-    ser = request.toRaw();
+    const ser = request.toRaw();
     assert.equal(ser.toString('hex'), data.toString('hex'));
     assert(request.verify());
   }
@@ -47,7 +46,7 @@ describe('BIP70', function() {
   });
 
   it('should verify cert chain', () => {
-    let request = bip70.PaymentRequest.fromRaw(tests.valid);
+    const request = bip70.PaymentRequest.fromRaw(tests.valid);
 
     assert.equal(request.version, 1);
     assert.equal(request.getChain().length, 4);
@@ -62,67 +61,65 @@ describe('BIP70', function() {
 
     assert(request.verifyChain());
 
-    request = bip70.PaymentRequest.fromRaw(tests.invalid);
+    const request2 = bip70.PaymentRequest.fromRaw(tests.invalid);
 
-    assert.equal(request.version, 1);
-    assert.equal(request.getChain().length, 3);
-    assert.equal(request.paymentDetails.paymentUrl,
+    assert.equal(request2.version, 1);
+    assert.equal(request2.getChain().length, 3);
+    assert.equal(request2.paymentDetails.paymentUrl,
       'https://bitpay.com/i/PAQtNxX7KL8BtJBnfXyTaH');
-    assert.equal(request.paymentDetails.network, 'main');
-    assert.equal(request.paymentDetails.time, 1442409238);
-    assert.equal(request.paymentDetails.expires, 1442410138);
-    assert.equal(request.paymentDetails.outputs.length, 1);
-    assert.equal(request.paymentDetails.merchantData.length, 76);
-    assert(request.paymentDetails.getData('json'));
-    assert(request.paymentDetails.isExpired());
+    assert.equal(request2.paymentDetails.network, 'main');
+    assert.equal(request2.paymentDetails.time, 1442409238);
+    assert.equal(request2.paymentDetails.expires, 1442410138);
+    assert.equal(request2.paymentDetails.outputs.length, 1);
+    assert.equal(request2.paymentDetails.merchantData.length, 76);
+    assert(request2.paymentDetails.getData('json'));
+    assert(request2.paymentDetails.isExpired());
 
-    assert(request.verifyChain());
+    assert(request2.verifyChain());
 
-    request.paymentDetails.setData({foo:1}, 'json');
-    assert.equal(request.paymentDetails.merchantData.length, 9);
-    assert.deepStrictEqual(request.paymentDetails.getData('json'), {foo:1});
-    assert(!request.verify());
+    request2.paymentDetails.setData({foo:1}, 'json');
+    assert.equal(request2.paymentDetails.merchantData.length, 9);
+    assert.deepStrictEqual(request2.paymentDetails.getData('json'), {foo:1});
+    assert(!request2.verify());
 
-    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
+    const request3 = bip70.PaymentRequest.fromRaw(tests.untrusted);
 
-    assert.equal(request.version, -1);
-    assert.equal(request.getChain().length, 2);
-    assert.equal(request.paymentDetails.paymentUrl,
+    assert.equal(request3.version, -1);
+    assert.equal(request3.getChain().length, 2);
+    assert.equal(request3.paymentDetails.paymentUrl,
       'https://www.coinbase.com/rp/55f9ca703d5d80008c0001f4');
-    assert.equal(request.paymentDetails.network, null);
-    assert.equal(request.paymentDetails.time, 1442433682);
-    assert.equal(request.paymentDetails.expires, 1442434548);
-    assert.equal(request.paymentDetails.outputs.length, 1);
-    assert.equal(request.paymentDetails.merchantData.length, 32);
-    assert.equal(request.paymentDetails.getData('utf8'),
+    assert.equal(request3.paymentDetails.network, null);
+    assert.equal(request3.paymentDetails.time, 1442433682);
+    assert.equal(request3.paymentDetails.expires, 1442434548);
+    assert.equal(request3.paymentDetails.outputs.length, 1);
+    assert.equal(request3.paymentDetails.merchantData.length, 32);
+    assert.equal(request3.paymentDetails.getData('utf8'),
       'bb79b6f2310e321bd3b1d929edbeb358');
-    assert(request.paymentDetails.isExpired());
+    assert(request3.paymentDetails.isExpired());
 
-    assert(request.verifyChain());
+    assert(request3.verifyChain());
   });
 
   it('should fail to verify cert signatures when enforcing trust', () => {
-    let request;
-
     x509.allowUntrusted = false;
 
-    request = bip70.PaymentRequest.fromRaw(tests.valid);
+    const request = bip70.PaymentRequest.fromRaw(tests.valid);
     assert(!request.verifyChain());
 
-    request = bip70.PaymentRequest.fromRaw(tests.invalid);
-    assert(!request.verifyChain());
+    const request2 = bip70.PaymentRequest.fromRaw(tests.invalid);
+    assert(!request2.verifyChain());
 
-    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
-    assert(!request.verifyChain());
+    const request3 = bip70.PaymentRequest.fromRaw(tests.untrusted);
+    assert(!request3.verifyChain());
   });
 
   it('should verify cert signatures once root cert is added', () => {
-    let request = bip70.PaymentRequest.fromRaw(tests.valid);
+    const request = bip70.PaymentRequest.fromRaw(tests.valid);
     x509.setTrust([request.getChain().pop()]);
     assert(request.verifyChain());
 
-    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
-    assert(!request.verifyChain());
+    const request2 = bip70.PaymentRequest.fromRaw(tests.untrusted);
+    assert(!request2.verifyChain());
   });
 
   it('should still fail to verify cert signatures for invalid', () => {
@@ -138,12 +135,12 @@ describe('BIP70', function() {
   });
 
   it('should validate untrusted once again', () => {
-    let request = bip70.PaymentRequest.fromRaw(tests.untrusted);
+    const request = bip70.PaymentRequest.fromRaw(tests.untrusted);
     x509.setTrust([request.getChain().pop()]);
 
-    request = bip70.PaymentRequest.fromRaw(tests.untrusted);
-    assert(request.verifyChain());
-    assert.equal(request.getCA().name,
+    const request2 = bip70.PaymentRequest.fromRaw(tests.untrusted);
+    assert(request2.verifyChain());
+    assert.equal(request2.getCA().name,
       'DigiCert SHA2 Extended Validation Server CA');
   });
 

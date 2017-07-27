@@ -39,9 +39,7 @@ CLI.prototype.getWallets = async function getWallets() {
 };
 
 CLI.prototype.createWallet = async function createWallet() {
-  let options, wallet;
-
-  options = {
+  const options = {
     id: this.config.str([0, 'id']),
     type: this.config.str('type'),
     master: this.config.str('master'),
@@ -59,7 +57,7 @@ CLI.prototype.createWallet = async function createWallet() {
     options.accountKey = this.config.str('watch');
   }
 
-  wallet = await this.client.createWallet(options);
+  const wallet = await this.client.createWallet(options);
 
   this.log(wallet);
 };
@@ -110,9 +108,8 @@ CLI.prototype.getAccount = async function getAccount() {
 
 CLI.prototype.createAccount = async function createAccount() {
   const name = this.config.str([0, 'name']);
-  let options, account;
 
-  options = {
+  const options = {
     type: this.config.str('type'),
     m: this.config.num('m'),
     n: this.config.num('n'),
@@ -120,7 +117,7 @@ CLI.prototype.createAccount = async function createAccount() {
     accountKey: this.config.str('watch')
   };
 
-  account = await this.wallet.createAccount(name, options);
+  const account = await this.wallet.createAccount(name, options);
 
   this.log(account);
 };
@@ -155,15 +152,14 @@ CLI.prototype.getWallet = async function getWallet() {
 
 CLI.prototype.getTX = async function getTX() {
   const hash = this.config.str(0);
-  let txs, tx;
 
   if (util.isBase58(hash)) {
-    txs = await this.client.getTXByAddress(hash);
+    const txs = await this.client.getTXByAddress(hash);
     this.log(txs);
     return;
   }
 
-  tx = await this.client.getTX(hash);
+  const tx = await this.client.getTX(hash);
 
   if (!tx) {
     this.log('TX not found.');
@@ -175,12 +171,11 @@ CLI.prototype.getTX = async function getTX() {
 
 CLI.prototype.getBlock = async function getBlock() {
   let hash = this.config.str(0);
-  let block;
 
   if (hash.length !== 64)
     hash = +hash;
 
-  block = await this.client.getBlock(hash);
+  const block = await this.client.getBlock(hash);
 
   if (!block) {
     this.log('Block not found.');
@@ -193,15 +188,14 @@ CLI.prototype.getBlock = async function getBlock() {
 CLI.prototype.getCoin = async function getCoin() {
   const hash = this.config.str(0);
   const index = this.config.num(1);
-  let coins, coin;
 
   if (util.isBase58(hash)) {
-    coins = await this.client.getCoinsByAddress(hash);
+    const coins = await this.client.getCoinsByAddress(hash);
     this.log(coins);
     return;
   }
 
-  coin = await this.client.getCoin(hash, index);
+  const coin = await this.client.getCoin(hash, index);
 
   if (!coin) {
     this.log('Coin not found.');
@@ -277,7 +271,7 @@ CLI.prototype.getMempool = async function getMempool() {
 };
 
 CLI.prototype.sendTX = async function sendTX() {
-  let output, options, tx;
+  let output;
 
   if (this.config.has('script')) {
     output = {
@@ -291,7 +285,7 @@ CLI.prototype.sendTX = async function sendTX() {
     };
   }
 
-  options = {
+  const options = {
     account: this.config.str('account'),
     passphrase: this.config.str('passphrase'),
     outputs: [output],
@@ -300,13 +294,13 @@ CLI.prototype.sendTX = async function sendTX() {
     subtractFee: this.config.bool('subtract-fee')
   };
 
-  tx = await this.wallet.send(options);
+  const tx = await this.wallet.send(options);
 
   this.log(tx);
 };
 
 CLI.prototype.createTX = async function createTX() {
-  let output, options, tx;
+  let output;
 
   if (this.config.has('script')) {
     output = {
@@ -320,7 +314,7 @@ CLI.prototype.createTX = async function createTX() {
     };
   }
 
-  options = {
+  const options = {
     account: this.config.str('account'),
     passphrase: this.config.str('passphrase'),
     outputs: [output],
@@ -328,7 +322,7 @@ CLI.prototype.createTX = async function createTX() {
     rate: this.config.amt('rate')
   };
 
-  tx = await this.wallet.createTX(options);
+  const tx = await this.wallet.createTX(options);
 
   this.log(tx);
 };
@@ -461,7 +455,6 @@ CLI.prototype.unlock = async function unlock() {
 CLI.prototype.rpc = async function rpc() {
   const method = this.argv.shift();
   const params = [];
-  let result;
 
   for (const arg of this.argv) {
     let param;
@@ -473,6 +466,7 @@ CLI.prototype.rpc = async function rpc() {
     params.push(param);
   }
 
+  let result;
   try {
     result = await this.client.rpc.execute(method, params);
   } catch (e) {

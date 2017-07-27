@@ -185,7 +185,6 @@ CoinView.prototype.removeOutput = function removeOutput(hash, index) {
 
 CoinView.prototype.spendFrom = function spendFrom(coins, index) {
   const entry = coins.spend(index);
-  let undo;
 
   if (!entry)
     return false;
@@ -193,7 +192,7 @@ CoinView.prototype.spendFrom = function spendFrom(coins, index) {
   this.undo.push(entry);
 
   if (coins.isEmpty()) {
-    undo = this.undo.top();
+    const undo = this.undo.top();
     undo.height = coins.height;
     undo.coinbase = coins.coinbase;
     undo.version = coins.version;
@@ -405,14 +404,13 @@ CoinView.prototype.toWriter = function toWriter(bw, tx) {
   for (const input of tx.inputs) {
     const prevout = input.prevout;
     const coins = this.get(prevout.hash);
-    let entry;
 
     if (!coins) {
       bw.writeU8(0);
       continue;
     }
 
-    entry = coins.get(prevout.index);
+    const entry = coins.get(prevout.index);
 
     if (!entry) {
       bw.writeU8(0);
@@ -437,12 +435,11 @@ CoinView.prototype.toWriter = function toWriter(bw, tx) {
 CoinView.prototype.fromReader = function fromReader(br, tx) {
   for (const input of tx.inputs) {
     const prevout = input.prevout;
-    let coins, entry;
 
     if (br.readU8() === 0)
       continue;
 
-    coins = this.get(prevout.hash);
+    let coins = this.get(prevout.hash);
 
     if (!coins) {
       coins = new Coins();
@@ -451,7 +448,7 @@ CoinView.prototype.fromReader = function fromReader(br, tx) {
       this.add(coins);
     }
 
-    entry = CoinEntry.fromReader(br);
+    const entry = CoinEntry.fromReader(br);
     coins.add(prevout.index, entry);
   }
 

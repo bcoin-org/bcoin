@@ -13,7 +13,7 @@ const network = Network.get('main');
 describe('Protocol', function() {
   const pkg = require('../lib/pkg');
   const agent = `/bcoin:${pkg.version}/`;
-  let parser, framer, v1, v2, hosts;
+  let parser, framer;
 
   beforeEach(() => {
     parser = new Parser();
@@ -32,7 +32,7 @@ describe('Protocol', function() {
     });
   }
 
-  v1 = packets.VersionPacket.fromOptions({
+  const v1 = packets.VersionPacket.fromOptions({
     version: 300,
     services: 1,
     time: network.now(),
@@ -51,7 +51,7 @@ describe('Protocol', function() {
     assert.equal(payload.noRelay, false);
   });
 
-  v2 = packets.VersionPacket.fromOptions({
+  const v2 = packets.VersionPacket.fromOptions({
     version: 300,
     services: 1,
     time: network.now(),
@@ -74,7 +74,7 @@ describe('Protocol', function() {
   });
 
   /* eslint indent: 0 */
-  hosts = [
+  const hosts = [
     new NetAddress({
       services: 1,
       host: '127.0.0.1',
@@ -106,9 +106,7 @@ describe('Protocol', function() {
 
   it('should include the raw data of only one transaction in a ' +
      'parsed transaction', () => {
-    let tx, rawTwoTxs, rawFirstTx;
-
-    rawTwoTxs = Buffer.from(
+    const rawTwoTxs = Buffer.from(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +
@@ -160,7 +158,7 @@ describe('Protocol', function() {
       'dc5c0500000017a9149eb21980dc9d413d8eac27314938b9da920ee53e8' +
       '700000000', 'hex');
 
-    rawFirstTx = Buffer.from(
+    const rawFirstTx = Buffer.from(
       '0100000004b124cca7e9686375380c845d0fd002ed704aef4472f4cc193' +
       'fca4aa1b3404da400000000b400493046022100d3c9ba786488323c975f' +
       'e61593df6a8041c5442736f361887abfe5c97175c72b022100ca61688f4' +
@@ -202,7 +200,7 @@ describe('Protocol', function() {
       'de5c0500000017a9141d9ca71efa36d814424ea6ca1437e67287aebe348' +
       '700000000', 'hex');
 
-    tx = TX.fromRaw(rawTwoTxs);
+    const tx = TX.fromRaw(rawTwoTxs);
     tx._raw = null;
 
     assert.deepEqual(tx.toRaw(), rawFirstTx);

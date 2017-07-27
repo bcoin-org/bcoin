@@ -16,30 +16,29 @@ const walletdb = new WalletDB({
 });
 
 (async () => {
-  let wallet, acct, mtx, tx, wtx;
-
   await walletdb.open();
 
-  wallet = await walletdb.create();
+  const wallet = await walletdb.create();
 
   console.log('Created wallet');
   console.log(wallet);
 
-  acct = await wallet.createAccount({
+  const acct = await wallet.createAccount({
     name: 'foo'
   });
 
   console.log('Created account');
   console.log(acct);
 
-  mtx = new MTX();
+  const mtx = new MTX();
   mtx.addOutpoint(dummy());
   mtx.addOutput(acct.getReceive(), 50460);
-  tx = mtx.toTX();
+
+  const tx = mtx.toTX();
 
   await walletdb.addTX(tx);
 
-  wtx = await wallet.getTX(tx.hash('hex'));
+  const wtx = await wallet.getTX(tx.hash('hex'));
 
   console.log('Added transaction');
   console.log(wtx);

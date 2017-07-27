@@ -13,14 +13,13 @@ const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
 const LDB = require('../lib/db/ldb');
 let file = process.argv[2];
-let options = {};
-let db, batch, index;
+let batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
 file = file.replace(/\.ldb\/?$/, '');
 
-db = LDB({
+const db = LDB({
   location: file,
   db: 'leveldb',
   compression: true,
@@ -29,14 +28,14 @@ db = LDB({
   bufferKeys: true
 });
 
-options = {};
+const options = {};
 options.spv = process.argv.indexOf('--spv') !== -1;
 options.prune = process.argv.indexOf('--prune') !== -1;
 options.indexTX = process.argv.indexOf('--index-tx') !== -1;
 options.indexAddress = process.argv.indexOf('--index-address') !== -1;
 options.network = networks.main;
 
-index = process.argv.indexOf('--network');
+const index = process.argv.indexOf('--network');
 
 if (index !== -1) {
   options.network = networks[process.argv[index + 1]];
@@ -44,16 +43,14 @@ if (index !== -1) {
 }
 
 async function updateVersion() {
-  let data, ver;
-
   console.log('Checking version.');
 
-  data = await db.get('V');
+  const data = await db.get('V');
 
   if (!data)
     throw new Error('No DB version found!');
 
-  ver = data.readUInt32LE(0, true);
+  let ver = data.readUInt32LE(0, true);
 
   if (ver !== 1)
     throw Error(`DB is version ${ver}.`);
@@ -116,38 +113,37 @@ async function updateDeployments() {
 
 async function reserializeCoins() {
   let total = 0;
-  let i, iter, item, hash, old, coins, coin, output;
 
-  iter = db.iterator({
+  const iter = db.iterator({
     gte: pair('c', encoding.ZERO_HASH),
     lte: pair('c', encoding.MAX_HASH),
     values: true
   });
 
   for (;;) {
-    item = await iter.next();
+    const item = await iter.next();
 
     if (!item)
       break;
 
-    hash = item.key.toString('hex', 1, 33);
-    old = OldCoins.fromRaw(item.value, hash);
+    const hash = item.key.toString('hex', 1, 33);
+    const old = OldCoins.fromRaw(item.value, hash);
 
-    coins = new Coins();
+    const coins = new Coins();
     coins.version = old.version;
     coins.hash = old.hash;
     coins.height = old.height;
     coins.coinbase = old.coinbase;
 
-    for (i = 0; i < old.outputs.length; i++) {
-      coin = old.get(i);
+    for (let i = 0; i < old.outputs.length; i++) {
+      const coin = old.get(i);
 
       if (!coin) {
         coins.outputs.push(null);
         continue;
       }
 
-      output = new Output();
+      const output = new Output();
       output.script = coin.script;
       output.value = coin.value;
 
@@ -168,22 +164,21 @@ async function reserializeCoins() {
 
 async function reserializeUndo() {
   let total = 0;
-  let iter, item, br, undo;
 
-  iter = db.iterator({
+  const iter = db.iterator({
     gte: pair('u', encoding.ZERO_HASH),
     lte: pair('u', encoding.MAX_HASH),
     values: true
   });
 
   for (;;) {
-    item = await iter.next();
+    const item = await iter.next();
 
     if (!item)
       break;
 
-    br = new BufferReader(item.value);
-    undo = new UndoCoins();
+    const br = new BufferReader(item.value);
+    const undo = new UndoCoins();
 
     while (br.left()) {
       undo.push(null);
@@ -253,12 +248,11 @@ function defaultOptions() {
 
 function defaultDeployments() {
   const bw = new BufferWriter();
-  let i, deployment;
 
   bw.writeU8(options.network.deploys.length);
 
-  for (i = 0; i < options.network.deploys.length; i++) {
-    deployment = options.network.deploys[i];
+  for (let i = 0; i < options.network.deploys.length; i++) {
+    const deployment = options.network.deploys[i];
     bw.writeU8(deployment.bit);
     bw.writeU32(deployment.startTime);
     bw.writeU32(deployment.timeout);

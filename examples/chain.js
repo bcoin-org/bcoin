@@ -7,11 +7,9 @@ const chain = new Chain({
 });
 
 (async () => {
-  let entry;
-
   await chain.open();
 
-  entry = await chain.getEntry(0);
+  const entry = await chain.getEntry(0);
 
   console.log(entry);
 })();

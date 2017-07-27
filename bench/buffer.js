@@ -6,26 +6,27 @@ const BufferWriter = require('../lib/utils/writer');
 const StaticWriter = require('../lib/utils/staticwriter');
 const bench = require('./bench');
 
-let wtx = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
-let i, tx, end;
+const hex = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
+const raw = Buffer.from(hex.trim(), 'hex');
+const tx = TX.fromRaw(raw);
 
-wtx = Buffer.from(wtx.trim(), 'hex');
-tx = TX.fromRaw(wtx);
-
-end = bench('serialize (static-writer)');
-for (i = 0; i < 10000; i++) {
-  tx._raw = null;
-  tx._size = -1;
-  tx._witness = -1;
-  tx.writeWitness(new StaticWriter(tx.getWitnessSizes().total)).render();
+{
+  const end = bench('serialize (static-writer)');
+  for (let i = 0; i < 10000; i++) {
+    tx.refresh();
+    const {size} = tx.getWitnessSizes();
+    const bw = new StaticWriter(size);
+    tx.toWitnessWriter(bw).render();
+  }
+  end(10000);
 }
-end(i);
 
-end = bench('serialize (buffer-writer)');
-for (i = 0; i < 10000; i++) {
-  tx._raw = null;
-  tx._size = -1;
-  tx._witness = -1;
-  tx.writeWitness(new BufferWriter()).render();
+{
+  const end = bench('serialize (buffer-writer)');
+  for (let i = 0; i < 10000; i++) {
+    tx.refresh();
+    const bw = new BufferWriter();
+    tx.toWitnessWriter(bw).render();
+  }
+  end(10000);
 }
-end(i);

@@ -24,11 +24,11 @@ describe('BIP150', function() {
   }
 
   it('should do encinit', () => {
-    let init = server.toEncinit();
+    const init = server.toEncinit();
     client.encinit(init.publicKey, init.cipher);
 
-    init = client.toEncinit();
-    server.encinit(init.publicKey, init.cipher);
+    const init2 = client.toEncinit();
+    server.encinit(init2.publicKey, init2.cipher);
 
     assert(!client.handshake);
     assert(!server.handshake);
@@ -49,14 +49,12 @@ describe('BIP150', function() {
   });
 
   it('should do BIP150 handshake', () => {
-    let challenge, reply, propose, result;
-
-    challenge = client.bip150.toChallenge();
-    reply = server.bip150.challenge(challenge.hash);
-    propose = client.bip150.reply(reply);
-    challenge = server.bip150.propose(propose);
-    reply = client.bip150.challenge(challenge);
-    result = server.bip150.reply(reply);
+    const challenge = client.bip150.toChallenge();
+    const reply = server.bip150.challenge(challenge.hash);
+    const propose = client.bip150.reply(reply);
+    const challenge2 = server.bip150.propose(propose);
+    const reply2 = client.bip150.challenge(challenge2);
+    const result = server.bip150.reply(reply2);
 
     assert(!result);
     assert(client.bip150.auth);

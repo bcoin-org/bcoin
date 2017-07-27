@@ -4,6 +4,8 @@ const assert = require('assert');
 const scrypt = require('../lib/crypto/scrypt');
 
 describe('Scrypt', function() {
+  this.timeout(20000);
+
   it('should perform scrypt with N=16', () => {
     const pass = Buffer.from('');
     const salt = Buffer.from('');

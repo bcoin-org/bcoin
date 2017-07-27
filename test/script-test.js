@@ -25,15 +25,13 @@ function success(res, stack) {
 
 describe('Script', function() {
   it('should encode/decode script', () => {
-    let src, decoded, dst;
-
-    src = '20'
+    const src = '20'
       + '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
       + '20'
       + '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f'
       + 'ac';
 
-    decoded = Script.fromRaw(src, 'hex');
+    const decoded = Script.fromRaw(src, 'hex');
     assert.equal(decoded.code.length, 3);
     assert.equal(decoded.code[0].data.toString('hex'),
       '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
@@ -41,7 +39,7 @@ describe('Script', function() {
       '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f');
     assert.equal(decoded.code[2].value, opcodes.OP_CHECKSIG);
 
-    dst = decoded.toRaw();
+    const dst = decoded.toRaw();
     assert.equal(dst.toString('hex'), src);
   });
 
@@ -66,11 +64,9 @@ describe('Script', function() {
   });
 
   it('should handle if statements correctly', () => {
-    let input, output, stack, res;
+    let input = new Script([opcodes.OP_1, opcodes.OP_2]);
 
-    input = new Script([opcodes.OP_1, opcodes.OP_2]);
-
-    output = new Script([
+    let output = new Script([
       opcodes.OP_2,
       opcodes.OP_EQUAL,
       opcodes.OP_IF,
@@ -81,11 +77,11 @@ describe('Script', function() {
       opcodes.OP_5
     ]);
 
-    stack = new Stack();
+    let stack = new Stack();
 
     input.execute(stack);
 
-    res = output.execute(stack);
+    let res = output.execute(stack);
     assert(res);
 
     assert.deepEqual(stack.items, [[1], [3], [5]]);
@@ -162,57 +158,51 @@ describe('Script', function() {
   });
 
   it('should handle CScriptNums correctly', () => {
-    let input, output, stack;
-
-    input = new Script([
+    const input = new Script([
       Buffer.from('ffffff7f', 'hex'),
       opcodes.OP_NEGATE,
       opcodes.OP_DUP,
       opcodes.OP_ADD
     ]);
 
-    output = new Script([
+    const output = new Script([
       Buffer.from('feffffff80', 'hex'),
       opcodes.OP_EQUAL
     ]);
 
-    stack = new Stack();
+    const stack = new Stack();
 
     assert(input.execute(stack));
     assert(success(output.execute(stack), stack));
   });
 
   it('should handle CScriptNums correctly', () => {
-    let input, output, stack;
-
-    input = new Script([
+    const input = new Script([
       opcodes.OP_11,
       opcodes.OP_10,
       opcodes.OP_1,
       opcodes.OP_ADD
     ]);
 
-    output = new Script([
+    const output = new Script([
       opcodes.OP_NUMNOTEQUAL,
       opcodes.OP_NOT
     ]);
 
-    stack = new Stack();
+    const stack = new Stack();
 
     assert(input.execute(stack));
     assert(success(output.execute(stack), stack));
   });
 
   it('should handle OP_ROLL correctly', () => {
-    let input, output, stack;
-
-    input = new Script([
+    const input = new Script([
       Buffer.from([0x16]),
       Buffer.from([0x15]),
       Buffer.from([0x14])
     ]);
 
-    output = new Script([
+    const output = new Script([
       opcodes.OP_0,
       opcodes.OP_ROLL,
       Buffer.from([0x14]),
@@ -222,7 +212,7 @@ describe('Script', function() {
       opcodes.OP_EQUAL
     ]);
 
-    stack = new Stack();
+    const stack = new Stack();
 
     assert(input.execute(stack));
     assert(success(output.execute(stack), stack));
@@ -262,10 +252,8 @@ describe('Script', function() {
     [false, true].forEach((noCache) => {
       const suffix = noCache ? 'without cache' : 'with cache';
       it(`should handle script test ${suffix}:${comments}`, () => {
-        let prev, tx, err, res;
-
         // Funding transaction.
-        prev = new TX({
+        const prev = new TX({
           version: 1,
           flag: 1,
           inputs: [{
@@ -285,7 +273,7 @@ describe('Script', function() {
         });
 
         // Spending transaction.
-        tx = new TX({
+        const tx = new TX({
           version: 1,
           flag: 1,
           inputs: [{
@@ -309,6 +297,8 @@ describe('Script', function() {
           tx.refresh();
         }
 
+        let err;
+        let res;
         try {
           res = Script.verify(input, witness, output, tx, 0, amount, flags);
         } catch (e) {

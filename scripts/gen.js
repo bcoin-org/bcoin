@@ -10,13 +10,10 @@ const Script = require('../lib/script/script');
 const Opcode = require('../lib/script/opcode');
 const opcodes = Script.opcodes;
 
-let main, testnet, regtest, segnet3, segnet4, btcd;
-
 function createGenesisBlock(options) {
   let flags = options.flags;
   let script = options.script;
   let reward = options.reward;
-  let tx, block;
 
   if (!flags) {
     flags = Buffer.from(
@@ -36,7 +33,7 @@ function createGenesisBlock(options) {
   if (!reward)
     reward = 50 * consensus.COIN;
 
-  tx = new TX({
+  const tx = new TX({
     version: 1,
     flag: 1,
     inputs: [{
@@ -58,7 +55,7 @@ function createGenesisBlock(options) {
     locktime: 0
   });
 
-  block = new Block({
+  const block = new Block({
     version: options.version,
     prevBlock: encoding.NULL_HASH,
     merkleRoot: tx.hash('hex'),
@@ -73,42 +70,42 @@ function createGenesisBlock(options) {
   return block;
 }
 
-main = createGenesisBlock({
+const main = createGenesisBlock({
   version: 1,
   time: 1231006505,
   bits: 486604799,
   nonce: 2083236893
 });
 
-testnet = createGenesisBlock({
+const testnet = createGenesisBlock({
   version: 1,
   time: 1296688602,
   bits: 486604799,
   nonce: 414098458
 });
 
-regtest = createGenesisBlock({
+const regtest = createGenesisBlock({
   version: 1,
   time: 1296688602,
   bits: 545259519,
   nonce: 2
 });
 
-segnet3 = createGenesisBlock({
+const segnet3 = createGenesisBlock({
   version: 1,
   time: 1452831101,
   bits: 486604799,
   nonce: 0
 });
 
-segnet4 = createGenesisBlock({
+const segnet4 = createGenesisBlock({
   version: 1,
   time: 1452831101,
   bits: 503447551,
   nonce: 0
 });
 
-btcd = createGenesisBlock({
+const btcd = createGenesisBlock({
   version: 1,
   time: 1401292357,
   bits: 545259519,

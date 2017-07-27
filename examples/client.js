@@ -7,9 +7,8 @@ const MTX = require('bcoin/lib/primitives/mtx');
 const HTTP = require('bcoin/lib/http');
 const FullNode = require('bcoin/lib/node/fullnode');
 const plugin = require('bcoin/lib/wallet/plugin');
-let node, wallet;
 
-node = new FullNode({
+const node = new FullNode({
   network: 'regtest',
   apiKey: 'foo',
   walletAuth: true,
@@ -18,22 +17,21 @@ node = new FullNode({
 
 node.use(plugin);
 
-wallet = new HTTP.Wallet({
+const wallet = new HTTP.Wallet({
   network: 'regtest',
   apiKey: 'foo'
 });
 
 async function fundWallet(wdb, addr) {
-  let tx;
-
   // Coinbase
-  tx = new MTX();
-  tx.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
-  tx.addOutput(addr, 50460);
-  tx.addOutput(addr, 50460);
-  tx.addOutput(addr, 50460);
-  tx.addOutput(addr, 50460);
-  tx = tx.toTX();
+  const mtx = new MTX();
+  mtx.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
+  mtx.addOutput(addr, 50460);
+  mtx.addOutput(addr, 50460);
+  mtx.addOutput(addr, 50460);
+  mtx.addOutput(addr, 50460);
+
+  const tx = mtx.toTX();
 
   wallet.once('balance', (balance) => {
     console.log('New Balance:');
@@ -55,9 +53,7 @@ async function fundWallet(wdb, addr) {
 }
 
 async function sendTX(addr, value) {
-  let options, tx;
-
-  options = {
+  const options = {
     rate: 10000,
     outputs: [{
       value: value,
@@ -65,19 +61,18 @@ async function sendTX(addr, value) {
     }]
   };
 
-  tx = await wallet.send(options);
+  const tx = await wallet.send(options);
 
   return tx.hash;
 }
 
 async function callNodeApi() {
   const info = await wallet.client.getInfo();
-  let json;
 
   console.log('Server Info:');
   console.log(info);
 
-  json = await wallet.client.rpc.execute('getblocktemplate', []);
+  const json = await wallet.client.rpc.execute('getblocktemplate', []);
 
   console.log('Block Template (RPC):');
   console.log(json);
@@ -85,11 +80,10 @@ async function callNodeApi() {
 
 (async () => {
   const wdb = node.require('walletdb');
-  let w, acct, hash, balance, tx;
 
   await node.open();
 
-  w = await wallet.create({ id: 'test' });
+  const w = await wallet.create({ id: 'test' });
 
   console.log('Wallet:');
   console.log(w);
@@ -97,23 +91,23 @@ async function callNodeApi() {
   // Fund default account.
   await fundWallet(wdb, w.account.receiveAddress);
 
-  balance = await wallet.getBalance();
+  const balance = await wallet.getBalance();
 
   console.log('Balance:');
   console.log(balance);
 
-  acct = await wallet.createAccount('foo');
+  const acct = await wallet.createAccount('foo');
 
   console.log('Account:');
   console.log(acct);
 
   // Send to our new account.
-  hash = await sendTX(acct.receiveAddress, 10000);
+  const hash = await sendTX(acct.receiveAddress, 10000);
 
   console.log('Sent TX:');
   console.log(hash);
 
-  tx = await wallet.getTX(hash);
+  const tx = await wallet.getTX(hash);
 
   console.log('Sent TX details:');
   console.log(tx);

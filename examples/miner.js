@@ -24,17 +24,15 @@ const miner = new Miner({
 });
 
 (async () => {
-  let tmpl, job, block;
-
   await miner.open();
 
-  tmpl = await miner.createBlock();
+  const tmpl = await miner.createBlock();
 
   console.log('Block template:');
   console.log(tmpl);
 
-  job = await miner.cpu.createJob();
-  block = await job.mineAsync();
+  const job = await miner.cpu.createJob();
+  const block = await job.mineAsync();
 
   console.log('Mined block:');
   console.log(block);

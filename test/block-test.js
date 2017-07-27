@@ -54,9 +54,7 @@ function applyUndo(block, undo) {
 }
 
 describe('Block', function() {
-  let mblock, raw, block, raw2;
-
-  mblock = new MerkleBlock({
+  let mblock = new MerkleBlock({
     version: 2,
     prevBlock: 'd1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0000000000000000',
     merkleRoot: '28bec1d35af480ba3884553d72694f6ba6c163a5c081d7e6edaec15f373f19af',
@@ -78,9 +76,10 @@ describe('Block', function() {
     ],
     flags: Buffer.from([245, 122, 0])
   });
-  raw = mblock.toRaw().toString('hex');
 
-  raw2 = '02000000d1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0'
+  const raw = mblock.toRaw().toString('hex');
+
+  const raw2 = '02000000d1831d4411bdfda89d9d8c842b541beafd1437fc560dbe5c0'
     + '00000000000000028bec1d35af480ba3884553d72694f6ba6c163a5c081d7e6edaec'
     + '15f373f19af62ef6d536c890019d0b4bf46cd0100000a7d22e53bce1bbb3294d1a39'
     + '6c5acc45bdcc8f192cb492f0d9f55421fd4c62de19d6d585fdaf3737b9a54aaee1dd'
@@ -96,16 +95,16 @@ describe('Block', function() {
 
   mblock = MerkleBlock.fromRaw(raw2, 'hex');
 
+  const block = Block.fromJSON(block300025);
+
   this.timeout(10000);
 
   it('should parse partial merkle tree', () => {
-    let tree;
-
     assert(mblock.verifyPOW());
     assert(mblock.verifyBody());
     assert(mblock.verify());
 
-    tree = mblock.getTree();
+    const tree = mblock.getTree();
 
     assert.equal(tree.matches.length, 2);
     assert.equal(mblock.hash('hex'),
@@ -163,7 +162,7 @@ describe('Block', function() {
   });
 
   it('should parse JSON', () => {
-    block = Block.fromJSON(block300025);
+    const block = Block.fromJSON(block300025);
     assert.equal(block.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.equal(block.rhash(),
@@ -172,19 +171,17 @@ describe('Block', function() {
   });
 
   it('should create a merkle block', () => {
-    let filter, item1, item2, mblock2;
+    const filter = Bloom.fromRate(1000, 0.01, Bloom.flags.NONE);
 
-    filter = Bloom.fromRate(1000, 0.01, Bloom.flags.NONE);
-
-    item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
-    item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+    const item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
+    const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
       + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
 
     filter.add(item1, 'hex');
     filter.add(item2, 'hex');
 
-    mblock2 = MerkleBlock.fromBlock(block, filter);
+    const mblock2 = MerkleBlock.fromBlock(block, filter);
 
     assert(mblock2.verifyBody());
     assert.deepEqual(mblock2.toRaw(), mblock.toRaw());
@@ -195,7 +192,6 @@ describe('Block', function() {
     const height = block300025.height;
     let sigops = 0;
     let reward = 0;
-    let flags;
 
     for (let i = 1; i < block300025.txs.length; i++) {
       const tx = block300025.txs[i];
@@ -212,7 +208,7 @@ describe('Block', function() {
     assert(!block.hasWitness());
     assert.equal(block.getWeight(), 1136924);
 
-    flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
+    const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
 
     for (let i = 1; i < block.txs.length; i++) {
       const tx = block.txs[i];
@@ -234,11 +230,10 @@ describe('Block', function() {
 
   it('should fail with a bad merkle root', () => {
     const block2 = new Block(block);
-    let reason;
     block2.merkleRoot = encoding.NULL_HASH;
     block2.refresh();
     assert(!block2.verifyPOW());
-    [, reason] = block2.checkBody();
+    const [, reason] = block2.checkBody();
     assert.equal(reason, 'bad-txnmrklroot');
     assert(!block2.verify());
     block2.merkleRoot = block.merkleRoot;
@@ -248,11 +243,10 @@ describe('Block', function() {
 
   it('should fail on merkle block with a bad merkle root', () => {
     const mblock2 = new MerkleBlock(mblock);
-    let reason;
     mblock2.merkleRoot = encoding.NULL_HASH;
     mblock2.refresh();
     assert(!mblock2.verifyPOW());
-    [, reason] = mblock2.checkBody();
+    const [, reason] = mblock2.checkBody();
     assert.equal(reason, 'bad-txnmrklroot');
     assert(!mblock2.verify());
     mblock2.merkleRoot = mblock.merkleRoot;
@@ -274,10 +268,9 @@ describe('Block', function() {
 
   it('should fail on duplicate txs', () => {
     const block2 = new Block(block);
-    let reason;
     block2.txs.push(block2.txs[block2.txs.length - 1]);
     block2.refresh();
-    [, reason] = block2.checkBody();
+    const [, reason] = block2.checkBody();
     assert.equal(reason, 'bad-txns-duplicate');
   });
 
@@ -293,28 +286,27 @@ describe('Block', function() {
     const cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
     const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
-    let i, tx, mempool, result;
 
     assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
 
-    for (i = 0; i < block.txs.length; i++) {
-      tx = block.txs[i];
+    for (let i = 0; i < block.txs.length; i++) {
+      const tx = block.txs[i];
       map.set(tx.hash('hex'), { tx: tx });
     }
 
-    mempool = {
+    const mempool = {
       map: map
     };
 
     assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    result = cblock1.fillMempool(false, mempool);
+    const result = cblock1.fillMempool(false, mempool);
     assert(result);
 
-    for (i = 0; i < cblock1.available.length; i++)
+    for (let i = 0; i < cblock1.available.length; i++)
       assert(cblock1.available[i]);
 
     assert.equal(
@@ -327,28 +319,27 @@ describe('Block', function() {
     const cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
     const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
-    let i, tx, mempool, result, req, res;
 
     assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
 
-    for (i = 0; i < block.txs.length >>> 1; i++) {
-      tx = block.txs[i];
+    for (let i = 0; i < block.txs.length >>> 1; i++) {
+      const tx = block.txs[i];
       map.set(tx.hash('hex'), { tx: tx });
     }
 
-    mempool = {
+    const mempool = {
       map: map
     };
 
     assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    result = cblock1.fillMempool(false, mempool);
+    let result = cblock1.fillMempool(false, mempool);
     assert(!result);
 
-    req = cblock1.toRequest();
+    let req = cblock1.toRequest();
     assert.equal(req.hash, cblock1.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
@@ -356,13 +347,13 @@ describe('Block', function() {
     assert.equal(req.hash, cblock1.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-    res = bip152.TXResponse.fromBlock(block, req);
+    let res = bip152.TXResponse.fromBlock(block, req);
     res = bip152.TXResponse.fromRaw(res.toRaw());
 
     result = cblock1.fillMissing(res);
     assert(result);
 
-    for (i = 0; i < cblock1.available.length; i++)
+    for (let i = 0; i < cblock1.available.length; i++)
       assert(cblock1.available[i]);
 
     assert.equal(
@@ -375,26 +366,25 @@ describe('Block', function() {
     const cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
-    let i, tx, result, mempool;
 
     assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
-    for (i = 0; i < block.txs.length; i++) {
-      tx = block.txs[i];
+    for (let i = 0; i < block.txs.length; i++) {
+      const tx = block.txs[i];
       map.set(tx.hash('hex'), { tx: tx });
     }
 
-    mempool = {
+    const mempool = {
       map: map
     };
 
-    result = cblock1.fillMempool(false, mempool);
+    const result = cblock1.fillMempool(false, mempool);
     assert(result);
 
-    for (i = 0; i < cblock1.available.length; i++)
+    for (let i = 0; i < cblock1.available.length; i++)
       assert(cblock1.available[i]);
 
     assert.equal(
@@ -407,38 +397,37 @@ describe('Block', function() {
     const cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
     const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
-    let i, tx, mempool, result, req, res;
 
     assert(cblock1.init());
 
     assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
     assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
 
-    for (i = 0; i < block.txs.length >>> 1; i++) {
-      tx = block.txs[i];
+    for (let i = 0; i < block.txs.length >>> 1; i++) {
+      const tx = block.txs[i];
       map.set(tx.hash('hex'), { tx: tx });
     }
 
-    mempool = {
+    const mempool = {
       map: map
     };
 
-    result = cblock1.fillMempool(false, mempool);
+    let result = cblock1.fillMempool(false, mempool);
     assert(!result);
 
-    req = cblock1.toRequest();
+    let req = cblock1.toRequest();
     assert.equal(req.hash, cblock1.hash('hex'));
 
     req = bip152.TXRequest.fromRaw(req.toRaw());
     assert.equal(req.hash, cblock1.hash('hex'));
 
-    res = bip152.TXResponse.fromBlock(block, req);
+    let res = bip152.TXResponse.fromBlock(block, req);
     res = bip152.TXResponse.fromRaw(res.toRaw());
 
     result = cblock1.fillMissing(res);
     assert(result);
 
-    for (i = 0; i < cblock1.available.length; i++)
+    for (let i = 0; i < cblock1.available.length; i++)
       assert(cblock1.available[i]);
 
     assert.equal(
@@ -454,10 +443,9 @@ describe('Block', function() {
     const view = applyUndo(block, undo);
     let sigops = 0;
     const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
-    let i, tx;
 
-    for (i = 0; i < block.txs.length; i++) {
-      tx = block.txs[i];
+    for (let i = 0; i < block.txs.length; i++) {
+      const tx = block.txs[i];
       sigops += tx.getSigopsCost(view, flags);
     }
 
@@ -473,10 +461,9 @@ describe('Block', function() {
     const view = applyUndo(block, undo);
     let sigops = 0;
     const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
-    let i, tx;
 
-    for (i = 0; i < block.txs.length; i++) {
-      tx = block.txs[i];
+    for (let i = 0; i < block.txs.length; i++) {
+      const tx = block.txs[i];
       sigops += tx.getSigopsCost(view, flags);
     }
 
@@ -492,10 +479,9 @@ describe('Block', function() {
     const view = applyUndo(block, undo);
     let sigops = 0;
     const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
-    let i, tx;
 
-    for (i = 0; i < block.txs.length; i++) {
-      tx = block.txs[i];
+    for (let i = 0; i < block.txs.length; i++) {
+      const tx = block.txs[i];
       sigops += tx.getSigopsCost(view, flags);
     }
 

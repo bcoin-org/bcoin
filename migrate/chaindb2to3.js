@@ -70,7 +70,6 @@ function writeJournal(batch, state, hash) {
 
 async function readJournal() {
   const data = await db.get(JOURNAL_KEY);
-  let state, hash;
 
   if (!data)
     return [STATE_VERSION, encoding.NULL_HASH];
@@ -81,8 +80,8 @@ async function readJournal() {
   if (data.length !== 34)
     throw new Error('Bad migration length.');
 
-  state = data.readUInt8(1, true);
-  hash = data.toString('hex', 2, 34);
+  const state = data.readUInt8(1, true);
+  const hash = data.toString('hex', 2, 34);
 
   console.log('Reading journal.');
   console.log('Recovering from state %d.', state);
@@ -92,16 +91,15 @@ async function readJournal() {
 
 async function updateVersion() {
   const batch = db.batch();
-  let data, version;
 
   console.log('Checking version.');
 
-  data = await db.get('V');
+  let data = await db.get('V');
 
   if (!data)
     throw new Error('No DB version found!');
 
-  version = data.readUInt32LE(0, true);
+  const version = data.readUInt32LE(0, true);
 
   if (version !== 2)
     throw Error(`DB is version ${version}.`);
@@ -136,8 +134,6 @@ async function reserializeUndo(hash) {
   console.log('Reserializing undo coins from tip %s.', util.revHex(tip.hash));
 
   while (tip.height !== 0) {
-    let undoData, blockData, block, old, undo;
-
     if (shouldPrune) {
       if (tip.height < height - 288) {
         batch.del(pair('u', tip.hash));
@@ -156,8 +152,8 @@ async function reserializeUndo(hash) {
       }
     }
 
-    undoData = await db.get(pair('u', tip.hash));
-    blockData = await db.get(pair('b', tip.hash));
+    const undoData = await db.get(pair('u', tip.hash));
+    const blockData = await db.get(pair('b', tip.hash));
 
     if (!undoData) {
       tip = await getEntry(tip.prevBlock);
@@ -171,9 +167,9 @@ async function reserializeUndo(hash) {
       break;
     }
 
-    block = Block.fromRaw(blockData);
-    old = OldUndoCoins.fromRaw(undoData);
-    undo = new UndoCoins();
+    const block = Block.fromRaw(blockData);
+    const old = OldUndoCoins.fromRaw(undoData);
+    const undo = new UndoCoins();
 
     for (let i = block.txs.length - 1; i >= 1; i--) {
       const tx = block.txs[i];
@@ -181,13 +177,12 @@ async function reserializeUndo(hash) {
         const {prevout} = tx.inputs[j];
         const coin = old.items.pop();
         const output = coin.toOutput();
-        let version, height, write, item;
 
         assert(coin);
 
-        [version, height, write] = await getMeta(coin, prevout);
+        const [version, height, write] = await getMeta(coin, prevout);
 
-        item = new CoinEntry();
+        const item = new CoinEntry();
         item.version = version;
         item.height = height;
         item.coinbase = coin.coinbase;
@@ -294,7 +289,6 @@ async function reserializeCoins(hash) {
   while (start) {
     const item = await iter.next();
     let update = false;
-    let hash, old;
 
     if (!item)
       break;
@@ -302,17 +296,16 @@ async function reserializeCoins(hash) {
     if (item.key.length !== 33)
       continue;
 
-    hash = item.key.toString('hex', 1, 33);
-    old = OldCoins.fromRaw(item.value, hash);
+    const hash = item.key.toString('hex', 1, 33);
+    const old = OldCoins.fromRaw(item.value, hash);
 
     for (let i = 0; i < old.outputs.length; i++) {
       const coin = old.getCoin(i);
-      let item;
 
       if (!coin)
         continue;
 
-      item = new CoinEntry();
+      const item = new CoinEntry();
       item.version = coin.version;
       item.height = coin.height;
       item.coinbase = coin.coinbase;
@@ -369,13 +362,12 @@ async function reserializeEntries(hash) {
 
   while (start) {
     const item = await iter.next();
-    let entry, main;
 
     if (!item)
       break;
 
-    entry = entryFromRaw(item.value);
-    main = await isMainChain(entry, tip);
+    const entry = entryFromRaw(item.value);
+    const main = await isMainChain(entry, tip);
 
     batch.put(item.key, entryToRaw(entry, main));
 
@@ -409,11 +401,10 @@ async function finalize() {
 
   if (shouldPrune) {
     const data = await db.get('O');
-    let flags;
 
     assert(data);
 
-    flags = data.readUInt32LE(4, true);
+    let flags = data.readUInt32LE(4, true);
     flags |= 1 << 2;
 
     data.writeUInt32LE(flags, 4, true);
@@ -433,8 +424,6 @@ async function finalize() {
 }
 
 async function getMeta(coin, prevout) {
-  let item, data, br, version, height;
-
   // Case 1: Undo coin is the last spend.
   if (coin.height !== -1) {
     assert(coin.version !== -1);
@@ -444,7 +433,7 @@ async function getMeta(coin, prevout) {
   // Case 2: We have previously cached
   // this coin's metadata, but it's not
   // written yet.
-  item = metaCache.get(prevout.hash);
+  const item = metaCache.get(prevout.hash);
 
   if (item) {
     const [version, height] = item;
@@ -454,7 +443,7 @@ async function getMeta(coin, prevout) {
   // Case 3: We have previously cached
   // this coin's metadata, and it is
   // written.
-  data = await db.get(pair(0x01, prevout.hash));
+  let data = await db.get(pair(0x01, prevout.hash));
 
   if (data) {
     const version = data.readUInt32LE(0, true);
@@ -467,9 +456,9 @@ async function getMeta(coin, prevout) {
   data = await db.get(pair('c', prevout.hash));
   assert(data);
 
-  br = new BufferReader(data);
-  version = br.readVarint();
-  height = br.readU32();
+  const br = new BufferReader(data);
+  const version = br.readVarint();
+  const height = br.readU32();
 
   return [version, height, true];
 }
@@ -575,8 +564,6 @@ function bpair(prefix, hash, index) {
 }
 
 (async () => {
-  let state, hash;
-
   await db.open();
 
   console.log('Opened %s.', file);
@@ -592,7 +579,7 @@ function bpair(prefix, hash, index) {
 
   await co.timeout(3000);
 
-  [state, hash] = await readJournal();
+  let [state, hash] = await readJournal();
 
   if (state === STATE_VERSION)
     [state, hash] = await updateVersion();

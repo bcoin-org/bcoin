@@ -33,14 +33,13 @@ describe('Coins', function() {
     const view = new CoinView();
     const prevout = new Outpoint(hash, 0);
     const input = Input.fromOutpoint(prevout);
-    let coins, entry, output;
 
     view.addTX(tx1, 1);
 
-    coins = view.get(hash);
+    const coins = view.get(hash);
     assert.equal(coins.outputs.size, tx1.outputs.length);
 
-    entry = coins.get(0);
+    const entry = coins.get(0);
     assert(entry);
     assert(!entry.spent);
 
@@ -51,7 +50,7 @@ describe('Coins', function() {
     assert(entry.output instanceof Output);
     assert.equal(entry.spent, false);
 
-    output = view.getOutputFor(input);
+    const output = view.getOutputFor(input);
     assert(output);
 
     deepCoinsEqual(entry, reserialize(entry));
@@ -60,20 +59,19 @@ describe('Coins', function() {
   it('should spend an output', () => {
     const hash = tx1.hash('hex');
     const view = new CoinView();
-    let coins, entry, length;
 
     view.addTX(tx1, 1);
 
-    coins = view.get(hash);
+    let coins = view.get(hash);
     assert(coins);
-    length = coins.outputs.size;
+    const length = coins.outputs.size;
 
     view.spendEntry(new Outpoint(hash, 0));
 
     coins = view.get(hash);
     assert(coins);
 
-    entry = coins.get(0);
+    const entry = coins.get(0);
     assert(entry);
     assert(entry.spent);
 
@@ -85,22 +83,20 @@ describe('Coins', function() {
 
   it('should handle coin view', () => {
     const view = new CoinView();
-    let i, tx, size, bw, br;
-    let raw, res, prev, coins;
 
-    for (i = 1; i < data.txs.length; i++) {
-      tx = data.txs[i];
+    for (let i = 1; i < data.txs.length; i++) {
+      const tx = data.txs[i];
       view.addTX(tx, 1);
     }
 
-    size = view.getSize(tx1);
-    bw = new StaticWriter(size);
-    raw = view.toWriter(bw, tx1).render();
-    br = new BufferReader(raw);
-    res = CoinView.fromReader(br, tx1);
+    const size = view.getSize(tx1);
+    const bw = new StaticWriter(size);
+    const raw = view.toWriter(bw, tx1).render();
+    const br = new BufferReader(raw);
+    const res = CoinView.fromReader(br, tx1);
 
-    prev = tx1.inputs[0].prevout;
-    coins = res.get(prev.hash);
+    const prev = tx1.inputs[0].prevout;
+    const coins = res.get(prev.hash);
 
     assert.strictEqual(coins.outputs.size, 1);
     assert.strictEqual(coins.get(0), null);

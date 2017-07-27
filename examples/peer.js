@@ -6,9 +6,8 @@ const Peer = require('bcoin/lib/net/peer');
 const NetAddress = require('bcoin/lib/primitives/netaddress');
 const Network = require('bcoin/lib/protocol/network');
 const network = Network.get('testnet');
-let peer, addr;
 
-peer = Peer.fromOptions({
+const peer = Peer.fromOptions({
   network: 'testnet',
   agent: 'my-subversion',
   hasWitness: () => {
@@ -16,7 +15,7 @@ peer = Peer.fromOptions({
   }
 });
 
-addr = NetAddress.fromHostname(process.argv[2], 'testnet');
+const addr = NetAddress.fromHostname(process.argv[2], 'testnet');
 
 peer.connect(addr);
 peer.tryOpen();

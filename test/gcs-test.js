@@ -15,11 +15,8 @@ describe('GCS', function() {
   const key = random.randomBytes(16);
   const P = 20;
   let filter1, filter2, filter3, filter4, filter5;
-  let contents1, contents2;
-  let op1, op2, op3, op4;
-  let addr1, addr2;
 
-  contents1 = [
+  const contents1 = [
     Buffer.from('Alex', 'ascii'),
     Buffer.from('Bob', 'ascii'),
     Buffer.from('Charlie', 'ascii'),
@@ -39,7 +36,7 @@ describe('GCS', function() {
     Buffer.from('Quentin', 'ascii')
   ];
 
-  contents2 = [
+  const contents2 = [
     Buffer.from('Alice', 'ascii'),
     Buffer.from('Betty', 'ascii'),
     Buffer.from('Charmaine', 'ascii'),
@@ -59,24 +56,24 @@ describe('GCS', function() {
     Buffer.from('Queenie', 'ascii')
   ];
 
-  op1 = new Outpoint(
+  const op1 = new Outpoint(
     '4cba1d1753ed19dbeafffb1a6c805d20e4af00b194a8f85353163cef83319c2c',
     4);
 
-  op2 = new Outpoint(
+  const op2 = new Outpoint(
     'b7c3c4bce1a23baef2da05f9b7e4bff813449ec7e80f980ec7e4cacfadcd3314',
     3);
 
-  op3 = new Outpoint(
+  const op3 = new Outpoint(
     '4cba1d1753ed19dbeafffb1a6c805d20e4af00b194a8f85353163cef83319c2c',
     400);
 
-  op4 = new Outpoint(
+  const op4 = new Outpoint(
     'b7c3c4bce1a23baef2da05f9b7e4bff813449ec7e80f980ec7e4cacfadcd3314',
     300);
 
-  addr1 = new Address('bc1qmyrddmxglk49ye2wd29wefaavw7es8k5d555lx');
-  addr2 = new Address('bc1q4645ycu0l9pnvxaxnhemushv0w4cd9flkqh95j');
+  const addr1 = new Address('bc1qmyrddmxglk49ye2wd29wefaavw7es8k5d555lx');
+  const addr2 = new Address('bc1q4645ycu0l9pnvxaxnhemushv0w4cd9flkqh95j');
 
   it('should test GCS filter build', () => {
     filter1 = GCSFilter.fromItems(P, key, contents1);
@@ -132,14 +129,12 @@ describe('GCS', function() {
   });
 
   it('should test GCS filter matchAny', () => {
-    let c, match;
-
-    match = filter1.matchAny(key, contents2);
+    let match = filter1.matchAny(key, contents2);
     assert(!match);
     match = filter2.matchAny(key, contents2);
     assert(!match);
 
-    c = contents2.slice();
+    const c = contents2.slice();
     c.push(Buffer.from('Nate'));
 
     match = filter1.matchAny(key, c);

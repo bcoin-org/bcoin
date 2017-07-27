@@ -9,7 +9,6 @@ const CoinView = require('../lib/coins/coinview');
 
 const SNAPSHOT = `${__dirname}/../dump.heapsnapshot`;
 const tx = parseTX('../test/data/tx4.hex');
-let raw, coins, entry;
 
 function parseTX(file) {
   const data = fs.readFileSync(`${__dirname}/${file}`, 'utf8');
@@ -28,9 +27,9 @@ function parseTX(file) {
   return { tx: tx, view: view };
 }
 
-raw = Coins.fromTX(tx.tx, 0).toRaw();
-coins = Coins.fromRaw(raw, tx.tx.hash('hex'));
-entry = MempoolEntry.fromTX(tx.tx, tx.view, 1000000);
+const raw = Coins.fromTX(tx.tx, 0).toRaw();
+const coins = Coins.fromRaw(raw, tx.tx.hash('hex'));
+const entry = MempoolEntry.fromTX(tx.tx, tx.view, 1000000);
 
 setInterval(() => {
   console.log(tx.hash('hex'));

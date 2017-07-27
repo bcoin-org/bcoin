@@ -9,13 +9,13 @@ const LDB = require('../lib/db/ldb');
 const BN = require('../lib/crypto/bn');
 const DUMMY = Buffer.from([0]);
 let file = process.argv[2];
-let db, batch;
+let batch;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
 file = file.replace(/\.ldb\/?$/, '');
 
-db = LDB({
+const db = LDB({
   location: file,
   db: 'leveldb',
   compression: true,
@@ -25,16 +25,14 @@ db = LDB({
 });
 
 async function checkVersion() {
-  let data, ver;
-
   console.log('Checking version.');
 
-  data = await db.get('V');
+  const data = await db.get('V');
 
   if (!data)
     return;
 
-  ver = data.readUInt32LE(0, true);
+  const ver = data.readUInt32LE(0, true);
 
   if (ver !== 1)
     throw Error(`DB is version ${ver}.`);
@@ -91,31 +89,30 @@ async function isMainChain(entry, tip) {
 // be indexing tips in the first place!
 async function indexTips() {
   const entries = await getEntries();
-  let tip = await getTip();
+  const tip = await getTip();
   const tips = [];
   const orphans = [];
   const prevs = {};
-  let i, orphan, entry, main;
 
-  for (i = 0; i < entries.length; i++) {
-    entry = entries[i];
-    main = await isMainChain(entry, tip.hash);
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
+    const main = await isMainChain(entry, tip.hash);
     if (!main) {
       orphans.push(entry);
       prevs[entry.prevBlock] = true;
     }
   }
 
-  for (i = 0; i < orphans.length; i++) {
-    orphan = orphans[i];
+  for (let i = 0; i < orphans.length; i++) {
+    const orphan = orphans[i];
     if (!prevs[orphan.hash])
       tips.push(orphan.hash);
   }
 
   tips.push(tip.hash);
 
-  for (i = 0; i < tips.length; i++) {
-    tip = tips[i];
+  for (let i = 0; i < tips.length; i++) {
+    const tip = tips[i];
     console.log('Indexing chain tip: %s.', util.revHex(tip));
     batch.put(pair('p', tip), DUMMY);
   }

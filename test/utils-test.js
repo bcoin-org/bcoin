@@ -13,9 +13,7 @@ const consensus = require('../lib/protocol/consensus');
 const Validator = require('../lib/utils/validator');
 
 describe('Utils', function() {
-  let vectors, signed, unsigned;
-
-  vectors = [
+  const vectors = [
     ['', ''],
     ['61', '2g'],
     ['626262', 'a3gV'],
@@ -38,15 +36,14 @@ describe('Utils', function() {
 
   it('should encode/decode base58', () => {
     const buf = Buffer.from('000000deadbeef', 'hex');
-    let b = base58.encode(buf);
-    let i, r;
+    const b = base58.encode(buf);
 
     assert.equal(b, '1116h8cQN');
     assert.deepEqual(base58.decode(b), buf);
 
-    for (i = 0; i < vectors.length; i++) {
-      r = Buffer.from(vectors[i][0], 'hex');
-      b = vectors[i][1];
+    for (let i = 0; i < vectors.length; i++) {
+      const r = Buffer.from(vectors[i][0], 'hex');
+      const b = vectors[i][1];
       assert.equal(base58.encode(r), b);
       assert.deepEqual(base58.decode(b), r);
     }
@@ -54,9 +51,8 @@ describe('Utils', function() {
 
   it('should verify proof-of-work', () => {
     const bits = 0x1900896c;
-    let hash;
 
-    hash = Buffer.from(
+    const hash = Buffer.from(
       '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
       'hex'
     );
@@ -105,8 +101,6 @@ describe('Utils', function() {
   });
 
   it('should write/read new varints', () => {
-    let b;
-
     /*
      * 0:         [0x00]  256:        [0x81 0x00]
      * 1:         [0x01]  16383:      [0xFE 0x7F]
@@ -116,7 +110,7 @@ describe('Utils', function() {
      * 2^32:           [0x8E 0xFE 0xFE 0xFF 0x00]
      */
 
-    b = Buffer.allocUnsafe(1);
+    let b = Buffer.allocUnsafe(1);
     b.fill(0x00);
     encoding.writeVarint2(b, 0, 0);
     assert.equal(encoding.readVarint2(b, 0).value, 0);
@@ -179,7 +173,7 @@ describe('Utils', function() {
     assert.deepEqual(b, [0x8e, 0xfe, 0xfe, 0xff, 0x00]);
   });
 
-  unsigned = [
+  const unsigned = [
     new BN('ffeeffee'),
     new BN('001fffeeffeeffee'),
     new BN('eeffeeff'),
@@ -188,7 +182,7 @@ describe('Utils', function() {
     new BN(1)
   ];
 
-  signed = [
+  const signed = [
     new BN('ffeeffee'),
     new BN('001fffeeffeeffee'),
     new BN('eeffeeff'),
@@ -209,14 +203,12 @@ describe('Utils', function() {
     const bits = num.bitLength();
 
     it(`should write+read a ${bits} bit unsigned int`, () => {
-      let n1, n2;
-
       encoding.writeU64BN(buf1, num, 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
 
-      n1 = encoding.readU64BN(buf1, 0);
-      n2 = encoding.readU64(buf2, 0);
+      const n1 = encoding.readU64BN(buf1, 0);
+      const n2 = encoding.readU64(buf2, 0);
       assert.equal(n1.toNumber(), n2);
     });
   });
@@ -228,29 +220,25 @@ describe('Utils', function() {
     const sign = num.isNeg() ? 'negative' : 'positive';
 
     it(`should write+read a ${bits} bit ${sign} int`, () => {
-      let n1, n2;
-
       encoding.write64BN(buf1, num, 0);
       encoding.write64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
 
-      n1 = encoding.read64BN(buf1, 0);
-      n2 = encoding.read64(buf2, 0);
+      const n1 = encoding.read64BN(buf1, 0);
+      const n2 = encoding.read64(buf2, 0);
       assert.equal(n1.toNumber(), n2);
     });
 
     it(`should write+read a ${bits} bit ${sign} int as unsigned`, () => {
-      let n1, n2;
-
       encoding.writeU64BN(buf1, num, 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
 
-      n1 = encoding.readU64BN(buf1, 0);
+      const n1 = encoding.readU64BN(buf1, 0);
       if (num.isNeg()) {
         assert.throws(() => encoding.readU64(buf2, 0));
       } else {
-        n2 = encoding.readU64(buf2, 0);
+        const n2 = encoding.readU64(buf2, 0);
         assert.equal(n1.toNumber(), n2);
       }
     });
@@ -263,18 +251,17 @@ describe('Utils', function() {
     let salt = '000102030405060708090a0b0c';
     let info = 'f0f1f2f3f4f5f6f7f8f9';
     let len = 42;
-    let prkE, okmE, prk, okm;
 
-    prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5';
-    okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1'
+    let prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5';
+    let okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1'
       + 'a5a4c5db02d56ecc4c5bf34007208d5b887185865';
 
     ikm = Buffer.from(ikm, 'hex');
     salt = Buffer.from(salt, 'hex');
     info = Buffer.from(info, 'hex');
 
-    prk = hkdf.extract(ikm, salt, alg);
-    okm = hkdf.expand(prk, info, len, alg);
+    let prk = hkdf.extract(ikm, salt, alg);
+    let okm = hkdf.expand(prk, info, len, alg);
 
     assert.equal(prk.toString('hex'), prkE);
     assert.equal(okm.toString('hex'), okmE);

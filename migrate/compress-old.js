@@ -20,8 +20,6 @@ const secp256k1 = require('../lib/crypto/secp256k1');
  */
 
 function compressScript(script, bw) {
-  let data;
-
   // Attempt to compress the output scripts.
   // We can _only_ ever compress them if
   // they are serialized as minimaldata, as
@@ -31,7 +29,7 @@ function compressScript(script, bw) {
   // P2PKH -> 1 | key-hash
   // Saves 5 bytes.
   if (script.isPubkeyhash(true)) {
-    data = script.code[2].data;
+    const data = script.code[2].data;
     bw.writeU8(1);
     bw.writeBytes(data);
     return bw;
@@ -40,7 +38,7 @@ function compressScript(script, bw) {
   // P2SH -> 2 | script-hash
   // Saves 3 bytes.
   if (script.isScripthash()) {
-    data = script.code[1].data;
+    const data = script.code[1].data;
     bw.writeU8(2);
     bw.writeBytes(data);
     return bw;
@@ -50,7 +48,7 @@ function compressScript(script, bw) {
   // Only works if the key is valid.
   // Saves up to 34 bytes.
   if (script.isPubkey(true)) {
-    data = script.code[0].data;
+    let data = script.code[0].data;
     if (secp256k1.publicKeyVerify(data)) {
       data = compressKey(data);
       bw.writeU8(3);
@@ -112,19 +110,17 @@ function decompressScript(script, br) {
  */
 
 function compressValue(value) {
-  let exp, last;
-
   if (value === 0)
     return 0;
 
-  exp = 0;
+  let exp = 0;
   while (value % 10 === 0 && exp < 9) {
     value /= 10;
     exp++;
   }
 
   if (exp < 9) {
-    last = value % 10;
+    const last = value % 10;
     value = (value - last) / 10;
     return 1 + 10 * (9 * value + last - 1) + exp;
   }
@@ -139,18 +135,17 @@ function compressValue(value) {
  */
 
 function decompressValue(value) {
-  let exp, n, last;
-
   if (value === 0)
     return 0;
 
   value--;
 
-  exp = value % 10;
+  let exp = value % 10;
   value = (value - exp) / 10;
 
+  let n;
   if (exp < 9) {
-    last = value % 9;
+    const last = value % 9;
     value = (value - last) / 9;
     n = value * 10 + last + 1;
   } else {
@@ -210,7 +205,6 @@ function compressKey(key) {
 
 function decompressKey(key) {
   const format = key[0] >>> 2;
-  let out;
 
   assert(key.length === 33);
 
@@ -223,7 +217,7 @@ function decompressKey(key) {
   // low bits so publicKeyConvert
   // actually understands it.
   key[0] &= 0x03;
-  out = secp256k1.publicKeyConvert(key, false);
+  const out = secp256k1.publicKeyConvert(key, false);
 
   // Reset the hi bits so as not to
   // mutate the original buffer.

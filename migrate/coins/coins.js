@@ -149,12 +149,10 @@ Coins.prototype.has = function has(index) {
  */
 
 Coins.prototype.isUnspent = function isUnspent(index) {
-  let output;
-
   if (index >= this.outputs.length)
     return false;
 
-  output = this.outputs[index];
+  const output = this.outputs[index];
 
   if (!output || output.spent)
     return false;
@@ -317,7 +315,6 @@ Coins.prototype.header = function header(len, size) {
   const first = this.isUnspent(0);
   const second = this.isUnspent(1);
   let offset = 0;
-  let code;
 
   // Throw if we're fully spent.
   assert(len !== 0, 'Cannot serialize fully-spent coins.');
@@ -330,7 +327,7 @@ Coins.prototype.header = function header(len, size) {
   }
 
   // Calculate header code.
-  code = 8 * (size - offset);
+  let code = 8 * (size - offset);
 
   if (this.coinbase)
     code += 1;
@@ -425,7 +422,6 @@ Coins.prototype.fromRaw = function fromRaw(data, hash) {
   const br = new BufferReader(data);
   let first = null;
   let second = null;
-  let code, size, offset;
 
   // Inject hash (passed by caller).
   this.hash = hash;
@@ -433,17 +429,17 @@ Coins.prototype.fromRaw = function fromRaw(data, hash) {
   // Read headers.
   this.version = br.readVarint();
   this.height = br.readU32();
-  code = br.readVarint();
+  const code = br.readVarint();
   this.coinbase = (code & 1) !== 0;
 
   // Recalculate size.
-  size = code / 8 | 0;
+  let size = code / 8 | 0;
 
   if ((code & 6) === 0)
     size += 1;
 
   // Setup spent field.
-  offset = br.offset;
+  let offset = br.offset;
   br.seek(size);
 
   // Read first two outputs.
@@ -484,7 +480,6 @@ Coins.prototype.fromRaw = function fromRaw(data, hash) {
 Coins.parseCoin = function parseCoin(data, hash, index) {
   const br = new BufferReader(data);
   const coin = new Coin();
-  let code, size, offset;
 
   // Inject outpoint (passed by caller).
   coin.hash = hash;
@@ -493,11 +488,11 @@ Coins.parseCoin = function parseCoin(data, hash, index) {
   // Read headers.
   coin.version = br.readVarint();
   coin.height = br.readU32();
-  code = br.readVarint();
+  const code = br.readVarint();
   coin.coinbase = (code & 1) !== 0;
 
   // Recalculate size.
-  size = code / 8 | 0;
+  let size = code / 8 | 0;
 
   if ((code & 6) === 0)
     size += 1;
@@ -506,7 +501,7 @@ Coins.parseCoin = function parseCoin(data, hash, index) {
     return;
 
   // Setup spent field.
-  offset = br.offset;
+  let offset = br.offset;
   br.seek(size);
 
   // Read first two outputs.
@@ -562,8 +557,6 @@ Coins.fromRaw = function fromRaw(data, hash) {
  */
 
 Coins.prototype.fromTX = function fromTX(tx, height) {
-  let output;
-
   assert(typeof height === 'number');
 
   this.version = tx.version;
@@ -571,7 +564,7 @@ Coins.prototype.fromTX = function fromTX(tx, height) {
   this.height = height;
   this.coinbase = tx.isCoinbase();
 
-  for (output of tx.outputs) {
+  for (const output of tx.outputs) {
     if (output.script.isUnspendable()) {
       this.outputs.push(null);
       continue;
@@ -631,11 +624,9 @@ function CoinEntry() {
  */
 
 CoinEntry.prototype.reader = function reader() {
-  let br;
-
   assert(this.raw);
 
-  br = new BufferReader(this.raw);
+  const br = new BufferReader(this.raw);
   br.offset = this.offset;
 
   return br;

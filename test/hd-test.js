@@ -68,12 +68,11 @@ describe('HD', function() {
 
   it('should derive correctly when private key has leading zeros', () => {
     const key = HD.PrivateKey.fromBase58(vectors.zero_priv);
-    let child;
 
     assert.equal(key.privateKey.toString('hex'),
       '00000055378cf5fafb56c711c674143f9b0ee82ab0ba2924f19b64f5ae7cdbfd');
 
-    child = key.derivePath('m/44\'/0\'/0\'/0/0\'');
+    const child = key.derivePath('m/44\'/0\'/0\'/0/0\'');
     assert.equal(child.privateKey.toString('hex'),
       '3348069561d2a0fb925e74bf198762acc47dce7db27372257d2d959a9e6f8aeb');
   });

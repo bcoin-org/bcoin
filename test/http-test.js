@@ -13,9 +13,9 @@ const FullNode = require('../lib/node/fullnode');
 const pkg = require('../lib/pkg');
 
 describe('HTTP', function() {
-  let node, wallet, wdb, addr, hash;
+  let addr, hash;
 
-  node = new FullNode({
+  const node = new FullNode({
     network: 'regtest',
     apiKey: 'foo',
     walletAuth: true,
@@ -23,12 +23,12 @@ describe('HTTP', function() {
     plugins: [require('../lib/wallet/plugin')]
   });
 
-  wallet = new HTTP.Wallet({
+  const wallet = new HTTP.Wallet({
     network: 'regtest',
     apiKey: 'foo'
   });
 
-  wdb = node.require('walletdb');
+  const wdb = node.require('walletdb');
 
   this.timeout(15000);
 
@@ -105,9 +105,8 @@ describe('HTTP', function() {
 
   it('should send a tx', async () => {
     let value = 0;
-    let options, tx;
 
-    options = {
+    const options = {
       rate: 10000,
       outputs: [{
         value: 10000,
@@ -115,7 +114,7 @@ describe('HTTP', function() {
       }]
     };
 
-    tx = await wallet.send(options);
+    const tx = await wallet.send(options);
 
     assert(tx);
     assert.equal(tx.inputs.length, 1);

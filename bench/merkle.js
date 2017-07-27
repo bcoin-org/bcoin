@@ -12,11 +12,10 @@ for (let i = 0; i < 3000; i++)
 
 {
   const end = bench('tree');
-  let i;
-  for (i = 0; i < 1000; i++) {
+  for (let i = 0; i < 1000; i++) {
     const [n, m] = merkle.createTree(leaves.slice());
     assert(n);
     assert(!m);
   }
-  end(i);
+  end(1000);
 }

@@ -173,7 +173,7 @@ describe('Bech32', function() {
 
   INVALID_ADDRESS.forEach((test) => {
     it(`should have invalid address for ${test}`, () => {
-      let ok1, ok2, ok;
+      let ok1, ok2;
 
       try {
         ok1 = fromAddress('bc', test);
@@ -187,7 +187,7 @@ describe('Bech32', function() {
         ok2 = null;
       }
 
-      ok = ok1 === null && ok2 === null;
+      const ok = ok1 === null && ok2 === null;
       assert(ok);
     });
   });
