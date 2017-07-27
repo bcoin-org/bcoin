@@ -29,12 +29,12 @@ CLI.prototype.log = function log(json) {
 };
 
 CLI.prototype.getInfo = async function getInfo() {
-  let info = await this.client.getInfo();
+  const info = await this.client.getInfo();
   this.log(info);
 };
 
 CLI.prototype.getWallets = async function getWallets() {
-  let wallets = await this.client.getWallets();
+  const wallets = await this.client.getWallets();
   this.log(wallets);
 };
 
@@ -65,51 +65,51 @@ CLI.prototype.createWallet = async function createWallet() {
 };
 
 CLI.prototype.getMaster = async function getMaster() {
-  let master = await this.wallet.getMaster();
+  const master = await this.wallet.getMaster();
   this.log(master);
 };
 
 CLI.prototype.getKey = async function getKey() {
-  let address = this.config.str(0);
-  let key = await this.wallet.getKey(address);
+  const address = this.config.str(0);
+  const key = await this.wallet.getKey(address);
   this.log(key);
 };
 
 CLI.prototype.getWIF = async function getWIF() {
-  let address = this.config.str(0);
-  let passphrase = this.config.str('passphrase');
-  let key = await this.wallet.getWIF(address, passphrase);
+  const address = this.config.str(0);
+  const passphrase = this.config.str('passphrase');
+  const key = await this.wallet.getWIF(address, passphrase);
   this.log(key.privateKey);
 };
 
 CLI.prototype.addSharedKey = async function addSharedKey() {
-  let key = this.config.str(0);
-  let account = this.config.str('account');
+  const key = this.config.str(0);
+  const account = this.config.str('account');
   await this.wallet.addSharedKey(account, key);
   this.log('Added key.');
 };
 
 CLI.prototype.removeSharedKey = async function removeSharedKey() {
-  let key = this.config.str(0);
-  let account = this.config.str('account');
+  const key = this.config.str(0);
+  const account = this.config.str('account');
   await this.wallet.removeSharedKey(account, key);
   this.log('Removed key.');
 };
 
 CLI.prototype.getSharedKeys = async function getSharedKeys() {
-  let acct = this.config.str([0, 'account']);
-  let account = await this.wallet.getAccount(acct);
+  const acct = this.config.str([0, 'account']);
+  const account = await this.wallet.getAccount(acct);
   this.log(account.keys);
 };
 
 CLI.prototype.getAccount = async function getAccount() {
-  let acct = this.config.str([0, 'account']);
-  let account = await this.wallet.getAccount(acct);
+  const acct = this.config.str([0, 'account']);
+  const account = await this.wallet.getAccount(acct);
   this.log(account);
 };
 
 CLI.prototype.createAccount = async function createAccount() {
-  let name = this.config.str([0, 'name']);
+  const name = this.config.str([0, 'name']);
   let options, account;
 
   options = {
@@ -126,35 +126,35 @@ CLI.prototype.createAccount = async function createAccount() {
 };
 
 CLI.prototype.createAddress = async function createAddress() {
-  let account = this.config.str([0, 'account']);
-  let addr = await this.wallet.createAddress(account);
+  const account = this.config.str([0, 'account']);
+  const addr = await this.wallet.createAddress(account);
   this.log(addr);
 };
 
 CLI.prototype.createChange = async function createChange() {
-  let account = this.config.str([0, 'account']);
-  let addr = await this.wallet.createChange(account);
+  const account = this.config.str([0, 'account']);
+  const addr = await this.wallet.createChange(account);
   this.log(addr);
 };
 
 CLI.prototype.createNested = async function createNested() {
-  let account = this.config.str([0, 'account']);
-  let addr = await this.wallet.createNested(account);
+  const account = this.config.str([0, 'account']);
+  const addr = await this.wallet.createNested(account);
   this.log(addr);
 };
 
 CLI.prototype.getAccounts = async function getAccounts() {
-  let accounts = await this.wallet.getAccounts();
+  const accounts = await this.wallet.getAccounts();
   this.log(accounts);
 };
 
 CLI.prototype.getWallet = async function getWallet() {
-  let info = await this.wallet.getInfo();
+  const info = await this.wallet.getInfo();
   this.log(info);
 };
 
 CLI.prototype.getTX = async function getTX() {
-  let hash = this.config.str(0);
+  const hash = this.config.str(0);
   let txs, tx;
 
   if (util.isBase58(hash)) {
@@ -191,8 +191,8 @@ CLI.prototype.getBlock = async function getBlock() {
 };
 
 CLI.prototype.getCoin = async function getCoin() {
-  let hash = this.config.str(0);
-  let index = this.config.num(1);
+  const hash = this.config.str(0);
+  const index = this.config.num(1);
   let coins, coin;
 
   if (util.isBase58(hash)) {
@@ -212,20 +212,20 @@ CLI.prototype.getCoin = async function getCoin() {
 };
 
 CLI.prototype.getWalletHistory = async function getWalletHistory() {
-  let account = this.config.str('account');
-  let txs = await this.wallet.getHistory(account);
+  const account = this.config.str('account');
+  const txs = await this.wallet.getHistory(account);
   this.log(txs);
 };
 
 CLI.prototype.getWalletPending = async function getWalletPending() {
-  let account = this.config.str('account');
-  let txs = await this.wallet.getPending(account);
+  const account = this.config.str('account');
+  const txs = await this.wallet.getPending(account);
   this.log(txs);
 };
 
 CLI.prototype.getWalletCoins = async function getWalletCoins() {
-  let account = this.config.str('account');
-  let coins = await this.wallet.getCoins(account);
+  const account = this.config.str('account');
+  const coins = await this.wallet.getCoins(account);
   this.log(coins);
 };
 
@@ -266,13 +266,13 @@ CLI.prototype.listenWallet = async function listenWallet() {
 };
 
 CLI.prototype.getBalance = async function getBalance() {
-  let account = this.config.str('account');
-  let balance = await this.wallet.getBalance(account);
+  const account = this.config.str('account');
+  const balance = await this.wallet.getBalance(account);
   this.log(balance);
 };
 
 CLI.prototype.getMempool = async function getMempool() {
-  let txs = await this.client.getMempool();
+  const txs = await this.client.getMempool();
   this.log(txs);
 };
 
@@ -334,56 +334,56 @@ CLI.prototype.createTX = async function createTX() {
 };
 
 CLI.prototype.signTX = async function signTX() {
-  let passphrase = this.config.str('passphrase');
-  let raw = this.config.str([0, 'tx']);
-  let tx = await this.wallet.sign(raw, { passphrase });
+  const passphrase = this.config.str('passphrase');
+  const raw = this.config.str([0, 'tx']);
+  const tx = await this.wallet.sign(raw, { passphrase });
 
   this.log(tx);
 };
 
 CLI.prototype.zapWallet = async function zapWallet() {
-  let age = this.config.num([0, 'age'], 72 * 60 * 60);
+  const age = this.config.num([0, 'age'], 72 * 60 * 60);
   await this.wallet.zap(this.config.str('account'), age);
   this.log('Zapped!');
 };
 
 CLI.prototype.broadcast = async function broadcast() {
-  let raw = this.config.str([0, 'tx']);
-  let tx = await this.client.broadcast(raw);
+  const raw = this.config.str([0, 'tx']);
+  const tx = await this.client.broadcast(raw);
   this.log('Broadcasted:');
   this.log(tx);
 };
 
 CLI.prototype.viewTX = async function viewTX() {
-  let raw = this.config.str([0, 'tx']);
-  let tx = await this.wallet.fill(raw);
+  const raw = this.config.str([0, 'tx']);
+  const tx = await this.wallet.fill(raw);
   this.log(tx);
 };
 
 CLI.prototype.getDetails = async function getDetails() {
-  let hash = this.config.str(0);
-  let details = await this.wallet.getTX(hash);
+  const hash = this.config.str(0);
+  const details = await this.wallet.getTX(hash);
   this.log(details);
 };
 
 CLI.prototype.getWalletBlocks = async function getWalletBlocks() {
-  let blocks = await this.wallet.getBlocks();
+  const blocks = await this.wallet.getBlocks();
   this.log(blocks);
 };
 
 CLI.prototype.getWalletBlock = async function getWalletBlock() {
-  let height = this.config.num(0);
-  let block = await this.wallet.getBlock(height);
+  const height = this.config.num(0);
+  const block = await this.wallet.getBlock(height);
   this.log(block);
 };
 
 CLI.prototype.retoken = async function retoken() {
-  let result = await this.wallet.retoken();
+  const result = await this.wallet.retoken();
   this.log(result);
 };
 
 CLI.prototype.rescan = async function rescan() {
-  let height = this.config.num(0);
+  const height = this.config.num(0);
   await this.client.rescan(height);
   this.log('Rescanning...');
 };
@@ -410,7 +410,7 @@ CLI.prototype.resendWallet = async function resendWallet() {
 };
 
 CLI.prototype.backup = async function backup() {
-  let path = this.config.str(0);
+  const path = this.config.str(0);
 
   await this.client.backup(path);
 
@@ -418,8 +418,8 @@ CLI.prototype.backup = async function backup() {
 };
 
 CLI.prototype.importKey = async function importKey() {
-  let key = this.config.str(0);
-  let account = this.config.str('account');
+  const key = this.config.str(0);
+  const account = this.config.str('account');
 
   if (!key)
     throw new Error('No key for import.');
@@ -440,8 +440,8 @@ CLI.prototype.importKey = async function importKey() {
 };
 
 CLI.prototype.importAddress = async function importKey() {
-  let address = this.config.str(0);
-  let account = this.config.str('account');
+  const address = this.config.str(0);
+  const account = this.config.str('account');
   await this.wallet.importAddress(account, address);
   this.log('Imported address.');
 };
@@ -452,18 +452,18 @@ CLI.prototype.lock = async function lock() {
 };
 
 CLI.prototype.unlock = async function unlock() {
-  let passphrase = this.config.str(0);
-  let timeout = this.config.num(1);
+  const passphrase = this.config.str(0);
+  const timeout = this.config.num(1);
   await this.wallet.unlock(passphrase, timeout);
   this.log('Unlocked.');
 };
 
 CLI.prototype.rpc = async function rpc() {
-  let method = this.argv.shift();
-  let params = [];
+  const method = this.argv.shift();
+  const params = [];
   let result;
 
-  for (let arg of this.argv) {
+  for (const arg of this.argv) {
     let param;
     try {
       param = JSON.parse(arg);
@@ -691,7 +691,7 @@ CLI.prototype.destroy = function destroy() {
 };
 
 async function main() {
-  let cli = new CLI();
+  const cli = new CLI();
   await cli.open();
   await cli.destroy();
 }

@@ -31,7 +31,7 @@ describe('Node', function() {
   this.timeout(5000);
 
   async function mineBlock(tip, tx) {
-    let job = await miner.createJob(tip);
+    const job = await miner.createJob(tip);
     let rtx;
 
     if (!tx)
@@ -67,7 +67,7 @@ describe('Node', function() {
   });
 
   it('should mine a block', async () => {
-    let block = await miner.mineBlock();
+    const block = await miner.mineBlock();
     assert(block);
     await chain.add(block);
   });
@@ -158,12 +158,12 @@ describe('Node', function() {
   });
 
   it('should check main chain', async () => {
-    let result = await tip1.isMainChain();
+    const result = await tip1.isMainChain();
     assert(!result);
   });
 
   it('should mine a block after a reorg', async () => {
-    let block = await mineBlock(null, cb2);
+    const block = await mineBlock(null, cb2);
     let entry, result;
 
     await chain.add(block);
@@ -177,8 +177,8 @@ describe('Node', function() {
   });
 
   it('should prevent double spend on new chain', async () => {
-    let block = await mineBlock(null, cb2);
-    let tip = chain.tip;
+    const block = await mineBlock(null, cb2);
+    const tip = chain.tip;
     let err;
 
     try {
@@ -193,8 +193,8 @@ describe('Node', function() {
   });
 
   it('should fail to mine a block with coins on an alternate chain', async () => {
-    let block = await mineBlock(null, cb1);
-    let tip = chain.tip;
+    const block = await mineBlock(null, cb1);
+    const tip = chain.tip;
     let err;
 
     try {
@@ -275,7 +275,7 @@ describe('Node', function() {
   });
 
   it('should activate csv', async () => {
-    let deployments = chain.network.deployments;
+    const deployments = chain.network.deployments;
     let i, block, prev, state, cache;
 
     prev = await chain.tip.getPrevious();
@@ -314,7 +314,7 @@ describe('Node', function() {
   });
 
   async function mineCSV(tx) {
-    let job = await miner.createJob();
+    const job = await miner.createJob();
     let redeemer;
 
     redeemer = new MTX();
@@ -340,7 +340,7 @@ describe('Node', function() {
   }
 
   it('should test csv', async () => {
-    let tx = (await chain.db.getBlock(chain.height)).txs[0];
+    const tx = (await chain.db.getBlock(chain.height)).txs[0];
     let block = await mineCSV(tx);
     let csv, job, redeemer;
 
@@ -372,7 +372,7 @@ describe('Node', function() {
   });
 
   it('should fail csv with bad sequence', async () => {
-    let csv = (await chain.db.getBlock(chain.height)).txs[1];
+    const csv = (await chain.db.getBlock(chain.height)).txs[1];
     let block, job, redeemer, err;
 
     redeemer = new MTX();
@@ -406,13 +406,13 @@ describe('Node', function() {
   });
 
   it('should mine a block', async () => {
-    let block = await miner.mineBlock();
+    const block = await miner.mineBlock();
     assert(block);
     await chain.add(block);
   });
 
   it('should fail csv lock checks', async () => {
-    let tx = (await chain.db.getBlock(chain.height)).txs[0];
+    const tx = (await chain.db.getBlock(chain.height)).txs[0];
     let block = await mineCSV(tx);
     let csv, job, redeemer, err;
 
@@ -460,7 +460,7 @@ describe('Node', function() {
   });
 
   it('should not get a block template', async () => {
-    let json = await node.rpc.call({
+    const json = await node.rpc.call({
       method: 'getblocktemplate'
     }, {});
     assert(json.error);
@@ -517,7 +517,7 @@ describe('Node', function() {
   });
 
   it('should send a block template proposal', async () => {
-    let attempt = await node.miner.createBlock();
+    const attempt = await node.miner.createBlock();
     let block, hex, json;
 
     attempt.refresh();
@@ -539,8 +539,8 @@ describe('Node', function() {
   });
 
   it('should submit a block', async () => {
-    let block = await node.miner.mineBlock();
-    let hex = block.toRaw().toString('hex');
+    const block = await node.miner.mineBlock();
+    const hex = block.toRaw().toString('hex');
     let json;
 
     json = await node.rpc.call({
@@ -554,7 +554,7 @@ describe('Node', function() {
   });
 
   it('should validate an address', async () => {
-    let addr = new Address();
+    const addr = new Address();
     let json;
 
     addr.network = node.network;

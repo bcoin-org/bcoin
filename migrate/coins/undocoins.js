@@ -40,7 +40,7 @@ function UndoCoins() {
  */
 
 UndoCoins.prototype.push = function push(entry) {
-  let undo = new UndoCoin();
+  const undo = new UndoCoin();
   undo.entry = entry;
   this.items.push(undo);
 };
@@ -55,7 +55,7 @@ UndoCoins.prototype.getSize = function getSize() {
 
   size += 4;
 
-  for (let coin of this.items)
+  for (const coin of this.items)
     size += coin.getSize();
 
   return size;
@@ -67,12 +67,12 @@ UndoCoins.prototype.getSize = function getSize() {
  */
 
 UndoCoins.prototype.toRaw = function toRaw() {
-  let size = this.getSize();
-  let bw = new StaticWriter(size);
+  const size = this.getSize();
+  const bw = new StaticWriter(size);
 
   bw.writeU32(this.items.length);
 
-  for (let coin of this.items)
+  for (const coin of this.items)
     coin.toWriter(bw);
 
   return bw.render();
@@ -86,8 +86,8 @@ UndoCoins.prototype.toRaw = function toRaw() {
  */
 
 UndoCoins.prototype.fromRaw = function fromRaw(data) {
-  let br = new BufferReader(data);
-  let count = br.readU32();
+  const br = new BufferReader(data);
+  const count = br.readU32();
 
   for (let i = 0; i < count; i++)
     this.items.push(UndoCoin.fromReader(br));
@@ -120,7 +120,7 @@ UndoCoins.prototype.isEmpty = function isEmpty() {
  */
 
 UndoCoins.prototype.commit = function commit() {
-  let raw = this.toRaw();
+  const raw = this.toRaw();
   this.items.length = 0;
   return raw;
 };
@@ -141,9 +141,9 @@ UndoCoins.prototype.top = function top() {
  */
 
 UndoCoins.prototype.apply = function apply(view, outpoint) {
-  let undo = this.items.pop();
-  let hash = outpoint.hash;
-  let index = outpoint.index;
+  const undo = this.items.pop();
+  const hash = outpoint.hash;
+  const index = outpoint.index;
   let coins;
 
   assert(undo);
@@ -263,7 +263,7 @@ UndoCoin.prototype.toWriter = function toWriter(bw) {
  */
 
 UndoCoin.prototype.toRaw = function toRaw() {
-  let size = this.getSize();
+  const size = this.getSize();
   return this.toWriter(new StaticWriter(size)).render();
 };
 
@@ -275,7 +275,7 @@ UndoCoin.prototype.toRaw = function toRaw() {
  */
 
 UndoCoin.prototype.fromReader = function fromReader(br) {
-  let code = br.readVarint();
+  const code = br.readVarint();
 
   this.output = new Output();
 

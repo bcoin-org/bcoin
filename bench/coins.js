@@ -6,7 +6,7 @@ const TX = require('../lib/primitives/tx');
 const bench = require('./bench');
 
 let raw = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
-let wtx = TX.fromRaw(raw.trim(), 'hex');
+const wtx = TX.fromRaw(raw.trim(), 'hex');
 let coins = Coins.fromTX(wtx, 1);
 let i, j, end, hash;
 

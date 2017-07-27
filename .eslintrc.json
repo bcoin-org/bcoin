@@ -36,6 +36,10 @@
     "no-extra-semi": 0,
     "handle-callback-err": 0,
     "no-buffer-constructor": 2,
-    "no-tabs": 2
+    "no-tabs": 2,
+    "prefer-const": ["error", {
+      "destructuring": "all",
+      "ignoreReadBeforeAssign": true
+    }]
   }
 }

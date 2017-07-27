@@ -151,7 +151,7 @@ Coins.prototype.get = function get(index) {
  */
 
 Coins.prototype.spend = function spend(index) {
-  let coin = this.get(index);
+  const coin = this.get(index);
 
   if (!coin)
     return;
@@ -221,9 +221,9 @@ Coins.prototype.isEmpty = function isEmpty() {
  */
 
 Coins.prototype.toRaw = function toRaw() {
-  let bw = new BufferWriter();
-  let length = this.size();
-  let len = Math.ceil(length / 8);
+  const bw = new BufferWriter();
+  const length = this.size();
+  const len = Math.ceil(length / 8);
   let i, output, bits, start, bit, oct, data;
 
   // Return nothing if we're fully spent.
@@ -302,7 +302,7 @@ Coins.prototype.toRaw = function toRaw() {
  */
 
 Coins.prototype.fromRaw = function fromRaw(data, hash, index) {
-  let br = new BufferReader(data);
+  const br = new BufferReader(data);
   let pos = 0;
   let bits, len, start, bit, oct, spent, coin;
 
@@ -356,8 +356,8 @@ Coins.prototype.fromRaw = function fromRaw(data, hash, index) {
  */
 
 Coins.parseCoin = function parseCoin(data, hash, index) {
-  let br = new BufferReader(data);
-  let coin = new Coin();
+  const br = new BufferReader(data);
+  const coin = new Coin();
   let pos = 0;
   let bits, len, start, bit, oct, spent;
 
@@ -490,7 +490,7 @@ function CoinEntry() {
  */
 
 CoinEntry.prototype.toCoin = function toCoin(coins, index) {
-  let coin = new Coin();
+  const coin = new Coin();
   let br;
 
   // Load in all necessary properties
@@ -551,7 +551,7 @@ CoinEntry.prototype.toWriter = function toWriter(bw) {
  */
 
 CoinEntry.fromReader = function fromReader(br) {
-  let entry = new CoinEntry();
+  const entry = new CoinEntry();
   entry.offset = br.offset;
   entry.size = skipCoin(br);
   entry.raw = br.data;
@@ -566,7 +566,7 @@ CoinEntry.fromReader = function fromReader(br) {
  */
 
 CoinEntry.fromTX = function fromTX(tx, index) {
-  let entry = new CoinEntry();
+  const entry = new CoinEntry();
   entry.output = tx.outputs[index];
   return entry;
 };
@@ -578,7 +578,7 @@ CoinEntry.fromTX = function fromTX(tx, index) {
  */
 
 CoinEntry.fromCoin = function fromCoin(coin) {
-  let entry = new CoinEntry();
+  const entry = new CoinEntry();
   entry.output = new Output();
   entry.output.script = coin.script;
   entry.output.value = coin.value;
@@ -590,7 +590,7 @@ CoinEntry.fromCoin = function fromCoin(coin) {
  */
 
 function skipCoin(br) {
-  let start = br.offset;
+  const start = br.offset;
 
   // Skip past the compressed scripts.
   switch (br.readU8()) {

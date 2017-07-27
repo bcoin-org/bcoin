@@ -8,7 +8,7 @@ const Outpoint = require('../lib/primitives/outpoint');
 let walletdb;
 
 function dummy() {
-  let hash = random.randomBytes(32).toString('hex');
+  const hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, 0);
 }
 

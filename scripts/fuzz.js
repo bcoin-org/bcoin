@@ -15,12 +15,12 @@ const MANDATORY = Script.flags.MANDATORY_VERIFY_FLAGS | Script.flags.VERIFY_WITN
 const STANDARD = Script.flags.STANDARD_VERIFY_FLAGS;
 
 function randomOutpoint() {
-  let hash = random.randomBytes(32).toString('hex');
+  const hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, util.random(0, 0xffffffff));
 }
 
 function randomInput() {
-  let input = Input.fromOutpoint(randomOutpoint());
+  const input = Input.fromOutpoint(randomOutpoint());
 
   if (util.random(0, 5) === 0)
     input.sequence = util.random(0, 0xffffffff);
@@ -33,9 +33,9 @@ function randomOutput() {
 }
 
 function randomTX() {
-  let tx = new TX();
-  let inputs = util.random(1, 5);
-  let outputs = util.random(0, 5);
+  const tx = new TX();
+  const inputs = util.random(1, 5);
+  const outputs = util.random(0, 5);
   let i;
 
   tx.version = util.random(0, 0xffffffff);
@@ -55,8 +55,8 @@ function randomTX() {
 }
 
 function randomWitness(redeem) {
-  let size = util.random(1, 100);
-  let witness = new Witness();
+  const size = util.random(1, 100);
+  const witness = new Witness();
   let i, len;
 
   for (i = 0; i < size; i++) {
@@ -73,8 +73,8 @@ function randomWitness(redeem) {
 }
 
 function randomInputScript(redeem) {
-  let size = util.random(1, 100);
-  let script = new Script();
+  const size = util.random(1, 100);
+  const script = new Script();
   let i, len;
 
   for (i = 0; i < size; i++) {
@@ -91,7 +91,7 @@ function randomInputScript(redeem) {
 }
 
 function randomOutputScript() {
-  let size = util.random(1, 10000);
+  const size = util.random(1, 10000);
   return Script.fromRaw(random.randomBytes(size));
 }
 
@@ -120,7 +120,7 @@ function isPushOnly(script) {
 }
 
 function randomPubkey() {
-  let len = util.random(0, 2) === 0 ? 33 : 65;
+  const len = util.random(0, 2) === 0 ? 33 : 65;
   return Script.fromPubkey(random.randomBytes(len));
 }
 
@@ -129,9 +129,9 @@ function randomPubkeyhash() {
 }
 
 function randomMultisig() {
-  let n = util.random(1, 16);
-  let m = util.random(1, n);
-  let keys = [];
+  const n = util.random(1, 16);
+  const m = util.random(1, n);
+  const keys = [];
   let i, len;
 
   for (i = 0; i < n; i++) {
@@ -155,8 +155,8 @@ function randomWitnessScripthash() {
 }
 
 function randomProgram() {
-  let version = util.random(0, 16);
-  let size = util.random(2, 41);
+  const version = util.random(0, 16);
+  const size = util.random(2, 41);
   return Script.fromProgram(version, random.randomBytes(size));
 }
 
@@ -215,7 +215,7 @@ function randomPubkeyhashContext() {
 }
 
 function randomScripthashContext() {
-  let redeem = randomRedeem();
+  const redeem = randomRedeem();
   return {
     input: randomInputScript(redeem.toRaw()),
     witness: new Witness(),
@@ -234,7 +234,7 @@ function randomWitnessPubkeyhashContext() {
 }
 
 function randomWitnessScripthashContext() {
-  let redeem = randomRedeem();
+  const redeem = randomRedeem();
   return {
     input: new Script(),
     witness: randomWitness(redeem.toRaw()),
@@ -244,8 +244,8 @@ function randomWitnessScripthashContext() {
 }
 
 function randomWitnessNestedContext() {
-  let redeem = randomRedeem();
-  let program = Script.fromProgram(0, redeem.sha256());
+  const redeem = randomRedeem();
+  const program = Script.fromProgram(0, redeem.sha256());
   return {
     input: new Script([program.toRaw()]),
     witness: randomWitness(redeem.toRaw()),
@@ -430,7 +430,7 @@ function fuzzLess(flags) {
 }
 
 function main() {
-  let flags = process.argv.indexOf('--standard') !== -1 ? STANDARD : MANDATORY;
+  const flags = process.argv.indexOf('--standard') !== -1 ? STANDARD : MANDATORY;
 
   switch (process.argv[2]) {
     case 'simple':

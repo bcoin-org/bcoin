@@ -38,12 +38,12 @@ describe('HTTP', function() {
   });
 
   it('should create wallet', async () => {
-    let info = await wallet.create({ id: 'test' });
+    const info = await wallet.create({ id: 'test' });
     assert.equal(info.id, 'test');
   });
 
   it('should get info', async () => {
-    let info = await wallet.client.getInfo();
+    const info = await wallet.client.getInfo();
     assert.equal(info.network, node.network.type);
     assert.equal(info.version, pkg.version);
     assert.equal(info.pool.agent, node.pool.options.agent);
@@ -52,7 +52,7 @@ describe('HTTP', function() {
   });
 
   it('should get wallet info', async () => {
-    let info = await wallet.getInfo();
+    const info = await wallet.getInfo();
     assert.equal(info.id, 'test');
     addr = info.account.receiveAddress;
     assert.equal(typeof addr, 'string');
@@ -98,7 +98,7 @@ describe('HTTP', function() {
   });
 
   it('should get balance', async () => {
-    let balance = await wallet.getBalance();
+    const balance = await wallet.getBalance();
     assert.equal(balance.confirmed, 0);
     assert.equal(balance.unconfirmed, 201840);
   });
@@ -129,35 +129,35 @@ describe('HTTP', function() {
   });
 
   it('should get a tx', async () => {
-    let tx = await wallet.getTX(hash);
+    const tx = await wallet.getTX(hash);
     assert(tx);
     assert.equal(tx.hash, hash);
   });
 
   it('should generate new api key', async () => {
-    let t = wallet.token.toString('hex');
-    let token = await wallet.retoken(null);
+    const t = wallet.token.toString('hex');
+    const token = await wallet.retoken(null);
     assert(token.length === 64);
     assert.notEqual(token, t);
   });
 
   it('should get balance', async () => {
-    let balance = await wallet.getBalance();
+    const balance = await wallet.getBalance();
     assert.equal(balance.unconfirmed, 199570);
   });
 
   it('should execute an rpc call', async () => {
-    let info = await wallet.client.rpc.execute('getblockchaininfo', []);
+    const info = await wallet.client.rpc.execute('getblockchaininfo', []);
     assert.equal(info.blocks, 0);
   });
 
   it('should execute an rpc call with bool parameter', async () => {
-    let info = await wallet.client.rpc.execute('getrawmempool', [true]);
+    const info = await wallet.client.rpc.execute('getrawmempool', [true]);
     assert.deepStrictEqual(info, {});
   });
 
   it('should create account', async () => {
-    let info = await wallet.createAccount('foo1');
+    const info = await wallet.createAccount('foo1');
     assert(info);
     assert(info.initialized);
     assert.equal(info.name, 'foo1');
@@ -167,7 +167,7 @@ describe('HTTP', function() {
   });
 
   it('should create account', async () => {
-    let info = await wallet.createAccount('foo2', {
+    const info = await wallet.createAccount('foo2', {
       type: 'multisig',
       m: 1,
       n: 2
@@ -181,7 +181,7 @@ describe('HTTP', function() {
   });
 
   it('should get a block template', async () => {
-    let json = await wallet.client.rpc.execute('getblocktemplate', []);
+    const json = await wallet.client.rpc.execute('getblocktemplate', []);
     assert.deepStrictEqual(json, {
       capabilities: [ 'proposal' ],
       mutable: [ 'time', 'transactions', 'prevblock' ],
@@ -209,10 +209,10 @@ describe('HTTP', function() {
   });
 
   it('should send a block template proposal', async () => {
-    let attempt = await node.miner.createBlock();
-    let block = attempt.toBlock();
-    let hex = block.toRaw().toString('hex');
-    let json = await wallet.client.rpc.execute('getblocktemplate', [{
+    const attempt = await node.miner.createBlock();
+    const block = attempt.toBlock();
+    const hex = block.toRaw().toString('hex');
+    const json = await wallet.client.rpc.execute('getblocktemplate', [{
       mode: 'proposal',
       data: hex
     }]);
@@ -220,7 +220,7 @@ describe('HTTP', function() {
   });
 
   it('should validate an address', async () => {
-    let json = await wallet.client.rpc.execute('validateaddress', [addr.toString()]);
+    const json = await wallet.client.rpc.execute('validateaddress', [addr.toString()]);
     assert.deepStrictEqual(json, {
       isvalid: true,
       address: addr.toString(),

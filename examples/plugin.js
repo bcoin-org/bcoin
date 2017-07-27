@@ -35,7 +35,7 @@ const node = new FullNode({
 node.use(MyPlugin);
 
 (async () => {
-  let plugin = node.require('my-plugin');
+  const plugin = node.require('my-plugin');
 
   await node.open();
 

@@ -24,7 +24,7 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  let bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
+  const bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
   let data, ver;
 
   console.log('Checking version.');
@@ -91,8 +91,8 @@ async function updateTXDB() {
 }
 
 function fromExtended(data, saveCoins) {
-  let tx = new TX();
-  let p = BufferReader(data);
+  const tx = new TX();
+  const p = BufferReader(data);
   let i, coinCount, coin;
 
   tx.fromRaw(p);
@@ -129,9 +129,9 @@ function fromExtended(data, saveCoins) {
 }
 
 function getValues(map) {
-  let items = [];
+  const items = [];
 
-  for (let key of Object.keys(map))
+  for (const key of Object.keys(map))
     items.push(map[key]);
 
   return items;

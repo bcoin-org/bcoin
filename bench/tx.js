@@ -12,11 +12,11 @@ const encoding = require('../lib/utils/encoding');
 const random = require('../lib/crypto/random');
 const bench = require('./bench');
 
-let json = require('../test/data/block300025.json');
-let block = Block.fromJSON(json);
-let btx = { tx: block.txs[397], view: new CoinView() };
+const json = require('../test/data/block300025.json');
+const block = Block.fromJSON(json);
+const btx = { tx: block.txs[397], view: new CoinView() };
 
-let tx3 = parseTX('../test/data/tx3.hex');
+const tx3 = parseTX('../test/data/tx3.hex');
 let wtx = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
 let i, tx, end, flags, input;
 
@@ -29,11 +29,11 @@ for (i = 0; i < tx.inputs.length; i++) {
 }
 
 function parseTX(file) {
-  let data = fs.readFileSync(`${__dirname}/${file}`, 'utf8');
-  let parts = data.trim().split(/\n+/);
+  const data = fs.readFileSync(`${__dirname}/${file}`, 'utf8');
+  const parts = data.trim().split(/\n+/);
   let raw = parts[0];
-  let tx = TX.fromRaw(raw.trim(), 'hex');
-  let view = new CoinView();
+  const tx = TX.fromRaw(raw.trim(), 'hex');
+  const view = new CoinView();
   let i, prev;
 
   for (i = 1; i < parts.length; i++) {
@@ -97,7 +97,7 @@ for (i = 0; i < 3000; i++)
 end(i * tx3.tx.inputs.length);
 
 end = bench('verify2');
-let script = tx3.view.getOutputFor(tx3.tx.inputs[0]).script;
+const script = tx3.view.getOutputFor(tx3.tx.inputs[0]).script;
 for (i = 0; i < 100000; i++)
   tx3.tx.signatureHashV0(0, script, Script.hashType.ALL);
 end(i);

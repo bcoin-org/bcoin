@@ -11,7 +11,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     let nonce = options.nonce;
     let plain = options.plain;
     let ciphertext = options.ciphertext;
-    let counter = options.counter;
+    const counter = options.counter;
     let chacha, plainenc;
 
     key = Buffer.from(key, 'hex');
@@ -159,9 +159,9 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
   });
 
   it('should perform poly1305', () => {
-    let expected = Buffer.from('ddb9da7ddd5e52792730ed5cda5f90a4', 'hex');
-    let key = Buffer.allocUnsafe(32);
-    let msg = Buffer.allocUnsafe(73);
+    const expected = Buffer.from('ddb9da7ddd5e52792730ed5cda5f90a4', 'hex');
+    const key = Buffer.allocUnsafe(32);
+    const msg = Buffer.allocUnsafe(73);
     let mac;
     let i;
 

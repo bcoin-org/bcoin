@@ -8,7 +8,7 @@ const nativeCrypto = require('crypto');
 
 describe('AES', function() {
   function pbkdf2key(passphrase, iterations, dkLen, ivLen, alg) {
-    let key = pbkdf2.derive(passphrase, '', iterations, dkLen + ivLen, 'sha512');
+    const key = pbkdf2.derive(passphrase, '', iterations, dkLen + ivLen, 'sha512');
     return {
       key: key.slice(0, dkLen),
       iv: key.slice(dkLen, dkLen + ivLen)
@@ -124,17 +124,17 @@ describe('AES', function() {
   }
 
   it('should encrypt and decrypt a hash with 2 blocks', () => {
-    let hash = digest.sha256(Buffer.alloc(0));
-    let enchash = encrypt(hash, 'foo');
-    let dechash = decrypt(enchash, 'foo');
+    const hash = digest.sha256(Buffer.alloc(0));
+    const enchash = encrypt(hash, 'foo');
+    const dechash = decrypt(enchash, 'foo');
 
-    let hash2 = digest.sha256(Buffer.alloc(0));
-    let enchash2 = nencrypt(hash2, 'foo');
-    let dechash2 = ndecrypt(enchash2, 'foo');
+    const hash2 = digest.sha256(Buffer.alloc(0));
+    const enchash2 = nencrypt(hash2, 'foo');
+    const dechash2 = ndecrypt(enchash2, 'foo');
 
-    let hash3 = digest.sha256(Buffer.alloc(0));
-    let enchash3 = bencrypt(hash3, 'foo');
-    let dechash3 = bdecrypt(enchash3, 'foo');
+    const hash3 = digest.sha256(Buffer.alloc(0));
+    const enchash3 = bencrypt(hash3, 'foo');
+    const dechash3 = bdecrypt(enchash3, 'foo');
 
     assert.deepEqual(hash, hash2);
     assert.deepEqual(enchash, enchash2);
@@ -143,13 +143,13 @@ describe('AES', function() {
   });
 
   it('should encrypt and decrypt a hash with uneven blocks', () => {
-    let hash = Buffer.concat([digest.sha256(Buffer.alloc(0)), Buffer.from([1,2,3])]);
-    let enchash = encrypt(hash, 'foo');
-    let dechash = decrypt(enchash, 'foo');
+    const hash = Buffer.concat([digest.sha256(Buffer.alloc(0)), Buffer.from([1,2,3])]);
+    const enchash = encrypt(hash, 'foo');
+    const dechash = decrypt(enchash, 'foo');
 
-    let hash2 = Buffer.concat([digest.sha256(Buffer.alloc(0)), Buffer.from([1,2,3])]);
-    let enchash2 = nencrypt(hash2, 'foo');
-    let dechash2 = ndecrypt(enchash2, 'foo');
+    const hash2 = Buffer.concat([digest.sha256(Buffer.alloc(0)), Buffer.from([1,2,3])]);
+    const enchash2 = nencrypt(hash2, 'foo');
+    const dechash2 = ndecrypt(enchash2, 'foo');
 
     assert.deepEqual(hash, hash2);
     assert.deepEqual(enchash, enchash2);

@@ -217,7 +217,7 @@ function decompressCoin(coin, br) {
  */
 
 function skipOutput(br) {
-  let start = br.offset;
+  const start = br.offset;
 
   // Skip past the value.
   br.skipVarint();
@@ -367,7 +367,7 @@ function compressKey(key) {
  */
 
 function decompressKey(key) {
-  let format = key[0];
+  const format = key[0];
   let out;
 
   assert(key.length === 33);

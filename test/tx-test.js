@@ -40,7 +40,7 @@ function clearCache(tx, noCache) {
 
 function parseTest(data) {
   let [coins, tx, names] = data;
-  let view = new CoinView();
+  const view = new CoinView();
   let flags = 0;
   let coin;
 
@@ -91,7 +91,7 @@ function parseTest(data) {
 }
 
 function sigopContext(scriptSig, witness, scriptPubkey) {
-  let view = new CoinView();
+  const view = new CoinView();
   let input, output, fund, spend;
 
   input = new Input();
@@ -130,7 +130,7 @@ function sigopContext(scriptSig, witness, scriptPubkey) {
 }
 
 describe('TX', function() {
-  let raw = '010000000125393c67cd4f581456dd0805fa8e9db3abdf90dbe1d4b53e28' +
+  const raw = '010000000125393c67cd4f581456dd0805fa8e9db3abdf90dbe1d4b53e28' +
             '6490f35d22b6f2010000006b483045022100f4fa5ced20d2dbd2f905809d' +
             '79ebe34e03496ef2a48a04d0a9a1db436a211dd202203243d086398feb4a' +
             'c21b3b79884079036cd5f3707ba153b383eabefa656512dd0121022ebabe' +
@@ -138,7 +138,7 @@ describe('TX', function() {
             'ffffff0254150000000000001976a9140740345f114e1a1f37ac1cc442b4' +
             '32b91628237e88ace7d27b00000000001976a91495ad422bb5911c2c9fe6' +
             'ce4f82a13c85f03d9b2e88ac00000000';
-  let inp = '01000000052fa236559f51f343f0905ea627a955f421a198541d928798b8' +
+  const inp = '01000000052fa236559f51f343f0905ea627a955f421a198541d928798b8' +
             '186980273942ec010000006b483045022100ae27626778eba264d56883f5' +
             'edc1a49897bf209e98f21c870a55d13bec916e1802204b66f4e3235143d1' +
             '1aef327d9454754cd1f28807c3bf9996c107900df9d19ea60121022ebabe' +
@@ -168,18 +168,18 @@ describe('TX', function() {
             '2e88ac00000000';
 
   [false, true].forEach((noCache) => {
-    let suffix = noCache ? 'without cache' : 'with cache';
+    const suffix = noCache ? 'without cache' : 'with cache';
 
     it(`should decode/encode with parser/framer ${suffix}`, () => {
-      let tx = TX.fromRaw(raw, 'hex');
+      const tx = TX.fromRaw(raw, 'hex');
       clearCache(tx, noCache);
       assert.equal(tx.toRaw().toString('hex'), raw);
     });
 
     it(`should be verifiable ${suffix}`, () => {
-      let tx = TX.fromRaw(raw, 'hex');
-      let p = TX.fromRaw(inp, 'hex');
-      let view = new CoinView();
+      const tx = TX.fromRaw(raw, 'hex');
+      const p = TX.fromRaw(inp, 'hex');
+      const view = new CoinView();
       view.addTX(p, -1);
 
       clearCache(tx, noCache);
@@ -204,8 +204,8 @@ describe('TX', function() {
     });
 
     it(`should verify high S value with only DERSIG enabled ${suffix}`, () => {
-      let coin = tx4.view.getOutputFor(tx4.tx.inputs[0]);
-      let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
+      const coin = tx4.view.getOutputFor(tx4.tx.inputs[0]);
+      const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx4.tx, noCache);
       assert(tx4.tx.verifyInput(0, coin, flags));
     });
@@ -244,7 +244,7 @@ describe('TX', function() {
     });
 
     [[valid, true], [invalid, false]].forEach((test) => {
-      let [arr, valid] = test;
+      const [arr, valid] = test;
       let comment = '';
 
       arr.forEach((json, i) => {
@@ -339,16 +339,16 @@ describe('TX', function() {
       clearCache(tx, noCache);
 
       it(`should get sighash of ${hash} (${hex}) ${suffix}`, () => {
-        let subscript = script.getSubscript(0).removeSeparators();
-        let hash = tx.signatureHash(index, subscript, 0, type, 0);
+        const subscript = script.getSubscript(0).removeSeparators();
+        const hash = tx.signatureHash(index, subscript, 0, type, 0);
         assert.equal(hash.toString('hex'), expected);
       });
     });
   });
 
   function createInput(value, view) {
-    let hash = random.randomBytes(32).toString('hex');
-    let output = new Output();
+    const hash = random.randomBytes(32).toString('hex');
+    const output = new Output();
     output.value = value;
     view.addOutput(new Outpoint(hash, 0), output);
     return {
@@ -360,8 +360,8 @@ describe('TX', function() {
   }
 
   it('should fail on >51 bit coin values', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(consensus.MAX_MONEY + 1, view)],
@@ -376,8 +376,8 @@ describe('TX', function() {
   });
 
   it('should handle 51 bit coin values', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(consensus.MAX_MONEY, view)],
@@ -392,8 +392,8 @@ describe('TX', function() {
   });
 
   it('should fail on >51 bit output values', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(consensus.MAX_MONEY, view)],
@@ -408,8 +408,8 @@ describe('TX', function() {
   });
 
   it('should handle 51 bit output values', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(consensus.MAX_MONEY, view)],
@@ -424,8 +424,8 @@ describe('TX', function() {
   });
 
   it('should fail on >51 bit fees', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(consensus.MAX_MONEY + 1, view)],
@@ -440,8 +440,8 @@ describe('TX', function() {
   });
 
   it('should fail on >51 bit values from multiple', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [
@@ -460,8 +460,8 @@ describe('TX', function() {
   });
 
   it('should fail on >51 bit output values from multiple', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(consensus.MAX_MONEY, view)],
@@ -486,8 +486,8 @@ describe('TX', function() {
   });
 
   it('should fail on >51 bit fees from multiple', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [
@@ -506,7 +506,7 @@ describe('TX', function() {
   });
 
   it('should fail to parse >53 bit values', () => {
-    let view = new CoinView();
+    const view = new CoinView();
     let tx, raw;
 
     tx = new TX({
@@ -542,8 +542,8 @@ describe('TX', function() {
   });
 
   it('should fail on 53 bit coin values', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(MAX_SAFE_INTEGER, view)],
@@ -558,8 +558,8 @@ describe('TX', function() {
   });
 
   it('should fail on 53 bit output values', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(consensus.MAX_MONEY, view)],
@@ -574,8 +574,8 @@ describe('TX', function() {
   });
 
   it('should fail on 53 bit fees', () => {
-    let view = new CoinView();
-    let tx = new TX({
+    const view = new CoinView();
+    const tx = new TX({
       version: 1,
       flag: 1,
       inputs: [createInput(MAX_SAFE_INTEGER, view)],
@@ -591,8 +591,8 @@ describe('TX', function() {
 
   [MAX_SAFE_ADDITION, MAX_SAFE_INTEGER].forEach((MAX) => {
     it('should fail on >53 bit values from multiple', () => {
-      let view = new CoinView();
-      let tx = new TX({
+      const view = new CoinView();
+      const tx = new TX({
         version: 1,
         flag: 1,
         inputs: [
@@ -611,8 +611,8 @@ describe('TX', function() {
     });
 
     it('should fail on >53 bit output values from multiple', () => {
-      let view = new CoinView();
-      let tx = new TX({
+      const view = new CoinView();
+      const tx = new TX({
         version: 1,
         flag: 1,
         inputs: [createInput(consensus.MAX_MONEY, view)],
@@ -637,8 +637,8 @@ describe('TX', function() {
     });
 
     it('should fail on >53 bit fees from multiple', () => {
-      let view = new CoinView();
-      let tx = new TX({
+      const view = new CoinView();
+      const tx = new TX({
         version: 1,
         flag: 1,
         inputs: [
@@ -658,9 +658,9 @@ describe('TX', function() {
   });
 
   it('should count sigops for multisig', () => {
-    let flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
-    let key = KeyRing.generate();
-    let pub = key.publicKey;
+    const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
+    const key = KeyRing.generate();
+    const pub = key.publicKey;
     let ctx, output, input, witness;
 
     output = Script.fromMultisig(1, 2, [pub, pub]);
@@ -680,9 +680,9 @@ describe('TX', function() {
   });
 
   it('should count sigops for p2sh multisig', () => {
-    let flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
-    let key = KeyRing.generate();
-    let pub = key.publicKey;
+    const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
+    const key = KeyRing.generate();
+    const pub = key.publicKey;
     let ctx, redeem, output, input, witness;
 
     redeem = Script.fromMultisig(1, 2, [pub, pub]);
@@ -703,8 +703,8 @@ describe('TX', function() {
   });
 
   it('should count sigops for p2wpkh', () => {
-    let flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
-    let key = KeyRing.generate();
+    const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
+    const key = KeyRing.generate();
     let ctx, output, input, witness;
 
     output = Script.fromProgram(0, key.getKeyHash());
@@ -739,8 +739,8 @@ describe('TX', function() {
   });
 
   it('should count sigops for nested p2wpkh', () => {
-    let flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
-    let key = KeyRing.generate();
+    const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
+    const key = KeyRing.generate();
     let ctx, redeem, output, input, witness;
 
     redeem = Script.fromProgram(0, key.getKeyHash());
@@ -761,9 +761,9 @@ describe('TX', function() {
   });
 
   it('should count sigops for p2wsh', () => {
-    let flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
-    let key = KeyRing.generate();
-    let pub = key.publicKey;
+    const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
+    const key = KeyRing.generate();
+    const pub = key.publicKey;
     let ctx, redeem, output, input, witness;
 
     redeem = Script.fromMultisig(1, 2, [pub, pub]);
@@ -786,9 +786,9 @@ describe('TX', function() {
   });
 
   it('should count sigops for nested p2wsh', () => {
-    let flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
-    let key = KeyRing.generate();
-    let pub = key.publicKey;
+    const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
+    const key = KeyRing.generate();
+    const pub = key.publicKey;
     let ctx, wscript, redeem, output, input, witness;
 
     wscript = Script.fromMultisig(1, 2, [pub, pub]);

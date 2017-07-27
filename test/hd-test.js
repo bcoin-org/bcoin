@@ -21,7 +21,7 @@ describe('HD', function() {
   let master, child1, child2, child3, child4, child5, child6;
 
   it('should create a pbkdf2 seed', () => {
-    let seed = pbkdf2.derive(vectors.phrase, 'mnemonicfoo', 2048, 64, 'sha512');
+    const seed = pbkdf2.derive(vectors.phrase, 'mnemonicfoo', 2048, 64, 'sha512');
     assert.equal(seed.toString('hex'), vectors.seed);
   });
 
@@ -67,7 +67,7 @@ describe('HD', function() {
   });
 
   it('should derive correctly when private key has leading zeros', () => {
-    let key = HD.PrivateKey.fromBase58(vectors.zero_priv);
+    const key = HD.PrivateKey.fromBase58(vectors.zero_priv);
     let child;
 
     assert.equal(key.privateKey.toString('hex'),
@@ -87,7 +87,7 @@ describe('HD', function() {
   });
 
   it('should deserialize and reserialize', () => {
-    let key = HD.generate();
+    const key = HD.generate();
     assert.equal(HD.fromJSON(key.toJSON()).toBase58(), key.toBase58());
   });
 
@@ -101,13 +101,13 @@ describe('HD', function() {
     });
 
     Object.keys(vector).forEach((path) => {
-      let kp = vector[path];
+      const kp = vector[path];
 
       if (path === 'seed' || path === 'm')
         return;
 
       it(`should derive ${path} from master`, () => {
-        let key = master.derivePath(path);
+        const key = master.derivePath(path);
         equal(key.toBase58(), kp.prv);
         equal(key.toPublic().toBase58(), kp.pub);
       });

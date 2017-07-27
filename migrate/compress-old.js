@@ -209,7 +209,7 @@ function compressKey(key) {
  */
 
 function decompressKey(key) {
-  let format = key[0] >>> 2;
+  const format = key[0] >>> 2;
   let out;
 
   assert(key.length === 33);

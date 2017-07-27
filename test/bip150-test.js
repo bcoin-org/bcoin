@@ -6,15 +6,15 @@ const BIP150 = require('../lib/net/bip150');
 const BIP151 = require('../lib/net/bip151');
 
 describe('BIP150', function() {
-  let db = new BIP150.AuthDB();
-  let ck = secp256k1.generatePrivateKey();
-  let sk = secp256k1.generatePrivateKey();
+  const db = new BIP150.AuthDB();
+  const ck = secp256k1.generatePrivateKey();
+  const sk = secp256k1.generatePrivateKey();
 
   db.addAuthorized(secp256k1.publicKeyCreate(ck, true));
   db.addKnown('127.0.0.2', secp256k1.publicKeyCreate(sk, true));
 
-  let client = new BIP151();
-  let server = new BIP151();
+  const client = new BIP151();
+  const server = new BIP151();
 
   client.bip150 = new BIP150(client, '127.0.0.2', true, db, ck);
   server.bip150 = new BIP150(server, '127.0.0.1', false, db, sk);
@@ -64,7 +64,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from client to server', () => {
-    let packet = client.packet('fake', payload());
+    const packet = client.packet('fake', payload());
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
@@ -76,7 +76,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from server to client', () => {
-    let packet = server.packet('fake', payload());
+    const packet = server.packet('fake', payload());
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
@@ -88,7 +88,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from client to server (2)', () => {
-    let packet = client.packet('fake', payload());
+    const packet = client.packet('fake', payload());
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
@@ -100,7 +100,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from server to client (2)', () => {
-    let packet = server.packet('fake', payload());
+    const packet = server.packet('fake', payload());
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
@@ -113,11 +113,11 @@ describe('BIP150', function() {
 
   it('client should rekey', () => {
     let rekeyed = false;
-    let bytes = client.output.processed;
+    const bytes = client.output.processed;
 
     client.once('rekey', () => {
       rekeyed = true;
-      let packet = client.packet('encack', client.toRekey().toRaw());
+      const packet = client.packet('encack', client.toRekey().toRaw());
       let emitted = false;
       server.once('packet', (cmd, body) => {
         emitted = true;
@@ -139,7 +139,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from client to server after rekey', () => {
-    let packet = client.packet('fake', payload());
+    const packet = client.packet('fake', payload());
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
@@ -151,7 +151,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from server to client after rekey', () => {
-    let packet = server.packet('fake', payload());
+    const packet = server.packet('fake', payload());
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
@@ -163,7 +163,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from client to server after rekey (2)', () => {
-    let packet = client.packet('fake', payload());
+    const packet = client.packet('fake', payload());
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
@@ -175,7 +175,7 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payload from server to client after rekey (2)', () => {
-    let packet = server.packet('fake', payload());
+    const packet = server.packet('fake', payload());
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
@@ -187,8 +187,8 @@ describe('BIP150', function() {
   });
 
   it('should encrypt payloads both ways asynchronously', () => {
-    let spacket = server.packet('fake', payload());
-    let cpacket = client.packet('fake', payload());
+    const spacket = server.packet('fake', payload());
+    const cpacket = client.packet('fake', payload());
     let cemitted = false;
     let semitted = false;
     client.once('packet', (cmd, body) => {

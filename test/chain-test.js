@@ -43,12 +43,12 @@ describe('Chain', function() {
   }
 
   async function mineBlock(job, flags) {
-    let block = await job.mineAsync();
+    const block = await job.mineAsync();
     return await addBlock(block, flags);
   }
 
   async function mineCSV(tx) {
-    let job = await cpu.createJob();
+    const job = await cpu.createJob();
     let rtx;
 
     rtx = new MTX();
@@ -189,12 +189,12 @@ describe('Chain', function() {
   });
 
   it('should check main chain', async () => {
-    let result = await tip1.isMainChain();
+    const result = await tip1.isMainChain();
     assert(!result);
   });
 
   it('should mine a block after a reorg', async () => {
-    let block = await cpu.mineBlock();
+    const block = await cpu.mineBlock();
     let hash, entry, result;
 
     assert(await chain.add(block));
@@ -239,9 +239,9 @@ describe('Chain', function() {
   });
 
   it('should fail to connect coins on an alternate chain', async () => {
-    let block = await chain.db.getBlock(tip1.hash);
-    let cb = block.txs[0];
-    let mtx = new MTX();
+    const block = await chain.db.getBlock(tip1.hash);
+    const cb = block.txs[0];
+    const mtx = new MTX();
     let job;
 
     mtx.addTX(cb, 0);
@@ -330,7 +330,7 @@ describe('Chain', function() {
   });
 
   it('should activate csv', async () => {
-    let deployments = network.deployments;
+    const deployments = network.deployments;
     let i, block, prev, state, cache;
 
     miner.options.version = -1;
@@ -374,14 +374,14 @@ describe('Chain', function() {
   });
 
   it('should have activated segwit', async () => {
-    let deployments = network.deployments;
-    let prev = await chain.tip.getPrevious();
-    let state = await chain.getState(prev, deployments.segwit);
+    const deployments = network.deployments;
+    const prev = await chain.tip.getPrevious();
+    const state = await chain.getState(prev, deployments.segwit);
     assert.equal(state, 3);
   });
 
   it('should test csv', async () => {
-    let tx = (await chain.db.getBlock(chain.height - 100)).txs[0];
+    const tx = (await chain.db.getBlock(chain.height - 100)).txs[0];
     let block = await mineCSV(tx);
     let csv, job, rtx;
 
@@ -413,8 +413,8 @@ describe('Chain', function() {
   });
 
   it('should fail csv with bad sequence', async () => {
-    let csv = (await chain.db.getBlock(chain.height - 100)).txs[0];
-    let rtx = new MTX();
+    const csv = (await chain.db.getBlock(chain.height - 100)).txs[0];
+    const rtx = new MTX();
     let job;
 
     rtx.addOutput({
@@ -436,14 +436,14 @@ describe('Chain', function() {
   });
 
   it('should mine a block', async () => {
-    let block = await cpu.mineBlock();
+    const block = await cpu.mineBlock();
     assert(block);
     assert(await chain.add(block));
   });
 
   it('should fail csv lock checks', async () => {
-    let tx = (await chain.db.getBlock(chain.height - 100)).txs[0];
-    let block = await mineCSV(tx);
+    const tx = (await chain.db.getBlock(chain.height - 100)).txs[0];
+    const block = await mineCSV(tx);
     let csv, job, rtx;
 
     assert(await chain.add(block));
@@ -475,36 +475,36 @@ describe('Chain', function() {
   });
 
   it('should fail to connect bad bits', async () => {
-    let job = await cpu.createJob();
+    const job = await cpu.createJob();
     job.attempt.bits = 553713663;
     assert.equal(await mineBlock(job), 'bad-diffbits');
   });
 
   it('should fail to connect bad MTP', async () => {
-    let mtp = await chain.tip.getMedianTime();
-    let job = await cpu.createJob();
+    const mtp = await chain.tip.getMedianTime();
+    const job = await cpu.createJob();
     job.attempt.time = mtp - 1;
     assert.equal(await mineBlock(job), 'time-too-old');
   });
 
   it('should fail to connect bad time', async () => {
-    let job = await cpu.createJob();
-    let now = network.now() + 3 * 60 * 60;
+    const job = await cpu.createJob();
+    const now = network.now() + 3 * 60 * 60;
     job.attempt.time = now;
     assert.equal(await mineBlock(job), 'time-too-new');
   });
 
   it('should fail to connect bad locktime', async () => {
-    let job = await cpu.createJob();
-    let tx = await wallet.send({ locktime: 100000 });
+    const job = await cpu.createJob();
+    const tx = await wallet.send({ locktime: 100000 });
     job.pushTX(tx.toTX());
     job.refresh();
     assert.equal(await mineBlock(job), 'bad-txns-nonfinal');
   });
 
   it('should fail to connect bad cb height', async () => {
-    let bip34height = network.block.bip34height;
-    let job = await cpu.createJob();
+    const bip34height = network.block.bip34height;
+    const job = await cpu.createJob();
 
     job.attempt.height = 10;
     job.attempt.refresh();
@@ -518,9 +518,9 @@ describe('Chain', function() {
   });
 
   it('should fail to connect bad witness nonce size', async () => {
-    let block = await cpu.mineBlock();
-    let tx = block.txs[0];
-    let input = tx.inputs[0];
+    const block = await cpu.mineBlock();
+    const tx = block.txs[0];
+    const input = tx.inputs[0];
     input.witness.set(0, Buffer.allocUnsafe(33));
     input.witness.compile();
     block.refresh(true);
@@ -528,9 +528,9 @@ describe('Chain', function() {
   });
 
   it('should fail to connect bad witness nonce', async () => {
-    let block = await cpu.mineBlock();
-    let tx = block.txs[0];
-    let input = tx.inputs[0];
+    const block = await cpu.mineBlock();
+    const tx = block.txs[0];
+    const input = tx.inputs[0];
     input.witness.set(0, encoding.ONE_HASH);
     input.witness.compile();
     block.refresh(true);
@@ -538,10 +538,10 @@ describe('Chain', function() {
   });
 
   it('should fail to connect bad witness commitment', async () => {
-    let flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
-    let block = await cpu.mineBlock();
-    let tx = block.txs[0];
-    let output = tx.outputs[1];
+    const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
+    const block = await cpu.mineBlock();
+    const tx = block.txs[0];
+    const output = tx.outputs[1];
     let commit;
 
     assert(output.script.isCommitment());
@@ -558,10 +558,10 @@ describe('Chain', function() {
   });
 
   it('should fail to connect unexpected witness', async () => {
-    let flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
-    let block = await cpu.mineBlock();
-    let tx = block.txs[0];
-    let output = tx.outputs[1];
+    const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
+    const block = await cpu.mineBlock();
+    const tx = block.txs[0];
+    const output = tx.outputs[1];
 
     assert(output.script.isCommitment());
 
@@ -593,8 +593,8 @@ describe('Chain', function() {
 
   it('should mine a witness tx', async () => {
     let block = await chain.db.getBlock(chain.height - 2000);
-    let cb = block.txs[0];
-    let mtx = new MTX();
+    const cb = block.txs[0];
+    const mtx = new MTX();
     let job;
 
     mtx.addTX(cb, 0);
@@ -612,9 +612,9 @@ describe('Chain', function() {
   });
 
   it('should mine fail to connect too much weight', async () => {
-    let start = chain.height - 2000;
-    let end = chain.height - 200;
-    let job = await cpu.createJob();
+    const start = chain.height - 2000;
+    const end = chain.height - 200;
+    const job = await cpu.createJob();
     let mtx = new MTX();
     let i, j, block, cb;
 
@@ -639,9 +639,9 @@ describe('Chain', function() {
   });
 
   it('should mine fail to connect too much size', async () => {
-    let start = chain.height - 2000;
-    let end = chain.height - 200;
-    let job = await cpu.createJob();
+    const start = chain.height - 2000;
+    const end = chain.height - 200;
+    const job = await cpu.createJob();
     let mtx = new MTX();
     let i, j, block, cb;
 
@@ -666,9 +666,9 @@ describe('Chain', function() {
   });
 
   it('should mine a big block', async () => {
-    let start = chain.height - 2000;
-    let end = chain.height - 200;
-    let job = await cpu.createJob();
+    const start = chain.height - 2000;
+    const end = chain.height - 200;
+    const job = await cpu.createJob();
     let mtx = new MTX();
     let i, j, block, cb;
 
@@ -703,7 +703,7 @@ describe('Chain', function() {
   });
 
   it('should fail to connect bad amount', async () => {
-    let job = await cpu.createJob();
+    const job = await cpu.createJob();
 
     job.attempt.fees += 1;
     job.refresh();
@@ -711,10 +711,10 @@ describe('Chain', function() {
   });
 
   it('should fail to connect premature cb spend', async () => {
-    let job = await cpu.createJob();
-    let block = await chain.db.getBlock(chain.height - 98);
-    let cb = block.txs[0];
-    let mtx = new MTX();
+    const job = await cpu.createJob();
+    const block = await chain.db.getBlock(chain.height - 98);
+    const cb = block.txs[0];
+    const mtx = new MTX();
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wwallet.getAddress(), 1);
@@ -729,10 +729,10 @@ describe('Chain', function() {
   });
 
   it('should fail to connect vout belowout', async () => {
-    let job = await cpu.createJob();
-    let block = await chain.db.getBlock(chain.height - 99);
-    let cb = block.txs[0];
-    let mtx = new MTX();
+    const job = await cpu.createJob();
+    const block = await chain.db.getBlock(chain.height - 99);
+    const cb = block.txs[0];
+    const mtx = new MTX();
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wwallet.getAddress(), 1e8);
@@ -747,10 +747,10 @@ describe('Chain', function() {
   });
 
   it('should fail to connect outtotal toolarge', async () => {
-    let job = await cpu.createJob();
-    let block = await chain.db.getBlock(chain.height - 99);
-    let cb = block.txs[0];
-    let mtx = new MTX();
+    const job = await cpu.createJob();
+    const block = await chain.db.getBlock(chain.height - 99);
+    const cb = block.txs[0];
+    const mtx = new MTX();
 
     mtx.addTX(cb, 0);
     mtx.addOutput(wwallet.getAddress(), Math.floor(consensus.MAX_MONEY / 2));
@@ -767,7 +767,7 @@ describe('Chain', function() {
   });
 
   it('should mine 111 multisig blocks', async () => {
-    let flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
+    const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
     let i, j, script, cb, output, val, block;
 
     script = new Script();
@@ -807,9 +807,9 @@ describe('Chain', function() {
   });
 
   it('should fail to connect too many sigops', async () => {
-    let start = chain.height - 110;
-    let end = chain.height - 100;
-    let job = await cpu.createJob();
+    const start = chain.height - 110;
+    const end = chain.height - 100;
+    const job = await cpu.createJob();
     let i, j, mtx, script, block, cb;
 
     script = new Script();

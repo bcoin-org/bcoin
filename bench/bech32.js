@@ -6,7 +6,7 @@ const bench = require('./bench');
 
 let i, end, addr;
 
-let addrs = [];
+const addrs = [];
 
 end = bench('serialize');
 for (i = 0; i < 100000; i++) {

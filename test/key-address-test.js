@@ -4,8 +4,8 @@ const assert = require('assert');
 const keyring = require('../lib/primitives/keyring');
 
 describe('Keyring Address', function() {
-  let ukey = keyring.fromSecret('5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss');
-  let ckey = keyring.fromSecret('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1');
+  const ukey = keyring.fromSecret('5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss');
+  const ckey = keyring.fromSecret('L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1');
 
   it('check uncompressed public key', () => {
     assert.equal(

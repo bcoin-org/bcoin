@@ -99,7 +99,7 @@ describe('Bech32', function() {
   ];
 
   function fromAddress(hrp, addr) {
-    let dec = bech32.decode(addr);
+    const dec = bech32.decode(addr);
 
     if (dec.hrp !== hrp)
       throw new Error('Invalid bech32 prefix or data length.');
@@ -114,7 +114,7 @@ describe('Bech32', function() {
   }
 
   function toAddress(hrp, version, program) {
-    let ret = bech32.encode(hrp, version, program);
+    const ret = bech32.encode(hrp, version, program);
 
     fromAddress(hrp, ret);
 
@@ -122,20 +122,20 @@ describe('Bech32', function() {
   }
 
   function createProgram(version, program) {
-    let ver = Buffer.from([version ? version + 0x80 : 0, program.length]);
+    const ver = Buffer.from([version ? version + 0x80 : 0, program.length]);
     return Buffer.concat([ver, program]);
   }
 
   VALID_CHECKSUM.forEach((test) => {
     it(`should have valid checksum for ${test}`, () => {
-      let ret = bech32.deserialize(test);
+      const ret = bech32.deserialize(test);
       assert(ret);
     });
   });
 
   VALID_ADDRESS.forEach((test) => {
-    let address = test[0];
-    let scriptpubkey = test[1];
+    const address = test[0];
+    const scriptpubkey = test[1];
     it(`should have valid address for ${address}`, () => {
       let hrp = 'bc';
       let ret, ok, output, recreate;
@@ -193,8 +193,8 @@ describe('Bech32', function() {
   });
 
   VALID_ADDRESS.forEach((test, i) => {
-    let address = test[0];
-    let scriptpubkey = test[1];
+    const address = test[0];
+    const scriptpubkey = test[1];
 
     // TODO: Fix. (wrong length for program)
     // Need to drop old segwit addrs.

@@ -19,8 +19,8 @@ const db = bcoin.ldb({
 });
 
 function makeKey(data) {
-  let height = data.readUInt32LE(1, true);
-  let key = Buffer.allocUnsafe(5);
+  const height = data.readUInt32LE(1, true);
+  const key = Buffer.allocUnsafe(5);
   key[0] = 0x48;
   key.writeUInt32BE(height, 1, true);
   return key;
@@ -75,7 +75,7 @@ async function updateState() {
 }
 
 async function updateEndian() {
-  let batch = db.batch();
+  const batch = db.batch();
   let total = 0;
   let iter, item;
 

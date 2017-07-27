@@ -22,7 +22,7 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  let bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
+  const bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
   let data, ver;
 
   console.log('Checking version.');
@@ -129,8 +129,8 @@ async function patchPathMaps() {
 }
 
 function parseWallets(data) {
-  let p = new BufferReader(data);
-  let wids = [];
+  const p = new BufferReader(data);
+  const wids = [];
 
   while (p.left())
     wids.push(p.readU32());
@@ -139,7 +139,7 @@ function parseWallets(data) {
 }
 
 function serializeWallets(wids) {
-  let p = new BufferWriter();
+  const p = new BufferWriter();
   let i, wid;
 
   p.writeU32(wids.length);
@@ -153,7 +153,7 @@ function serializeWallets(wids) {
 }
 
 function accountToRaw(account) {
-  let p = new BufferWriter();
+  const p = new BufferWriter();
   let i, key;
 
   p.writeVarString(account.name, 'ascii');
@@ -179,8 +179,8 @@ function accountToRaw(account) {
 };
 
 function accountFromRaw(data) {
-  let account = {};
-  let p = new BufferReader(data);
+  const account = {};
+  const p = new BufferReader(data);
   let i, count, key;
 
   account.name = p.readVarString('ascii');
@@ -208,7 +208,7 @@ function accountFromRaw(data) {
 }
 
 function n(wid, index) {
-  let key = Buffer.allocUnsafe(9);
+  const key = Buffer.allocUnsafe(9);
   key[0] = 0x6e;
   key.writeUInt32BE(wid, 1, true);
   key.writeUInt32BE(index, 5, true);
@@ -216,7 +216,7 @@ function n(wid, index) {
 }
 
 function r(wid, index, hash) {
-  let key = Buffer.allocUnsafe(1 + 4 + 4 + (hash.length / 2));
+  const key = Buffer.allocUnsafe(1 + 4 + 4 + (hash.length / 2));
   key[0] = 0x72;
   key.writeUInt32BE(wid, 1, true);
   key.writeUInt32BE(index, 5, true);
@@ -225,7 +225,7 @@ function r(wid, index, hash) {
 }
 
 async function updateLookahead() {
-  let WalletDB = require('../lib/wallet/walletdb');
+  const WalletDB = require('../lib/wallet/walletdb');
   let i, j, db, wallet;
 
   db = new WalletDB({

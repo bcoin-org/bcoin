@@ -14,8 +14,8 @@ const data = parseTX('data/tx1.hex');
 const tx1 = data.tx;
 
 function reserialize(coin) {
-  let raw = coin.toRaw();
-  let entry = CoinEntry.fromRaw(raw);
+  const raw = coin.toRaw();
+  const entry = CoinEntry.fromRaw(raw);
   entry.raw = null;
   return CoinEntry.fromRaw(entry.toRaw());
 }
@@ -29,10 +29,10 @@ function deepCoinsEqual(a, b) {
 
 describe('Coins', function() {
   it('should instantiate coinview from tx', () => {
-    let hash = tx1.hash('hex');
-    let view = new CoinView();
-    let prevout = new Outpoint(hash, 0);
-    let input = Input.fromOutpoint(prevout);
+    const hash = tx1.hash('hex');
+    const view = new CoinView();
+    const prevout = new Outpoint(hash, 0);
+    const input = Input.fromOutpoint(prevout);
     let coins, entry, output;
 
     view.addTX(tx1, 1);
@@ -58,8 +58,8 @@ describe('Coins', function() {
   });
 
   it('should spend an output', () => {
-    let hash = tx1.hash('hex');
-    let view = new CoinView();
+    const hash = tx1.hash('hex');
+    const view = new CoinView();
     let coins, entry, length;
 
     view.addTX(tx1, 1);
@@ -84,7 +84,7 @@ describe('Coins', function() {
   });
 
   it('should handle coin view', () => {
-    let view = new CoinView();
+    const view = new CoinView();
     let i, tx, size, bw, br;
     let raw, res, prev, coins;
 

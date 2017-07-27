@@ -5,10 +5,10 @@ const bench = require('./bench');
 const HD = require('../lib/hd');
 const Mnemonic = require('../lib/hd/mnemonic');
 
-let mnemonic = new Mnemonic();
+const mnemonic = new Mnemonic();
 HD.fromMnemonic(mnemonic);
 
-let phrase = mnemonic.getPhrase();
+const phrase = mnemonic.getPhrase();
 let i, end;
 
 assert.equal(Mnemonic.fromPhrase(phrase).getPhrase(), phrase);

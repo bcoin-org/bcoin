@@ -80,7 +80,7 @@ CoinView.prototype.remove = function remove(hash) {
  */
 
 CoinView.prototype.addTX = function addTX(tx, height) {
-  let coins = Coins.fromTX(tx, height);
+  const coins = Coins.fromTX(tx, height);
   return this.add(coins);
 };
 
@@ -91,7 +91,7 @@ CoinView.prototype.addTX = function addTX(tx, height) {
  */
 
 CoinView.prototype.removeTX = function removeTX(tx, height) {
-  let coins = Coins.fromTX(tx, height);
+  const coins = Coins.fromTX(tx, height);
   coins.outputs.length = 0;
   return this.add(coins);
 };
@@ -152,7 +152,7 @@ CoinView.prototype.addOutput = function addOutput(hash, index, output) {
  */
 
 CoinView.prototype.spendOutput = function spendOutput(hash, index) {
-  let coins = this.get(hash);
+  const coins = this.get(hash);
 
   if (!coins)
     return false;
@@ -168,7 +168,7 @@ CoinView.prototype.spendOutput = function spendOutput(hash, index) {
  */
 
 CoinView.prototype.removeOutput = function removeOutput(hash, index) {
-  let coins = this.get(hash);
+  const coins = this.get(hash);
 
   if (!coins)
     return false;
@@ -184,7 +184,7 @@ CoinView.prototype.removeOutput = function removeOutput(hash, index) {
  */
 
 CoinView.prototype.spendFrom = function spendFrom(coins, index) {
-  let entry = coins.spend(index);
+  const entry = coins.spend(index);
   let undo;
 
   if (!entry)
@@ -210,7 +210,7 @@ CoinView.prototype.spendFrom = function spendFrom(coins, index) {
  */
 
 CoinView.prototype.getCoin = function getCoin(input) {
-  let coins = this.get(input.prevout.hash);
+  const coins = this.get(input.prevout.hash);
 
   if (!coins)
     return;
@@ -225,7 +225,7 @@ CoinView.prototype.getCoin = function getCoin(input) {
  */
 
 CoinView.prototype.getOutput = function getOutput(input) {
-  let coins = this.get(input.prevout.hash);
+  const coins = this.get(input.prevout.hash);
 
   if (!coins)
     return;
@@ -240,7 +240,7 @@ CoinView.prototype.getOutput = function getOutput(input) {
  */
 
 CoinView.prototype.getEntry = function getEntry(input) {
-  let coins = this.get(input.prevout.hash);
+  const coins = this.get(input.prevout.hash);
 
   if (!coins)
     return;
@@ -255,7 +255,7 @@ CoinView.prototype.getEntry = function getEntry(input) {
  */
 
 CoinView.prototype.hasEntry = function hasEntry(input) {
-  let coins = this.get(input.prevout.hash);
+  const coins = this.get(input.prevout.hash);
 
   if (!coins)
     return false;
@@ -270,7 +270,7 @@ CoinView.prototype.hasEntry = function hasEntry(input) {
  */
 
 CoinView.prototype.getHeight = function getHeight(input) {
-  let coins = this.get(input.prevout.hash);
+  const coins = this.get(input.prevout.hash);
 
   if (!coins)
     return -1;
@@ -285,7 +285,7 @@ CoinView.prototype.getHeight = function getHeight(input) {
  */
 
 CoinView.prototype.isCoinbase = function isCoinbase(input) {
-  let coins = this.get(input.prevout.hash);
+  const coins = this.get(input.prevout.hash);
 
   if (!coins)
     return false;
@@ -327,7 +327,7 @@ CoinView.prototype.readCoins = async function readCoins(db, hash) {
 CoinView.prototype.ensureInputs = async function ensureInputs(db, tx) {
   let found = true;
 
-  for (let input of tx.inputs) {
+  for (const input of tx.inputs) {
     if (!(await this.readCoins(db, input.prevout.hash)))
       found = false;
   }
@@ -344,9 +344,9 @@ CoinView.prototype.ensureInputs = async function ensureInputs(db, tx) {
  */
 
 CoinView.prototype.spendInputs = async function spendInputs(db, tx) {
-  for (let input of tx.inputs) {
-    let prevout = input.prevout;
-    let coins = await this.readCoins(db, prevout.hash);
+  for (const input of tx.inputs) {
+    const prevout = input.prevout;
+    const coins = await this.readCoins(db, prevout.hash);
 
     if (!coins)
       return false;
@@ -364,9 +364,9 @@ CoinView.prototype.spendInputs = async function spendInputs(db, tx) {
  */
 
 CoinView.prototype.toArray = function toArray() {
-  let out = [];
+  const out = [];
 
-  for (let coins of this.map.values())
+  for (const coins of this.map.values())
     out.push(coins);
 
   return out;
@@ -382,8 +382,8 @@ CoinView.prototype.getSize = function getSize(tx) {
 
   size += tx.inputs.length;
 
-  for (let input of tx.inputs) {
-    let entry = this.getEntry(input);
+  for (const input of tx.inputs) {
+    const entry = this.getEntry(input);
 
     if (!entry)
       continue;
@@ -402,9 +402,9 @@ CoinView.prototype.getSize = function getSize(tx) {
  */
 
 CoinView.prototype.toWriter = function toWriter(bw, tx) {
-  for (let input of tx.inputs) {
-    let prevout = input.prevout;
-    let coins = this.get(prevout.hash);
+  for (const input of tx.inputs) {
+    const prevout = input.prevout;
+    const coins = this.get(prevout.hash);
     let entry;
 
     if (!coins) {
@@ -435,8 +435,8 @@ CoinView.prototype.toWriter = function toWriter(bw, tx) {
  */
 
 CoinView.prototype.fromReader = function fromReader(br, tx) {
-  for (let input of tx.inputs) {
-    let prevout = input.prevout;
+  for (const input of tx.inputs) {
+    const prevout = input.prevout;
     let coins, entry;
 
     if (br.readU8() === 0)

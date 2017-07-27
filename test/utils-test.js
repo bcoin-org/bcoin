@@ -37,7 +37,7 @@ describe('Utils', function() {
   ];
 
   it('should encode/decode base58', () => {
-    let buf = Buffer.from('000000deadbeef', 'hex');
+    const buf = Buffer.from('000000deadbeef', 'hex');
     let b = base58.encode(buf);
     let i, r;
 
@@ -53,7 +53,7 @@ describe('Utils', function() {
   });
 
   it('should verify proof-of-work', () => {
-    let bits = 0x1900896c;
+    const bits = 0x1900896c;
     let hash;
 
     hash = Buffer.from(
@@ -204,9 +204,9 @@ describe('Utils', function() {
   ];
 
   unsigned.forEach((num) => {
-    let buf1 = Buffer.allocUnsafe(8);
-    let buf2 = Buffer.allocUnsafe(8);
-    let bits = num.bitLength();
+    const buf1 = Buffer.allocUnsafe(8);
+    const buf2 = Buffer.allocUnsafe(8);
+    const bits = num.bitLength();
 
     it(`should write+read a ${bits} bit unsigned int`, () => {
       let n1, n2;
@@ -222,10 +222,10 @@ describe('Utils', function() {
   });
 
   signed.forEach((num) => {
-    let buf1 = Buffer.allocUnsafe(8);
-    let buf2 = Buffer.allocUnsafe(8);
-    let bits = num.bitLength();
-    let sign = num.isNeg() ? 'negative' : 'positive';
+    const buf1 = Buffer.allocUnsafe(8);
+    const buf2 = Buffer.allocUnsafe(8);
+    const bits = num.bitLength();
+    const sign = num.isNeg() ? 'negative' : 'positive';
 
     it(`should write+read a ${bits} bit ${sign} int`, () => {
       let n1, n2;
@@ -323,16 +323,16 @@ describe('Utils', function() {
   });
 
   it('should do proper schnorr', () => {
-    let key = secp256k1.generatePrivateKey();
-    let pub = secp256k1.publicKeyCreate(key, true);
-    let msg = digest.hash256(Buffer.from('foo', 'ascii'));
-    let sig = schnorr.sign(msg, key);
+    const key = secp256k1.generatePrivateKey();
+    const pub = secp256k1.publicKeyCreate(key, true);
+    const msg = digest.hash256(Buffer.from('foo', 'ascii'));
+    const sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
     assert.deepEqual(schnorr.recover(sig, msg), pub);
   });
 
   it('should validate integers 0 and 1 as booleans', () => {
-    let validator = new Validator({shouldBeTrue: 1, shouldBeFalse: 0});
+    const validator = new Validator({shouldBeTrue: 1, shouldBeFalse: 0});
     assert(validator.bool('shouldBeTrue') === true);
     assert(validator.bool('shouldBeFalse') === false);
   });

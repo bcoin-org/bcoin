@@ -71,7 +71,7 @@ async function sendTX(addr, value) {
 }
 
 async function callNodeApi() {
-  let info = await wallet.client.getInfo();
+  const info = await wallet.client.getInfo();
   let json;
 
   console.log('Server Info:');
@@ -84,7 +84,7 @@ async function callNodeApi() {
 }
 
 (async () => {
-  let wdb = node.require('walletdb');
+  const wdb = node.require('walletdb');
   let w, acct, hash, balance, tx;
 
   await node.open();

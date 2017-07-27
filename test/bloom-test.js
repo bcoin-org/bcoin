@@ -43,7 +43,7 @@ describe('Bloom', function() {
   });
 
   it('should test and add stuff', () => {
-    let b = new Bloom(512, 10, 156);
+    const b = new Bloom(512, 10, 156);
 
     b.add('hello', 'ascii');
     assert(b.test('hello', 'ascii'));
@@ -59,9 +59,9 @@ describe('Bloom', function() {
   });
 
   it('should serialize to the correct format', () => {
-    let filter = new Bloom(952, 6, 3624314491, Bloom.flags.NONE);
-    let item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
-    let item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+    const filter = new Bloom(952, 6, 3624314491, Bloom.flags.NONE);
+    const item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
+    const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
       + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
     filter.add(item1, 'hex');
@@ -70,7 +70,7 @@ describe('Bloom', function() {
   });
 
   it('should handle 1m ops with regular filter', () => {
-    let filter = Bloom.fromRate(210000, 0.00001, -1);
+    const filter = Bloom.fromRate(210000, 0.00001, -1);
     let i, j, str;
 
     filter.tweak = 0xdeadbeef;
@@ -89,7 +89,7 @@ describe('Bloom', function() {
   });
 
   it('should handle 1m ops with rolling filter', () => {
-    let filter = new RollingFilter(210000, 0.00001);
+    const filter = new RollingFilter(210000, 0.00001);
     let i, j, str;
 
     filter.tweak = 0xdeadbeef;
@@ -108,7 +108,7 @@ describe('Bloom', function() {
   });
 
   it('should handle rolling generations', () => {
-    let filter = new RollingFilter(50, 0.00001);
+    const filter = new RollingFilter(50, 0.00001);
     let i, j, str;
 
     filter.tweak = 0xdeadbeee;

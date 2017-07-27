@@ -10,7 +10,7 @@ const Account = require('../lib/wallet/account');
 const Wallet = require('../lib/wallet/wallet');
 const BufferReader = require('../lib/utils/reader');
 const BufferWriter = require('../lib/utils/writer');
-let layout = walletdb.layout;
+const layout = walletdb.layout;
 let file = process.argv[2];
 let db, batch;
 
@@ -28,7 +28,7 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  let bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
+  const bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
   let data, ver;
 
   console.log('Checking version.');
@@ -194,8 +194,8 @@ async function updateTXMap() {
 }
 
 function pathFromRaw(data) {
-  let path = {};
-  let p = new BufferReader(data);
+  const path = {};
+  const p = new BufferReader(data);
 
   path.wid = p.readU32();
   path.name = p.readVarString('utf8');
@@ -228,8 +228,8 @@ function pathFromRaw(data) {
 }
 
 function parsePaths(data, hash) {
-  let p = new BufferReader(data);
-  let out = {};
+  const p = new BufferReader(data);
+  const out = {};
   let path;
 
   while (p.left()) {
@@ -243,15 +243,15 @@ function parsePaths(data, hash) {
 }
 
 function parseWallets(data) {
-  let p = new BufferReader(data);
-  let wallets = [];
+  const p = new BufferReader(data);
+  const wallets = [];
   while (p.left())
     wallets.push(p.readU32());
   return wallets;
 }
 
 function serializeWallets(wallets) {
-  let p = new BufferWriter();
+  const p = new BufferWriter();
   let i, wid;
 
   for (i = 0; i < wallets.length; i++) {
@@ -270,8 +270,8 @@ function readAccountKey(key) {
 }
 
 function accountFromRaw(data, dbkey) {
-  let account = {};
-  let p = new BufferReader(data);
+  const account = {};
+  const p = new BufferReader(data);
   let i, count, key, name;
 
   dbkey = readAccountKey(dbkey);
@@ -311,8 +311,8 @@ function accountFromRaw(data, dbkey) {
 }
 
 function walletFromRaw(data) {
-  let wallet = {};
-  let p = new BufferReader(data);
+  const wallet = {};
+  const p = new BufferReader(data);
   let id;
 
   wallet.network = bcoin.network.fromMagic(p.readU32());
@@ -337,8 +337,8 @@ function walletFromRaw(data) {
 }
 
 function keyFromRaw(data, network) {
-  let ring = {};
-  let p = new BufferReader(data);
+  const ring = {};
+  const p = new BufferReader(data);
   let key, script;
 
   ring.network = bcoin.network.get(network);

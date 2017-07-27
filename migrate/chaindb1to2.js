@@ -64,7 +64,7 @@ async function updateVersion() {
 }
 
 async function checkTipIndex() {
-  let keys = await db.keys({
+  const keys = await db.keys({
     gte: pair('p', encoding.ZERO_HASH),
     lte: pair('p', encoding.MAX_HASH)
   });
@@ -206,7 +206,7 @@ function write(data, str, off) {
 }
 
 function pair(prefix, hash) {
-  let key = Buffer.allocUnsafe(33);
+  const key = Buffer.allocUnsafe(33);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
@@ -215,7 +215,7 @@ function pair(prefix, hash) {
 }
 
 function injectCoin(undo, coin) {
-  let output = new Output();
+  const output = new Output();
 
   output.value = coin.value;
   output.script = coin.script;
@@ -227,7 +227,7 @@ function injectCoin(undo, coin) {
 }
 
 function defaultOptions() {
-  let bw = new BufferWriter();
+  const bw = new BufferWriter();
   let flags = 0;
 
   if (options.spv)
@@ -252,7 +252,7 @@ function defaultOptions() {
 }
 
 function defaultDeployments() {
-  let bw = new BufferWriter();
+  const bw = new BufferWriter();
   let i, deployment;
 
   bw.writeU8(options.network.deploys.length);

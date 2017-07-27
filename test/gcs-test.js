@@ -8,12 +8,12 @@ const Block = require('../lib/primitives/block');
 const Outpoint = require('../lib/primitives/outpoint');
 const Address = require('../lib/primitives/address');
 
-let raw = fs.readFileSync(`${__dirname}/data/block928927.raw`);
-let block = Block.fromRaw(raw);
+const raw = fs.readFileSync(`${__dirname}/data/block928927.raw`);
+const block = Block.fromRaw(raw);
 
 describe('GCS', function() {
-  let key = random.randomBytes(16);
-  let P = 20;
+  const key = random.randomBytes(16);
+  const P = 20;
   let filter1, filter2, filter3, filter4, filter5;
   let contents1, contents2;
   let op1, op2, op3, op4;
@@ -149,8 +149,8 @@ describe('GCS', function() {
   });
 
   it('should test GCS filter fromBlock', () => {
-    let key = block.hash().slice(0, 16);
-    let filter = GCSFilter.fromBlock(block);
+    const key = block.hash().slice(0, 16);
+    const filter = GCSFilter.fromBlock(block);
     assert(filter.match(key, op1.toRaw()));
     assert(filter.match(key, op2.toRaw()));
     assert(!filter.match(key, op3.toRaw()));
@@ -163,8 +163,8 @@ describe('GCS', function() {
   });
 
   it('should test GCS filter fromExtended', () => {
-    let key = block.hash().slice(0, 16);
-    let filter = GCSFilter.fromExtended(block);
+    const key = block.hash().slice(0, 16);
+    const filter = GCSFilter.fromExtended(block);
     assert(!filter.match(key, op1.toRaw()));
     assert(filter.match(key, block.txs[0].hash()));
     assert(filter.match(key, block.txs[1].hash()));

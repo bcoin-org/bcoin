@@ -46,22 +46,22 @@ describe('Script', function() {
   });
 
   it('should encode/decode numbers', () => {
-    let script = [0, 0x51, 0x52, 0x60];
-    let encoded = Script.fromArray(script).raw;
-    let decoded = Script(encoded).toArray();
+    const script = [0, 0x51, 0x52, 0x60];
+    const encoded = Script.fromArray(script).raw;
+    const decoded = Script(encoded).toArray();
     assert.deepEqual(decoded, script);
   });
 
   it('should recognize a P2SH output', () => {
-    let hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
-    let decoded = Script.fromRaw(hex, 'hex');
+    const hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
+    const decoded = Script.fromRaw(hex, 'hex');
     assert(decoded.isScripthash());
   });
 
   it('should recognize a Null Data output', () => {
-    let hex = '6a28590c080112220a1b353930632e6f7267282a5f'
+    const hex = '6a28590c080112220a1b353930632e6f7267282a5f'
       + '5e294f7665726c6179404f7261636c65103b1a010c';
-    let decoded = Script.fromRaw(hex, 'hex');
+    const decoded = Script.fromRaw(hex, 'hex');
     assert(decoded.isNulldata());
   });
 
@@ -232,8 +232,8 @@ describe('Script', function() {
     let witness = Array.isArray(data[0]) ? data.shift() : [];
     let input = data[0] ? data[0].trim() : data[0] || '';
     let output = data[1] ? data[1].trim() : data[1] || '';
-    let names = data[2] ? data[2].trim().split(/,\s*/) : [];
-    let expected = data[3] || '';
+    const names = data[2] ? data[2].trim().split(/,\s*/) : [];
+    const expected = data[3] || '';
     let comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
     let amount = 0;
     let flags = 0;
@@ -260,7 +260,7 @@ describe('Script', function() {
     }
 
     [false, true].forEach((noCache) => {
-      let suffix = noCache ? 'without cache' : 'with cache';
+      const suffix = noCache ? 'without cache' : 'with cache';
       it(`should handle script test ${suffix}:${comments}`, () => {
         let prev, tx, err, res;
 

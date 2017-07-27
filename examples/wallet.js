@@ -6,7 +6,7 @@ const MTX = require('bcoin/lib/primitives/mtx');
 const Outpoint = require('bcoin/lib/primitives/outpoint');
 
 function dummy() {
-  let hash = random.randomBytes(32).toString('hex');
+  const hash = random.randomBytes(32).toString('hex');
   return new Outpoint(hash, 0);
 }
 

@@ -55,25 +55,25 @@ NodeContext.prototype.init = function() {
 };
 
 NodeContext.prototype.open = function open() {
-  let jobs = [];
+  const jobs = [];
 
-  for (let node of this.nodes)
+  for (const node of this.nodes)
     jobs.push(node.open());
 
   return Promise.all(jobs);
 };
 
 NodeContext.prototype.close = function close() {
-  let jobs = [];
+  const jobs = [];
 
-  for (let node of this.nodes)
+  for (const node of this.nodes)
     jobs.push(node.close());
 
   return Promise.all(jobs);
 };
 
 NodeContext.prototype.connect = async function connect() {
-  for (let node of this.nodes) {
+  for (const node of this.nodes) {
     await node.connect();
     await co.timeout(1000);
   }
@@ -90,7 +90,7 @@ NodeContext.prototype.disconnect = async function disconnect() {
 };
 
 NodeContext.prototype.startSync = function startSync() {
-  for (let node of this.nodes) {
+  for (const node of this.nodes) {
     node.chain.synced = true;
     node.chain.emit('full');
     node.startSync();
@@ -98,12 +98,12 @@ NodeContext.prototype.startSync = function startSync() {
 };
 
 NodeContext.prototype.stopSync = function stopSync() {
-  for (let node of this.nodes)
+  for (const node of this.nodes)
     node.stopSync();
 };
 
 NodeContext.prototype.generate = async function generate(index, blocks) {
-  let node = this.nodes[index];
+  const node = this.nodes[index];
   let i, block;
 
   assert(node);
@@ -115,7 +115,7 @@ NodeContext.prototype.generate = async function generate(index, blocks) {
 };
 
 NodeContext.prototype.height = function height(index) {
-  let node = this.nodes[index];
+  const node = this.nodes[index];
 
   assert(node);
 

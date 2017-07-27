@@ -56,7 +56,7 @@ const STATE_DONE = 5;
 const metaCache = new Map();
 
 function writeJournal(batch, state, hash) {
-  let data = Buffer.allocUnsafe(34);
+  const data = Buffer.allocUnsafe(34);
 
   if (!hash)
     hash = encoding.NULL_HASH;
@@ -69,7 +69,7 @@ function writeJournal(batch, state, hash) {
 }
 
 async function readJournal() {
-  let data = await db.get(JOURNAL_KEY);
+  const data = await db.get(JOURNAL_KEY);
   let state, hash;
 
   if (!data)
@@ -91,7 +91,7 @@ async function readJournal() {
 }
 
 async function updateVersion() {
-  let batch = db.batch();
+  const batch = db.batch();
   let data, version;
 
   console.log('Checking version.');
@@ -126,7 +126,7 @@ async function updateVersion() {
 async function reserializeUndo(hash) {
   let batch = db.batch();
   let tip = await getTip();
-  let height = tip.height;
+  const height = tip.height;
   let pruning = false;
   let total = 0;
 
@@ -176,11 +176,11 @@ async function reserializeUndo(hash) {
     undo = new UndoCoins();
 
     for (let i = block.txs.length - 1; i >= 1; i--) {
-      let tx = block.txs[i];
+      const tx = block.txs[i];
       for (let j = tx.inputs.length - 1; j >= 0; j--) {
-        let {prevout} = tx.inputs[j];
-        let coin = old.items.pop();
-        let output = coin.toOutput();
+        const {prevout} = tx.inputs[j];
+        const coin = old.items.pop();
+        const output = coin.toOutput();
         let version, height, write, item;
 
         assert(coin);
@@ -198,7 +198,7 @@ async function reserializeUndo(hash) {
 
         // Store an index of heights and versions for later.
         if (write) {
-          let data = Buffer.allocUnsafe(8);
+          const data = Buffer.allocUnsafe(8);
           data.writeUInt32LE(version, 0, true);
           data.writeUInt32LE(height, 4, true);
           batch.put(pair(0x01, prevout.hash), data);
@@ -239,7 +239,7 @@ async function cleanupIndex() {
   let batch = db.batch();
   let total = 0;
 
-  let iter = db.iterator({
+  const iter = db.iterator({
     gte: pair(0x01, encoding.ZERO_HASH),
     lte: pair(0x01, encoding.MAX_HASH),
     keys: true
@@ -248,7 +248,7 @@ async function cleanupIndex() {
   console.log('Removing txid->height undo index.');
 
   for (;;) {
-    let item = await iter.next();
+    const item = await iter.next();
 
     if (!item)
       break;
@@ -276,7 +276,7 @@ async function reserializeCoins(hash) {
   let start = true;
   let total = 0;
 
-  let iter = db.iterator({
+  const iter = db.iterator({
     gte: pair('c', hash),
     lte: pair('c', encoding.MAX_HASH),
     keys: true,
@@ -284,7 +284,7 @@ async function reserializeCoins(hash) {
   });
 
   if (hash !== encoding.NULL_HASH) {
-    let item = await iter.next();
+    const item = await iter.next();
     if (!item)
       start = false;
   }
@@ -292,7 +292,7 @@ async function reserializeCoins(hash) {
   console.log('Reserializing coins from %s.', util.revHex(hash));
 
   while (start) {
-    let item = await iter.next();
+    const item = await iter.next();
     let update = false;
     let hash, old;
 
@@ -306,7 +306,7 @@ async function reserializeCoins(hash) {
     old = OldCoins.fromRaw(item.value, hash);
 
     for (let i = 0; i < old.outputs.length; i++) {
-      let coin = old.getCoin(i);
+      const coin = old.getCoin(i);
       let item;
 
       if (!coin)
@@ -346,19 +346,19 @@ async function reserializeCoins(hash) {
 }
 
 async function reserializeEntries(hash) {
-  let tip = await getTipHash();
+  const tip = await getTipHash();
   let batch = db.batch();
   let start = true;
   let total = 0;
 
-  let iter = db.iterator({
+  const iter = db.iterator({
     gte: pair('e', hash),
     lte: pair('e', encoding.MAX_HASH),
     values: true
   });
 
   if (hash !== encoding.NULL_HASH) {
-    let item = await iter.next();
+    const item = await iter.next();
     if (!item)
       start = false;
     else
@@ -368,7 +368,7 @@ async function reserializeEntries(hash) {
   console.log('Reserializing entries from %s.', util.revHex(hash));
 
   while (start) {
-    let item = await iter.next();
+    const item = await iter.next();
     let entry, main;
 
     if (!item)
@@ -396,8 +396,8 @@ async function reserializeEntries(hash) {
 }
 
 async function finalize() {
-  let batch = db.batch();
-  let data = Buffer.allocUnsafe(4);
+  const batch = db.batch();
+  const data = Buffer.allocUnsafe(4);
 
   data.writeUInt32LE(3, 0, true);
 
@@ -408,7 +408,7 @@ async function finalize() {
   batch.del(pair('n', encoding.ZERO_HASH));
 
   if (shouldPrune) {
-    let data = await db.get('O');
+    const data = await db.get('O');
     let flags;
 
     assert(data);
@@ -447,7 +447,7 @@ async function getMeta(coin, prevout) {
   item = metaCache.get(prevout.hash);
 
   if (item) {
-    let [version, height] = item;
+    const [version, height] = item;
     return [version, height, false];
   }
 
@@ -457,8 +457,8 @@ async function getMeta(coin, prevout) {
   data = await db.get(pair(0x01, prevout.hash));
 
   if (data) {
-    let version = data.readUInt32LE(0, true);
-    let height = data.readUInt32LE(4, true);
+    const version = data.readUInt32LE(0, true);
+    const height = data.readUInt32LE(4, true);
     return [version, height, false];
   }
 
@@ -475,30 +475,30 @@ async function getMeta(coin, prevout) {
 }
 
 async function getTip() {
-  let tip = await getTipHash();
+  const tip = await getTipHash();
   return await getEntry(tip);
 }
 
 async function getTipHash() {
-  let state = await db.get('R');
+  const state = await db.get('R');
   assert(state);
   return state.toString('hex', 0, 32);
 }
 
 async function getEntry(hash) {
-  let data = await db.get(pair('e', hash));
+  const data = await db.get(pair('e', hash));
   assert(data);
   return entryFromRaw(data);
 }
 
 async function isPruned() {
-  let data = await db.get('O');
+  const data = await db.get('O');
   assert(data);
   return (data.readUInt32LE(4) & 4) !== 0;
 }
 
 async function isSPV() {
-  let data = await db.get('O');
+  const data = await db.get('O');
   assert(data);
   return (data.readUInt32LE(4) & 1) !== 0;
 }
@@ -514,9 +514,9 @@ async function isMainChain(entry, tip) {
 }
 
 function entryFromRaw(data) {
-  let p = new BufferReader(data, true);
-  let hash = digest.hash256(p.readBytes(80));
-  let entry = {};
+  const p = new BufferReader(data, true);
+  const hash = digest.hash256(p.readBytes(80));
+  const entry = {};
 
   p.seek(-80);
 
@@ -534,7 +534,7 @@ function entryFromRaw(data) {
 }
 
 function entryToRaw(entry, main) {
-  let bw = new StaticWriter(116 + 1);
+  const bw = new StaticWriter(116 + 1);
 
   bw.writeU32(entry.version);
   bw.writeHash(entry.prevBlock);
@@ -556,7 +556,7 @@ function write(data, str, off) {
 }
 
 function pair(prefix, hash) {
-  let key = Buffer.allocUnsafe(33);
+  const key = Buffer.allocUnsafe(33);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;
@@ -565,7 +565,7 @@ function pair(prefix, hash) {
 }
 
 function bpair(prefix, hash, index) {
-  let key = Buffer.allocUnsafe(37);
+  const key = Buffer.allocUnsafe(37);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;

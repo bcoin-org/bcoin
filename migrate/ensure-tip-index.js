@@ -41,9 +41,9 @@ async function checkVersion() {
 }
 
 function entryFromRaw(data) {
-  let p = new BufferReader(data, true);
-  let hash = digest.hash256(p.readBytes(80));
-  let entry = {};
+  const p = new BufferReader(data, true);
+  const hash = digest.hash256(p.readBytes(80));
+  const entry = {};
 
   p.seek(-80);
 
@@ -69,10 +69,10 @@ function getEntries() {
 }
 
 async function getTip(entry) {
-  let state = await db.get('R');
+  const state = await db.get('R');
   assert(state);
-  let tip = state.toString('hex', 0, 32);
-  let data = await db.get(pair('e', tip));
+  const tip = state.toString('hex', 0, 32);
+  const data = await db.get(pair('e', tip));
   assert(data);
   return entryFromRaw(data);
 }
@@ -90,11 +90,11 @@ async function isMainChain(entry, tip) {
 // And this insane function is why we should
 // be indexing tips in the first place!
 async function indexTips() {
-  let entries = await getEntries();
+  const entries = await getEntries();
   let tip = await getTip();
-  let tips = [];
-  let orphans = [];
-  let prevs = {};
+  const tips = [];
+  const orphans = [];
+  const prevs = {};
   let i, orphan, entry, main;
 
   for (i = 0; i < entries.length; i++) {
@@ -128,7 +128,7 @@ function write(data, str, off) {
 }
 
 function pair(prefix, hash) {
-  let key = Buffer.allocUnsafe(33);
+  const key = Buffer.allocUnsafe(33);
   if (typeof prefix === 'string')
     prefix = prefix.charCodeAt(0);
   key[0] = prefix;

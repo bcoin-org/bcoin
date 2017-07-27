@@ -23,7 +23,7 @@ x509.trusted.clear();
 
 describe('BIP70', function() {
   function testRequest(data) {
-    let request = bip70.PaymentRequest.fromRaw(data);
+    const request = bip70.PaymentRequest.fromRaw(data);
     let ser;
 
     assert.equal(request.pkiType, 'x509+sha256');
@@ -126,12 +126,12 @@ describe('BIP70', function() {
   });
 
   it('should still fail to verify cert signatures for invalid', () => {
-    let request = bip70.PaymentRequest.fromRaw(tests.invalid);
+    const request = bip70.PaymentRequest.fromRaw(tests.invalid);
     assert(!request.verifyChain());
   });
 
   it('should get chain and ca for request', () => {
-    let request = bip70.PaymentRequest.fromRaw(tests.valid);
+    const request = bip70.PaymentRequest.fromRaw(tests.valid);
     assert.equal(request.getChain().length, 4);
     assert.equal(request.getCA().name,
       'Go Daddy Class 2 Certification Authority');
@@ -148,7 +148,7 @@ describe('BIP70', function() {
   });
 
   it('should parse a payment ack', () => {
-    let ack = bip70.PaymentACK.fromRaw(tests.ack);
+    const ack = bip70.PaymentACK.fromRaw(tests.ack);
     assert.equal(ack.memo.length, 95);
     assert.equal(ack.memo, 'Transaction received by BitPay.'
       + ' Invoice will be marked as paid if the transaction is confirmed.');
@@ -156,7 +156,7 @@ describe('BIP70', function() {
   });
 
   it('should create a payment request, sign, and verify', () => {
-    let request = new bip70.PaymentRequest({
+    const request = new bip70.PaymentRequest({
       version: 25,
       paymentDetails: {
         network: 'testnet',

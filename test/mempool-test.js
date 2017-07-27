@@ -16,9 +16,9 @@ const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
 
 describe('Mempool', function() {
-  let chain = new Chain({ db: 'memory' });
-  let mempool = new Mempool({ chain: chain, db: 'memory' });
-  let wallet = new MemWallet();
+  const chain = new Chain({ db: 'memory' });
+  const mempool = new Mempool({ chain: chain, db: 'memory' });
+  const wallet = new MemWallet();
   let cached;
 
   this.timeout(5000);
@@ -53,8 +53,8 @@ describe('Mempool', function() {
   });
 
   it('should handle incoming orphans and TXs', async () => {
-    let kp = KeyRing.generate();
-    let w = wallet;
+    const kp = KeyRing.generate();
+    const w = wallet;
     let t1, t2, t3, t4, f1, fake, prev, sig, balance, txs;
 
     t1 = new MTX();
@@ -152,8 +152,8 @@ describe('Mempool', function() {
   });
 
   it('should handle locktime', async () => {
-    let w = wallet;
-    let kp = KeyRing.generate();
+    const w = wallet;
+    const kp = KeyRing.generate();
     let tx, prev, prevHash, sig;
 
     tx = new MTX();
@@ -178,8 +178,8 @@ describe('Mempool', function() {
   });
 
   it('should handle invalid locktime', async () => {
-    let w = wallet;
-    let kp = KeyRing.generate();
+    const w = wallet;
+    const kp = KeyRing.generate();
     let tx, prev, prevHash, sig, err;
 
     tx = new MTX();
@@ -209,8 +209,8 @@ describe('Mempool', function() {
   });
 
   it('should not cache a malleated wtx with mutated sig', async () => {
-    let w = wallet;
-    let kp = KeyRing.generate();
+    const w = wallet;
+    const kp = KeyRing.generate();
     let tx, prev, prevHash, prevs, sig, err;
 
     kp.witness = true;
@@ -243,8 +243,8 @@ describe('Mempool', function() {
   });
 
   it('should not cache a malleated tx with unnecessary witness', async () => {
-    let w = wallet;
-    let kp = KeyRing.generate();
+    const w = wallet;
+    const kp = KeyRing.generate();
     let tx, prev, prevHash, sig, err;
 
     tx = new MTX();
@@ -272,8 +272,8 @@ describe('Mempool', function() {
   });
 
   it('should not cache a malleated wtx with wit removed', async () => {
-    let w = wallet;
-    let kp = KeyRing.generate();
+    const w = wallet;
+    const kp = KeyRing.generate();
     let tx, prev, prevHash, err;
 
     kp.witness = true;
@@ -301,8 +301,8 @@ describe('Mempool', function() {
   });
 
   it('should cache non-malleated tx without sig', async () => {
-    let w = wallet;
-    let kp = KeyRing.generate();
+    const w = wallet;
+    const kp = KeyRing.generate();
     let tx, prev, prevHash, err;
 
     tx = new MTX();
@@ -329,7 +329,7 @@ describe('Mempool', function() {
   });
 
   it('should clear reject cache', async () => {
-    let w = wallet;
+    const w = wallet;
     let tx;
 
     tx = new MTX();

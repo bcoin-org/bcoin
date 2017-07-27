@@ -23,7 +23,7 @@ const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
 let globalHeight = 1;
-let globalTime = util.now();
+const globalTime = util.now();
 
 function nextBlock(height) {
   let hash, prev;
@@ -70,8 +70,8 @@ describe('Wallet', function() {
   });
 
   it('should generate new key and address', async () => {
-    let w = await wdb.create();
-    let addr = w.getAddress('string');
+    const w = await wdb.create();
+    const addr = w.getAddress('string');
     assert(addr);
     assert(Address.fromString(addr));
   });
@@ -103,7 +103,7 @@ describe('Wallet', function() {
   });
 
   async function testP2PKH(witness, bullshitNesting) {
-    let flags = Script.flags.STANDARD_VERIFY_FLAGS;
+    const flags = Script.flags.STANDARD_VERIFY_FLAGS;
     let w, addr, src, tx;
 
     w = await wdb.create({ witness: witness });
@@ -180,8 +180,8 @@ describe('Wallet', function() {
   });
 
   it('should handle missed and invalid txs', async () => {
-    let w = await wdb.create();
-    let f = await wdb.create();
+    const w = await wdb.create();
+    const f = await wdb.create();
     let t1, t2, t3, t4, f1, fake, balance, txs;
 
     // Coinbase
@@ -284,7 +284,7 @@ describe('Wallet', function() {
   });
 
   it('should cleanup spenders after double-spend', async () => {
-    let w = doubleSpendWallet;
+    const w = doubleSpendWallet;
     let tx, txs, total, balance;
 
     tx = new MTX();
@@ -445,8 +445,8 @@ describe('Wallet', function() {
   });
 
   it('should fill tx with inputs', async () => {
-    let w1 = await wdb.create();
-    let w2 = await wdb.create();
+    const w1 = await wdb.create();
+    const w2 = await wdb.create();
     let view, t1, t2, t3, err;
 
     // Coinbase
@@ -490,8 +490,8 @@ describe('Wallet', function() {
   });
 
   it('should fill tx with inputs with accurate fee', async () => {
-    let w1 = await wdb.create({ master: KEY1 });
-    let w2 = await wdb.create({ master: KEY2 });
+    const w1 = await wdb.create({ master: KEY1 });
+    const w2 = await wdb.create({ master: KEY2 });
     let view, t1, t2, t3, balance, err;
 
     // Coinbase
@@ -549,9 +549,9 @@ describe('Wallet', function() {
   });
 
   it('should sign multiple inputs using different keys', async () => {
-    let w1 = await wdb.create();
-    let w2 = await wdb.create();
-    let to = await wdb.create();
+    const w1 = await wdb.create();
+    const w2 = await wdb.create();
+    const to = await wdb.create();
     let t1, t2, tx, cost, total, coins1, coins2;
 
     // Coinbase
@@ -616,9 +616,9 @@ describe('Wallet', function() {
   });
 
   async function testMultisig(witness, bullshitNesting, cb) {
-    let flags = Script.flags.STANDARD_VERIFY_FLAGS;
-    let rec = bullshitNesting ? 'nested' : 'receive';
-    let depth = bullshitNesting ? 'nestedDepth' : 'receiveDepth';
+    const flags = Script.flags.STANDARD_VERIFY_FLAGS;
+    const rec = bullshitNesting ? 'nested' : 'receive';
+    const depth = bullshitNesting ? 'nestedDepth' : 'receiveDepth';
     let options, w1, w2, w3, receive, b58;
     let addr, paddr, utx, send, change;
     let view, block;
@@ -755,8 +755,8 @@ describe('Wallet', function() {
   });
 
   it('should fill tx with account 1', async () => {
-    let w1 = await wdb.create();
-    let w2 = await wdb.create();
+    const w1 = await wdb.create();
+    const w2 = await wdb.create();
     let account, accounts, rec, t1, t2, t3, err;
 
     account = await w1.createAccount({ name: 'foo' });
@@ -810,7 +810,7 @@ describe('Wallet', function() {
   });
 
   it('should fail to fill tx with account 1', async () => {
-    let w = await wdb.create();
+    const w = await wdb.create();
     let acc, account, t1, t2, err;
 
     wallet = w;
@@ -890,7 +890,7 @@ describe('Wallet', function() {
   });
 
   it('should fill tx with inputs when encrypted', async () => {
-    let w = await wdb.create({ passphrase: 'foo' });
+    const w = await wdb.create({ passphrase: 'foo' });
     let t1, t2, err;
 
     w.master.stop();
@@ -928,8 +928,8 @@ describe('Wallet', function() {
   });
 
   it('should fill tx with inputs with subtract fee (1)', async () => {
-    let w1 = await wdb.create();
-    let w2 = await wdb.create();
+    const w1 = await wdb.create();
+    const w2 = await wdb.create();
     let t1, t2;
 
     // Coinbase
@@ -957,8 +957,8 @@ describe('Wallet', function() {
   });
 
   it('should fill tx with inputs with subtract fee (2)', async () => {
-    let w1 = await wdb.create();
-    let w2 = await wdb.create();
+    const w1 = await wdb.create();
+    const w2 = await wdb.create();
     let options, t1, t2;
 
     // Coinbase
@@ -991,8 +991,8 @@ describe('Wallet', function() {
   });
 
   it('should fill tx with smart coin selection', async () => {
-    let w1 = await wdb.create();
-    let w2 = await wdb.create();
+    const w1 = await wdb.create();
+    const w2 = await wdb.create();
     let found = false;
     let total = 0;
     let i, options, t1, t2, t3, block, coins, coin;
@@ -1085,19 +1085,19 @@ describe('Wallet', function() {
   });
 
   it('should get range of txs', async () => {
-    let w = wallet;
-    let txs = await w.getRange({ start: util.now() - 1000 });
+    const w = wallet;
+    const txs = await w.getRange({ start: util.now() - 1000 });
     assert.equal(txs.length, 2);
   });
 
   it('should get range of txs from account', async () => {
-    let w = wallet;
-    let txs = await w.getRange('foo', { start: util.now() - 1000 });
+    const w = wallet;
+    const txs = await w.getRange('foo', { start: util.now() - 1000 });
     assert.equal(txs.length, 2);
   });
 
   it('should not get range of txs from non-existent account', async () => {
-    let w = wallet;
+    const w = wallet;
     let txs, err;
 
     try {
@@ -1112,14 +1112,14 @@ describe('Wallet', function() {
   });
 
   it('should get account balance', async () => {
-    let w = wallet;
-    let balance = await w.getBalance('foo');
+    const w = wallet;
+    const balance = await w.getBalance('foo');
     assert.equal(balance.unconfirmed, 21840);
   });
 
   it('should import privkey', async () => {
-    let key = KeyRing.generate();
-    let w = await wdb.create({ passphrase: 'test' });
+    const key = KeyRing.generate();
+    const w = await wdb.create({ passphrase: 'test' });
     let options, k, t1, t2, wtx;
 
     await w.importKey('default', key, 'test');
@@ -1161,9 +1161,9 @@ describe('Wallet', function() {
   });
 
   it('should import pubkey', async () => {
-    let priv = KeyRing.generate();
-    let key = new KeyRing(priv.publicKey);
-    let w = await wdb.create({ watchOnly: true });
+    const priv = KeyRing.generate();
+    const key = new KeyRing(priv.publicKey);
+    const w = await wdb.create({ watchOnly: true });
     let k;
 
     await w.importKey('default', key);
@@ -1177,8 +1177,8 @@ describe('Wallet', function() {
   });
 
   it('should import address', async () => {
-    let key = KeyRing.generate();
-    let w = await wdb.create({ watchOnly: true });
+    const key = KeyRing.generate();
+    const w = await wdb.create({ watchOnly: true });
     let k;
 
     await w.importAddress('default', key.getAddress());
@@ -1192,25 +1192,25 @@ describe('Wallet', function() {
   });
 
   it('should get details', async () => {
-    let w = wallet;
-    let txs = await w.getRange('foo', { start: util.now() - 1000 });
-    let details = await w.toDetails(txs);
+    const w = wallet;
+    const txs = await w.getRange('foo', { start: util.now() - 1000 });
+    const details = await w.toDetails(txs);
     assert(details.some((tx) => {
       return tx.toJSON().outputs[0].path.name === 'foo';
     }));
   });
 
   it('should rename wallet', async () => {
-    let w = wallet;
+    const w = wallet;
     await wallet.rename('test');
-    let txs = await w.getRange('foo', { start: util.now() - 1000 });
-    let details = await w.toDetails(txs);
+    const txs = await w.getRange('foo', { start: util.now() - 1000 });
+    const details = await w.toDetails(txs);
     assert.equal(details[0].toJSON().id, 'test');
   });
 
   it('should change passphrase with encrypted imports', async () => {
-    let w = ewallet;
-    let addr = ekey.getAddress();
+    const w = ewallet;
+    const addr = ekey.getAddress();
     let path, d1, d2, k;
 
     assert(w.master.encrypted);

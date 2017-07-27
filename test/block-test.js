@@ -25,11 +25,11 @@ cmpct1 = cmpct1.trim().split('\n');
 cmpct2 = cmpct2.trim();
 
 function parseUndo(data) {
-  let br = new BufferReader(data);
-  let undo = [];
+  const br = new BufferReader(data);
+  const undo = [];
 
   while (br.left()) {
-    let output = Output.fromReader(br);
+    const output = Output.fromReader(br);
     undo.push(output);
   }
 
@@ -37,14 +37,14 @@ function parseUndo(data) {
 }
 
 function applyUndo(block, undo) {
-  let view = new CoinView();
+  const view = new CoinView();
   let i = 0;
 
-  for (let tx of block.txs) {
+  for (const tx of block.txs) {
     if (tx.isCoinbase())
       continue;
 
-    for (let {prevout} of tx.inputs)
+    for (const {prevout} of tx.inputs)
       view.addOutput(prevout, undo[i++]);
   }
 
@@ -121,26 +121,26 @@ describe('Block', function() {
   });
 
   it('should decode/encode with parser/framer', () => {
-    let b = MerkleBlock.fromRaw(raw, 'hex');
+    const b = MerkleBlock.fromRaw(raw, 'hex');
     assert.equal(b.toRaw().toString('hex'), raw);
     assert.equal(raw, raw2);
   });
 
   it('should be verifiable', () => {
-    let b = MerkleBlock.fromRaw(raw, 'hex');
+    const b = MerkleBlock.fromRaw(raw, 'hex');
     assert(b.verify());
   });
 
   it('should be serialized and deserialized and still verify', () => {
-    let raw = mblock.toRaw();
-    let b = MerkleBlock.fromRaw(raw);
+    const raw = mblock.toRaw();
+    const b = MerkleBlock.fromRaw(raw);
     assert.deepEqual(b.toRaw(), raw);
     assert(b.verify());
   });
 
   it('should be jsonified and unjsonified and still verify', () => {
-    let raw = mblock.toJSON();
-    let b = MerkleBlock.fromJSON(raw);
+    const raw = mblock.toJSON();
+    const b = MerkleBlock.fromJSON(raw);
     assert.deepEqual(b.toJSON(), raw);
     assert(b.verify());
   });
@@ -150,7 +150,7 @@ describe('Block', function() {
     let total = 0;
 
     for (;;) {
-      let reward = consensus.getReward(height, 210000);
+      const reward = consensus.getReward(height, 210000);
       assert(reward <= consensus.COIN * 50);
       total += reward;
       if (reward === 0)
@@ -191,17 +191,17 @@ describe('Block', function() {
   });
 
   it('should verify a historical block', () => {
-    let view = new CoinView();
-    let height = block300025.height;
+    const view = new CoinView();
+    const height = block300025.height;
     let sigops = 0;
     let reward = 0;
     let flags;
 
     for (let i = 1; i < block300025.txs.length; i++) {
-      let tx = block300025.txs[i];
+      const tx = block300025.txs[i];
       for (let j = 0; j < tx.inputs.length; j++) {
-        let input = tx.inputs[j];
-        let coin = Coin.fromJSON(input.coin);
+        const input = tx.inputs[j];
+        const coin = Coin.fromJSON(input.coin);
         view.addCoin(coin);
       }
     }
@@ -215,7 +215,7 @@ describe('Block', function() {
     flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
 
     for (let i = 1; i < block.txs.length; i++) {
-      let tx = block.txs[i];
+      const tx = block.txs[i];
       assert(tx.isSane());
       assert(tx.verifyInputs(view, height));
       assert(tx.verify(view, flags));
@@ -233,7 +233,7 @@ describe('Block', function() {
   });
 
   it('should fail with a bad merkle root', () => {
-    let block2 = new Block(block);
+    const block2 = new Block(block);
     let reason;
     block2.merkleRoot = encoding.NULL_HASH;
     block2.refresh();
@@ -247,7 +247,7 @@ describe('Block', function() {
   });
 
   it('should fail on merkle block with a bad merkle root', () => {
-    let mblock2 = new MerkleBlock(mblock);
+    const mblock2 = new MerkleBlock(mblock);
     let reason;
     mblock2.merkleRoot = encoding.NULL_HASH;
     mblock2.refresh();
@@ -261,7 +261,7 @@ describe('Block', function() {
   });
 
   it('should fail with a low target', () => {
-    let block2 = new Block(block);
+    const block2 = new Block(block);
     block2.bits = 403014710;
     block2.refresh();
     assert(!block2.verifyPOW());
@@ -273,7 +273,7 @@ describe('Block', function() {
   });
 
   it('should fail on duplicate txs', () => {
-    let block2 = new Block(block);
+    const block2 = new Block(block);
     let reason;
     block2.txs.push(block2.txs[block2.txs.length - 1]);
     block2.refresh();
@@ -282,17 +282,17 @@ describe('Block', function() {
   });
 
   it('should verify with headers', () => {
-    let headers = new Headers(block);
+    const headers = new Headers(block);
     assert(headers.verifyPOW());
     assert(headers.verifyBody());
     assert(headers.verify());
   });
 
   it('should handle compact block', () => {
-    let block = Block.fromRaw(cmpct1[1], 'hex');
-    let cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
-    let cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    let map = new Map();
+    const block = Block.fromRaw(cmpct1[1], 'hex');
+    const cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
+    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const map = new Map();
     let i, tx, mempool, result;
 
     assert(cblock1.init());
@@ -323,10 +323,10 @@ describe('Block', function() {
   });
 
   it('should handle half-full compact block', () => {
-    let block = Block.fromRaw(cmpct1[1], 'hex');
-    let cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
-    let cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    let map = new Map();
+    const block = Block.fromRaw(cmpct1[1], 'hex');
+    const cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
+    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const map = new Map();
     let i, tx, mempool, result, req, res;
 
     assert(cblock1.init());
@@ -371,10 +371,10 @@ describe('Block', function() {
   });
 
   it('should handle compact block', () => {
-    let block = Block.fromRaw(cmpct2block);
-    let cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
-    let cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    let map = new Map();
+    const block = Block.fromRaw(cmpct2block);
+    const cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
+    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const map = new Map();
     let i, tx, result, mempool;
 
     assert(cblock1.init());
@@ -403,10 +403,10 @@ describe('Block', function() {
   });
 
   it('should handle half-full compact block', () => {
-    let block = Block.fromRaw(cmpct2block);
-    let cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
-    let cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
-    let map = new Map();
+    const block = Block.fromRaw(cmpct2block);
+    const cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
+    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const map = new Map();
     let i, tx, mempool, result, req, res;
 
     assert(cblock1.init());
@@ -447,13 +447,13 @@ describe('Block', function() {
   });
 
   it('should count sigops for block 928828 (testnet)', async () => {
-    let blockRaw = await fs.readFile(`${__dirname}/data/block928828.raw`);
-    let undoRaw = await fs.readFile(`${__dirname}/data/undo928828.raw`);
-    let block = Block.fromRaw(blockRaw);
-    let undo = parseUndo(undoRaw);
-    let view = applyUndo(block, undo);
+    const blockRaw = await fs.readFile(`${__dirname}/data/block928828.raw`);
+    const undoRaw = await fs.readFile(`${__dirname}/data/undo928828.raw`);
+    const block = Block.fromRaw(blockRaw);
+    const undo = parseUndo(undoRaw);
+    const view = applyUndo(block, undo);
     let sigops = 0;
-    let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+    const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
     let i, tx;
 
     for (i = 0; i < block.txs.length; i++) {
@@ -466,13 +466,13 @@ describe('Block', function() {
   });
 
   it('should count sigops for block 928927 (testnet)', async () => {
-    let blockRaw = await fs.readFile(`${__dirname}/data/block928927.raw`);
-    let undoRaw = await fs.readFile(`${__dirname}/data/undo928927.raw`);
-    let block = Block.fromRaw(blockRaw);
-    let undo = parseUndo(undoRaw);
-    let view = applyUndo(block, undo);
+    const blockRaw = await fs.readFile(`${__dirname}/data/block928927.raw`);
+    const undoRaw = await fs.readFile(`${__dirname}/data/undo928927.raw`);
+    const block = Block.fromRaw(blockRaw);
+    const undo = parseUndo(undoRaw);
+    const view = applyUndo(block, undo);
     let sigops = 0;
-    let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+    const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
     let i, tx;
 
     for (i = 0; i < block.txs.length; i++) {
@@ -485,13 +485,13 @@ describe('Block', function() {
   });
 
   it('should count sigops for block 1087400 (testnet)', async () => {
-    let blockRaw = await fs.readFile(`${__dirname}/data/block1087400.raw`);
-    let undoRaw = await fs.readFile(`${__dirname}/data/undo1087400.raw`);
-    let block = Block.fromRaw(blockRaw);
-    let undo = parseUndo(undoRaw);
-    let view = applyUndo(block, undo);
+    const blockRaw = await fs.readFile(`${__dirname}/data/block1087400.raw`);
+    const undoRaw = await fs.readFile(`${__dirname}/data/undo1087400.raw`);
+    const block = Block.fromRaw(blockRaw);
+    const undo = parseUndo(undoRaw);
+    const view = applyUndo(block, undo);
     let sigops = 0;
-    let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+    const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
     let i, tx;
 
     for (i = 0; i < block.txs.length; i++) {

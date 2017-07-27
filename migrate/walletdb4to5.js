@@ -19,7 +19,7 @@ db = bcoin.ldb({
 });
 
 async function updateVersion() {
-  let bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
+  const bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
   let data, ver;
 
   console.log('Checking version.');

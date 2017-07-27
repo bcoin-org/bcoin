@@ -182,7 +182,7 @@ Coins.prototype.get = function get(index) {
  */
 
 Coins.prototype.getOutput = function getOutput(index) {
-  let entry = this.get(index);
+  const entry = this.get(index);
 
   if (!entry)
     return;
@@ -197,7 +197,7 @@ Coins.prototype.getOutput = function getOutput(index) {
  */
 
 Coins.prototype.getCoin = function getCoin(index) {
-  let entry = this.get(index);
+  const entry = this.get(index);
 
   if (!entry)
     return;
@@ -212,7 +212,7 @@ Coins.prototype.getCoin = function getCoin(index) {
  */
 
 Coins.prototype.spend = function spend(index) {
-  let entry = this.get(index);
+  const entry = this.get(index);
 
   if (!entry || entry.spent)
     return;
@@ -229,7 +229,7 @@ Coins.prototype.spend = function spend(index) {
  */
 
 Coins.prototype.remove = function remove(index) {
-  let entry = this.get(index);
+  const entry = this.get(index);
 
   if (!entry)
     return false;
@@ -314,8 +314,8 @@ Coins.prototype.isEmpty = function isEmpty() {
  */
 
 Coins.prototype.header = function header(len, size) {
-  let first = this.isUnspent(0);
-  let second = this.isUnspent(1);
+  const first = this.isUnspent(0);
+  const second = this.isUnspent(1);
   let offset = 0;
   let code;
 
@@ -350,11 +350,11 @@ Coins.prototype.header = function header(len, size) {
  */
 
 Coins.prototype.toRaw = function toRaw() {
-  let len = this.length();
-  let size = Math.floor((len + 5) / 8);
-  let code = this.header(len, size);
-  let total = this.getSize(len, size, code);
-  let bw = new StaticWriter(total);
+  const len = this.length();
+  const size = Math.floor((len + 5) / 8);
+  const code = this.header(len, size);
+  const total = this.getSize(len, size, code);
+  const bw = new StaticWriter(total);
 
   // Write headers.
   bw.writeVarint(this.version);
@@ -373,7 +373,7 @@ Coins.prototype.toRaw = function toRaw() {
 
   // Write the compressed outputs.
   for (let i = 0; i < len; i++) {
-    let output = this.outputs[i];
+    const output = this.outputs[i];
 
     if (!output || output.spent)
       continue;
@@ -402,7 +402,7 @@ Coins.prototype.getSize = function getSize(len, size, code) {
 
   // Write the compressed outputs.
   for (let i = 0; i < len; i++) {
-    let output = this.outputs[i];
+    const output = this.outputs[i];
 
     if (!output || output.spent)
       continue;
@@ -422,7 +422,7 @@ Coins.prototype.getSize = function getSize(len, size, code) {
  */
 
 Coins.prototype.fromRaw = function fromRaw(data, hash) {
-  let br = new BufferReader(data);
+  const br = new BufferReader(data);
   let first = null;
   let second = null;
   let code, size, offset;
@@ -458,7 +458,7 @@ Coins.prototype.fromRaw = function fromRaw(data, hash) {
 
   // Read outputs.
   for (let i = 0; i < size; i++) {
-    let ch = br.data[offset++];
+    const ch = br.data[offset++];
     for (let j = 0; j < 8; j++) {
       if ((ch & (1 << j)) === 0) {
         this.outputs.push(null);
@@ -482,8 +482,8 @@ Coins.prototype.fromRaw = function fromRaw(data, hash) {
  */
 
 Coins.parseCoin = function parseCoin(data, hash, index) {
-  let br = new BufferReader(data);
-  let coin = new Coin();
+  const br = new BufferReader(data);
+  const coin = new Coin();
   let code, size, offset;
 
   // Inject outpoint (passed by caller).
@@ -526,7 +526,7 @@ Coins.parseCoin = function parseCoin(data, hash, index) {
 
   // Read outputs.
   for (let i = 0; i < size; i++) {
-    let ch = br.data[offset++];
+    const ch = br.data[offset++];
     for (let j = 0; j < 8; j++) {
       if ((ch & (1 << j)) !== 0) {
         if (index === 0) {
@@ -649,8 +649,8 @@ CoinEntry.prototype.reader = function reader() {
  */
 
 CoinEntry.prototype.toCoin = function toCoin(coins, index) {
-  let coin = new Coin();
-  let output = this.toOutput();
+  const coin = new Coin();
+  const output = this.toOutput();
 
   // Load in all necessary properties
   // from the parent Coins object.
@@ -718,7 +718,7 @@ CoinEntry.prototype.toWriter = function toWriter(bw) {
  */
 
 CoinEntry.fromReader = function fromReader(br) {
-  let entry = new CoinEntry();
+  const entry = new CoinEntry();
   entry.offset = br.offset;
   entry.size = decompress.skip(br);
   entry.raw = br.data;
@@ -732,7 +732,7 @@ CoinEntry.fromReader = function fromReader(br) {
  */
 
 CoinEntry.fromOutput = function fromOutput(output) {
-  let entry = new CoinEntry();
+  const entry = new CoinEntry();
   entry.output = output;
   return entry;
 };
@@ -744,8 +744,8 @@ CoinEntry.fromOutput = function fromOutput(output) {
  */
 
 CoinEntry.fromCoin = function fromCoin(coin) {
-  let entry = new CoinEntry();
-  let output = new Output();
+  const entry = new CoinEntry();
+  const output = new Output();
   output.value = coin.value;
   output.script = coin.script;
   entry.output = output;
