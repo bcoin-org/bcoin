@@ -12,9 +12,9 @@
  */
 
 const assert = require('assert');
-const secp256k1 = require('../crypto/secp256k1');
-const encoding = require('../utils/encoding');
-const consensus = require('../protocol/consensus');
+const secp256k1 = require('../../lib/crypto/secp256k1');
+const encoding = require('../../lib/utils/encoding');
+const consensus = require('../../lib/protocol/consensus');
 
 /*
  * Constants
@@ -30,6 +30,8 @@ const EMPTY_BUFFER = Buffer.alloc(0);
  */
 
 function compressScript(script, bw) {
+  let data;
+
   // Attempt to compress the output scripts.
   // We can _only_ ever compress them if
   // they are serialized as minimaldata, as
@@ -39,18 +41,18 @@ function compressScript(script, bw) {
   // P2PKH -> 0 | key-hash
   // Saves 5 bytes.
   if (script.isPubkeyhash(true)) {
-    let hash = script.code[2].data;
+    data = script.code[2].data;
     bw.writeU8(0);
-    bw.writeBytes(hash);
+    bw.writeBytes(data);
     return bw;
   }
 
   // P2SH -> 1 | script-hash
   // Saves 3 bytes.
   if (script.isScripthash()) {
-    let hash = script.code[1].data;
+    data = script.code[1].data;
     bw.writeU8(1);
-    bw.writeBytes(hash);
+    bw.writeBytes(data);
     return bw;
   }
 
@@ -58,10 +60,10 @@ function compressScript(script, bw) {
   // Only works if the key is valid.
   // Saves up to 35 bytes.
   if (script.isPubkey(true)) {
-    let key = script.code[0].data;
-    if (publicKeyVerify(key)) {
-      key = compressKey(key);
-      bw.writeBytes(key);
+    data = script.code[0].data;
+    if (publicKeyVerify(data)) {
+      data = compressKey(data);
+      bw.writeBytes(data);
       return bw;
     }
   }
@@ -127,7 +129,7 @@ function decompressScript(script, br) {
  */
 
 function sizeScript(script) {
-  let size;
+  let size, data;
 
   if (script.isPubkeyhash(true))
     return 21;
@@ -136,8 +138,8 @@ function sizeScript(script) {
     return 21;
 
   if (script.isPubkey(true)) {
-    let key = script.code[0].data;
-    if (publicKeyVerify(key))
+    data = script.code[0].data;
+    if (publicKeyVerify(data))
       return 33;
   }
 
@@ -182,6 +184,63 @@ function sizeOutput(output) {
   size += encoding.sizeVarint(output.value);
   size += sizeScript(output.script);
   return size;
+}
+
+/**
+ * Compress an output.
+ * @param {Coin} coin
+ * @param {BufferWriter} bw
+ */
+
+function compressCoin(coin, bw) {
+  bw.writeVarint(coin.value);
+  compressScript(coin.script, bw);
+  return bw;
+}
+
+/**
+ * Decompress a script from buffer reader.
+ * @param {Coin} coin
+ * @param {BufferReader} br
+ */
+
+function decompressCoin(coin, br) {
+  coin.value = br.readVarint();
+  decompressScript(coin.script, br);
+  return coin;
+}
+
+/**
+ * Skip past a compressed output.
+ * @param {BufferWriter} bw
+ * @returns {Number}
+ */
+
+function skipOutput(br) {
+  let start = br.offset;
+
+  // Skip past the value.
+  br.skipVarint();
+
+  // Skip past the compressed scripts.
+  switch (br.readU8()) {
+    case 0:
+    case 1:
+      br.seek(20);
+      break;
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      br.seek(32);
+      break;
+    default:
+      br.offset -= 1;
+      br.seek(br.readVarint() - COMPRESS_TYPES);
+      break;
+  }
+
+  return br.offset - start;
 }
 
 /**
@@ -341,6 +400,20 @@ function decompressKey(key) {
  * Expose
  */
 
-exports.pack = compressOutput;
-exports.unpack = decompressOutput;
-exports.size = sizeOutput;
+exports.compress = {
+  output: compressOutput,
+  coin: compressCoin,
+  size: sizeOutput,
+  script: compressScript,
+  value: compressValue,
+  key: compressKey
+};
+
+exports.decompress = {
+  output: decompressOutput,
+  coin: decompressCoin,
+  skip: skipOutput,
+  script: decompressScript,
+  value: decompressValue,
+  key: decompressKey
+};

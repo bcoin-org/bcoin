@@ -8,6 +8,7 @@ const consensus = require('../lib/protocol/consensus');
 const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
+const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const Input = require('../lib/primitives/input');
@@ -76,7 +77,7 @@ function parseTest(data) {
     view.addCoin(coin);
   }
 
-  coin = view.getOutput(tx.inputs[0]);
+  coin = view.getOutputFor(tx.inputs[0]);
 
   return {
     tx: tx,
@@ -203,7 +204,7 @@ describe('TX', function() {
     });
 
     it(`should verify high S value with only DERSIG enabled ${suffix}`, () => {
-      let coin = tx4.view.getOutput(tx4.tx.inputs[0]);
+      let coin = tx4.view.getOutputFor(tx4.tx.inputs[0]);
       let flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx4.tx, noCache);
       assert(tx4.tx.verifyInput(0, coin, flags));
@@ -349,7 +350,7 @@ describe('TX', function() {
     let hash = random.randomBytes(32).toString('hex');
     let output = new Output();
     output.value = value;
-    view.addOutput(hash, 0, output);
+    view.addOutput(new Outpoint(hash, 0), output);
     return {
       prevout: {
         hash: hash,
