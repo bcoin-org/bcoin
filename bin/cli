@@ -433,7 +433,7 @@ CLI.prototype.importKey = async function importKey() {
   throw new Error('Bad key for import.');
 };
 
-CLI.prototype.importAddress = async function importKey() {
+CLI.prototype.importAddress = async function importAddress() {
   const address = this.config.str(0);
   const account = this.config.str('account');
   await this.wallet.importAddress(account, address);
