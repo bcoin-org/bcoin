@@ -19,10 +19,9 @@ if (process.argv.indexOf('--version') !== -1
   throw new Error('Could not exit.');
 }
 
-const bcoin = require('../');
-const plugin = require('../lib/wallet/plugin');
+const FullNode = require('../lib/node/fullnode');
 
-const node = new bcoin.fullnode({
+const node = new FullNode({
   config: true,
   argv: true,
   env: true,
@@ -37,8 +36,10 @@ const node = new bcoin.fullnode({
 });
 
 // Temporary hack
-if (!node.config.bool('no-wallet') && !node.has('walletdb'))
+if (!node.config.bool('no-wallet') && !node.has('walletdb')) {
+  const plugin = require('../lib/wallet/plugin');
   node.use(plugin);
+}
 
 process.on('unhandledRejection', (err, promise) => {
   throw err;

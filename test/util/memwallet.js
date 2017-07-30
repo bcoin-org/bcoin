@@ -146,7 +146,7 @@ MemWallet.prototype.deriveKey = function deriveKey(branch, index) {
 MemWallet.prototype.getKey = function getKey(hash) {
   const path = this.paths.get(hash);
   if (!path)
-    return;
+    return null;
   return this.derivePath(path);
 };
 

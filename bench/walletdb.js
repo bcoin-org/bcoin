@@ -24,6 +24,7 @@ const walletdb = new WalletDB({
 
   const wallet = await walletdb.create();
   const addrs = [];
+  let tx;
 
   // Accounts
   {
@@ -65,7 +66,7 @@ const walletdb = new WalletDB({
       mtx.addOutput(addrs[(i + 1) % addrs.length], 50460);
       mtx.addOutput(addrs[(i + 2) % addrs.length], 50460);
       mtx.addOutput(addrs[(i + 3) % addrs.length], 50460);
-      const tx = mtx.toTX();
+      tx = mtx.toTX();
 
       jobs.push(walletdb.addTX(tx));
     }
@@ -88,7 +89,7 @@ const walletdb = new WalletDB({
       mtx.addOutput(addrs[(i + 1) % addrs.length], 50460);
       mtx.addOutput(addrs[(i + 2) % addrs.length], 50460);
       mtx.addOutput(addrs[(i + 3) % addrs.length], 50460);
-      const tx = mtx.toTX();
+      tx = mtx.toTX();
 
       jobs.push(walletdb.addTX(tx));
     }

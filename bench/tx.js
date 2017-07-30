@@ -19,6 +19,7 @@ const btx = { tx: block.txs[397], view: new CoinView() };
 const tx3 = parseTX('../test/data/tx3.hex');
 const hex = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
 const raw = Buffer.from(hex.trim(), 'hex');
+const tx = TX.fromRaw(raw);
 
 {
   const tx = json.txs[397];
@@ -153,25 +154,25 @@ for (let i = 0; i < 100; i++) {
   });
 }
 
-const tx = mtx.toTX();
+const tx2 = mtx.toTX();
 
 {
   const end = bench('input hashes');
   for (let i = 0; i < 1000; i++)
-    tx.getInputHashes(null, 'hex');
+    tx2.getInputHashes(null, 'hex');
   end(1000);
 }
 
 {
   const end = bench('output hashes');
   for (let i = 0; i < 1000; i++)
-    tx.getOutputHashes('hex');
+    tx2.getOutputHashes('hex');
   end(1000);
 }
 
 {
   const end = bench('all hashes');
   for (let i = 0; i < 1000; i++)
-    tx.getHashes(null, 'hex');
+    tx2.getHashes(null, 'hex');
   end(1000);
 }

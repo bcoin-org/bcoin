@@ -5,11 +5,11 @@
 process.title = 'bcoin';
 
 const assert = require('assert');
-const bcoin = require('../');
-const plugin = require('../lib/wallet/plugin');
-const util = bcoin.util;
+const SPVNode = require('../lib/node/spvnode');
+const util = require('../lib/utils/util');
+const Outpoint = require('../lib/primitives/outpoint');
 
-const node = bcoin.spvnode({
+const node = SPVNode({
   config: true,
   argv: true,
   env: true,
@@ -24,8 +24,10 @@ const node = bcoin.spvnode({
 });
 
 // Temporary hack
-if (!node.has('walletdb'))
+if (!node.has('walletdb')) {
+  const plugin = require('../lib/wallet/plugin');
   node.use(plugin);
+}
 
 process.on('unhandledRejection', (err, promise) => {
   throw err;
@@ -38,7 +40,7 @@ process.on('unhandledRejection', (err, promise) => {
 
   if (node.config.bool('test')) {
     node.pool.watchAddress('1VayNert3x1KzbpzMGt2qdqrAThiRovi8');
-    node.pool.watchOutpoint(new bcoin.outpoint());
+    node.pool.watchOutpoint(new Outpoint());
     node.on('block', (block) => {
       assert(block.txs.length >= 1);
       if (block.txs.length > 1)

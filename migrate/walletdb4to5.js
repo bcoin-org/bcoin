@@ -26,7 +26,7 @@ async function updateVersion() {
   const data = await db.get('V');
   assert(data, 'No version.');
 
-  ver = data.readUInt32LE(0, true);
+  let ver = data.readUInt32LE(0, true);
 
   if (ver !== 4)
     throw Error(`DB is version ${ver}.`);
@@ -35,7 +35,7 @@ async function updateVersion() {
 
   await db.backup(bak);
 
-  let ver = Buffer.allocUnsafe(4);
+  ver = Buffer.allocUnsafe(4);
   ver.writeUInt32LE(5, 0, true);
   batch.put('V', ver);
 }

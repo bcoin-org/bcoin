@@ -563,6 +563,9 @@ function bpair(prefix, hash, index) {
   return key;
 }
 
+// Make eslint happy.
+reserializeEntries;
+
 (async () => {
   await db.open();
 

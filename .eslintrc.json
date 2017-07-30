@@ -1,16 +1,17 @@
 {
-  "extends": "eslint:recommended",
   "env": {
     "browser": true,
     "es6": true,
-    "node": true,
-    "mocha": true
+    "mocha": true,
+    "node": true
   },
+  "extends": "eslint:recommended",
   "parserOptions": {
     "ecmaVersion": 8
   },
   "rules": {
-    "strict": 2,
+    "consistent-return": "off",
+    "func-name-matching": "off",
     "indent": ["error", 2, {
       "SwitchCase": 1,
       "CallExpression": {
@@ -18,28 +19,37 @@
       },
       "ArrayExpression": "off"
     }],
+    "handle-callback-err": "off",
     "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "single"],
-    "semi": ["error", "always"],
-    "no-console": 0,
+    "no-buffer-constructor": "error",
+    "no-console": "off",
+    "no-cond-assign": "off",
+    "no-extra-semi": "off",
+    "no-fallthrough": "off",
+    "no-func-assign": "off",
+    "no-param-reassign": "off",
+    "no-shadow-restricted-names": "error",
+    "no-tabs": "error",
     "no-unused-vars": ["error", {
       "vars": "all",
       "args": "none",
       "ignoreRestSiblings": false
     }],
-    "no-func-assign": 0,
-    "no-cond-assign": 0,
-    "no-unreachable": 0,
-    "no-fallthrough": 0,
-    "no-useless-escape": 0,
-    "no-unsafe-finally": 0,
-    "no-extra-semi": 0,
-    "handle-callback-err": 0,
-    "no-buffer-constructor": 2,
-    "no-tabs": 2,
+    "no-use-before-define": ["error", {
+      "functions": false,
+      "classes": false
+    }],
+    "no-unreachable": "off",
+    "no-useless-escape": "off",
+    "no-unsafe-finally": "off",
+    "no-var": "error",
     "prefer-const": ["error", {
       "destructuring": "all",
       "ignoreReadBeforeAssign": true
-    }]
+    }],
+    "quotes": ["error", "single"],
+    "semi": ["error", "always"],
+    "strict": "error",
+    "valid-jsdoc": "error"
   }
 }
