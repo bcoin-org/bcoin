@@ -22,6 +22,8 @@
 // THE SOFTWARE.
 
 /* eslint-env mocha */
+/* eslint max-len: "off" */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -97,7 +99,7 @@ describe('Bech32', function() {
     'BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P',
     'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7',
     'tb1pw508d6qejxtdg4y5r3zarqfsj6c3',
-    'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv',
+    'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv'
   ];
 
   function fromAddress(hrp, addr) {

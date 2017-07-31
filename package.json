@@ -60,7 +60,7 @@
   "scripts": {
     "clean": "rm -f {browser/,}{bcoin.js,bcoin-worker.js}",
     "docs": "jsdoc -c jsdoc.json",
-    "lint": "eslint lib/ test/ migrate/ examples/ bench/ scripts/*.js bin/cli bin/node bin/spvnode || exit 0",
+    "lint": "eslint lib/ test/ migrate/ examples/ bench/ scripts/*.js bin/{cli,node,spvnode,wallet} || exit 0",
     "lint-file": "eslint",
     "test": "mocha --reporter spec test/*-test.js",
     "test-browser": "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec test/*-test.js",

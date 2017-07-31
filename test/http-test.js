@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -184,15 +185,17 @@ describe('HTTP', function() {
   it('should get a block template', async () => {
     const json = await wallet.client.rpc.execute('getblocktemplate', []);
     assert.deepStrictEqual(json, {
-      capabilities: [ 'proposal' ],
-      mutable: [ 'time', 'transactions', 'prevblock' ],
+      capabilities: ['proposal'],
+      mutable: ['time', 'transactions', 'prevblock'],
       version: 536870912,
       rules: [],
       vbavailable: {},
       vbrequired: 0,
       height: 1,
-      previousblockhash: '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206',
-      target: '7fffff0000000000000000000000000000000000000000000000000000000000',
+      previousblockhash:
+        '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206',
+      target:
+        '7fffff0000000000000000000000000000000000000000000000000000000000',
       bits: '207fffff',
       noncerange: '00000000ffffffff',
       curtime: json.curtime,
@@ -201,7 +204,9 @@ describe('HTTP', function() {
       expires: json.expires,
       sigoplimit: 20000,
       sizelimit: 1000000,
-      longpollid: '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e22060000000000',
+      longpollid:
+        '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206'
+        + '0000000000',
       submitold: false,
       coinbaseaux: { flags: '6d696e65642062792062636f696e' },
       coinbasevalue: 5000000000,
@@ -221,7 +226,9 @@ describe('HTTP', function() {
   });
 
   it('should validate an address', async () => {
-    const json = await wallet.client.rpc.execute('validateaddress', [addr.toString()]);
+    const json = await wallet.client.rpc.execute('validateaddress', [
+      addr.toString()
+    ]);
     assert.deepStrictEqual(json, {
       isvalid: true,
       address: addr.toString(),

@@ -633,7 +633,7 @@ CLI.prototype.handleWallet = async function handleWallet() {
       this.log('  $ unlock [passphrase] [timeout?]: Unlock wallet.');
       this.log('  $ resend: Resend pending transactions.');
       this.log('Other Options:');
-      this.log('  --passphrase [passphrase]: For signing and account creation.');
+      this.log('  --passphrase [passphrase]: For signing & account creation.');
       this.log('  --account [account-name]: Account name.');
       break;
   }

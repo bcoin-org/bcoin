@@ -17,7 +17,7 @@ function NodeContext(network, size) {
   this.init();
 };
 
-NodeContext.prototype.init = function() {
+NodeContext.prototype.init = function init() {
   let i, port, last, node;
 
   for (i = 0; i < this.size; i++) {
@@ -46,7 +46,7 @@ NodeContext.prototype.init = function() {
       ]
     });
 
-    node.on('error', function(err) {
+    node.on('error', (err) => {
       node.logger.error(err);
     });
 

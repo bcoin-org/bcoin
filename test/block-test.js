@@ -1,4 +1,6 @@
 /* eslint-env mocha */
+/* eslint max-len: "off" */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -16,6 +18,9 @@ const encoding = require('../lib/utils/encoding');
 const bip152 = require('../lib/net/bip152');
 const BufferReader = require('../lib/utils/reader');
 const fs = require('../lib/utils/fs');
+const CompactBlock = bip152.CompactBlock;
+const TXRequest = bip152.TXRequest;
+const TXResponse = bip152.TXResponse;
 
 const block300025 = require('./data/block300025.json');
 const cmpct2block = fs.readFileSync(`${__dirname}/data/cmpct2.bin`);
@@ -285,8 +290,8 @@ describe('Block', function() {
 
   it('should handle compact block', () => {
     const block = Block.fromRaw(cmpct1[1], 'hex');
-    const cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
-    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const cblock1 = CompactBlock.fromRaw(cmpct1[0], 'hex');
+    const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
@@ -318,8 +323,8 @@ describe('Block', function() {
 
   it('should handle half-full compact block', () => {
     const block = Block.fromRaw(cmpct1[1], 'hex');
-    const cblock1 = bip152.CompactBlock.fromRaw(cmpct1[0], 'hex');
-    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const cblock1 = CompactBlock.fromRaw(cmpct1[0], 'hex');
+    const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
@@ -345,12 +350,12 @@ describe('Block', function() {
     assert.equal(req.hash, cblock1.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-    req = bip152.TXRequest.fromRaw(req.toRaw());
+    req = TXRequest.fromRaw(req.toRaw());
     assert.equal(req.hash, cblock1.hash('hex'));
     assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-    let res = bip152.TXResponse.fromBlock(block, req);
-    res = bip152.TXResponse.fromRaw(res.toRaw());
+    let res = TXResponse.fromBlock(block, req);
+    res = TXResponse.fromRaw(res.toRaw());
 
     result = cblock1.fillMissing(res);
     assert(result);
@@ -365,8 +370,8 @@ describe('Block', function() {
 
   it('should handle compact block', () => {
     const block = Block.fromRaw(cmpct2block);
-    const cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
-    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const cblock1 = CompactBlock.fromRaw(cmpct2, 'hex');
+    const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
@@ -396,8 +401,8 @@ describe('Block', function() {
 
   it('should handle half-full compact block', () => {
     const block = Block.fromRaw(cmpct2block);
-    const cblock1 = bip152.CompactBlock.fromRaw(cmpct2, 'hex');
-    const cblock2 = bip152.CompactBlock.fromBlock(block, false, cblock1.keyNonce);
+    const cblock1 = CompactBlock.fromRaw(cmpct2, 'hex');
+    const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
@@ -420,11 +425,11 @@ describe('Block', function() {
     let req = cblock1.toRequest();
     assert.equal(req.hash, cblock1.hash('hex'));
 
-    req = bip152.TXRequest.fromRaw(req.toRaw());
+    req = TXRequest.fromRaw(req.toRaw());
     assert.equal(req.hash, cblock1.hash('hex'));
 
-    let res = bip152.TXResponse.fromBlock(block, req);
-    res = bip152.TXResponse.fromRaw(res.toRaw());
+    let res = TXResponse.fromBlock(block, req);
+    res = TXResponse.fromRaw(res.toRaw());
 
     result = cblock1.fillMissing(res);
     assert(result);

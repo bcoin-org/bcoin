@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -62,7 +63,8 @@ describe('Mempool', function() {
 
     const prev = Script.fromPubkey(kp.publicKey);
     t1.addCoin(dummy(prev));
-    const sig = t1.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
+    const sig = t1.signature(
+      0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     t1.inputs[0].script = new Script([sig]);
 
     // balance: 51000
@@ -166,7 +168,8 @@ describe('Mempool', function() {
 
     chain.tip.height = 200;
 
-    const sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
+    const sig = tx.signature(
+      0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     tx.inputs[0].script = new Script([sig]);
 
     tx = tx.toTX();
@@ -190,7 +193,8 @@ describe('Mempool', function() {
     tx.setLocktime(200);
     chain.tip.height = 200 - 1;
 
-    const sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
+    const sig = tx.signature(
+      0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     tx.inputs[0].script = new Script([sig]);
     tx = tx.toTX();
 
@@ -223,7 +227,8 @@ describe('Mempool', function() {
 
     const prevs = Script.fromPubkeyhash(kp.getKeyHash());
 
-    const sig = tx.signature(0, prevs, 70000, kp.privateKey, Script.hashType.ALL, 1);
+    const sig = tx.signature(
+      0, prevs, 70000, kp.privateKey, Script.hashType.ALL, 1);
     sig[sig.length - 1] = 0;
 
     tx.inputs[0].witness = new Witness([sig, kp.publicKey]);
@@ -253,7 +258,8 @@ describe('Mempool', function() {
 
     tx.addCoin(dummy(prev, prevHash));
 
-    const sig = tx.signature(0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
+    const sig = tx.signature(
+      0, prev, 70000, kp.privateKey, Script.hashType.ALL, 0);
     tx.inputs[0].script = new Script([sig]);
     tx.inputs[0].witness.push(Buffer.alloc(0));
     tx = tx.toTX();

@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -254,7 +255,8 @@ describe('Utils', function() {
     let info = 'f0f1f2f3f4f5f6f7f8f9';
     let len = 42;
 
-    let prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5';
+    let prkE = '077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec8'
+      + '44ad7c2b3e5';
     let okmE = '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1'
       + 'a5a4c5db02d56ecc4c5bf34007208d5b887185865';
 

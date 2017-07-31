@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -96,7 +97,8 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
         + '0000000000000000000000000000000000000000000000000000000000000000',
       ciphertext: ''
         + '76b8e0ada0f13d90405d6ae55386bd28bdd219b8a08ded1aa836efcc8b77'
-        + '0dc7da41597c5157488d7724e03fb8d84a376a43b8f41518a11cc387b669b2ee6586',
+        + '0dc7da41597c5157488d7724e03fb8d84a376a43b8f41518a11cc387b669'
+        + 'b2ee6586',
       counter: 0
     });
   });
@@ -175,7 +177,8 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
   });
 
   it('should perform poly1305', () => {
-    let key = '85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b';
+    let key = '85d6be7857556d337f4452fe42d506a'
+      + '80103808afb0db2fd4abff6af4149f51b';
     let msg = 'Cryptographic Forum Research Group';
     let tag = 'a8061dc1305136c6c22b8baf0c0127a9';
 

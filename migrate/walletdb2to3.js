@@ -8,6 +8,7 @@ const Path = require('../lib/wallet/path');
 const MasterKey = require('../lib/wallet/masterkey');
 const Account = require('../lib/wallet/account');
 const Wallet = require('../lib/wallet/wallet');
+const KeyRing = require('../lib/primitives/keyring');
 const BufferReader = require('../lib/utils/reader');
 const BufferWriter = require('../lib/utils/writer');
 const layout = walletdb.layout;
@@ -85,7 +86,7 @@ async function updatePathMap() {
           continue;
         }
         const ring = keyFromRaw(path.data);
-        path.data = new bcoin.keyring(ring).toRaw();
+        path.data = new KeyRing(ring).toRaw();
       }
       batch.put(layout.P(key, hash), path.toRaw());
     }

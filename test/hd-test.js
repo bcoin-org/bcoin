@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -23,7 +24,8 @@ describe('HD', function() {
   let master, child1, child2, child3, child4, child5, child6;
 
   it('should create a pbkdf2 seed', () => {
-    const seed = pbkdf2.derive(vectors.phrase, 'mnemonicfoo', 2048, 64, 'sha512');
+    const seed = pbkdf2.derive(
+      vectors.phrase, 'mnemonicfoo', 2048, 64, 'sha512');
     assert.equal(seed.toString('hex'), vectors.seed);
   });
 

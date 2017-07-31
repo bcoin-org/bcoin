@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -127,15 +128,15 @@ describe('Wallet', function() {
     assert(tx.verify(flags));
   }
 
-  it('should sign/verify pubkeyhash tx', async () => {
+  it('should sign/verify p2pkh tx', async () => {
     await testP2PKH(false, false);
   });
 
-  it('should sign/verify witnesspubkeyhash tx', async () => {
+  it('should sign/verify p2wpkh tx', async () => {
     await testP2PKH(true, false);
   });
 
-  it('should sign/verify witnesspubkeyhash tx with bullshit nesting', async () => {
+  it('should sign/verify p2wpkh tx w/ nested bullshit', async () => {
     await testP2PKH(true, true);
   });
 
@@ -730,15 +731,15 @@ describe('Wallet', function() {
     assert.equal(send.getFee(view), 10000);
   }
 
-  it('should verify 2-of-3 scripthash tx', async () => {
+  it('should verify 2-of-3 p2sh tx', async () => {
     await testMultisig(false, false);
   });
 
-  it('should verify 2-of-3 witnessscripthash tx', async () => {
+  it('should verify 2-of-3 p2wsh tx', async () => {
     await testMultisig(true, false);
   });
 
-  it('should verify 2-of-3 witnessscripthash tx with bullshit nesting', async () => {
+  it('should verify 2-of-3 p2wsh tx w/ nested bullshit', async () => {
     await testMultisig(true, true);
   });
 

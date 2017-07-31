@@ -8,7 +8,22 @@
     "ecmaVersion": 8
   },
   "rules": {
+    "array-bracket-spacing": ["error", "never"],
+    "arrow-parens": ["error", "as-needed", {
+      "requireForBlockBody": true
+    }],
+    "arrow-spacing": "error",
+    "block-spacing": ["error", "always"],
+    "brace-style": ["error", "1tbs"],
+    "camelcase": ["error", {
+      "properties": "never"
+    }],
+    "comma-dangle": ["error", "never"],
     "consistent-return": "error",
+    "eol-last": ["error", "always"],
+    "eqeqeq": ["error", "always", {
+      "null": "ignore"
+    }],
     "func-name-matching": "off",
     "indent": ["error", 2, {
       "SwitchCase": 1,
@@ -19,15 +34,36 @@
     }],
     "handle-callback-err": "off",
     "linebreak-style": ["error", "unix"],
+    "max-len": ["error", {
+      "code": 80,
+      "ignorePattern": "function \\w+\\(",
+      "ignoreUrls": true
+    }],
+    "max-statements-per-line": ["error", {
+      "max": 1
+    }],
+    "new-cap": ["error", {
+      "newIsCap": true,
+      "capIsNew": false
+    }],
+    "new-parens": "error",
     "no-buffer-constructor": "error",
     "no-console": "off",
-    "no-cond-assign": "off",
     "no-extra-semi": "off",
     "no-fallthrough": "off",
     "no-func-assign": "off",
+    "no-implicit-coercion": "off",
+    "no-multi-assign": "error",
+    "no-multiple-empty-lines": ["error", {
+      "max": 1
+    }],
+    "no-nested-ternary": "error",
     "no-param-reassign": "off",
+    "no-return-assign": "error",
+    "no-return-await": "off",
     "no-shadow-restricted-names": "error",
     "no-tabs": "error",
+    "no-trailing-spaces": "error",
     "no-unused-vars": ["error", {
       "vars": "all",
       "args": "none",
@@ -37,17 +73,25 @@
       "functions": false,
       "classes": false
     }],
-    "no-unreachable": "off",
     "no-useless-escape": "off",
-    "no-unsafe-finally": "off",
     "no-var": "error",
+    "nonblock-statement-body-position": ["error", "below"],
+    "padded-blocks": ["error", "never"],
+    "prefer-arrow-callback": "error",
     "prefer-const": ["error", {
       "destructuring": "all",
       "ignoreReadBeforeAssign": true
     }],
+    "prefer-template": "off",
     "quotes": ["error", "single"],
     "semi": ["error", "always"],
+    "spaced-comment": ["error", "always", {
+      "exceptions": ["!"]
+    }],
+    "space-before-blocks": "error",
     "strict": "error",
-    "valid-jsdoc": "error"
+    "unicode-bom": ["error", "never"],
+    "valid-jsdoc": "error",
+    "wrap-iife": ["error", "inside"]
   }
 }

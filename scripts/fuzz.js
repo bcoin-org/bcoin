@@ -10,7 +10,8 @@ const Outpoint = require('../lib/primitives/outpoint');
 const TX = require('../lib/primitives/tx');
 const random = require('../lib/crypto/random');
 
-const MANDATORY = Script.flags.MANDATORY_VERIFY_FLAGS | Script.flags.VERIFY_WITNESS;
+const MANDATORY = Script.flags.MANDATORY_VERIFY_FLAGS
+  | Script.flags.VERIFY_WITNESS;
 const STANDARD = Script.flags.STANDARD_VERIFY_FLAGS;
 
 function randomOutpoint() {
@@ -429,7 +430,9 @@ function fuzzLess(flags) {
 }
 
 function main() {
-  const flags = process.argv.indexOf('--standard') !== -1 ? STANDARD : MANDATORY;
+  const flags = process.argv.indexOf('--standard') !== -1
+    ? STANDARD
+    : MANDATORY;
 
   switch (process.argv[2]) {
     case 'simple':

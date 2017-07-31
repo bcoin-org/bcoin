@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint new-cap: "off" */
+
 const bcoin = require('bcoin');
 const assert = require('assert');
 
@@ -39,9 +41,9 @@ const assert = require('assert');
     value: 10000
   });
 
-  // Now that we've created the output, we can do some coin selection (the output
-  // must be added first so we know how much money is needed and also so we can
-  // accurately estimate the size for fee calculation).
+  // Now that we've created the output, we can do some coin selection (the
+  // output must be added first so we know how much money is needed and also so
+  // we can accurately estimate the size for fee calculation).
 
   // Select coins from our array and add inputs.
   // Calculate fee and add a change output.

@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -183,7 +184,7 @@ describe('Node', function() {
     assert(chain.tip === tip);
   });
 
-  it('should fail to mine a block with coins on an alternate chain', async () => {
+  it('should fail to mine block with coins on an alternate chain', async () => {
     const block = await mineBlock(null, cb1);
     const tip = chain.tip;
     let err;
@@ -467,15 +468,16 @@ describe('Node', function() {
 
     assert.deepStrictEqual(json, {
       result: {
-        capabilities: [ 'proposal' ],
-        mutable: [ 'time', 'transactions', 'prevblock' ],
+        capabilities: ['proposal'],
+        mutable: ['time', 'transactions', 'prevblock'],
         version: 536870912,
-        rules: [ 'csv', '!segwit', 'testdummy' ],
+        rules: ['csv', '!segwit', 'testdummy'],
         vbavailable: {},
         vbrequired: 0,
         height: 437,
         previousblockhash: node.chain.tip.rhash(),
-        target: '7fffff0000000000000000000000000000000000000000000000000000000000',
+        target:
+          '7fffff0000000000000000000000000000000000000000000000000000000000',
         bits: '207fffff',
         noncerange: '00000000ffffffff',
         curtime: json.result.curtime,
@@ -490,7 +492,9 @@ describe('Node', function() {
         coinbaseaux: { flags: '6d696e65642062792062636f696e' },
         coinbasevalue: 1250000000,
         coinbasetxn: undefined,
-        default_witness_commitment: '6a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf9',
+        default_witness_commitment:
+          '6a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962'
+          + 'b48bebd836974e8cf9',
         transactions: []
       },
       error: null,

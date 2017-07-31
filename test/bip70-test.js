@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -39,7 +40,9 @@ describe('BIP70', function() {
     assert(request.verify());
   }
 
-  x509.verifyTime = function() { return true; };
+  x509.verifyTime = function() {
+    return true;
+  };
 
   it('should parse and verify a payment request', () => {
     testRequest(tests.valid);

@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
@@ -270,7 +271,7 @@ describe('TX', function() {
 
         if (valid) {
           if (comments.indexOf('Coinbase') === 0) {
-            it(`should handle valid coinbase ${suffix}: ${comments}`, () => {
+            it(`should handle valid tx test ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(tx.isSane());
             });
@@ -282,7 +283,7 @@ describe('TX', function() {
           });
         } else {
           if (comments === 'Duplicate inputs') {
-            it(`should handle duplicate input test ${suffix}: ${comments}`, () => {
+            it(`should handle invalid tx test ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
@@ -290,7 +291,7 @@ describe('TX', function() {
             return;
           }
           if (comments === 'Negative output') {
-            it(`should handle invalid tx (negative) ${suffix}: ${comments}`, () => {
+            it(`should handle invalid tx test ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(tx.verify(view, flags));
               assert.ok(!tx.isSane());
@@ -298,7 +299,7 @@ describe('TX', function() {
             return;
           }
           if (comments.indexOf('Coinbase') === 0) {
-            it(`should handle invalid coinbase ${suffix}: ${comments}`, () => {
+            it(`should handle invalid tx test ${suffix}: ${comments}`, () => {
               clearCache(tx, noCache);
               assert.ok(!tx.isSane());
             });
