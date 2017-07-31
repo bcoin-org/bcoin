@@ -29,9 +29,11 @@ const CoinEntry = require('../lib/coins/coinentry');
 const UndoCoins = require('../lib/coins/undocoins');
 const Block = require('../lib/primitives/block');
 const LDB = require('../lib/db/ldb');
+const LRU = require('../lib/utils/lru');
 
 const file = process.argv[2].replace(/\.ldb\/?$/, '');
 const shouldPrune = process.argv.indexOf('--prune') !== -1;
+let hasIndex = false;
 
 const db = LDB({
   location: file,
@@ -54,6 +56,7 @@ const STATE_FINAL = 4;
 const STATE_DONE = 5;
 
 const metaCache = new Map();
+const lruCache = new LRU(200000);
 
 function writeJournal(batch, state, hash) {
   const data = Buffer.allocUnsafe(34);
@@ -127,6 +130,7 @@ async function reserializeUndo(hash) {
   const height = tip.height;
   let pruning = false;
   let total = 0;
+  let totalCoins = 0;
 
   if (hash !== encoding.NULL_HASH)
     tip = await getEntry(hash);
@@ -136,16 +140,23 @@ async function reserializeUndo(hash) {
   while (tip.height !== 0) {
     if (shouldPrune) {
       if (tip.height < height - 288) {
+        console.log('Pruning block %s (%d).',
+          util.revHex(tip.hash), tip.height);
+
         batch.del(pair('u', tip.hash));
         batch.del(pair('b', tip.hash));
+
         if (!pruning) {
-          console.log('Reserialized %d undo coins.', total);
+          console.log(
+            'Reserialized %d undo records (%d coins).',
+            total, totalCoins);
           writeJournal(batch, STATE_UNDO, tip.prevBlock);
           await batch.write();
           metaCache.clear();
           batch = db.batch();
           pruning = true;
         }
+
         tip = await getEntry(tip.prevBlock);
         assert(tip);
         continue;
@@ -171,6 +182,10 @@ async function reserializeUndo(hash) {
     const old = OldUndoCoins.fromRaw(undoData);
     const undo = new UndoCoins();
 
+    console.log(
+      'Reserializing coins for block %s (%d).',
+      util.revHex(tip.hash), tip.height);
+
     for (let i = block.txs.length - 1; i >= 1; i--) {
       const tx = block.txs[i];
       for (let j = tx.inputs.length - 1; j >= 0; j--) {
@@ -192,13 +207,18 @@ async function reserializeUndo(hash) {
         item.raw = null;
 
         // Store an index of heights and versions for later.
+        const meta = [version, height];
+
         if (write) {
           const data = Buffer.allocUnsafe(8);
           data.writeUInt32LE(version, 0, true);
           data.writeUInt32LE(height, 4, true);
           batch.put(pair(0x01, prevout.hash), data);
-          metaCache.set(prevout.hash, [version, height]);
+          metaCache.set(prevout.hash, meta);
         }
+
+        if (!lruCache.has(prevout.hash))
+          lruCache.set(prevout.hash, meta);
 
         undo.items.push(item);
       }
@@ -207,10 +227,14 @@ async function reserializeUndo(hash) {
     // We need to reverse everything.
     undo.items.reverse();
 
+    totalCoins += undo.items.length;
+
     batch.put(pair('u', tip.hash), undo.toRaw());
 
     if (++total % 1000 === 0) {
-      console.log('Reserialized %d undo coins.', total);
+      console.log(
+        'Reserialized %d undo records (%d coins).',
+        total, totalCoins);
       writeJournal(batch, STATE_UNDO, tip.prevBlock);
       await batch.write();
       metaCache.clear();
@@ -224,8 +248,11 @@ async function reserializeUndo(hash) {
   await batch.write();
 
   metaCache.clear();
+  lruCache.reset();
 
-  console.log('Reserialized %d undo coins.', total);
+  console.log(
+    'Reserialized %d undo records (%d coins).',
+    total, totalCoins);
 
   return [STATE_CLEANUP, encoding.NULL_HASH];
 }
@@ -427,20 +454,39 @@ async function getMeta(coin, prevout) {
   // Case 1: Undo coin is the last spend.
   if (coin.height !== -1) {
     assert(coin.version !== -1);
-    return [coin.version, coin.height, true];
+    return [coin.version, coin.height, hasIndex ? false : true];
   }
 
-  // Case 2: We have previously cached
-  // this coin's metadata, but it's not
-  // written yet.
-  const item = metaCache.get(prevout.hash);
+  // Case 2: The item is still in the LRU cache.
+  let item = lruCache.get(prevout.hash);
 
   if (item) {
     const [version, height] = item;
     return [version, height, false];
   }
 
-  // Case 3: We have previously cached
+  // Case 3: The database has a tx-index. We
+  // can just hit that instead of reindexing.
+  if (hasIndex) {
+    const data = await db.get(pair('t', prevout.hash));
+    assert(data);
+    assert(data[data.length - 45] === 1);
+    const version = data.readUInt32LE(0, true);
+    const height = data.readUInt32LE(data.length - 12, true);
+    return [version, height, false];
+  }
+
+  // Case 4: We have previously cached
+  // this coin's metadata, but it's not
+  // written yet.
+  item = metaCache.get(prevout.hash);
+
+  if (item) {
+    const [version, height] = item;
+    return [version, height, false];
+  }
+
+  // Case 5: We have previously cached
   // this coin's metadata, and it is
   // written.
   let data = await db.get(pair(0x01, prevout.hash));
@@ -451,7 +497,7 @@ async function getMeta(coin, prevout) {
     return [version, height, false];
   }
 
-  // Case 4: The coin's metadata is
+  // Case 6: The coin's metadata is
   // still in the top-level UTXO set.
   data = await db.get(pair('c', prevout.hash));
   assert(data);
@@ -490,6 +536,12 @@ async function isSPV() {
   const data = await db.get('O');
   assert(data);
   return (data.readUInt32LE(4) & 1) !== 0;
+}
+
+async function isIndexed() {
+  const data = await db.get('O');
+  assert(data);
+  return (data.readUInt32LE(4) & 8) !== 0;
 }
 
 async function isMainChain(entry, tip) {
@@ -576,6 +628,9 @@ reserializeEntries;
 
   if ((await isPruned()) && shouldPrune)
     throw new Error('Database is already pruned.');
+
+  if (await isIndexed())
+    hasIndex = true;
 
   console.log('Starting migration in 3 seconds...');
   console.log('If you crash you can start over.');
