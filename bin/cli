@@ -173,7 +173,7 @@ CLI.prototype.getBlock = async function getBlock() {
   let hash = this.config.str(0);
 
   if (hash.length !== 64)
-    hash = +hash;
+    hash = parseInt(hash, 10);
 
   const block = await this.client.getBlock(hash);
 
@@ -386,7 +386,7 @@ CLI.prototype.reset = async function reset() {
   let hash = this.config.str(0);
 
   if (hash.length !== 64)
-    hash = +hash;
+    hash = parseInt(hash, 10);
 
   await this.client.reset(hash);
 

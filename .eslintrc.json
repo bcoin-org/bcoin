@@ -52,7 +52,7 @@
     "no-extra-semi": "off",
     "no-fallthrough": "off",
     "no-func-assign": "off",
-    "no-implicit-coercion": "off",
+    "no-implicit-coercion": "error",
     "no-multi-assign": "error",
     "no-multiple-empty-lines": ["error", {
       "max": 1
