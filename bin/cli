@@ -25,7 +25,7 @@ function CLI() {
 CLI.prototype.log = function log(json) {
   if (typeof json === 'string')
     return console.log.apply(console, arguments);
-  console.log(JSON.stringify(json, null, 2));
+  return console.log(JSON.stringify(json, null, 2));
 };
 
 CLI.prototype.getInfo = async function getInfo() {
@@ -491,81 +491,113 @@ CLI.prototype.handleWallet = async function handleWallet() {
 
   switch (this.argv.shift()) {
     case 'listen':
-      return await this.listenWallet();
+      await this.listenWallet();
+      break;
     case 'get':
-      return await this.getWallet();
+      await this.getWallet();
+      break;
     case 'master':
-      return await this.getMaster();
+      await this.getMaster();
+      break;
     case 'shared':
       if (this.argv[0] === 'add') {
         this.argv.shift();
-        return await this.addSharedKey();
+        await this.addSharedKey();
+        break;
       }
       if (this.argv[0] === 'remove') {
         this.argv.shift();
-        return await this.removeSharedKey();
+        await this.removeSharedKey();
+        break;
       }
       if (this.argv[0] === 'list')
         this.argv.shift();
-      return await this.getSharedKeys();
+      await this.getSharedKeys();
+      break;
     case 'balance':
-      return await this.getBalance();
+      await this.getBalance();
+      break;
     case 'history':
-      return await this.getWalletHistory();
+      await this.getWalletHistory();
+      break;
     case 'pending':
-      return await this.getWalletPending();
+      await this.getWalletPending();
+      break;
     case 'coins':
-      return await this.getWalletCoins();
+      await this.getWalletCoins();
+      break;
     case 'account':
       if (this.argv[0] === 'list') {
         this.argv.shift();
-        return await this.getAccounts();
+        await this.getAccounts();
+        break;
       }
       if (this.argv[0] === 'create') {
         this.argv.shift();
-        return await this.createAccount();
+        await this.createAccount();
+        break;
       }
       if (this.argv[0] === 'get')
         this.argv.shift();
-      return await this.getAccount();
+      await this.getAccount();
+      break;
     case 'address':
-      return await this.createAddress();
+      await this.createAddress();
+      break;
     case 'change':
-      return await this.createChange();
+      await this.createChange();
+      break;
     case 'nested':
-      return await this.createNested();
+      await this.createNested();
+      break;
     case 'retoken':
-      return await this.retoken();
+      await this.retoken();
+      break;
     case 'sign':
-      return await this.signTX();
+      await this.signTX();
+      break;
     case 'mktx':
-      return await this.createTX();
+      await this.createTX();
+      break;
     case 'send':
-      return await this.sendTX();
+      await this.sendTX();
+      break;
     case 'zap':
-      return await this.zapWallet();
+      await this.zapWallet();
+      break;
     case 'tx':
-      return await this.getDetails();
+      await this.getDetails();
+      break;
     case 'blocks':
-      return await this.getWalletBlocks();
+      await this.getWalletBlocks();
+      break;
     case 'block':
-      return await this.getWalletBlock();
+      await this.getWalletBlock();
+      break;
     case 'view':
-      return await this.viewTX();
+      await this.viewTX();
+      break;
     case 'import':
-      return await this.importKey();
+      await this.importKey();
+      break;
     case 'watch':
-      return await this.importAddress();
+      await this.importAddress();
+      break;
     case 'key':
-      return await this.getKey();
+      await this.getKey();
+      break;
     case 'dump':
-      return await this.getWIF();
+      await this.getWIF();
+      break;
     case 'lock':
-      return await this.lock();
+      await this.lock();
+      break;
     case 'unlock':
-      return await this.unlock();
+      await this.unlock();
+      break;
     case 'resend':
-      return await this.resendWallet();
+      await this.resendWallet();
+      break;
     default:
       this.log('Unrecognized command.');
       this.log('Commands:');
@@ -603,7 +635,7 @@ CLI.prototype.handleWallet = async function handleWallet() {
       this.log('Other Options:');
       this.log('  --passphrase [passphrase]: For signing and account creation.');
       this.log('  --account [account-name]: Account name.');
-      return;
+      break;
   }
 };
 
@@ -616,31 +648,44 @@ CLI.prototype.handleNode = async function handleNode() {
 
   switch (this.argv.shift()) {
     case 'info':
-      return await this.getInfo();
+      await this.getInfo();
+      break;
     case 'wallets':
-      return await this.getWallets();
+      await this.getWallets();
+      break;
     case 'mkwallet':
-      return await this.createWallet();
+      await this.createWallet();
+      break;
     case 'broadcast':
-      return await this.broadcast();
+      await this.broadcast();
+      break;
     case 'mempool':
-      return await this.getMempool();
+      await this.getMempool();
+      break;
     case 'tx':
-      return await this.getTX();
+      await this.getTX();
+      break;
     case 'coin':
-      return await this.getCoin();
+      await this.getCoin();
+      break;
     case 'block':
-      return await this.getBlock();
+      await this.getBlock();
+      break;
     case 'rescan':
-      return await this.rescan();
+      await this.rescan();
+      break;
     case 'reset':
-      return await this.reset();
+      await this.reset();
+      break;
     case 'resend':
-      return await this.resend();
+      await this.resend();
+      break;
     case 'backup':
-      return await this.backup();
+      await this.backup();
+      break;
     case 'rpc':
-      return await this.rpc();
+      await this.rpc();
+      break;
     default:
       this.log('Unrecognized command.');
       this.log('Commands:');
@@ -657,7 +702,7 @@ CLI.prototype.handleNode = async function handleNode() {
       this.log('  $ resend: Resend pending transactions.');
       this.log('  $ backup [path]: Backup the wallet db.');
       this.log('  $ rpc [command] [args]: Execute RPC command.');
-      return;
+      break;
   }
 };
 
@@ -668,29 +713,33 @@ CLI.prototype.open = async function open() {
       this.argv.shift();
       if (this.argv[0] === 'create') {
         this.argv[0] = 'mkwallet';
-        return await this.handleNode();
+        await this.handleNode();
+        break;
       }
-      return await this.handleWallet();
+      await this.handleWallet();
+      break;
     default:
-      return await this.handleNode();
+      await this.handleNode();
+      break;
   }
 };
 
 CLI.prototype.destroy = function destroy() {
   if (this.wallet)
     this.wallet.client.destroy();
+
   if (this.client)
     this.client.destroy();
+
   return Promise.resolve();
 };
 
-async function main() {
+(async () => {
   const cli = new CLI();
   await cli.open();
   await cli.destroy();
-}
-
-main().then(process.exit).catch((err) => {
-  console.error(err.stack + '');
-  return process.exit(1);
+  process.exit(0);
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
 });

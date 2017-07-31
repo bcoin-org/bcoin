@@ -541,7 +541,7 @@ function entryToRaw(entry, main) {
 function write(data, str, off) {
   if (Buffer.isBuffer(str))
     return str.copy(data, off);
-  data.write(str, off, 'hex');
+  return data.write(str, off, 'hex');
 }
 
 function pair(prefix, hash) {

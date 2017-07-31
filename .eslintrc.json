@@ -8,7 +8,7 @@
     "ecmaVersion": 8
   },
   "rules": {
-    "consistent-return": "off",
+    "consistent-return": "error",
     "func-name-matching": "off",
     "indent": ["error", 2, {
       "SwitchCase": 1,

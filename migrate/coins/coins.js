@@ -4,6 +4,8 @@
  * https://github.com/bcoin-org/bcoin
  */
 
+/* eslint-disable */
+
 'use strict';
 
 const assert = require('assert');

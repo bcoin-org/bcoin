@@ -1,6 +1,5 @@
 'use strict';
 
-const assert = require('assert');
 const util = require('../lib/utils/util');
 const Script = require('../lib/script/script');
 const Stack = require('../lib/script/stack');
@@ -173,7 +172,7 @@ function randomRedeem() {
     case 4:
       return randomProgram();
   }
-  assert(false);
+  throw new Error();
 }
 
 function randomScript() {
@@ -193,7 +192,7 @@ function randomScript() {
     case 6:
       return randomProgram();
   }
-  assert(false);
+  throw new Error();
 }
 
 function randomPubkeyContext() {
@@ -269,7 +268,7 @@ function randomContext() {
     case 5:
       return randomWitnessNestedContext();
   }
-  assert(false);
+  throw new Error();
 }
 
 function fuzzSimple(flags) {
@@ -434,11 +433,14 @@ function main() {
 
   switch (process.argv[2]) {
     case 'simple':
-      return fuzzSimple(flags);
+      fuzzSimple(flags);
+      break;
     case 'verify':
-      return fuzzVerify(flags);
+      fuzzVerify(flags);
+      break;
     case 'less':
-      return fuzzLess(flags);
+      fuzzLess(flags);
+      break;
     default:
       util.log('Please select a mode:');
       util.log('simple, verify, less');
