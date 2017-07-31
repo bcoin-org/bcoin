@@ -162,7 +162,7 @@ async function reserializeUndo(hash) {
     }
 
     if (!blockData) {
-      if (!(await isPruned()))
+      if (!await isPruned())
         throw new Error(`Block not found: ${tip.hash}.`);
       break;
     }

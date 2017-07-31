@@ -93,7 +93,7 @@ describe('Node', function() {
       assert(tip1);
       assert(tip2);
 
-      assert(!(await tip2.isMainChain()));
+      assert(!await tip2.isMainChain());
 
       await co.wait();
     }

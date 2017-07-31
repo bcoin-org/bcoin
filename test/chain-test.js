@@ -137,7 +137,7 @@ describe('Chain', function() {
       assert(tip1);
       assert(tip2);
 
-      assert(!(await tip2.isMainChain()));
+      assert(!await tip2.isMainChain());
     }
   });
 
