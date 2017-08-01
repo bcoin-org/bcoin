@@ -18,16 +18,14 @@ function NodeContext(network, size) {
 };
 
 NodeContext.prototype.init = function init() {
-  let i, port, last, node;
-
-  for (i = 0; i < this.size; i++) {
-    port = this.network.port + i;
-    last = port - 1;
+  for (let i = 0; i < this.size; i++) {
+    const port = this.network.port + i;
+    let last = port - 1;
 
     if (last < this.network.port)
       last = port;
 
-    node = new FullNode({
+    const node = new FullNode({
       network: this.network,
       db: 'memory',
       logger: new Logger({
@@ -80,10 +78,8 @@ NodeContext.prototype.connect = async function connect() {
 };
 
 NodeContext.prototype.disconnect = async function disconnect() {
-  let i, node;
-
-  for (i = this.nodes.length - 1; i >= 0; i--) {
-    node = this.nodes[i];
+  for (let i = this.nodes.length - 1; i >= 0; i--) {
+    const node = this.nodes[i];
     await node.disconnect();
     await co.timeout(1000);
   }
@@ -104,12 +100,11 @@ NodeContext.prototype.stopSync = function stopSync() {
 
 NodeContext.prototype.generate = async function generate(index, blocks) {
   const node = this.nodes[index];
-  let i, block;
 
   assert(node);
 
-  for (i = 0; i < blocks; i++) {
-    block = await node.miner.mineBlock();
+  for (let i = 0; i < blocks; i++) {
+    const block = await node.miner.mineBlock();
     await node.chain.add(block);
   }
 };

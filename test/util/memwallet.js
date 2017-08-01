@@ -134,19 +134,21 @@ MemWallet.prototype.derivePath = function derivePath(path) {
 MemWallet.prototype.deriveKey = function deriveKey(branch, index) {
   let key = this.master.deriveBIP44(this.account);
   key = key.derive(branch).derive(index);
-  key = new KeyRing({
+  const ring = new KeyRing({
     network: this.network,
     privateKey: key.privateKey,
     witness: this.witness
   });
-  key.witness = this.witness;
-  return key;
+  ring.witness = this.witness;
+  return ring;
 };
 
 MemWallet.prototype.getKey = function getKey(hash) {
   const path = this.paths.get(hash);
+
   if (!path)
     return null;
+
   return this.derivePath(path);
 };
 
@@ -226,17 +228,15 @@ MemWallet.prototype.syncKey = function syncKey(path) {
 MemWallet.prototype.addBlock = function addBlock(entry, txs) {
   let i, tx;
 
-  for (i = 0; i < txs.length; i++) {
-    tx = txs[i];
+  for (let i = 0; i < txs.length; i++) {
+    const tx = txs[i];
     this.addTX(tx, entry.height);
   }
 };
 
 MemWallet.prototype.removeBlock = function removeBlock(entry, txs) {
-  let i, tx;
-
-  for (i = txs.length - 1; i >= 0; i--) {
-    tx = txs[i];
+  for (let i = txs.length - 1; i >= 0; i--) {
+    const tx = txs[i];
     this.removeTX(tx, entry.height);
   }
 };
@@ -244,7 +244,6 @@ MemWallet.prototype.removeBlock = function removeBlock(entry, txs) {
 MemWallet.prototype.addTX = function addTX(tx, height) {
   const hash = tx.hash('hex');
   let result = false;
-  let i, op, path, addr, coin, input, output;
 
   if (height == null)
     height = -1;
@@ -252,10 +251,10 @@ MemWallet.prototype.addTX = function addTX(tx, height) {
   if (this.map.has(hash))
     return true;
 
-  for (i = 0; i < tx.inputs.length; i++) {
-    input = tx.inputs[i];
-    op = input.prevout.toKey();
-    coin = this.getCoin(op);
+  for (let i = 0; i < tx.inputs.length; i++) {
+    const input = tx.inputs[i];
+    const op = input.prevout.toKey();
+    const coin = this.getCoin(op);
 
     if (!coin)
       continue;
@@ -265,20 +264,21 @@ MemWallet.prototype.addTX = function addTX(tx, height) {
     this.removeCoin(op);
   }
 
-  for (i = 0; i < tx.outputs.length; i++) {
-    output = tx.outputs[i];
-    addr = output.getHash('hex');
+  for (let i = 0; i < tx.outputs.length; i++) {
+    const output = tx.outputs[i];
+    const addr = output.getHash('hex');
 
     if (!addr)
       continue;
 
-    path = this.getPath(addr);
+    const path = this.getPath(addr);
 
     if (!path)
       continue;
 
     result = true;
-    coin = Coin.fromTX(tx, i, height);
+
+    const coin = Coin.fromTX(tx, i, height);
 
     this.addCoin(coin);
     this.syncKey(path);
@@ -295,14 +295,13 @@ MemWallet.prototype.addTX = function addTX(tx, height) {
 MemWallet.prototype.removeTX = function removeTX(tx, height) {
   const hash = tx.hash('hex');
   let result = false;
-  let i, op, coin, input;
 
   if (!this.map.has(hash))
     return false;
 
-  for (i = 0; i < tx.outputs.length; i++) {
-    op = Outpoint(hash, i).toKey();
-    coin = this.getCoin(op);
+  for (let i = 0; i < tx.outputs.length; i++) {
+    const op = Outpoint(hash, i).toKey();
+    const coin = this.getCoin(op);
 
     if (!coin)
       continue;
@@ -312,10 +311,10 @@ MemWallet.prototype.removeTX = function removeTX(tx, height) {
     this.removeCoin(op);
   }
 
-  for (i = 0; i < tx.inputs.length; i++) {
-    input = tx.inputs[i];
-    op = input.prevout.toKey();
-    coin = this.getUndo(op);
+  for (let i = 0; i < tx.inputs.length; i++) {
+    const input = tx.inputs[i];
+    const op = input.prevout.toKey();
+    const coin = this.getUndo(op);
 
     if (!coin)
       continue;
@@ -335,26 +334,25 @@ MemWallet.prototype.removeTX = function removeTX(tx, height) {
 
 MemWallet.prototype.deriveInputs = function deriveInputs(mtx) {
   const keys = [];
-  let i, input, coin, addr, path, key;
 
-  for (i = 0; i < mtx.inputs.length; i++) {
-    input = mtx.inputs[i];
-    coin = mtx.view.getOutputFor(input);
+  for (let i = 0; i < mtx.inputs.length; i++) {
+    const input = mtx.inputs[i];
+    const coin = mtx.view.getOutputFor(input);
 
     if (!coin)
       continue;
 
-    addr = coin.getHash('hex');
+    const addr = coin.getHash('hex');
 
     if (!addr)
       continue;
 
-    path = this.getPath(addr);
+    const path = this.getPath(addr);
 
     if (!path)
       continue;
 
-    key = this.derivePath(path);
+    const key = this.derivePath(path);
 
     keys.push(key);
   }

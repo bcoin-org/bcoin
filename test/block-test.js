@@ -22,14 +22,13 @@ const CompactBlock = bip152.CompactBlock;
 const TXRequest = bip152.TXRequest;
 const TXResponse = bip152.TXResponse;
 
-const block300025 = require('./data/block300025.json');
-const cmpct2block = fs.readFileSync(`${__dirname}/data/cmpct2.bin`);
+const block300025 = fs.readFileSync(`${__dirname}/data/block300025.raw`);
+const undo300025 = fs.readFileSync(`${__dirname}/data/undo300025.raw`);
 
-let cmpct1 = fs.readFileSync(`${__dirname}/data/compactblock.hex`, 'utf8');
-let cmpct2 = fs.readFileSync(`${__dirname}/data/cmpct2`, 'utf8');
-
-cmpct1 = cmpct1.trim().split('\n');
-cmpct2 = cmpct2.trim();
+const cmpct1 = fs.readFileSync(`${__dirname}/data/compact1.raw`);
+const cmpct1block = fs.readFileSync(`${__dirname}/data/compact1-block.raw`);
+const cmpct2 = fs.readFileSync(`${__dirname}/data/compact2.raw`);
+const cmpct2block = fs.readFileSync(`${__dirname}/data/compact2-block.raw`);
 
 function parseUndo(data) {
   const br = new BufferReader(data);
@@ -102,7 +101,7 @@ describe('Block', function() {
 
   mblock = MerkleBlock.fromRaw(raw2, 'hex');
 
-  const block = Block.fromJSON(block300025);
+  const block = Block.fromRaw(block300025);
 
   this.timeout(10000);
 
@@ -169,7 +168,7 @@ describe('Block', function() {
   });
 
   it('should parse JSON', () => {
-    const block = Block.fromJSON(block300025);
+    const block = Block.fromJSON(Block.fromRaw(block300025).toJSON());
     assert.equal(block.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.equal(block.rhash(),
@@ -195,19 +194,12 @@ describe('Block', function() {
   });
 
   it('should verify a historical block', () => {
-    const view = new CoinView();
-    const height = block300025.height;
+    const block = Block.fromRaw(block300025);
+    const undo = parseUndo(undo300025);
+    const view = applyUndo(block, undo);
+    const height = 300025;
     let sigops = 0;
     let reward = 0;
-
-    for (let i = 1; i < block300025.txs.length; i++) {
-      const tx = block300025.txs[i];
-      for (let j = 0; j < tx.inputs.length; j++) {
-        const input = tx.inputs[j];
-        const coin = Coin.fromJSON(input.coin);
-        view.addCoin(coin);
-      }
-    }
 
     assert(block.verify());
     assert(block.txs[0].isCoinbase());
@@ -289,15 +281,15 @@ describe('Block', function() {
   });
 
   it('should handle compact block', () => {
-    const block = Block.fromRaw(cmpct1[1], 'hex');
-    const cblock1 = CompactBlock.fromRaw(cmpct1[0], 'hex');
+    const block = Block.fromRaw(cmpct1block);
+    const cblock1 = CompactBlock.fromRaw(cmpct1);
     const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
 
-    assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
-    assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
+    assert.deepEqual(cblock1.toRaw(), cmpct1);
+    assert.deepEqual(cblock2.toRaw(), cmpct1);
 
     for (let i = 0; i < block.txs.length; i++) {
       const tx = block.txs[i];
@@ -322,15 +314,15 @@ describe('Block', function() {
   });
 
   it('should handle half-full compact block', () => {
-    const block = Block.fromRaw(cmpct1[1], 'hex');
-    const cblock1 = CompactBlock.fromRaw(cmpct1[0], 'hex');
+    const block = Block.fromRaw(cmpct1block);
+    const cblock1 = CompactBlock.fromRaw(cmpct1);
     const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
 
-    assert.equal(cblock1.toRaw().toString('hex'), cmpct1[0]);
-    assert.equal(cblock2.toRaw().toString('hex'), cmpct1[0]);
+    assert.deepEqual(cblock1.toRaw(), cmpct1);
+    assert.deepEqual(cblock2.toRaw(), cmpct1);
 
     for (let i = 0; i < block.txs.length >>> 1; i++) {
       const tx = block.txs[i];
@@ -370,14 +362,14 @@ describe('Block', function() {
 
   it('should handle compact block', () => {
     const block = Block.fromRaw(cmpct2block);
-    const cblock1 = CompactBlock.fromRaw(cmpct2, 'hex');
+    const cblock1 = CompactBlock.fromRaw(cmpct2);
     const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
 
-    assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
-    assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
+    assert.deepEqual(cblock1.toRaw(), cmpct2);
+    assert.deepEqual(cblock2.toRaw(), cmpct2);
 
     for (let i = 0; i < block.txs.length; i++) {
       const tx = block.txs[i];
@@ -401,14 +393,14 @@ describe('Block', function() {
 
   it('should handle half-full compact block', () => {
     const block = Block.fromRaw(cmpct2block);
-    const cblock1 = CompactBlock.fromRaw(cmpct2, 'hex');
+    const cblock1 = CompactBlock.fromRaw(cmpct2);
     const cblock2 = CompactBlock.fromBlock(block, false, cblock1.keyNonce);
     const map = new Map();
 
     assert(cblock1.init());
 
-    assert.equal(cblock1.toRaw().toString('hex'), cmpct2);
-    assert.equal(cblock2.toRaw().toString('hex'), cmpct2);
+    assert.deepEqual(cblock1.toRaw(), cmpct2);
+    assert.deepEqual(cblock2.toRaw(), cmpct2);
 
     for (let i = 0; i < block.txs.length >>> 1; i++) {
       const tx = block.txs[i];

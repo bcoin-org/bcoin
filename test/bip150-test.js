@@ -113,8 +113,8 @@ describe('BIP150', function() {
   });
 
   it('client should rekey', () => {
-    let rekeyed = false;
     const bytes = client.output.processed;
+    let rekeyed = false;
 
     client.once('rekey', () => {
       rekeyed = true;
