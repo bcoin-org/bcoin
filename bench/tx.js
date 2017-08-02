@@ -1,3 +1,5 @@
+/* eslint max-len: "off" */
+
 'use strict';
 
 const fs = require('fs');
@@ -6,42 +8,23 @@ const Address = require('../lib/primitives/address');
 const TX = require('../lib/primitives/tx');
 const Script = require('../lib/script/script');
 const MTX = require('../lib/primitives/mtx');
-const Coin = require('../lib/primitives/coin');
-const CoinView = require('../lib/coins/coinview');
 const encoding = require('../lib/utils/encoding');
 const random = require('../lib/crypto/random');
+const common = require('../test/util/common');
 const bench = require('./bench');
 
-const json = require('../test/data/block300025.json');
-const block = Block.fromJSON(json);
-const btx = { tx: block.txs[397], view: new CoinView() };
+const block300025 = fs.readFileSync(`${__dirname}/../test/data/block300025.raw`);
+const undo300025 = fs.readFileSync(`${__dirname}/../test/data/undo300025.raw`);
+const block = Block.fromRaw(block300025);
+const undo = common.parseUndo(undo300025);
+const btx = {
+  tx: block.txs[397],
+  view: common.applyUndo(block, undo)
+};
 
-const tx3 = parseTX('../test/data/tx3.hex');
-const hex = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
-const raw = Buffer.from(hex.trim(), 'hex');
-const tx = TX.fromRaw(raw);
-
-{
-  const tx = json.txs[397];
-  for (const input of tx.inputs)
-    btx.view.addCoin(Coin.fromJSON(input.coin));
-}
-
-function parseTX(file) {
-  const data = fs.readFileSync(`${__dirname}/${file}`, 'utf8');
-  const parts = data.trim().split(/\n+/);
-  const raw = parts[0];
-  const tx = TX.fromRaw(raw.trim(), 'hex');
-  const view = new CoinView();
-
-  for (let i = 1; i < parts.length; i++) {
-    const raw = parts[i];
-    const prev = TX.fromRaw(raw.trim(), 'hex');
-    view.addTX(prev, -1);
-  }
-
-  return { tx: tx, view: view };
-}
+const tx3 = common.parseTX('data/tx3.hex');
+const tx5 = common.parseTX('data/tx5.hex');
+const raw = tx5.tx.toRaw();
 
 {
   const end = bench('parse');
@@ -53,8 +36,8 @@ function parseTX(file) {
 {
   const end = bench('serialize');
   for (let i = 0; i < 1000; i++) {
-    tx._raw = null;
-    tx.toRaw();
+    tx5.tx._raw = null;
+    tx5.tx.toRaw();
   }
   end(1000);
 }
@@ -71,8 +54,8 @@ function parseTX(file) {
 {
   const end = bench('witness hash');
   for (let i = 0; i < 3000; i++) {
-    tx.witnessHash();
-    tx._whash = null;
+    tx5.tx.witnessHash();
+    tx5.tx._whash = null;
   }
   end(3000);
 }
@@ -80,28 +63,28 @@ function parseTX(file) {
 {
   const end = bench('sanity');
   for (let i = 0; i < 1000; i++)
-    tx.isSane();
+    tx5.tx.isSane();
   end(1000);
 }
 
 {
   const end = bench('input hashes');
   for (let i = 0; i < 1000; i++)
-    tx.getInputHashes(null, 'hex');
+    tx5.tx.getInputHashes(null, 'hex');
   end(1000);
 }
 
 {
   const end = bench('output hashes');
   for (let i = 0; i < 1000; i++)
-    tx.getOutputHashes('hex');
+    tx5.tx.getOutputHashes('hex');
   end(1000);
 }
 
 {
   const end = bench('all hashes');
   for (let i = 0; i < 1000; i++)
-    tx.getHashes(null, 'hex');
+    tx5.tx.getHashes(null, 'hex');
   end(1000);
 }
 

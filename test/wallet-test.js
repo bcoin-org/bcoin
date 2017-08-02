@@ -25,8 +25,8 @@ const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
 const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
-let globalHeight = 1;
 const globalTime = util.now();
+let globalHeight = 1;
 
 function nextBlock(height) {
   if (height == null)
@@ -54,14 +54,14 @@ function dummy(hash) {
 }
 
 describe('Wallet', function() {
-  let wallet, ewallet, ekey;
-  let doubleSpendWallet, doubleSpend;
-
   const wdb = new WalletDB({
     name: 'wallet-test',
     db: 'memory',
     verify: true
   });
+
+  let wallet, ewallet, ekey;
+  let doubleSpendWallet, doubleSpend;
 
   this.timeout(5000);
 

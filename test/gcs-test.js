@@ -17,7 +17,6 @@ const block = Block.fromRaw(raw);
 describe('GCS', function() {
   const key = random.randomBytes(16);
   const P = 20;
-  let filter1, filter2, filter3, filter4, filter5;
 
   const contents1 = [
     Buffer.from('Alex', 'ascii'),
@@ -77,6 +76,8 @@ describe('GCS', function() {
 
   const addr1 = new Address('bc1qmyrddmxglk49ye2wd29wefaavw7es8k5d555lx');
   const addr2 = new Address('bc1q4645ycu0l9pnvxaxnhemushv0w4cd9flkqh95j');
+
+  let filter1, filter2, filter3, filter4, filter5;
 
   it('should test GCS filter build', () => {
     filter1 = GCSFilter.fromItems(P, key, contents1);

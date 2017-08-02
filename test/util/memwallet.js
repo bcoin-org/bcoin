@@ -226,8 +226,6 @@ MemWallet.prototype.syncKey = function syncKey(path) {
 };
 
 MemWallet.prototype.addBlock = function addBlock(entry, txs) {
-  let i, tx;
-
   for (let i = 0; i < txs.length; i++) {
     const tx = txs[i];
     this.addTX(tx, entry.height);

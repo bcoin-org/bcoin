@@ -10,64 +10,59 @@ const AEAD = require('../lib/crypto/aead');
 
 describe('ChaCha20 / Poly1305 / AEAD', function() {
   function testChaCha(options) {
-    let key = options.key;
-    let nonce = options.nonce;
-    let plain = options.plain;
-    let ciphertext = options.ciphertext;
+    const key = Buffer.from(options.key, 'hex');
+    const nonce = Buffer.from(options.nonce, 'hex');
+    const plain = Buffer.from(options.plain, 'hex');
+    const ciphertext = Buffer.from(options.ciphertext, 'hex');
     const counter = options.counter;
 
-    key = Buffer.from(key, 'hex');
-    nonce = Buffer.from(nonce, 'hex');
-    plain = Buffer.from(plain, 'hex');
-    ciphertext = Buffer.from(ciphertext, 'hex');
+    {
+      const chacha = new ChaCha20();
+      chacha.init(key, nonce, counter);
+      const plainenc = Buffer.from(plain);
+      chacha.encrypt(plainenc);
+      assert.deepEqual(plainenc, ciphertext);
+    }
 
-    let chacha = new ChaCha20();
-    chacha.init(key, nonce, counter);
-    const plainenc = Buffer.from(plain);
-    chacha.encrypt(plainenc);
-    assert.deepEqual(plainenc, ciphertext);
-
-    chacha = new ChaCha20();
-    chacha.init(key, nonce, counter);
-    chacha.encrypt(ciphertext);
-    assert.deepEqual(plain, ciphertext);
+    {
+      const chacha = new ChaCha20();
+      chacha.init(key, nonce, counter);
+      chacha.encrypt(ciphertext);
+      assert.deepEqual(plain, ciphertext);
+    }
   }
 
   function testAEAD(options) {
-    let plain = options.plain;
-    let aad = options.aad;
-    let key = options.key;
-    let nonce = options.nonce;
-    let pk = options.pk;
-    let ciphertext = options.ciphertext;
-    let tag = options.tag;
+    const plain = Buffer.from(options.plain, 'hex');
+    const aad = Buffer.from(options.aad, 'hex');
+    const key = Buffer.from(options.key, 'hex');
+    const nonce = Buffer.from(options.nonce, 'hex');
+    const pk = Buffer.from(options.pk, 'hex');
+    const ciphertext = Buffer.from(options.ciphertext, 'hex');
+    const tag = Buffer.from(options.tag, 'hex');
 
-    plain = Buffer.from(plain, 'hex');
-    aad = Buffer.from(aad, 'hex');
-    key = Buffer.from(key, 'hex');
-    nonce = Buffer.from(nonce, 'hex');
-    pk = Buffer.from(pk, 'hex');
-    ciphertext = Buffer.from(ciphertext, 'hex');
-    tag = Buffer.from(tag, 'hex');
+    {
+      const aead = new AEAD();
+      aead.init(key, nonce);
+      assert.equal(aead.chacha20.getCounter(), 1);
+      assert.deepEqual(aead.polyKey, pk);
+      aead.aad(aad);
+      const plainenc = Buffer.from(plain);
+      aead.encrypt(plainenc);
+      assert.deepEqual(plainenc, ciphertext);
+      assert.deepEqual(aead.finish(), tag);
+    }
 
-    let aead = new AEAD();
-    aead.init(key, nonce);
-    assert.equal(aead.chacha20.getCounter(), 1);
-    assert.deepEqual(aead.polyKey, pk);
-    aead.aad(aad);
-    const plainenc = Buffer.from(plain);
-    aead.encrypt(plainenc);
-    assert.deepEqual(plainenc, ciphertext);
-    assert.deepEqual(aead.finish(), tag);
-
-    aead = new AEAD();
-    aead.init(key, nonce);
-    assert.equal(aead.chacha20.getCounter(), 1);
-    assert.deepEqual(aead.polyKey, pk);
-    aead.aad(aad);
-    aead.decrypt(ciphertext);
-    assert.deepEqual(ciphertext, plain);
-    assert.deepEqual(aead.finish(), tag);
+    {
+      const aead = new AEAD();
+      aead.init(key, nonce);
+      assert.equal(aead.chacha20.getCounter(), 1);
+      assert.deepEqual(aead.polyKey, pk);
+      aead.aad(aad);
+      aead.decrypt(ciphertext);
+      assert.deepEqual(ciphertext, plain);
+      assert.deepEqual(aead.finish(), tag);
+    }
   }
 
   it('should perform chacha20', () => {
@@ -177,14 +172,13 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
   });
 
   it('should perform poly1305', () => {
-    let key = '85d6be7857556d337f4452fe42d506a'
-      + '80103808afb0db2fd4abff6af4149f51b';
-    let msg = 'Cryptographic Forum Research Group';
-    let tag = 'a8061dc1305136c6c22b8baf0c0127a9';
+    const key = Buffer.from(''
+      + '85d6be7857556d337f4452fe42d506a'
+      + '80103808afb0db2fd4abff6af4149f51b',
+      'hex');
 
-    key = Buffer.from(key, 'hex');
-    msg = Buffer.from(msg, 'ascii');
-    tag = Buffer.from(tag, 'hex');
+    const msg = Buffer.from('Cryptographic Forum Research Group', 'ascii');
+    const tag = Buffer.from('a8061dc1305136c6c22b8baf0c0127a9', 'hex');
 
     const mac = Poly1305.auth(msg, key);
     assert(Poly1305.verify(mac, tag));

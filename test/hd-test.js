@@ -21,7 +21,7 @@ function equal(a, b) {
 }
 
 describe('HD', function() {
-  let master, child1, child2, child3, child4, child5, child6;
+  let master, child;
 
   it('should create a pbkdf2 seed', () => {
     const seed = pbkdf2.derive(
@@ -30,42 +30,45 @@ describe('HD', function() {
   });
 
   it('should create master private key', () => {
-    master = HD.PrivateKey.fromSeed(Buffer.from(vectors.seed, 'hex'));
-    assert.equal(master.toBase58(), vectors.master_priv);
-    assert.equal(master.toPublic().toBase58(), vectors.master_pub);
+    const seed = Buffer.from(vectors.seed, 'hex');
+    const key = HD.PrivateKey.fromSeed(seed);
+    assert.equal(key.toBase58(), vectors.master_priv);
+    assert.equal(key.toPublic().toBase58(), vectors.master_pub);
+    master = key;
   });
 
   it('should derive(0) child from master', () => {
-    child1 = master.derive(0);
+    const child1 = master.derive(0);
     assert.equal(child1.toBase58(), vectors.child1_priv);
     assert.equal(child1.toPublic().toBase58(), vectors.child1_pub);
   });
 
   it('should derive(1) child from master public key', () => {
-    child2 = master.toPublic().derive(1);
+    const child2 = master.toPublic().derive(1);
     assert.equal(child2.toBase58(), vectors.child2_pub);
   });
 
   it('should derive(1) child from master', () => {
-    child3 = master.derive(1);
+    const child3 = master.derive(1);
     assert.equal(child3.toBase58(), vectors.child3_priv);
     assert.equal(child3.toPublic().toBase58(), vectors.child3_pub);
   });
 
   it('should derive(2) child from master', () => {
-    child4 = master.derive(2);
+    const child4 = master.derive(2);
     assert.equal(child4.toBase58(), vectors.child4_priv);
     assert.equal(child4.toPublic().toBase58(), vectors.child4_pub);
+    child = child4;
   });
 
   it('should derive(0) child from child(2)', () => {
-    child5 = child4.derive(0);
+    const child5 = child.derive(0);
     assert.equal(child5.toBase58(), vectors.child5_priv);
     assert.equal(child5.toPublic().toBase58(), vectors.child5_pub);
   });
 
   it('should derive(1) child from child(2)', () => {
-    child6 = child4.derive(1);
+    const child6 = child.derive(1);
     assert.equal(child6.toBase58(), vectors.child6_priv);
     assert.equal(child6.toPublic().toBase58(), vectors.child6_pub);
   });
@@ -94,7 +97,7 @@ describe('HD', function() {
     assert.equal(HD.fromJSON(key.toJSON()).toBase58(), key.toBase58());
   });
 
-  [vector1, vector2].forEach((vector) => {
+  for (const vector of [vector1, vector2]) {
     let master;
 
     it('should create from a seed', () => {
@@ -103,7 +106,7 @@ describe('HD', function() {
       equal(master.toPublic().toBase58(), vector.m.pub);
     });
 
-    Object.keys(vector).forEach((path) => {
+    for (const path of Object.keys(vector)) {
       const kp = vector[path];
 
       if (path === 'seed' || path === 'm')
@@ -114,6 +117,6 @@ describe('HD', function() {
         equal(key.toBase58(), kp.prv);
         equal(key.toPublic().toBase58(), kp.pub);
       });
-    });
-  });
+    }
+  }
 });

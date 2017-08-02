@@ -1,14 +1,11 @@
 'use strict';
 
-const fs = require('fs');
-const TX = require('../lib/primitives/tx');
 const BufferWriter = require('../lib/utils/writer');
 const StaticWriter = require('../lib/utils/staticwriter');
+const common = require('../test/util/common');
 const bench = require('./bench');
 
-const hex = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
-const raw = Buffer.from(hex.trim(), 'hex');
-const tx = TX.fromRaw(raw);
+const {tx} = common.parseTX('data/tx5.hex');
 
 {
   const end = bench('serialize (static-writer)');
@@ -16,7 +13,8 @@ const tx = TX.fromRaw(raw);
     tx.refresh();
     const {size} = tx.getWitnessSizes();
     const bw = new StaticWriter(size);
-    tx.toWitnessWriter(bw).render();
+    tx.toWitnessWriter(bw);
+    bw.render();
   }
   end(10000);
 }
@@ -26,7 +24,8 @@ const tx = TX.fromRaw(raw);
   for (let i = 0; i < 10000; i++) {
     tx.refresh();
     const bw = new BufferWriter();
-    tx.toWitnessWriter(bw).render();
+    tx.toWitnessWriter(bw);
+    bw.render();
   }
   end(10000);
 }

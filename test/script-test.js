@@ -11,7 +11,7 @@ const TX = require('../lib/primitives/tx');
 const encoding = require('../lib/utils/encoding');
 const opcodes = Script.opcodes;
 
-const scripts = require('./data/script_tests');
+const scripts = require('./data/script-tests.json');
 
 function success(res, stack) {
   if (!res)
@@ -24,6 +24,45 @@ function success(res, stack) {
     return false;
 
   return true;
+}
+
+function parseScriptTest(data) {
+  const witHex = Array.isArray(data[0]) ? data.shift() : [];
+  const inpHex = data[0] ? data[0].trim() : data[0] || '';
+  const outHex = data[1] ? data[1].trim() : data[1] || '';
+  const names = data[2] ? data[2].trim().split(/,\s*/) : [];
+  const expected = data[3] || '';
+  let comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
+
+  if (!comments)
+    comments = outHex.slice(0, 60);
+
+  comments += ` (${expected})`;
+
+  let amount = 0;
+  if (witHex.length !== 0)
+    amount = witHex.pop() * 1e8;
+
+  const witness = Witness.fromString(witHex);
+  const input = Script.fromString(inpHex);
+  const output = Script.fromString(outHex);
+
+  let flags = 0;
+  for (const name of names) {
+    const flag = `VERIFY_${name}`;
+    assert(Script.flags[flag] != null, 'Unknown flag.');
+    flags |= Script.flags[flag];
+  }
+
+  return {
+    witness: witness,
+    input: input,
+    output: output,
+    amount: amount,
+    flags: flags,
+    expected: expected,
+    comments: comments
+  };
 }
 
 describe('Script', function() {
@@ -67,97 +106,108 @@ describe('Script', function() {
   });
 
   it('should handle if statements correctly', () => {
-    let input = new Script([opcodes.OP_1, opcodes.OP_2]);
+    {
+      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
 
-    let output = new Script([
-      opcodes.OP_2,
-      opcodes.OP_EQUAL,
-      opcodes.OP_IF,
-      opcodes.OP_3,
-      opcodes.OP_ELSE,
-      opcodes.OP_4,
-      opcodes.OP_ENDIF,
-      opcodes.OP_5
-    ]);
+      const output = new Script([
+        opcodes.OP_2,
+        opcodes.OP_EQUAL,
+        opcodes.OP_IF,
+        opcodes.OP_3,
+        opcodes.OP_ELSE,
+        opcodes.OP_4,
+        opcodes.OP_ENDIF,
+        opcodes.OP_5
+      ]);
 
-    let stack = new Stack();
+      const stack = new Stack();
 
-    input.execute(stack);
+      input.execute(stack);
 
-    let res = output.execute(stack);
-    assert(res);
+      const res = output.execute(stack);
+      assert(res);
 
-    assert.deepEqual(stack.items, [[1], [3], [5]]);
+      assert.deepEqual(stack.items, [[1], [3], [5]]);
+    }
 
-    input = new Script([opcodes.OP_1, opcodes.OP_2]);
-    output = new Script([
-      opcodes.OP_9,
-      opcodes.OP_EQUAL,
-      opcodes.OP_IF,
-      opcodes.OP_3,
-      opcodes.OP_ELSE,
-      opcodes.OP_4,
-      opcodes.OP_ENDIF,
-      opcodes.OP_5
-    ]);
+    {
+      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const output = new Script([
+        opcodes.OP_9,
+        opcodes.OP_EQUAL,
+        opcodes.OP_IF,
+        opcodes.OP_3,
+        opcodes.OP_ELSE,
+        opcodes.OP_4,
+        opcodes.OP_ENDIF,
+        opcodes.OP_5
+      ]);
 
-    stack = new Stack();
-    input.execute(stack);
+      const stack = new Stack();
+      input.execute(stack);
 
-    res = output.execute(stack);
-    assert(res);
-    assert.deepEqual(stack.items, [[1], [4], [5]]);
+      const res = output.execute(stack);
+      assert(res);
+      assert.deepEqual(stack.items, [[1], [4], [5]]);
+    }
 
-    input = new Script([opcodes.OP_1, opcodes.OP_2]);
-    output = new Script([
-      opcodes.OP_2,
-      opcodes.OP_EQUAL,
-      opcodes.OP_IF,
-      opcodes.OP_3,
-      opcodes.OP_ENDIF,
-      opcodes.OP_5
-    ]);
+    {
+      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const output = new Script([
+        opcodes.OP_2,
+        opcodes.OP_EQUAL,
+        opcodes.OP_IF,
+        opcodes.OP_3,
+        opcodes.OP_ENDIF,
+        opcodes.OP_5
+      ]);
 
-    stack = new Stack();
+      const stack = new Stack();
 
-    input.execute(stack);
+      input.execute(stack);
 
-    res = output.execute(stack);
-    assert(res);
-    assert.deepEqual(stack.items, [[1], [3], [5]]);
+      const res = output.execute(stack);
+      assert(res);
+      assert.deepEqual(stack.items, [[1], [3], [5]]);
+    }
 
-    input = new Script([opcodes.OP_1, opcodes.OP_2]);
-    output = new Script([
-      opcodes.OP_9,
-      opcodes.OP_EQUAL,
-      opcodes.OP_IF,
-      opcodes.OP_3,
-      opcodes.OP_ENDIF,
-      opcodes.OP_5
-    ]);
+    {
+      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const output = new Script([
+        opcodes.OP_9,
+        opcodes.OP_EQUAL,
+        opcodes.OP_IF,
+        opcodes.OP_3,
+        opcodes.OP_ENDIF,
+        opcodes.OP_5
+      ]);
 
-    stack = new Stack();
-    input.execute(stack);
+      const stack = new Stack();
+      input.execute(stack);
 
-    res = output.execute(stack);
-    assert(res);
-    assert.deepEqual(stack.items, [[1], [5]]);
+      const res = output.execute(stack);
+      assert(res);
+      assert.deepEqual(stack.items, [[1], [5]]);
+    }
 
-    input = new Script([opcodes.OP_1, opcodes.OP_2]);
-    output = new Script([
-      opcodes.OP_9,
-      opcodes.OP_EQUAL,
-      opcodes.OP_NOTIF,
-      opcodes.OP_3,
-      opcodes.OP_ENDIF,
-      opcodes.OP_5
-    ]);
-    stack = new Stack();
-    input.execute(stack);
+    {
+      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const output = new Script([
+        opcodes.OP_9,
+        opcodes.OP_EQUAL,
+        opcodes.OP_NOTIF,
+        opcodes.OP_3,
+        opcodes.OP_ENDIF,
+        opcodes.OP_5
+      ]);
 
-    res = output.execute(stack);
-    assert(res);
-    assert.deepEqual(stack.items, [[1], [3], [5]]);
+      const stack = new Stack();
+      input.execute(stack);
+
+      const res = output.execute(stack);
+      assert(res);
+      assert.deepEqual(stack.items, [[1], [3], [5]]);
+    }
   });
 
   it('should handle CScriptNums correctly', () => {
@@ -221,39 +271,18 @@ describe('Script', function() {
     assert(success(output.execute(stack), stack));
   });
 
-  scripts.forEach((data) => {
-    let witness = Array.isArray(data[0]) ? data.shift() : [];
-    let input = data[0] ? data[0].trim() : data[0] || '';
-    let output = data[1] ? data[1].trim() : data[1] || '';
-    const names = data[2] ? data[2].trim().split(/,\s*/) : [];
-    const expected = data[3] || '';
-    let comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
-    let amount = 0;
-    let flags = 0;
-
+  for (const data of scripts) {
     if (data.length === 1)
-      return;
+      continue;
 
-    if (!comments)
-      comments = output.slice(0, 60);
+    const test = parseScriptTest(data);
+    const {witness, input, output} = test;
+    const {amount, flags} = test;
+    const {expected, comments} = test;
 
-    comments += ` (${expected})`;
-
-    if (witness.length !== 0)
-      amount = witness.pop() * 100000000;
-
-    witness = Witness.fromString(witness);
-    input = Script.fromString(input);
-    output = Script.fromString(output);
-
-    for (let name of names) {
-      name = `VERIFY_${name}`;
-      assert(Script.flags[name] != null, 'Unknown flag.');
-      flags |= Script.flags[name];
-    }
-
-    [false, true].forEach((noCache) => {
+    for (const noCache of [false, true]) {
       const suffix = noCache ? 'without cache' : 'with cache';
+
       it(`should handle script test ${suffix}:${comments}`, () => {
         // Funding transaction.
         const prev = new TX({
@@ -318,6 +347,6 @@ describe('Script', function() {
         assert.ifError(err);
         assert(res);
       });
-    });
-  });
+    }
+  }
 });

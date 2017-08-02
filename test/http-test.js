@@ -16,8 +16,6 @@ const FullNode = require('../lib/node/fullnode');
 const pkg = require('../lib/pkg');
 
 describe('HTTP', function() {
-  let addr, hash;
-
   const node = new FullNode({
     network: 'regtest',
     apiKey: 'foo',
@@ -32,6 +30,8 @@ describe('HTTP', function() {
   });
 
   const wdb = node.require('walletdb');
+
+  let addr, hash;
 
   this.timeout(15000);
 

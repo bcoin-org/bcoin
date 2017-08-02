@@ -15,9 +15,6 @@ const TX = require('../lib/primitives/tx');
 const Address = require('../lib/primitives/address');
 
 describe('Node', function() {
-  let wallet, tip1, tip2, cb1, cb2;
-  let tx1, tx2;
-
   const node = new FullNode({
     db: 'memory',
     apiKey: 'foo',
@@ -29,6 +26,9 @@ describe('Node', function() {
   const chain = node.chain;
   const miner = node.miner;
   const wdb = node.require('walletdb');
+
+  let wallet, tip1, tip2, cb1, cb2;
+  let tx1, tx2;
 
   this.timeout(5000);
 
@@ -605,9 +605,6 @@ describe('Node', function() {
   });
 
   it('should get a block template', async () => {
-    let fees = 0;
-    let weight = 0;
-
     node.rpc.refreshBlock();
 
     const json = await node.rpc.call({
@@ -623,8 +620,10 @@ describe('Node', function() {
 
     const result = json.result;
 
-    for (let i = 0; i < result.transactions.length; i++) {
-      const item = result.transactions[i];
+    let fees = 0;
+    let weight = 0;
+
+    for (const item of result.transactions) {
       fees += item.fee;
       weight += item.weight;
     }
@@ -679,8 +678,7 @@ describe('Node', function() {
 
     const result = json.result;
 
-    for (let i = 0; i < result.transactions.length; i++) {
-      const item = result.transactions[i];
+    for (const item of result.transactions) {
       fees += item.fee;
       weight += item.weight;
     }

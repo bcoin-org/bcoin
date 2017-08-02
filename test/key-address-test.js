@@ -9,6 +9,7 @@ const keyring = require('../lib/primitives/keyring');
 describe('Keyring Address', function() {
   const ukey = keyring.fromSecret(
     '5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss');
+
   const ckey = keyring.fromSecret(
     'L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1');
 

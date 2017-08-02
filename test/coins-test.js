@@ -65,14 +65,14 @@ describe('Coins', function() {
 
     view.addTX(tx1, 1);
 
-    let coins = view.get(hash);
+    const coins = view.get(hash);
     assert(coins);
+
     const length = coins.outputs.size;
 
     view.spendEntry(new Outpoint(hash, 0));
 
-    coins = view.get(hash);
-    assert(coins);
+    assert(view.get(hash) === coins);
 
     const entry = coins.get(0);
     assert(entry);

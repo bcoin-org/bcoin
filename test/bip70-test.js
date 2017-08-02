@@ -194,7 +194,7 @@ describe('BIP70', function() {
 
     assert(!req.pkiData);
     req.setChain([tests.ca.crt]);
-    req.sign(tests.ca.priv)
+    req.sign(tests.ca.priv);
 
     assert(req.pkiData);
     assert.equal(req.pkiType, 'x509+sha256');

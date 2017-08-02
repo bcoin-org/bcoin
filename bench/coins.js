@@ -1,13 +1,11 @@
 'use strict';
 
-const fs = require('fs');
 const Coins = require('../lib/coins/coins');
-const TX = require('../lib/primitives/tx');
+const common = require('../test/util/common');
 const bench = require('./bench');
 
-const hex = fs.readFileSync(`${__dirname}/../test/data/wtx.hex`, 'utf8');
-const wtx = TX.fromRaw(hex.trim(), 'hex');
-const coins = Coins.fromTX(wtx, 1);
+const {tx} = common.parseTX('data/tx5.hex');
+const coins = Coins.fromTX(tx, 1);
 const raw = coins.toRaw();
 
 {
