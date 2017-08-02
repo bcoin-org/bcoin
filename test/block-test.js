@@ -234,8 +234,10 @@ describe('Block', function() {
 
     const map = new Map();
 
-    for (const tx of block.txs)
-      map.set(tx.hash('hex'), { tx: tx });
+    for (let i = 1; i < block.txs.length; i++) {
+      const tx = block.txs[i];
+      map.set(tx.hash('hex'), { tx });
+    }
 
     const full = cblock1.fillMempool(false, { map });
     assert(full);
@@ -260,9 +262,9 @@ describe('Block', function() {
 
     const map = new Map();
 
-    for (let i = 0; i < (block.txs.length >>> 1); i++) {
+    for (let i = 1; i < ((block.txs.length + 1) >>> 1); i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx: tx });
+      map.set(tx.hash('hex'), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -298,12 +300,14 @@ describe('Block', function() {
     assert.deepEqual(cblock1.toRaw(), compact898352);
     assert.deepEqual(cblock2.toRaw(), compact898352);
 
+    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
+
     const map = new Map();
 
-    for (const tx of block.txs)
-      map.set(tx.hash('hex'), { tx: tx });
-
-    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
+    for (let i = 1; i < block.txs.length; i++) {
+      const tx = block.txs[i];
+      map.set(tx.hash('hex'), { tx });
+    }
 
     const full = cblock1.fillMempool(false, { map });
     assert(full);
@@ -326,14 +330,14 @@ describe('Block', function() {
     assert.deepEqual(cblock1.toRaw(), compact898352);
     assert.deepEqual(cblock2.toRaw(), compact898352);
 
+    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
+
     const map = new Map();
 
-    for (let i = 0; i < (block.txs.length >>> 1); i++) {
+    for (let i = 1; i < ((block.txs.length + 1) >>> 1); i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx: tx });
+      map.set(tx.hash('hex'), { tx });
     }
-
-    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
     const full = cblock1.fillMempool(false, { map });
     assert(!full);
