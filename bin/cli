@@ -7,6 +7,10 @@ const util = require('../lib/utils/util');
 const Client = require('../lib/http/client');
 const Wallet = require('../lib/http/wallet');
 
+const ANTIREPLAY = ''
+  + '6a2e426974636f696e3a204120506565722d746f2d5065657'
+  + '220456c656374726f6e696320436173682053797374656d';
+
 function CLI() {
   this.config = new Config('bcoin');
 
@@ -271,24 +275,31 @@ CLI.prototype.getMempool = async function getMempool() {
 };
 
 CLI.prototype.sendTX = async function sendTX() {
-  let output;
+  const outputs = [];
 
   if (this.config.has('script')) {
-    output = {
+    outputs.push({
       script: this.config.str('script'),
       value: this.config.amt([0, 'value'])
-    };
+    });
   } else {
-    output = {
+    outputs.push({
       address: this.config.str([0, 'address']),
       value: this.config.amt([1, 'value'])
-    };
+    });
+  }
+
+  if (this.config.bool('no-replay')) {
+    outputs.push({
+      script: ANTIREPLAY,
+      value: 0
+    });
   }
 
   const options = {
     account: this.config.str('account'),
     passphrase: this.config.str('passphrase'),
-    outputs: [output],
+    outputs: outputs,
     smart: this.config.bool('smart'),
     rate: this.config.amt('rate'),
     subtractFee: this.config.bool('subtract-fee')
