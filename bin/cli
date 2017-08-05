@@ -81,6 +81,10 @@ CLI.prototype.getWIF = async function getWIF() {
   const address = this.config.str(0);
   const passphrase = this.config.str('passphrase');
   const key = await this.wallet.getWIF(address, passphrase);
+  if (!key) {
+    this.log('Key not found.');
+    return;
+  }
   this.log(key.privateKey);
 };
 
@@ -101,6 +105,10 @@ CLI.prototype.removeSharedKey = async function removeSharedKey() {
 CLI.prototype.getSharedKeys = async function getSharedKeys() {
   const acct = this.config.str([0, 'account']);
   const account = await this.wallet.getAccount(acct);
+  if (!account) {
+    this.log('Account not found.');
+    return;
+  }
   this.log(account.keys);
 };
 
