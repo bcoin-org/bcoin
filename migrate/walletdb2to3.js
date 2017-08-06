@@ -216,7 +216,7 @@ function pathFromRaw(data) {
       break;
   }
 
-  path.version = p.read8();
+  path.version = p.readI8();
   path.type = p.readU8();
 
   return path;

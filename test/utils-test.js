@@ -229,12 +229,12 @@ describe('Utils', function() {
     it(`should write+read a ${bits} bit ${sign} int`, () => {
       const buf1 = Buffer.allocUnsafe(8);
       const buf2 = Buffer.allocUnsafe(8);
-      encoding.write64BN(buf1, num, 0);
-      encoding.write64(buf2, num.toNumber(), 0);
+      encoding.writeI64BN(buf1, num, 0);
+      encoding.writeI64(buf2, num.toNumber(), 0);
       assert.deepEqual(buf1, buf2);
 
-      const n1 = encoding.read64BN(buf1, 0);
-      const n2 = encoding.read64(buf2, 0);
+      const n1 = encoding.readI64BN(buf1, 0);
+      const n2 = encoding.readI64(buf2, 0);
       assert.equal(n1.toNumber(), n2);
     });
 
