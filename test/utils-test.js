@@ -10,6 +10,7 @@ const encoding = require('../lib/utils/encoding');
 const Amount = require('../lib/btc/amount');
 const consensus = require('../lib/protocol/consensus');
 const Validator = require('../lib/utils/validator');
+const util = require('../lib/utils/util');
 
 const base58Tests = [
   ['', ''],
@@ -78,24 +79,34 @@ describe('Utils', function() {
     assert(btc === 5460 * 10000000);
     btc = Amount.value('546.0000');
     assert(btc === 5460 * 10000000);
+
     assert.doesNotThrow(() => {
       Amount.value('546.00000000000000000');
     });
+
     assert.throws(() => {
       Amount.value('546.00000000000000001');
     });
+
     assert.doesNotThrow(() => {
       Amount.value('90071992.54740991');
     });
+
     assert.doesNotThrow(() => {
       Amount.value('090071992.547409910');
     });
+
     assert.throws(() => {
       Amount.value('90071992.54740992');
     });
+
     assert.throws(() => {
       Amount.value('190071992.54740991');
     });
+
+    assert.strictEqual(parseFloat('0.15645647') * 1e8, 15645646.999999998);
+    assert.strictEqual(util.fromFixed('0.15645647', 8), 15645647);
+    assert.strictEqual(util.toFixed(15645647, 8), '0.15645647');
   });
 
   it('should write/read new varints', () => {
