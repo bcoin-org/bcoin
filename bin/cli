@@ -48,8 +48,8 @@ CLI.prototype.createWallet = async function createWallet() {
     type: this.config.str('type'),
     master: this.config.str('master'),
     mnemonic: this.config.str('mnemonic'),
-    m: this.config.num('m'),
-    n: this.config.num('n'),
+    m: this.config.uint('m'),
+    n: this.config.uint('n'),
     witness: this.config.bool('witness'),
     passphrase: this.config.str('passphrase'),
     watchOnly: false,
@@ -123,8 +123,8 @@ CLI.prototype.createAccount = async function createAccount() {
 
   const options = {
     type: this.config.str('type'),
-    m: this.config.num('m'),
-    n: this.config.num('n'),
+    m: this.config.uint('m'),
+    n: this.config.uint('n'),
     witness: this.config.bool('witness'),
     accountKey: this.config.str('watch')
   };
@@ -199,7 +199,7 @@ CLI.prototype.getBlock = async function getBlock() {
 
 CLI.prototype.getCoin = async function getCoin() {
   const hash = this.config.str(0);
-  const index = this.config.num(1);
+  const index = this.config.uint(1);
 
   if (util.isBase58(hash)) {
     const coins = await this.client.getCoinsByAddress(hash);
@@ -288,12 +288,12 @@ CLI.prototype.sendTX = async function sendTX() {
   if (this.config.has('script')) {
     outputs.push({
       script: this.config.str('script'),
-      value: this.config.amt([0, 'value'])
+      value: this.config.ufixed([0, 'value'], 8)
     });
   } else {
     outputs.push({
       address: this.config.str([0, 'address']),
-      value: this.config.amt([1, 'value'])
+      value: this.config.ufixed([1, 'value'], 8)
     });
   }
 
@@ -309,7 +309,7 @@ CLI.prototype.sendTX = async function sendTX() {
     passphrase: this.config.str('passphrase'),
     outputs: outputs,
     smart: this.config.bool('smart'),
-    rate: this.config.amt('rate'),
+    rate: this.config.ufixed('rate', 8),
     subtractFee: this.config.bool('subtract-fee')
   };
 
@@ -324,12 +324,12 @@ CLI.prototype.createTX = async function createTX() {
   if (this.config.has('script')) {
     output = {
       script: this.config.str('script'),
-      value: this.config.amt([0, 'value'])
+      value: this.config.ufixed([0, 'value'], 8)
     };
   } else {
     output = {
       address: this.config.str([0, 'address']),
-      value: this.config.amt([1, 'value'])
+      value: this.config.ufixed([1, 'value'], 8)
     };
   }
 
@@ -338,7 +338,7 @@ CLI.prototype.createTX = async function createTX() {
     passphrase: this.config.str('passphrase'),
     outputs: [output],
     smart: this.config.bool('smart'),
-    rate: this.config.amt('rate'),
+    rate: this.config.ufixed('rate', 8),
     subtractFee: this.config.bool('subtract-fee')
   };
 
@@ -356,7 +356,7 @@ CLI.prototype.signTX = async function signTX() {
 };
 
 CLI.prototype.zapWallet = async function zapWallet() {
-  const age = this.config.num([0, 'age'], 72 * 60 * 60);
+  const age = this.config.uint([0, 'age'], 72 * 60 * 60);
   await this.wallet.zap(this.config.str('account'), age);
   this.log('Zapped!');
 };
@@ -386,7 +386,7 @@ CLI.prototype.getWalletBlocks = async function getWalletBlocks() {
 };
 
 CLI.prototype.getWalletBlock = async function getWalletBlock() {
-  const height = this.config.num(0);
+  const height = this.config.uint(0);
   const block = await this.wallet.getBlock(height);
   this.log(block);
 };
@@ -397,7 +397,7 @@ CLI.prototype.retoken = async function retoken() {
 };
 
 CLI.prototype.rescan = async function rescan() {
-  const height = this.config.num(0);
+  const height = this.config.uint(0);
   await this.client.rescan(height);
   this.log('Rescanning...');
 };
@@ -467,7 +467,7 @@ CLI.prototype.lock = async function lock() {
 
 CLI.prototype.unlock = async function unlock() {
   const passphrase = this.config.str(0);
-  const timeout = this.config.num(1);
+  const timeout = this.config.uint(1);
   await this.wallet.unlock(passphrase, timeout);
   this.log('Unlocked.');
 };

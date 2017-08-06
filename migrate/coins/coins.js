@@ -54,7 +54,7 @@ function Coins(options) {
 
 Coins.prototype.fromOptions = function fromOptions(options) {
   if (options.version != null) {
-    assert(util.isUInt32(options.version));
+    assert(util.isU32(options.version));
     this.version = options.version;
   }
 
