@@ -64,7 +64,7 @@ Coins.prototype.fromOptions = function fromOptions(options) {
   }
 
   if (options.height != null) {
-    assert(util.isNumber(options.height));
+    assert(util.isInt(options.height));
     this.height = options.height;
   }
 
