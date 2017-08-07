@@ -52,10 +52,10 @@
   },
   "main": "./lib/bcoin.js",
   "bin": {
-    "bcoin-node": "./bin/node",
-    "bcoin-spvnode": "./bin/spvnode",
+    "bcoin": "./bin/bcoin",
     "bcoin-cli": "./bin/cli",
-    "bcoin": "./bin/bcoin"
+    "bcoin-node": "./bin/node",
+    "bcoin-spvnode": "./bin/spvnode"
   },
   "scripts": {
     "clean": "rm -f {browser/,}{bcoin.js,bcoin-worker.js}",
