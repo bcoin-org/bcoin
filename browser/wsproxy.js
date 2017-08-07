@@ -9,8 +9,6 @@ const digest = require('../lib/crypto/digest');
 const IP = require('../lib/utils/ip');
 const BufferWriter = require('../lib/utils/writer');
 
-const NAME_REGEX = /^[a-z0-9\-\.]+?\.(?:be|me|org|com|net|ch|de)$/i;
-
 const TARGET = Buffer.from(
   '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
   'hex');

@@ -7,6 +7,7 @@
   "parserOptions": {
     "ecmaVersion": 8
   },
+  "root": true,
   "rules": {
     "array-bracket-spacing": ["error", "never"],
     "arrow-parens": ["error", "as-needed", {
