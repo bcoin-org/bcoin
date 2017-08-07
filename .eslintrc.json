@@ -24,7 +24,7 @@
     "eqeqeq": ["error", "always", {
       "null": "ignore"
     }],
-    "func-name-matching": "off",
+    "func-name-matching": "error",
     "indent": ["error", 2, {
       "SwitchCase": 1,
       "CallExpression": {
