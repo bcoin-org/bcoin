@@ -39,7 +39,7 @@ function WSProxy(options) {
   this.init();
 }
 
-util.inherits(WSProxy, EventEmitter);
+Object.setPrototypeOf(WSProxy.prototype, EventEmitter.prototype);
 
 WSProxy.prototype.init = function init() {
   this.io.on('error', (err) => {
