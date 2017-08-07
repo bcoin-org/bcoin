@@ -287,7 +287,6 @@ describe('Script', function() {
         // Funding transaction.
         const prev = new TX({
           version: 1,
-          flag: 1,
           inputs: [{
             prevout: {
               hash: encoding.NULL_HASH,
@@ -307,7 +306,6 @@ describe('Script', function() {
         // Spending transaction.
         const tx = new TX({
           version: 1,
-          flag: 1,
           inputs: [{
             prevout: {
               hash: prev.hash('hex'),
@@ -329,8 +327,7 @@ describe('Script', function() {
           tx.refresh();
         }
 
-        let err;
-        let res;
+        let err, res;
         try {
           res = Script.verify(input, witness, output, tx, 0, amount, flags);
         } catch (e) {

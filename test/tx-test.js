@@ -340,7 +340,6 @@ describe('TX', function() {
     const [input, view] = createInput(consensus.MAX_MONEY + 1);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -356,7 +355,6 @@ describe('TX', function() {
     const [input, view] = createInput(consensus.MAX_MONEY);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -372,7 +370,6 @@ describe('TX', function() {
     const [input, view] = createInput(consensus.MAX_MONEY);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -388,7 +385,6 @@ describe('TX', function() {
     const [input, view] = createInput(consensus.MAX_MONEY);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -404,7 +400,6 @@ describe('TX', function() {
     const [input, view] = createInput(consensus.MAX_MONEY + 1);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -420,7 +415,6 @@ describe('TX', function() {
     const view = new CoinView();
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [
         createInput(Math.floor(consensus.MAX_MONEY / 2), view)[0],
         createInput(Math.floor(consensus.MAX_MONEY / 2), view)[0],
@@ -440,7 +434,6 @@ describe('TX', function() {
     const [input, view] = createInput(consensus.MAX_MONEY);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [
         {
@@ -466,7 +459,6 @@ describe('TX', function() {
     const view = new CoinView();
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [
         createInput(Math.floor(consensus.MAX_MONEY / 2), view)[0],
         createInput(Math.floor(consensus.MAX_MONEY / 2), view)[0],
@@ -487,7 +479,6 @@ describe('TX', function() {
 
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -515,7 +506,6 @@ describe('TX', function() {
     const [input, view] = createInput(MAX_SAFE_INTEGER);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -531,7 +521,6 @@ describe('TX', function() {
     const [input, view] = createInput(consensus.MAX_MONEY);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -547,7 +536,6 @@ describe('TX', function() {
     const [input, view] = createInput(MAX_SAFE_INTEGER);
     const tx = new TX({
       version: 1,
-      flag: 1,
       inputs: [input],
       outputs: [{
         script: [],
@@ -564,7 +552,6 @@ describe('TX', function() {
       const view = new CoinView();
       const tx = new TX({
         version: 1,
-        flag: 1,
         inputs: [
           createInput(MAX, view)[0],
           createInput(MAX, view)[0],
@@ -584,7 +571,6 @@ describe('TX', function() {
       const [input, view] = createInput(consensus.MAX_MONEY);
       const tx = new TX({
         version: 1,
-        flag: 1,
         inputs: [input],
         outputs: [
           {
@@ -610,7 +596,6 @@ describe('TX', function() {
       const view = new CoinView();
       const tx = new TX({
         version: 1,
-        flag: 1,
         inputs: [
           createInput(MAX, view)[0],
           createInput(MAX, view)[0],

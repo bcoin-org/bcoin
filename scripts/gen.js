@@ -35,7 +35,6 @@ function createGenesisBlock(options) {
 
   const tx = new TX({
     version: 1,
-    flag: 1,
     inputs: [{
       prevout: {
         hash: encoding.NULL_HASH,
