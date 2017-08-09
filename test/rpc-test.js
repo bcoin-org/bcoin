@@ -161,12 +161,4 @@ it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
  });
 });
 });
-  // chain,
-  // blocks: this.chain.height,
-  // headers: this.chain.height,
-  // bestblockhash: this.chain.tip.rhash(),
-  // mediantime: await this.chain.tip.getMedianTime(),
-  // verificationprogress: this.chain.getProgress(),
-  // chainwork: this.chain.tip.chainwork.toString('hex', 64)
-
 
