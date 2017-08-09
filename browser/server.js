@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+const fs = require('../lib/utils/fs');
 const HTTPBase = require('../lib/http/base');
 const WSProxy = require('./wsproxy');
 
