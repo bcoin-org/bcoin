@@ -92,4 +92,7 @@ const tpool = new Pool({
     console.log('Saw testnet transaction:');
     console.log(tx);
   });
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

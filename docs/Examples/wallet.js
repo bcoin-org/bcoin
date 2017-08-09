@@ -1,9 +1,10 @@
 'use strict';
 
-const random = require('bcoin/lib/crypto/random');
-const WalletDB = require('bcoin/lib/wallet/walletdb');
-const MTX = require('bcoin/lib/primitives/mtx');
-const Outpoint = require('bcoin/lib/primitives/outpoint');
+const bcoin = require('../..');
+const random = bcoin.crypto.random;
+const WalletDB = bcoin.walletdb;
+const MTX = bcoin.mtx;
+const Outpoint = bcoin.outpoint;
 
 function dummy() {
   const hash = random.randomBytes(32).toString('hex');
@@ -42,4 +43,7 @@ const walletdb = new WalletDB({
 
   console.log('Added transaction');
   console.log(wtx);
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

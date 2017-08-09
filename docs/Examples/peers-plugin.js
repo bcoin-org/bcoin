@@ -1,6 +1,7 @@
 'use strict';
 
-const FullNode = require('bcoin/lib/node/fullnode');
+const bcoin = require('../..');
+const FullNode = bcoin.fullnode;
 
 function MyPlugin(node) {
   this.node = node;
@@ -52,4 +53,7 @@ node.use(MyPlugin);
   });
 
   node.startSync();
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

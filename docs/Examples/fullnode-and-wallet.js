@@ -1,6 +1,6 @@
 'use strict';
 const bcoin = require('../..').set('main');
-const WalletDB = bcoin.walletdb;
+const walletPlugin = bcoin.wallet.plugin;
 
 const node = bcoin.fullnode({
   checkpoints: true,
@@ -8,6 +8,8 @@ const node = bcoin.fullnode({
   passsphrase: 'node',
   logLevel: 'info'
 });
+
+node.use(walletPlugin);
 
 // We get a lot of errors sometimes,
 // usually from peers hanging up on us.
@@ -30,8 +32,7 @@ const newReceiving = 'AddressHere';
     type: 'pubkeyhash'
   };
 
-  console.log(node);
-  const walletdb = new WalletDB();
+  const walletdb = node.require('walletdb');
 
   await walletdb.open();
   const wallet = await walletdb.create(options);
@@ -76,4 +77,7 @@ const newReceiving = 'AddressHere';
   node.chain.on('full', () => {
     node.mempool.getHistory().then(console.log);
   });
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

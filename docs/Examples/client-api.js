@@ -1,12 +1,13 @@
 'use strict';
 
-const encoding = require('bcoin/lib/utils/encoding');
-const co = require('bcoin/lib/utils/co');
-const Outpoint = require('bcoin/lib/primitives/outpoint');
-const MTX = require('bcoin/lib/primitives/mtx');
-const HTTP = require('bcoin/lib/http');
-const FullNode = require('bcoin/lib/node/fullnode');
-const plugin = require('bcoin/lib/wallet/plugin');
+const bcoin = require('../..');
+const encoding = bcoin.encoding;
+const co = bcoin.co;
+const Outpoint = bcoin.outpoint;
+const MTX = bcoin.mtx;
+const HTTP = bcoin.http;
+const FullNode = bcoin.fullnode;
+const plugin = bcoin.wallet.plugin;
 
 const node = new FullNode({
   network: 'regtest',
@@ -113,4 +114,7 @@ async function callNodeApi() {
   console.log(tx);
 
   await callNodeApi();
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

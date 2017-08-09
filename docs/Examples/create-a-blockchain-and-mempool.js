@@ -36,4 +36,7 @@ const miner = new Miner({
   console.log(block);
   await chain.add(block);
   console.log('Added block!');
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

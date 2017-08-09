@@ -1,10 +1,11 @@
 'use strict';
 
-// Usage: $ node ./examples/peer.js [ip]:[port]
+// Usage: $ node ./docs/Examples/connect-to-peer.js [ip]:[port]
 
-const Peer = require('bcoin/lib/net/peer');
-const NetAddress = require('bcoin/lib/primitives/netaddress');
-const Network = require('bcoin/lib/protocol/network');
+const bcoin = require('../..');
+const Peer = bcoin.peer;
+const NetAddress = bcoin.netaddress;
+const Network = bcoin.network;
 const network = Network.get('testnet');
 
 const peer = Peer.fromOptions({
@@ -16,6 +17,8 @@ const peer = Peer.fromOptions({
 });
 
 const addr = NetAddress.fromHostname(process.argv[2], 'testnet');
+
+console.log(`Connecting to ${addr.hostname}`);
 
 peer.connect(addr);
 peer.tryOpen();

@@ -2,7 +2,7 @@
 
 /* eslint new-cap: "off" */
 
-const bcoin = require('bcoin');
+const bcoin = require('../..');
 const assert = require('assert');
 
 (async () => {
