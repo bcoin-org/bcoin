@@ -1,10 +1,8 @@
 'use strict';
 
 const heapdump = require('heapdump');
-const fs = require('../lib/utils/fs');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Coins = require('../lib/coins/coins');
-const TX = require('../lib/primitives/tx');
 const common = require('../test/util/common');
 
 const SNAPSHOT = `${__dirname}/../dump.heapsnapshot`;

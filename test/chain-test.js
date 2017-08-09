@@ -450,7 +450,8 @@ describe('Chain', function() {
     job.addTX(spend.toTX(), spend.view);
     job.refresh();
 
-    assert.strictEqual(await mineBlock(job), 'mandatory-script-verify-flag-failed');
+    assert.strictEqual(await mineBlock(job),
+      'mandatory-script-verify-flag-failed');
   });
 
   it('should mine a block', async () => {
@@ -570,7 +571,8 @@ describe('Chain', function() {
     block.refresh(true);
     block.merkleRoot = block.createMerkleRoot('hex');
 
-    assert.strictEqual(await addBlock(block, flags), 'bad-witness-merkle-match');
+    assert.strictEqual(await addBlock(block, flags),
+      'bad-witness-merkle-match');
   });
 
   it('should fail to connect unexpected witness', async () => {

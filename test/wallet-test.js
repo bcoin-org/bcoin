@@ -52,7 +52,7 @@ function nextBlock() {
   return {
     hash: hash.toString('hex'),
     height: height,
-    prevBlock: prevHead.toString('hex'),
+    prevBlock: prevHash.toString('hex'),
     time: time,
     merkleRoot: encoding.NULL_HASH,
     nonce: 0,
@@ -407,7 +407,7 @@ describe('Wallet', function() {
       const balance = await alice.getBalance();
       assert.strictEqual(balance.unconfirmed, 11000);
 
-      let txs = await alice.getHistory();
+      const txs = await alice.getHistory();
       assert(txs.some((wtx) => {
         return wtx.hash === f1.hash('hex');
       }));
@@ -728,8 +728,6 @@ describe('Wallet', function() {
     // Create our tx with an output
     const tx = new MTX();
     tx.addOutput(carol.getAddress(), 5460);
-
-    const cost = tx.getOutputValue();
 
     const coins1 = await alice.getCoins();
     const coins2 = await bob.getCoins();
