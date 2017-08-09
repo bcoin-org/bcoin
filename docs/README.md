@@ -36,7 +36,7 @@ Welcome to the bcoin docs!
 [work-transactions]: Working-with-transactions.md
 [scripting]: Scripting.md
 
-[example-p2p]: Example-Connecting-to-the-P2P-Network.md
-[example-blockchain]: Example-Creating-a-Blockchain-and-Mempool.md
-[example-fullnode]: Example-Fullnode-Object.md
-[example-spv]: Example-SPV-Sync.md
+[example-p2p]: Examples/connect-to-the-p2p-network.js
+[example-blockchain]: Examples/create-a-blockchain-and-mempool.js
+[example-fullnode]: Examples/fullnode-and-wallet.js
+[example-spv]: Examples/spv-sync-wallet.js
