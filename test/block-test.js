@@ -1,11 +1,10 @@
 /* eslint-env mocha */
-/* eslint max-len: "off" */
 /* eslint prefer-arrow-callback: "off" */
 
 'use strict';
 
 const assert = require('assert');
-const fs = require('fs');
+const fs = require('../lib/utils/fs');
 const common = require('./util/common');
 const Bloom = require('../lib/utils/bloom');
 const Block = require('../lib/primitives/block');
@@ -53,15 +52,15 @@ describe('Block', function() {
 
     const tree = mblock.getTree();
 
-    assert.equal(tree.matches.length, 2);
-    assert.equal(mblock.hash('hex'),
+    assert.strictEqual(tree.matches.length, 2);
+    assert.strictEqual(mblock.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
-    assert.equal(mblock.rhash(),
+    assert.strictEqual(mblock.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
-    assert.equal(
+    assert.strictEqual(
       tree.matches[0].toString('hex'),
       '7393f84cd04ca8931975c66282ebf1847c78d8de6c2578d4f9bae23bc6f30857');
-    assert.equal(
+    assert.strictEqual(
       tree.matches[1].toString('hex'),
       'ec8c51de3170301430ec56f6703533d9ea5b05c6fa7068954bcb90eed8c2ee5c');
   });
@@ -69,8 +68,8 @@ describe('Block', function() {
   it('should decode/encode merkle block', () => {
     const merkle = MerkleBlock.fromRaw(merkle300025);
     merkle.refresh();
-    assert.deepEqual(merkle.toRaw(), merkle300025);
-    assert.deepEqual(merkle300025, mblock.toRaw());
+    assert.deepStrictEqual(merkle.toRaw(), merkle300025);
+    assert.deepStrictEqual(merkle300025, mblock.toRaw());
   });
 
   it('should be verify merkle block', () => {
@@ -81,14 +80,14 @@ describe('Block', function() {
   it('should be encoded/decoded and still verify', () => {
     const raw = mblock.toRaw();
     const merkle = MerkleBlock.fromRaw(raw);
-    assert.deepEqual(merkle.toRaw(), raw);
+    assert.deepStrictEqual(merkle.toRaw(), raw);
     assert(merkle.verify());
   });
 
   it('should be jsonified/unjsonified and still verify', () => {
     const json = mblock.toJSON();
     const merkle = MerkleBlock.fromJSON(json);
-    assert.deepEqual(merkle.toJSON(), json);
+    assert.deepStrictEqual(merkle.toJSON(), json);
     assert(merkle.verify());
   });
 
@@ -105,17 +104,17 @@ describe('Block', function() {
       height++;
     }
 
-    assert.equal(height, 6930000);
-    assert.equal(total, 2099999997690000);
+    assert.strictEqual(height, 6930000);
+    assert.strictEqual(total, 2099999997690000);
   });
 
   it('should parse JSON', () => {
     const block = Block.fromJSON(Block.fromRaw(block300025).toJSON());
-    assert.equal(block.hash('hex'),
+    assert.strictEqual(block.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
-    assert.equal(block.rhash(),
+    assert.strictEqual(block.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
-    assert.equal(block.merkleRoot, block.createMerkleRoot('hex'));
+    assert.strictEqual(block.merkleRoot, block.createMerkleRoot('hex'));
   });
 
   it('should create a merkle block', () => {
@@ -132,7 +131,7 @@ describe('Block', function() {
     const merkle = MerkleBlock.fromBlock(block, filter);
 
     assert(merkle.verifyBody());
-    assert.deepEqual(merkle.toRaw(), mblock.toRaw());
+    assert.deepStrictEqual(merkle.toRaw(), mblock.toRaw());
   });
 
   it('should verify a historical block', () => {
@@ -146,7 +145,7 @@ describe('Block', function() {
     assert(block.txs[0].isCoinbase());
     assert(block.txs[0].isSane());
     assert(!block.hasWitness());
-    assert.equal(block.getWeight(), 1136924);
+    assert.strictEqual(block.getWeight(), 1136924);
 
     let sigops = 0;
     let reward = 0;
@@ -164,9 +163,9 @@ describe('Block', function() {
 
     reward += consensus.getReward(height, 210000);
 
-    assert.equal(sigops, 5280);
-    assert.equal(reward, 2507773345);
-    assert.equal(reward, block.txs[0].outputs[0].value);
+    assert.strictEqual(sigops, 5280);
+    assert.strictEqual(reward, 2507773345);
+    assert.strictEqual(reward, block.txs[0].outputs[0].value);
   });
 
   it('should fail with a bad merkle root', () => {
@@ -175,7 +174,7 @@ describe('Block', function() {
     block2.refresh();
     assert(!block2.verifyPOW());
     const [, reason] = block2.checkBody();
-    assert.equal(reason, 'bad-txnmrklroot');
+    assert.strictEqual(reason, 'bad-txnmrklroot');
     assert(!block2.verify());
     block2.merkleRoot = block.merkleRoot;
     block2.refresh();
@@ -188,7 +187,7 @@ describe('Block', function() {
     mblock2.refresh();
     assert(!mblock2.verifyPOW());
     const [, reason] = mblock2.checkBody();
-    assert.equal(reason, 'bad-txnmrklroot');
+    assert.strictEqual(reason, 'bad-txnmrklroot');
     assert(!mblock2.verify());
     mblock2.merkleRoot = mblock.merkleRoot;
     mblock2.refresh();
@@ -212,7 +211,7 @@ describe('Block', function() {
     block2.txs.push(block2.txs[block2.txs.length - 1]);
     block2.refresh();
     const [, reason] = block2.checkBody();
-    assert.equal(reason, 'bad-txns-duplicate');
+    assert.strictEqual(reason, 'bad-txns-duplicate');
   });
 
   it('should verify with headers', () => {
@@ -229,8 +228,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepEqual(cblock1.toRaw(), compact426884);
-    assert.deepEqual(cblock2.toRaw(), compact426884);
+    assert.deepStrictEqual(cblock1.toRaw(), compact426884);
+    assert.deepStrictEqual(cblock2.toRaw(), compact426884);
 
     const map = new Map();
 
@@ -245,9 +244,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.equal(
-      cblock1.toBlock().toRaw().toString('hex'),
-      block.toRaw().toString('hex'));
+    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should handle half-full compact block', () => {
@@ -257,8 +254,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepEqual(cblock1.toRaw(), compact426884);
-    assert.deepEqual(cblock2.toRaw(), compact426884);
+    assert.deepStrictEqual(cblock1.toRaw(), compact426884);
+    assert.deepStrictEqual(cblock2.toRaw(), compact426884);
 
     const map = new Map();
 
@@ -271,10 +268,10 @@ describe('Block', function() {
     assert(!full);
 
     let req = cblock1.toRequest();
-    assert.equal(req.hash, cblock1.hash('hex'));
+    assert.strictEqual(req.hash, cblock1.hash('hex'));
 
     req = TXRequest.fromRaw(req.toRaw());
-    assert.equal(req.hash, cblock1.hash('hex'));
+    assert.strictEqual(req.hash, cblock1.hash('hex'));
 
     let res = TXResponse.fromBlock(block, req);
     res = TXResponse.fromRaw(res.toRaw());
@@ -285,9 +282,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.equal(
-      cblock1.toBlock().toRaw().toString('hex'),
-      block.toRaw().toString('hex'));
+    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should handle compact block', () => {
@@ -297,10 +292,10 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepEqual(cblock1.toRaw(), compact898352);
-    assert.deepEqual(cblock2.toRaw(), compact898352);
+    assert.deepStrictEqual(cblock1.toRaw(), compact898352);
+    assert.deepStrictEqual(cblock2.toRaw(), compact898352);
 
-    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
+    assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
     const map = new Map();
 
@@ -315,9 +310,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.equal(
-      cblock1.toBlock().toRaw().toString('hex'),
-      block.toRaw().toString('hex'));
+    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should handle half-full compact block', () => {
@@ -327,10 +320,10 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepEqual(cblock1.toRaw(), compact898352);
-    assert.deepEqual(cblock2.toRaw(), compact898352);
+    assert.deepStrictEqual(cblock1.toRaw(), compact898352);
+    assert.deepStrictEqual(cblock2.toRaw(), compact898352);
 
-    assert.equal(cblock1.sid(block.txs[1].hash()), 125673511480291);
+    assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
     const map = new Map();
 
@@ -343,12 +336,12 @@ describe('Block', function() {
     assert(!full);
 
     let req = cblock1.toRequest();
-    assert.equal(req.hash, cblock1.hash('hex'));
-    assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
+    assert.strictEqual(req.hash, cblock1.hash('hex'));
+    assert.deepStrictEqual(req.indexes, [5, 6, 7, 8, 9]);
 
     req = TXRequest.fromRaw(req.toRaw());
-    assert.equal(req.hash, cblock1.hash('hex'));
-    assert.deepEqual(req.indexes, [5, 6, 7, 8, 9]);
+    assert.strictEqual(req.hash, cblock1.hash('hex'));
+    assert.deepStrictEqual(req.indexes, [5, 6, 7, 8, 9]);
 
     let res = TXResponse.fromBlock(block, req);
     res = TXResponse.fromRaw(res.toRaw());
@@ -359,9 +352,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.equal(
-      cblock1.toBlock().toRaw().toString('hex'),
-      block.toRaw().toString('hex'));
+    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should count sigops for block 928927 (testnet)', () => {
@@ -374,8 +365,8 @@ describe('Block', function() {
     for (const tx of block.txs)
       sigops += tx.getSigopsCost(view, flags);
 
-    assert.equal(sigops, 10015);
-    assert.equal(block.getWeight(), 3992391);
+    assert.strictEqual(sigops, 10015);
+    assert.strictEqual(block.getWeight(), 3992391);
   });
 
   it('should count sigops for block 928828 (testnet)', () => {
@@ -388,8 +379,8 @@ describe('Block', function() {
     for (const tx of block.txs)
       sigops += tx.getSigopsCost(view, flags);
 
-    assert.equal(sigops, 23236);
-    assert.equal(block.getWeight(), 2481560);
+    assert.strictEqual(sigops, 23236);
+    assert.strictEqual(block.getWeight(), 2481560);
   });
 
   it('should count sigops for block 1087400 (testnet)', () => {
@@ -402,7 +393,7 @@ describe('Block', function() {
     for (const tx of block.txs)
       sigops += tx.getSigopsCost(view, flags);
 
-    assert.equal(sigops, 1298);
-    assert.equal(block.getWeight(), 193331);
+    assert.strictEqual(sigops, 1298);
+    assert.strictEqual(block.getWeight(), 193331);
   });
 });

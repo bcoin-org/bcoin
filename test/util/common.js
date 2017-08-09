@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const fs = require('fs');
+const fs = require('../../lib/utils/fs');
 const TX = require('../../lib/primitives/tx');
 const Output = require('../../lib/primitives/output');
 const CoinView = require('../../lib/coins/coinview');

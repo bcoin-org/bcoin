@@ -11,7 +11,7 @@ const CoinView = require('../lib/coins/coinview');
 const CoinEntry = require('../lib/coins/coinentry');
 const StaticWriter = require('../lib/utils/staticwriter');
 const BufferReader = require('../lib/utils/reader');
-const parseTX = require('./util/common').parseTX;
+const {parseTX} = require('./util/common');
 
 const data = parseTX('data/tx1.hex');
 const tx1 = data.tx;
@@ -40,18 +40,18 @@ describe('Coins', function() {
     view.addTX(tx1, 1);
 
     const coins = view.get(hash);
-    assert.equal(coins.outputs.size, tx1.outputs.length);
+    assert.strictEqual(coins.outputs.size, tx1.outputs.length);
 
     const entry = coins.get(0);
     assert(entry);
     assert(!entry.spent);
 
-    assert.equal(entry.version, 1);
-    assert.equal(entry.height, 1);
-    assert.equal(entry.coinbase, false);
-    assert.equal(entry.raw, null);
+    assert.strictEqual(entry.version, 1);
+    assert.strictEqual(entry.height, 1);
+    assert.strictEqual(entry.coinbase, false);
+    assert.strictEqual(entry.raw, null);
     assert(entry.output instanceof Output);
-    assert.equal(entry.spent, false);
+    assert.strictEqual(entry.spent, false);
 
     const output = view.getOutputFor(input);
     assert(output);
@@ -81,7 +81,7 @@ describe('Coins', function() {
     deepCoinsEqual(entry, reserialize(entry));
     assert.strictEqual(coins.outputs.size, length);
 
-    assert.equal(view.undo.items.length, 1);
+    assert.strictEqual(view.undo.items.length, 1);
   });
 
   it('should handle coin view', () => {

@@ -8,63 +8,55 @@ const ChaCha20 = require('../lib/crypto/chacha20');
 const Poly1305 = require('../lib/crypto/poly1305');
 const AEAD = require('../lib/crypto/aead');
 
+function testChaCha(options) {
+  const key = Buffer.from(options.key, 'hex');
+  const nonce = Buffer.from(options.nonce, 'hex');
+  const plain = Buffer.from(options.plain, 'hex');
+  const ciphertext = Buffer.from(options.ciphertext, 'hex');
+  const counter = options.counter;
+
+  const ctx1 = new ChaCha20();
+  ctx1.init(key, nonce, counter);
+  const plainenc = Buffer.from(plain);
+  ctx1.encrypt(plainenc);
+  assert.deepStrictEqual(plainenc, ciphertext);
+
+  const ctx2 = new ChaCha20();
+  ctx2.init(key, nonce, counter);
+  ctx2.encrypt(ciphertext);
+  assert.deepStrictEqual(plain, ciphertext);
+}
+
+function testAEAD(options) {
+  const plain = Buffer.from(options.plain, 'hex');
+  const aad = Buffer.from(options.aad, 'hex');
+  const key = Buffer.from(options.key, 'hex');
+  const nonce = Buffer.from(options.nonce, 'hex');
+  const pk = Buffer.from(options.pk, 'hex');
+  const ciphertext = Buffer.from(options.ciphertext, 'hex');
+  const tag = Buffer.from(options.tag, 'hex');
+
+  const ctx1 = new AEAD();
+  ctx1.init(key, nonce);
+  assert.strictEqual(ctx1.chacha20.getCounter(), 1);
+  assert.deepStrictEqual(ctx1.polyKey, pk);
+  ctx1.aad(aad);
+  const plainenc = Buffer.from(plain);
+  ctx1.encrypt(plainenc);
+  assert.deepStrictEqual(plainenc, ciphertext);
+  assert.deepStrictEqual(ctx1.finish(), tag);
+
+  const ctx2 = new AEAD();
+  ctx2.init(key, nonce);
+  assert.strictEqual(ctx2.chacha20.getCounter(), 1);
+  assert.deepStrictEqual(ctx2.polyKey, pk);
+  ctx2.aad(aad);
+  ctx2.decrypt(ciphertext);
+  assert.deepStrictEqual(ciphertext, plain);
+  assert.deepStrictEqual(ctx2.finish(), tag);
+}
+
 describe('ChaCha20 / Poly1305 / AEAD', function() {
-  function testChaCha(options) {
-    const key = Buffer.from(options.key, 'hex');
-    const nonce = Buffer.from(options.nonce, 'hex');
-    const plain = Buffer.from(options.plain, 'hex');
-    const ciphertext = Buffer.from(options.ciphertext, 'hex');
-    const counter = options.counter;
-
-    {
-      const chacha = new ChaCha20();
-      chacha.init(key, nonce, counter);
-      const plainenc = Buffer.from(plain);
-      chacha.encrypt(plainenc);
-      assert.deepEqual(plainenc, ciphertext);
-    }
-
-    {
-      const chacha = new ChaCha20();
-      chacha.init(key, nonce, counter);
-      chacha.encrypt(ciphertext);
-      assert.deepEqual(plain, ciphertext);
-    }
-  }
-
-  function testAEAD(options) {
-    const plain = Buffer.from(options.plain, 'hex');
-    const aad = Buffer.from(options.aad, 'hex');
-    const key = Buffer.from(options.key, 'hex');
-    const nonce = Buffer.from(options.nonce, 'hex');
-    const pk = Buffer.from(options.pk, 'hex');
-    const ciphertext = Buffer.from(options.ciphertext, 'hex');
-    const tag = Buffer.from(options.tag, 'hex');
-
-    {
-      const aead = new AEAD();
-      aead.init(key, nonce);
-      assert.equal(aead.chacha20.getCounter(), 1);
-      assert.deepEqual(aead.polyKey, pk);
-      aead.aad(aad);
-      const plainenc = Buffer.from(plain);
-      aead.encrypt(plainenc);
-      assert.deepEqual(plainenc, ciphertext);
-      assert.deepEqual(aead.finish(), tag);
-    }
-
-    {
-      const aead = new AEAD();
-      aead.init(key, nonce);
-      assert.equal(aead.chacha20.getCounter(), 1);
-      assert.deepEqual(aead.polyKey, pk);
-      aead.aad(aad);
-      aead.decrypt(ciphertext);
-      assert.deepEqual(ciphertext, plain);
-      assert.deepEqual(aead.finish(), tag);
-    }
-  }
-
   it('should perform chacha20', () => {
     testChaCha({
       key: '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f',
@@ -168,7 +160,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
 
     const mac = Poly1305.auth(msg, key);
     assert(Poly1305.verify(mac, expected));
-    assert.deepEqual(mac, expected);
+    assert.deepStrictEqual(mac, expected);
   });
 
   it('should perform poly1305', () => {

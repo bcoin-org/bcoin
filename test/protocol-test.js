@@ -32,7 +32,7 @@ describe('Protocol', function() {
     it(`should encode/decode ${command}`, (cb) => {
       const ver = Buffer.from(framer.packet(command, payload.toRaw()));
       parser.once('packet', (packet) => {
-        assert.equal(packet.cmd, command);
+        assert.strictEqual(packet.cmd, command);
         test(packet);
         cb();
       });
@@ -53,10 +53,10 @@ describe('Protocol', function() {
   });
 
   packetTest('version', v1, (payload) => {
-    assert.equal(payload.version, 300);
-    assert.equal(payload.agent, agent);
-    assert.equal(payload.height, 0);
-    assert.equal(payload.noRelay, false);
+    assert.strictEqual(payload.version, 300);
+    assert.strictEqual(payload.agent, agent);
+    assert.strictEqual(payload.height, 0);
+    assert.strictEqual(payload.noRelay, false);
   });
 
   const v2 = packets.VersionPacket.fromOptions({
@@ -72,10 +72,10 @@ describe('Protocol', function() {
   });
 
   packetTest('version', v2, (payload) => {
-    assert.equal(payload.version, 300);
-    assert.equal(payload.agent, agent);
-    assert.equal(payload.height, 10);
-    assert.equal(payload.noRelay, true);
+    assert.strictEqual(payload.version, 300);
+    assert.strictEqual(payload.agent, agent);
+    assert.strictEqual(payload.height, 10);
+    assert.strictEqual(payload.noRelay, true);
   });
 
   packetTest('verack', new packets.VerackPacket(), (payload) => {
@@ -97,18 +97,18 @@ describe('Protocol', function() {
   ];
 
   packetTest('addr', new packets.AddrPacket(hosts), (payload) => {
-    assert.equal(typeof payload.items.length, 'number');
-    assert.equal(payload.items.length, 2);
+    assert.strictEqual(typeof payload.items.length, 'number');
+    assert.strictEqual(payload.items.length, 2);
 
-    assert.equal(typeof payload.items[0].time, 'number');
-    assert.equal(payload.items[0].services, 1);
-    assert.equal(payload.items[0].host, hosts[0].host);
-    assert.equal(payload.items[0].port, hosts[0].port);
+    assert.strictEqual(typeof payload.items[0].time, 'number');
+    assert.strictEqual(payload.items[0].services, 1);
+    assert.strictEqual(payload.items[0].host, hosts[0].host);
+    assert.strictEqual(payload.items[0].port, hosts[0].port);
 
-    assert.equal(typeof payload.items[1].time, 'number');
-    assert.equal(payload.items[1].services, 1);
-    assert.equal(payload.items[1].host, hosts[1].host);
-    assert.equal(payload.items[1].port, hosts[1].port);
+    assert.strictEqual(typeof payload.items[1].time, 'number');
+    assert.strictEqual(payload.items[1].services, 1);
+    assert.strictEqual(payload.items[1].host, hosts[1].host);
+    assert.strictEqual(payload.items[1].port, hosts[1].port);
   });
 
   it('should include the raw data of only one transaction', () => {
@@ -117,6 +117,6 @@ describe('Protocol', function() {
     const tx = TX.fromRaw(raw);
     tx.refresh();
 
-    assert.deepEqual(tx.toRaw(), tx8.tx.toRaw());
+    assert.deepStrictEqual(tx.toRaw(), tx8.tx.toRaw());
   });
 });

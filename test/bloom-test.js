@@ -9,7 +9,13 @@ const RollingFilter = require('../lib/utils/rollingfilter');
 const murmur3 = require('../lib/utils/murmur3');
 
 function testMurmur(str, seed, expect, enc) {
-  assert.equal(murmur3(Buffer.from(str, enc || 'ascii'), seed), expect);
+  if (!enc)
+    enc = 'ascii';
+
+  const data = Buffer.from(str, enc);
+  const hash = murmur3(data, seed);
+
+  assert.strictEqual(hash, expect);
 }
 
 describe('Bloom', function() {
@@ -61,14 +67,15 @@ describe('Bloom', function() {
     const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
       + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
-    const filterHex = ''
+    const filterRaw = Buffer.from(''
       + '000000000000000000000000000000000000000000000000088004000000000000000'
       + '000000000200000000000000000000000000000000800000000000000000002000000'
       + '000000000000002000000000000000000000000000000000000000000040000200000'
-      + '0000000001000000800000080000000';
+      + '0000000001000000800000080000000',
+      'hex');
     filter.add(item1, 'hex');
     filter.add(item2, 'hex');
-    assert.equal(filter.filter.toString('hex'), filterHex);
+    assert.deepStrictEqual(filter.filter, filterRaw);
   });
 
   it('should handle 1m ops with regular filter', () => {
@@ -83,8 +90,8 @@ describe('Bloom', function() {
       filter.add(str, 'ascii');
       do {
         const str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true);
-        assert(filter.test(str + '-', 'ascii') === false);
+        assert(filter.test(str, 'ascii'));
+        assert(!filter.test(str + '-', 'ascii'));
       } while (j--);
     }
   });
@@ -101,8 +108,8 @@ describe('Bloom', function() {
       filter.add(str, 'ascii');
       do {
         const str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true);
-        assert(filter.test(str + '-', 'ascii') === false);
+        assert(filter.test(str, 'ascii'));
+        assert(!filter.test(str + '-', 'ascii'));
       } while (j--);
     }
   });
@@ -118,8 +125,8 @@ describe('Bloom', function() {
       filter.add(str, 'ascii');
       do {
         const str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true);
-        assert(filter.test(str + '-', 'ascii') === false);
+        assert(filter.test(str, 'ascii'));
+        assert(!filter.test(str + '-', 'ascii'));
       } while (j--);
     }
 
@@ -129,8 +136,8 @@ describe('Bloom', function() {
       filter.add(str, 'ascii');
       do {
         const str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true, str);
-        assert(filter.test(str + '-', 'ascii') === false, str);
+        assert(filter.test(str, 'ascii'));
+        assert(!filter.test(str + '-', 'ascii'));
       } while (j--);
     }
 
@@ -140,8 +147,8 @@ describe('Bloom', function() {
       filter.add(str, 'ascii');
       do {
         const str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true, str);
-        assert(filter.test(str + '-', 'ascii') === false, str);
+        assert(filter.test(str, 'ascii'));
+        assert(!filter.test(str + '-', 'ascii'));
       } while (j--);
     }
 
@@ -151,10 +158,10 @@ describe('Bloom', function() {
       filter.add(str, 'ascii');
       do {
         const str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true, str);
-        assert(filter.test(str + '-', 'ascii') === false, str);
+        assert(filter.test(str, 'ascii'));
+        assert(!filter.test(str + '-', 'ascii'));
       } while (j-- > 25);
-      assert(filter.test('foobar 24', 'ascii') === false);
+      assert(!filter.test('foobar 24', 'ascii'));
     }
 
     for (let i = 100; i < 125; i++) {
@@ -163,11 +170,11 @@ describe('Bloom', function() {
       filter.add(str, 'ascii');
       do {
         const str = 'foobar' + j;
-        assert(filter.test(str, 'ascii') === true, str);
-        assert(filter.test(str + '-', 'ascii') === false, str);
+        assert(filter.test(str, 'ascii'));
+        assert(!filter.test(str + '-', 'ascii'));
       } while (j-- > 50);
     }
 
-    assert(filter.test('foobar 49', 'ascii') === false);
+    assert(!filter.test('foobar 49', 'ascii'));
   });
 });

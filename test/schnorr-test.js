@@ -15,6 +15,6 @@ describe('Schnorr', function() {
     const msg = digest.hash256(Buffer.from('foo', 'ascii'));
     const sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
-    assert.deepEqual(schnorr.recover(sig, msg), pub);
+    assert.deepStrictEqual(schnorr.recover(sig, msg), pub);
   });
 });

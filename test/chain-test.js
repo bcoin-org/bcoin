@@ -18,69 +18,89 @@ const Output = require('../lib/primitives/output');
 const common = require('../lib/blockchain/common');
 const opcodes = Script.opcodes;
 
+const network = Network.get('regtest');
+
+const chain = new Chain({
+  db: 'memory',
+  network
+});
+
+const miner = new Miner({
+  chain,
+  version: 4
+});
+
+const cpu = miner.cpu;
+
+const wallet = new MemWallet({
+  network,
+  witness: false
+});
+
+const witWallet = new MemWallet({
+  network,
+  witness: true
+});
+
+let tip1 = null;
+let tip2 = null;
+
+async function addBlock(block, flags) {
+  let entry;
+
+  try {
+    entry = await chain.add(block, flags);
+  } catch (e) {
+    assert(e.type === 'VerifyError');
+    return e.reason;
+  }
+
+  if (!entry)
+    return 'bad-prevblk';
+
+  return 'OK';
+}
+
+async function mineBlock(job, flags) {
+  const block = await job.mineAsync();
+  return await addBlock(block, flags);
+}
+
+async function mineCSV(fund) {
+  const job = await cpu.createJob();
+  const spend = new MTX();
+
+  spend.addOutput({
+    script: [
+      Script.array(new BN(1)),
+      Script.opcodes.OP_CHECKSEQUENCEVERIFY
+    ],
+    value: 10000
+  });
+
+  spend.addTX(fund, 0);
+  spend.setLocktime(chain.height);
+
+  wallet.sign(spend);
+
+  const [tx, view] = spend.commit();
+
+  job.addTX(tx, view);
+  job.refresh();
+
+  return await job.mineAsync();
+}
+
+chain.on('connect', (entry, block) => {
+  wallet.addBlock(entry, block.txs);
+});
+
+chain.on('disconnect', (entry, block) => {
+  wallet.removeBlock(entry, block.txs);
+});
+
 describe('Chain', function() {
-  const network = Network.get('regtest');
-  const chain = new Chain({ db: 'memory', network: network });
-  const miner = new Miner({ chain: chain, version: 4 });
-  const wallet = new MemWallet({ network: network });
-  const wwallet = new MemWallet({ network: network, witness: true });
-  const cpu = miner.cpu;
-  let tip1, tip2;
-
   this.timeout(45000);
-
-  async function addBlock(block, flags) {
-    let entry;
-
-    try {
-      entry = await chain.add(block, flags);
-    } catch (e) {
-      assert(e.type === 'VerifyError');
-      return e.reason;
-    }
-
-    if (!entry)
-      return 'bad-prevblk';
-
-    return 'OK';
-  }
-
-  async function mineBlock(job, flags) {
-    const block = await job.mineAsync();
-    return await addBlock(block, flags);
-  }
-
-  async function mineCSV(tx) {
-    const job = await cpu.createJob();
-    const rtx = new MTX();
-
-    rtx.addOutput({
-      script: [
-        Script.array(new BN(1)),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
-      ],
-      value: 10000
-    });
-
-    rtx.addTX(tx, 0);
-
-    rtx.setLocktime(chain.height);
-
-    wallet.sign(rtx);
-
-    job.addTX(rtx.toTX(), rtx.view);
-    job.refresh();
-
-    return await job.mineAsync();
-  }
-
-  chain.on('connect', (entry, block) => {
-    wallet.addBlock(entry, block.txs);
-  });
-
-  chain.on('disconnect', (entry, block) => {
-    wallet.removeBlock(entry, block.txs);
-  });
 
   it('should open chain and miner', async () => {
     await chain.open();
@@ -99,7 +119,7 @@ describe('Chain', function() {
       assert(await chain.add(block));
     }
 
-    assert.equal(chain.height, 200);
+    assert.strictEqual(chain.height, 200);
   });
 
   it('should mine competing chains', async () => {
@@ -142,19 +162,17 @@ describe('Chain', function() {
   });
 
   it('should have correct chain value', () => {
-    assert.equal(chain.db.state.value, 897500000000);
-    assert.equal(chain.db.state.coin, 220);
-    assert.equal(chain.db.state.tx, 221);
+    assert.strictEqual(chain.db.state.value, 897500000000);
+    assert.strictEqual(chain.db.state.coin, 220);
+    assert.strictEqual(chain.db.state.tx, 221);
   });
 
   it('should have correct wallet balance', async () => {
-    assert.equal(wallet.balance, 897500000000);
+    assert.strictEqual(wallet.balance, 897500000000);
   });
 
   it('should handle a reorg', async () => {
-    let forked = false;
-
-    assert.equal(chain.height, 210);
+    assert.strictEqual(chain.height, 210);
 
     const entry = await chain.db.getEntry(tip2.hash);
     assert(entry);
@@ -163,6 +181,7 @@ describe('Chain', function() {
     const block = await cpu.mineBlock(entry);
     assert(block);
 
+    let forked = false;
     chain.once('reorganize', () => {
       forked = true;
     });
@@ -175,13 +194,13 @@ describe('Chain', function() {
   });
 
   it('should have correct chain value', () => {
-    assert.equal(chain.db.state.value, 900000000000);
-    assert.equal(chain.db.state.coin, 221);
-    assert.equal(chain.db.state.tx, 222);
+    assert.strictEqual(chain.db.state.value, 900000000000);
+    assert.strictEqual(chain.db.state.coin, 221);
+    assert.strictEqual(chain.db.state.tx, 222);
   });
 
   it('should have correct wallet balance', async () => {
-    assert.equal(wallet.balance, 900000000000);
+    assert.strictEqual(wallet.balance, 900000000000);
   });
 
   it('should check main chain', async () => {
@@ -205,8 +224,6 @@ describe('Chain', function() {
   });
 
   it('should prevent double spend on new chain', async () => {
-    let job = await cpu.createJob();
-
     const mtx = await wallet.create({
       outputs: [{
         address: wallet.getAddress(),
@@ -214,22 +231,29 @@ describe('Chain', function() {
       }]
     });
 
-    job.addTX(mtx.toTX(), mtx.view);
-    job.refresh();
+    {
+      const job = await cpu.createJob();
 
-    const block = await job.mineAsync();
+      job.addTX(mtx.toTX(), mtx.view);
+      job.refresh();
 
-    assert(await chain.add(block));
+      const block = await job.mineAsync();
 
-    job = await cpu.createJob();
+      assert(await chain.add(block));
+    }
 
-    assert(mtx.outputs.length > 1);
-    mtx.outputs.pop();
+    {
+      const job = await cpu.createJob();
 
-    job.addTX(mtx.toTX(), mtx.view);
-    job.refresh();
+      assert(mtx.outputs.length > 1);
+      mtx.outputs.pop();
 
-    assert.equal(await mineBlock(job), 'bad-txns-inputs-missingorspent');
+      job.addTX(mtx.toTX(), mtx.view);
+      job.refresh();
+
+      assert.strictEqual(await mineBlock(job),
+        'bad-txns-inputs-missingorspent');
+    }
   });
 
   it('should fail to connect coins on an alternate chain', async () => {
@@ -246,13 +270,13 @@ describe('Chain', function() {
     job.addTX(mtx.toTX(), mtx.view);
     job.refresh();
 
-    assert.equal(await mineBlock(job), 'bad-txns-inputs-missingorspent');
+    assert.strictEqual(await mineBlock(job), 'bad-txns-inputs-missingorspent');
   });
 
   it('should have correct chain value', () => {
-    assert.equal(chain.db.state.value, 905000000000);
-    assert.equal(chain.db.state.coin, 224);
-    assert.equal(chain.db.state.tx, 225);
+    assert.strictEqual(chain.db.state.value, 905000000000);
+    assert.strictEqual(chain.db.state.coin, 224);
+    assert.strictEqual(chain.db.state.tx, 225);
   });
 
   it('should get coin', async () => {
@@ -285,28 +309,32 @@ describe('Chain', function() {
 
     const coin = await chain.db.getCoin(tx.hash('hex'), 2);
 
-    assert.deepEqual(coin.toRaw(), output.toRaw());
+    assert.deepStrictEqual(coin.toRaw(), output.toRaw());
   });
 
   it('should have correct wallet balance', async () => {
-    assert.equal(wallet.balance, 907500000000);
-    assert.equal(wallet.receiveDepth, 15);
-    assert.equal(wallet.changeDepth, 14);
-    assert.equal(wallet.txs, 226);
+    assert.strictEqual(wallet.balance, 907500000000);
+    assert.strictEqual(wallet.receiveDepth, 15);
+    assert.strictEqual(wallet.changeDepth, 14);
+    assert.strictEqual(wallet.txs, 226);
   });
 
   it('should get tips and remove chains', async () => {
-    let tips = await chain.db.getTips();
+    {
+      const tips = await chain.db.getTips();
 
-    assert.notEqual(tips.indexOf(chain.tip.hash), -1);
-    assert.equal(tips.length, 2);
+      assert.notStrictEqual(tips.indexOf(chain.tip.hash), -1);
+      assert.strictEqual(tips.length, 2);
+    }
 
     await chain.db.removeChains();
 
-    tips = await chain.db.getTips();
+    {
+      const tips = await chain.db.getTips();
 
-    assert.notEqual(tips.indexOf(chain.tip.hash), -1);
-    assert.equal(tips.length, 1);
+      assert.notStrictEqual(tips.indexOf(chain.tip.hash), -1);
+      assert.strictEqual(tips.length, 1);
+    }
   });
 
   it('should rescan for transactions', async () => {
@@ -316,7 +344,7 @@ describe('Chain', function() {
       total += txs.length;
     });
 
-    assert.equal(total, 226);
+    assert.strictEqual(total, 226);
   });
 
   it('should activate csv', async () => {
@@ -324,11 +352,11 @@ describe('Chain', function() {
 
     miner.options.version = -1;
 
-    assert.equal(chain.height, 214);
+    assert.strictEqual(chain.height, 214);
 
     const prev = await chain.tip.getPrevious();
     const state = await chain.getState(prev, deployments.csv);
-    assert.equal(state, 1);
+    assert.strictEqual(state, 1);
 
     for (let i = 0; i < 417; i++) {
       const block = await cpu.mineBlock();
@@ -337,31 +365,31 @@ describe('Chain', function() {
         case 288: {
           const prev = await chain.tip.getPrevious();
           const state = await chain.getState(prev, deployments.csv);
-          assert.equal(state, 1);
+          assert.strictEqual(state, 1);
           break;
         }
         case 432: {
           const prev = await chain.tip.getPrevious();
           const state = await chain.getState(prev, deployments.csv);
-          assert.equal(state, 2);
+          assert.strictEqual(state, 2);
           break;
         }
         case 576: {
           const prev = await chain.tip.getPrevious();
           const state = await chain.getState(prev, deployments.csv);
-          assert.equal(state, 3);
+          assert.strictEqual(state, 3);
           break;
         }
       }
     }
 
-    assert.equal(chain.height, 631);
+    assert.strictEqual(chain.height, 631);
     assert(chain.state.hasCSV());
     assert(chain.state.hasWitness());
 
     const cache = await chain.db.getStateCache();
-    assert.deepEqual(cache, chain.db.stateCache);
-    assert.equal(chain.db.stateCache.updates.length, 0);
+    assert.deepStrictEqual(cache, chain.db.stateCache);
+    assert.strictEqual(chain.db.stateCache.updates.length, 0);
     assert(await chain.db.verifyDeployments());
   });
 
@@ -369,20 +397,20 @@ describe('Chain', function() {
     const deployments = network.deployments;
     const prev = await chain.tip.getPrevious();
     const state = await chain.getState(prev, deployments.segwit);
-    assert.equal(state, 3);
+    assert.strictEqual(state, 3);
   });
 
   it('should test csv', async () => {
     const tx = (await chain.db.getBlock(chain.height - 100)).txs[0];
-    let block = await mineCSV(tx);
+    const csvBlock = await mineCSV(tx);
 
-    assert(await chain.add(block));
+    assert(await chain.add(csvBlock));
 
-    const csv = block.txs[1];
+    const csv = csvBlock.txs[1];
 
-    const rtx = new MTX();
+    const spend = new MTX();
 
-    rtx.addOutput({
+    spend.addOutput({
       script: [
         Script.array(new BN(2)),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
@@ -390,24 +418,24 @@ describe('Chain', function() {
       value: 10000
     });
 
-    rtx.addTX(csv, 0);
-    rtx.setSequence(0, 1, false);
+    spend.addTX(csv, 0);
+    spend.setSequence(0, 1, false);
 
     const job = await cpu.createJob();
 
-    job.addTX(rtx.toTX(), rtx.view);
+    job.addTX(spend.toTX(), spend.view);
     job.refresh();
 
-    block = await job.mineAsync();
+    const block = await job.mineAsync();
 
     assert(await chain.add(block));
   });
 
   it('should fail csv with bad sequence', async () => {
     const csv = (await chain.db.getBlock(chain.height - 100)).txs[0];
-    const rtx = new MTX();
+    const spend = new MTX();
 
-    rtx.addOutput({
+    spend.addOutput({
       script: [
         Script.array(new BN(1)),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
@@ -415,14 +443,14 @@ describe('Chain', function() {
       value: 1 * 1e8
     });
 
-    rtx.addTX(csv, 0);
-    rtx.setSequence(0, 1, false);
+    spend.addTX(csv, 0);
+    spend.setSequence(0, 1, false);
 
     const job = await cpu.createJob();
-    job.addTX(rtx.toTX(), rtx.view);
+    job.addTX(spend.toTX(), spend.view);
     job.refresh();
 
-    assert.equal(await mineBlock(job), 'mandatory-script-verify-flag-failed');
+    assert.strictEqual(await mineBlock(job), 'mandatory-script-verify-flag-failed');
   });
 
   it('should mine a block', async () => {
@@ -433,15 +461,15 @@ describe('Chain', function() {
 
   it('should fail csv lock checks', async () => {
     const tx = (await chain.db.getBlock(chain.height - 100)).txs[0];
-    const block = await mineCSV(tx);
+    const csvBlock = await mineCSV(tx);
 
-    assert(await chain.add(block));
+    assert(await chain.add(csvBlock));
 
-    const csv = block.txs[1];
+    const csv = csvBlock.txs[1];
 
-    const rtx = new MTX();
+    const spend = new MTX();
 
-    rtx.addOutput({
+    spend.addOutput({
       script: [
         Script.array(new BN(2)),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
@@ -449,38 +477,38 @@ describe('Chain', function() {
       value: 1 * 1e8
     });
 
-    rtx.addTX(csv, 0);
-    rtx.setSequence(0, 2, false);
+    spend.addTX(csv, 0);
+    spend.setSequence(0, 2, false);
 
     const job = await cpu.createJob();
-    job.addTX(rtx.toTX(), rtx.view);
+    job.addTX(spend.toTX(), spend.view);
     job.refresh();
 
-    assert.equal(await mineBlock(job), 'bad-txns-nonfinal');
+    assert.strictEqual(await mineBlock(job), 'bad-txns-nonfinal');
   });
 
   it('should have correct wallet balance', async () => {
-    assert.equal(wallet.balance, 1412499980000);
+    assert.strictEqual(wallet.balance, 1412499980000);
   });
 
   it('should fail to connect bad bits', async () => {
     const job = await cpu.createJob();
     job.attempt.bits = 553713663;
-    assert.equal(await mineBlock(job), 'bad-diffbits');
+    assert.strictEqual(await mineBlock(job), 'bad-diffbits');
   });
 
   it('should fail to connect bad MTP', async () => {
     const mtp = await chain.tip.getMedianTime();
     const job = await cpu.createJob();
     job.attempt.time = mtp - 1;
-    assert.equal(await mineBlock(job), 'time-too-old');
+    assert.strictEqual(await mineBlock(job), 'time-too-old');
   });
 
   it('should fail to connect bad time', async () => {
     const job = await cpu.createJob();
     const now = network.now() + 3 * 60 * 60;
     job.attempt.time = now;
-    assert.equal(await mineBlock(job), 'time-too-new');
+    assert.strictEqual(await mineBlock(job), 'time-too-new');
   });
 
   it('should fail to connect bad locktime', async () => {
@@ -488,7 +516,7 @@ describe('Chain', function() {
     const tx = await wallet.send({ locktime: 100000 });
     job.pushTX(tx.toTX());
     job.refresh();
-    assert.equal(await mineBlock(job), 'bad-txns-nonfinal');
+    assert.strictEqual(await mineBlock(job), 'bad-txns-nonfinal');
   });
 
   it('should fail to connect bad cb height', async () => {
@@ -500,7 +528,7 @@ describe('Chain', function() {
 
     try {
       network.block.bip34height = 0;
-      assert.equal(await mineBlock(job), 'bad-cb-height');
+      assert.strictEqual(await mineBlock(job), 'bad-cb-height');
     } finally {
       network.block.bip34height = bip34height;
     }
@@ -513,7 +541,7 @@ describe('Chain', function() {
     input.witness.set(0, Buffer.allocUnsafe(33));
     input.witness.compile();
     block.refresh(true);
-    assert.equal(await addBlock(block), 'bad-witness-nonce-size');
+    assert.strictEqual(await addBlock(block), 'bad-witness-nonce-size');
   });
 
   it('should fail to connect bad witness nonce', async () => {
@@ -523,7 +551,7 @@ describe('Chain', function() {
     input.witness.set(0, encoding.ONE_HASH);
     input.witness.compile();
     block.refresh(true);
-    assert.equal(await addBlock(block), 'bad-witness-merkle-match');
+    assert.strictEqual(await addBlock(block), 'bad-witness-merkle-match');
   });
 
   it('should fail to connect bad witness commitment', async () => {
@@ -542,7 +570,7 @@ describe('Chain', function() {
     block.refresh(true);
     block.merkleRoot = block.createMerkleRoot('hex');
 
-    assert.equal(await addBlock(block, flags), 'bad-witness-merkle-match');
+    assert.strictEqual(await addBlock(block, flags), 'bad-witness-merkle-match');
   });
 
   it('should fail to connect unexpected witness', async () => {
@@ -558,13 +586,13 @@ describe('Chain', function() {
     block.refresh(true);
     block.merkleRoot = block.createMerkleRoot('hex');
 
-    assert.equal(await addBlock(block, flags), 'unexpected-witness');
+    assert.strictEqual(await addBlock(block, flags), 'unexpected-witness');
   });
 
   it('should add wit addrs to miner', async () => {
     miner.addresses.length = 0;
-    miner.addAddress(wwallet.getReceive());
-    assert.equal(wwallet.getReceive().getType(), 'witness');
+    miner.addAddress(witWallet.getReceive());
+    assert.strictEqual(witWallet.getReceive().getType(), 'witness');
   });
 
   it('should mine 2000 witness blocks', async () => {
@@ -574,24 +602,24 @@ describe('Chain', function() {
       assert(await chain.add(block));
     }
 
-    assert.equal(chain.height, 2636);
+    assert.strictEqual(chain.height, 2636);
   });
 
   it('should mine a witness tx', async () => {
-    let block = await chain.db.getBlock(chain.height - 2000);
-    const cb = block.txs[0];
+    const prev = await chain.db.getBlock(chain.height - 2000);
+    const cb = prev.txs[0];
     const mtx = new MTX();
 
     mtx.addTX(cb, 0);
-    mtx.addOutput(wwallet.getAddress(), 1000);
+    mtx.addOutput(witWallet.getAddress(), 1000);
 
-    wwallet.sign(mtx);
+    witWallet.sign(mtx);
 
     const job = await cpu.createJob();
     job.addTX(mtx.toTX(), mtx.view);
     job.refresh();
 
-    block = await job.mineAsync();
+    const block = await job.mineAsync();
 
     assert(await chain.add(block));
   });
@@ -609,16 +637,16 @@ describe('Chain', function() {
       mtx.addTX(cb, 0);
 
       for (let j = 0; j < 16; j++)
-        mtx.addOutput(wwallet.getAddress(), 1);
+        mtx.addOutput(witWallet.getAddress(), 1);
 
-      wwallet.sign(mtx);
+      witWallet.sign(mtx);
 
       job.pushTX(mtx.toTX());
     }
 
     job.refresh();
 
-    assert.equal(await mineBlock(job), 'bad-blk-weight');
+    assert.strictEqual(await mineBlock(job), 'bad-blk-weight');
   });
 
   it('should mine fail to connect too much size', async () => {
@@ -634,16 +662,16 @@ describe('Chain', function() {
       mtx.addTX(cb, 0);
 
       for (let j = 0; j < 20; j++)
-        mtx.addOutput(wwallet.getAddress(), 1);
+        mtx.addOutput(witWallet.getAddress(), 1);
 
-      wwallet.sign(mtx);
+      witWallet.sign(mtx);
 
       job.pushTX(mtx.toTX());
     }
 
     job.refresh();
 
-    assert.equal(await mineBlock(job), 'bad-blk-length');
+    assert.strictEqual(await mineBlock(job), 'bad-blk-length');
   });
 
   it('should mine a big block', async () => {
@@ -659,23 +687,23 @@ describe('Chain', function() {
       mtx.addTX(cb, 0);
 
       for (let j = 0; j < 15; j++)
-        mtx.addOutput(wwallet.getAddress(), 1);
+        mtx.addOutput(witWallet.getAddress(), 1);
 
-      wwallet.sign(mtx);
+      witWallet.sign(mtx);
 
       job.pushTX(mtx.toTX());
     }
 
     job.refresh();
 
-    assert.equal(await mineBlock(job), 'OK');
+    assert.strictEqual(await mineBlock(job), 'OK');
   });
 
   it('should fail to connect bad versions', async () => {
     for (let i = 0; i <= 3; i++) {
       const job = await cpu.createJob();
       job.attempt.version = i;
-      assert.equal(await mineBlock(job), 'bad-version');
+      assert.strictEqual(await mineBlock(job), 'bad-version');
     }
   });
 
@@ -684,7 +712,7 @@ describe('Chain', function() {
 
     job.attempt.fees += 1;
     job.refresh();
-    assert.equal(await mineBlock(job), 'bad-cb-amount');
+    assert.strictEqual(await mineBlock(job), 'bad-cb-amount');
   });
 
   it('should fail to connect premature cb spend', async () => {
@@ -694,14 +722,14 @@ describe('Chain', function() {
     const mtx = new MTX();
 
     mtx.addTX(cb, 0);
-    mtx.addOutput(wwallet.getAddress(), 1);
+    mtx.addOutput(witWallet.getAddress(), 1);
 
-    wwallet.sign(mtx);
+    witWallet.sign(mtx);
 
     job.addTX(mtx.toTX(), mtx.view);
     job.refresh();
 
-    assert.equal(await mineBlock(job),
+    assert.strictEqual(await mineBlock(job),
       'bad-txns-premature-spend-of-coinbase');
   });
 
@@ -712,14 +740,14 @@ describe('Chain', function() {
     const mtx = new MTX();
 
     mtx.addTX(cb, 0);
-    mtx.addOutput(wwallet.getAddress(), 1e8);
+    mtx.addOutput(witWallet.getAddress(), 1e8);
 
-    wwallet.sign(mtx);
+    witWallet.sign(mtx);
 
     job.pushTX(mtx.toTX());
     job.refresh();
 
-    assert.equal(await mineBlock(job),
+    assert.strictEqual(await mineBlock(job),
       'bad-txns-in-belowout');
   });
 
@@ -730,33 +758,36 @@ describe('Chain', function() {
     const mtx = new MTX();
 
     mtx.addTX(cb, 0);
-    mtx.addOutput(wwallet.getAddress(), Math.floor(consensus.MAX_MONEY / 2));
-    mtx.addOutput(wwallet.getAddress(), Math.floor(consensus.MAX_MONEY / 2));
-    mtx.addOutput(wwallet.getAddress(), Math.floor(consensus.MAX_MONEY / 2));
 
-    wwallet.sign(mtx);
+    const value = Math.floor(consensus.MAX_MONEY / 2);
+
+    mtx.addOutput(witWallet.getAddress(), value);
+    mtx.addOutput(witWallet.getAddress(), value);
+    mtx.addOutput(witWallet.getAddress(), value);
+
+    witWallet.sign(mtx);
 
     job.pushTX(mtx.toTX());
     job.refresh();
 
-    assert.equal(await mineBlock(job),
+    assert.strictEqual(await mineBlock(job),
       'bad-txns-txouttotal-toolarge');
   });
 
   it('should mine 111 multisig blocks', async () => {
     const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
 
-    let script = new Script();
-    script.push(new BN(20));
+    const redeem = new Script();
+    redeem.push(new BN(20));
 
     for (let i = 0; i < 20; i++)
-      script.push(encoding.ZERO_KEY);
+      redeem.push(encoding.ZERO_KEY);
 
-    script.push(new BN(20));
-    script.push(opcodes.OP_CHECKMULTISIG);
-    script.compile();
+    redeem.push(new BN(20));
+    redeem.push(opcodes.OP_CHECKMULTISIG);
+    redeem.compile();
 
-    script = Script.fromScripthash(script.hash160());
+    const script = Script.fromScripthash(redeem.hash160());
 
     for (let i = 0; i < 111; i++) {
       const block = await cpu.mineBlock();
@@ -779,7 +810,7 @@ describe('Chain', function() {
       assert(await chain.add(block, flags));
     }
 
-    assert.equal(chain.height, 2749);
+    assert.strictEqual(chain.height, 2749);
   });
 
   it('should fail to connect too many sigops', async () => {
@@ -811,14 +842,14 @@ describe('Chain', function() {
         mtx.inputs[j - 2].script = new Script([script.toRaw()]);
       }
 
-      mtx.addOutput(wwallet.getAddress(), 1);
+      mtx.addOutput(witWallet.getAddress(), 1);
 
       job.pushTX(mtx.toTX());
     }
 
     job.refresh();
 
-    assert.equal(await mineBlock(job), 'bad-blk-sigops');
+    assert.strictEqual(await mineBlock(job), 'bad-blk-sigops');
   });
 
   it('should cleanup', async () => {

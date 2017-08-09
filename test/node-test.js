@@ -14,46 +14,76 @@ const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const Address = require('../lib/primitives/address');
 
-describe('Node', function() {
-  const node = new FullNode({
-    db: 'memory',
-    apiKey: 'foo',
-    network: 'regtest',
-    workers: true,
-    plugins: [require('../lib/wallet/plugin')]
+const node = new FullNode({
+  db: 'memory',
+  apiKey: 'foo',
+  network: 'regtest',
+  workers: true,
+  plugins: [require('../lib/wallet/plugin')]
+});
+
+const chain = node.chain;
+const miner = node.miner;
+const wdb = node.require('walletdb');
+
+let wallet = null;
+let tip1 = null;
+let tip2 = null;
+let cb1 = null;
+let cb2 = null;
+let tx1 = null;
+let tx2 = null;
+
+async function mineBlock(tip, tx) {
+  const job = await miner.createJob(tip);
+
+  if (!tx)
+    return await job.mineAsync();
+
+  const spend = new MTX();
+
+  spend.addTX(tx, 0);
+
+  spend.addOutput(wallet.getReceive(), 25 * 1e8);
+  spend.addOutput(wallet.getChange(), 5 * 1e8);
+
+  spend.setLocktime(chain.height);
+
+  await wallet.sign(spend);
+
+  job.addTX(spend.toTX(), spend.view);
+  job.refresh();
+
+  return await job.mineAsync();
+}
+
+async function mineCSV(fund) {
+  const job = await miner.createJob();
+  const spend = new MTX();
+
+  spend.addOutput({
+    script: [
+      Script.array(new BN(1)),
+      Script.opcodes.OP_CHECKSEQUENCEVERIFY
+    ],
+    value: 10 * 1e8
   });
 
-  const chain = node.chain;
-  const miner = node.miner;
-  const wdb = node.require('walletdb');
+  spend.addTX(fund, 0);
+  spend.setLocktime(chain.height);
 
-  let wallet, tip1, tip2, cb1, cb2;
-  let tx1, tx2;
+  await wallet.sign(spend);
 
+  const [tx, view] = spend.commit();
+
+  job.addTX(tx, view);
+  job.refresh();
+
+  return await job.mineAsync();
+}
+
+describe('Node', function() {
   this.timeout(5000);
-
-  async function mineBlock(tip, tx) {
-    const job = await miner.createJob(tip);
-
-    if (!tx)
-      return await job.mineAsync();
-
-    const rtx = new MTX();
-
-    rtx.addTX(tx, 0);
-
-    rtx.addOutput(wallet.getReceive(), 25 * 1e8);
-    rtx.addOutput(wallet.getChange(), 5 * 1e8);
-
-    rtx.setLocktime(chain.height);
-
-    await wallet.sign(rtx);
-
-    job.addTX(rtx.toTX(), rtx.view);
-    job.refresh();
-
-    return await job.mineAsync();
-  }
 
   it('should open chain and miner', async () => {
     miner.mempool = null;
@@ -100,22 +130,22 @@ describe('Node', function() {
   });
 
   it('should have correct chain value', () => {
-    assert.equal(chain.db.state.value, 55000000000);
-    assert.equal(chain.db.state.coin, 20);
-    assert.equal(chain.db.state.tx, 21);
+    assert.strictEqual(chain.db.state.value, 55000000000);
+    assert.strictEqual(chain.db.state.coin, 20);
+    assert.strictEqual(chain.db.state.tx, 21);
   });
 
   it('should have correct balance', async () => {
     await co.timeout(100);
 
     const balance = await wallet.getBalance();
-    assert.equal(balance.unconfirmed, 550 * 1e8);
-    assert.equal(balance.confirmed, 550 * 1e8);
+    assert.strictEqual(balance.unconfirmed, 550 * 1e8);
+    assert.strictEqual(balance.confirmed, 550 * 1e8);
   });
 
   it('should handle a reorg', async () => {
-    assert.equal(wdb.state.height, chain.height);
-    assert.equal(chain.height, 11);
+    assert.strictEqual(wdb.state.height, chain.height);
+    assert.strictEqual(chain.height, 11);
 
     const entry = await chain.db.getEntry(tip2.hash);
     assert(entry);
@@ -137,17 +167,17 @@ describe('Node', function() {
   });
 
   it('should have correct chain value', () => {
-    assert.equal(chain.db.state.value, 60000000000);
-    assert.equal(chain.db.state.coin, 21);
-    assert.equal(chain.db.state.tx, 22);
+    assert.strictEqual(chain.db.state.value, 60000000000);
+    assert.strictEqual(chain.db.state.coin, 21);
+    assert.strictEqual(chain.db.state.tx, 22);
   });
 
   it('should have correct balance', async () => {
     await co.timeout(100);
 
     const balance = await wallet.getBalance();
-    assert.equal(balance.unconfirmed, 1100 * 1e8);
-    assert.equal(balance.confirmed, 600 * 1e8);
+    assert.strictEqual(balance.unconfirmed, 1100 * 1e8);
+    assert.strictEqual(balance.confirmed, 600 * 1e8);
   });
 
   it('should check main chain', async () => {
@@ -171,8 +201,8 @@ describe('Node', function() {
   it('should prevent double spend on new chain', async () => {
     const block = await mineBlock(null, cb2);
     const tip = chain.tip;
-    let err;
 
+    let err;
     try {
       await chain.add(block);
     } catch (e) {
@@ -180,15 +210,15 @@ describe('Node', function() {
     }
 
     assert(err);
-    assert.equal(err.reason, 'bad-txns-inputs-missingorspent');
+    assert.strictEqual(err.reason, 'bad-txns-inputs-missingorspent');
     assert(chain.tip === tip);
   });
 
   it('should fail to mine block with coins on an alternate chain', async () => {
     const block = await mineBlock(null, cb1);
     const tip = chain.tip;
-    let err;
 
+    let err;
     try {
       await chain.add(block);
     } catch (e) {
@@ -196,59 +226,63 @@ describe('Node', function() {
     }
 
     assert(err);
-    assert.equal(err.reason, 'bad-txns-inputs-missingorspent');
+    assert.strictEqual(err.reason, 'bad-txns-inputs-missingorspent');
     assert(chain.tip === tip);
   });
 
   it('should have correct chain value', () => {
-    assert.equal(chain.db.state.value, 65000000000);
-    assert.equal(chain.db.state.coin, 23);
-    assert.equal(chain.db.state.tx, 24);
+    assert.strictEqual(chain.db.state.value, 65000000000);
+    assert.strictEqual(chain.db.state.coin, 23);
+    assert.strictEqual(chain.db.state.tx, 24);
   });
 
   it('should get coin', async () => {
-    let block = await mineBlock();
-    await chain.add(block);
+    const block1 = await mineBlock();
+    await chain.add(block1);
 
-    block = await mineBlock(null, block.txs[0]);
-    await chain.add(block);
+    const block2 = await mineBlock(null, block1.txs[0]);
+    await chain.add(block2);
 
-    const tx = block.txs[1];
+    const tx = block2.txs[1];
     const output = Coin.fromTX(tx, 1, chain.height);
 
     const coin = await chain.db.getCoin(tx.hash('hex'), 1);
 
-    assert.deepEqual(coin.toRaw(), output.toRaw());
+    assert.deepStrictEqual(coin.toRaw(), output.toRaw());
   });
 
   it('should get balance', async () => {
     await co.timeout(100);
 
     const balance = await wallet.getBalance();
-    assert.equal(balance.unconfirmed, 1250 * 1e8);
-    assert.equal(balance.confirmed, 750 * 1e8);
+    assert.strictEqual(balance.unconfirmed, 1250 * 1e8);
+    assert.strictEqual(balance.confirmed, 750 * 1e8);
 
     assert(wallet.account.receiveDepth >= 7);
     assert(wallet.account.changeDepth >= 6);
 
-    assert.equal(wdb.state.height, chain.height);
+    assert.strictEqual(wdb.state.height, chain.height);
 
     const txs = await wallet.getHistory();
-    assert.equal(txs.length, 45);
+    assert.strictEqual(txs.length, 45);
   });
 
   it('should get tips and remove chains', async () => {
-    let tips = await chain.db.getTips();
+    {
+      const tips = await chain.db.getTips();
 
-    assert.notEqual(tips.indexOf(chain.tip.hash), -1);
-    assert.equal(tips.length, 2);
+      assert.notStrictEqual(tips.indexOf(chain.tip.hash), -1);
+      assert.strictEqual(tips.length, 2);
+    }
 
     await chain.db.removeChains();
 
-    tips = await chain.db.getTips();
+    {
+      const tips = await chain.db.getTips();
 
-    assert.notEqual(tips.indexOf(chain.tip.hash), -1);
-    assert.equal(tips.length, 1);
+      assert.notStrictEqual(tips.indexOf(chain.tip.hash), -1);
+      assert.strictEqual(tips.length, 1);
+    }
   });
 
   it('should rescan for transactions', async () => {
@@ -258,7 +292,7 @@ describe('Node', function() {
       total += txs.length;
     });
 
-    assert.equal(total, 26);
+    assert.strictEqual(total, 26);
   });
 
   it('should activate csv', async () => {
@@ -297,46 +331,22 @@ describe('Node', function() {
     assert(chain.state.hasCSV());
 
     const cache = await chain.db.getStateCache();
-    assert.deepEqual(cache, chain.db.stateCache);
-    assert.equal(chain.db.stateCache.updates.length, 0);
+    assert.deepStrictEqual(cache, chain.db.stateCache);
+    assert.strictEqual(chain.db.stateCache.updates.length, 0);
     assert(await chain.db.verifyDeployments());
   });
 
-  async function mineCSV(tx) {
-    const job = await miner.createJob();
-    const redeemer = new MTX();
-
-    redeemer.addOutput({
-      script: [
-        Script.array(new BN(1)),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
-      ],
-      value: 10 * 1e8
-    });
-
-    redeemer.addTX(tx, 0);
-
-    redeemer.setLocktime(chain.height);
-
-    await wallet.sign(redeemer);
-
-    job.addTX(redeemer.toTX(), redeemer.view);
-    job.refresh();
-
-    return await job.mineAsync();
-  }
-
   it('should test csv', async () => {
     const tx = (await chain.db.getBlock(chain.height)).txs[0];
-    let block = await mineCSV(tx);
+    const csvBlock = await mineCSV(tx);
 
-    await chain.add(block);
+    await chain.add(csvBlock);
 
-    const csv = block.txs[1];
+    const csv = csvBlock.txs[1];
 
-    const redeemer = new MTX();
+    const spend = new MTX();
 
-    redeemer.addOutput({
+    spend.addOutput({
       script: [
         Script.array(new BN(2)),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
@@ -344,24 +354,24 @@ describe('Node', function() {
       value: 10 * 1e8
     });
 
-    redeemer.addTX(csv, 0);
-    redeemer.setSequence(0, 1, false);
+    spend.addTX(csv, 0);
+    spend.setSequence(0, 1, false);
 
     const job = await miner.createJob();
 
-    job.addTX(redeemer.toTX(), redeemer.view);
+    job.addTX(spend.toTX(), spend.view);
     job.refresh();
 
-    block = await job.mineAsync();
+    const block = await job.mineAsync();
 
     await chain.add(block);
   });
 
   it('should fail csv with bad sequence', async () => {
     const csv = (await chain.db.getBlock(chain.height)).txs[1];
-    const redeemer = new MTX();
+    const spend = new MTX();
 
-    redeemer.addOutput({
+    spend.addOutput({
       script: [
         Script.array(new BN(1)),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
@@ -369,12 +379,12 @@ describe('Node', function() {
       value: 10 * 1e8
     });
 
-    redeemer.addTX(csv, 0);
-    redeemer.setSequence(0, 1, false);
+    spend.addTX(csv, 0);
+    spend.setSequence(0, 1, false);
 
     const job = await miner.createJob();
 
-    job.addTX(redeemer.toTX(), redeemer.view);
+    job.addTX(spend.toTX(), spend.view);
     job.refresh();
 
     const block = await job.mineAsync();
@@ -398,15 +408,15 @@ describe('Node', function() {
 
   it('should fail csv lock checks', async () => {
     const tx = (await chain.db.getBlock(chain.height)).txs[0];
-    let block = await mineCSV(tx);
+    const csvBlock = await mineCSV(tx);
 
-    await chain.add(block);
+    await chain.add(csvBlock);
 
-    const csv = block.txs[1];
+    const csv = csvBlock.txs[1];
 
-    const redeemer = new MTX();
+    const spend = new MTX();
 
-    redeemer.addOutput({
+    spend.addOutput({
       script: [
         Script.array(new BN(2)),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
@@ -414,15 +424,15 @@ describe('Node', function() {
       value: 10 * 1e8
     });
 
-    redeemer.addTX(csv, 0);
-    redeemer.setSequence(0, 2, false);
+    spend.addTX(csv, 0);
+    spend.setSequence(0, 2, false);
 
     const job = await miner.createJob();
 
-    job.addTX(redeemer.toTX(), redeemer.view);
+    job.addTX(spend.toTX(), spend.view);
     job.refresh();
 
-    block = await job.mineAsync();
+    const block = await job.mineAsync();
 
     let err;
     try {
@@ -432,12 +442,12 @@ describe('Node', function() {
     }
 
     assert(err);
-    assert.equal(err.reason, 'bad-txns-nonfinal');
+    assert.strictEqual(err.reason, 'bad-txns-nonfinal');
   });
 
   it('should rescan for transactions', async () => {
     await wdb.rescan(0);
-    assert.equal(wallet.txdb.state.confirmed, 1289250000000);
+    assert.strictEqual(wallet.txdb.state.confirmed, 1289250000000);
   });
 
   it('should reset miner mempool', async () => {
@@ -449,7 +459,7 @@ describe('Node', function() {
       method: 'getblocktemplate'
     }, {});
     assert(json.error);
-    assert.equal(json.error.code, -8);
+    assert.strictEqual(json.error.code, -8);
   });
 
   it('should get a block template', async () => {
@@ -534,7 +544,7 @@ describe('Node', function() {
 
     assert(!json.error);
     assert(json.result === null);
-    assert.equal(node.chain.tip.hash, block.hash('hex'));
+    assert.strictEqual(node.chain.tip.hash, block.hash('hex'));
   });
 
   it('should validate an address', async () => {
@@ -569,7 +579,6 @@ describe('Node', function() {
 
     assert(mtx.isSigned());
 
-    tx1 = mtx;
     const tx = mtx.toTX();
 
     await wallet.db.addTX(tx);
@@ -577,7 +586,9 @@ describe('Node', function() {
     const missing = await node.mempool.addTX(tx);
     assert(!missing || missing.length === 0);
 
-    assert.equal(node.mempool.map.size, 1);
+    assert.strictEqual(node.mempool.map.size, 1);
+
+    tx1 = mtx;
   });
 
   it('should add lesser transaction to mempool', async () => {
@@ -593,7 +604,6 @@ describe('Node', function() {
 
     assert(mtx.isSigned());
 
-    tx2 = mtx;
     const tx = mtx.toTX();
 
     await wallet.db.addTX(tx);
@@ -601,7 +611,9 @@ describe('Node', function() {
     const missing = await node.mempool.addTX(tx);
     assert(!missing || missing.length === 0);
 
-    assert.equal(node.mempool.map.size, 2);
+    assert.strictEqual(node.mempool.map.size, 2);
+
+    tx2 = mtx;
   });
 
   it('should get a block template', async () => {
@@ -628,12 +640,12 @@ describe('Node', function() {
       weight += item.weight;
     }
 
-    assert.equal(result.transactions.length, 2);
-    assert.equal(fees, tx1.getFee() + tx2.getFee());
-    assert.equal(weight, tx1.getWeight() + tx2.getWeight());
-    assert.equal(result.transactions[0].hash, tx1.txid());
-    assert.equal(result.transactions[1].hash, tx2.txid());
-    assert.equal(result.coinbasevalue, 125e7 + fees);
+    assert.strictEqual(result.transactions.length, 2);
+    assert.strictEqual(fees, tx1.getFee() + tx2.getFee());
+    assert.strictEqual(weight, tx1.getWeight() + tx2.getWeight());
+    assert.strictEqual(result.transactions[0].hash, tx1.txid());
+    assert.strictEqual(result.transactions[1].hash, tx2.txid());
+    assert.strictEqual(result.coinbasevalue, 125e7 + fees);
   });
 
   it('should get raw transaction', async () => {
@@ -645,7 +657,7 @@ describe('Node', function() {
 
     assert(!json.error);
     const tx = TX.fromRaw(json.result, 'hex');
-    assert.equal(tx.txid(), tx2.txid());
+    assert.strictEqual(tx.txid(), tx2.txid());
   });
 
   it('should prioritise transaction', async () => {
@@ -683,12 +695,12 @@ describe('Node', function() {
       weight += item.weight;
     }
 
-    assert.equal(result.transactions.length, 2);
-    assert.equal(fees, tx1.getFee() + tx2.getFee());
-    assert.equal(weight, tx1.getWeight() + tx2.getWeight());
-    assert.equal(result.transactions[0].hash, tx2.txid());
-    assert.equal(result.transactions[1].hash, tx1.txid());
-    assert.equal(result.coinbasevalue, 125e7 + fees);
+    assert.strictEqual(result.transactions.length, 2);
+    assert.strictEqual(fees, tx1.getFee() + tx2.getFee());
+    assert.strictEqual(weight, tx1.getWeight() + tx2.getWeight());
+    assert.strictEqual(result.transactions[0].hash, tx2.txid());
+    assert.strictEqual(result.transactions[1].hash, tx1.txid());
+    assert.strictEqual(result.coinbasevalue, 125e7 + fees);
   });
 
   it('should cleanup', async () => {

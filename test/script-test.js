@@ -13,7 +13,7 @@ const opcodes = Script.opcodes;
 
 const scripts = require('./data/script-tests.json');
 
-function success(res, stack) {
+function isSuccess(res, stack) {
   if (!res)
     return false;
 
@@ -27,7 +27,7 @@ function success(res, stack) {
 }
 
 function parseScriptTest(data) {
-  const witHex = Array.isArray(data[0]) ? data.shift() : [];
+  const witArr = Array.isArray(data[0]) ? data.shift() : [];
   const inpHex = data[0] ? data[0].trim() : data[0] || '';
   const outHex = data[1] ? data[1].trim() : data[1] || '';
   const names = data[2] ? data[2].trim().split(/,\s*/) : [];
@@ -40,10 +40,10 @@ function parseScriptTest(data) {
   comments += ` (${expected})`;
 
   let amount = 0;
-  if (witHex.length !== 0)
-    amount = witHex.pop() * 1e8;
+  if (witArr.length !== 0)
+    amount = witArr.pop() * 1e8;
 
-  const witness = Witness.fromString(witHex);
+  const witness = Witness.fromString(witArr);
   const input = Script.fromString(inpHex);
   const output = Script.fromString(outHex);
 
@@ -67,29 +67,31 @@ function parseScriptTest(data) {
 
 describe('Script', function() {
   it('should encode/decode script', () => {
-    const src = '20'
+    const src = Buffer.from(''
+      + '20'
       + '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
       + '20'
       + '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f'
-      + 'ac';
+      + 'ac',
+      'hex');
 
-    const decoded = Script.fromRaw(src, 'hex');
-    assert.equal(decoded.code.length, 3);
-    assert.equal(decoded.code[0].data.toString('hex'),
+    const decoded = Script.fromRaw(src);
+    assert.strictEqual(decoded.code.length, 3);
+    assert.strictEqual(decoded.code[0].data.toString('hex'),
       '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
-    assert.equal(decoded.code[1].data.toString('hex'),
+    assert.strictEqual(decoded.code[1].data.toString('hex'),
       '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f');
-    assert.equal(decoded.code[2].value, opcodes.OP_CHECKSIG);
+    assert.strictEqual(decoded.code[2].value, opcodes.OP_CHECKSIG);
 
     const dst = decoded.toRaw();
-    assert.equal(dst.toString('hex'), src);
+    assert.deepStrictEqual(dst, src);
   });
 
   it('should encode/decode numbers', () => {
     const script = [0, 0x51, 0x52, 0x60];
     const encoded = Script.fromArray(script).raw;
     const decoded = Script(encoded).toArray();
-    assert.deepEqual(decoded, script);
+    assert.deepStrictEqual(decoded, script);
   });
 
   it('should recognize a P2SH output', () => {
@@ -226,7 +228,7 @@ describe('Script', function() {
     const stack = new Stack();
 
     assert(input.execute(stack));
-    assert(success(output.execute(stack), stack));
+    assert(isSuccess(output.execute(stack), stack));
   });
 
   it('should handle CScriptNums correctly', () => {
@@ -245,7 +247,7 @@ describe('Script', function() {
     const stack = new Stack();
 
     assert(input.execute(stack));
-    assert(success(output.execute(stack), stack));
+    assert(isSuccess(output.execute(stack), stack));
   });
 
   it('should handle OP_ROLL correctly', () => {
@@ -268,7 +270,7 @@ describe('Script', function() {
     const stack = new Stack();
 
     assert(input.execute(stack));
-    assert(success(output.execute(stack), stack));
+    assert(isSuccess(output.execute(stack), stack));
   });
 
   for (const data of scripts) {
@@ -337,7 +339,7 @@ describe('Script', function() {
         if (expected !== 'OK') {
           assert(!res);
           assert(err);
-          assert.equal(err.code, expected);
+          assert.strictEqual(err.code, expected);
           return;
         }
 

@@ -15,24 +15,25 @@ const HTTP = require('../lib/http');
 const FullNode = require('../lib/node/fullnode');
 const pkg = require('../lib/pkg');
 
+const node = new FullNode({
+  network: 'regtest',
+  apiKey: 'foo',
+  walletAuth: true,
+  db: 'memory',
+  plugins: [require('../lib/wallet/plugin')]
+});
+
+const wallet = new HTTP.Wallet({
+  network: 'regtest',
+  apiKey: 'foo'
+});
+
+const wdb = node.require('walletdb');
+
+let addr = null;
+let hash = null;
+
 describe('HTTP', function() {
-  const node = new FullNode({
-    network: 'regtest',
-    apiKey: 'foo',
-    walletAuth: true,
-    db: 'memory',
-    plugins: [require('../lib/wallet/plugin')]
-  });
-
-  const wallet = new HTTP.Wallet({
-    network: 'regtest',
-    apiKey: 'foo'
-  });
-
-  const wdb = node.require('walletdb');
-
-  let addr, hash;
-
   this.timeout(15000);
 
   it('should open node', async () => {
@@ -42,46 +43,47 @@ describe('HTTP', function() {
 
   it('should create wallet', async () => {
     const info = await wallet.create({ id: 'test' });
-    assert.equal(info.id, 'test');
+    assert.strictEqual(info.id, 'test');
   });
 
   it('should get info', async () => {
     const info = await wallet.client.getInfo();
-    assert.equal(info.network, node.network.type);
-    assert.equal(info.version, pkg.version);
-    assert.equal(info.pool.agent, node.pool.options.agent);
-    assert.equal(typeof info.chain, 'object');
-    assert.equal(info.chain.height, 0);
+    assert.strictEqual(info.network, node.network.type);
+    assert.strictEqual(info.version, pkg.version);
+    assert.strictEqual(info.pool.agent, node.pool.options.agent);
+    assert.strictEqual(typeof info.chain, 'object');
+    assert.strictEqual(info.chain.height, 0);
   });
 
   it('should get wallet info', async () => {
     const info = await wallet.getInfo();
-    assert.equal(info.id, 'test');
+    assert.strictEqual(info.id, 'test');
     addr = info.account.receiveAddress;
-    assert.equal(typeof addr, 'string');
+    assert.strictEqual(typeof addr, 'string');
     addr = Address.fromString(addr);
   });
 
   it('should fill with funds', async () => {
-    let tx, balance, receive, details;
+    const mtx = new MTX();
+    mtx.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
+    mtx.addOutput(addr, 50460);
+    mtx.addOutput(addr, 50460);
+    mtx.addOutput(addr, 50460);
+    mtx.addOutput(addr, 50460);
 
-    // Coinbase
-    tx = new MTX();
-    tx.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
-    tx.addOutput(addr, 50460);
-    tx.addOutput(addr, 50460);
-    tx.addOutput(addr, 50460);
-    tx.addOutput(addr, 50460);
-    tx = tx.toTX();
+    const tx = mtx.toTX();
 
+    let balance = null;
     wallet.once('balance', (b) => {
       balance = b;
     });
 
+    let receive = null;
     wallet.once('address', (r) => {
       receive = r[0];
     });
 
+    let details = null;
     wallet.once('tx', (d) => {
       details = d;
     });
@@ -90,25 +92,23 @@ describe('HTTP', function() {
     await co.timeout(300);
 
     assert(receive);
-    assert.equal(receive.id, 'test');
-    assert.equal(receive.type, 'pubkeyhash');
-    assert.equal(receive.branch, 0);
+    assert.strictEqual(receive.id, 'test');
+    assert.strictEqual(receive.type, 'pubkeyhash');
+    assert.strictEqual(receive.branch, 0);
     assert(balance);
-    assert.equal(balance.confirmed, 0);
-    assert.equal(balance.unconfirmed, 201840);
+    assert.strictEqual(balance.confirmed, 0);
+    assert.strictEqual(balance.unconfirmed, 201840);
     assert(details);
-    assert.equal(details.hash, tx.rhash());
+    assert.strictEqual(details.hash, tx.rhash());
   });
 
   it('should get balance', async () => {
     const balance = await wallet.getBalance();
-    assert.equal(balance.confirmed, 0);
-    assert.equal(balance.unconfirmed, 201840);
+    assert.strictEqual(balance.confirmed, 0);
+    assert.strictEqual(balance.unconfirmed, 201840);
   });
 
   it('should send a tx', async () => {
-    let value = 0;
-
     const options = {
       rate: 10000,
       outputs: [{
@@ -120,12 +120,14 @@ describe('HTTP', function() {
     const tx = await wallet.send(options);
 
     assert(tx);
-    assert.equal(tx.inputs.length, 1);
-    assert.equal(tx.outputs.length, 2);
+    assert.strictEqual(tx.inputs.length, 1);
+    assert.strictEqual(tx.outputs.length, 2);
 
+    let value = 0;
     value += tx.outputs[0].value;
     value += tx.outputs[1].value;
-    assert.equal(value, 48190);
+
+    assert.strictEqual(value, 48190);
 
     hash = tx.hash;
   });
@@ -133,24 +135,24 @@ describe('HTTP', function() {
   it('should get a tx', async () => {
     const tx = await wallet.getTX(hash);
     assert(tx);
-    assert.equal(tx.hash, hash);
+    assert.strictEqual(tx.hash, hash);
   });
 
   it('should generate new api key', async () => {
-    const t = wallet.token.toString('hex');
+    const old = wallet.token.toString('hex');
     const token = await wallet.retoken(null);
     assert(token.length === 64);
-    assert.notEqual(token, t);
+    assert.notStrictEqual(token, old);
   });
 
   it('should get balance', async () => {
     const balance = await wallet.getBalance();
-    assert.equal(balance.unconfirmed, 199570);
+    assert.strictEqual(balance.unconfirmed, 199570);
   });
 
   it('should execute an rpc call', async () => {
     const info = await wallet.client.rpc.execute('getblockchaininfo', []);
-    assert.equal(info.blocks, 0);
+    assert.strictEqual(info.blocks, 0);
   });
 
   it('should execute an rpc call with bool parameter', async () => {
@@ -162,10 +164,10 @@ describe('HTTP', function() {
     const info = await wallet.createAccount('foo1');
     assert(info);
     assert(info.initialized);
-    assert.equal(info.name, 'foo1');
-    assert.equal(info.accountIndex, 1);
-    assert.equal(info.m, 1);
-    assert.equal(info.n, 1);
+    assert.strictEqual(info.name, 'foo1');
+    assert.strictEqual(info.accountIndex, 1);
+    assert.strictEqual(info.m, 1);
+    assert.strictEqual(info.n, 1);
   });
 
   it('should create account', async () => {
@@ -176,10 +178,10 @@ describe('HTTP', function() {
     });
     assert(info);
     assert(!info.initialized);
-    assert.equal(info.name, 'foo2');
-    assert.equal(info.accountIndex, 2);
-    assert.equal(info.m, 1);
-    assert.equal(info.n, 2);
+    assert.strictEqual(info.name, 'foo2');
+    assert.strictEqual(info.accountIndex, 2);
+    assert.strictEqual(info.m, 1);
+    assert.strictEqual(info.n, 2);
   });
 
   it('should get a block template', async () => {

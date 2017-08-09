@@ -22,7 +22,6 @@
 // THE SOFTWARE.
 
 /* eslint-env mocha */
-/* eslint max-len: "off" */
 /* eslint prefer-arrow-callback: "off" */
 
 'use strict';
@@ -33,9 +32,11 @@ const Address = require('../lib/primitives/address');
 
 const validChecksums = [
   'A12UEL5L',
-  'an83characterlonghumanreadablepartthatcontainsthenumber1andtheexcludedcharactersbio1tt5tgs',
+  'an83characterlonghumanreadablepartthatcontains'
+  + 'thenumber1andtheexcludedcharactersbio1tt5tgs',
   'abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw',
-  '11qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc8247j',
+  '11qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'
+  + 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc8247j',
   'split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w'
 ];
 
@@ -57,7 +58,8 @@ const validAddresses = [
     ])
   ],
   [
-    'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx',
+    'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw50'
+    + '8d6qejxtdg4y5r3zarvary0c5xw7k7grplx',
     Buffer.from([
       0x81, 0x28, 0x75, 0x1e, 0x76, 0xe8, 0x19, 0x91, 0x96, 0xd4, 0x54,
       0x94, 0x1c, 0x45, 0xd1, 0xb3, 0xa3, 0x23, 0xf1, 0x43, 0x3b, 0xd6,
@@ -94,7 +96,8 @@ const invalidAddresses = [
   'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5',
   'BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2',
   'bc1rw5uspcuh',
-  'bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90',
+  'bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d'
+  + '6qejxtdg4y5r3zarvary0c5xw7kw5rljs90',
   'BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P',
   'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7',
   'tb1pw508d6qejxtdg4y5r3zarqfsj6c3',
@@ -140,7 +143,7 @@ describe('Bech32', function() {
   for (const [addr, script] of validAddresses) {
     it(`should have valid address for ${addr}`, () => {
       let hrp = 'bc';
-      let ret;
+      let ret = null;
 
       try {
         ret = fromAddress(hrp, addr);
@@ -175,14 +178,16 @@ describe('Bech32', function() {
 
   for (const addr of invalidAddresses) {
     it(`should have invalid address for ${addr}`, () => {
-      let ok1;
+      let ok1 = null;
+
       try {
         ok1 = fromAddress('bc', addr);
       } catch (e) {
         ok1 = null;
       }
 
-      let ok2;
+      let ok2 = null;
+
       try {
         ok2 = fromAddress('tb', addr);
       } catch (e) {
@@ -196,7 +201,7 @@ describe('Bech32', function() {
 
   for (const [addr, script] of validAddresses) {
     it(`should have valid address for ${addr}`, () => {
-      let ret;
+      let ret = null;
 
       try {
         ret = Address.fromBech32(addr, 'main');
@@ -230,14 +235,16 @@ describe('Bech32', function() {
 
   for (const addr of invalidAddresses) {
     it(`should have invalid address for ${addr}`, () => {
-      let ok1;
+      let ok1 = null;
+
       try {
         ok1 = Address.fromBech32(addr, 'main');
       } catch (e) {
         ok1 = null;
       }
 
-      let ok2;
+      let ok2 = null;
+
       try {
         ok2 = Address.fromBech32(addr, 'testnet');
       } catch (e) {

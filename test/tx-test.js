@@ -37,7 +37,7 @@ const MAX_SAFE_ADDITION = 0xfffffffffffff;
 
 function clearCache(tx, noCache) {
   if (!noCache) {
-    assert.equal(tx.hash('hex'), tx.clone().hash('hex'));
+    assert.strictEqual(tx.hash('hex'), tx.clone().hash('hex'));
     return;
   }
   tx.refresh();
@@ -224,27 +224,27 @@ describe('TX', function() {
       const {tx} = tx5;
       clearCache(tx, noCache);
 
-      assert.equal(tx.inputs.length, 5);
-      assert.equal(tx.outputs.length, 1980);
+      assert.strictEqual(tx.inputs.length, 5);
+      assert.strictEqual(tx.outputs.length, 1980);
       assert(tx.hasWitness());
-      assert.notEqual(tx.hash('hex'), tx.witnessHash('hex'));
-      assert.equal(tx.witnessHash('hex'),
+      assert.notStrictEqual(tx.hash('hex'), tx.witnessHash('hex'));
+      assert.strictEqual(tx.witnessHash('hex'),
         '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
-      assert.equal(tx.getSize(), 62138);
-      assert.equal(tx.getVirtualSize(), 61813);
-      assert.equal(tx.getWeight(), 247250);
+      assert.strictEqual(tx.getSize(), 62138);
+      assert.strictEqual(tx.getVirtualSize(), 61813);
+      assert.strictEqual(tx.getWeight(), 247250);
 
       const raw1 = tx.toRaw();
       clearCache(tx, true);
 
       const raw2 = tx.toRaw();
-      assert.deepEqual(raw1, raw2);
+      assert.deepStrictEqual(raw1, raw2);
 
       const tx2 = TX.fromRaw(raw2);
       clearCache(tx2, noCache);
 
-      assert.equal(tx.hash('hex'), tx2.hash('hex'));
-      assert.equal(tx.witnessHash('hex'), tx2.witnessHash('hex'));
+      assert.strictEqual(tx.hash('hex'), tx2.hash('hex'));
+      assert.strictEqual(tx.witnessHash('hex'), tx2.witnessHash('hex'));
     });
 
     it(`should verify the coolest tx ever sent ${suffix}`, () => {
@@ -331,7 +331,7 @@ describe('TX', function() {
       it(`should get sighash of ${hash} (${hex}) ${suffix}`, () => {
         const subscript = script.getSubscript(0).removeSeparators();
         const hash = tx.signatureHash(index, subscript, 0, type, 0);
-        assert.equal(hash.toString('hex'), expected);
+        assert.strictEqual(hash.toString('hex'), expected);
       });
     }
   }
@@ -628,8 +628,8 @@ describe('TX', function() {
 
     const ctx = sigopContext(input, witness, output);
 
-    assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 0);
-    assert.equal(ctx.fund.getSigopsCost(ctx.view, flags),
+    assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 0);
+    assert.strictEqual(ctx.fund.getSigopsCost(ctx.view, flags),
       consensus.MAX_MULTISIG_PUBKEYS * consensus.WITNESS_SCALE_FACTOR);
   });
 
@@ -651,7 +651,7 @@ describe('TX', function() {
 
     const ctx = sigopContext(input, witness, output);
 
-    assert.equal(ctx.spend.getSigopsCost(ctx.view, flags),
+    assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags),
       2 * consensus.WITNESS_SCALE_FACTOR);
   });
 
@@ -670,8 +670,8 @@ describe('TX', function() {
       const output = Script.fromProgram(0, key.getKeyHash());
       const ctx = sigopContext(input, witness, output);
 
-      assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 1);
-      assert.equal(
+      assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 1);
+      assert.strictEqual(
         ctx.spend.getSigopsCost(ctx.view, flags & ~Script.flags.VERIFY_WITNESS),
         0);
     }
@@ -680,7 +680,7 @@ describe('TX', function() {
       const output = Script.fromProgram(1, key.getKeyHash());
       const ctx = sigopContext(input, witness, output);
 
-      assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 0);
+      assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 0);
     }
 
     {
@@ -691,7 +691,7 @@ describe('TX', function() {
       ctx.spend.inputs[0].prevout.index = 0xffffffff;
       ctx.spend.refresh();
 
-      assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 0);
+      assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 0);
     }
   });
 
@@ -713,7 +713,7 @@ describe('TX', function() {
 
     const ctx = sigopContext(input, witness, output);
 
-    assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 1);
+    assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 1);
   });
 
   it('should count sigops for p2wsh', () => {
@@ -734,8 +734,8 @@ describe('TX', function() {
 
     const ctx = sigopContext(input, witness, output);
 
-    assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 2);
-    assert.equal(
+    assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 2);
+    assert.strictEqual(
       ctx.spend.getSigopsCost(ctx.view, flags & ~Script.flags.VERIFY_WITNESS),
       0);
   });
@@ -761,6 +761,6 @@ describe('TX', function() {
 
     const ctx = sigopContext(input, witness, output);
 
-    assert.equal(ctx.spend.getSigopsCost(ctx.view, flags), 2);
+    assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 2);
   });
 });

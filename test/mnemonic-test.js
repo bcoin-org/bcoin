@@ -30,11 +30,11 @@ describe('Mnemonic', function() {
           passphrase: passphrase
         });
 
-        assert.equal(mnemonic.getPhrase(), phrase);
-        assert.equal(mnemonic.toSeed().toString('hex'), seed.toString('hex'));
+        assert.strictEqual(mnemonic.getPhrase(), phrase);
+        assert.deepStrictEqual(mnemonic.toSeed(), seed);
 
         const key = HDPrivateKey.fromMnemonic(mnemonic);
-        assert.equal(key.toBase58(), xpriv);
+        assert.strictEqual(key.toBase58(), xpriv);
       });
     }
   }
@@ -42,9 +42,9 @@ describe('Mnemonic', function() {
   it('should verify phrase', () => {
     const m1 = new Mnemonic();
     const m2 = Mnemonic.fromPhrase(m1.getPhrase());
-    assert.deepEqual(m2.getEntropy(), m1.getEntropy());
-    assert.equal(m2.bits, m1.bits);
-    assert.equal(m2.language, m1.language);
-    assert.deepEqual(m2.toSeed(), m1.toSeed());
+    assert.deepStrictEqual(m2.getEntropy(), m1.getEntropy());
+    assert.strictEqual(m2.bits, m1.bits);
+    assert.strictEqual(m2.language, m1.language);
+    assert.deepStrictEqual(m2.toSeed(), m1.toSeed());
   });
 });

@@ -8,24 +8,24 @@ const secp256k1 = require('../lib/crypto/secp256k1');
 const BIP150 = require('../lib/net/bip150');
 const BIP151 = require('../lib/net/bip151');
 
+const db = new BIP150.AuthDB();
+const ck = secp256k1.generatePrivateKey();
+const sk = secp256k1.generatePrivateKey();
+
+db.addAuthorized(secp256k1.publicKeyCreate(ck, true));
+db.addKnown('127.0.0.2', secp256k1.publicKeyCreate(sk, true));
+
+const client = new BIP151();
+const server = new BIP151();
+
+client.bip150 = new BIP150(client, '127.0.0.2', true, db, ck);
+server.bip150 = new BIP150(server, '127.0.0.1', false, db, sk);
+
+function payload() {
+  return Buffer.from('deadbeef', 'hex');
+}
+
 describe('BIP150', function() {
-  const db = new BIP150.AuthDB();
-  const ck = secp256k1.generatePrivateKey();
-  const sk = secp256k1.generatePrivateKey();
-
-  db.addAuthorized(secp256k1.publicKeyCreate(ck, true));
-  db.addKnown('127.0.0.2', secp256k1.publicKeyCreate(sk, true));
-
-  const client = new BIP151();
-  const server = new BIP151();
-
-  client.bip150 = new BIP150(client, '127.0.0.2', true, db, ck);
-  server.bip150 = new BIP150(server, '127.0.0.1', false, db, sk);
-
-  function payload() {
-    return Buffer.from('deadbeef', 'hex');
-  }
-
   it('should do encinit', () => {
     const init = server.toEncinit();
     client.encinit(init.publicKey, init.cipher);
@@ -69,8 +69,8 @@ describe('BIP150', function() {
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     server.feed(packet);
     assert(emitted);
@@ -81,8 +81,8 @@ describe('BIP150', function() {
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     client.feed(packet);
     assert(emitted);
@@ -93,8 +93,8 @@ describe('BIP150', function() {
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     server.feed(packet);
     assert(emitted);
@@ -105,8 +105,8 @@ describe('BIP150', function() {
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     client.feed(packet);
     assert(emitted);
@@ -122,7 +122,7 @@ describe('BIP150', function() {
       let emitted = false;
       server.once('packet', (cmd, body) => {
         emitted = true;
-        assert.equal(cmd, 'encack');
+        assert.strictEqual(cmd, 'encack');
         server.encack(body);
       });
       server.feed(packet);
@@ -144,8 +144,8 @@ describe('BIP150', function() {
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     server.feed(packet);
     assert(emitted);
@@ -156,8 +156,8 @@ describe('BIP150', function() {
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     client.feed(packet);
     assert(emitted);
@@ -168,8 +168,8 @@ describe('BIP150', function() {
     let emitted = false;
     server.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     server.feed(packet);
     assert(emitted);
@@ -180,8 +180,8 @@ describe('BIP150', function() {
     let emitted = false;
     client.once('packet', (cmd, body) => {
       emitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     client.feed(packet);
     assert(emitted);
@@ -194,13 +194,13 @@ describe('BIP150', function() {
     let semitted = false;
     client.once('packet', (cmd, body) => {
       cemitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     server.once('packet', (cmd, body) => {
       semitted = true;
-      assert.equal(cmd, 'fake');
-      assert.equal(body.toString('hex'), 'deadbeef');
+      assert.strictEqual(cmd, 'fake');
+      assert.strictEqual(body.toString('hex'), 'deadbeef');
     });
     client.feed(spacket);
     server.feed(cpacket);
