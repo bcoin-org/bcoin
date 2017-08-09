@@ -150,10 +150,15 @@ it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
   }, {})
     assert(json, {
       result: {
+      blocks: node.chain.height,
+      headers: node.chain.height,
       bestblockhash: node.chain.tip.rhash(),
-      chainwork: chain.tip.toString('hex', 64)
-}
-});
+      mediantime: await node.chain.tip.getMedianTime(),
+      verificationprogress: node.chain.getProgress(),
+      chainwork: node.chain.tip.toString('hex', 64)
+  },
+  error: null,
+ });
 });
 });
   // chain,
