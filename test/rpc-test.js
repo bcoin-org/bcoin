@@ -8,8 +8,11 @@ const Output = require('../lib/primitives/output');
 const KeyRing = require('../lib/primitives/keyring');
 const Amount = require('../lib/btc/amount');
 const Script = require('../lib/script/script');
+const digest = require('../lib/crypto/digest');
 const Address = require('../lib/primitives/address');
 const FullNode = require('../lib/node/fullnode');
+const Validator = require('../lib/utils/validator');
+const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const RPC = require('../lib/http/rpc');
 const RPCBase = require('../lib/http/rpcbase');
@@ -96,10 +99,10 @@ describe('RPC', function() {
   let network, json, node;
   let chain, miner, wdb;
   let wallet, http;
-  let tx1, tx2, tx3;
+  let tx1, tx2, tx3, cb;
 
   node = new FullNode({
-    network: 'testnet',
+    network: 'regtest',
     db: 'memory',
     apiKey: 'foo',
     workers: true,
@@ -113,7 +116,7 @@ describe('RPC', function() {
   this.timeout(5000);
 
 
-it('should validate an address', async () => {
+  it('should validate an address', async () => {
   let addr = new Address();
   let json;
 
@@ -160,5 +163,32 @@ it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
   error: null,
  });
 });
+
+it('should relay Bestblockhash', async () => {
+  let json;
+
+  json = await node.rpc.call({
+    method: 'getbestblockhash',
+  }, {})
+  assert(json, {
+    result: {
+      bestblockhash: node.chain.tip.rhash()
+    }
+  })
+})
+
+it('should decode valid Script data', async () => {
+  let valid = new Validator();
+  let script = new Script();
+  let addr = new Address.fromScripthash(script.hash160());
+  let data = valid.buf(0);
+  let json;
+
+  addr.network = node.network;
+
+  json = await node.rpc.call({
+    method: 'decodescript',
+    params: [addr.toString(addr.network)]
+  }, {});
 });
 
