@@ -24,7 +24,7 @@ Welcome to the bcoin docs!
 - [Client API Usage][example-client-api]
 - [Miner with WorkerPool][example-miner-configs]
 - [Create and Sign TX][example-tx-create-sign]
-- [Get Transaction from Chain][example-tx-chain]
+- [Get Transaction from Chain][example-tx-from-chain]
 
 ## Advanced
 - [Working with transactions][work-transactions]
