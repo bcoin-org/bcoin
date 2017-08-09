@@ -70,15 +70,15 @@ describe('Utils', function() {
 
   it('should convert btc to satoshi', () => {
     let btc = Amount.value('0.0000546');
-    assert(btc === 5460);
+    assert.strictEqual(btc, 5460);
     btc = Amount.value('546.78');
-    assert(btc === 54678 * 1000000);
+    assert.strictEqual(btc, 54678 * 1000000);
     btc = Amount.value('546');
-    assert(btc === 5460 * 10000000);
+    assert.strictEqual(btc, 5460 * 10000000);
     btc = Amount.value('546.0');
-    assert(btc === 5460 * 10000000);
+    assert.strictEqual(btc, 5460 * 10000000);
     btc = Amount.value('546.0000');
-    assert(btc === 5460 * 10000000);
+    assert.strictEqual(btc, 5460 * 10000000);
 
     assert.doesNotThrow(() => {
       Amount.value('546.00000000000000000');
@@ -257,7 +257,7 @@ describe('Utils', function() {
 
   it('should validate integers 0 and 1 as booleans', () => {
     const validator = new Validator({shouldBeTrue: 1, shouldBeFalse: 0});
-    assert(validator.bool('shouldBeTrue') === true);
-    assert(validator.bool('shouldBeFalse') === false);
+    assert.strictEqual(validator.bool('shouldBeTrue'), true);
+    assert.strictEqual(validator.bool('shouldBeFalse'), false);
   });
 });

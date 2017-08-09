@@ -141,7 +141,7 @@ describe('HTTP', function() {
   it('should generate new api key', async () => {
     const old = wallet.token.toString('hex');
     const token = await wallet.retoken(null);
-    assert(token.length === 64);
+    assert.strictEqual(token.length, 64);
     assert.notStrictEqual(token, old);
   });
 

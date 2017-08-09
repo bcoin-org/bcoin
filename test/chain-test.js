@@ -51,7 +51,7 @@ async function addBlock(block, flags) {
   try {
     entry = await chain.add(block, flags);
   } catch (e) {
-    assert(e.type === 'VerifyError');
+    assert.strictEqual(e.type, 'VerifyError');
     return e.reason;
   }
 
@@ -149,7 +149,7 @@ describe('Chain', function() {
       assert(await chain.add(blk1));
       assert(await chain.add(blk2));
 
-      assert(chain.tip.hash === hash1);
+      assert.strictEqual(chain.tip.hash, hash1);
 
       tip1 = await chain.db.getEntry(hash1);
       tip2 = await chain.db.getEntry(hash2);
@@ -176,7 +176,7 @@ describe('Chain', function() {
 
     const entry = await chain.db.getEntry(tip2.hash);
     assert(entry);
-    assert(chain.height === entry.height);
+    assert.strictEqual(chain.height, entry.height);
 
     const block = await cpu.mineBlock(entry);
     assert(block);
@@ -189,7 +189,7 @@ describe('Chain', function() {
     assert(await chain.add(block));
 
     assert(forked);
-    assert(chain.tip.hash === block.hash('hex'));
+    assert.strictEqual(chain.tip.hash, block.hash('hex'));
     assert(chain.tip.chainwork.cmp(tip1.chainwork) > 0);
   });
 
@@ -217,7 +217,7 @@ describe('Chain', function() {
     const entry = await chain.db.getEntry(hash);
 
     assert(entry);
-    assert(chain.tip.hash === entry.hash);
+    assert.strictEqual(chain.tip.hash, entry.hash);
 
     const result = await entry.isMainChain();
     assert(result);

@@ -72,7 +72,7 @@ describe('Coins', function() {
 
     view.spendEntry(new Outpoint(hash, 0));
 
-    assert(view.get(hash) === coins);
+    assert.strictEqual(view.get(hash), coins);
 
     const entry = coins.get(0);
     assert(entry);

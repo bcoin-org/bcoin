@@ -115,7 +115,7 @@ describe('Node', function() {
 
       await chain.add(block2);
 
-      assert(chain.tip.hash === block1.hash('hex'));
+      assert.strictEqual(chain.tip.hash, block1.hash('hex'));
 
       tip1 = await chain.db.getEntry(block1.hash('hex'));
       tip2 = await chain.db.getEntry(block2.hash('hex'));
@@ -149,7 +149,7 @@ describe('Node', function() {
 
     const entry = await chain.db.getEntry(tip2.hash);
     assert(entry);
-    assert(chain.height === entry.height);
+    assert.strictEqual(chain.height, entry.height);
 
     const block = await miner.mineBlock(entry);
     assert(block);
@@ -162,7 +162,7 @@ describe('Node', function() {
     await chain.add(block);
 
     assert(forked);
-    assert(chain.tip.hash === block.hash('hex'));
+    assert.strictEqual(chain.tip.hash, block.hash('hex'));
     assert(chain.tip.chainwork.cmp(tip1.chainwork) > 0);
   });
 
@@ -192,7 +192,7 @@ describe('Node', function() {
 
     const entry = await chain.db.getEntry(block.hash('hex'));
     assert(entry);
-    assert(chain.tip.hash === entry.hash);
+    assert.strictEqual(chain.tip.hash, entry.hash);
 
     const result = await entry.isMainChain();
     assert(result);
@@ -211,7 +211,7 @@ describe('Node', function() {
 
     assert(err);
     assert.strictEqual(err.reason, 'bad-txns-inputs-missingorspent');
-    assert(chain.tip === tip);
+    assert.strictEqual(chain.tip, tip);
   });
 
   it('should fail to mine block with coins on an alternate chain', async () => {
@@ -227,7 +227,7 @@ describe('Node', function() {
 
     assert(err);
     assert.strictEqual(err.reason, 'bad-txns-inputs-missingorspent');
-    assert(chain.tip === tip);
+    assert.strictEqual(chain.tip, tip);
   });
 
   it('should have correct chain value', () => {
@@ -300,7 +300,7 @@ describe('Node', function() {
 
     const prev = await chain.tip.getPrevious();
     const state = await chain.getState(prev, deployments.csv);
-    assert(state === 0);
+    assert.strictEqual(state, 0);
 
     for (let i = 0; i < 417; i++) {
       const block = await miner.mineBlock();
@@ -309,25 +309,25 @@ describe('Node', function() {
         case 144: {
           const prev = await chain.tip.getPrevious();
           const state = await chain.getState(prev, deployments.csv);
-          assert(state === 1);
+          assert.strictEqual(state, 1);
           break;
         }
         case 288: {
           const prev = await chain.tip.getPrevious();
           const state = await chain.getState(prev, deployments.csv);
-          assert(state === 2);
+          assert.strictEqual(state, 2);
           break;
         }
         case 432: {
           const prev = await chain.tip.getPrevious();
           const state = await chain.getState(prev, deployments.csv);
-          assert(state === 3);
+          assert.strictEqual(state, 3);
           break;
         }
       }
     }
 
-    assert(chain.height === 432);
+    assert.strictEqual(chain.height, 432);
     assert(chain.state.hasCSV());
 
     const cache = await chain.db.getStateCache();
@@ -471,10 +471,10 @@ describe('Node', function() {
       id: '1'
     }, {});
 
-    assert(typeof json.result.curtime === 'number');
-    assert(typeof json.result.mintime === 'number');
-    assert(typeof json.result.maxtime === 'number');
-    assert(typeof json.result.expires === 'number');
+    assert.strictEqual(typeof json.result.curtime, 'number');
+    assert.strictEqual(typeof json.result.mintime, 'number');
+    assert.strictEqual(typeof json.result.maxtime, 'number');
+    assert.strictEqual(typeof json.result.expires, 'number');
 
     assert.deepStrictEqual(json, {
       result: {
@@ -530,7 +530,7 @@ describe('Node', function() {
     }, {});
 
     assert(!json.error);
-    assert(json.result === null);
+    assert.strictEqual(json.result, null);
   });
 
   it('should submit a block', async () => {
@@ -543,7 +543,7 @@ describe('Node', function() {
     }, {});
 
     assert(!json.error);
-    assert(json.result === null);
+    assert.strictEqual(json.result, null);
     assert.strictEqual(node.chain.tip.hash, block.hash('hex'));
   });
 
@@ -668,7 +668,7 @@ describe('Node', function() {
     }, {});
 
     assert(!json.error);
-    assert(json.result === true);
+    assert.strictEqual(json.result, true);
   });
 
   it('should get a block template', async () => {

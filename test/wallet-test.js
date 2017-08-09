@@ -698,7 +698,7 @@ describe('Wallet', function() {
 
     assert(err);
     assert(balance);
-    assert(balance.unconfirmed === 5460);
+    assert.strictEqual(balance.unconfirmed, 5460);
   });
 
   it('should sign multiple inputs using different keys', async () => {
@@ -846,7 +846,7 @@ describe('Wallet', function() {
     const account = await wallet.getAccount('foo');
     assert.strictEqual(account.name, 'foo');
     assert.strictEqual(account.accountIndex, 1);
-    assert(wallet.account.accountIndex === 0);
+    assert.strictEqual(wallet.account.accountIndex, 0);
 
     assert(!account.receive.getAddress().equals(
       wallet.account.receive.getAddress()));
@@ -1226,7 +1226,7 @@ describe('Wallet', function() {
     const t2 = await wallet.createTX(options);
     await wallet.sign(t2);
     assert(t2.verify());
-    assert(t2.inputs[0].prevout.hash === wtx.hash);
+    assert.strictEqual(t2.inputs[0].prevout.hash, wtx.hash);
 
     importedWallet = wallet;
     importedKey = key;
