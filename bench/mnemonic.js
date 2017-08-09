@@ -10,7 +10,7 @@ HD.fromMnemonic(mnemonic);
 
 const phrase = mnemonic.getPhrase();
 
-assert.equal(Mnemonic.fromPhrase(phrase).getPhrase(), phrase);
+assert.strictEqual(Mnemonic.fromPhrase(phrase).getPhrase(), phrase);
 
 {
   const end = bench('fromPhrase');
