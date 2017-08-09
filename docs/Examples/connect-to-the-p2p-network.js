@@ -1,15 +1,26 @@
-``` js
-var bcoin = require('bcoin').set('main');
+'use strict';
+const bcoin = require('../..').set('main');
+const Chain = bcoin.chain;
+const Mempool = bcoin.mempool;
+const Pool = bcoin.pool;
 
 // Create a blockchain and store it in leveldb.
 // `db` also accepts `rocksdb` and `lmdb`.
-var prefix = process.env.HOME + '/my-bcoin-environment';
-var chain = new bcoin.chain({ db: 'leveldb', location: prefix + '/chain' });
+const prefix = process.env.HOME + '/my-bcoin-environment';
+const chain = new Chain({
+  db: 'leveldb',
+  location: prefix + '/chain',
+  network: 'main'
+});
 
-var mempool = new bcoin.mempool({ chain: chain });
+const mempool = new Mempool({ chain: chain });
 
 // Create a network pool of peers with a limit of 8 peers.
-var pool = new bcoin.pool({ chain: chain, mempool: mempool, maxPeers: 8 });
+const pool = new Pool({
+  chain: chain,
+  mempool: mempool,
+  maxPeers: 8
+});
 
 // Open the pool (implicitly opens mempool and chain).
 (async function() {
@@ -22,44 +33,44 @@ var pool = new bcoin.pool({ chain: chain, mempool: mempool, maxPeers: 8 });
   pool.startSync();
 
   // Watch the action
-  chain.on('block', function(block) {
+  chain.on('block', (block) => {
     console.log('Connected block to blockchain:');
     console.log(block);
   });
 
-  mempool.on('tx', function(tx) {
+  mempool.on('tx', (tx) => {
     console.log('Added tx to mempool:');
     console.log(tx);
   });
 
-  pool.on('tx', function(tx) {
+  pool.on('tx', (tx) => {
     console.log('Saw transaction:');
     console.log(tx.rhash);
   });
 })();
 
-// Start up a segnet4 sync in-memory
+// Start up a testnet sync in-memory
 // while we're at it (because we can).
 
-var tchain = new bcoin.chain({
-  network: 'segnet4',
+const tchain = new Chain({
+  network: 'testnet',
   db: 'memory'
 });
 
-var tmempool = new bcoin.mempool({
-  network: 'segnet4',
+const tmempool = new Mempool({
+  network: 'testnet',
   chain: tchain
 });
 
-var tpool = new bcoin.pool({
-  network: 'segnet4',
+const tpool = new Pool({
+  network: 'testnet',
   chain: tchain,
   mempool: tmempool,
   size: 8
 });
 
 (async function() {
-  await pool.open();
+  await tpool.open();
 
   // Connect, start retrieving and relaying txs
   await tpool.connect();
@@ -67,20 +78,18 @@ var tpool = new bcoin.pool({
   // Start the blockchain sync.
   tpool.startSync();
 
-  tchain.on('block', function(block) {
-    console.log('Added segnet4 block:');
+  tchain.on('block', (block) => {
+    console.log('Added testnet block:');
     console.log(block);
   });
 
-  tmempool.on('tx', function(tx) {
-    console.log('Added segnet4 tx to mempool:');
+  tmempool.on('tx', (tx) => {
+    console.log('Added testnet tx to mempool:');
     console.log(tx);
   });
 
-  tpool.on('tx', function(tx) {
-    console.log('Saw segnet4 transaction:');
+  tpool.on('tx', (tx) => {
+    console.log('Saw testnet transaction:');
     console.log(tx);
   });
 })();
-
-```
