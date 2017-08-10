@@ -37,7 +37,9 @@ const MAX_SAFE_ADDITION = 0xfffffffffffff;
 
 function clearCache(tx, noCache) {
   if (!noCache) {
-    assert.strictEqual(tx.hash('hex'), tx.clone().hash('hex'));
+    const copy = tx.clone();
+    assert.strictEqual(tx.txid(), copy.txid());
+    assert.strictEqual(tx.wtxid(), copy.wtxid());
     return;
   }
   tx.refresh();
@@ -61,20 +63,15 @@ function parseTXTest(data) {
     const script = Script.fromString(str);
     const value = parseInt(amount || '0', 10);
 
-    if (index === -1)
+    // Ignore the coinbase tests.
+    // They should all fail.
+    if ((index >>> 0) === 0xffffffff)
       continue;
 
-    const coin = new Coin({
-      version: 1,
-      height: -1,
-      coinbase: false,
-      hash: hash,
-      index: index,
-      script: script,
-      value: value
-    });
+    const prevout = new Outpoint(hash, index);
+    const output = new Output({script, value});
 
-    view.addCoin(coin);
+    view.addOutput(prevout, output);
   }
 
   const raw = Buffer.from(hex, 'hex');
@@ -227,7 +224,7 @@ describe('TX', function() {
       assert.strictEqual(tx.inputs.length, 5);
       assert.strictEqual(tx.outputs.length, 1980);
       assert(tx.hasWitness());
-      assert.notStrictEqual(tx.hash('hex'), tx.witnessHash('hex'));
+      assert.notStrictEqual(tx.txid(), tx.wtxid());
       assert.strictEqual(tx.witnessHash('hex'),
         '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
       assert.strictEqual(tx.getSize(), 62138);
@@ -235,7 +232,7 @@ describe('TX', function() {
       assert.strictEqual(tx.getWeight(), 247250);
 
       const raw1 = tx.toRaw();
-      clearCache(tx, true);
+      tx.refresh();
 
       const raw2 = tx.toRaw();
       assert.deepStrictEqual(raw1, raw2);
@@ -243,8 +240,9 @@ describe('TX', function() {
       const tx2 = TX.fromRaw(raw2);
       clearCache(tx2, noCache);
 
-      assert.strictEqual(tx.hash('hex'), tx2.hash('hex'));
-      assert.strictEqual(tx.witnessHash('hex'), tx2.witnessHash('hex'));
+      assert.strictEqual(tx.txid(), tx2.txid());
+      assert.strictEqual(tx.wtxid(), tx2.wtxid());
+      assert.notStrictEqual(tx.txid(), tx2.wtxid());
     });
 
     it(`should verify the coolest tx ever sent ${suffix}`, () => {
