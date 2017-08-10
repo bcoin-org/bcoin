@@ -10,6 +10,7 @@ const encoding = require('../lib/utils/encoding');
 const digest = require('../lib/crypto/digest');
 const random = require('../lib/crypto/random');
 const WalletDB = require('../lib/wallet/walletdb');
+const WorkerPool = require('../lib/workers/workerpool');
 const Address = require('../lib/primitives/address');
 const MTX = require('../lib/primitives/mtx');
 const Coin = require('../lib/primitives/coin');
@@ -25,9 +26,14 @@ const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
 const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
+const workers = new WorkerPool({
+  enabled: true
+});
+
 const wdb = new WalletDB({
   db: 'memory',
-  verify: true
+  verify: true,
+  workers
 });
 
 let currentWallet = null;

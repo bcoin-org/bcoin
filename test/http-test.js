@@ -20,6 +20,7 @@ const node = new FullNode({
   apiKey: 'foo',
   walletAuth: true,
   db: 'memory',
+  workers: true,
   plugins: [require('../lib/wallet/plugin')]
 });
 

@@ -8,6 +8,7 @@ const encoding = require('../lib/utils/encoding');
 const random = require('../lib/crypto/random');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
+const WorkerPool = require('../lib/workers/workerpool');
 const Chain = require('../lib/blockchain/chain');
 const MTX = require('../lib/primitives/mtx');
 const Coin = require('../lib/primitives/coin');
@@ -19,13 +20,19 @@ const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
 const ALL = Script.hashType.ALL;
 
+const workers = new WorkerPool({
+  enabled: true
+});
+
 const chain = new Chain({
-  db: 'memory'
+  db: 'memory',
+  workers
 });
 
 const mempool = new Mempool({
   chain,
-  db: 'memory'
+  db: 'memory',
+  workers
 });
 
 const wallet = new MemWallet();

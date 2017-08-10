@@ -10,6 +10,7 @@ const encoding = require('../lib/utils/encoding');
 const Coin = require('../lib/primitives/coin');
 const Script = require('../lib/script/script');
 const Chain = require('../lib/blockchain/chain');
+const WorkerPool = require('../lib/workers/workerpool');
 const Miner = require('../lib/mining/miner');
 const MTX = require('../lib/primitives/mtx');
 const MemWallet = require('./util/memwallet');
@@ -20,14 +21,20 @@ const opcodes = Script.opcodes;
 
 const network = Network.get('regtest');
 
+const workers = new WorkerPool({
+  enabled: true
+});
+
 const chain = new Chain({
   db: 'memory',
-  network
+  network,
+  workers
 });
 
 const miner = new Miner({
   chain,
-  version: 4
+  version: 4,
+  workers
 });
 
 const cpu = miner.cpu;
