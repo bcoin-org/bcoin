@@ -14,10 +14,7 @@ const opcodes = Script.opcodes;
 
 const scripts = require('./data/script-tests.json');
 
-function isSuccess(res, stack) {
-  if (!res)
-    return false;
-
+function isSuccess(stack) {
   if (stack.length === 0)
     return false;
 
@@ -126,9 +123,7 @@ describe('Script', function() {
       const stack = new Stack();
 
       input.execute(stack);
-
-      const res = output.execute(stack);
-      assert(res);
+      output.execute(stack);
 
       assert.deepEqual(stack.items, [[1], [3], [5]]);
     }
@@ -147,10 +142,10 @@ describe('Script', function() {
       ]);
 
       const stack = new Stack();
-      input.execute(stack);
 
-      const res = output.execute(stack);
-      assert(res);
+      input.execute(stack);
+      output.execute(stack);
+
       assert.deepEqual(stack.items, [[1], [4], [5]]);
     }
 
@@ -168,9 +163,8 @@ describe('Script', function() {
       const stack = new Stack();
 
       input.execute(stack);
+      output.execute(stack);
 
-      const res = output.execute(stack);
-      assert(res);
       assert.deepEqual(stack.items, [[1], [3], [5]]);
     }
 
@@ -186,10 +180,10 @@ describe('Script', function() {
       ]);
 
       const stack = new Stack();
-      input.execute(stack);
 
-      const res = output.execute(stack);
-      assert(res);
+      input.execute(stack);
+      output.execute(stack);
+
       assert.deepEqual(stack.items, [[1], [5]]);
     }
 
@@ -205,10 +199,10 @@ describe('Script', function() {
       ]);
 
       const stack = new Stack();
-      input.execute(stack);
 
-      const res = output.execute(stack);
-      assert(res);
+      input.execute(stack);
+      output.execute(stack);
+
       assert.deepEqual(stack.items, [[1], [3], [5]]);
     }
   });
@@ -228,8 +222,10 @@ describe('Script', function() {
 
     const stack = new Stack();
 
-    assert(input.execute(stack));
-    assert(isSuccess(output.execute(stack), stack));
+    input.execute(stack);
+    output.execute(stack);
+
+    assert(isSuccess(stack));
   });
 
   it('should handle CScriptNums correctly', () => {
@@ -247,8 +243,10 @@ describe('Script', function() {
 
     const stack = new Stack();
 
-    assert(input.execute(stack));
-    assert(isSuccess(output.execute(stack), stack));
+    input.execute(stack);
+    output.execute(stack);
+
+    assert(isSuccess(stack));
   });
 
   it('should handle OP_ROLL correctly', () => {
@@ -270,8 +268,10 @@ describe('Script', function() {
 
     const stack = new Stack();
 
-    assert(input.execute(stack));
-    assert(isSuccess(output.execute(stack), stack));
+    input.execute(stack);
+    output.execute(stack);
+
+    assert(isSuccess(stack));
   });
 
   for (const data of scripts) {
@@ -330,22 +330,20 @@ describe('Script', function() {
           tx.refresh();
         }
 
-        let err, res;
+        let err;
         try {
-          res = Script.verify(input, witness, output, tx, 0, value, flags);
+          Script.verify(input, witness, output, tx, 0, value, flags);
         } catch (e) {
           err = e;
         }
 
         if (expected !== 'OK') {
-          assert(!res);
           assert(err);
           assert.strictEqual(err.code, expected);
           return;
         }
 
         assert.ifError(err);
-        assert(res);
       });
     }
   }
