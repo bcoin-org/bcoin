@@ -152,13 +152,16 @@ describe('Block', function() {
 
     for (let i = 1; i < block.txs.length; i++) {
       const tx = block.txs[i];
+
       assert(tx.isSane());
       assert(tx.verifyInputs(view, height));
       assert(tx.verify(view, flags));
       assert(!tx.hasWitness());
+
       sigops += tx.getSigopsCost(view, flags);
-      view.addTX(tx, height);
       reward += tx.getFee(view);
+
+      view.addTX(tx, height);
     }
 
     reward += consensus.getReward(height, 210000);
@@ -267,14 +270,12 @@ describe('Block', function() {
     const full = cblock1.fillMempool(false, { map });
     assert(!full);
 
-    let req = cblock1.toRequest();
+    const rawReq = cblock1.toRequest().toRaw();
+    const req = TXRequest.fromRaw(rawReq);
     assert.strictEqual(req.hash, cblock1.hash('hex'));
 
-    req = TXRequest.fromRaw(req.toRaw());
-    assert.strictEqual(req.hash, cblock1.hash('hex'));
-
-    let res = TXResponse.fromBlock(block, req);
-    res = TXResponse.fromRaw(res.toRaw());
+    const rawRes = TXResponse.fromBlock(block, req).toRaw();
+    const res = TXResponse.fromRaw(rawRes);
 
     const filled = cblock1.fillMissing(res);
     assert(filled);
@@ -335,16 +336,13 @@ describe('Block', function() {
     const full = cblock1.fillMempool(false, { map });
     assert(!full);
 
-    let req = cblock1.toRequest();
+    const rawReq = cblock1.toRequest().toRaw();
+    const req = TXRequest.fromRaw(rawReq);
     assert.strictEqual(req.hash, cblock1.hash('hex'));
     assert.deepStrictEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-    req = TXRequest.fromRaw(req.toRaw());
-    assert.strictEqual(req.hash, cblock1.hash('hex'));
-    assert.deepStrictEqual(req.indexes, [5, 6, 7, 8, 9]);
-
-    let res = TXResponse.fromBlock(block, req);
-    res = TXResponse.fromRaw(res.toRaw());
+    const rawRes = TXResponse.fromBlock(block, req).toRaw();
+    const res = TXResponse.fromRaw(rawRes);
 
     const filled = cblock1.fillMissing(res);
     assert(filled);
