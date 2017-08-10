@@ -13,8 +13,8 @@ const tests = {
 };
 
 describe('Mnemonic', function() {
-  for (const lang of Object.keys(tests)) {
-    const test = tests[lang];
+  for (const language of Object.keys(tests)) {
+    const test = tests[language];
     let i = 0;
 
     for (const data of test) {
@@ -23,19 +23,38 @@ describe('Mnemonic', function() {
       const passphrase = data[2];
       const seed = Buffer.from(data[3], 'hex');
       const xpriv = data[4];
-      it(`should create a ${lang} mnemonic (${i++})`, () => {
+
+      it(`should create a ${language} mnemonic from entropy (${i})`, () => {
         const mnemonic = new Mnemonic({
-          language: lang,
-          entropy: entropy,
-          passphrase: passphrase
+          language,
+          entropy,
+          passphrase
         });
 
         assert.strictEqual(mnemonic.getPhrase(), phrase);
+        assert.deepStrictEqual(mnemonic.getEntropy(), entropy);
         assert.deepStrictEqual(mnemonic.toSeed(), seed);
 
         const key = HDPrivateKey.fromMnemonic(mnemonic);
         assert.strictEqual(key.toBase58(), xpriv);
       });
+
+      it(`should create a ${language} mnemonic from phrase (${i})`, () => {
+        const mnemonic = new Mnemonic({
+          language,
+          phrase,
+          passphrase
+        });
+
+        assert.strictEqual(mnemonic.getPhrase(), phrase);
+        assert.deepStrictEqual(mnemonic.getEntropy(), entropy);
+        assert.deepStrictEqual(mnemonic.toSeed(), seed);
+
+        const key = HDPrivateKey.fromMnemonic(mnemonic);
+        assert.strictEqual(key.toBase58(), xpriv);
+      });
+
+      i += 1;
     }
   }
 
