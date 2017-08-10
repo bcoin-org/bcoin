@@ -8,6 +8,7 @@ const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const Stack = require('../lib/script/stack');
 const TX = require('../lib/primitives/tx');
+const util = require('../lib/utils/util');
 const encoding = require('../lib/utils/encoding');
 const opcodes = Script.opcodes;
 
@@ -39,9 +40,9 @@ function parseScriptTest(data) {
 
   comments += ` (${expected})`;
 
-  let amount = 0;
-  if (witArr.length !== 0)
-    amount = witArr.pop() * 1e8;
+  let value = 0;
+  if (witArr.length > 0)
+    value = util.fromDouble(witArr.pop(), 8);
 
   const witness = Witness.fromString(witArr);
   const input = Script.fromString(inpHex);
@@ -58,7 +59,7 @@ function parseScriptTest(data) {
     witness: witness,
     input: input,
     output: output,
-    amount: amount,
+    value: value,
     flags: flags,
     expected: expected,
     comments: comments
@@ -279,7 +280,7 @@ describe('Script', function() {
 
     const test = parseScriptTest(data);
     const {witness, input, output} = test;
-    const {amount, flags} = test;
+    const {value, flags} = test;
     const {expected, comments} = test;
 
     for (const noCache of [false, true]) {
@@ -300,7 +301,7 @@ describe('Script', function() {
           }],
           outputs: [{
             script: output,
-            value: amount
+            value: value
           }],
           locktime: 0
         });
@@ -319,7 +320,7 @@ describe('Script', function() {
           }],
           outputs: [{
             script: [],
-            value: amount
+            value: value
           }],
           locktime: 0
         });
@@ -331,7 +332,7 @@ describe('Script', function() {
 
         let err, res;
         try {
-          res = Script.verify(input, witness, output, tx, 0, amount, flags);
+          res = Script.verify(input, witness, output, tx, 0, value, flags);
         } catch (e) {
           err = e;
         }
