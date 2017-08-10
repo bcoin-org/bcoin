@@ -175,14 +175,47 @@ it('should relay Bestblockhash', async () => {
       bestblockhash: node.chain.tip.rhash()
     }
   })
+});
+
+it('should relay miner, (getmininginfo)', async () => {
+  let size, weight, txs, diff;
+  let json;
+
+  json = await node.rpc.call({
+    method: 'getmininginfo'
+  }, {})
+  assert(json, {
+    result: {
+    blocks: node.chain.height,
+    currentblocksize: size,
+    errors: '',
+    chain: node.network.type
+  }
 })
+});
+
+
+
+  // blocks: this.chain.height,
+  // currentblocksize: size,
+  // currentblockweight: weight,
+  // currentblocktx: txs,
+  // difficulty: diff,
+  // errors: '',
+  // genproclimit:
+  // newtworkhashps: getHashRate(120),
+  // pooledtx: this.totalTX(),
+  // chain: this.network.type !== 'testnet',
+  // generate: this.mining
+
 
 it('should decode valid Script data', async () => {
   let valid = new Validator();
   let script = new Script();
   let addr = new Address.fromScripthash(script.hash160());
   let data = valid.buf(0);
-  let json;
+  let hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
+  let json, decoded;
 
   addr.network = node.network;
 
@@ -190,5 +223,8 @@ it('should decode valid Script data', async () => {
     method: 'decodescript',
     params: [addr.toString(addr.network)]
   }, {});
-});
 
+  decoded = Script.fromRaw(hex, 'hex');
+  assert(decoded.isScripthash);
+ });
+});
