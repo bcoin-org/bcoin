@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const BN = require('../lib/crypto/bn');
 const base58 = require('../lib/utils/base58');
 const encoding = require('../lib/utils/encoding');
@@ -39,12 +39,12 @@ describe('Utils', function() {
     const str = base58.encode(buf);
 
     assert.strictEqual(str, '1116h8cQN');
-    assert.deepStrictEqual(base58.decode(str), buf);
+    assert.bufferEqual(base58.decode(str), buf);
 
     for (const [hex, b58] of base58Tests) {
       const data = Buffer.from(hex, 'hex');
       assert.strictEqual(base58.encode(data), b58);
-      assert.deepStrictEqual(base58.decode(b58), data);
+      assert.bufferEqual(base58.decode(b58), data);
     }
   });
 
@@ -212,12 +212,14 @@ describe('Utils', function() {
     it(`should write+read a ${bits} bit unsigned int`, () => {
       const buf1 = Buffer.allocUnsafe(8);
       const buf2 = Buffer.allocUnsafe(8);
+
       encoding.writeU64BN(buf1, num, 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
-      assert.deepStrictEqual(buf1, buf2);
+      assert.bufferEqual(buf1, buf2);
 
       const n1 = encoding.readU64BN(buf1, 0);
       const n2 = encoding.readU64(buf2, 0);
+
       assert.strictEqual(n1.toNumber(), n2);
     });
   }
@@ -229,23 +231,27 @@ describe('Utils', function() {
     it(`should write+read a ${bits} bit ${sign} int`, () => {
       const buf1 = Buffer.allocUnsafe(8);
       const buf2 = Buffer.allocUnsafe(8);
+
       encoding.writeI64BN(buf1, num, 0);
       encoding.writeI64(buf2, num.toNumber(), 0);
-      assert.deepStrictEqual(buf1, buf2);
+      assert.bufferEqual(buf1, buf2);
 
       const n1 = encoding.readI64BN(buf1, 0);
       const n2 = encoding.readI64(buf2, 0);
+
       assert.strictEqual(n1.toNumber(), n2);
     });
 
     it(`should write+read a ${bits} bit ${sign} int as unsigned`, () => {
       const buf1 = Buffer.allocUnsafe(8);
       const buf2 = Buffer.allocUnsafe(8);
+
       encoding.writeU64BN(buf1, num, 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
-      assert.deepStrictEqual(buf1, buf2);
+      assert.bufferEqual(buf1, buf2);
 
       const n1 = encoding.readU64BN(buf1, 0);
+
       if (num.isNeg()) {
         assert.throws(() => encoding.readU64(buf2, 0));
       } else {
@@ -256,7 +262,10 @@ describe('Utils', function() {
   }
 
   it('should validate integers 0 and 1 as booleans', () => {
-    const validator = new Validator({shouldBeTrue: 1, shouldBeFalse: 0});
+    const validator = new Validator({
+      shouldBeTrue: 1,
+      shouldBeFalse: 0
+    });
     assert.strictEqual(validator.bool('shouldBeTrue'), true);
     assert.strictEqual(validator.bool('shouldBeFalse'), false);
   });

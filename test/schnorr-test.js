@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const secp256k1 = require('../lib/crypto/secp256k1');
 const digest = require('../lib/crypto/digest');
 const schnorr = require('../lib/crypto/schnorr');
@@ -15,6 +15,6 @@ describe('Schnorr', function() {
     const msg = digest.hash256(Buffer.from('foo', 'ascii'));
     const sig = schnorr.sign(msg, key);
     assert(schnorr.verify(msg, sig, pub));
-    assert.deepStrictEqual(schnorr.recover(sig, msg), pub);
+    assert.bufferEqual(schnorr.recover(sig, msg), pub);
   });
 });

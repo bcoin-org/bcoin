@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const ChaCha20 = require('../lib/crypto/chacha20');
 const Poly1305 = require('../lib/crypto/poly1305');
 const AEAD = require('../lib/crypto/aead');
@@ -19,12 +19,12 @@ function testChaCha(options) {
   ctx1.init(key, nonce, counter);
   const plainenc = Buffer.from(plain);
   ctx1.encrypt(plainenc);
-  assert.deepStrictEqual(plainenc, ciphertext);
+  assert.bufferEqual(plainenc, ciphertext);
 
   const ctx2 = new ChaCha20();
   ctx2.init(key, nonce, counter);
   ctx2.encrypt(ciphertext);
-  assert.deepStrictEqual(plain, ciphertext);
+  assert.bufferEqual(plain, ciphertext);
 }
 
 function testAEAD(options) {
@@ -39,21 +39,21 @@ function testAEAD(options) {
   const ctx1 = new AEAD();
   ctx1.init(key, nonce);
   assert.strictEqual(ctx1.chacha20.getCounter(), 1);
-  assert.deepStrictEqual(ctx1.polyKey, pk);
+  assert.bufferEqual(ctx1.polyKey, pk);
   ctx1.aad(aad);
   const plainenc = Buffer.from(plain);
   ctx1.encrypt(plainenc);
-  assert.deepStrictEqual(plainenc, ciphertext);
-  assert.deepStrictEqual(ctx1.finish(), tag);
+  assert.bufferEqual(plainenc, ciphertext);
+  assert.bufferEqual(ctx1.finish(), tag);
 
   const ctx2 = new AEAD();
   ctx2.init(key, nonce);
   assert.strictEqual(ctx2.chacha20.getCounter(), 1);
-  assert.deepStrictEqual(ctx2.polyKey, pk);
+  assert.bufferEqual(ctx2.polyKey, pk);
   ctx2.aad(aad);
   ctx2.decrypt(ciphertext);
-  assert.deepStrictEqual(ciphertext, plain);
-  assert.deepStrictEqual(ctx2.finish(), tag);
+  assert.bufferEqual(ciphertext, plain);
+  assert.bufferEqual(ctx2.finish(), tag);
 }
 
 describe('ChaCha20 / Poly1305 / AEAD', function() {
@@ -160,7 +160,7 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
 
     const mac = Poly1305.auth(msg, key);
     assert(Poly1305.verify(mac, expected));
-    assert.deepStrictEqual(mac, expected);
+    assert.bufferEqual(mac, expected);
   });
 
   it('should perform poly1305', () => {

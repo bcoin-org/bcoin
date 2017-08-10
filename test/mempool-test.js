@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const encoding = require('../lib/utils/encoding');
 const random = require('../lib/crypto/random');
 const MempoolEntry = require('../lib/mempool/mempoolentry');

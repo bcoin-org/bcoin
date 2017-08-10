@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 const encoding = require('../lib/utils/encoding');

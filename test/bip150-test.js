@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const secp256k1 = require('../lib/crypto/secp256k1');
 const BIP150 = require('../lib/net/bip150');
 const BIP151 = require('../lib/net/bip151');

@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const util = require('../lib/utils/util');
 const encoding = require('../lib/utils/encoding');
 const random = require('../lib/crypto/random');
@@ -235,7 +235,7 @@ describe('TX', function() {
       tx.refresh();
 
       const raw2 = tx.toRaw();
-      assert.deepStrictEqual(raw1, raw2);
+      assert.bufferEqual(raw1, raw2);
 
       const tx2 = TX.fromRaw(raw2);
       clearCache(tx2, noCache);

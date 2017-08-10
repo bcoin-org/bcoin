@@ -26,7 +26,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const bech32 = require('../lib/utils/bech32');
 const Address = require('../lib/primitives/address');
 

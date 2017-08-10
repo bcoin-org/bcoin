@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const Bloom = require('../lib/utils/bloom');
 const RollingFilter = require('../lib/utils/rollingfilter');
 const murmur3 = require('../lib/utils/murmur3');
@@ -75,7 +75,7 @@ describe('Bloom', function() {
       'hex');
     filter.add(item1, 'hex');
     filter.add(item2, 'hex');
-    assert.deepStrictEqual(filter.filter, filterRaw);
+    assert.bufferEqual(filter.filter, filterRaw);
   });
 
   it('should handle 1m ops with regular filter', () => {

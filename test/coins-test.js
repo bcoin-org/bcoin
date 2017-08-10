@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const Output = require('../lib/primitives/output');
 const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
@@ -27,7 +27,7 @@ function deepCoinsEqual(a, b) {
   assert.strictEqual(a.version, b.version);
   assert.strictEqual(a.height, b.height);
   assert.strictEqual(a.coinbase, b.coinbase);
-  assert.deepStrictEqual(a.raw, b.raw);
+  assert.bufferEqual(a.raw, b.raw);
 }
 
 describe('Coins', function() {

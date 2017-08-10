@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const siphash = require('../lib/crypto/siphash');
 const siphash256 = siphash.siphash256;
 

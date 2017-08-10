@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
 
@@ -32,8 +32,8 @@ describe('Mnemonic', function() {
         });
 
         assert.strictEqual(mnemonic.getPhrase(), phrase);
-        assert.deepStrictEqual(mnemonic.getEntropy(), entropy);
-        assert.deepStrictEqual(mnemonic.toSeed(), seed);
+        assert.bufferEqual(mnemonic.getEntropy(), entropy);
+        assert.bufferEqual(mnemonic.toSeed(), seed);
 
         const key = HDPrivateKey.fromMnemonic(mnemonic);
         assert.strictEqual(key.toBase58(), xpriv);
@@ -47,8 +47,8 @@ describe('Mnemonic', function() {
         });
 
         assert.strictEqual(mnemonic.getPhrase(), phrase);
-        assert.deepStrictEqual(mnemonic.getEntropy(), entropy);
-        assert.deepStrictEqual(mnemonic.toSeed(), seed);
+        assert.bufferEqual(mnemonic.getEntropy(), entropy);
+        assert.bufferEqual(mnemonic.toSeed(), seed);
 
         const key = HDPrivateKey.fromMnemonic(mnemonic);
         assert.strictEqual(key.toBase58(), xpriv);
@@ -61,9 +61,9 @@ describe('Mnemonic', function() {
   it('should verify phrase', () => {
     const m1 = new Mnemonic();
     const m2 = Mnemonic.fromPhrase(m1.getPhrase());
-    assert.deepStrictEqual(m2.getEntropy(), m1.getEntropy());
+    assert.bufferEqual(m2.getEntropy(), m1.getEntropy());
     assert.strictEqual(m2.bits, m1.bits);
     assert.strictEqual(m2.language, m1.language);
-    assert.deepStrictEqual(m2.toSeed(), m1.toSeed());
+    assert.bufferEqual(m2.toSeed(), m1.toSeed());
   });
 });

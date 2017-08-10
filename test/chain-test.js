@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const BN = require('../lib/crypto/bn');
 const consensus = require('../lib/protocol/consensus');
 const encoding = require('../lib/utils/encoding');
@@ -316,7 +316,7 @@ describe('Chain', function() {
 
     const coin = await chain.db.getCoin(tx.hash('hex'), 2);
 
-    assert.deepStrictEqual(coin.toRaw(), output.toRaw());
+    assert.bufferEqual(coin.toRaw(), output.toRaw());
   });
 
   it('should have correct wallet balance', async () => {

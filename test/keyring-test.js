@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const KeyRing = require('../lib/primitives/keyring');
 
 describe('KeyRing', function() {

@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const fs = require('../lib/utils/fs');
 const GCSFilter = require('../lib/utils/gcs');
 const random = require('../lib/crypto/random');
@@ -104,16 +104,16 @@ describe('GCS', function() {
     assert.strictEqual(filter1.n, contents1.length);
     assert.strictEqual(filter1.p, filter2.p);
     assert.strictEqual(filter1.n, filter2.n);
-    assert.deepStrictEqual(filter1.data, filter2.data);
+    assert.bufferEqual(filter1.data, filter2.data);
     assert.strictEqual(filter1.p, filter3.p);
     assert.strictEqual(filter1.n, filter3.n);
-    assert.deepStrictEqual(filter1.data, filter3.data);
+    assert.bufferEqual(filter1.data, filter3.data);
     assert.strictEqual(filter1.p, filter4.p);
     assert.strictEqual(filter1.n, filter4.n);
-    assert.deepStrictEqual(filter1.data, filter4.data);
+    assert.bufferEqual(filter1.data, filter4.data);
     assert.strictEqual(filter1.p, filter5.p);
     assert.strictEqual(filter1.n, filter5.n);
-    assert.deepStrictEqual(filter1.data, filter5.data);
+    assert.bufferEqual(filter1.data, filter5.data);
   });
 
   it('should test GCS filter match', () => {

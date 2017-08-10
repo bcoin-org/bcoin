@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const util = require('../lib/utils/util');
 const bip70 = require('../lib/bip70');
 const Address = require('../lib/primitives/address');
@@ -38,7 +38,7 @@ function testRequest(data) {
   assert(req.paymentDetails.memo.length !== 0);
   assert(req.paymentDetails.paymentUrl.length !== 0);
 
-  assert.deepStrictEqual(req.toRaw(), data);
+  assert.bufferEqual(req.toRaw(), data);
   assert(req.verify());
 }
 
@@ -153,7 +153,7 @@ describe('BIP70', function() {
     assert.strictEqual(ack.memo.length, 95);
     assert.strictEqual(ack.memo, 'Transaction received by BitPay.'
       + ' Invoice will be marked as paid if the transaction is confirmed.');
-    assert.deepStrictEqual(ack.toRaw(), tests.ack);
+    assert.bufferEqual(ack.toRaw(), tests.ack);
   });
 
   it('should create a payment request, sign, and verify', () => {

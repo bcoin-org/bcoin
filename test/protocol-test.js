@@ -4,7 +4,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const Network = require('../lib/protocol/network');
 const util = require('../lib/utils/util');
 const NetAddress = require('../lib/primitives/netaddress');
@@ -117,6 +117,6 @@ describe('Protocol', function() {
     const tx = TX.fromRaw(raw);
     tx.refresh();
 
-    assert.deepStrictEqual(tx.toRaw(), tx8.tx.toRaw());
+    assert.bufferEqual(tx.toRaw(), tx8.tx.toRaw());
   });
 });

@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const fs = require('../lib/utils/fs');
 const common = require('./util/common');
 const Bloom = require('../lib/utils/bloom');
@@ -68,8 +68,8 @@ describe('Block', function() {
   it('should decode/encode merkle block', () => {
     const merkle = MerkleBlock.fromRaw(merkle300025);
     merkle.refresh();
-    assert.deepStrictEqual(merkle.toRaw(), merkle300025);
-    assert.deepStrictEqual(merkle300025, mblock.toRaw());
+    assert.bufferEqual(merkle.toRaw(), merkle300025);
+    assert.bufferEqual(mblock.toRaw(), merkle300025);
   });
 
   it('should be verify merkle block', () => {
@@ -80,7 +80,7 @@ describe('Block', function() {
   it('should be encoded/decoded and still verify', () => {
     const raw = mblock.toRaw();
     const merkle = MerkleBlock.fromRaw(raw);
-    assert.deepStrictEqual(merkle.toRaw(), raw);
+    assert.bufferEqual(merkle.toRaw(), raw);
     assert(merkle.verify());
   });
 
@@ -131,7 +131,7 @@ describe('Block', function() {
     const merkle = MerkleBlock.fromBlock(block, filter);
 
     assert(merkle.verifyBody());
-    assert.deepStrictEqual(merkle.toRaw(), mblock.toRaw());
+    assert.bufferEqual(merkle.toRaw(), mblock.toRaw());
   });
 
   it('should verify a historical block', () => {
@@ -228,8 +228,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepStrictEqual(cblock1.toRaw(), compact426884);
-    assert.deepStrictEqual(cblock2.toRaw(), compact426884);
+    assert.bufferEqual(cblock1.toRaw(), compact426884);
+    assert.bufferEqual(cblock2.toRaw(), compact426884);
 
     const map = new Map();
 
@@ -244,7 +244,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should handle half-full compact block', () => {
@@ -254,8 +254,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepStrictEqual(cblock1.toRaw(), compact426884);
-    assert.deepStrictEqual(cblock2.toRaw(), compact426884);
+    assert.bufferEqual(cblock1.toRaw(), compact426884);
+    assert.bufferEqual(cblock2.toRaw(), compact426884);
 
     const map = new Map();
 
@@ -282,7 +282,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should handle compact block', () => {
@@ -292,8 +292,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepStrictEqual(cblock1.toRaw(), compact898352);
-    assert.deepStrictEqual(cblock2.toRaw(), compact898352);
+    assert.bufferEqual(cblock1.toRaw(), compact898352);
+    assert.bufferEqual(cblock2.toRaw(), compact898352);
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
@@ -310,7 +310,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should handle half-full compact block', () => {
@@ -320,8 +320,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.deepStrictEqual(cblock1.toRaw(), compact898352);
-    assert.deepStrictEqual(cblock2.toRaw(), compact898352);
+    assert.bufferEqual(cblock1.toRaw(), compact898352);
+    assert.bufferEqual(cblock2.toRaw(), compact898352);
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
@@ -352,7 +352,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.deepStrictEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
   it('should count sigops for block 928927 (testnet)', () => {

@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const HD = require('../lib/hd');
 const base58 = require('../lib/utils/base58');
 const pbkdf2 = require('../lib/crypto/pbkdf2');

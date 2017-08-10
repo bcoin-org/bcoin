@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const hkdf = require('../lib/crypto/hkdf');
 
 describe('HKDF', function() {
@@ -28,8 +28,8 @@ describe('HKDF', function() {
     const prk = hkdf.extract(ikm, salt, alg);
     const okm = hkdf.expand(prk, info, len, alg);
 
-    assert.deepStrictEqual(prk, prkE);
-    assert.deepStrictEqual(okm, okmE);
+    assert.bufferEqual(prk, prkE);
+    assert.bufferEqual(okm, okmE);
   });
 
   it('should do proper hkdf (2)', () => {
@@ -78,7 +78,7 @@ describe('HKDF', function() {
     const prk = hkdf.extract(ikm, salt, alg);
     const okm = hkdf.expand(prk, info, len, alg);
 
-    assert.deepStrictEqual(prk, prkE);
-    assert.deepStrictEqual(okm, okmE);
+    assert.bufferEqual(prk, prkE);
+    assert.bufferEqual(okm, okmE);
   });
 });

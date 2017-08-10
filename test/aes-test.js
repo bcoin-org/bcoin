@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const aes = require('../lib/crypto/aes');
 
 describe('AES', function() {
@@ -24,10 +24,10 @@ describe('AES', function() {
       'hex');
 
     const ciphertext = aes.encipher(data, key, iv);
-    assert.deepStrictEqual(ciphertext, expected);
+    assert.bufferEqual(ciphertext, expected);
 
     const plaintext = aes.decipher(ciphertext, key, iv);
-    assert.deepStrictEqual(plaintext, data);
+    assert.bufferEqual(plaintext, data);
   });
 
   it('should encrypt and decrypt with uneven blocks', () => {
@@ -41,9 +41,9 @@ describe('AES', function() {
       'hex');
 
     const ciphertext = aes.encipher(data, key, iv);
-    assert.deepStrictEqual(ciphertext, expected);
+    assert.bufferEqual(ciphertext, expected);
 
     const plaintext = aes.decipher(ciphertext, key, iv);
-    assert.deepStrictEqual(plaintext, data);
+    assert.bufferEqual(plaintext, data);
   });
 });

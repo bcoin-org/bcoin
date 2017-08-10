@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const Stack = require('../lib/script/stack');
@@ -82,7 +82,7 @@ describe('Script', function() {
     assert.strictEqual(decoded.code[2].value, opcodes.OP_CHECKSIG);
 
     const dst = decoded.toRaw();
-    assert.deepStrictEqual(dst, src);
+    assert.bufferEqual(dst, src);
   });
 
   it('should encode/decode numbers', () => {
@@ -130,6 +130,7 @@ describe('Script', function() {
 
     {
       const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+
       const output = new Script([
         opcodes.OP_9,
         opcodes.OP_EQUAL,
@@ -151,6 +152,7 @@ describe('Script', function() {
 
     {
       const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+
       const output = new Script([
         opcodes.OP_2,
         opcodes.OP_EQUAL,
@@ -170,6 +172,7 @@ describe('Script', function() {
 
     {
       const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+
       const output = new Script([
         opcodes.OP_9,
         opcodes.OP_EQUAL,
@@ -189,6 +192,7 @@ describe('Script', function() {
 
     {
       const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+
       const output = new Script([
         opcodes.OP_9,
         opcodes.OP_EQUAL,

@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
 const BIP151 = require('../lib/net/bip151');
 
 const client = new BIP151();
