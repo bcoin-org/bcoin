@@ -9,7 +9,6 @@ const encoding = require('../lib/utils/encoding');
 const random = require('../lib/crypto/random');
 const consensus = require('../lib/protocol/consensus');
 const TX = require('../lib/primitives/tx');
-const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
@@ -36,24 +35,30 @@ const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
 const MAX_SAFE_ADDITION = 0xfffffffffffff;
 
 function clearCache(tx, noCache) {
-  if (!noCache) {
-    const copy = tx.clone();
-    assert.strictEqual(tx.txid(), copy.txid());
-    assert.strictEqual(tx.wtxid(), copy.wtxid());
+  if (noCache) {
+    tx.refresh();
     return;
   }
-  tx.refresh();
+
+  const copy = tx.clone();
+  assert.strictEqual(tx.txid(), copy.txid());
+  assert.strictEqual(tx.wtxid(), copy.wtxid());
 }
 
 function parseTXTest(data) {
-  const [coins, hex, names] = data;
+  const coins = data[0];
+  const hex = data[1];
+  const names = data[2] || 'NONE';
 
   let flags = 0;
 
-  for (const name of (names || '').trim().split(/,\s*/)) {
-    const flag = `VERIFY_${name}`;
-    assert(Script.flags[flag] != null, 'Unknown flag.');
-    flags |= Script.flags[flag];
+  for (const name of names.split(',')) {
+    const flag = Script.flags[`VERIFY_${name}`];
+
+    if (flag == null)
+      throw new Error(`Unknown flag: ${name}.`);
+
+    flags |= flag;
   }
 
   const view = new CoinView();

@@ -26,11 +26,11 @@ function isSuccess(stack) {
 
 function parseScriptTest(data) {
   const witArr = Array.isArray(data[0]) ? data.shift() : [];
-  const inpHex = data[0] ? data[0].trim() : data[0] || '';
-  const outHex = data[1] ? data[1].trim() : data[1] || '';
-  const names = data[2] ? data[2].trim().split(/,\s*/) : [];
-  const expected = data[3] || '';
-  let comments = Array.isArray(data[4]) ? data[4].join('. ') : data[4] || '';
+  const inpHex = data[0];
+  const outHex = data[1];
+  const names = data[2] || 'NONE';
+  const expected = data[3];
+  let comments = data[4];
 
   if (!comments)
     comments = outHex.slice(0, 60);
@@ -46,10 +46,13 @@ function parseScriptTest(data) {
   const output = Script.fromString(outHex);
 
   let flags = 0;
-  for (const name of names) {
-    const flag = `VERIFY_${name}`;
-    assert(Script.flags[flag] != null, 'Unknown flag.');
-    flags |= Script.flags[flag];
+  for (const name of names.split(',')) {
+    const flag = Script.flags[`VERIFY_${name}`];
+
+    if (flag == null)
+      throw new Error(`Unknown flag: ${name}.`);
+
+    flags |= flag;
   }
 
   return {
