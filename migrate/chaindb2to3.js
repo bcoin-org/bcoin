@@ -34,6 +34,8 @@ const LRU = require('../lib/utils/lru');
 const file = process.argv[2].replace(/\.ldb\/?$/, '');
 const shouldPrune = process.argv.indexOf('--prune') !== -1;
 let hasIndex = false;
+let hasPruned = false;
+let hasSPV = false;
 
 const db = LDB({
   location: file,
@@ -97,21 +99,20 @@ async function updateVersion() {
 
   console.log('Checking version.');
 
-  let data = await db.get('V');
+  const verRaw = await db.get('V');
 
-  if (!data)
+  if (!verRaw)
     throw new Error('No DB version found!');
 
-  const version = data.readUInt32LE(0, true);
+  const version = verRaw.readUInt32LE(0, true);
 
   if (version !== 2)
     throw Error(`DB is version ${version}.`);
 
-  data = Buffer.allocUnsafe(4);
-
   // Set to uint32_max temporarily.
   // This is to prevent bcoin from
   // trying to access this chain.
+  const data = Buffer.allocUnsafe(4);
   data.writeUInt32LE(-1 >>> 0, 0, true);
   batch.put('V', data);
 
@@ -125,19 +126,20 @@ async function updateVersion() {
 }
 
 async function reserializeUndo(hash) {
-  let batch = db.batch();
   let tip = await getTip();
   const height = tip.height;
-  let pruning = false;
-  let total = 0;
-  let totalCoins = 0;
 
   if (hash !== encoding.NULL_HASH)
     tip = await getEntry(hash);
 
   console.log('Reserializing undo coins from tip %s.', util.revHex(tip.hash));
 
-  while (tip.height !== 0) {
+  let batch = db.batch();
+  let pruning = false;
+  let total = 0;
+  let totalCoins = 0;
+
+  while (tip.height !== 0 && !hasSPV) {
     if (shouldPrune) {
       if (tip.height < height - 288) {
         console.log('Pruning block %s (%d).',
@@ -173,7 +175,7 @@ async function reserializeUndo(hash) {
     }
 
     if (!blockData) {
-      if (!await isPruned())
+      if (!hasPruned)
         throw new Error(`Block not found: ${tip.hash}.`);
       break;
     }
@@ -258,8 +260,8 @@ async function reserializeUndo(hash) {
 }
 
 async function cleanupIndex() {
-  let batch = db.batch();
-  let total = 0;
+  if (hasSPV)
+    return [STATE_COINS, encoding.NULL_HASH];
 
   const iter = db.iterator({
     gte: pair(0x01, encoding.ZERO_HASH),
@@ -268,6 +270,9 @@ async function cleanupIndex() {
   });
 
   console.log('Removing txid->height undo index.');
+
+  let batch = db.batch();
+  let total = 0;
 
   for (;;) {
     const item = await iter.next();
@@ -294,9 +299,8 @@ async function cleanupIndex() {
 }
 
 async function reserializeCoins(hash) {
-  let batch = db.batch();
-  let start = true;
-  let total = 0;
+  if (hasSPV)
+    return [STATE_ENTRY, encoding.NULL_HASH];
 
   const iter = db.iterator({
     gte: pair('c', hash),
@@ -304,6 +308,8 @@ async function reserializeCoins(hash) {
     keys: true,
     values: true
   });
+
+  let start = true;
 
   if (hash !== encoding.NULL_HASH) {
     const item = await iter.next();
@@ -313,9 +319,11 @@ async function reserializeCoins(hash) {
 
   console.log('Reserializing coins from %s.', util.revHex(hash));
 
+  let batch = db.batch();
+  let total = 0;
+
   while (start) {
     const item = await iter.next();
-    let update = false;
 
     if (!item)
       break;
@@ -325,6 +333,8 @@ async function reserializeCoins(hash) {
 
     const hash = item.key.toString('hex', 1, 33);
     const old = OldCoins.fromRaw(item.value, hash);
+
+    let update = false;
 
     for (let i = 0; i < old.outputs.length; i++) {
       const coin = old.getCoin(i);
@@ -366,16 +376,13 @@ async function reserializeCoins(hash) {
 }
 
 async function reserializeEntries(hash) {
-  const tip = await getTipHash();
-  let batch = db.batch();
-  let start = true;
-  let total = 0;
-
   const iter = db.iterator({
     gte: pair('e', hash),
     lte: pair('e', encoding.MAX_HASH),
     values: true
   });
+
+  let start = true;
 
   if (hash !== encoding.NULL_HASH) {
     const item = await iter.next();
@@ -386,6 +393,11 @@ async function reserializeEntries(hash) {
   }
 
   console.log('Reserializing entries from %s.', util.revHex(hash));
+
+  const tip = await getTipHash();
+
+  let total = 0;
+  let batch = db.batch();
 
   while (start) {
     const item = await iter.next();
@@ -453,56 +465,70 @@ async function finalize() {
 async function getMeta(coin, prevout) {
   // Case 1: Undo coin is the last spend.
   if (coin.height !== -1) {
-    assert(coin.version !== -1);
+    assert(coin.version !== -1, 'Database corruption.');
     return [coin.version, coin.height, hasIndex ? false : true];
   }
 
   // Case 2: The item is still in the LRU cache.
-  let item = lruCache.get(prevout.hash);
+  const lruItem = lruCache.get(prevout.hash);
 
-  if (item) {
-    const [version, height] = item;
+  if (lruItem) {
+    const [version, height] = lruItem;
     return [version, height, false];
   }
 
   // Case 3: The database has a tx-index. We
   // can just hit that instead of reindexing.
   if (hasIndex) {
-    const data = await db.get(pair('t', prevout.hash));
-    assert(data);
-    assert(data[data.length - 45] === 1);
-    const version = data.readUInt32LE(0, true);
-    const height = data.readUInt32LE(data.length - 12, true);
+    const txRaw = await db.get(pair('t', prevout.hash));
+    assert(txRaw, 'Database corruption.');
+    assert(txRaw[txRaw.length - 45] === 1);
+    const version = txRaw.readUInt32LE(0, true);
+    const height = txRaw.readUInt32LE(txRaw.length - 12, true);
     return [version, height, false];
   }
 
   // Case 4: We have previously cached
   // this coin's metadata, but it's not
   // written yet.
-  item = metaCache.get(prevout.hash);
+  const metaItem = metaCache.get(prevout.hash);
 
-  if (item) {
-    const [version, height] = item;
+  if (metaItem) {
+    const [version, height] = metaItem;
     return [version, height, false];
   }
 
   // Case 5: We have previously cached
   // this coin's metadata, and it is
   // written.
-  let data = await db.get(pair(0x01, prevout.hash));
+  const metaRaw = await db.get(pair(0x01, prevout.hash));
 
-  if (data) {
-    const version = data.readUInt32LE(0, true);
-    const height = data.readUInt32LE(4, true);
+  if (metaRaw) {
+    const version = metaRaw.readUInt32LE(0, true);
+    const height = metaRaw.readUInt32LE(4, true);
     return [version, height, false];
   }
 
   // Case 6: The coin's metadata is
   // still in the top-level UTXO set.
-  data = await db.get(pair('c', prevout.hash));
-  assert(data);
+  const coinsRaw = await db.get(pair('c', prevout.hash));
 
-  const br = new BufferReader(data);
+  // Case 7: We're pruned and are
+  // under the keepBlocks threshold.
+  // We don't have access to this
+  // data. Luckily, it appears that
+  // all historical transactions
+  // under height 182 are version 1,
+  // which means height is not
+  // necessary to determine CSV
+  // anyway. Just store the height
+  // as `1`.
+  if (!coinsRaw) {
+    assert(hasPruned, 'Database corruption.');
+    return [1, 1, false];
+  }
+
+  const br = new BufferReader(coinsRaw);
   const version = br.readVarint();
   const height = br.readU32();
 
@@ -555,21 +581,21 @@ async function isMainChain(entry, tip) {
 }
 
 function entryFromRaw(data) {
-  const p = new BufferReader(data, true);
-  const hash = digest.hash256(p.readBytes(80));
+  const br = new BufferReader(data, true);
+  const hash = digest.hash256(br.readBytes(80));
+
+  br.seek(-80);
+
   const entry = {};
-
-  p.seek(-80);
-
   entry.hash = hash.toString('hex');
-  entry.version = p.readU32();
-  entry.prevBlock = p.readHash('hex');
-  entry.merkleRoot = p.readHash('hex');
-  entry.ts = p.readU32();
-  entry.bits = p.readU32();
-  entry.nonce = p.readU32();
-  entry.height = p.readU32();
-  entry.chainwork = new BN(p.readBytes(32), 'le');
+  entry.version = br.readU32();
+  entry.prevBlock = br.readHash('hex');
+  entry.merkleRoot = br.readHash('hex');
+  entry.ts = br.readU32();
+  entry.bits = br.readU32();
+  entry.nonce = br.readU32();
+  entry.height = br.readU32();
+  entry.chainwork = new BN(br.readBytes(32), 'le');
 
   return entry;
 }
@@ -624,13 +650,19 @@ reserializeEntries;
   console.log('Opened %s.', file);
 
   if (await isSPV())
-    throw new Error('Cannot migrate SPV database.');
+    hasSPV = true;
 
-  if ((await isPruned()) && shouldPrune)
-    throw new Error('Database is already pruned.');
+  if (await isPruned())
+    hasPruned = true;
 
   if (await isIndexed())
     hasIndex = true;
+
+  if (shouldPrune && hasPruned)
+    throw new Error('Database is already pruned.');
+
+  if (shouldPrune && hasSPV)
+    throw new Error('Database cannot be pruned due to SPV.');
 
   console.log('Starting migration in 3 seconds...');
   console.log('If you crash you can start over.');
