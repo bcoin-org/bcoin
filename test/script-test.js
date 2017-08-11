@@ -39,7 +39,7 @@ function parseScriptTest(data) {
 
   let value = 0;
   if (witArr.length > 0)
-    value = util.fromDouble(witArr.pop(), 8);
+    value = util.fromFloat(witArr.pop(), 8);
 
   const witness = Witness.fromString(witArr);
   const input = Script.fromString(inpHex);
