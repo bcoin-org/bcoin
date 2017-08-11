@@ -233,7 +233,7 @@ async function reserializeUndo(hash) {
 
     batch.put(pair('u', tip.hash), undo.toRaw());
 
-    if (++total % 1000 === 0) {
+    if (++total % 100 === 0) {
       console.log(
         'Reserialized %d undo records (%d coins).',
         total, totalCoins);
