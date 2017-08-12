@@ -6,47 +6,47 @@
 const assert = require('./util/assert');
 const KeyRing = require('../lib/primitives/keyring');
 
+const uncompressed = KeyRing.fromSecret(
+  '5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss');
+
+const compressed = KeyRing.fromSecret(
+  'L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1');
+
 describe('KeyRing', function() {
-  const ukey = KeyRing.fromSecret(
-    '5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss');
-
-  const ckey = KeyRing.fromSecret(
-    'L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1');
-
-  it('check uncompressed public key', () => {
+  it('should get uncompressed public key', () => {
     assert.strictEqual(
       '04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b'
       + '8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235',
-      ukey.getPublicKey('hex'));
+      uncompressed.getPublicKey('hex'));
   });
 
-  it('check uncompressed public key to address', () => {
+  it('should get uncompressed public key address', () => {
     assert.strictEqual(
       '1HZwkjkeaoZfTSaJxDw6aKkxp45agDiEzN',
-      ukey.getKeyAddress('base58'));
+      uncompressed.getKeyAddress('base58'));
   });
 
-  it('check uncompressed secret', () => {
+  it('should get uncompressed WIF', () => {
     assert.strictEqual(
       '5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss',
-      ukey.toSecret());
+      uncompressed.toSecret());
   });
 
-  it('check compressed public key', () => {
+  it('should get compressed public key', () => {
     assert.strictEqual(
       '03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd',
-      ckey.getPublicKey('hex'));
+      compressed.getPublicKey('hex'));
   });
 
-  it('check compressed public key to address', () => {
+  it('should get compressed public key address', () => {
     assert.strictEqual(
       '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV',
-      ckey.getKeyAddress('base58'));
+      compressed.getKeyAddress('base58'));
   });
 
-  it('check compressed secret', () => {
+  it('should get compressed WIF', () => {
     assert.strictEqual(
       'L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1',
-      ckey.toSecret());
+      compressed.toSecret());
   });
 });

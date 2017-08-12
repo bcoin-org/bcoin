@@ -39,24 +39,22 @@ const undo928828 = fs.readFileSync(`${__dirname}/data/undo928828.raw`);
 const block1087400 = fs.readFileSync(`${__dirname}/data/block1087400.raw`);
 const undo1087400 = fs.readFileSync(`${__dirname}/data/undo1087400.raw`);
 
-// Abstract
-const mblock = MerkleBlock.fromRaw(merkle300025);
-const block = Block.fromRaw(block300025);
-
 describe('Block', function() {
   this.timeout(10000);
 
   it('should parse partial merkle tree', () => {
-    assert(mblock.verifyPOW());
-    assert(mblock.verifyBody());
-    assert(mblock.verify());
+    const block = MerkleBlock.fromRaw(merkle300025);
 
-    const tree = mblock.getTree();
+    assert(block.verifyPOW());
+    assert(block.verifyBody());
+    assert(block.verify());
+
+    const tree = block.getTree();
 
     assert.strictEqual(tree.matches.length, 2);
-    assert.strictEqual(mblock.hash('hex'),
+    assert.strictEqual(block.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
-    assert.strictEqual(mblock.rhash(),
+    assert.strictEqual(block.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
     assert.strictEqual(
       tree.matches[0].toString('hex'),
@@ -67,29 +65,30 @@ describe('Block', function() {
   });
 
   it('should decode/encode merkle block', () => {
-    const merkle = MerkleBlock.fromRaw(merkle300025);
-    merkle.refresh();
-    assert.bufferEqual(merkle.toRaw(), merkle300025);
-    assert.bufferEqual(mblock.toRaw(), merkle300025);
+    const block = MerkleBlock.fromRaw(merkle300025);
+    block.refresh();
+    assert.bufferEqual(block.toRaw(), merkle300025);
   });
 
-  it('should be verify merkle block', () => {
-    const merkle = MerkleBlock.fromRaw(merkle300025);
-    assert(merkle.verify());
+  it('should verify merkle block', () => {
+    const block = MerkleBlock.fromRaw(merkle300025);
+    assert(block.verify());
   });
 
   it('should be encoded/decoded and still verify', () => {
-    const raw = mblock.toRaw();
-    const merkle = MerkleBlock.fromRaw(raw);
-    assert.bufferEqual(merkle.toRaw(), raw);
-    assert(merkle.verify());
+    const block1 = MerkleBlock.fromRaw(merkle300025);
+    const raw = block1.toRaw();
+    const block2 = MerkleBlock.fromRaw(raw);
+    assert.bufferEqual(block2.toRaw(), raw);
+    assert(block2.verify());
   });
 
   it('should be jsonified/unjsonified and still verify', () => {
-    const json = mblock.toJSON();
-    const merkle = MerkleBlock.fromJSON(json);
-    assert.deepStrictEqual(merkle.toJSON(), json);
-    assert(merkle.verify());
+    const block1 = MerkleBlock.fromRaw(merkle300025);
+    const json = block1.toJSON();
+    const block2 = MerkleBlock.fromJSON(json);
+    assert.deepStrictEqual(block2.toJSON(), json);
+    assert(block2.verify());
   });
 
   it('should calculate reward properly', () => {
@@ -110,12 +109,13 @@ describe('Block', function() {
   });
 
   it('should parse JSON', () => {
-    const block = Block.fromJSON(Block.fromRaw(block300025).toJSON());
-    assert.strictEqual(block.hash('hex'),
+    const block1 = Block.fromRaw(block300025);
+    const block2 = Block.fromJSON(block1.toJSON());
+    assert.strictEqual(block2.hash('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
-    assert.strictEqual(block.rhash(),
+    assert.strictEqual(block2.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
-    assert.strictEqual(block.merkleRoot, block.createMerkleRoot('hex'));
+    assert.strictEqual(block2.merkleRoot, block2.createMerkleRoot('hex'));
   });
 
   it('should create a merkle block', () => {
@@ -129,10 +129,11 @@ describe('Block', function() {
     filter.add(item1, 'hex');
     filter.add(item2, 'hex');
 
-    const merkle = MerkleBlock.fromBlock(block, filter);
+    const block1 = Block.fromRaw(block300025);
+    const block2 = MerkleBlock.fromBlock(block1, filter);
 
-    assert(merkle.verifyBody());
-    assert.bufferEqual(merkle.toRaw(), mblock.toRaw());
+    assert(block2.verifyBody());
+    assert.bufferEqual(block2.toRaw(), merkle300025);
   });
 
   it('should verify a historical block', () => {
@@ -173,53 +174,56 @@ describe('Block', function() {
   });
 
   it('should fail with a bad merkle root', () => {
-    const block2 = new Block(block);
-    block2.merkleRoot = encoding.NULL_HASH;
-    block2.refresh();
-    assert(!block2.verifyPOW());
-    const [, reason] = block2.checkBody();
+    const block = Block.fromRaw(block300025);
+    const merkleRoot = block.merkleRoot;
+    block.merkleRoot = encoding.NULL_HASH;
+    block.refresh();
+    assert(!block.verifyPOW());
+    const [, reason] = block.checkBody();
     assert.strictEqual(reason, 'bad-txnmrklroot');
-    assert(!block2.verify());
-    block2.merkleRoot = block.merkleRoot;
-    block2.refresh();
-    assert(block2.verify());
+    assert(!block.verify());
+    block.merkleRoot = merkleRoot;
+    block.refresh();
+    assert(block.verify());
   });
 
   it('should fail on merkle block with a bad merkle root', () => {
-    const mblock2 = new MerkleBlock(mblock);
-    mblock2.merkleRoot = encoding.NULL_HASH;
-    mblock2.refresh();
-    assert(!mblock2.verifyPOW());
-    const [, reason] = mblock2.checkBody();
+    const block = MerkleBlock.fromRaw(merkle300025);
+    const merkleRoot = block.merkleRoot;
+    block.merkleRoot = encoding.NULL_HASH;
+    block.refresh();
+    assert(!block.verifyPOW());
+    const [, reason] = block.checkBody();
     assert.strictEqual(reason, 'bad-txnmrklroot');
-    assert(!mblock2.verify());
-    mblock2.merkleRoot = mblock.merkleRoot;
-    mblock2.refresh();
-    assert(mblock2.verify());
+    assert(!block.verify());
+    block.merkleRoot = merkleRoot;
+    block.refresh();
+    assert(block.verify());
   });
 
   it('should fail with a low target', () => {
-    const block2 = new Block(block);
-    block2.bits = 403014710;
-    block2.refresh();
-    assert(!block2.verifyPOW());
-    assert(block2.verifyBody());
-    assert(!block2.verify());
-    block2.bits = block.bits;
-    block2.refresh();
-    assert(block2.verify());
+    const block = Block.fromRaw(block300025);
+    const bits = block.bits;
+    block.bits = 403014710;
+    block.refresh();
+    assert(!block.verifyPOW());
+    assert(block.verifyBody());
+    assert(!block.verify());
+    block.bits = bits;
+    block.refresh();
+    assert(block.verify());
   });
 
   it('should fail on duplicate txs', () => {
-    const block2 = new Block(block);
-    block2.txs.push(block2.txs[block2.txs.length - 1]);
-    block2.refresh();
-    const [, reason] = block2.checkBody();
+    const block = Block.fromRaw(block300025);
+    block.txs.push(block.txs[block.txs.length - 1]);
+    block.refresh();
+    const [, reason] = block.checkBody();
     assert.strictEqual(reason, 'bad-txns-duplicate');
   });
 
   it('should verify with headers', () => {
-    const headers = new Headers(block);
+    const headers = Headers.fromHead(block300025);
     assert(headers.verifyPOW());
     assert(headers.verifyBody());
     assert(headers.verify());

@@ -135,7 +135,7 @@ describe('Mempool', function() {
       await mempool.addTX(t4.toTX());
 
       const balance = mempool.getBalance();
-      assert.strictEqual(balance, 70000); // note: funding balance
+      assert.strictEqual(balance, 70000);
     }
 
     {

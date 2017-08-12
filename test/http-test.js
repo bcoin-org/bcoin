@@ -102,7 +102,7 @@ describe('HTTP', function() {
     assert.strictEqual(balance.confirmed, 0);
     assert.strictEqual(balance.unconfirmed, 201840);
     assert(details);
-    assert.strictEqual(details.hash, tx.rhash());
+    assert.strictEqual(details.hash, tx.txid());
   });
 
   it('should get balance', async () => {
