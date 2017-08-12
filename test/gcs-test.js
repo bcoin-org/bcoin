@@ -142,12 +142,12 @@ describe('GCS', function() {
     match = filter2.matchAny(key, contents2);
     assert(!match);
 
-    const c = contents2.slice();
-    c.push(Buffer.from('Nate'));
+    const contents = contents2.slice();
+    contents.push(Buffer.from('Nate'));
 
-    match = filter1.matchAny(key, c);
+    match = filter1.matchAny(key, contents);
     assert(match);
-    match = filter2.matchAny(key, c);
+    match = filter2.matchAny(key, contents);
     assert(match);
   });
 

@@ -471,10 +471,11 @@ describe('Node', function() {
       id: '1'
     }, {});
 
-    assert.strictEqual(typeof json.result.curtime, 'number');
-    assert.strictEqual(typeof json.result.mintime, 'number');
-    assert.strictEqual(typeof json.result.maxtime, 'number');
-    assert.strictEqual(typeof json.result.expires, 'number');
+    assert.typeOf(json.result, 'object');
+    assert.typeOf(json.result.curtime, 'number');
+    assert.typeOf(json.result.mintime, 'number');
+    assert.typeOf(json.result.maxtime, 'number');
+    assert.typeOf(json.result.expires, 'number');
 
     assert.deepStrictEqual(json, {
       result: {
@@ -584,7 +585,7 @@ describe('Node', function() {
     await wallet.db.addTX(tx);
 
     const missing = await node.mempool.addTX(tx);
-    assert(!missing || missing.length === 0);
+    assert(!missing);
 
     assert.strictEqual(node.mempool.map.size, 1);
 
@@ -609,7 +610,7 @@ describe('Node', function() {
     await wallet.db.addTX(tx);
 
     const missing = await node.mempool.addTX(tx);
-    assert(!missing || missing.length === 0);
+    assert(!missing);
 
     assert.strictEqual(node.mempool.map.size, 2);
 

@@ -51,17 +51,19 @@ describe('HTTP', function() {
     const info = await wallet.client.getInfo();
     assert.strictEqual(info.network, node.network.type);
     assert.strictEqual(info.version, pkg.version);
+    assert.typeOf(info.pool, 'object');
     assert.strictEqual(info.pool.agent, node.pool.options.agent);
-    assert.strictEqual(typeof info.chain, 'object');
+    assert.typeOf(info.chain, 'object');
     assert.strictEqual(info.chain.height, 0);
   });
 
   it('should get wallet info', async () => {
     const info = await wallet.getInfo();
     assert.strictEqual(info.id, 'test');
-    addr = info.account.receiveAddress;
-    assert.strictEqual(typeof addr, 'string');
-    addr = Address.fromString(addr);
+    assert.typeOf(info.account, 'object');
+    const str = info.account.receiveAddress;
+    assert.typeOf(str, 'string');
+    addr = Address.fromString(str);
   });
 
   it('should fill with funds', async () => {

@@ -14,7 +14,7 @@ describe('Schnorr', function() {
     const pub = secp256k1.publicKeyCreate(key, true);
     const msg = digest.hash256(Buffer.from('foo', 'ascii'));
     const sig = schnorr.sign(msg, key);
-    assert(schnorr.verify(msg, sig, pub));
+    assert.strictEqual(schnorr.verify(msg, sig, pub), true);
     assert.bufferEqual(schnorr.recover(sig, msg), pub);
   });
 });

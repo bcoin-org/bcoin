@@ -39,10 +39,11 @@ const undo928828 = fs.readFileSync(`${__dirname}/data/undo928828.raw`);
 const block1087400 = fs.readFileSync(`${__dirname}/data/block1087400.raw`);
 const undo1087400 = fs.readFileSync(`${__dirname}/data/undo1087400.raw`);
 
-describe('Block', function() {
-  const mblock = MerkleBlock.fromRaw(merkle300025);
-  const block = Block.fromRaw(block300025);
+// Abstract
+const mblock = MerkleBlock.fromRaw(merkle300025);
+const block = Block.fromRaw(block300025);
 
+describe('Block', function() {
   this.timeout(10000);
 
   it('should parse partial merkle tree', () => {

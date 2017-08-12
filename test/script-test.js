@@ -345,7 +345,7 @@ describe('Script', function() {
         }
 
         if (expected !== 'OK') {
-          assert(err);
+          assert.typeOf(err, 'error');
           assert.strictEqual(err.code, expected);
           return;
         }

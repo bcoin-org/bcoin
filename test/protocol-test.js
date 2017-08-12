@@ -97,15 +97,15 @@ describe('Protocol', function() {
   ];
 
   packetTest('addr', new packets.AddrPacket(hosts), (payload) => {
-    assert.strictEqual(typeof payload.items.length, 'number');
+    assert.typeOf(payload.items, 'array');
     assert.strictEqual(payload.items.length, 2);
 
-    assert.strictEqual(typeof payload.items[0].time, 'number');
+    assert.typeOf(payload.items[0].time, 'number');
     assert.strictEqual(payload.items[0].services, 1);
     assert.strictEqual(payload.items[0].host, hosts[0].host);
     assert.strictEqual(payload.items[0].port, hosts[0].port);
 
-    assert.strictEqual(typeof payload.items[1].time, 'number');
+    assert.typeOf(payload.items[1].time, 'number');
     assert.strictEqual(payload.items[1].services, 1);
     assert.strictEqual(payload.items[1].host, hosts[1].host);
     assert.strictEqual(payload.items[1].port, hosts[1].port);

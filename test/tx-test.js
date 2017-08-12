@@ -41,8 +41,9 @@ function clearCache(tx, noCache) {
   }
 
   const copy = tx.clone();
-  assert.strictEqual(tx.txid(), copy.txid());
-  assert.strictEqual(tx.wtxid(), copy.wtxid());
+
+  assert.bufferEqual(tx.hash(), copy.hash());
+  assert.bufferEqual(tx.witnessHash(), copy.witnessHash());
 }
 
 function parseTXTest(data) {

@@ -173,7 +173,12 @@ describe('ChaCha20 / Poly1305 / AEAD', function() {
     const tag = Buffer.from('a8061dc1305136c6c22b8baf0c0127a9', 'hex');
 
     const mac = Poly1305.auth(msg, key);
+
     assert(Poly1305.verify(mac, tag));
+
+    mac[0] = 0;
+
+    assert(!Poly1305.verify(mac, tag));
   });
 
   it('should create an AEAD and encrypt', () => {

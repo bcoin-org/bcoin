@@ -14,13 +14,9 @@ const vector2 = vectors.vector2;
 let master = null;
 let child = null;
 
-function unbase58(data) {
-  return base58.decode(data).toString('hex');
-}
-
 function base58Equal(a, b) {
   assert.strictEqual(a, b);
-  assert.strictEqual(unbase58(a), unbase58(b));
+  assert.bufferEqual(base58.decode(a), base58.decode(b));
 }
 
 describe('HD', function() {
@@ -93,16 +89,18 @@ describe('HD', function() {
     HD.PublicKey.fromBase58(master.toPublic().toBase58());
   });
 
-  it('should deserialize and reserialize', () => {
+  it('should deserialize and reserialize json', () => {
     const key = HD.generate();
-    assert.strictEqual(HD.fromJSON(key.toJSON()).toBase58(), key.toBase58());
+    const json = key.toJSON();
+    base58Equal(HD.fromJSON(json).toBase58(), key.toBase58());
   });
 
   for (const vector of [vector1, vector2]) {
     let master = null;
 
     it('should create from a seed', () => {
-      const key = HD.PrivateKey.fromSeed(Buffer.from(vector.seed, 'hex'));
+      const seed = Buffer.from(vector.seed, 'hex');
+      const key = HD.PrivateKey.fromSeed(seed);
       const pub = key.toPublic();
 
       base58Equal(key.toBase58(), vector.m.prv);
@@ -112,10 +110,10 @@ describe('HD', function() {
     });
 
     for (const path of Object.keys(vector)) {
-      const kp = vector[path];
-
       if (path === 'seed' || path === 'm')
-        return;
+        continue;
+
+      const kp = vector[path];
 
       it(`should derive ${path} from master`, () => {
         const key = master.derivePath(path);

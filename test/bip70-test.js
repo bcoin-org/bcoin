@@ -182,7 +182,8 @@ describe('BIP70', function() {
     assert.deepStrictEqual(req.paymentDetails.getData('json'), {foo:'bar'});
 
     assert.strictEqual(req.version, 25);
-    assert.strictEqual(req.paymentDetails.paymentUrl, 'http://bcoin.io/payment');
+    assert.strictEqual(req.paymentDetails.paymentUrl,
+      'http://bcoin.io/payment');
     assert.strictEqual(req.paymentDetails.network, 'testnet');
     assert(req.paymentDetails.time <= util.now());
     assert.strictEqual(req.paymentDetails.expires,

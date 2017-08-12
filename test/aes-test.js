@@ -6,13 +6,13 @@
 const assert = require('./util/assert');
 const aes = require('../lib/crypto/aes');
 
+const key = Buffer.from(
+  '3a0c0bf669694ac7685e6806eeadee8e56c9b9bd22c3caa81c718ed4bbf809a1',
+  'hex');
+
+const iv = Buffer.from('6dd26d9045b73c377a9ed2ffeca72ffd', 'hex');
+
 describe('AES', function() {
-  const key = Buffer.from(
-    '3a0c0bf669694ac7685e6806eeadee8e56c9b9bd22c3caa81c718ed4bbf809a1',
-    'hex');
-
-  const iv = Buffer.from('6dd26d9045b73c377a9ed2ffeca72ffd', 'hex');
-
   it('should encrypt and decrypt with 2 blocks', () => {
     const data = Buffer.from(
       'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',

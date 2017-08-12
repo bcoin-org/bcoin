@@ -44,13 +44,12 @@ describe('Coins', function() {
 
     const entry = coins.get(0);
     assert(entry);
-    assert(!entry.spent);
 
     assert.strictEqual(entry.version, 1);
     assert.strictEqual(entry.height, 1);
     assert.strictEqual(entry.coinbase, false);
     assert.strictEqual(entry.raw, null);
-    assert(entry.output instanceof Output);
+    assert.instanceOf(entry.output, Output);
     assert.strictEqual(entry.spent, false);
 
     const output = view.getOutputFor(input);

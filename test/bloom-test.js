@@ -67,15 +67,18 @@ describe('Bloom', function() {
     const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
       + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
       + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
-    const filterRaw = Buffer.from(''
+
+    const expected = Buffer.from(''
       + '000000000000000000000000000000000000000000000000088004000000000000000'
       + '000000000200000000000000000000000000000000800000000000000000002000000'
       + '000000000000002000000000000000000000000000000000000000000040000200000'
       + '0000000001000000800000080000000',
       'hex');
+
     filter.add(item1, 'hex');
     filter.add(item2, 'hex');
-    assert.bufferEqual(filter.filter, filterRaw);
+
+    assert.bufferEqual(filter.filter, expected);
   });
 
   it('should handle 1m ops with regular filter', () => {
