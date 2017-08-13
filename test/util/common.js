@@ -75,8 +75,6 @@ common.writeBlock = function writeBlock(name, block, view) {
 };
 
 common.writeTX = function writeTX(name, tx, view) {
-  const index = name.substring(2);
-
   common.writeFile(`${name}.raw`, tx.toRaw());
 
   if (!view)

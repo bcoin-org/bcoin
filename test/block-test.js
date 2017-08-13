@@ -4,11 +4,9 @@
 'use strict';
 
 const assert = require('./util/assert');
-const fs = require('../lib/utils/fs');
 const common = require('./util/common');
 const Bloom = require('../lib/utils/bloom');
 const Block = require('../lib/primitives/block');
-const Headers = require('../lib/primitives/headers');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
@@ -365,11 +363,11 @@ describe('Block', function() {
       const [block, view] = ctx.getBlock();
       const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
 
-      let sigops = 0;
+      let count = 0;
       for (const tx of block.txs)
-        sigops += tx.getSigopsCost(view, flags);
+        count += tx.getSigopsCost(view, flags);
 
-      assert.strictEqual(sigops, sigops);
+      assert.strictEqual(count, sigops);
       assert.strictEqual(block.getWeight(), weight);
       block.refresh();
       assert.strictEqual(block.getWeight(), weight);

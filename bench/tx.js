@@ -1,7 +1,5 @@
 'use strict';
 
-const fs = require('../lib/utils/fs');
-const Block = require('../lib/primitives/block');
 const Address = require('../lib/primitives/address');
 const TX = require('../lib/primitives/tx');
 const Script = require('../lib/script/script');
