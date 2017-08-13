@@ -15,8 +15,8 @@ const packets = require('../lib/net/packets');
 const common = require('./util/common');
 const network = Network.get('main');
 
-const tx8 = common.parseTX('data/tx8.hex');
-const tx9 = common.parseTX('data/tx9.hex');
+const tx8 = common.parseTX('tx8');
+const tx9 = common.parseTX('tx9');
 
 describe('Protocol', function() {
   const pkg = require('../lib/pkg');
@@ -28,15 +28,20 @@ describe('Protocol', function() {
     framer = new Framer();
   });
 
-  function packetTest(command, payload, test) {
-    it(`should encode/decode ${command}`, (cb) => {
-      const ver = Buffer.from(framer.packet(command, payload.toRaw()));
+  function packetTest(cmd, payload, test) {
+    it(`should encode/decode ${cmd}`, (cb) => {
       parser.once('packet', (packet) => {
-        assert.strictEqual(packet.cmd, command);
-        test(packet);
+        try {
+          assert.strictEqual(packet.cmd, cmd);
+          test(packet);
+        } catch (e) {
+          cb(e);
+          return;
+        }
         cb();
       });
-      parser.feed(ver);
+      const raw = framer.packet(cmd, payload.toRaw());
+      parser.feed(raw);
     });
   }
 

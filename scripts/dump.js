@@ -7,7 +7,7 @@ const common = require('../test/util/common');
 
 const SNAPSHOT = `${__dirname}/../dump.heapsnapshot`;
 
-const {tx, view} = common.parseTX('data/tx4.hex');
+const {tx, view} = common.parseTX('tx4');
 const coins = Coins.fromTX(tx, 0);
 const entry = MempoolEntry.fromTX(tx, view, 1000000);
 

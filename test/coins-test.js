@@ -13,7 +13,7 @@ const StaticWriter = require('../lib/utils/staticwriter');
 const BufferReader = require('../lib/utils/reader');
 const {parseTX} = require('./util/common');
 
-const data = parseTX('data/tx1.hex');
+const data = parseTX('tx1');
 const tx1 = data.tx;
 
 function reserialize(coin) {

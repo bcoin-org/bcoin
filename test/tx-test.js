@@ -23,13 +23,13 @@ const validTests = require('./data/tx-valid.json');
 const invalidTests = require('./data/tx-invalid.json');
 const sighashTests = require('./data/sighash-tests.json');
 
-const tx1 = common.parseTX('data/tx1.hex');
-const tx2 = common.parseTX('data/tx2.hex');
-const tx3 = common.parseTX('data/tx3.hex');
-const tx4 = common.parseTX('data/tx4.hex');
-const tx5 = common.parseTX('data/tx5.hex');
-const tx6 = common.parseTX('data/tx6.hex');
-const tx7 = common.parseTX('data/tx7.hex');
+const tx1 = common.parseTX('tx1');
+const tx2 = common.parseTX('tx2');
+const tx3 = common.parseTX('tx3');
+const tx4 = common.parseTX('tx4');
+const tx5 = common.parseTX('tx5');
+const tx6 = common.parseTX('tx6');
+const tx7 = common.parseTX('tx7');
 
 const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
 const MAX_SAFE_ADDITION = 0xfffffffffffff;

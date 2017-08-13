@@ -5,7 +5,7 @@ const StaticWriter = require('../lib/utils/staticwriter');
 const common = require('../test/util/common');
 const bench = require('./bench');
 
-const {tx} = common.parseTX('data/tx5.hex');
+const {tx} = common.parseTX('tx5');
 
 {
   const end = bench('serialize (static-writer)');

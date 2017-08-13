@@ -19,11 +19,11 @@ const undo = common.parseUndo(undoRaw);
 
 const btx = {
   tx: block.txs[397],
-  view: common.applyUndo(block, undo)
+  view: common.applyBlockUndo(block, undo)
 };
 
-const tx3 = common.parseTX('data/tx3.hex');
-const tx5 = common.parseTX('data/tx5.hex');
+const tx3 = common.parseTX('tx3');
+const tx5 = common.parseTX('tx5');
 const raw = tx5.tx.toRaw();
 
 {

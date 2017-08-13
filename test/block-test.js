@@ -139,7 +139,7 @@ describe('Block', function() {
   it('should verify a historical block', () => {
     const block = Block.fromRaw(block300025);
     const undo = common.parseUndo(undo300025);
-    const view = common.applyUndo(block, undo);
+    const view = common.applyBlockUndo(block, undo);
     const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
     const height = 300025;
 
@@ -361,7 +361,7 @@ describe('Block', function() {
   it('should count sigops for block 928927 (testnet)', () => {
     const block = Block.fromRaw(block928927);
     const undo = common.parseUndo(undo928927);
-    const view = common.applyUndo(block, undo);
+    const view = common.applyBlockUndo(block, undo);
     const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
 
     let sigops = 0;
@@ -375,7 +375,7 @@ describe('Block', function() {
   it('should count sigops for block 928828 (testnet)', () => {
     const block = Block.fromRaw(block928828);
     const undo = common.parseUndo(undo928828);
-    const view = common.applyUndo(block, undo);
+    const view = common.applyBlockUndo(block, undo);
     const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
 
     let sigops = 0;
@@ -389,7 +389,7 @@ describe('Block', function() {
   it('should count sigops for block 1087400 (testnet)', () => {
     const block = Block.fromRaw(block1087400);
     const undo = common.parseUndo(undo1087400);
-    const view = common.applyUndo(block, undo);
+    const view = common.applyBlockUndo(block, undo);
     const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
 
     let sigops = 0;
