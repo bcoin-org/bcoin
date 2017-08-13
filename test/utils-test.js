@@ -129,63 +129,53 @@ describe('Utils', function() {
      */
 
     let b = Buffer.allocUnsafe(1);
-    b.fill(0x00);
     encoding.writeVarint2(b, 0, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 0);
     assert.deepEqual(b, [0]);
 
     b = Buffer.allocUnsafe(1);
-    b.fill(0x00);
     encoding.writeVarint2(b, 1, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 1);
     assert.deepEqual(b, [1]);
 
     b = Buffer.allocUnsafe(1);
-    b.fill(0x00);
     encoding.writeVarint2(b, 127, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 127);
     assert.deepEqual(b, [0x7f]);
 
     b = Buffer.allocUnsafe(2);
-    b.fill(0x00);
     encoding.writeVarint2(b, 128, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 128);
     assert.deepEqual(b, [0x80, 0x00]);
 
     b = Buffer.allocUnsafe(2);
-    b.fill(0x00);
     encoding.writeVarint2(b, 255, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 255);
     assert.deepEqual(b, [0x80, 0x7f]);
 
     b = Buffer.allocUnsafe(2);
-    b.fill(0x00);
     encoding.writeVarint2(b, 16383, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 16383);
     assert.deepEqual(b, [0xfe, 0x7f]);
 
     b = Buffer.allocUnsafe(2);
-    b.fill(0x00);
     encoding.writeVarint2(b, 16384, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 16384);
     assert.deepEqual(b, [0xff, 0x00]);
 
     b = Buffer.allocUnsafe(3);
-    b.fill(0x00);
     encoding.writeVarint2(b, 16511, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 16511);
     // assert.deepEqual(b, [0x80, 0xff, 0x7f]);
     assert.deepEqual(b, [0xff, 0x7f, 0x00]);
 
     b = Buffer.allocUnsafe(3);
-    b.fill(0x00);
     encoding.writeVarint2(b, 65535, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 65535);
     // assert.deepEqual(b, [0x82, 0xfd, 0x7f]);
     assert.deepEqual(b, [0x82, 0xfe, 0x7f]);
 
     b = Buffer.allocUnsafe(5);
-    b.fill(0x00);
     encoding.writeVarint2(b, Math.pow(2, 32), 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, Math.pow(2, 32));
     assert.deepEqual(b, [0x8e, 0xfe, 0xfe, 0xff, 0x00]);
