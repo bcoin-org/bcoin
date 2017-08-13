@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const path = require('path');
 const fs = require('../../lib/utils/fs');
 const Block = require('../../lib/primitives/block');
 const MerkleBlock = require('../../lib/primitives/merkleblock');
@@ -12,63 +13,57 @@ const CoinView = require('../../lib/coins/coinview');
 const BufferReader = require('../../lib/utils/reader');
 const BufferWriter = require('../../lib/utils/writer');
 
-exports.readBlock = function readBlock(name) {
-  const height = name.substring(5);
-  const blockFile = `${__dirname}/../data/block${height}.raw`;
+const common = exports;
 
-  if (!fs.existsSync(blockFile)) {
-    const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
+common.readFile = function readFile(name, enc) {
+  const file = path.resolve(__dirname, '..', 'data', name);
+  return fs.readFileSync(file, enc);
+};
+
+common.writeFile = function writeFile(name, data) {
+  const file = path.resolve(__dirname, '..', 'data', name);
+  return fs.writeFileSync(file, data);
+};
+
+common.exists = function exists(name) {
+  const file = path.resolve(__dirname, '..', 'data', name);
+  return fs.existsSync(file);
+};
+
+common.readBlock = function readBlock(name) {
+  const raw = common.readFile(`${name}.raw`);
+
+  if (!common.exists(`${name}-undo.raw`))
     return new BlockContext(Block, raw);
-  }
 
-  const raw = fs.readFileSync(blockFile);
-  const block = Block.fromRaw(raw);
-
-  const undoFile = `${__dirname}/../data/undo${height}.raw`;
-
-  if (!fs.existsSync(undoFile))
-    return new BlockContext(Block, raw);
-
-  const undoRaw = fs.readFileSync(undoFile);
+  const undoRaw = common.readFile(`${name}-undo.raw`);
 
   return new BlockContext(Block, raw, undoRaw);
 };
 
-exports.readMerkle = function readMerkle(name) {
-  const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
+common.readMerkle = function readMerkle(name) {
+  const raw = common.readFile(`${name}.raw`);
   return new BlockContext(MerkleBlock, raw);
 };
 
-exports.readCompact = function readCompact(name) {
-  const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
+common.readCompact = function readCompact(name) {
+  const raw = common.readFile(`${name}.raw`);
   return new BlockContext(CompactBlock, raw);
 };
 
-exports.readTX = function readTX(name) {
-  const index = name.substring(2);
-  const txFile = `${__dirname}/../data/tx${index}.raw`;
+common.readTX = function readTX(name) {
+  const raw = common.readFile(`${name}.raw`);
 
-  if (!fs.existsSync(txFile)) {
-    const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
-    return new TXContext(raw);
-  }
-
-  const raw = fs.readFileSync(txFile);
-
-  const undoFile = `${__dirname}/../data/utx${index}.raw`;
-
-  if (!fs.existsSync(undoFile))
+  if (!common.exists(`${name}-undo.raw`))
     return new TXContext(raw);
 
-  const undoRaw = fs.readFileSync(undoFile);
+  const undoRaw = common.readFile(`${name}-undo.raw`);
 
   return new TXContext(raw, undoRaw);
 };
 
-exports.writeBlock = function writeBlock(name, block, view) {
-  const height = name.substring(5);
-
-  fs.writeFileSync(`${__dirname}/../data/block${height}.raw`, block.toRaw());
+common.writeBlock = function writeBlock(name, block, view) {
+  common.writeFile(`${name}.raw`, block.toRaw());
 
   if (!view)
     return;
@@ -76,13 +71,13 @@ exports.writeBlock = function writeBlock(name, block, view) {
   const undo = makeBlockUndo(block, view);
   const undoRaw = serializeUndo(undo);
 
-  fs.writeFileSync(`${__dirname}/../data/undo${height}.raw`, undoRaw);
+  common.writeFile(`${name}-undo.raw`, undoRaw);
 };
 
-exports.writeTX = function writeTX(name, tx, view) {
+common.writeTX = function writeTX(name, tx, view) {
   const index = name.substring(2);
 
-  fs.writeFileSync(`${__dirname}/../data/tx${index}.raw`, tx.toRaw());
+  common.writeFile(`${name}.raw`, tx.toRaw());
 
   if (!view)
     return;
@@ -90,7 +85,7 @@ exports.writeTX = function writeTX(name, tx, view) {
   const undo = makeTXUndo(tx, view);
   const undoRaw = serializeUndo(undo);
 
-  fs.writeFileSync(`${__dirname}/../data/utx${index}.raw`, undoRaw);
+  common.writeFile(`${name}-undo.raw`, undoRaw);
 };
 
 function parseUndo(data) {
