@@ -359,18 +359,22 @@ describe('Block', function() {
 
   for (const [name, sigops, weight] of sigopsVectors) {
     const ctx = common.readBlock(name);
-    it(`should count sigops for ${name}`, () => {
-      const [block, view] = ctx.getBlock();
-      const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+    for (const cache of [false, true]) {
+      const word = cache ? 'with' : 'without';
+      it(`should count sigops for ${name} (${word} cache)`, () => {
+        const [block, view] = ctx.getBlock();
+        const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
 
-      let count = 0;
-      for (const tx of block.txs)
-        count += tx.getSigopsCost(view, flags);
+        if (!cache)
+          block.refresh(true);
 
-      assert.strictEqual(count, sigops);
-      assert.strictEqual(block.getWeight(), weight);
-      block.refresh();
-      assert.strictEqual(block.getWeight(), weight);
-    });
+        let count = 0;
+        for (const tx of block.txs)
+          count += tx.getSigopsCost(view, flags);
+
+        assert.strictEqual(count, sigops);
+        assert.strictEqual(block.getWeight(), weight);
+      });
+    }
   }
 });
