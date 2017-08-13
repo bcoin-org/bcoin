@@ -8,7 +8,6 @@ const BN = require('../lib/crypto/bn');
 const base58 = require('../lib/utils/base58');
 const encoding = require('../lib/utils/encoding');
 const Amount = require('../lib/btc/amount');
-const consensus = require('../lib/protocol/consensus');
 const Validator = require('../lib/utils/validator');
 const util = require('../lib/utils/util');
 
@@ -70,17 +69,6 @@ describe('Utils', function() {
       assert.strictEqual(base58.encode(data), b58);
       assert.bufferEqual(base58.decode(b58), data);
     }
-  });
-
-  it('should verify proof-of-work', () => {
-    const bits = 0x1900896c;
-
-    const hash = Buffer.from(
-      '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
-      'hex'
-    );
-
-    assert.strictEqual(consensus.verifyPOW(hash, bits), true);
   });
 
   it('should convert satoshi to btc', () => {

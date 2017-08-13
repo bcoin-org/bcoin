@@ -92,23 +92,6 @@ describe('Block', function() {
     assert(block2.verify());
   });
 
-  it('should calculate reward properly', () => {
-    let height = 0;
-    let total = 0;
-
-    for (;;) {
-      const reward = consensus.getReward(height, 210000);
-      assert(reward <= consensus.COIN * 50);
-      total += reward;
-      if (reward === 0)
-        break;
-      height++;
-    }
-
-    assert.strictEqual(height, 6930000);
-    assert.strictEqual(total, 2099999997690000);
-  });
-
   it('should parse JSON', () => {
     const [block1] = block300025.getBlock();
     const block2 = Block.fromJSON(block1.toJSON());
