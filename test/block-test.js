@@ -357,10 +357,10 @@ describe('Block', function() {
     assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
-  for (const [name, sigops, weight] of sigopsVectors) {
-    const ctx = common.readBlock(name);
-    for (const cache of [false, true]) {
-      const word = cache ? 'with' : 'without';
+  for (const cache of [false, true]) {
+    const word = cache ? 'with' : 'without';
+    for (const [name, sigops, weight] of sigopsVectors) {
+      const ctx = common.readBlock(name);
       it(`should count sigops for ${name} (${word} cache)`, () => {
         const [block, view] = ctx.getBlock();
         const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
