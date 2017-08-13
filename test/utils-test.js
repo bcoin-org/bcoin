@@ -72,31 +72,17 @@ describe('Utils', function() {
   });
 
   it('should convert satoshi to btc', () => {
-    let btc = Amount.btc(5460);
-    assert.strictEqual(btc, '0.0000546');
-
-    btc = Amount.btc(54678 * 1000000);
-    assert.strictEqual(btc, '546.78');
-
-    btc = Amount.btc(5460 * 10000000);
-    assert.strictEqual(btc, '546.0');
+    assert.strictEqual(Amount.btc(5460), '0.0000546');
+    assert.strictEqual(Amount.btc(54678 * 1000000), '546.78');
+    assert.strictEqual(Amount.btc(5460 * 10000000), '546.0');
   });
 
   it('should convert btc to satoshi', () => {
-    let btc = Amount.value('0.0000546');
-    assert.strictEqual(btc, 5460);
-
-    btc = Amount.value('546.78');
-    assert.strictEqual(btc, 54678 * 1000000);
-
-    btc = Amount.value('546');
-    assert.strictEqual(btc, 5460 * 10000000);
-
-    btc = Amount.value('546.0');
-    assert.strictEqual(btc, 5460 * 10000000);
-
-    btc = Amount.value('546.0000');
-    assert.strictEqual(btc, 5460 * 10000000);
+    assert.strictEqual(Amount.value('0.0000546'), 5460);
+    assert.strictEqual(Amount.value('546.78'), 54678 * 1000000);
+    assert.strictEqual(Amount.value('546'), 5460 * 10000000);
+    assert.strictEqual(Amount.value('546.0'), 5460 * 10000000);
+    assert.strictEqual(Amount.value('546.0000'), 5460 * 10000000);
 
     assert.doesNotThrow(() => {
       Amount.value('546.00000000000000000');
@@ -122,10 +108,14 @@ describe('Utils', function() {
       Amount.value('190071992.54740991');
     });
 
+    assert.strictEqual(0.15645647 * 1e8, 15645646.999999998);
     assert.strictEqual(parseFloat('0.15645647') * 1e8, 15645646.999999998);
-    assert.strictEqual(util.fromFloat(0.15645647, 8), 15645647);
+    assert.strictEqual(15645647 / 1e8, 0.15645647);
+
     assert.strictEqual(util.fromFixed('0.15645647', 8), 15645647);
     assert.strictEqual(util.toFixed(15645647, 8), '0.15645647');
+    assert.strictEqual(util.fromFloat(0.15645647, 8), 15645647);
+    assert.strictEqual(util.toFloat(15645647, 8), 0.15645647);
   });
 
   it('should write/read new varints', () => {
