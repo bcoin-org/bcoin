@@ -5,9 +5,7 @@ const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Coins = require('../lib/coins/coins');
 const common = require('../test/util/common');
 
-const SNAPSHOT = `${__dirname}/../dump.heapsnapshot`;
-
-const {tx, view} = common.parseTX('tx4');
+const [tx, view] = common.readTX('tx4').getTX();
 const coins = Coins.fromTX(tx, 0);
 const entry = MempoolEntry.fromTX(tx, view, 1000000);
 
@@ -18,7 +16,7 @@ setInterval(() => {
 }, 60 * 1000);
 
 setImmediate(() => {
-  heapdump.writeSnapshot(SNAPSHOT, (err) => {
+  heapdump.writeSnapshot(`${__dirname}/../dump.heapsnapshot`, (err) => {
     if (err)
       throw err;
   });

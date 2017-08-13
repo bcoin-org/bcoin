@@ -23,13 +23,13 @@ const validTests = require('./data/tx-valid.json');
 const invalidTests = require('./data/tx-invalid.json');
 const sighashTests = require('./data/sighash-tests.json');
 
-const tx1 = common.parseTX('tx1');
-const tx2 = common.parseTX('tx2');
-const tx3 = common.parseTX('tx3');
-const tx4 = common.parseTX('tx4');
-const tx5 = common.parseTX('tx5');
-const tx6 = common.parseTX('tx6');
-const tx7 = common.parseTX('tx7');
+const tx1 = common.readTX('tx1');
+const tx2 = common.readTX('tx2');
+const tx3 = common.readTX('tx3');
+const tx4 = common.readTX('tx4');
+const tx5 = common.readTX('tx5');
+const tx6 = common.readTX('tx6');
+const tx7 = common.readTX('tx7');
 
 const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER;
 const MAX_SAFE_ADDITION = 0xfffffffffffff;
@@ -198,25 +198,25 @@ describe('TX', function() {
     const suffix = noCache ? 'without cache' : 'with cache';
 
     it(`should verify non-minimal output ${suffix}`, () => {
-      const {tx, view} = tx1;
+      const [tx, view] = tx1.getTX();
       clearCache(tx, noCache);
       assert(tx.verify(view, Script.flags.VERIFY_P2SH));
     });
 
     it(`should verify tx.version == 0 ${suffix}`, () => {
-      const {tx, view} = tx2;
+      const [tx, view] = tx2.getTX();
       clearCache(tx, noCache);
       assert(tx.verify(view, Script.flags.VERIFY_P2SH));
     });
 
     it(`should verify sighash_single bug w/ findanddelete ${suffix}`, () => {
-      const {tx, view} = tx3;
+      const [tx, view] = tx3.getTX();
       clearCache(tx, noCache);
       assert(tx.verify(view, Script.flags.VERIFY_P2SH));
     });
 
     it(`should verify high S value with only DERSIG enabled ${suffix}`, () => {
-      const {tx, view} = tx4;
+      const [tx, view] = tx4.getTX();
       const coin = view.getOutputFor(tx.inputs[0]);
       const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx, noCache);
@@ -224,7 +224,7 @@ describe('TX', function() {
     });
 
     it(`should parse witness tx properly ${suffix}`, () => {
-      const {tx} = tx5;
+      const [tx] = tx5.getTX();
       clearCache(tx, noCache);
 
       assert.strictEqual(tx.inputs.length, 5);
@@ -252,13 +252,13 @@ describe('TX', function() {
     });
 
     it(`should verify the coolest tx ever sent ${suffix}`, () => {
-      const {tx, view} = tx6;
+      const [tx, view] = tx6.getTX();
       clearCache(tx, noCache);
       assert(tx.verify(view, Script.flags.VERIFY_NONE));
     });
 
     it(`should verify a historical transaction ${suffix}`, () => {
-      const {tx, view} = tx7;
+      const [tx, view] = tx7.getTX();
       clearCache(tx, noCache);
       assert(tx.verify(view));
     });

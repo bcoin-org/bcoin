@@ -11,10 +11,9 @@ const CoinView = require('../lib/coins/coinview');
 const CoinEntry = require('../lib/coins/coinentry');
 const StaticWriter = require('../lib/utils/staticwriter');
 const BufferReader = require('../lib/utils/reader');
-const {parseTX} = require('./util/common');
+const common = require('./util/common');
 
-const data = parseTX('tx1');
-const tx1 = data.tx;
+const tx1 = common.readTX('tx1');
 
 function reserialize(coin) {
   const raw = coin.toRaw();
@@ -32,15 +31,16 @@ function deepCoinsEqual(a, b) {
 
 describe('Coins', function() {
   it('should instantiate coinview from tx', () => {
-    const hash = tx1.hash('hex');
+    const [tx] = tx1.getTX();
+    const hash = tx.hash('hex');
     const view = new CoinView();
     const prevout = new Outpoint(hash, 0);
     const input = Input.fromOutpoint(prevout);
 
-    view.addTX(tx1, 1);
+    view.addTX(tx, 1);
 
     const coins = view.get(hash);
-    assert.strictEqual(coins.outputs.size, tx1.outputs.length);
+    assert.strictEqual(coins.outputs.size, tx.outputs.length);
 
     const entry = coins.get(0);
     assert(entry);
@@ -59,10 +59,11 @@ describe('Coins', function() {
   });
 
   it('should spend an output', () => {
-    const hash = tx1.hash('hex');
+    const [tx] = tx1.getTX();
+    const hash = tx.hash('hex');
     const view = new CoinView();
 
-    view.addTX(tx1, 1);
+    view.addTX(tx, 1);
 
     const coins = view.get(hash);
     assert(coins);
@@ -84,20 +85,15 @@ describe('Coins', function() {
   });
 
   it('should handle coin view', () => {
-    const view = new CoinView();
+    const [tx, view] = tx1.getTX();
 
-    for (let i = 1; i < data.txs.length; i++) {
-      const tx = data.txs[i];
-      view.addTX(tx, 1);
-    }
-
-    const size = view.getSize(tx1);
+    const size = view.getSize(tx);
     const bw = new StaticWriter(size);
-    const raw = view.toWriter(bw, tx1).render();
+    const raw = view.toWriter(bw, tx).render();
     const br = new BufferReader(raw);
-    const res = CoinView.fromReader(br, tx1);
+    const res = CoinView.fromReader(br, tx);
 
-    const prev = tx1.inputs[0].prevout;
+    const prev = tx.inputs[0].prevout;
     const coins = res.get(prev.hash);
 
     assert.strictEqual(coins.outputs.size, 1);

@@ -15,8 +15,8 @@ const packets = require('../lib/net/packets');
 const common = require('./util/common');
 const network = Network.get('main');
 
-const tx8 = common.parseTX('tx8');
-const tx9 = common.parseTX('tx9');
+const tx8 = common.readTX('tx8');
+const tx9 = common.readTX('tx9');
 
 describe('Protocol', function() {
   const pkg = require('../lib/pkg');
@@ -117,11 +117,13 @@ describe('Protocol', function() {
   });
 
   it('should include the raw data of only one transaction', () => {
-    const raw = Buffer.concat([tx8.tx.toRaw(), tx9.tx.toRaw()]);
+    const [tx1] = tx8.getTX();
+    const [tx2] = tx9.getTX();
+    const raw = Buffer.concat([tx1.toRaw(), tx2.toRaw()]);
 
     const tx = TX.fromRaw(raw);
     tx.refresh();
 
-    assert.bufferEqual(tx.toRaw(), tx8.tx.toRaw());
+    assert.bufferEqual(tx.toRaw(), tx1.toRaw());
   });
 });

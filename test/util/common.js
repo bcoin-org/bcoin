@@ -4,6 +4,7 @@ const assert = require('assert');
 const fs = require('../../lib/utils/fs');
 const Block = require('../../lib/primitives/block');
 const MerkleBlock = require('../../lib/primitives/merkleblock');
+const Headers = require('../../lib/primitives/headers');
 const {CompactBlock} = require('../../lib/net/bip152');
 const TX = require('../../lib/primitives/tx');
 const Output = require('../../lib/primitives/output');
@@ -11,37 +12,13 @@ const CoinView = require('../../lib/coins/coinview');
 const BufferReader = require('../../lib/utils/reader');
 const BufferWriter = require('../../lib/utils/writer');
 
-exports.parseTX = function parseTX(name) {
-  const data = fs.readFileSync(`${__dirname}/../data/${name}.hex`, 'utf8');
-  const parts = data.trim().split('\n');
-  const raw = Buffer.from(parts[0], 'hex');
-  const tx = TX.fromRaw(raw);
-  const view = new CoinView();
-  const txs = [tx];
-
-  for (let i = 1; i < parts.length; i++) {
-    const raw = Buffer.from(parts[i], 'hex');
-    const prev = TX.fromRaw(raw);
-    view.addTX(prev, -1);
-    txs.push(prev);
-  }
-
-  return {
-    tx: tx,
-    view: view,
-    txs: txs
-  };
-};
-
 exports.readBlock = function readBlock(name) {
   const height = name.substring(5);
   const blockFile = `${__dirname}/../data/block${height}.raw`;
 
   if (!fs.existsSync(blockFile)) {
     const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
-    const block = Block.fromRaw(raw);
-    const view = new CoinView();
-    return { raw, block, view };
+    return new BlockContext(Block, raw);
   }
 
   const raw = fs.readFileSync(blockFile);
@@ -49,28 +26,22 @@ exports.readBlock = function readBlock(name) {
 
   const undoFile = `${__dirname}/../data/undo${height}.raw`;
 
-  if (!fs.existsSync(undoFile)) {
-    const view = new CoinView();
-    return { raw, block, view };
-  }
+  if (!fs.existsSync(undoFile))
+    return new BlockContext(Block, raw);
 
   const undoRaw = fs.readFileSync(undoFile);
-  const undo = exports.parseUndo(undoRaw);
-  const view = exports.applyBlockUndo(block, undo);
 
-  return { raw, block, view };
+  return new BlockContext(Block, raw, undoRaw);
 };
 
 exports.readMerkle = function readMerkle(name) {
   const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
-  const block = MerkleBlock.fromRaw(raw);
-  return { raw, block };
+  return new BlockContext(MerkleBlock, raw);
 };
 
 exports.readCompact = function readCompact(name) {
   const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
-  const block = CompactBlock.fromRaw(raw);
-  return { raw, block };
+  return new BlockContext(CompactBlock, raw);
 };
 
 exports.readTX = function readTX(name) {
@@ -79,29 +50,50 @@ exports.readTX = function readTX(name) {
 
   if (!fs.existsSync(txFile)) {
     const raw = fs.readFileSync(`${__dirname}/../data/${name}.raw`);
-    const tx = TX.fromRaw(raw);
-    const view = new CoinView();
-    return { raw, tx, view };
+    return new TXContext(raw);
   }
 
   const raw = fs.readFileSync(txFile);
-  const tx = TX.fromRaw(raw);
 
   const undoFile = `${__dirname}/../data/utx${index}.raw`;
 
-  if (!fs.existsSync(undoFile)) {
-    const view = new CoinView();
-    return { raw, tx, view };
-  }
+  if (!fs.existsSync(undoFile))
+    return new TXContext(raw);
 
   const undoRaw = fs.readFileSync(undoFile);
-  const undo = exports.parseUndo(undoRaw);
-  const view = exports.applyTXUndo(tx, undo);
 
-  return { raw, tx, view };
+  return new TXContext(raw, undoRaw);
 };
 
-exports.parseUndo = function parseUndo(data) {
+exports.writeBlock = function writeBlock(name, block, view) {
+  const height = name.substring(5);
+
+  fs.writeFileSync(`${__dirname}/../data/block${height}.raw`, block.toRaw());
+
+  if (!view)
+    return;
+
+  const undo = makeBlockUndo(block, view);
+  const undoRaw = serializeUndo(undo);
+
+  fs.writeFileSync(`${__dirname}/../data/undo${height}.raw`, undoRaw);
+};
+
+exports.writeTX = function writeTX(name, tx, view) {
+  const index = name.substring(2);
+
+  fs.writeFileSync(`${__dirname}/../data/tx${index}.raw`, tx.toRaw());
+
+  if (!view)
+    return;
+
+  const undo = makeTXUndo(tx, view);
+  const undoRaw = serializeUndo(undo);
+
+  fs.writeFileSync(`${__dirname}/../data/utx${index}.raw`, undoRaw);
+};
+
+function parseUndo(data) {
   const br = new BufferReader(data);
   const items = [];
 
@@ -111,9 +103,20 @@ exports.parseUndo = function parseUndo(data) {
   }
 
   return items;
-};
+}
 
-exports.applyBlockUndo = function applyBlockUndo(block, undo) {
+function serializeUndo(items) {
+  const bw = new BufferWriter();
+
+  for (const item of items) {
+    bw.writeI64(item.value);
+    bw.writeVarBytes(item.script.toRaw());
+  }
+
+  return bw.render();
+}
+
+function applyBlockUndo(block, undo) {
   const view = new CoinView();
   let i = 0;
 
@@ -128,9 +131,9 @@ exports.applyBlockUndo = function applyBlockUndo(block, undo) {
   assert(i === undo.length, 'Undo coins data inconsistency.');
 
   return view;
-};
+}
 
-exports.applyTXUndo = function applyTXUndo(tx, undo) {
+function applyTXUndo(tx, undo) {
   const view = new CoinView();
   let i = 0;
 
@@ -140,9 +143,9 @@ exports.applyTXUndo = function applyTXUndo(tx, undo) {
   assert(i === undo.length, 'Undo coins data inconsistency.');
 
   return view;
-};
+}
 
-exports.makeBlockUndo = function makeBlockUndo(block, view) {
+function makeBlockUndo(block, view) {
   const items = [];
 
   for (const tx of block.txs) {
@@ -157,9 +160,9 @@ exports.makeBlockUndo = function makeBlockUndo(block, view) {
   }
 
   return items;
-};
+}
 
-exports.makeTXUndo = function makeTXUndo(tx, view) {
+function makeTXUndo(tx, view) {
   const items = [];
 
   for (const {prevout} of tx.inputs) {
@@ -169,43 +172,55 @@ exports.makeTXUndo = function makeTXUndo(tx, view) {
   }
 
   return items;
-};
+}
 
-exports.serializeUndo = function serializeUndo(items) {
-  const bw = new BufferWriter();
-
-  for (const item of items) {
-    bw.writeI64(item.value);
-    bw.writeVarBytes(item.script.toRaw());
+class BlockContext {
+  constructor(ctor, raw, undoRaw) {
+    this.ctor = ctor;
+    this.raw = raw;
+    this.undoRaw = undoRaw || null;
   }
+  getRaw() {
+    return this.raw;
+  }
+  getBlock() {
+    const Block = this.ctor;
+    const block = Block.fromRaw(this.raw);
 
-  return bw.render();
-};
+    if (!this.undoRaw) {
+      const view = new CoinView();
+      return [block, view];
+    }
 
-exports.writeBlock = function writeBlock(name, block, view) {
-  const height = name.substring(5);
+    const undo = parseUndo(this.undoRaw);
+    const view = applyBlockUndo(block, undo);
 
-  fs.writeFileSync(`${__dirname}/../data/block${height}.raw`, block.toRaw());
+    return [block, view];
+  }
+  getHeaders() {
+    return Headers.fromHead(this.raw);
+  }
+}
 
-  if (!view)
-    return;
+class TXContext {
+  constructor(raw, undoRaw) {
+    this.raw = raw;
+    this.undoRaw = undoRaw || null;
+  }
+  getRaw() {
+    return this.raw;
+  }
+  getTX() {
+    const tx = TX.fromRaw(this.raw);
 
-  const undo = exports.makeBlockUndo(block, view);
-  const undoRaw = exports.serializeUndo(undo);
+    if (!this.undoRaw) {
+      const view = new CoinView();
+      return [tx, view];
+    }
 
-  fs.writeFileSync(`${__dirname}/../data/undo${height}.raw`, undoRaw);
-};
+    const undo = parseUndo(this.undoRaw);
+    const view = applyTXUndo(tx, undo);
 
-exports.writeTX = function writeTX(name, tx, view) {
-  const index = name.substring(2);
-
-  fs.writeFileSync(`${__dirname}/../data/tx${index}.raw`, tx.toRaw());
-
-  if (!view)
-    return;
-
-  const undo = exports.makeTXUndo(tx, view);
-  const undoRaw = exports.serializeUndo(undo);
-
-  fs.writeFileSync(`${__dirname}/../data/utx${index}.raw`, undoRaw);
-};
+    return [tx, view];
+  }
+}

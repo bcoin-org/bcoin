@@ -4,7 +4,7 @@ const Coins = require('../lib/coins/coins');
 const common = require('../test/util/common');
 const bench = require('./bench');
 
-const {tx} = common.parseTX('tx5');
+const [tx] = common.readTX('tx5').getTX();
 const coins = Coins.fromTX(tx, 1);
 const raw = coins.toRaw();
 
