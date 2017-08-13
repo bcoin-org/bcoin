@@ -31,9 +31,16 @@ const block898352 = common.readBlock('block898352');
 const compact898352 = common.readCompact('compact898352');
 
 // Sigops counting test vectors
-const block928927 = common.readBlock('block928927');
-const block928828 = common.readBlock('block928828');
-const block1087400 = common.readBlock('block1087400');
+// Format: [name, sigops, weight]
+const sigopsVectors = [
+  ['block928816', 9109, 3568200],
+  ['block928828', 23236, 2481560],
+  ['block928831', 10035, 3992382],
+  ['block928848', 11319, 3992537],
+  ['block928849', 9137, 3682105],
+  ['block928927', 10015, 3992391],
+  ['block1087400', 1298, 193331]
+];
 
 describe('Block', function() {
   this.timeout(10000);
@@ -352,39 +359,20 @@ describe('Block', function() {
     assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
   });
 
-  it('should count sigops for block 928927 (testnet)', () => {
-    const [block, view] = block928927.getBlock();
-    const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
+  for (const [name, sigops, weight] of sigopsVectors) {
+    const ctx = common.readBlock(name);
+    it(`should count sigops for ${name}`, () => {
+      const [block, view] = ctx.getBlock();
+      const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
 
-    let sigops = 0;
-    for (const tx of block.txs)
-      sigops += tx.getSigopsCost(view, flags);
+      let sigops = 0;
+      for (const tx of block.txs)
+        sigops += tx.getSigopsCost(view, flags);
 
-    assert.strictEqual(sigops, 10015);
-    assert.strictEqual(block.getWeight(), 3992391);
-  });
-
-  it('should count sigops for block 928828 (testnet)', () => {
-    const [block, view] = block928828.getBlock();
-    const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
-
-    let sigops = 0;
-    for (const tx of block.txs)
-      sigops += tx.getSigopsCost(view, flags);
-
-    assert.strictEqual(sigops, 23236);
-    assert.strictEqual(block.getWeight(), 2481560);
-  });
-
-  it('should count sigops for block 1087400 (testnet)', () => {
-    const [block, view] = block1087400.getBlock();
-    const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_WITNESS;
-
-    let sigops = 0;
-    for (const tx of block.txs)
-      sigops += tx.getSigopsCost(view, flags);
-
-    assert.strictEqual(sigops, 1298);
-    assert.strictEqual(block.getWeight(), 193331);
-  });
+      assert.strictEqual(sigops, sigops);
+      assert.strictEqual(block.getWeight(), weight);
+      block.refresh();
+      assert.strictEqual(block.getWeight(), weight);
+    });
+  }
 });
