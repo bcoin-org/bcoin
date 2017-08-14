@@ -33,14 +33,18 @@ const chain = new Chain({
   console.log('Block at 50k:', entry);
 
   // eslint-disable-next-line max-len
-  const txhash = '7f5990b008a2d0fc006d13b15e25d05ff30fadab656d49a5c6afea0e0d0b458c';
+  const txhash = '4dd628123dcde4f2fb3a8b8a18b806721b56007e32497ebe76cde598ce1652af';
   const txmeta = await chain.db.getMeta(util.revHex(txhash));
+  const tx = txmeta.tx;
+  const coinview = await chain.db.getSpentView(tx);
+
   console.log(`Tx with hash ${txhash}:`, txmeta);
+  console.log(`Tx input: ${tx.getInputValue(coinview)},` +
+    ` output: ${tx.getOutputValue()}, fee: ${tx.getFee(coinview)}`);
 
   // eslint-disable-next-line max-len
   const bhash = '00000000077eacdd2c803a742195ba430a6d9545e43128ba55ec3c80beea6c0c';
   const block = await chain.db.getBlock(util.revHex(bhash));
-
   console.log(`Block with hash ${bhash}:`, block);
 })().catch((err) => {
   console.error(err.stack);
