@@ -3,14 +3,14 @@
 const assert = require('assert');
 const Input = require('../lib/primitives/input');
 const Output = require('../lib/primitives/output');
-const KeyRing = require('../lib/primitives/keyring');
 const Amount = require('../lib/btc/amount');
 const Script = require('../lib/script/script');
 const digest = require('../lib/crypto/digest');
 const Address = require('../lib/primitives/address');
 const FullNode = require('../lib/node/fullnode');
-const Validator = require('../lib/utils/validator');
+const Coin = require('../lib/primitives/coin');
 const util = require('../lib/utils/util');
+const Validator = require('../lib/utils/validator');
 const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
@@ -96,12 +96,7 @@ const errs = RPCBase.errors;
  */
 
 describe('RPC', function() {
-  let network, json, node;
-  let chain, miner, pool;
-  let wallet, wdb, http;
-  let tx1, tx2, tx3, cb;
-
-  node = new FullNode({
+  const node = new FullNode({
     network: 'regtest',
     db: 'memory',
     apiKey: 'foo',
@@ -109,28 +104,32 @@ describe('RPC', function() {
     plugins: [require('../lib/wallet/plugin')]
   });
 
-  node.open();
-  chain = node.chain;
-  miner = node.miner;
-  pool = node.pool;
+const chain = node.chain;
+const miner = node.miner;
+const pool = node.pool;
+const wdb = node.require('walletdb');
 
-  wdb = node.require('walletdb');
+let wallet = null;
+let tx1 = null;
 
-  this.timeout(5000);
+async function getHashRate() {
+  const addr = new Address();
+  const tip = await chain.db.getEntry(height);
+  await lookup = tip.height % addr.network.pow.retargetInterval + 1;
+
+  return await tip.hash;
+};
 
 
 async function startBlock(tip, tx) {
-  let tip = chain.tip;
-  let job = await miner.createJob(tip);
-  let mtx;
+  const job = await miner.createJob(tip);
 
   if (!tx)
     return await job.mineAsync();
 
-  mtx = new MTX();
+  const mtx = new MTX();
 
   mtx.addTX(tx, 0);
-
   mtx.addOutput(wallet.getReceive(), 25 * 1e8);
   mtx.addOutput(wallet.getChange(), 5 * 1e8);
 
@@ -156,14 +155,16 @@ it('should open walletdb', async () => {
   miner.addAddress(wallet.getReceive());
 });
 
+it('should connect to the mempool', async() => {
+  await pool.connect()
+  node.startSync()
+});
 
 it('should validate an address', async () => {
-  let addr = new Address();
-  let json;
-
+  const addr = new Address();
   addr.network = node.network;
 
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'validateaddress',
     params: [addr.toString()]
   }, {});
@@ -178,36 +179,27 @@ it('should validate an address', async () => {
 });
 
 it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
-  let tips = await chain.db.getTips();
-  let json, block, hex;
-  let headers, chainwork, bestblockhash;
 
-  try {
-    await chain.tip
-  } catch (e) {
-    err = e;
-  }
-
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'getblockchaininfo',
   }, {})
     assert(json, {
       result: {
+      chain: node.network.type,
       blocks: chain.height,
       headers: chain.height,
       bestblockhash: chain.tip.rhash(),
       mediantime: await chain.tip.getMedianTime(),
       verificationprogress: chain.getProgress(),
-      chainwork: chain.tip.toString('hex', 64)
+      chainwork: chain.tip.toString('hex', 64),
+      pruned: node.rpc.chain.options.prune
   },
   error: null,
  });
 });
 
 it('should relay Bestblockhash', async () => {
-  let json;
-
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'getbestblockhash',
   }, {})
   assert(json, {
@@ -218,11 +210,45 @@ it('should relay Bestblockhash', async () => {
 });
 
 
-it('should relay rpc-command getMempoolInfo (getmempoolinfo)', async () => {
-  let btc = Amount.btc;
-  let json;
+it('should relay transaction output', async () => {
+  const json = await node.rpc.call({
+    method: 'gettxout'
+  }, {})
+  assert.deepStrictEqual(json, {
+    result: {
+      bestblock: chain.tip.rhash(),
+      coinbase: false,
+      confirmations: chain.height,
+      value: 0,
+      version: 1
+    }
+  })
+});
 
-  json = await node.rpc.call({
+
+it('shoud relay chainstate', async () => {
+  const btc = Amount.btc;
+  const json = await node.rpc.call({
+    method: 'gettxoutsetinfo'
+  }, {})
+  assert.deepStrictEqual(json,  {
+    result: {
+      height: chain.height,
+      bestblock: chain.tip.rhash(),
+      transactions: chain.db.state.tx,
+      txouts: chain.db.state.coin,
+      bytes_serialized: 0,
+      hash_serialized: 0,
+      total_amount: btc(chain.db.state.value, true)
+    },
+    error: null,
+    id: null
+  })
+});
+
+it('should relay rpc-command getMempoolInfo (getmempoolinfo)', async () => {
+  const btc = Amount.btc;
+  const json = await node.rpc.call({
     method: 'getmempoolinfo',
 
   }, {})
@@ -238,27 +264,20 @@ it('should relay rpc-command getMempoolInfo (getmempoolinfo)', async () => {
 });
 
 it('should get entry to Mempool (getmempoolentry txid)', async () => {
-  let hash, entry;
-  let json;
-
-  entry = node.mempool.getEntry(hash);
-
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'getmempoolentry',
     id: '1'
   }, {})
   assert(json, {
     result: {
-      error: ''
+      error: undefined
     }
   });
 });
 
 it('should relay Chainstate', async() => {
-  let btc = Amount.btc;
-  let json;
-
-  json = await node.rpc.call({
+  const btc = Amount.btc;
+  const json = await node.rpc.call({
     method: 'gettxoutsetinfo'
   }, {})
   assert(json, {
@@ -267,8 +286,8 @@ it('should relay Chainstate', async() => {
       bestblock: chain.tip.rhash(),
       transaction: chain.db.state.tx,
       txouts: chain.db.state.coin,
-      bytes_serialized: null,
-      hash_serialized: null,
+      bytes_serialized: 0,
+      hash_serialized: 0,
       total_amount: btc(chain.db.state.value, true)
     }
   });
@@ -277,9 +296,7 @@ it('should relay Chainstate', async() => {
 
 it('should relay miner, (getmininginfo)', async () => {
   let size, weight, txs, diff;
-  let json;
-
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'getmininginfo'
   }, {})
   assert(json, {
@@ -293,13 +310,11 @@ it('should relay miner, (getmininginfo)', async () => {
 })
 });
 
-
 it('getinfo from node', async () => {
-  let addr = new Address();
-  let btc = Amount.btc;
-  let json;
+  const addr = new Address();
+  const btc = Amount.btc;
 
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'getinfo',
     params: [addr.toString(addr.network)]
   }, {})
@@ -314,16 +329,12 @@ it('getinfo from node', async () => {
 });
 
 it('should decode valid Script data', async () => {
-  let valid = new Validator();
-  let script = new Script();
-  let addr = new Address.fromScripthash(script.hash160());
-  let data = valid.buf(0);
+  const script = new Script();
+  const addr = new Address.fromScripthash(script.hash160());
   let hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
-  let json, decoded;
+  let decoded;
 
-  addr.network = node.network;
-
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'decodescript',
     params: [addr.toString(addr.network)]
   }, {});
@@ -332,19 +343,32 @@ it('should decode valid Script data', async () => {
   assert(decoded.isScripthash);
  });
 
+
+/*
+ * Node-Related
+ */
+
+it('should prune the Blockchain', async () => {
+  // TODO:
+  // assert.deepStrictEqual
+  // 'Cannot prune chain in SPV mode', 'Chain is Already Pruned'
+  const json = await node.rpc.call({
+    method: 'pruneblockchain'
+  });
+});
+
+
 /*
  * P2P RPC Calls
  */
 
 it('should relay getNetworkInfo', async () => {
-  let hosts = pool.hosts;
-  let addr = new Address();
-  let btc = Amount.btc;
-  let json;
-
+  const hosts = pool.hosts;
+  const addr = new Address();
+  const btc = Amount.btc;
   addr.network = node.network;
 
-  json = await node.rpc.call({
+  const json = await node.rpc.call({
     method: 'getnetworkinfo'
   }, {});
   assert(json, {
@@ -362,4 +386,18 @@ it('should relay getNetworkInfo', async () => {
   })
 });
 
+it('should addnode', async () => {
+  const json = await node.rpc.call({
+    method: 'addnode'
+  }, {});
 });
+
+
+it('should cleanup', async () => {
+  consensus.COINBASE_MATURITY = 100;
+  await pool.disconnect();
+  await node.close();
+});
+
+});
+
