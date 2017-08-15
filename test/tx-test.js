@@ -551,15 +551,15 @@ describe('TX', function() {
     assert.ok(!tx.verifyInputs(view, 0));
   });
 
-  [MAX_SAFE_ADDITION, MAX_SAFE_INTEGER].forEach((MAX) => {
+  for (const value of [MAX_SAFE_ADDITION, MAX_SAFE_INTEGER]) {
     it('should fail on >53 bit values from multiple', () => {
       const view = new CoinView();
       const tx = new TX({
         version: 1,
         inputs: [
-          createInput(MAX, view)[0],
-          createInput(MAX, view)[0],
-          createInput(MAX, view)[0]
+          createInput(value, view)[0],
+          createInput(value, view)[0],
+          createInput(value, view)[0]
         ],
         outputs: [{
           script: [],
@@ -579,15 +579,15 @@ describe('TX', function() {
         outputs: [
           {
             script: [],
-            value: MAX
+            value: value
           },
           {
             script: [],
-            value: MAX
+            value: value
           },
           {
             script: [],
-            value: MAX
+            value: value
           }
         ],
         locktime: 0
@@ -601,9 +601,9 @@ describe('TX', function() {
       const tx = new TX({
         version: 1,
         inputs: [
-          createInput(MAX, view)[0],
-          createInput(MAX, view)[0],
-          createInput(MAX, view)[0]
+          createInput(value, view)[0],
+          createInput(value, view)[0],
+          createInput(value, view)[0]
         ],
         outputs: [{
           script: [],
@@ -614,7 +614,7 @@ describe('TX', function() {
       assert.ok(tx.isSane());
       assert.ok(!tx.verifyInputs(view, 0));
     });
-  });
+  }
 
   it('should count sigops for multisig', () => {
     const flags = Script.flags.VERIFY_WITNESS | Script.flags.VERIFY_P2SH;
