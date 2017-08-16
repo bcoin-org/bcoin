@@ -23,32 +23,33 @@
     "node": ">=7.6.0"
   },
   "dependencies": {
-    "bn.js": "4.11.7",
+    "bn.js": "4.11.8",
     "elliptic": "6.4.0",
     "n64": "0.0.14"
   },
   "optionalDependencies": {
     "bcoin-native": "0.0.23",
     "leveldown": "1.7.2",
-    "secp256k1": "3.2.5",
-    "socket.io": "2.0.1",
-    "socket.io-client": "2.0.1"
+    "secp256k1": "3.3.0",
+    "socket.io": "2.0.3",
+    "socket.io-client": "2.0.3"
   },
   "devDependencies": {
     "babel-core": "^6.25.0",
-    "babel-loader": "^7.1.0",
+    "babel-loader": "^7.1.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-es2016": "^6.24.1",
     "babel-preset-es2017": "^6.24.1",
-    "eslint": "^4.1.0",
-    "hash.js": "^1.0.3",
-    "jsdoc": "^3.4.3",
+    "babel-preset-env": "^1.6.0",
+    "eslint": "^4.4.1",
+    "hash.js": "^1.1.3",
+    "jsdoc": "^3.5.4",
     "level-js": "^2.2.4",
-    "mocha": "^3.4.1",
+    "mocha": "^3.5.0",
     "node-loader": "^0.6.0",
-    "uglifyjs-webpack-plugin": "^1.0.0-beta.1",
-    "webpack": "^3.0.0"
+    "uglifyjs-webpack-plugin": "^1.0.0-beta.2",
+    "webpack": "^3.5.4"
   },
   "main": "./lib/bcoin.js",
   "bin": {

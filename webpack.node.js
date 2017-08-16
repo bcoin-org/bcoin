@@ -1,6 +1,6 @@
 'use strict';
 
-const webpack = require('webpack')
+const webpack = require('webpack');
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const str = JSON.stringify;

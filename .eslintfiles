@@ -11,3 +11,6 @@ migrate/
 scripts/
 test/
 webpack/
+webpack.browser.js
+webpack.compat.js
+webpack.node.js
