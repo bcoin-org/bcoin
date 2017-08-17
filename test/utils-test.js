@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const BN = require('../lib/crypto/bn');
+const {U64, I64} = require('../lib/utils/int64');
 const base58 = require('../lib/utils/base58');
 const encoding = require('../lib/utils/encoding');
 const Amount = require('../lib/btc/amount');
@@ -33,27 +33,27 @@ const base58Tests = [
 ];
 
 const unsigned = [
-  new BN('ffeeffee'),
-  new BN('001fffeeffeeffee'),
-  new BN('eeffeeff'),
-  new BN('001feeffeeffeeff'),
-  new BN(0),
-  new BN(1)
+  new U64('ffeeffee', 16),
+  new U64('001fffeeffeeffee', 16),
+  new U64('eeffeeff', 16),
+  new U64('001feeffeeffeeff', 16),
+  new U64(0),
+  new U64(1)
 ];
 
 const signed = [
-  new BN('ffeeffee'),
-  new BN('001fffeeffeeffee'),
-  new BN('eeffeeff'),
-  new BN('001feeffeeffeeff'),
-  new BN(0),
-  new BN(1),
-  new BN('ffeeffee').ineg(),
-  new BN('001fffeeffeeffee').ineg(),
-  new BN('eeffeeff').ineg(),
-  new BN('001feeffeeffeeff').ineg(),
-  new BN(0).ineg(),
-  new BN(1).ineg()
+  new I64('ffeeffee', 16),
+  new I64('001fffeeffeeffee', 16),
+  new I64('eeffeeff', 16),
+  new I64('001feeffeeffeeff', 16),
+  new I64(0),
+  new I64(1),
+  new I64('ffeeffee', 16).ineg(),
+  new I64('001fffeeffeeffee', 16).ineg(),
+  new I64('eeffeeff', 16).ineg(),
+  new I64('001feeffeeffeeff', 16).ineg(),
+  new I64(0).ineg(),
+  new I64(1).ineg()
 ];
 
 describe('Utils', function() {
@@ -188,11 +188,11 @@ describe('Utils', function() {
       const buf1 = Buffer.allocUnsafe(8);
       const buf2 = Buffer.allocUnsafe(8);
 
-      encoding.writeU64BN(buf1, num, 0);
+      encoding.writeU64N(buf1, num, 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
       assert.bufferEqual(buf1, buf2);
 
-      const n1 = encoding.readU64BN(buf1, 0);
+      const n1 = encoding.readU64N(buf1, 0);
       const n2 = encoding.readU64(buf2, 0);
 
       assert.strictEqual(n1.toNumber(), n2);
@@ -207,11 +207,11 @@ describe('Utils', function() {
       const buf1 = Buffer.allocUnsafe(8);
       const buf2 = Buffer.allocUnsafe(8);
 
-      encoding.writeI64BN(buf1, num, 0);
+      encoding.writeI64N(buf1, num, 0);
       encoding.writeI64(buf2, num.toNumber(), 0);
       assert.bufferEqual(buf1, buf2);
 
-      const n1 = encoding.readI64BN(buf1, 0);
+      const n1 = encoding.readI64N(buf1, 0);
       const n2 = encoding.readI64(buf2, 0);
 
       assert.strictEqual(n1.toNumber(), n2);
@@ -221,11 +221,11 @@ describe('Utils', function() {
       const buf1 = Buffer.allocUnsafe(8);
       const buf2 = Buffer.allocUnsafe(8);
 
-      encoding.writeU64BN(buf1, num, 0);
+      encoding.writeU64N(buf1, num.toU64(), 0);
       encoding.writeU64(buf2, num.toNumber(), 0);
       assert.bufferEqual(buf1, buf2);
 
-      const n1 = encoding.readU64BN(buf1, 0);
+      const n1 = encoding.readU64N(buf1, 0);
 
       if (num.isNeg()) {
         assert.throws(() => encoding.readU64(buf2, 0));
