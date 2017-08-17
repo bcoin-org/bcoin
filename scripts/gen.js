@@ -1,6 +1,5 @@
 'use strict';
 
-const BN = require('../lib/crypto/bn');
 const util = require('../lib/utils/util');
 const consensus = require('../lib/protocol/consensus');
 const encoding = require('../lib/utils/encoding');
@@ -8,6 +7,7 @@ const TX = require('../lib/primitives/tx');
 const Block = require('../lib/primitives/block');
 const Script = require('../lib/script/script');
 const Opcode = require('../lib/script/opcode');
+const ScriptNum = require('../lib/script/scriptnum');
 const opcodes = Script.opcodes;
 
 function createGenesisBlock(options) {
@@ -41,7 +41,7 @@ function createGenesisBlock(options) {
         index: 0xffffffff
       },
       script: [
-        Opcode.fromNumber(new BN(486604799)),
+        Opcode.fromNumber(new ScriptNum(486604799)),
         Opcode.fromPush(Buffer.from([4])),
         Opcode.fromData(flags)
       ],

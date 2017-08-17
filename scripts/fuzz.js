@@ -308,7 +308,7 @@ function fuzzSimple(flags) {
     if (stack.length === 0)
       continue;
 
-    if (!Script.bool(stack.top(-1)))
+    if (!stack.bool(-1))
       continue;
 
     if (isPushOnly(output))

@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const BN = require('../lib/crypto/bn');
+const ScriptNum = require('../lib/script/scriptnum');
 const consensus = require('../lib/protocol/consensus');
 const co = require('../lib/utils/co');
 const Coin = require('../lib/primitives/coin');
@@ -63,7 +63,7 @@ async function mineCSV(fund) {
 
   spend.addOutput({
     script: [
-      Script.array(new BN(1)),
+      ScriptNum.encode(1),
       Script.opcodes.OP_CHECKSEQUENCEVERIFY
     ],
     value: 10 * 1e8
@@ -348,7 +348,7 @@ describe('Node', function() {
 
     spend.addOutput({
       script: [
-        Script.array(new BN(2)),
+        ScriptNum.encode(2),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
@@ -373,7 +373,7 @@ describe('Node', function() {
 
     spend.addOutput({
       script: [
-        Script.array(new BN(1)),
+        ScriptNum.encode(1),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8
@@ -418,7 +418,7 @@ describe('Node', function() {
 
     spend.addOutput({
       script: [
-        Script.array(new BN(2)),
+        ScriptNum.encode(2),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10 * 1e8

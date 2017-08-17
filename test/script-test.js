@@ -18,7 +18,7 @@ function isSuccess(stack) {
   if (stack.length === 0)
     return false;
 
-  if (!Script.bool(stack.top(-1)))
+  if (!stack.bool(-1))
     return false;
 
   return true;

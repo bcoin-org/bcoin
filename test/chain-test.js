@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const BN = require('../lib/crypto/bn');
+const ScriptNum = require('../lib/script/scriptnum');
 const consensus = require('../lib/protocol/consensus');
 const encoding = require('../lib/utils/encoding');
 const Coin = require('../lib/primitives/coin');
@@ -79,7 +79,7 @@ async function mineCSV(fund) {
 
   spend.addOutput({
     script: [
-      Script.array(new BN(1)),
+      ScriptNum.encode(1),
       Script.opcodes.OP_CHECKSEQUENCEVERIFY
     ],
     value: 10000
@@ -419,7 +419,7 @@ describe('Chain', function() {
 
     spend.addOutput({
       script: [
-        Script.array(new BN(2)),
+        ScriptNum.encode(2),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 10000
@@ -444,7 +444,7 @@ describe('Chain', function() {
 
     spend.addOutput({
       script: [
-        Script.array(new BN(1)),
+        ScriptNum.encode(1),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 1 * 1e8
@@ -479,7 +479,7 @@ describe('Chain', function() {
 
     spend.addOutput({
       script: [
-        Script.array(new BN(2)),
+        ScriptNum.encode(2),
         Script.opcodes.OP_CHECKSEQUENCEVERIFY
       ],
       value: 1 * 1e8
@@ -787,12 +787,12 @@ describe('Chain', function() {
     const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
 
     const redeem = new Script();
-    redeem.push(new BN(20));
+    redeem.push(new ScriptNum(20));
 
     for (let i = 0; i < 20; i++)
       redeem.push(encoding.ZERO_KEY);
 
-    redeem.push(new BN(20));
+    redeem.push(new ScriptNum(20));
     redeem.push(opcodes.OP_CHECKMULTISIG);
     redeem.compile();
 
@@ -828,12 +828,12 @@ describe('Chain', function() {
     const job = await cpu.createJob();
 
     const script = new Script();
-    script.push(new BN(20));
+    script.push(new ScriptNum(20));
 
     for (let i = 0; i < 20; i++)
       script.push(encoding.ZERO_KEY);
 
-    script.push(new BN(20));
+    script.push(new ScriptNum(20));
     script.push(opcodes.OP_CHECKMULTISIG);
     script.compile();
 
