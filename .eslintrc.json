@@ -26,7 +26,7 @@
       "null": "ignore"
     }],
     "func-name-matching": "error",
-    "indent": ["error", 2, {
+    "indent": ["off", 2, {
       "SwitchCase": 1,
       "CallExpression": {
         "arguments": "off"
