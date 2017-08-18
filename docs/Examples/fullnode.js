@@ -1,6 +1,7 @@
 'use strict';
 
-const FullNode = require('bcoin/lib/node/fullnode');
+const bcoin = require('../..');
+const FullNode = bcoin.fullnode;
 
 const node = new FullNode({
   network: 'testnet',
@@ -21,4 +22,7 @@ const node = new FullNode({
   });
 
   node.startSync();
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

@@ -1,9 +1,10 @@
 'use strict';
 
-const KeyRing = require('bcoin/lib/primitives/keyring');
-const WorkerPool = require('bcoin/lib/workers/workerpool');
-const Chain = require('bcoin/lib/blockchain/chain');
-const Miner = require('bcoin/lib/mining/miner');
+const bcoin = require('../..');
+const KeyRing = bcoin.keyring;
+const WorkerPool = bcoin.workerpool;
+const Chain = bcoin.chain;
+const Miner = bcoin.miner;
 
 const key = KeyRing.generate('regtest');
 
@@ -31,7 +32,7 @@ const miner = new Miner({
   console.log('Block template:');
   console.log(tmpl);
 
-  const job = await miner.cpu.createJob();
+  const job = await miner.createJob();
   const block = await job.mineAsync();
 
   console.log('Mined block:');
@@ -42,4 +43,7 @@ const miner = new Miner({
 
   console.log('New tip:');
   console.log(chain.tip);
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});
