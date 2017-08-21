@@ -81,7 +81,7 @@ describe('Mempool', function() {
 
     const sig = t1.signature(0, script, 70000, key.privateKey, ALL, 0);
 
-    t1.inputs[0].script = new Script([sig]);
+    t1.inputs[0].script = Script.fromItems([sig]);
 
     // balance: 51000
     wallet.sign(t1);
@@ -126,8 +126,9 @@ describe('Mempool', function() {
     wallet.template(fake);
 
     // Fake signature
-    fake.inputs[0].script.set(0, encoding.ZERO_SIG);
-    fake.inputs[0].script.compile();
+    const input = fake.inputs[0];
+    input.script.setData(0, encoding.ZERO_SIG);
+    input.script.compile();
     // balance: 11000
 
     {
@@ -188,7 +189,7 @@ describe('Mempool', function() {
     chain.tip.height = 200;
 
     const sig = tx.signature(0, prev, 70000, key.privateKey, ALL, 0);
-    tx.inputs[0].script = new Script([sig]);
+    tx.inputs[0].script = Script.fromItems([sig]);
 
     await mempool.addTX(tx.toTX());
     chain.tip.height = 0;
@@ -209,7 +210,7 @@ describe('Mempool', function() {
     chain.tip.height = 200 - 1;
 
     const sig = tx.signature(0, prev, 70000, key.privateKey, ALL, 0);
-    tx.inputs[0].script = new Script([sig]);
+    tx.inputs[0].script = Script.fromItems([sig]);
 
     let err;
     try {
@@ -268,7 +269,7 @@ describe('Mempool', function() {
     tx.addCoin(dummyInput(prev, prevHash));
 
     const sig = tx.signature(0, prev, 70000, key.privateKey, ALL, 0);
-    tx.inputs[0].script = new Script([sig]);
+    tx.inputs[0].script = Script.fromItems([sig]);
     tx.inputs[0].witness.push(Buffer.alloc(0));
 
     let err;

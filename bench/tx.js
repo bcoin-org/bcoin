@@ -27,10 +27,8 @@ const tx10 = common.readTX('tx10');
   const [tx, view] = tx5.getTX();
   const end = bench('sigops');
 
-  let sigops = 0;
-
   for (let i = 0; i < 100000; i++)
-    sigops += tx.getSigopsCost(view);
+    tx.getSigopsCost(view);
 
   end(100000);
 }
@@ -161,10 +159,10 @@ for (let i = 0; i < 100; i++) {
       hash: encoding.NULL_HASH,
       index: 0
     },
-    script: [
-      Buffer.allocUnsafe(9),
-      random.randomBytes(33)
-    ]
+    script: new Script()
+      .pushData(Buffer.allocUnsafe(9))
+      .pushData(random.randomBytes(33))
+      .compile()
   });
   mtx.addOutput({
     address: Address.fromHash(random.randomBytes(20)),

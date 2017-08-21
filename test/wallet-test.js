@@ -27,7 +27,7 @@ const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
 const workers = new WorkerPool({
-  enabled: true
+  enabled: false
 });
 
 const wdb = new WalletDB({
@@ -222,8 +222,9 @@ async function testP2SH(witness, nesting) {
   assert(bob.account.change.getAddress().equals(change2));
   assert(carol.account.change.getAddress().equals(change2));
 
-  tx.inputs[0][vector].set(2, encoding.ZERO_SIG);
-  tx.inputs[0][vector].compile();
+  const input = tx.inputs[0];
+  input[vector].setData(2, encoding.ZERO_SIG);
+  input[vector].compile();
 
   assert(!tx.verify(view, flags));
   assert.strictEqual(tx.getFee(view), 10000);
@@ -373,8 +374,9 @@ describe('Wallet', function() {
     // Script inputs but do not sign
     await alice.template(fake);
     // Fake signature
-    fake.inputs[0].script.set(0, encoding.ZERO_SIG);
-    fake.inputs[0].script.compile();
+    const input = fake.inputs[0];
+    input.script.setData(0, encoding.ZERO_SIG);
+    input.script.compile();
     // balance: 11000
 
     // Fake TX should temporarily change output.

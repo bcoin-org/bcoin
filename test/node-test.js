@@ -4,11 +4,11 @@
 'use strict';
 
 const assert = require('./util/assert');
-const ScriptNum = require('../lib/script/scriptnum');
 const consensus = require('../lib/protocol/consensus');
 const co = require('../lib/utils/co');
 const Coin = require('../lib/primitives/coin');
 const Script = require('../lib/script/script');
+const Opcode = require('../lib/script/opcode');
 const FullNode = require('../lib/node/fullnode');
 const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
@@ -63,8 +63,8 @@ async function mineCSV(fund) {
 
   spend.addOutput({
     script: [
-      ScriptNum.encode(1),
-      Script.opcodes.OP_CHECKSEQUENCEVERIFY
+      Opcode.fromInt(1),
+      Opcode.fromSymbol('checksequenceverify')
     ],
     value: 10 * 1e8
   });
@@ -348,8 +348,8 @@ describe('Node', function() {
 
     spend.addOutput({
       script: [
-        ScriptNum.encode(2),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
+        Opcode.fromInt(2),
+        Opcode.fromSymbol('checksequenceverify')
       ],
       value: 10 * 1e8
     });
@@ -373,8 +373,8 @@ describe('Node', function() {
 
     spend.addOutput({
       script: [
-        ScriptNum.encode(1),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
+        Opcode.fromInt(1),
+        Opcode.fromSymbol('checksequenceverify')
       ],
       value: 10 * 1e8
     });
@@ -418,8 +418,8 @@ describe('Node', function() {
 
     spend.addOutput({
       script: [
-        ScriptNum.encode(2),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
+        Opcode.fromInt(2),
+        Opcode.fromSymbol('checksequenceverify')
       ],
       value: 10 * 1e8
     });

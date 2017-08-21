@@ -9,10 +9,10 @@ const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
 const TX = require('../lib/primitives/tx');
 const random = require('../lib/crypto/random');
+const flags = Script.flags;
 
-const MANDATORY = Script.flags.MANDATORY_VERIFY_FLAGS
-  | Script.flags.VERIFY_WITNESS;
-const STANDARD = Script.flags.STANDARD_VERIFY_FLAGS;
+const MANDATORY = flags.MANDATORY_VERIFY_FLAGS | flags.VERIFY_WITNESS;
+const STANDARD = flags.STANDARD_VERIFY_FLAGS;
 
 function randomOutpoint() {
   const hash = random.randomBytes(32).toString('hex');
@@ -36,14 +36,13 @@ function randomTX() {
   const tx = new TX();
   const inputs = util.random(1, 5);
   const outputs = util.random(0, 5);
-  let i;
 
   tx.version = util.random(0, 0xffffffff);
 
-  for (i = 0; i < inputs; i++)
+  for (let i = 0; i < inputs; i++)
     tx.inputs.push(randomInput());
 
-  for (i = 0; i < outputs; i++)
+  for (let i = 0; i < outputs; i++)
     tx.inputs.push(randomOutput());
 
   if (util.random(0, 5) === 0)
@@ -57,10 +56,9 @@ function randomTX() {
 function randomWitness(redeem) {
   const size = util.random(1, 100);
   const witness = new Witness();
-  let i, len;
 
-  for (i = 0; i < size; i++) {
-    len = util.random(0, 100);
+  for (let i = 0; i < size; i++) {
+    const len = util.random(0, 100);
     witness.push(random.randomBytes(len));
   }
 
@@ -75,19 +73,16 @@ function randomWitness(redeem) {
 function randomInputScript(redeem) {
   const size = util.random(1, 100);
   const script = new Script();
-  let i, len;
 
-  for (i = 0; i < size; i++) {
-    len = util.random(0, 100);
-    script.push(random.randomBytes(len));
+  for (let i = 0; i < size; i++) {
+    const len = util.random(0, 100);
+    script.pushData(random.randomBytes(len));
   }
 
   if (redeem)
-    script.push(redeem);
+    script.pushData(redeem);
 
-  script.compile();
-
-  return script;
+  return script.compile();
 }
 
 function randomOutputScript() {
@@ -96,14 +91,10 @@ function randomOutputScript() {
 }
 
 function isPushOnly(script) {
-  let i, op;
-
   if (script.isPushOnly())
     return true;
 
-  for (i = 0; i < script.code.length; i++) {
-    op = script.code[i];
-
+  for (const op of script.code) {
     if (op.value === Script.opcodes.NOP)
       continue;
 
@@ -132,10 +123,9 @@ function randomMultisig() {
   const n = util.random(1, 16);
   const m = util.random(1, n);
   const keys = [];
-  let i, len;
 
-  for (i = 0; i < n; i++) {
-    len = util.random(0, 2) === 0 ? 33 : 65;
+  for (let i = 0; i < n; i++) {
+    const len = util.random(0, 2) === 0 ? 33 : 65;
     keys.push(random.randomBytes(len));
   }
 
@@ -247,7 +237,7 @@ function randomWitnessNestedContext() {
   const redeem = randomRedeem();
   const program = Script.fromProgram(0, redeem.sha256());
   return {
-    input: new Script([program.toRaw()]),
+    input: Script.fromItems([program.toRaw()]),
     witness: randomWitness(redeem.toRaw()),
     output: Script.fromScripthash(program.hash160()),
     redeem: redeem
@@ -275,7 +265,6 @@ function randomContext() {
 function fuzzSimple(flags) {
   let tx = randomTX();
   let total = -1;
-  let stack, input, output;
 
   for (;;) {
     if (++total % 1000 === 0)
@@ -284,8 +273,8 @@ function fuzzSimple(flags) {
     if (total % 500 === 0)
       tx = randomTX();
 
-    stack = new Stack();
-    input = randomInputScript();
+    const stack = new Stack();
+    const input = randomInputScript();
 
     try {
       input.execute(stack, flags, tx, 0, 0, 0);
@@ -295,7 +284,7 @@ function fuzzSimple(flags) {
       throw e;
     }
 
-    output = randomOutputScript();
+    const output = randomOutputScript();
 
     try {
       output.execute(stack, flags, tx, 0, 0, 0);
@@ -308,7 +297,7 @@ function fuzzSimple(flags) {
     if (stack.length === 0)
       continue;
 
-    if (!stack.bool(-1))
+    if (!stack.getBool(-1))
       continue;
 
     if (isPushOnly(output))
@@ -332,7 +321,6 @@ function fuzzSimple(flags) {
 function fuzzVerify(flags) {
   let tx = randomTX();
   let total = -1;
-  let input, output, witness;
 
   for (;;) {
     if (++total % 1000 === 0)
@@ -341,9 +329,9 @@ function fuzzVerify(flags) {
     if (total % 500 === 0)
       tx = randomTX();
 
-    input = randomInputScript();
-    witness = randomWitness();
-    output = randomOutputScript();
+    const input = randomInputScript();
+    const witness = randomWitness();
+    const output = randomOutputScript();
 
     try {
       Script.verify(
@@ -382,7 +370,6 @@ function fuzzVerify(flags) {
 function fuzzLess(flags) {
   let tx = randomTX();
   let total = -1;
-  let ctx;
 
   for (;;) {
     if (++total % 1000 === 0)
@@ -391,7 +378,7 @@ function fuzzLess(flags) {
     if (total % 500 === 0)
       tx = randomTX();
 
-    ctx = randomContext();
+    const ctx = randomContext();
 
     try {
       Script.verify(

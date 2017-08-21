@@ -13,11 +13,11 @@ const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
+const Opcode = require('../lib/script/opcode');
 const Input = require('../lib/primitives/input');
 const CoinView = require('../lib/coins/coinview');
 const KeyRing = require('../lib/primitives/keyring');
 const common = require('./util/common');
-const opcodes = Script.opcodes;
 
 const validTests = require('./data/tx-valid.json');
 const invalidTests = require('./data/tx-invalid.json');
@@ -624,8 +624,8 @@ describe('TX', function() {
     const output = Script.fromMultisig(1, 2, [pub, pub]);
 
     const input = new Script([
-      opcodes.OP_0,
-      opcodes.OP_0
+      Opcode.fromOp(0),
+      Opcode.fromOp(0)
     ]);
 
     const witness = new Witness();
@@ -646,9 +646,9 @@ describe('TX', function() {
     const output = Script.fromScripthash(redeem.hash160());
 
     const input = new Script([
-      opcodes.OP_0,
-      opcodes.OP_0,
-      redeem.toRaw()
+      Opcode.fromOp(0),
+      Opcode.fromOp(0),
+      Opcode.fromData(redeem.toRaw())
     ]);
 
     const witness = new Witness();
@@ -707,7 +707,7 @@ describe('TX', function() {
     const output = Script.fromScripthash(redeem.hash160());
 
     const input = new Script([
-      redeem.toRaw()
+      Opcode.fromData(redeem.toRaw())
     ]);
 
     const witness = new Witness([
@@ -754,7 +754,7 @@ describe('TX', function() {
     const output = Script.fromScripthash(redeem.hash160());
 
     const input = new Script([
-      redeem.toRaw()
+      Opcode.fromData(redeem.toRaw())
     ]);
 
     const witness = new Witness([

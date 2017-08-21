@@ -7,10 +7,10 @@ const assert = require('./util/assert');
 const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const Stack = require('../lib/script/stack');
+const Opcode = require('../lib/script/opcode');
 const TX = require('../lib/primitives/tx');
 const util = require('../lib/utils/util');
 const encoding = require('../lib/utils/encoding');
-const opcodes = Script.opcodes;
 
 const scripts = require('./data/script-tests.json');
 
@@ -18,7 +18,7 @@ function isSuccess(stack) {
   if (stack.length === 0)
     return false;
 
-  if (!stack.bool(-1))
+  if (!stack.getBool(-1))
     return false;
 
   return true;
@@ -67,34 +67,6 @@ function parseScriptTest(data) {
 }
 
 describe('Script', function() {
-  it('should encode/decode script', () => {
-    const src = Buffer.from(''
-      + '20'
-      + '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f'
-      + '20'
-      + '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f'
-      + 'ac',
-      'hex');
-
-    const decoded = Script.fromRaw(src);
-    assert.strictEqual(decoded.code.length, 3);
-    assert.strictEqual(decoded.code[0].data.toString('hex'),
-      '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f');
-    assert.strictEqual(decoded.code[1].data.toString('hex'),
-      '101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f');
-    assert.strictEqual(decoded.code[2].value, opcodes.OP_CHECKSIG);
-
-    const dst = decoded.toRaw();
-    assert.bufferEqual(dst, src);
-  });
-
-  it('should encode/decode numbers', () => {
-    const script = [0, 0x51, 0x52, 0x60];
-    const encoded = Script.fromArray(script).raw;
-    const decoded = Script(encoded).toArray();
-    assert.deepStrictEqual(decoded, script);
-  });
-
   it('should recognize a P2SH output', () => {
     const hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
     const decoded = Script.fromRaw(hex, 'hex');
@@ -110,17 +82,20 @@ describe('Script', function() {
 
   it('should handle if statements correctly', () => {
     {
-      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const input = new Script([
+        Opcode.fromInt(1),
+        Opcode.fromInt(2)
+      ]);
 
       const output = new Script([
-        opcodes.OP_2,
-        opcodes.OP_EQUAL,
-        opcodes.OP_IF,
-        opcodes.OP_3,
-        opcodes.OP_ELSE,
-        opcodes.OP_4,
-        opcodes.OP_ENDIF,
-        opcodes.OP_5
+        Opcode.fromInt(2),
+        Opcode.fromSymbol('equal'),
+        Opcode.fromSymbol('if'),
+        Opcode.fromInt(3),
+        Opcode.fromSymbol('else'),
+        Opcode.fromInt(4),
+        Opcode.fromSymbol('endif'),
+        Opcode.fromInt(5)
       ]);
 
       const stack = new Stack();
@@ -132,17 +107,20 @@ describe('Script', function() {
     }
 
     {
-      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const input = new Script([
+        Opcode.fromInt(1),
+        Opcode.fromInt(2)
+      ]);
 
       const output = new Script([
-        opcodes.OP_9,
-        opcodes.OP_EQUAL,
-        opcodes.OP_IF,
-        opcodes.OP_3,
-        opcodes.OP_ELSE,
-        opcodes.OP_4,
-        opcodes.OP_ENDIF,
-        opcodes.OP_5
+        Opcode.fromInt(9),
+        Opcode.fromSymbol('equal'),
+        Opcode.fromSymbol('if'),
+        Opcode.fromInt(3),
+        Opcode.fromSymbol('else'),
+        Opcode.fromInt(4),
+        Opcode.fromSymbol('endif'),
+        Opcode.fromInt(5)
       ]);
 
       const stack = new Stack();
@@ -154,15 +132,18 @@ describe('Script', function() {
     }
 
     {
-      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const input = new Script([
+        Opcode.fromInt(1),
+        Opcode.fromInt(2)
+      ]);
 
       const output = new Script([
-        opcodes.OP_2,
-        opcodes.OP_EQUAL,
-        opcodes.OP_IF,
-        opcodes.OP_3,
-        opcodes.OP_ENDIF,
-        opcodes.OP_5
+        Opcode.fromInt(2),
+        Opcode.fromSymbol('equal'),
+        Opcode.fromSymbol('if'),
+        Opcode.fromInt(3),
+        Opcode.fromSymbol('endif'),
+        Opcode.fromInt(5)
       ]);
 
       const stack = new Stack();
@@ -174,15 +155,18 @@ describe('Script', function() {
     }
 
     {
-      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const input = new Script([
+        Opcode.fromInt(1),
+        Opcode.fromInt(2)
+      ]);
 
       const output = new Script([
-        opcodes.OP_9,
-        opcodes.OP_EQUAL,
-        opcodes.OP_IF,
-        opcodes.OP_3,
-        opcodes.OP_ENDIF,
-        opcodes.OP_5
+        Opcode.fromInt(9),
+        Opcode.fromSymbol('equal'),
+        Opcode.fromSymbol('if'),
+        Opcode.fromInt(3),
+        Opcode.fromSymbol('endif'),
+        Opcode.fromInt(5)
       ]);
 
       const stack = new Stack();
@@ -194,15 +178,18 @@ describe('Script', function() {
     }
 
     {
-      const input = new Script([opcodes.OP_1, opcodes.OP_2]);
+      const input = new Script([
+        Opcode.fromInt(1),
+        Opcode.fromInt(2)
+      ]);
 
       const output = new Script([
-        opcodes.OP_9,
-        opcodes.OP_EQUAL,
-        opcodes.OP_NOTIF,
-        opcodes.OP_3,
-        opcodes.OP_ENDIF,
-        opcodes.OP_5
+        Opcode.fromInt(9),
+        Opcode.fromSymbol('equal'),
+        Opcode.fromSymbol('notif'),
+        Opcode.fromInt(3),
+        Opcode.fromSymbol('endif'),
+        Opcode.fromInt(5)
       ]);
 
       const stack = new Stack();
@@ -216,15 +203,15 @@ describe('Script', function() {
 
   it('should handle CScriptNums correctly', () => {
     const input = new Script([
-      Buffer.from('ffffff7f', 'hex'),
-      opcodes.OP_NEGATE,
-      opcodes.OP_DUP,
-      opcodes.OP_ADD
+      Opcode.fromString('ffffff7f', 'hex'),
+      Opcode.fromSymbol('negate'),
+      Opcode.fromSymbol('dup'),
+      Opcode.fromSymbol('add')
     ]);
 
     const output = new Script([
-      Buffer.from('feffffff80', 'hex'),
-      opcodes.OP_EQUAL
+      Opcode.fromString('feffffff80', 'hex'),
+      Opcode.fromSymbol('equal')
     ]);
 
     const stack = new Stack();
@@ -237,15 +224,15 @@ describe('Script', function() {
 
   it('should handle CScriptNums correctly', () => {
     const input = new Script([
-      opcodes.OP_11,
-      opcodes.OP_10,
-      opcodes.OP_1,
-      opcodes.OP_ADD
+      Opcode.fromInt(11),
+      Opcode.fromInt(10),
+      Opcode.fromInt(1),
+      Opcode.fromSymbol('add')
     ]);
 
     const output = new Script([
-      opcodes.OP_NUMNOTEQUAL,
-      opcodes.OP_NOT
+      Opcode.fromSymbol('numnotequal'),
+      Opcode.fromSymbol('not')
     ]);
 
     const stack = new Stack();
@@ -258,19 +245,19 @@ describe('Script', function() {
 
   it('should handle OP_ROLL correctly', () => {
     const input = new Script([
-      Buffer.from([0x16]),
-      Buffer.from([0x15]),
-      Buffer.from([0x14])
+      Opcode.fromInt(0x16),
+      Opcode.fromInt(0x15),
+      Opcode.fromInt(0x14)
     ]);
 
     const output = new Script([
-      opcodes.OP_0,
-      opcodes.OP_ROLL,
-      Buffer.from([0x14]),
-      opcodes.OP_EQUALVERIFY,
-      opcodes.OP_DEPTH,
-      opcodes.OP_2,
-      opcodes.OP_EQUAL
+      Opcode.fromInt(0),
+      Opcode.fromSymbol('roll'),
+      Opcode.fromInt(0x14),
+      Opcode.fromSymbol('equalverify'),
+      Opcode.fromSymbol('depth'),
+      Opcode.fromInt(2),
+      Opcode.fromSymbol('equal')
     ]);
 
     const stack = new Stack();
@@ -302,7 +289,10 @@ describe('Script', function() {
               hash: encoding.NULL_HASH,
               index: 0xffffffff
             },
-            script: [opcodes.OP_0, opcodes.OP_0],
+            script: [
+              Opcode.fromOp(0),
+              Opcode.fromOp(0)
+            ],
             witness: [],
             sequence: 0xffffffff
           }],

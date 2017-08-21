@@ -1,37 +1,38 @@
 Scripts are array-like objects with some helper functions.
 
 ``` js
-var bcoin = require('bcoin');
-var assert = require('assert');
-var ScriptNum = bcoin.scriptnum;
-var opcodes = bcoin.script.opcodes;
+const bcoin = require('bcoin');
+const assert = require('assert');
+const Script = bcoin.script;
+const Witness = bcoin.witness;
+const Stack = bcoin.stack;
 
-var output = new bcoin.script();
-output.push(opcodes.OP_DROP);
-output.push(opcodes.OP_ADD);
-output.push(new ScriptNum(7));
-output.push(opcodes.OP_NUMEQUAL);
+const output = new Script();
+output.pushSym('OP_DROP');
+output.pushSym('OP_ADD');
+output.pushInt(7);
+output.pushSym('OP_NUMEQUAL');
 // Compile the script to its binary representation
 // (you must do this if you change something!).
-output.compile();
 assert(output.getSmall(2) === 7); // compiled as OP_7
+output.compile();
 
-var input = new bcoin.script();
-input.set(0, 'hello world'); // add some metadata
-input.push(new ScriptNum(2));
-input.push(new ScriptNum(5));
+const input = new Script();
+input.setString(0, 'hello world'); // add some metadata
+input.pushInt(2);
+input.pushInt(5);
 input.push(input.shift());
 assert(input.getString(2) === 'hello world');
 input.compile();
 
 // A stack is another array-like object which contains
 // only Buffers (whereas scripts contain Opcode objects).
-var stack = new bcoin.stack();
+const stack = new Stack();
 input.execute(stack);
 output.execute(stack);
 // Verify the script was successful in its execution:
 assert(stack.length === 1);
-assert(bcoin.script.bool(stack.pop()) === true);
+assert(stack.getBool(-1) === true);
 ```
 
 Using a witness would be similar, but witnesses do not get executed, they
@@ -39,11 +40,11 @@ simply _become_ the stack. The witness object itself is very similar to the
 Stack object (an array-like object containing Buffers).
 
 ``` js
-var witness = new bcoin.witness();
-witness.push(new ScriptNum(2));
-witness.push(new ScriptNum(5));
-witness.push('hello world');
+const witness = new Witness();
+witness.pushInt(2);
+witness.pushInt(5);
+witness.pushString('hello world');
 
-var stack = witness.toStack();
+const stack = witness.toStack();
 output.execute(stack);
 ```

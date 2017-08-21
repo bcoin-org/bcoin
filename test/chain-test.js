@@ -4,7 +4,6 @@
 'use strict';
 
 const assert = require('./util/assert');
-const ScriptNum = require('../lib/script/scriptnum');
 const consensus = require('../lib/protocol/consensus');
 const encoding = require('../lib/utils/encoding');
 const Coin = require('../lib/primitives/coin');
@@ -17,6 +16,7 @@ const MemWallet = require('./util/memwallet');
 const Network = require('../lib/protocol/network');
 const Output = require('../lib/primitives/output');
 const common = require('../lib/blockchain/common');
+const Opcode = require('../lib/script/opcode');
 const opcodes = Script.opcodes;
 
 const network = Network.get('regtest');
@@ -79,8 +79,8 @@ async function mineCSV(fund) {
 
   spend.addOutput({
     script: [
-      ScriptNum.encode(1),
-      Script.opcodes.OP_CHECKSEQUENCEVERIFY
+      Opcode.fromInt(1),
+      Opcode.fromSymbol('checksequenceverify')
     ],
     value: 10000
   });
@@ -419,8 +419,8 @@ describe('Chain', function() {
 
     spend.addOutput({
       script: [
-        ScriptNum.encode(2),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
+        Opcode.fromInt(2),
+        Opcode.fromSymbol('checksequenceverify')
       ],
       value: 10000
     });
@@ -444,8 +444,8 @@ describe('Chain', function() {
 
     spend.addOutput({
       script: [
-        ScriptNum.encode(1),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
+        Opcode.fromInt(1),
+        Opcode.fromSymbol('checksequenceverify')
       ],
       value: 1 * 1e8
     });
@@ -479,8 +479,8 @@ describe('Chain', function() {
 
     spend.addOutput({
       script: [
-        ScriptNum.encode(2),
-        Script.opcodes.OP_CHECKSEQUENCEVERIFY
+        Opcode.fromInt(2),
+        Opcode.fromSymbol('checksequenceverify')
       ],
       value: 1 * 1e8
     });
@@ -547,7 +547,6 @@ describe('Chain', function() {
     const tx = block.txs[0];
     const input = tx.inputs[0];
     input.witness.set(0, Buffer.allocUnsafe(33));
-    input.witness.compile();
     block.refresh(true);
     assert.strictEqual(await addBlock(block), 'bad-witness-nonce-size');
   });
@@ -557,7 +556,6 @@ describe('Chain', function() {
     const tx = block.txs[0];
     const input = tx.inputs[0];
     input.witness.set(0, encoding.ONE_HASH);
-    input.witness.compile();
     block.refresh(true);
     assert.strictEqual(await addBlock(block), 'bad-witness-merkle-match');
   });
@@ -570,9 +568,9 @@ describe('Chain', function() {
 
     assert(output.script.isCommitment());
 
-    const commit = Buffer.from(output.script.get(1));
+    const commit = Buffer.from(output.script.getData(1));
     commit.fill(0, 10);
-    output.script.set(1, commit);
+    output.script.setData(1, commit);
     output.script.compile();
 
     block.refresh(true);
@@ -787,13 +785,14 @@ describe('Chain', function() {
     const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
 
     const redeem = new Script();
-    redeem.push(new ScriptNum(20));
+    redeem.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      redeem.push(encoding.ZERO_KEY);
+      redeem.pushData(encoding.ZERO_KEY);
 
-    redeem.push(new ScriptNum(20));
-    redeem.push(opcodes.OP_CHECKMULTISIG);
+    redeem.pushInt(20);
+    redeem.pushOp(opcodes.OP_CHECKMULTISIG);
+
     redeem.compile();
 
     const script = Script.fromScripthash(redeem.hash160());
@@ -828,13 +827,15 @@ describe('Chain', function() {
     const job = await cpu.createJob();
 
     const script = new Script();
-    script.push(new ScriptNum(20));
+
+    script.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      script.push(encoding.ZERO_KEY);
+      script.pushData(encoding.ZERO_KEY);
 
-    script.push(new ScriptNum(20));
-    script.push(opcodes.OP_CHECKMULTISIG);
+    script.pushInt(20);
+    script.pushOp(opcodes.OP_CHECKMULTISIG);
+
     script.compile();
 
     for (let i = start; i <= end; i++) {
@@ -848,7 +849,7 @@ describe('Chain', function() {
 
       for (let j = 2; j < cb.outputs.length; j++) {
         mtx.addTX(cb, j);
-        mtx.inputs[j - 2].script = new Script([script.toRaw()]);
+        mtx.inputs[j - 2].script.fromItems([script.toRaw()]);
       }
 
       mtx.addOutput(witWallet.getAddress(), 1);

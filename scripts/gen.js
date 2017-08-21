@@ -6,13 +6,10 @@ const encoding = require('../lib/utils/encoding');
 const TX = require('../lib/primitives/tx');
 const Block = require('../lib/primitives/block');
 const Script = require('../lib/script/script');
-const Opcode = require('../lib/script/opcode');
-const ScriptNum = require('../lib/script/scriptnum');
-const opcodes = Script.opcodes;
 
 function createGenesisBlock(options) {
   let flags = options.flags;
-  let script = options.script;
+  let key = options.key;
   let reward = options.reward;
 
   if (!flags) {
@@ -21,13 +18,11 @@ function createGenesisBlock(options) {
       'ascii');
   }
 
-  if (!script) {
-    script = Script.fromArray([
-      Buffer.from('04678afdb0fe5548271967f1a67130b7105cd6a828e039'
-        + '09a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c3'
-        + '84df7ba0b8d578a4c702b6bf11d5f', 'hex'),
-      opcodes.OP_CHECKSIG
-    ]);
+  if (!key) {
+    key = Buffer.from(''
+      + '04678afdb0fe5548271967f1a67130b7105cd6a828e039'
+      + '09a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c3'
+      + '84df7ba0b8d578a4c702b6bf11d5f', 'hex');
   }
 
   if (!reward)
@@ -40,16 +35,16 @@ function createGenesisBlock(options) {
         hash: encoding.NULL_HASH,
         index: 0xffffffff
       },
-      script: [
-        Opcode.fromNumber(new ScriptNum(486604799)),
-        Opcode.fromPush(Buffer.from([4])),
-        Opcode.fromData(flags)
-      ],
+      script: Script()
+        .pushInt(486604799)
+        .pushPush(Buffer.from([4]))
+        .pushData(flags)
+        .compile(),
       sequence: 0xffffffff
     }],
     outputs: [{
       value: reward,
-      script: script
+      script: Script.fromPubkey(key)
     }],
     locktime: 0
   });
