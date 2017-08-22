@@ -288,12 +288,12 @@ CLI.prototype.sendTX = async function sendTX() {
   if (this.config.has('script')) {
     outputs.push({
       script: this.config.str('script'),
-      value: this.config.ufixed([0, 'value'], 8)
+      value: this.config.uint([0, 'value'])
     });
   } else {
     outputs.push({
       address: this.config.str([0, 'address']),
-      value: this.config.ufixed([1, 'value'], 8)
+      value: this.config.uint([1, 'value'])
     });
   }
 
@@ -303,7 +303,6 @@ CLI.prototype.sendTX = async function sendTX() {
       value: 0
     });
   }
-
   const options = {
     account: this.config.str('account'),
     passphrase: this.config.str('passphrase'),
