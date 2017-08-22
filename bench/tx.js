@@ -24,6 +24,18 @@ const tx10 = common.readTX('tx10');
 }
 
 {
+  const [tx, view] = tx5.getTX();
+  const end = bench('sigops');
+
+  let sigops = 0;
+
+  for (let i = 0; i < 100000; i++)
+    sigops += tx.getSigopsCost(view);
+
+  end(100000);
+}
+
+{
   const [tx] = tx5.getTX();
   const end = bench('serialize');
 
