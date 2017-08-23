@@ -1,21 +1,24 @@
+/* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
+
 'use strict';
 
-const assert = require('assert');
+const assert = require('./util/assert');
+const digest = require('../lib/crypto/digest');
 const Input = require('../lib/primitives/input');
 const Output = require('../lib/primitives/output');
 const Amount = require('../lib/btc/amount');
 const Script = require('../lib/script/script');
-const digest = require('../lib/crypto/digest');
 const Address = require('../lib/primitives/address');
 const FullNode = require('../lib/node/fullnode');
 const Coin = require('../lib/primitives/coin');
-const util = require('../lib/utils/util');
-const Validator = require('../lib/utils/validator');
 const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
+const util = require('../lib/utils/util');
 const RPC = require('../lib/http/rpc');
 const RPCBase = require('../lib/http/rpcbase');
+const MAGIC_STRING = RPCBase.MAGIC_STRING;
 const RPCError = RPCBase.RPCError;
 const errs = RPCBase.errors;
 
@@ -66,6 +69,7 @@ const errs = RPCBase.errors;
  * createwitnessaddress
  * verifymessage
  * signmessagewithprivkey
+
  *
  * setmocktime
  *
@@ -95,14 +99,13 @@ const errs = RPCBase.errors;
  * setloglevel
  */
 
-describe('RPC', function() {
-  const node = new FullNode({
-    network: 'regtest',
-    db: 'memory',
-    apiKey: 'foo',
-    workers: true,
-    plugins: [require('../lib/wallet/plugin')]
-  });
+const node = new FullNode({
+  network: 'regtest',
+  db: 'memory',
+  apiKey: 'test',
+  workers: true,
+  plugins: [require('../lib/wallet/plugin')]
+});
 
 const chain = node.chain;
 const miner = node.miner;
@@ -111,15 +114,16 @@ const wdb = node.require('walletdb');
 
 let wallet = null;
 let tx1 = null;
+let height = chain.height;
 
-async function getHashRate() {
+
+async function getHashRate(lookup) {
   const addr = new Address();
-  const tip = await chain.db.getEntry(height);
+  const tip = await chain.db.getEntry(height)
   await lookup = tip.height % addr.network.pow.retargetInterval + 1;
 
-  return await tip.hash;
+  return tip.hash;
 };
-
 
 async function startBlock(tip, tx) {
   const job = await miner.createJob(tip);
@@ -128,20 +132,23 @@ async function startBlock(tip, tx) {
     return await job.mineAsync();
 
   const mtx = new MTX();
-
   mtx.addTX(tx, 0);
   mtx.addOutput(wallet.getReceive(), 25 * 1e8);
-  mtx.addOutput(wallet.getChange(), 5 * 1e8);
+  mtx.addOutput(wallet.getReceive(), 5 * 1e8);
 
-  mtx.setLocktime(chain.height);
+  mtx.setLocktime(height);
 
   await wallet.sign(mtx);
 
   job.addTX(mtx.toTX(), mtx.view);
   job.refresh();
 
-  return await job.mineAsync();
+  return await job.mineAsync()
 }
+
+
+describe('RPC', function() {
+  this.timeout(5000);
 
 it('should open chain, and miner', async() => {
   miner.mempool = null;
@@ -159,6 +166,61 @@ it('should connect to the mempool', async() => {
   await pool.connect()
   node.startSync()
 });
+
+it('should relay node memory (nativeHeap / jsHeap)', async () => {
+  const json = await node.rpc.call({
+    method: 'getmemoryinfo'
+  }, {})
+});
+
+it('should create a block template', async () => {
+  const json = await node.rpc.call({
+    method: 'getblocktemplate',
+    params: [{rules: ['segwit']}],
+    id: '1'
+  }, {});
+
+  assert.typeOf(json.result, 'object');
+  assert.typeOf(json.result.curtime, 'number');
+  assert.typeOf(json.result.mintime, 'number');
+  assert.typeOf(json.result.maxtime, 'number');
+  assert.typeOf(json.result.expires, 'number');
+
+  assert.deepStrictEqual(json, {
+    result: {
+      capabilities: ['proposal'],
+      mutable: ['time', 'transactions', 'prevblock'],
+      version: 536870912,
+      rules: [],
+      vbavailable: {},
+      vbrequired: 0,
+      height: 1,
+      previousblockhash: chain.tip.rhash(),
+      target: '7fffff0000000000000000000000000000000000000000000000000000000000',
+      bits: '207fffff',
+      noncerange: '00000000ffffffff',
+      curtime: json.result.curtime,
+      mintime: json.result.mintime,
+      maxtime: json.result.maxtime,
+      expires: json.result.expires,
+      sigoplimit: 20000,
+      sizelimit: 1000000,
+      weightlimit: undefined,
+      longpollid: node.chain.tip.rhash() + '0000000000',
+      submitold: false,
+      coinbaseaux: { flags: '6d696e65642062792062636f696e' },
+      coinbasevalue: 5000000000,
+      coinbasetxn: undefined,
+      default_witness_commitment: '6a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962'
+                                + 'b48bebd836974e8cf9',
+
+      transactions: []
+    },
+    error: null,
+    id: '1'
+  });
+});
+
 
 it('should validate an address', async () => {
   const addr = new Address();
@@ -179,24 +241,43 @@ it('should validate an address', async () => {
 });
 
 it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
-
   const json = await node.rpc.call({
-    method: 'getblockchaininfo',
-  }, {})
-    assert(json, {
-      result: {
+    method: 'getblockchaininfo'
+  }, {});
+
+    assert.deepStrictEqual(json.result, {
       chain: node.network.type,
       blocks: chain.height,
       headers: chain.height,
       bestblockhash: chain.tip.rhash(),
       mediantime: await chain.tip.getMedianTime(),
       verificationprogress: chain.getProgress(),
-      chainwork: chain.tip.toString('hex', 64),
+      chainwork: chain.tip.chainwork.toString('hex', 64),
       pruned: node.rpc.chain.options.prune
-  },
-  error: null,
- });
+    });
 });
+
+/*
+ * Transaction Related
+ */
+
+it('should create a transaction', async () => {});
+  // [{txid: id, vout: :n}...]
+  // {"address": amount, "data": 'hex'}
+  // 'locktime'
+
+it('should relay chaintip', async () => {
+  const json = await node.rpc.call({
+    method: 'getchaintips',
+  }, {})
+  assert(json, {
+    result: {
+      height: chain.height,
+      hash: chain.tip.hash
+    }
+  })
+});
+
 
 it('should relay Bestblockhash', async () => {
   const json = await node.rpc.call({
@@ -209,21 +290,6 @@ it('should relay Bestblockhash', async () => {
   })
 });
 
-
-it('should relay transaction output', async () => {
-  const json = await node.rpc.call({
-    method: 'gettxout'
-  }, {})
-  assert.deepStrictEqual(json, {
-    result: {
-      bestblock: chain.tip.rhash(),
-      coinbase: false,
-      confirmations: chain.height,
-      value: 0,
-      version: 1
-    }
-  })
-});
 
 
 it('shoud relay chainstate', async () => {
@@ -328,6 +394,14 @@ it('getinfo from node', async () => {
   });
 });
 
+it('should sendrawtranscation', async () => {
+  const json = await node.rpc.call({
+    method: 'sendrawtransaction'
+   }, {})
+
+  await node.relay();
+});
+
 it('should decode valid Script data', async () => {
   const script = new Script();
   const addr = new Address.fromScripthash(script.hash160());
@@ -365,24 +439,34 @@ it('should prune the Blockchain', async () => {
 it('should relay getNetworkInfo', async () => {
   const hosts = pool.hosts;
   const addr = new Address();
-  const btc = Amount.btc;
   addr.network = node.network;
+  const btc = Amount.btc;
 
   const json = await node.rpc.call({
     method: 'getnetworkinfo'
   }, {});
-  assert(json, {
+  assert.deepStrictEqual(json, {
     result: {
+      connections: pool.peers.size(),
+      version: 'v1.0.0-beta.14',
       subversion: pool.options.agent,
       protocolversion: pool.options.version,
       localservices: util.hex32(pool.options.services),
       localrelay: !pool.options.noRelay,
       timeoffset: addr.network.time.offset,
       networkactive: pool.connected,
-      connections: pool.peers.size(),
       networks: [],
       relayfee: btc(addr.network.minRelay, true),
+      incrementalfee: 0,
+      localaddresses: [],
+      warnings: ''
     }
+  })
+});
+
+it('should createwitnessaddress', async () => {
+  const json = await node.rpc.call({
+    method: 'createwitnessaddress'
   })
 });
 
@@ -390,6 +474,37 @@ it('should addnode', async () => {
   const json = await node.rpc.call({
     method: 'addnode'
   }, {});
+});
+
+
+/*
+ * HTTP Wallet RPC-Calls
+ */
+it('should relay wallet address, getaccountaddres, "account"', async () => {
+  const wallet = wdb.primary.account.wallet.toJSON();
+  const json = wdb.rpc.call({
+    method: 'getaccountaddress',
+    params: [wallet.account.receiveAddress]
+  }, {})
+});
+
+it('should relay walletdb balance (getbalance)', async () => {
+  const btc = Amount.btc;
+  const json = wdb.rpc.call({
+    method: 'getbalance'
+  }, {})
+  assert(json, {
+    result: 0,
+    error: null,
+    id: null
+
+})
+});
+
+it('should generate new wallet address', async () => {
+  const json = wdb.rpc.call({
+    method: 'getnewaddress'
+  })
 });
 
 
