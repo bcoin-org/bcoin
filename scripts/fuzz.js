@@ -1,5 +1,6 @@
 'use strict';
 
+const assert = require('assert');
 const util = require('../lib/utils/util');
 const Script = require('../lib/script/script');
 const Stack = require('../lib/script/stack');
@@ -11,8 +12,61 @@ const TX = require('../lib/primitives/tx');
 const random = require('../lib/crypto/random');
 const flags = Script.flags;
 
+let consensus = null;
+
+try {
+  consensus = require('nodeconsensus');
+} catch (e) {
+  ;
+}
+
+if (consensus)
+  util.log('Running against bitcoinconsensus...');
+
 const MANDATORY = flags.MANDATORY_VERIFY_FLAGS | flags.VERIFY_WITNESS;
 const STANDARD = flags.STANDARD_VERIFY_FLAGS;
+
+function verifyConsensus(tx, index, output, value, flags) {
+  if (!consensus)
+    return 'OK';
+  return consensus.verify(tx.toRaw(), index, output.toRaw(), value, flags);
+}
+
+function assertConsensus(tx, output, flags, code) {
+  if (!consensus)
+    return code;
+
+  const err = verifyConsensus(tx, 0, output, 0, flags);
+
+  if (err !== code) {
+    util.log('bitcoinconsensus mismatch!');
+    util.log(`${err} (bitcoin core) !== ${code} (bcoin)`);
+    util.log(tx);
+    util.log(output);
+    util.log(flags);
+    util.log('TX: %s', tx.toRaw().toString('hex'));
+    util.log('Output Script: %s', output.toRaw().toString('hex'));
+  }
+}
+
+function randomSignature() {
+  const r = secp256k1.generatePrivateKey();
+  const s = secp256k1.generatePrivateKey();
+  return secp256k1.toDER(Buffer.concat([r, s]));
+}
+
+function randomKey() {
+  const x = secp256k1.generatePrivateKey();
+  const y = secp256k1.generatePrivateKey();
+
+  if (util.random(0, 2) === 0) {
+    const p = Buffer.from([2 | (y[y.length - 1] & 1)]);
+    return Buffer.concat([p, x]);
+  }
+
+  const p = Buffer.from([4]);
+  return Buffer.concat([p, x, y]);
+}
 
 function randomOutpoint() {
   const hash = random.randomBytes(32).toString('hex');
@@ -43,7 +97,7 @@ function randomTX() {
     tx.inputs.push(randomInput());
 
   for (let i = 0; i < outputs; i++)
-    tx.inputs.push(randomOutput());
+    tx.outputs.push(randomOutput());
 
   if (util.random(0, 5) === 0)
     tx.locktime = util.random(0, 0xffffffff);
@@ -333,6 +387,11 @@ function fuzzVerify(flags) {
     const witness = randomWitness();
     const output = randomOutputScript();
 
+    tx.inputs[0].script = input;
+    tx.inputs[0].witness = witness;
+
+    tx.refresh();
+
     try {
       Script.verify(
         input,
@@ -344,10 +403,14 @@ function fuzzVerify(flags) {
         flags
       );
     } catch (e) {
-      if (e.type === 'ScriptError')
+      if (e.type === 'ScriptError') {
+        assertConsensus(tx, output, flags, e.code);
         continue;
+      }
       throw e;
     }
+
+    assertConsensus(tx, output, flags, 'OK');
 
     if (isPushOnly(output))
       continue;
@@ -379,6 +442,12 @@ function fuzzLess(flags) {
       tx = randomTX();
 
     const ctx = randomContext();
+    const input = tx.inputs[0];
+
+    input.script = ctx.input;
+    input.witness = ctx.witness;
+
+    tx.refresh();
 
     try {
       Script.verify(
@@ -391,10 +460,14 @@ function fuzzLess(flags) {
         flags
       );
     } catch (e) {
-      if (e.type === 'ScriptError')
+      if (e.type === 'ScriptError') {
+        assertConsensus(tx, ctx.output, flags, e.code);
         continue;
+      }
       throw e;
     }
+
+    assertConsensus(tx, ctx.output, flags, 'OK');
 
     util.log('Produced valid scripts:');
 
@@ -438,5 +511,8 @@ function main() {
       break;
   }
 }
+
+randomKey;
+randomSignature;
 
 main();
