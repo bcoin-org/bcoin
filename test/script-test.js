@@ -290,8 +290,8 @@ describe('Script', function() {
               index: 0xffffffff
             },
             script: [
-              Opcode.fromOp(0),
-              Opcode.fromOp(0)
+              Opcode.fromInt(0),
+              Opcode.fromInt(0)
             ],
             witness: [],
             sequence: 0xffffffff
