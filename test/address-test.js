@@ -50,8 +50,7 @@ describe('Address', function() {
   it('should match mainnet p2sh address obtained from script', () => {
     const raw = p2sh1.getRaw();
     const script = Script.fromRaw(Buffer.from(raw, 'hex'));
-    const p2sh = script.hash160();
-    const addr = Address.fromScripthash(p2sh);
+    const addr = Address.fromScript(script);
     const expectedAddr = '3QJmV3qfvL9SuYo34YihAf3sRCW3qSinyC';
     assert.strictEqual(addr.toString(), expectedAddr);
   });
