@@ -16,88 +16,12 @@ const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
+const co = require('../lib/utils/co');
 const RPC = require('../lib/http/rpc');
 const RPCBase = require('../lib/http/rpcbase');
 const MAGIC_STRING = RPCBase.MAGIC_STRING;
 const RPCError = RPCBase.RPCError;
 const errs = RPCBase.errors;
-
-/**
- * getblockchaininfo
- * getbestblockhash
- * getblockcount
- * getblock
- * getblockbyheight
- * getblockhash
- * getblockheader
- * getchantips
- * getdifficulty
- * getmempoolancestors
- * getmempooldescendants
- * getmempoolentry
- * getmempoolinfo
- * gettxout
- * gettxoutsetinfo
- * pruneblockchain
- * verifychain
- *
- * invalidateblock
- * reconsiderblock
- *
- * getnetworkhashps
- * getmininginfo
- * prioritisetransaction
- * getwork
- * getworklp
- * getblocktemplate
- * submitblock
- * verifyblock
- *
- * setgenerate
- * getgenerate
- * generate
- * generatetoaddress
- *
- * estimatefee
- * estimatepriority
- * estimatesmartfee
- * estimatesmartpriority
- *
- * getinfo
- * validateaddress
- * createmultisig
- * createwitnessaddress
- * verifymessage
- * signmessagewithprivkey
-
- *
- * setmocktime
- *
- * getconnectioncount
- * ping
- * getpeerinfo
- * addnode
- * disconnectnode
- * getaddednodeinfo
- * getnettotals
- * getnetworkinfo
- * setban
- * listbanned
- * clearbanned
- *
- * getrawtransaction
- * createrawtransaction
- * decodedrawtransaction
- * decodescript
- * sendrawtransaction
- * signrawtransaction
- *
- * gettxoutproff
- * verifytxoutproof
- *
- * getmemoryinfo
- * setloglevel
- */
 
 const node = new FullNode({
   network: 'regtest',
@@ -117,12 +41,40 @@ let tx1 = null;
 let height = chain.height;
 
 
-async function getHashRate(lookup) {
-  const addr = new Address();
-  const tip = await chain.db.getEntry(height)
-  await lookup = tip.height % addr.network.pow.retargetInterval + 1;
+async function getHashRate(lookup, height) {
+  let tip = await chain.tip;
 
-  return tip.hash;
+  if (height != null)
+    tip = await chain.db.getEntry(height);
+
+  if (!tip)
+    return 0;
+
+  if (lookup <= 0)
+    lookup = tip.height % node.network.pow.retargetInterval + 1;
+
+  if (lookup > tip.height)
+    lookup = tip.height;
+
+  let minTime = tip.time;
+  let maxTime = minTime;
+  let entry = tip;
+
+  for (let i = 0; i < lookup; i++) {
+    entry = await entry.getPrevious();
+
+  minTime = Math.min(entry.time, minTime);
+  maxTime = Math.max(entry.time, maxTime);
+  };
+
+  if (minTime === maxTime)
+    return 0;
+
+  const workDiff = tip.chainwork.sub(entry.chainwork);
+  const timeDiff = maxTime - minTime;
+  const ps = parseInt(workDiff.toString(10) / 10) / timeDiff;
+
+  return ps;
 };
 
 async function startBlock(tip, tx) {
@@ -144,6 +96,57 @@ async function startBlock(tip, tx) {
   job.refresh();
 
   return await job.mineAsync()
+}
+
+async function getSoftforks() {
+  return [
+    toDeployment('bip34', 2, chain.state.hasBIP34()),
+    toDeployment('bip66', 3, chain.state.hasBIP66()),
+    toDeployment('bip65', 4, chain.state.hasCLTV())
+  ];
+}
+
+async function toDeployment(id, version, status) {
+  let id = pool.id;
+  let version = pool.options.version;
+
+  return {
+    id: id,
+    version: version,
+    reject: {
+      status: status
+    }
+  };
+}
+
+
+async function toDifficulty(bits) {
+
+ const shift = (bits >>> 24) & 0xff;
+ const diff = 0x0000ffff / (bits & 0xffffff)
+
+  while (shift < 29) {
+    diff *= 256.0;
+    shift++;
+  }
+
+  while (shift > 29)  {
+    diff /= 256.0;
+    shift--;
+  }
+
+  return diff;
+}
+
+async function pruneHeight(chain) {
+  const pruning = (chain.options.prune !== false)
+
+  if (!chain.options.prune)
+    return chain.height;
+
+  while (pruning % node.network.block.keepBlocks) {
+    verbose = null;
+  }
 }
 
 
@@ -221,6 +224,20 @@ it('should create a block template', async () => {
   });
 });
 
+it('should submit a block', async () => {
+  const block = await miner.mineBlock();
+  const hex = block.toRaw().toString('hex');
+
+  const json = await node.rpc.call({
+    method: 'submitblock',
+    params: [hex]
+  }, {});
+
+  assert(!json.error);
+  assert.strictEqual(json.result, null);
+  assert.strictEqual(chain.tip.hash, block.hash('hex'));
+});
+
 
 it('should validate an address', async () => {
   const addr = new Address();
@@ -241,40 +258,72 @@ it('should validate an address', async () => {
 });
 
 it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
+  const deployments = chain.options.network.deployments;
+  const tip = chain.tip;
+  const forks = {};
+  const softforks = [chain.state.hasBIP34, chain.state.hasBIP66, chain.state.hasBIP65]
+
   const json = await node.rpc.call({
     method: 'getblockchaininfo'
   }, {});
 
     assert.deepStrictEqual(json.result, {
-      chain: node.network.type,
-      blocks: chain.height,
-      headers: chain.height,
       bestblockhash: chain.tip.rhash(),
-      mediantime: await chain.tip.getMedianTime(),
-      verificationprogress: chain.getProgress(),
+      bip9_softforks: deployments,
+      blocks: chain.height,
+      chain: node.network.type,
       chainwork: chain.tip.chainwork.toString('hex', 64),
-      pruned: node.rpc.chain.options.prune
-    });
+      difficulty: 4.6565423739069247e-10,
+      headers:chain.height,
+      mediantime: await chain.tip.getMedianTime(),
+      pruned: node.rpc.chain.options.prune,
+      pruneheight: null,
+      softforks:
+      [{
+        id: 'bip34',
+        reject: {
+        status: false,
+      },
+        version: 2
+      },
+       {
+        id: 'bip66',
+        reject: {
+        status: false
+      },
+        version: 3
+      },
+       {
+        id: 'bip65',
+        reject: {
+        status: false
+      },
+        version: 4
+      }],
+      verificationprogress: chain.getProgress()
+  });
 });
 
-/*
- * Transaction Related
- */
 
-it('should create a transaction', async () => {});
-  // [{txid: id, vout: :n}...]
-  // {"address": amount, "data": 'hex'}
-  // 'locktime'
+it('should relay chaintips', async () => {
+  const tips = await chain.db.getTips();
+  const findFork = chain.tip.isMainChain();
 
-it('should relay chaintip', async () => {
   const json = await node.rpc.call({
     method: 'getchaintips',
   }, {})
-  assert(json, {
-    result: {
+
+  const result = json.result;
+
+  assert.deepStrictEqual(json, {
+    error: null,
+    id: null,
+    result: [{
+      branchlen: 0,
+      hash: chain.tip.rhash(),
       height: chain.height,
-      hash: chain.tip.hash
-    }
+      status: findFork ? 'active' : 'valid-headers'
+    }]
   })
 });
 
@@ -283,34 +332,13 @@ it('should relay Bestblockhash', async () => {
   const json = await node.rpc.call({
     method: 'getbestblockhash',
   }, {})
-  assert(json, {
-    result: {
-      bestblockhash: chain.tip.rhash()
-    }
-  })
-});
-
-
-
-it('shoud relay chainstate', async () => {
-  const btc = Amount.btc;
-  const json = await node.rpc.call({
-    method: 'gettxoutsetinfo'
-  }, {})
-  assert.deepStrictEqual(json,  {
-    result: {
-      height: chain.height,
-      bestblock: chain.tip.rhash(),
-      transactions: chain.db.state.tx,
-      txouts: chain.db.state.coin,
-      bytes_serialized: 0,
-      hash_serialized: 0,
-      total_amount: btc(chain.db.state.value, true)
-    },
+  assert.deepStrictEqual(json, {
     error: null,
-    id: null
+    id: null,
+    result: chain.tip.rhash()
   })
 });
+
 
 it('should relay rpc-command getMempoolInfo (getmempoolinfo)', async () => {
   const btc = Amount.btc;
@@ -318,14 +346,16 @@ it('should relay rpc-command getMempoolInfo (getmempoolinfo)', async () => {
     method: 'getmempoolinfo',
 
   }, {})
-  assert(json, {
+  assert.deepStrictEqual(json, {
     result: {
-      size: node.mempool.size,
       bytes: node.mempool.getSize(),
-      usage: node.mempool.getSize(),
       maxmempool: node.mempool.options.maxSize,
-      mempoolminfee: btc(node.mempool.options.minRelay, true)
-    }
+      mempoolminfee: btc(node.mempool.options.minRelay, true),
+      size: 0,
+      usage: 0
+    },
+    error: null,
+    id: null
   })
 });
 
@@ -341,95 +371,109 @@ it('should get entry to Mempool (getmempoolentry txid)', async () => {
   });
 });
 
+
 it('should relay Chainstate', async() => {
   const btc = Amount.btc;
   const json = await node.rpc.call({
     method: 'gettxoutsetinfo'
   }, {})
-  assert(json, {
+  assert.deepStrictEqual(json, {
     result: {
       height: chain.height,
       bestblock: chain.tip.rhash(),
-      transaction: chain.db.state.tx,
+      transactions: chain.db.state.tx,
       txouts: chain.db.state.coin,
       bytes_serialized: 0,
       hash_serialized: 0,
       total_amount: btc(chain.db.state.value, true)
-    }
+    },
+    error: null,
+    id: null
   });
 });
 
 
-it('should relay miner, (getmininginfo)', async () => {
-  let size, weight, txs, diff;
+it('should rpc-method (getmininginfo)', async () => {
+  const attempt = await node.miner.createBlock();
+
+  attempt.refresh();
+
+  const block = attempt.toBlock();
+  const tip = chain.tip;
   const json = await node.rpc.call({
     method: 'getmininginfo'
-  }, {})
-  assert(json, {
+  }, {});
+
+  let size = 0;
+  let weight = 0;
+  let txs = 0;
+  let diff = 0;
+
+  assert.deepStrictEqual(json, {
     result: {
     blocks: chain.height,
     currentblocksize: size,
-    genproclimit:  node.rpc.procLimit,
+    currentblockweight: weight,
+    currentblocktx: txs,
+    difficulty: diff,
     errors: '',
-    chain: node.network.type
-  }
+    genproclimit: await node.rpc.procLimit,
+    networkhashps: await getHashRate(120, chain.tip.height),
+    pooledtx: pool.mempool.map.size,
+    testnet: node.network !== node.network.type,
+    chain: node.network.type,
+    generate: false
+  },
+    error: null,
+    id: null
 })
 });
 
 it('getinfo from node', async () => {
-  const addr = new Address();
   const btc = Amount.btc;
+  const bits = node.chain.tip.bits;
 
   const json = await node.rpc.call({
-    method: 'getinfo',
-    params: [addr.toString(addr.network)]
+    method: 'getinfo'
   }, {})
-  assert(json, {
+  assert.deepStrictEqual(json, {
+    error: null,
+    id: null,
     result: {
-      difficulty: chain.db.getTip(chain.tip.bits),
+      balance: 0,
+      blocks: 1,
+      connections: 0,
+      difficulty: 4.6565423739069247e-10,
+      errors: '',
+      keypoololdest: 0,
+      keypoolsize: 0,
       paytxfee: btc(node.network.feeRate, true),
+      protocolversion: pool.options.version,
+      proxy: '',
       relayfee: btc(node.network.minRelay, true),
-      protocolversion: pool.options.version
-    }
+      testnet: node.network.type !== 'testnet',
+      timeoffset: 0,
+      unlocked_until: 0,
+      version: 'v1.0.0-beta.14',
+      walletversion: 0
+    },
+
   });
 });
 
-it('should sendrawtranscation', async () => {
-  const json = await node.rpc.call({
-    method: 'sendrawtransaction'
-   }, {})
 
-  await node.relay();
-});
+it('should decode valid P2SH output data', async () => {
 
-it('should decode valid Script data', async () => {
+  const hex ='a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
+  const decoded = Script.fromRaw(hex, 'hex');
   const script = new Script();
   const addr = new Address.fromScripthash(script.hash160());
-  let hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
-  let decoded;
 
   const json = await node.rpc.call({
     method: 'decodescript',
     params: [addr.toString(addr.network)]
   }, {});
-
-  decoded = Script.fromRaw(hex, 'hex');
-  assert(decoded.isScripthash);
  });
-
-
-/*
- * Node-Related
- */
-
-it('should prune the Blockchain', async () => {
-  // TODO:
-  // assert.deepStrictEqual
-  // 'Cannot prune chain in SPV mode', 'Chain is Already Pruned'
-  const json = await node.rpc.call({
-    method: 'pruneblockchain'
-  });
-});
 
 
 /*
@@ -439,8 +483,13 @@ it('should prune the Blockchain', async () => {
 it('should relay getNetworkInfo', async () => {
   const hosts = pool.hosts;
   const addr = new Address();
-  addr.network = node.network;
   const btc = Amount.btc;
+  const locals = [
+    { 'address': '2601:586:4005:d388:36f3:9aff:fe2b:e125',
+      'port': 48444,
+      'score': 1  }];
+
+  addr.network = node.network;
 
   const json = await node.rpc.call({
     method: 'getnetworkinfo'
@@ -453,57 +502,16 @@ it('should relay getNetworkInfo', async () => {
       protocolversion: pool.options.version,
       localservices: util.hex32(pool.options.services),
       localrelay: !pool.options.noRelay,
-      timeoffset: addr.network.time.offset,
+      timeoffset: node.network.time.offset,
       networkactive: pool.connected,
       networks: [],
       relayfee: btc(addr.network.minRelay, true),
       incrementalfee: 0,
-      localaddresses: [],
+      localaddresses: locals,
       warnings: ''
-    }
-  })
-});
-
-it('should createwitnessaddress', async () => {
-  const json = await node.rpc.call({
-    method: 'createwitnessaddress'
-  })
-});
-
-it('should addnode', async () => {
-  const json = await node.rpc.call({
-    method: 'addnode'
-  }, {});
-});
-
-
-/*
- * HTTP Wallet RPC-Calls
- */
-it('should relay wallet address, getaccountaddres, "account"', async () => {
-  const wallet = wdb.primary.account.wallet.toJSON();
-  const json = wdb.rpc.call({
-    method: 'getaccountaddress',
-    params: [wallet.account.receiveAddress]
-  }, {})
-});
-
-it('should relay walletdb balance (getbalance)', async () => {
-  const btc = Amount.btc;
-  const json = wdb.rpc.call({
-    method: 'getbalance'
-  }, {})
-  assert(json, {
-    result: 0,
+   },
     error: null,
     id: null
-
-})
-});
-
-it('should generate new wallet address', async () => {
-  const json = wdb.rpc.call({
-    method: 'getnewaddress'
   })
 });
 
