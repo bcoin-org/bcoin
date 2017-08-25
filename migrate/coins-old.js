@@ -257,7 +257,7 @@ Coins.prototype.toRaw = function toRaw() {
   // allocating a buffer. We mark the spents
   // after rendering the final buffer.
   bw.writeVarint(len);
-  const start = bw.written;
+  const start = bw.offset;
   bw.fill(0, len);
 
   // Write the compressed outputs.
