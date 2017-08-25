@@ -624,8 +624,8 @@ describe('TX', function() {
     const output = Script.fromMultisig(1, 2, [pub, pub]);
 
     const input = new Script([
-      Opcode.fromOp(0),
-      Opcode.fromOp(0)
+      Opcode.fromInt(0),
+      Opcode.fromInt(0)
     ]);
 
     const witness = new Witness();
@@ -646,8 +646,8 @@ describe('TX', function() {
     const output = Script.fromScripthash(redeem.hash160());
 
     const input = new Script([
-      Opcode.fromOp(0),
-      Opcode.fromOp(0),
+      Opcode.fromInt(0),
+      Opcode.fromInt(0),
       Opcode.fromData(redeem.toRaw())
     ]);
 
