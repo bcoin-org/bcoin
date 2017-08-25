@@ -310,7 +310,9 @@ CLI.prototype.sendTX = async function sendTX() {
     outputs: outputs,
     smart: this.config.bool('smart'),
     rate: this.config.ufixed('rate', 8),
-    subtractFee: this.config.bool('subtract-fee')
+    subtractFee: this.config.bool('subtract-fee'),
+    extraOutputs: this.config.uint('extra'),
+    selection: this.config.str('selection')
   };
 
   const tx = await this.wallet.send(options);
@@ -339,7 +341,9 @@ CLI.prototype.createTX = async function createTX() {
     outputs: [output],
     smart: this.config.bool('smart'),
     rate: this.config.ufixed('rate', 8),
-    subtractFee: this.config.bool('subtract-fee')
+    subtractFee: this.config.bool('subtract-fee'),
+    extraOutputs: this.config.uint('extra'),
+    selection: this.config.str('selection')
   };
 
   const tx = await this.wallet.createTX(options);
