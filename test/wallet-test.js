@@ -223,8 +223,9 @@ async function testP2SH(witness, nesting) {
   assert(carol.account.change.getAddress().equals(change2));
 
   const input = tx.inputs[0];
-  input[vector].setData(2, encoding.ZERO_SIG);
-  input[vector].compile();
+  const stack = input[vector].toStack();
+  stack.set(2, encoding.ZERO_SIG);
+  input[vector].fromStack(stack);
 
   assert(!tx.verify(view, flags));
   assert.strictEqual(tx.getFee(view), 10000);
@@ -375,8 +376,9 @@ describe('Wallet', function() {
     await alice.template(fake);
     // Fake signature
     const input = fake.inputs[0];
-    input.script.setData(0, encoding.ZERO_SIG);
-    input.script.compile();
+    const script = input.script.write();
+    script.setData(0, encoding.ZERO_SIG);
+    script.compile();
     // balance: 11000
 
     // Fake TX should temporarily change output.

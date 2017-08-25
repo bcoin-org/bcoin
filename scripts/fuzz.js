@@ -119,14 +119,12 @@ function randomWitness(redeem) {
   if (redeem)
     witness.push(redeem);
 
-  witness.compile();
-
   return witness;
 }
 
 function randomInputScript(redeem) {
   const size = util.random(1, 100);
-  const script = new Script();
+  const script = Script.write();
 
   for (let i = 0; i < size; i++) {
     const len = util.random(0, 100);
@@ -148,7 +146,7 @@ function isPushOnly(script) {
   if (script.isPushOnly())
     return true;
 
-  for (const op of script.code) {
+  for (const op of script.values()) {
     if (op.value === Script.opcodes.NOP)
       continue;
 

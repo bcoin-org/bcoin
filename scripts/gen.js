@@ -35,7 +35,7 @@ function createGenesisBlock(options) {
         hash: encoding.NULL_HASH,
         index: 0xffffffff
       },
-      script: Script()
+      script: Script.write()
         .pushInt(486604799)
         .pushPush(Buffer.from([4]))
         .pushData(flags)

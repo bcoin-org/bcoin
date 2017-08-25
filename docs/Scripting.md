@@ -7,7 +7,7 @@ const Script = bcoin.script;
 const Witness = bcoin.witness;
 const Stack = bcoin.stack;
 
-const output = new Script();
+let output = Script.write();
 output.pushSym('OP_DROP');
 output.pushSym('OP_ADD');
 output.pushInt(7);
@@ -15,15 +15,15 @@ output.pushSym('OP_NUMEQUAL');
 // Compile the script to its binary representation
 // (you must do this if you change something!).
 assert(output.getSmall(2) === 7); // compiled as OP_7
-output.compile();
+output = output.compile();
 
-const input = new Script();
+let input = Script.write();
 input.setString(0, 'hello world'); // add some metadata
 input.pushInt(2);
 input.pushInt(5);
 input.push(input.shift());
 assert(input.getString(2) === 'hello world');
-input.compile();
+input = input.compile();
 
 // A stack is another array-like object which contains
 // only Buffers (whereas scripts contain Opcode objects).

@@ -568,10 +568,11 @@ describe('Chain', function() {
 
     assert(output.script.isCommitment());
 
-    const commit = Buffer.from(output.script.getData(1));
+    const script = output.script.write();
+    const commit = Buffer.from(script.getData(1));
     commit.fill(0, 10);
-    output.script.setData(1, commit);
-    output.script.compile();
+    script.setData(1, commit);
+    script.compile();
 
     block.refresh(true);
     block.merkleRoot = block.createMerkleRoot('hex');
@@ -784,16 +785,16 @@ describe('Chain', function() {
   it('should mine 111 multisig blocks', async () => {
     const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
 
-    const redeem = new Script();
-    redeem.pushInt(20);
+    const sw = Script.write();
+    sw.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      redeem.pushData(encoding.ZERO_KEY);
+      sw.pushData(encoding.ZERO_KEY);
 
-    redeem.pushInt(20);
-    redeem.pushOp(opcodes.OP_CHECKMULTISIG);
+    sw.pushInt(20);
+    sw.pushOp(opcodes.OP_CHECKMULTISIG);
 
-    redeem.compile();
+    const redeem = sw.compile();
 
     const script = Script.fromScripthash(redeem.hash160());
 
@@ -826,17 +827,17 @@ describe('Chain', function() {
     const end = chain.height - 100;
     const job = await cpu.createJob();
 
-    const script = new Script();
+    const sw = Script.write();
 
-    script.pushInt(20);
+    sw.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      script.pushData(encoding.ZERO_KEY);
+      sw.pushData(encoding.ZERO_KEY);
 
-    script.pushInt(20);
-    script.pushOp(opcodes.OP_CHECKMULTISIG);
+    sw.pushInt(20);
+    sw.pushOp(opcodes.OP_CHECKMULTISIG);
 
-    script.compile();
+    const script = sw.compile();
 
     for (let i = start; i <= end; i++) {
       const block = await chain.db.getBlock(i);

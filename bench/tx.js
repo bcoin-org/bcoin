@@ -159,7 +159,7 @@ for (let i = 0; i < 100; i++) {
       hash: encoding.NULL_HASH,
       index: 0
     },
-    script: new Script()
+    script: Script.write()
       .pushData(Buffer.allocUnsafe(9))
       .pushData(random.randomBytes(33))
       .compile()
