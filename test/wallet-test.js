@@ -293,7 +293,7 @@ describe('Wallet', function() {
     });
 
     const xpriv = HD.PrivateKey.generate();
-    const key = xpriv.deriveBIP44(0).toPublic();
+    const key = xpriv.deriveAccount(44, 0).toPublic();
 
     await wallet.addSharedKey(key);
 

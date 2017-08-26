@@ -88,7 +88,7 @@ MemWallet.prototype.init = function init() {
     this.master = HD.PrivateKey.generate();
 
   if (!this.key)
-    this.key = this.master.deriveBIP44(this.account);
+    this.key = this.master.deriveAccount(44, this.account);
 
   i = this.receiveDepth;
   while (i--)
@@ -132,7 +132,7 @@ MemWallet.prototype.derivePath = function derivePath(path) {
 };
 
 MemWallet.prototype.deriveKey = function deriveKey(branch, index) {
-  let key = this.master.deriveBIP44(this.account);
+  let key = this.master.deriveAccount(44, this.account);
   key = key.derive(branch).derive(index);
   const ring = new KeyRing({
     network: this.network,
