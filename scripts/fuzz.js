@@ -1,6 +1,5 @@
 'use strict';
 
-const assert = require('assert');
 const util = require('../lib/utils/util');
 const Script = require('../lib/script/script');
 const Stack = require('../lib/script/stack');
@@ -10,6 +9,7 @@ const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
 const TX = require('../lib/primitives/tx');
 const random = require('../lib/crypto/random');
+const secp256k1 = require('../lib/crypto/secp256k1');
 const flags = Script.flags;
 
 let consensus = null;
@@ -34,7 +34,7 @@ function verifyConsensus(tx, index, output, value, flags) {
 
 function assertConsensus(tx, output, flags, code) {
   if (!consensus)
-    return code;
+    return;
 
   const err = verifyConsensus(tx, 0, output, 0, flags);
 
