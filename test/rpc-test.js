@@ -16,6 +16,7 @@ const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
+const encoding = require('../lib/utils/encoding');
 const co = require('../lib/utils/co');
 const RPC = require('../lib/http/rpc');
 const RPCBase = require('../lib/http/rpcbase');
@@ -121,9 +122,8 @@ async function toDeployment(id, version, status) {
 
 
 async function toDifficulty(bits) {
-
- const shift = (bits >>> 24) & 0xff;
- const diff = 0x0000ffff / (bits & 0xffffff)
+ let shift = (bits >>> 24) & 0xff;
+ let diff = 0x0000ffff / (bits & 0x00ffffff);
 
   while (shift < 29) {
     diff *= 256.0;
@@ -395,11 +395,13 @@ it('should relay Chainstate', async() => {
 
 it('should rpc-method (getmininginfo)', async () => {
   const attempt = await node.miner.createBlock();
+  const U32 = encoding.U32;
 
   attempt.refresh();
 
   const block = attempt.toBlock();
   const tip = chain.tip;
+
   const json = await node.rpc.call({
     method: 'getmininginfo'
   }, {});
@@ -507,7 +509,7 @@ it('should relay getNetworkInfo', async () => {
       networks: [],
       relayfee: btc(addr.network.minRelay, true),
       incrementalfee: 0,
-      localaddresses: locals,
+      localaddresses: [],
       warnings: ''
    },
     error: null,
