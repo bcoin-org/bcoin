@@ -329,7 +329,7 @@ CoinView.prototype.ensureInputs = async function ensureInputs(db, tx) {
   let found = true;
 
   for (const input of tx.inputs) {
-    if (!(await this.readCoins(db, input.prevout.hash)))
+    if (!await this.readCoins(db, input.prevout.hash))
       found = false;
   }
 
