@@ -17,12 +17,6 @@ const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 const encoding = require('../lib/utils/encoding');
-const co = require('../lib/utils/co');
-const RPC = require('../lib/http/rpc');
-const RPCBase = require('../lib/http/rpcbase');
-const MAGIC_STRING = RPCBase.MAGIC_STRING;
-const RPCError = RPCBase.RPCError;
-const errs = RPCBase.errors;
 
 const node = new FullNode({
   network: 'regtest',
@@ -41,42 +35,6 @@ let wallet = null;
 let tx1 = null;
 let height = chain.height;
 
-
-async function getHashRate(lookup, height) {
-  let tip = await chain.tip;
-
-  if (height != null)
-    tip = await chain.db.getEntry(height);
-
-  if (!tip)
-    return 0;
-
-  if (lookup <= 0)
-    lookup = tip.height % node.network.pow.retargetInterval + 1;
-
-  if (lookup > tip.height)
-    lookup = tip.height;
-
-  let minTime = tip.time;
-  let maxTime = minTime;
-  let entry = tip;
-
-  for (let i = 0; i < lookup; i++) {
-    entry = await entry.getPrevious();
-
-  minTime = Math.min(entry.time, minTime);
-  maxTime = Math.max(entry.time, maxTime);
-  };
-
-  if (minTime === maxTime)
-    return 0;
-
-  const workDiff = tip.chainwork.sub(entry.chainwork);
-  const timeDiff = maxTime - minTime;
-  const ps = parseInt(workDiff.toString(10) / 10) / timeDiff;
-
-  return ps;
-};
 
 async function startBlock(tip, tx) {
   const job = await miner.createJob(tip);
@@ -108,9 +66,6 @@ async function getSoftforks() {
 }
 
 async function toDeployment(id, version, status) {
-  let id = pool.id;
-  let version = pool.options.version;
-
   return {
     id: id,
     version: version,
@@ -120,33 +75,17 @@ async function toDeployment(id, version, status) {
   };
 }
 
+async function pruned(height) {
+  let hash = await chain.tip.hash;
 
-async function toDifficulty(bits) {
- let shift = (bits >>> 24) & 0xff;
- let diff = 0x0000ffff / (bits & 0x00ffffff);
+  if (height != null)
+     height = node.network.block.pruneAfterHeight;
 
-  while (shift < 29) {
-    diff *= 256.0;
-    shift++;
-  }
+  let unlock = chain.locker.lock();
 
-  while (shift > 29)  {
-    diff /= 256.0;
-    shift--;
-  }
+  return await chain.db.prune(hash)
+  unlock();
 
-  return diff;
-}
-
-async function pruneHeight(chain) {
-  const pruning = (chain.options.prune !== false)
-
-  if (!chain.options.prune)
-    return chain.height;
-
-  while (pruning % node.network.block.keepBlocks) {
-    verbose = null;
-  }
 }
 
 
@@ -261,15 +200,28 @@ it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
   const deployments = chain.options.network.deployments;
   const tip = chain.tip;
   const forks = {};
-  const softforks = [chain.state.hasBIP34, chain.state.hasBIP66, chain.state.hasBIP65]
+
+  for (const deployment of node.network.deploys) {
+    const state = await node.chain.getState(tip, deployment);
+    let status;
+
+  forks[deployment.name] = {
+    status: status,
+    bit: deployment.bit,
+    startTime: deployment.startTime,
+    timeout: deployment.timeout
+  }
+    return forks;
+  }
 
   const json = await node.rpc.call({
     method: 'getblockchaininfo'
   }, {});
 
     assert.deepStrictEqual(json.result, {
+      result: {
       bestblockhash: chain.tip.rhash(),
-      bip9_softforks: deployments,
+      bip9_softforks: deployment,
       blocks: chain.height,
       chain: node.network.type,
       chainwork: chain.tip.chainwork.toString('hex', 64),
@@ -278,30 +230,11 @@ it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
       mediantime: await chain.tip.getMedianTime(),
       pruned: node.rpc.chain.options.prune,
       pruneheight: null,
-      softforks:
-      [{
-        id: 'bip34',
-        reject: {
-        status: false,
-      },
-        version: 2
-      },
-       {
-        id: 'bip66',
-        reject: {
-        status: false
-      },
-        version: 3
-      },
-       {
-        id: 'bip65',
-        reject: {
-        status: false
-      },
-        version: 4
-      }],
+      softforks: getSoftforks(),
       verificationprogress: chain.getProgress()
-  });
+
+  }
+    });
 });
 
 
@@ -393,44 +326,6 @@ it('should relay Chainstate', async() => {
 });
 
 
-it('should rpc-method (getmininginfo)', async () => {
-  const attempt = await node.miner.createBlock();
-  const U32 = encoding.U32;
-
-  attempt.refresh();
-
-  const block = attempt.toBlock();
-  const tip = chain.tip;
-
-  const json = await node.rpc.call({
-    method: 'getmininginfo'
-  }, {});
-
-  let size = 0;
-  let weight = 0;
-  let txs = 0;
-  let diff = 0;
-
-  assert.deepStrictEqual(json, {
-    result: {
-    blocks: chain.height,
-    currentblocksize: size,
-    currentblockweight: weight,
-    currentblocktx: txs,
-    difficulty: diff,
-    errors: '',
-    genproclimit: await node.rpc.procLimit,
-    networkhashps: await getHashRate(120, chain.tip.height),
-    pooledtx: pool.mempool.map.size,
-    testnet: node.network !== node.network.type,
-    chain: node.network.type,
-    generate: false
-  },
-    error: null,
-    id: null
-})
-});
-
 it('getinfo from node', async () => {
   const btc = Amount.btc;
   const bits = node.chain.tip.bits;
@@ -465,31 +360,25 @@ it('getinfo from node', async () => {
 
 
 it('should decode valid P2SH output data', async () => {
+  const hex = '6a28590c080112220a1b353930632e6f7267282a5f'
+            + '5e294f7665726c6179404f7261636c65103b1a010c';
 
-  const hex ='a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
   const decoded = Script.fromRaw(hex, 'hex');
-  const script = new Script();
-  const addr = new Address.fromScripthash(script.hash160());
 
   const json = await node.rpc.call({
     method: 'decodescript',
-    params: [addr.toString(addr.network)]
+    params: [{
+      data: hex
+    }]
   }, {});
+  assert(decoded.isNulldata());
+  assert.strictEqual(json.result, null);
  });
-
-
-/*
- * P2P RPC Calls
- */
 
 it('should relay getNetworkInfo', async () => {
   const hosts = pool.hosts;
   const addr = new Address();
   const btc = Amount.btc;
-  const locals = [
-    { 'address': '2601:586:4005:d388:36f3:9aff:fe2b:e125',
-      'port': 48444,
-      'score': 1  }];
 
   addr.network = node.network;
 
