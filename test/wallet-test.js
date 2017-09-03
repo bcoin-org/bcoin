@@ -27,7 +27,7 @@ const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
 const workers = new WorkerPool({
-  enabled: false
+  enabled: true
 });
 
 const wdb = new WalletDB({
