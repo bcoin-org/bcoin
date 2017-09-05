@@ -64,11 +64,9 @@
     "lint": "eslint $(cat .eslintfiles) || exit 0",
     "lint-file": "eslint",
     "test": "mocha --reporter spec test/*.js",
-    "test-browser":
-      "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec test/*.js",
+    "test-browser": "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec test/*.js",
     "test-file": "mocha --reporter spec",
-    "test-file-browser":
-      "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec",
+    "test-file-browser": "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec",
     "webpack": "webpack --config webpack.browser.js",
     "webpack-browser": "webpack --config webpack.browser.js",
     "webpack-compat": "webpack --config webpack.compat.js",
