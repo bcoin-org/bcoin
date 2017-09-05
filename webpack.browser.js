@@ -27,10 +27,6 @@ module.exports = {
       'process.env.BCOIN_WORKER_FILE':
         str(env.BCOIN_WORKER_FILE || '/bcoin-worker.js')
     }),
-    new UglifyJsPlugin({
-      compress: {
-        warnings: true
-      }
-    })
+    new webpack.optimize.UglifyJsPlugin()
   ]
 };

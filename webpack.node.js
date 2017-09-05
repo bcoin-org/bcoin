@@ -40,10 +40,6 @@ module.exports = {
         str(env.BCOIN_WORKER_FILE || 'bcoin-worker.js')
     }),
     new webpack.IgnorePlugin(/^utf-8-validate|bufferutil$/),
-    new UglifyJsPlugin({
-      compress: {
-        warnings: true
-      }
-    })
+    new UglifyJsPlugin()
   ]
 };
