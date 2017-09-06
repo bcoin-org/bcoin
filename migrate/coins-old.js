@@ -600,7 +600,7 @@ function skipCoin(br) {
   }
 
   // Skip past the value.
-  br.skipVarint();
+  br.readVarint();
 
   return br.offset - start;
 }
