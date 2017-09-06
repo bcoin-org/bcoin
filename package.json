@@ -52,6 +52,7 @@
     "webpack": "^3.5.4"
   },
   "main": "./lib/bcoin.js",
+  "react-native": "./rn/bcoin.js",
   "bin": {
     "bcoin": "./bin/bcoin",
     "bcoin-cli": "./bin/cli",
@@ -70,6 +71,8 @@
     "webpack": "webpack --config webpack.browser.js",
     "webpack-browser": "webpack --config webpack.browser.js",
     "webpack-compat": "webpack --config webpack.compat.js",
-    "webpack-node": "webpack --config webpack.node.js"
+    "webpack-node": "webpack --config webpack.node.js",
+    "webpack-rn": "webpack --config webpack.rn.js",
+    "prepare": "npm run webpack-rn"
   }
 }

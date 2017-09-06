@@ -2,5 +2,6 @@ node_modules/
 docs/reference/
 docker_data/
 browser/bcoin*
+rn/*
 package-lock.json
 npm-debug.log
