@@ -197,7 +197,7 @@ describe('Chain', function() {
 
     assert(forked);
     assert.strictEqual(chain.tip.hash, block.hash('hex'));
-    assert(chain.tip.chainwork.cmp(tip1.chainwork) > 0);
+    assert(chain.tip.chainwork.gt(tip1.chainwork));
   });
 
   it('should have correct chain value', () => {
