@@ -1,38 +1,34 @@
 'use strict';
 
-const Coins = require('../lib/coins/coins');
+const CoinView = require('../lib/coins/coinview');
+const BufferReader = require('../lib/utils/reader');
+const StaticWriter = require('../lib/utils/writer');
 const common = require('../test/util/common');
 const bench = require('./bench');
 
-const [tx] = common.readTX('tx5').getTX();
-const coins = Coins.fromTX(tx, 1);
-const raw = coins.toRaw();
+const [tx, view] = common.readTX('tx3').getTX();
 
 {
   const end = bench('serialize');
 
-  for (let i = 0; i < 10000; i++)
-    coins.toRaw();
-
-  end(10000);
-}
-
-{
-  const end = bench('parse');
-
-  for (let i = 0; i < 10000; i++)
-    Coins.fromRaw(raw);
-
-  end(10000);
-}
-
-{
-  const end = bench('get');
-
-  for (let i = 0; i < 10000; i++) {
-    for (let j = 0; j < coins.outputs.length; j++)
-      coins.get(j);
+  for (let i = 0; i < 10000000; i++) {
+    const bw = new StaticWriter(view.getSize(tx));
+    view.toWriter(bw, tx).render();
   }
 
-  end(10000 * coins.outputs.length);
+  end(10000000);
+}
+
+{
+  const bw = new StaticWriter(view.getSize(tx));
+  const raw = view.toWriter(bw, tx).render();
+
+  const end = bench('parse');
+
+  for (let i = 0; i < 10000000; i++) {
+    const br = new BufferReader(raw);
+    CoinView.fromReader(br, tx);
+  }
+
+  end(10000000);
 }

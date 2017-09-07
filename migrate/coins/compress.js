@@ -218,7 +218,7 @@ function skipOutput(br) {
   const start = br.offset;
 
   // Skip past the value.
-  br.skipVarint();
+  br.readVarint();
 
   // Skip past the compressed scripts.
   switch (br.readU8()) {

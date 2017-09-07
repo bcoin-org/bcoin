@@ -4,15 +4,14 @@
 'use strict';
 
 const assert = require('./util/assert');
-const fs = require('../lib/utils/fs');
 const GCSFilter = require('../lib/utils/gcs');
 const random = require('../lib/crypto/random');
-const Block = require('../lib/primitives/block');
 const Outpoint = require('../lib/primitives/outpoint');
 const Address = require('../lib/primitives/address');
+const common = require('./util/common');
 
-const raw = fs.readFileSync(`${__dirname}/data/block928927.raw`);
-const block = Block.fromRaw(raw);
+const block928927 = common.readBlock('block928927');
+const [block] = block928927.getBlock();
 
 const key = random.randomBytes(16);
 const P = 20;
