@@ -16,7 +16,12 @@ const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
+const IP = require('../lib/utils/ip');
 const encoding = require('../lib/utils/encoding');
+const Opcode = require('../lib/script/opcode');
+const common = require('../lib/script/common');
+const opcodes = common.opcodes;
+
 
 const node = new FullNode({
   network: 'regtest',
@@ -75,7 +80,13 @@ async function toDeployment(id, version, status) {
   };
 }
 
-async function pruned(height) {
+async function parseIP(address, network) {
+    return IP.fromHostname(address, node.network.port);
+};
+
+
+async function pruned() {
+  let height;
   let hash = await chain.tip.hash;
 
   if (height != null)
@@ -87,7 +98,6 @@ async function pruned(height) {
   unlock();
 
 }
-
 
 describe('RPC', function() {
   this.timeout(5000);
@@ -197,7 +207,6 @@ it('should validate an address', async () => {
 });
 
 it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
-  const deployments = chain.options.network.deployments;
   const tip = chain.tip;
   const forks = {};
 
@@ -240,7 +249,7 @@ it('should relay blockchain info (eg blocks,headers,chainwork)', async () => {
 
 it('should relay chaintips', async () => {
   const tips = await chain.db.getTips();
-  const findFork = chain.tip.isMainChain();
+  const findFork = chain.tip.hash || chain.network.genesis.hash;
 
   const json = await node.rpc.call({
     method: 'getchaintips',
@@ -376,11 +385,18 @@ it('should decode valid P2SH output data', async () => {
  });
 
 it('should relay getNetworkInfo', async () => {
-  const hosts = pool.hosts;
   const addr = new Address();
   const btc = Amount.btc;
+  const services = {};
 
-  addr.network = node.network;
+  for (const local of pool.hosts.local) {
+    services[local] = {
+      address: local.addr,
+      port: node.network.port,
+      score: 1
+    }
+    return services;
+  };
 
   const json = await node.rpc.call({
     method: 'getnetworkinfo'
@@ -398,9 +414,20 @@ it('should relay getNetworkInfo', async () => {
       networks: [],
       relayfee: btc(addr.network.minRelay, true),
       incrementalfee: 0,
-      localaddresses: [],
+      localaddresses: local,
       warnings: ''
    },
+    error: null,
+    id: null
+  })
+});
+
+it('should relay peers connected to the mempool', async () => {
+  const json = await node.rpc.call({
+    method: 'getconnectioncount'
+  }, {});
+  assert.deepStrictEqual(json, {
+    result: pool.peers.size(),
     error: null,
     id: null
   })
