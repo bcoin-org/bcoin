@@ -1,6 +1,6 @@
 {
   "name": "bcoin",
-  "version": "1.0.0-beta.14",
+  "version": "1.0.0-beta.15",
   "description": "Bitcoin bike-shed",
   "license": "MIT",
   "repository": "git://github.com/bcoin-org/bcoin.git",
