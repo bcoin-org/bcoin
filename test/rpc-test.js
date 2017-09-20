@@ -18,10 +18,6 @@ const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 const IP = require('../lib/utils/ip');
 const encoding = require('../lib/utils/encoding');
-const Opcode = require('../lib/script/opcode');
-const common = require('../lib/script/common');
-const opcodes = common.opcodes;
-
 
 const node = new FullNode({
   network: 'regtest',
@@ -79,10 +75,6 @@ async function toDeployment(id, version, status) {
     }
   };
 }
-
-async function parseIP(address, network) {
-    return IP.fromHostname(address, node.network.port);
-};
 
 
 async function pruned() {
