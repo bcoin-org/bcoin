@@ -180,6 +180,15 @@ it('should submit a block', async () => {
 });
 
 
+it('should invalidate a block', async () => {
+  const hash = chain.tip.hash;
+  const invalid = await chain.invalidate(hash);
+  const json = await node.rpc.call({
+    method: 'invalidateblock',
+    params: [invalid]
+  }, {})
+});
+
 it('should validate an address', async () => {
   const addr = new Address();
   addr.network = node.network;
