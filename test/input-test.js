@@ -4,26 +4,40 @@
 'use strict';
 
 const Input = require('../lib/primitives/input');
+const util = require('../lib/utils/util');
+const BufferReader = require('../lib/utils/reader');
 const assert = require('./util/assert');
 const common = require('./util/common');
 
 // Take input rawbytes from the raw data format
+// p2pkh
 const tx1 = common.readTX('tx1');
 const input1 = tx1.getRaw().slice(5, 154);
 
-// Take input rawbytes from the raw data format
+// multisig
 const tx2 = common.readTX('tx3');
 const input2 = tx2.getRaw().slice(152, 339);
 
-// Take input rawbytes from the raw data format
+// p2sh multisig
 const tx3 = common.readTX('tx4');
 const input3 = tx3.getRaw().slice(5, 266);
+
+const bip69tests = require('./data/bip69');
 
 describe('Input', function() {
   it('should return same raw', () => {
     [input1, input2, input3].forEach((rawinput) => {
       const raw = rawinput.slice();
       const input = Input.fromRaw(raw);
+
+      assert.bufferEqual(raw, input.toRaw());
+    });
+  });
+
+  it('should return same raw on fromReader', () => {
+    [input1, input2, input3].forEach((rawinput) => {
+      const raw = rawinput.slice();
+      const input = Input.fromReader(new BufferReader(raw));
 
       assert.bufferEqual(raw, input.toRaw());
     });
@@ -42,6 +56,7 @@ describe('Input', function() {
 
     assert.strictEqual(type, 'pubkeyhash');
     assert.strictEqual(addr, '1PM9ZgAV8Z4df1md2zRTF98tPjzTAfk2a6');
+    assert.strictEqual(input.isCoinbase(), false);
 
     assert.strictEqual(input.isFinal(), true);
     assert.strictEqual(input.isRBF(), false);
@@ -64,6 +79,7 @@ describe('Input', function() {
 
     assert.strictEqual(type, 'multisig');
     assert.strictEqual(addr, null);
+    assert.strictEqual(input.isCoinbase(), false);
 
     assert.strictEqual(input.isFinal(), true);
     assert.strictEqual(input.isRBF(), false);
@@ -91,6 +107,7 @@ describe('Input', function() {
     assert.strictEqual(type, 'scripthash');
     assert.strictEqual(subtype, 'multisig');
     assert.strictEqual(addr, '3416sTvfjDT8YPJ6PywJE1Pm2GgWiv2guz');
+    assert.strictEqual(input.isCoinbase(), false);
 
     assert.strictEqual(input.isFinal(), false);
     assert.strictEqual(input.isRBF(), true);
@@ -100,6 +117,8 @@ describe('Input', function() {
     assert.bufferEqual(prevout, rawprevout);
     assert.bufferEqual(redeem, rawredeem);
   });
+
+  // it('should parse p2wpkh')
 
   it('should parse coinbase input', () => {
     const rawprevout = Buffer.from('' +
@@ -132,6 +151,7 @@ describe('Input', function() {
     const prevout = input.prevout.toRaw();
 
     assert.strictEqual(type, 'coinbase');
+    assert.strictEqual(input.isCoinbase(), true);
 
     assert.strictEqual(input.isFinal(), true);
     assert.strictEqual(input.isRBF(), false);
@@ -161,11 +181,80 @@ describe('Input', function() {
     const prevout = input.prevout.toRaw();
 
     assert.strictEqual(type, 'nonstandard');
+    assert.strictEqual(input.isCoinbase(), false);
 
     assert.strictEqual(input.isFinal(), true);
     assert.strictEqual(input.isRBF(), false);
+    assert.strictEqual(input.getSize(), raw.length);
 
     assert.bufferEqual(input.script.toRaw(), rawscript.slice(1));
     assert.bufferEqual(prevout, rawprevout);
+  });
+
+  it('should be the same from same raw', () => {
+    const raw = input1.slice();
+    const inputObject1 = Input.fromRaw(raw);
+    const inputObject2 = Input.fromRaw(raw);
+    const equals = inputObject1.equals(inputObject2);
+
+    assert.strictEqual(equals, true);
+  });
+
+  it('should clone input correctly', () => {
+    const raw = input1.slice();
+    const inputObject1 = Input.fromRaw(raw);
+    const inputObject2 = inputObject1.clone();
+    const equals = inputObject1.equals(inputObject2);
+
+    assert.strictEqual(inputObject1 !== inputObject2, true);
+    assert.strictEqual(equals, true);
+  });
+
+  it('should create input from Options', () => {
+    const raw = input3.slice();
+    const rawscript = raw.slice(37, 257);
+
+    const options = {
+      prevout: {
+        hash: '8759d7397a86d6c42dfe2c55612e523d' +
+              '171e51708fec9e289118deb5ba994001',
+        index: 1
+      },
+      script: rawscript,
+      sequence: 0
+    };
+
+    const inputRaw = Input.fromRaw(raw);
+    const inputOptions = Input.fromOptions(options);
+
+    assert.strictEqual(inputRaw.equals(inputOptions), true);
+  });
+
+  describe('BIP69', () => {
+    bip69tests.inputs.forEach((test) => {
+      it(`should sort: ${test.description}`, () => {
+        const inputs = test.inputs.map((prevout, i) => {
+          const input = Input.fromOptions({
+            prevout: {
+              hash: util.revHex(prevout.txId),
+              index: prevout.vout
+            }
+          });
+
+          // to compare indexes
+          input.i = i;
+
+          return input;
+        });
+
+        const expected = test.expected;
+
+        inputs.sort((a, b) => {
+          return a.compare(b);
+        });
+
+        assert.deepStrictEqual(inputs.map(input => input.i), expected);
+      });
+    });
   });
 });
