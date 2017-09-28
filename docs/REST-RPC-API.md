@@ -811,9 +811,9 @@ Authentication with the API server must be completed before any other events
 will be accepted.
 
 Note that even if the server API key is disabled on the test server, the
-`auth` event must still be sent to complete the handshake.
+`wallet auth` event must still be sent to complete the handshake.
 
-`emit('auth', 'server-api-key')`
+`emit('wallet auth', 'server-api-key')`
 
 The server will respond with a socket.io ACK packet once auth is completed.
 
