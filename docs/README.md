@@ -1,11 +1,11 @@
 Welcome to the bcoin docs!
 
 ## Getting Started
-- [Tutorials][tutorials]
 - [Getting Started][getting-started]
 - [Configuration][configuration]
-- [Design][design]
 - [Wallet System][wallet-system]
+- [Design][design]
+- [Guides][guides]
 
 ## Running
 - [Bcoin CLI][cli]
@@ -26,23 +26,16 @@ Welcome to the bcoin docs!
 - [Create and Sign TX][example-tx-create-sign]
 - [Get Transaction from Chain][example-tx-from-chain]
 
-## Advanced
-- [Working with transactions][work-transactions]
-- [Scripting][scripting]
-
-[tutorials]: http://bcoin.io/guide-tutorial-list.html
 
 [getting-started]: Beginner's-Guide.md
 [configuration]: Configuration.md
 [design]: Design.md
 [wallet-system]: Wallet-System.md
+[guides]: http://bcoin.io/guides.html
 
 [cli]: CLI.md
 [browser]: Running-in-the-browser.md
-[rest-rpc]: REST-RPC-API.md
-
-[work-transactions]: Working-with-transactions.md
-[scripting]: Scripting.md
+[rest-rpc]: http://bcoin.io/api-docs/index.html#introduction
 
 [example-p2p]: Examples/connect-to-the-p2p-network.js
 [example-blockchain]: Examples/create-a-blockchain-and-mempool.js
