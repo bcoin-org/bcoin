@@ -10,7 +10,7 @@ const FlatFileDB = require('../lib/db/ffldb');
 
 const TESTDB = './ffldb-test';
 
-const ffldb = new FlatFileDB(TESTDB);
+const ffldb = new FlatFileDB(TESTDB, {'network': 'simnet'});
 
 const rm = async (dir) => {
   const files = await fs.readdir(dir);
