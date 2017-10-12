@@ -58,7 +58,8 @@ CLI.prototype.createWallet = async function createWallet() {
 
   if (this.config.has('watch')) {
     options.watchOnly = true;
-    options.accountKey = this.config.str('watch');
+    if (this.config.str('watch') != 'true')
+      options.accountKey = this.config.str('watch');
   }
 
   const wallet = await this.client.createWallet(options);
