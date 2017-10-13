@@ -4,7 +4,6 @@ const assert = require('../test/util/assert');
 const fs = require('../lib/utils/fs');
 const path = require('path');
 const bench = require('./bench');
-const co = require('../lib/utils/co');
 const networks = require('../lib/protocol/networks');
 const FlatFileDB = require('../lib/db/ffldb');
 
@@ -27,8 +26,7 @@ const rm = async (dir) => {
 };
 
 (async () => {
-  const open = co.promisify(ffldb.open);
-  await open.call(ffldb);
+  await ffldb.open();
 
   // Block
   {
@@ -43,8 +41,7 @@ const rm = async (dir) => {
     end(1);
   }
 
-  const close = co.promisify(ffldb.close);
-  await close.call(ffldb);
+  await ffldb.close();
 
   await rm(TESTDB);
 })();
