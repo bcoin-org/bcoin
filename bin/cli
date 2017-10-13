@@ -52,15 +52,9 @@ CLI.prototype.createWallet = async function createWallet() {
     n: this.config.uint('n'),
     witness: this.config.bool('witness'),
     passphrase: this.config.str('passphrase'),
-    watchOnly: false,
-    accountKey: null
+    watchOnly: this.config.has('key') ? true : this.config.bool('watch'),
+    accountKey: this.config.str('key')
   };
-
-  if (this.config.has('watch')) {
-    options.watchOnly = true;
-    if (this.config.str('watch') != 'true')
-      options.accountKey = this.config.str('watch');
-  }
 
   const wallet = await this.client.createWallet(options);
 
@@ -127,7 +121,7 @@ CLI.prototype.createAccount = async function createAccount() {
     m: this.config.uint('m'),
     n: this.config.uint('n'),
     witness: this.config.bool('witness'),
-    accountKey: this.config.str('watch')
+    accountKey: this.config.str('key')
   };
 
   const account = await this.wallet.createAccount(name, options);
