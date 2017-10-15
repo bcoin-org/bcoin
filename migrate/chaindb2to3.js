@@ -274,13 +274,10 @@ async function cleanupIndex() {
   let batch = db.batch();
   let total = 0;
 
-  for (;;) {
-    const item = await iter.next();
+  while (await iter.next()) {
+    const {key} = iter;
 
-    if (!item)
-      break;
-
-    batch.del(item.key);
+    batch.del(key);
 
     if (++total % 10000 === 0) {
       console.log('Cleaned up %d undo records.', total);

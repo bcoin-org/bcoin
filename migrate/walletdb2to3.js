@@ -61,15 +61,13 @@ async function updatePathMap() {
 
   console.log('Migrating path map.');
 
-  for (;;) {
-    const item = await iter.next();
-
-    if (!item)
-      break;
+  while (await iter.next()) {
+    const {key, value} = iter;
 
     total++;
-    const hash = layout.pp(item.key);
-    const oldPaths = parsePaths(item.value, hash);
+
+    const hash = layout.pp(key);
+    const oldPaths = parsePaths(value, hash);
     const keys = Object.keys(oldPaths);
 
     for (let i = 0; i < keys.length; i++) {
@@ -91,7 +89,7 @@ async function updatePathMap() {
       batch.put(layout.P(key, hash), path.toRaw());
     }
 
-    batch.put(item.key, serializeWallets(keys.sort()));
+    batch.put(key, serializeWallets(keys.sort()));
   }
 
   console.log('Migrated %d paths.', total);

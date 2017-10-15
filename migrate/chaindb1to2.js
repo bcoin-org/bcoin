@@ -120,14 +120,10 @@ async function reserializeCoins() {
     values: true
   });
 
-  for (;;) {
-    const item = await iter.next();
-
-    if (!item)
-      break;
-
-    const hash = item.key.toString('hex', 1, 33);
-    const old = OldCoins.fromRaw(item.value, hash);
+  while (await iter.next()) {
+    const {key, value} = iter;
+    const hash = key.toString('hex', 1, 33);
+    const old = OldCoins.fromRaw(value, hash);
 
     const coins = new Coins();
     coins.version = old.version;
@@ -153,7 +149,7 @@ async function reserializeCoins() {
 
     coins.cleanup();
 
-    batch.put(item.key, coins.toRaw());
+    batch.put(key, coins.toRaw());
 
     if (++total % 100000 === 0)
       console.log('Reserialized %d coins.', total);

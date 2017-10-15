@@ -83,14 +83,10 @@ async function updateEndian() {
     values: true
   });
 
-  for (;;) {
-    const item = await iter.next();
-
-    if (!item)
-      break;
-
-    batch.del(item.key);
-    batch.put(makeKey(item.key), item.value);
+  while (await iter.next()) {
+    const {key, value} = iter;
+    batch.del(key);
+    batch.put(makeKey(key), value);
     total++;
   }
 
