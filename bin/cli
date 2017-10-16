@@ -165,7 +165,7 @@ CLI.prototype.getWallet = async function getWallet() {
 CLI.prototype.getTX = async function getTX() {
   const hash = this.config.str(0);
 
-  if (util.isBase58(hash)) {
+  if (util.isBase58(hash) || util.isBech32(hash)) {
     const txs = await this.client.getTXByAddress(hash);
     this.log(txs);
     return;
@@ -201,7 +201,7 @@ CLI.prototype.getCoin = async function getCoin() {
   const hash = this.config.str(0);
   const index = this.config.uint(1);
 
-  if (util.isBase58(hash)) {
+  if (util.isBase58(hash) || util.isBech32(hash)) {
     const coins = await this.client.getCoinsByAddress(hash);
     this.log(coins);
     return;

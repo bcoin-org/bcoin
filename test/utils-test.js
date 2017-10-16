@@ -32,6 +32,16 @@ const base58Tests = [
   ['00000000000000000000', '1111111111']
 ];
 
+const validBech32Tests = [
+  'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4',
+  'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7',
+  'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw50'
+  + '8d6qejxtdg4y5r3zarvary0c5xw7k7grplx',
+  'BC1SW50QA3JX3S',
+  'bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj',
+  'tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy'
+];
+
 const unsigned = [
   new U64('ffeeffee', 16),
   new U64('001fffeeffeeffee', 16),
@@ -243,5 +253,11 @@ describe('Utils', function() {
     });
     assert.strictEqual(validator.bool('shouldBeTrue'), true);
     assert.strictEqual(validator.bool('shouldBeFalse'), false);
+  });
+
+  it('should validate bech32 addresses based only on string data', () => {
+    for (const bech32addr of validBech32Tests) {
+      assert.strictEqual(util.isBech32(bech32addr), true);
+    }
   });
 });
