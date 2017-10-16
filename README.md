@@ -38,7 +38,7 @@ See the [Beginner's Guide][guide] for more in-depth installation instructions.
 ## Documentation
 
 - API Docs: http://bcoin.io/docs/
-- REST Docs: [docs/REST-RPC-API](docs/REST-RPC-API.md)
+- REST Docs: http://bcoin.io/api-docs/index.html
 - Docs: [docs/](docs/README.md)
 
 ## Support
