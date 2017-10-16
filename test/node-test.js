@@ -582,7 +582,7 @@ describe('Node', function() {
 
     const tx = mtx.toTX();
 
-    await wallet.db.addTX(tx);
+    await wallet.wdb.addTX(tx);
 
     const missing = await node.mempool.addTX(tx);
     assert(!missing);
@@ -607,7 +607,7 @@ describe('Node', function() {
 
     const tx = mtx.toTX();
 
-    await wallet.db.addTX(tx);
+    await wallet.wdb.addTX(tx);
 
     const missing = await node.mempool.addTX(tx);
     assert(!missing);
