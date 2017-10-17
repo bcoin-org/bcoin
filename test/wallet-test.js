@@ -118,14 +118,14 @@ async function testP2SH(witness, nesting) {
   const carol = await wdb.create(options);
   const recipient = await wdb.create();
 
-  await alice.addSharedKey(bob.account.accountKey);
-  await alice.addSharedKey(carol.account.accountKey);
+  await alice.addSharedKey(0, bob.account.accountKey);
+  await alice.addSharedKey(0, carol.account.accountKey);
 
-  await bob.addSharedKey(alice.account.accountKey);
-  await bob.addSharedKey(carol.account.accountKey);
+  await bob.addSharedKey(0, alice.account.accountKey);
+  await bob.addSharedKey(0, carol.account.accountKey);
 
-  await carol.addSharedKey(alice.account.accountKey);
-  await carol.addSharedKey(bob.account.accountKey);
+  await carol.addSharedKey(0, alice.account.accountKey);
+  await carol.addSharedKey(0, bob.account.accountKey);
 
   // Our p2sh address
   const addr1 = alice.account[receive].getAddress();
@@ -262,15 +262,8 @@ describe('Wallet', function() {
 
   it('should create and get wallet', async () => {
     const wallet1 = await wdb.create();
-
-    await wallet1.destroy();
-
     const wallet2 = await wdb.get(wallet1.id);
-
-    assert(wallet1 !== wallet2);
-    assert(wallet1.master !== wallet2.master);
-    assert(wallet1.master.key.equals(wallet2.master.key));
-    assert(wallet1.account.accountKey.equals(wallet2.account.accountKey));
+    assert(wallet1 === wallet2);
   });
 
   it('should sign/verify p2pkh tx', async () => {
@@ -295,7 +288,7 @@ describe('Wallet', function() {
     const xpriv = HD.PrivateKey.generate();
     const key = xpriv.deriveAccount(44, 0).toPublic();
 
-    await wallet.addSharedKey(key);
+    await wallet.addSharedKey(0, key);
 
     const script = Script.fromMultisig(1, 2, [
       wallet.account.receive.getPublicKey(),
@@ -684,7 +677,7 @@ describe('Wallet', function() {
     assert.strictEqual(t2.getSize(), 521);
     assert.strictEqual(t2.getVirtualSize(), 521);
 
-    let balance;
+    let balance = null;
     bob.once('balance', (b) => {
       balance = b;
     });
@@ -927,6 +920,7 @@ describe('Wallet', function() {
         passphrase: 'foo'
       });
       await wallet.destroy();
+      wdb.unregister(wallet);
     }
 
     const wallet = await wdb.get('foobar');
@@ -1156,7 +1150,7 @@ describe('Wallet', function() {
 
   it('should get range of txs', async () => {
     const wallet = currentWallet;
-    const txs = await wallet.getRange({
+    const txs = await wallet.getRange(null, {
       start: util.now() - 1000
     });
     assert.strictEqual(txs.length, 2);
