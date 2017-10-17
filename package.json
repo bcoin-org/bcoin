@@ -68,7 +68,7 @@
     "test-browser": "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec test/*.js",
     "test-file": "mocha --reporter spec",
     "test-file-browser": "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec",
-    "test-ci": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- -t 20000 --reporter spec test/*.js",
+    "test-ci": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- --reporter spec test/*.js",
     "webpack": "webpack --config webpack.browser.js",
     "webpack-browser": "webpack --config webpack.browser.js",
     "webpack-compat": "webpack --config webpack.compat.js",
