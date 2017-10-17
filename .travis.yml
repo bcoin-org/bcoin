@@ -9,4 +9,12 @@ cache:
 script:
   - "npm run test-ci"
 
+before_install:
+  # Recompile modules
+  - "test ! -d node_modules || npm prune"
+  - "test ! -d node_modules || npm rebuild"
+env:
+  - BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1
+  - BCOIN_NO_NATIVE=0 BCOIN_NO_SECP256K1=0
+
 after_script: "npm install coveralls && cat ./coverage/lcov.info | coveralls"
