@@ -44,8 +44,8 @@ async function mineBlock(tip, tx) {
 
   spend.addTX(tx, 0);
 
-  spend.addOutput(wallet.getReceive(), 25 * 1e8);
-  spend.addOutput(wallet.getChange(), 5 * 1e8);
+  spend.addOutput(await wallet.receiveAddress(), 25 * 1e8);
+  spend.addOutput(await wallet.changeAddress(), 5 * 1e8);
 
   spend.setLocktime(chain.height);
 
@@ -94,7 +94,7 @@ describe('Node', function() {
   it('should open walletdb', async () => {
     wallet = await wdb.create();
     miner.addresses.length = 0;
-    miner.addAddress(wallet.getReceive());
+    miner.addAddress(await wallet.receiveAddress());
   });
 
   it('should mine a block', async () => {
@@ -258,8 +258,8 @@ describe('Node', function() {
     assert.strictEqual(balance.unconfirmed, 1250 * 1e8);
     assert.strictEqual(balance.confirmed, 750 * 1e8);
 
-    assert(wallet.account.receiveDepth >= 7);
-    assert(wallet.account.changeDepth >= 6);
+    assert((await wallet.receiveDepth()) >= 7);
+    assert((await wallet.changeDepth()) >= 6);
 
     assert.strictEqual(wdb.state.height, chain.height);
 
@@ -447,7 +447,7 @@ describe('Node', function() {
 
   it('should rescan for transactions', async () => {
     await wdb.rescan(0);
-    assert.strictEqual(wallet.txdb.state.confirmed, 1289250000000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 1289250000000);
   });
 
   it('should reset miner mempool', async () => {
@@ -572,7 +572,7 @@ describe('Node', function() {
       rate: 100000,
       outputs: [{
         value: 100000,
-        address: wallet.getAddress()
+        address: await wallet.receiveAddress()
       }]
     });
 
@@ -582,7 +582,7 @@ describe('Node', function() {
 
     const tx = mtx.toTX();
 
-    await wallet.wdb.addTX(tx);
+    await wdb.addTX(tx);
 
     const missing = await node.mempool.addTX(tx);
     assert(!missing);
@@ -597,7 +597,7 @@ describe('Node', function() {
       rate: 1000,
       outputs: [{
         value: 50000,
-        address: wallet.getAddress()
+        address: await wallet.receiveAddress()
       }]
     });
 
@@ -607,7 +607,7 @@ describe('Node', function() {
 
     const tx = mtx.toTX();
 
-    await wallet.wdb.addTX(tx);
+    await wdb.addTX(tx);
 
     const missing = await node.mempool.addTX(tx);
     assert(!missing);
