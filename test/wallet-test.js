@@ -19,6 +19,7 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
+const U32 = encoding.U32;
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -26,15 +27,9 @@ const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
 const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
-const workers = new WorkerPool({
-  enabled: true
-});
-
-const wdb = new WalletDB({
-  db: 'memory',
-  verify: true,
-  workers
-});
+const enabled = true;
+const workers = new WorkerPool({ enabled });
+const wdb = new WalletDB({ workers });
 
 let currentWallet = null;
 let importedWallet = null;
@@ -42,27 +37,32 @@ let importedKey = null;
 let doubleSpendWallet = null;
 let doubleSpendCoin = null;
 
-let globalTime = util.now();
-let globalHeight = 1;
+function prevBlock(wdb) {
+  assert(wdb.state.height > 0);
+  return fakeBlock(wdb.state.height - 1);
+};
 
-function nextBlock() {
-  const height = globalHeight++;
-  const time = globalTime++;
+function curBlock(wdb) {
+  return fakeBlock(wdb.state.height);
+};
 
-  const prevHead = encoding.U32(height - 1);
-  const prevHash = digest.hash256(prevHead);
+function nextBlock(wdb) {
+  return fakeBlock(wdb.state.height + 1);
+}
 
-  const head = encoding.U32(height);
-  const hash = digest.hash256(head);
+function fakeBlock(height) {
+  const prev = digest.hash256(U32((height - 1) >>> 0));
+  const hash = digest.hash256(U32(height >>> 0));
+  const root = digest.hash256(U32((height | 0x80000000) >>> 0));
 
   return {
     hash: hash.toString('hex'),
-    height: height,
-    prevBlock: prevHash.toString('hex'),
-    time: time,
-    merkleRoot: encoding.NULL_HASH,
+    prevBlock: prev.toString('hex'),
+    merkleRoot: root.toString('hex'),
+    time: 500000000 + (height * (10 * 60)),
+    bits: 0,
     nonce: 0,
-    bits: 0
+    height: height
   };
 }
 
@@ -73,10 +73,7 @@ function dummyInput() {
 
 async function testP2PKH(witness, nesting) {
   const flags = Script.flags.STANDARD_VERIFY_FLAGS;
-
-  const wallet = await wdb.create({
-    witness
-  });
+  const wallet = await wdb.create({ witness });
 
   const addr = Address.fromString(wallet.getAddress('string'));
 
@@ -157,11 +154,9 @@ async function testP2SH(witness, nesting) {
     fund.addOutput(nesting ? nestedAddr1 : addr1, 5460 * 10);
 
     // Simulate a confirmation
-    const block = nextBlock();
-
     assert.strictEqual(alice.account[receiveDepth], 1);
 
-    await wdb.addBlock(block, [fund.toTX()]);
+    await wdb.addBlock(nextBlock(wdb), [fund.toTX()]);
 
     assert.strictEqual(alice.account[receiveDepth], 2);
     assert.strictEqual(alice.account.changeDepth, 1);
@@ -205,9 +200,7 @@ async function testP2SH(witness, nesting) {
 
   // Simulate a confirmation
   {
-    const block = nextBlock();
-
-    await wdb.addBlock(block, [tx]);
+    await wdb.addBlock(nextBlock(wdb), [tx]);
 
     assert.strictEqual(alice.account[receiveDepth], 2);
     assert.strictEqual(alice.account.changeDepth, 2);
@@ -360,53 +353,39 @@ describe('Wallet', function() {
     // balance: 11000
     await alice.sign(f1);
 
-    const fake = new MTX();
-    fake.addTX(t1, 1); // 1000 (already redeemed)
-    fake.addOutput(alice.getAddress(), 500);
-
-    // Script inputs but do not sign
-    await alice.template(fake);
-    // Fake signature
-    const input = fake.inputs[0];
-    input.script.setData(0, encoding.ZERO_SIG);
-    input.script.compile();
-    // balance: 11000
-
-    // Fake TX should temporarily change output.
     {
-      await wdb.addTX(fake.toTX());
       await wdb.addTX(t4.toTX());
-
-      const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 22500);
-    }
-
-    {
-      await wdb.addTX(t1.toTX());
-
-      const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 72500);
-    }
-
-    {
-      await wdb.addTX(t2.toTX());
-
-      const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 46500);
-    }
-
-    {
-      await wdb.addTX(t3.toTX());
 
       const balance = await alice.getBalance();
       assert.strictEqual(balance.unconfirmed, 22000);
     }
 
     {
+      await wdb.addTX(t1.toTX());
+
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 73000);
+    }
+
+    {
+      await wdb.addTX(t2.toTX());
+
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 71000);
+    }
+
+    {
+      await wdb.addTX(t3.toTX());
+
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 69000);
+    }
+
+    {
       await wdb.addTX(f1.toTX());
 
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.unconfirmed, 58000);
 
       const txs = await alice.getHistory();
       assert(txs.some((wtx) => {
@@ -423,10 +402,45 @@ describe('Wallet', function() {
         return wtx.tx.hash('hex') === f1.hash('hex');
       }));
     }
+
+    // Should recover from missed txs on block.
+    await wdb.addBlock(nextBlock(wdb), [
+      t1.toTX(),
+      t2.toTX(),
+      t3.toTX(),
+      t4.toTX(),
+      f1.toTX()
+    ]);
+
+    {
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.confirmed, 11000);
+
+      const txs = await alice.getHistory();
+      assert(txs.some((wtx) => {
+        return wtx.hash === f1.hash('hex');
+      }));
+    }
+
+    {
+      const balance = await bob.getBalance();
+      assert.strictEqual(balance.unconfirmed, 10000);
+      assert.strictEqual(balance.confirmed, 10000);
+
+      const txs = await bob.getHistory();
+      assert(txs.some((wtx) => {
+        return wtx.tx.hash('hex') === f1.hash('hex');
+      }));
+    }
+
   });
 
   it('should cleanup spenders after double-spend', async () => {
     const wallet = doubleSpendWallet;
+
+    // Reorg and unconfirm all previous txs.
+    await wdb.removeBlock(curBlock(wdb));
 
     {
       const txs = await wallet.getHistory();
@@ -441,6 +455,7 @@ describe('Wallet', function() {
     {
       const balance = await wallet.getBalance();
       assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.confirmed, 0);
     }
 
     {
@@ -468,14 +483,6 @@ describe('Wallet', function() {
   });
 
   it('should handle missed txs without resolution', async () => {
-    const wdb = new WalletDB({
-      name: 'wallet-test',
-      db: 'memory',
-      verify: false
-    });
-
-    await wdb.open();
-
     const alice = await wdb.create();
     const bob = await wdb.create();
 
@@ -534,20 +541,20 @@ describe('Wallet', function() {
     {
       await wdb.addTX(t2.toTX());
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 47000);
+      assert.strictEqual(balance.unconfirmed, 71000);
     }
 
     {
       await wdb.addTX(t3.toTX());
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 22000);
+      assert.strictEqual(balance.unconfirmed, 69000);
     }
 
     {
       await wdb.addTX(f1.toTX());
 
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.unconfirmed, 58000);
 
       const txs = await alice.getHistory();
       assert(txs.some((wtx) => {
@@ -565,10 +572,14 @@ describe('Wallet', function() {
       }));
     }
 
-    await wdb.addTX(t2.toTX());
-    await wdb.addTX(t3.toTX());
-    await wdb.addTX(t4.toTX());
-    await wdb.addTX(f1.toTX());
+    // Should recover from missed txs on block.
+    await wdb.addBlock(nextBlock(wdb), [
+      t1.toTX(),
+      t2.toTX(),
+      t3.toTX(),
+      t4.toTX(),
+      f1.toTX()
+    ]);
 
     {
       const balance = await alice.getBalance();
@@ -1067,9 +1078,7 @@ describe('Wallet', function() {
     t2.addOutput(alice.getAddress(), 5460);
     t2.addOutput(alice.getAddress(), 5460);
 
-    const block = nextBlock();
-
-    await wdb.addBlock(block, [t2.toTX()]);
+    await wdb.addBlock(nextBlock(wdb), [t2.toTX()]);
 
     {
       const coins = await alice.getSmartCoins();
@@ -1077,7 +1086,7 @@ describe('Wallet', function() {
 
       for (let i = 0; i < coins.length; i++) {
         const coin = coins[i];
-        assert.strictEqual(coin.height, block.height);
+        assert.strictEqual(coin.height, wdb.state.height);
       }
     }
 
@@ -1104,7 +1113,7 @@ describe('Wallet', function() {
           assert(coin.value < 5460);
           found = true;
         } else {
-          assert.strictEqual(coin.height, block.height);
+          assert.strictEqual(coin.height, wdb.state.height);
         }
         total += coin.value;
       }
@@ -1136,7 +1145,7 @@ describe('Wallet', function() {
           assert(coin.value < 5460);
           found = true;
         } else {
-          assert.strictEqual(coin.height, block.height);
+          assert.strictEqual(coin.height, wdb.state.height);
         }
       }
 
@@ -1337,12 +1346,7 @@ describe('Wallet', function() {
   });
 
   it('should recover from a missed tx', async () => {
-    const wdb = new WalletDB({
-      name: 'wallet-test',
-      db: 'memory',
-      verify: false
-    });
-
+    const wdb = new WalletDB({ workers });
     await wdb.open();
 
     const alice = await wdb.create({
@@ -1393,21 +1397,16 @@ describe('Wallet', function() {
     assert.strictEqual((await alice.getBalance()).unconfirmed, 30000);
 
     // Bob sees t2 on the chain.
-    await bob.add(t2.toTX());
+    await bob.add(t2.toTX(), nextBlock(wdb));
 
     // Bob sees t3 on the chain.
-    await bob.add(t3.toTX());
+    await bob.add(t3.toTX(), nextBlock(wdb));
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
   });
 
   it('should recover from a missed tx and double spend', async () => {
-    const wdb = new WalletDB({
-      name: 'wallet-test',
-      db: 'memory',
-      verify: false
-    });
-
+    const wdb = new WalletDB({ workers });
     await wdb.open();
 
     const alice = await wdb.create({
@@ -1468,10 +1467,10 @@ describe('Wallet', function() {
     assert.strictEqual((await alice.getBalance()).unconfirmed, 30000);
 
     // Bob sees t2a on the chain.
-    await bob.add(t2a.toTX());
+    await bob.add(t2a.toTX(), nextBlock(wdb));
 
     // Bob sees t3 on the chain.
-    await bob.add(t3.toTX());
+    await bob.add(t3.toTX(), nextBlock(wdb));
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
   });
