@@ -19,8 +19,9 @@ Will create a datadir of `~/.bcoin_spv`, containing a chain database, wallet dat
 
 - `config`: Points to a custom config file, not in the prefix directory.
 - `network`: Which network's chainparams to use for the node (main, testnet, regtest, or segnet4) (default: main).
-- `use-workers`: Whether to use a worker process pool for transaction verification (default: true).
-- `max-workers`: Number of worker processes to spawn for transaction verification. By default, the worker pool will be sized based on the number of CPUs/cores in the machine.
+- `workers`: Whether to use a worker process pool for transaction verification (default: true).
+- `workers-size`: Number of worker processes to spawn for transaction verification. By default, the worker pool will be sized based on the number of CPUs/cores in the machine.
+- `workers-timeout`: Worker process execution timeout in milliseconds (default: 120000).
 - `sigcache-size`: Max number of items in signature cache.
 
 ## Node Options
