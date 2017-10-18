@@ -43,7 +43,12 @@ const leveldb = new LevelDOWN(TESTDB);
     await put.call(leveldb, key, value);
     const expected = await get.call(leveldb, key);
     assert.strictEqual(expected.toString(), value);
-    end(1);
+
+    for (let i = 0; i < 1000000; i++) {
+      await get.call(leveldb, key);
+    }
+
+    end(1000000);
   }
 
   const close = co.promisify(leveldb.close);

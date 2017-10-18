@@ -35,10 +35,16 @@ const rm = async (dir) => {
     const block = Buffer.from(networks.main.genesisBlock, 'hex');
     await ffldb.putBlock(key, block);
 
-    const end = bench('block');
     const expected = await ffldb.getBlock(key);
     assert.bufferEqual(expected, block);
-    end(1);
+
+    const end = bench('block');
+
+    for (let i = 0; i < 1000000; i++) {
+      await ffldb.getBlock(key);
+    }
+
+    end(1000000);
   }
 
   await ffldb.close();
