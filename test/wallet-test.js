@@ -479,6 +479,29 @@ describe('Wallet', function() {
     }
   });
 
+  it('should handle double-spend (not our input)', async () => {
+    const wallet = await wdb.create();
+
+    const t1 = new MTX();
+    const input = dummyInput();
+    t1.addInput(input);
+    t1.addOutput(await wallet.receiveAddress(), 50000);
+    await wdb.addTX(t1.toTX());
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+
+    let conflict = false;
+    wallet.on('conflict', () => {
+      conflict = true;
+    });
+
+    const t2 = new MTX();
+    t2.addInput(input);
+    t2.addOutput(new Address(), 5000);
+    await wdb.addTX(t2.toTX());
+    assert(conflict);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 0);
+  });
+
   it('should handle more missed txs', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
