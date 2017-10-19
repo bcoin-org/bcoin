@@ -429,12 +429,12 @@ CLI.prototype.backup = async function backup() {
 CLI.prototype.importKey = async function importKey() {
   const key = this.config.str(0);
   const account = this.config.str('account');
-
+  const passphrase = this.config.str('passphrase');
   if (!key)
     throw new Error('No key for import.');
 
   if (util.isBase58(key)) {
-    await this.wallet.importPrivate(account, key);
+    await this.wallet.importPrivate(account, key, passphrase);
     this.log('Imported private key.');
     return;
   }
