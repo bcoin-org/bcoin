@@ -387,7 +387,8 @@ CLI.prototype.getWalletBlock = async function getWalletBlock() {
 };
 
 CLI.prototype.retoken = async function retoken() {
-  const result = await this.wallet.retoken();
+  const passphrase = this.config.str('passphrase');
+  const result = await this.wallet.retoken(passphrase);
   this.log(result);
 };
 
