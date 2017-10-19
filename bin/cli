@@ -63,12 +63,14 @@ CLI.prototype.createWallet = async function createWallet() {
 
 CLI.prototype.getMaster = async function getMaster() {
   const master = await this.wallet.getMaster();
+
   this.log(master);
 };
 
 CLI.prototype.getKey = async function getKey() {
   const address = this.config.str(0);
   const key = await this.wallet.getKey(address);
+
   this.log(key);
 };
 
@@ -76,40 +78,49 @@ CLI.prototype.getWIF = async function getWIF() {
   const address = this.config.str(0);
   const passphrase = this.config.str('passphrase');
   const key = await this.wallet.getWIF(address, passphrase);
+
   if (!key) {
     this.log('Key not found.');
     return;
   }
+
   this.log(key.privateKey);
 };
 
 CLI.prototype.addSharedKey = async function addSharedKey() {
   const key = this.config.str(0);
   const account = this.config.str('account');
+
   await this.wallet.addSharedKey(account, key);
+
   this.log('Added key.');
 };
 
 CLI.prototype.removeSharedKey = async function removeSharedKey() {
   const key = this.config.str(0);
   const account = this.config.str('account');
+
   await this.wallet.removeSharedKey(account, key);
+
   this.log('Removed key.');
 };
 
 CLI.prototype.getSharedKeys = async function getSharedKeys() {
   const acct = this.config.str([0, 'account']);
   const account = await this.wallet.getAccount(acct);
+
   if (!account) {
     this.log('Account not found.');
     return;
   }
+
   this.log(account.keys);
 };
 
 CLI.prototype.getAccount = async function getAccount() {
   const acct = this.config.str([0, 'account']);
   const account = await this.wallet.getAccount(acct);
+
   this.log(account);
 };
 
@@ -132,18 +143,21 @@ CLI.prototype.createAccount = async function createAccount() {
 CLI.prototype.createAddress = async function createAddress() {
   const account = this.config.str([0, 'account']);
   const addr = await this.wallet.createAddress(account);
+
   this.log(addr);
 };
 
 CLI.prototype.createChange = async function createChange() {
   const account = this.config.str([0, 'account']);
   const addr = await this.wallet.createChange(account);
+
   this.log(addr);
 };
 
 CLI.prototype.createNested = async function createNested() {
   const account = this.config.str([0, 'account']);
   const addr = await this.wallet.createNested(account);
+
   this.log(addr);
 };
 
@@ -215,18 +229,21 @@ CLI.prototype.getCoin = async function getCoin() {
 CLI.prototype.getWalletHistory = async function getWalletHistory() {
   const account = this.config.str('account');
   const txs = await this.wallet.getHistory(account);
+
   this.log(txs);
 };
 
 CLI.prototype.getWalletPending = async function getWalletPending() {
   const account = this.config.str('account');
   const txs = await this.wallet.getPending(account);
+
   this.log(txs);
 };
 
 CLI.prototype.getWalletCoins = async function getWalletCoins() {
   const account = this.config.str('account');
   const coins = await this.wallet.getCoins(account);
+
   this.log(coins);
 };
 
@@ -269,11 +286,13 @@ CLI.prototype.listenWallet = async function listenWallet() {
 CLI.prototype.getBalance = async function getBalance() {
   const account = this.config.str('account');
   const balance = await this.wallet.getBalance(account);
+
   this.log(balance);
 };
 
 CLI.prototype.getMempool = async function getMempool() {
   const txs = await this.client.getMempool();
+
   this.log(txs);
 };
 
@@ -352,13 +371,16 @@ CLI.prototype.signTX = async function signTX() {
 
 CLI.prototype.zapWallet = async function zapWallet() {
   const age = this.config.uint([0, 'age'], 72 * 60 * 60);
+
   await this.wallet.zap(this.config.str('account'), age);
+
   this.log('Zapped!');
 };
 
 CLI.prototype.broadcast = async function broadcast() {
   const raw = this.config.str([0, 'tx']);
   const tx = await this.client.broadcast(raw);
+
   this.log('Broadcasted:');
   this.log(tx);
 };
@@ -366,12 +388,14 @@ CLI.prototype.broadcast = async function broadcast() {
 CLI.prototype.viewTX = async function viewTX() {
   const raw = this.config.str([0, 'tx']);
   const tx = await this.wallet.fill(raw);
+
   this.log(tx);
 };
 
 CLI.prototype.getDetails = async function getDetails() {
   const hash = this.config.str(0);
   const details = await this.wallet.getTX(hash);
+
   this.log(details);
 };
 
@@ -383,18 +407,22 @@ CLI.prototype.getWalletBlocks = async function getWalletBlocks() {
 CLI.prototype.getWalletBlock = async function getWalletBlock() {
   const height = this.config.uint(0);
   const block = await this.wallet.getBlock(height);
+
   this.log(block);
 };
 
 CLI.prototype.retoken = async function retoken() {
   const passphrase = this.config.str('passphrase');
   const result = await this.wallet.retoken(passphrase);
+
   this.log(result);
 };
 
 CLI.prototype.rescan = async function rescan() {
   const height = this.config.uint(0);
+
   await this.client.rescan(height);
+
   this.log('Rescanning...');
 };
 
@@ -411,11 +439,13 @@ CLI.prototype.reset = async function reset() {
 
 CLI.prototype.resend = async function resend() {
   await this.client.resend();
+
   this.log('Resending...');
 };
 
 CLI.prototype.resendWallet = async function resendWallet() {
   await this.wallet.resend();
+
   this.log('Resending...');
 };
 
@@ -431,6 +461,7 @@ CLI.prototype.importKey = async function importKey() {
   const key = this.config.str(0);
   const account = this.config.str('account');
   const passphrase = this.config.str('passphrase');
+
   if (!key)
     throw new Error('No key for import.');
 
@@ -452,19 +483,24 @@ CLI.prototype.importKey = async function importKey() {
 CLI.prototype.importAddress = async function importAddress() {
   const address = this.config.str(0);
   const account = this.config.str('account');
+
   await this.wallet.importAddress(account, address);
+
   this.log('Imported address.');
 };
 
 CLI.prototype.lock = async function lock() {
   await this.wallet.lock();
+
   this.log('Locked.');
 };
 
 CLI.prototype.unlock = async function unlock() {
   const passphrase = this.config.str(0);
   const timeout = this.config.uint(1);
+
   await this.wallet.unlock(passphrase, timeout);
+
   this.log('Unlocked.');
 };
 
