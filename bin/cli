@@ -283,12 +283,12 @@ CLI.prototype.sendTX = async function sendTX() {
   if (this.config.has('script')) {
     outputs.push({
       script: this.config.str('script'),
-      value: this.config.ufixed([0, 'value'], 8)
+      value: this.config.uint([0, 'value'])
     });
   } else {
     outputs.push({
       address: this.config.str([0, 'address']),
-      value: this.config.ufixed([1, 'value'], 8)
+      value: this.config.uint([1, 'value'])
     });
   }
 
@@ -298,13 +298,12 @@ CLI.prototype.sendTX = async function sendTX() {
       value: 0
     });
   }
-
   const options = {
     account: this.config.str('account'),
     passphrase: this.config.str('passphrase'),
     outputs: outputs,
     smart: this.config.bool('smart'),
-    rate: this.config.ufixed('rate', 8),
+    rate: this.config.uint('rate'),
     subtractFee: this.config.bool('subtract-fee')
   };
 
@@ -319,12 +318,12 @@ CLI.prototype.createTX = async function createTX() {
   if (this.config.has('script')) {
     output = {
       script: this.config.str('script'),
-      value: this.config.ufixed([0, 'value'], 8)
+      value: this.config.uint([0, 'value'])
     };
   } else {
     output = {
       address: this.config.str([0, 'address']),
-      value: this.config.ufixed([1, 'value'], 8)
+      value: this.config.uint([1, 'value'])
     };
   }
 
@@ -333,7 +332,7 @@ CLI.prototype.createTX = async function createTX() {
     passphrase: this.config.str('passphrase'),
     outputs: [output],
     smart: this.config.bool('smart'),
-    rate: this.config.ufixed('rate', 8),
+    rate: this.config.uint('rate'),
     subtractFee: this.config.bool('subtract-fee')
   };
 
