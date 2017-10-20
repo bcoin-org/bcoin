@@ -8,6 +8,7 @@ cache:
 
 script:
   - "npm run test-ci"
+  - "npm run lint"
 
 before_install:
   # Recompile modules
