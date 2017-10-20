@@ -1380,8 +1380,7 @@ describe('Wallet', function() {
     t1.addInput(dummyInput());
     t1.addOutput(addr, 50000);
 
-    await alice.add(t1.toTX());
-    await bob.add(t1.toTX());
+    await wdb.addTX(t1.toTX());
 
     // Bob misses this tx!
     const t2 = new MTX();
@@ -1407,16 +1406,18 @@ describe('Wallet', function() {
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 50000);
 
-    await alice.add(t3.toTX());
-    await bob.add(t3.toTX());
+    await wdb.addTX(t3.toTX());
 
     assert.strictEqual((await alice.getBalance()).unconfirmed, 30000);
 
+    // t1 gets confirmed.
+    await wdb.addBlock(nextBlock(wdb), [t1.toTX()]);
+
     // Bob sees t2 on the chain.
-    await bob.add(t2.toTX(), nextBlock(wdb));
+    await wdb.addBlock(nextBlock(wdb), [t2.toTX()]);
 
     // Bob sees t3 on the chain.
-    await bob.add(t3.toTX(), nextBlock(wdb));
+    await wdb.addBlock(nextBlock(wdb), [t3.toTX()]);
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
   });
@@ -1440,8 +1441,7 @@ describe('Wallet', function() {
     t1.addInput(dummyInput());
     t1.addOutput(addr, 50000);
 
-    await alice.add(t1.toTX());
-    await bob.add(t1.toTX());
+    await wdb.addTX(t1.toTX());
 
     // Bob misses this tx!
     const t2a = new MTX();
@@ -1477,16 +1477,18 @@ describe('Wallet', function() {
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 20000);
 
-    await alice.add(t3.toTX());
-    await bob.add(t3.toTX());
+    await wdb.addTX(t3.toTX());
 
     assert.strictEqual((await alice.getBalance()).unconfirmed, 30000);
 
+    // t1 gets confirmed.
+    await wdb.addBlock(nextBlock(wdb), [t1.toTX()]);
+
     // Bob sees t2a on the chain.
-    await bob.add(t2a.toTX(), nextBlock(wdb));
+    await wdb.addBlock(nextBlock(wdb), [t2a.toTX()]);
 
     // Bob sees t3 on the chain.
-    await bob.add(t3.toTX(), nextBlock(wdb));
+    await wdb.addBlock(nextBlock(wdb), [t3.toTX()]);
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
   });
