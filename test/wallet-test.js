@@ -1318,7 +1318,8 @@ describe('Wallet', function() {
 
     const details = await wallet.toDetails(txs);
 
-    assert.strictEqual(details[0].toJSON().id, 'test');
+    assert(details.length > 0);
+    assert.strictEqual(wallet.id, 'test');
   });
 
   it('should change passphrase with encrypted imports', async () => {
