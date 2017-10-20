@@ -551,17 +551,15 @@ describe('Node', function() {
   it('should validate an address', async () => {
     const addr = new Address();
 
-    addr.network = node.network;
-
     const json = await node.rpc.call({
       method: 'validateaddress',
-      params: [addr.toString()]
+      params: [addr.toString(node.network)]
     }, {});
 
     assert.deepStrictEqual(json.result, {
       isvalid: true,
-      address: addr.toString(),
-      scriptPubKey: Script.fromAddress(addr).toJSON(),
+      address: addr.toString(node.network),
+      scriptPubKey: Script.fromAddress(addr, node.network).toJSON(),
       ismine: false,
       iswatchonly: false
     });

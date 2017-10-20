@@ -51,7 +51,7 @@ describe('Input', function() {
     const input = Input.fromRaw(raw);
 
     const type = input.getType();
-    const addr = input.getAddress().toBase58();
+    const addr = input.getAddress().toBase58('main');
     const prevout = input.prevout.toRaw();
 
     assert.strictEqual(type, 'pubkeyhash');
@@ -100,7 +100,7 @@ describe('Input', function() {
 
     const type = input.getType();
     const subtype = input.getSubtype();
-    const addr = input.getAddress().toBase58();
+    const addr = input.getAddress().toBase58('main');
     const prevout = input.prevout.toRaw();
     const redeem = input.getRedeem().toRaw();
 

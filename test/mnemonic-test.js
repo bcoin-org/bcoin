@@ -36,7 +36,7 @@ describe('Mnemonic', function() {
         assert.bufferEqual(mnemonic.toSeed(), seed);
 
         const key = HDPrivateKey.fromMnemonic(mnemonic);
-        assert.strictEqual(key.toBase58(), xpriv);
+        assert.strictEqual(key.toBase58('main'), xpriv);
       });
 
       it(`should create a ${language} mnemonic from phrase (${i})`, () => {
@@ -51,7 +51,7 @@ describe('Mnemonic', function() {
         assert.bufferEqual(mnemonic.toSeed(), seed);
 
         const key = HDPrivateKey.fromMnemonic(mnemonic);
-        assert.strictEqual(key.toBase58(), xpriv);
+        assert.strictEqual(key.toBase58('main'), xpriv);
       });
 
       i += 1;

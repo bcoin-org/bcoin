@@ -73,7 +73,7 @@ async function testP2PKH(witness, nesting) {
   const wallet = await wdb.create({ witness });
 
   const waddr = await wallet.receiveAddress();
-  const addr = Address.fromString(waddr.toString());
+  const addr = Address.fromString(waddr.toString(wdb.network), wdb.network);
 
   assert.strictEqual(addr.type, type);
   assert.strictEqual(addr.type, waddr.type);
@@ -235,19 +235,19 @@ describe('Wallet', function() {
     const addr1 = await wallet.receiveAddress();
     assert(addr1);
 
-    const str = addr1.toString();
-    const addr2 = Address.fromString(str);
+    const str = addr1.toString(wdb.network);
+    const addr2 = Address.fromString(str, wdb.network);
 
     assert(addr2.equals(addr1));
   });
 
   it('should validate existing address', () => {
-    assert(Address.fromString('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
+    assert(Address.fromString('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc', 'main'));
   });
 
   it('should fail to validate invalid address', () => {
     assert.throws(() => {
-      Address.fromString('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc');
+      Address.fromString('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc', 'main');
     });
   });
 
@@ -277,7 +277,7 @@ describe('Wallet', function() {
     });
 
     const xpriv = HD.PrivateKey.generate();
-    const key = xpriv.deriveAccount(44, 0).toPublic();
+    const key = xpriv.deriveAccount(44, 0, 0).toPublic();
 
     await wallet.addSharedKey(0, key);
 
@@ -1303,7 +1303,7 @@ describe('Wallet', function() {
     const details = await wallet.toDetails(txs);
 
     assert(details.some((tx) => {
-      return tx.toJSON().outputs[0].path.name === 'foo';
+      return tx.toJSON(wdb.network).outputs[0].path.name === 'foo';
     }));
   });
 
