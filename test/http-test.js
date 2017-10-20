@@ -60,10 +60,10 @@ describe('HTTP', function() {
   it('should get wallet info', async () => {
     const info = await wallet.getInfo();
     assert.strictEqual(info.id, 'test');
-    assert.typeOf(info.account, 'object');
-    const str = info.account.receiveAddress;
+    const acct = await wallet.getAccount('default');
+    const str = acct.receiveAddress;
     assert.typeOf(str, 'string');
-    addr = Address.fromString(str);
+    addr = Address.fromString(str, node.network);
   });
 
   it('should fill with funds', async () => {
@@ -95,7 +95,7 @@ describe('HTTP', function() {
     await co.timeout(300);
 
     assert(receive);
-    assert.strictEqual(receive.id, 'test');
+    assert.strictEqual(receive.name, 'default');
     assert.strictEqual(receive.type, 'pubkeyhash');
     assert.strictEqual(receive.branch, 0);
     assert(balance);
@@ -116,7 +116,7 @@ describe('HTTP', function() {
       rate: 10000,
       outputs: [{
         value: 10000,
-        address: addr.toString()
+        address: addr.toString(node.network)
       }]
     };
 
@@ -232,11 +232,11 @@ describe('HTTP', function() {
 
   it('should validate an address', async () => {
     const json = await wallet.client.rpc.execute('validateaddress', [
-      addr.toString()
+      addr.toString(node.network)
     ]);
     assert.deepStrictEqual(json, {
       isvalid: true,
-      address: addr.toString(),
+      address: addr.toString(node.network),
       scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
       ismine: false,
       iswatchonly: false

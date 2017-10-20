@@ -182,16 +182,19 @@ describe('Bech32', function() {
   for (const [addr, script] of validAddresses) {
     it(`should have valid address for ${addr}`, () => {
       let ret = null;
+      let network = null;
 
       try {
-        ret = Address.fromBech32(addr, 'main');
+        network = 'main';
+        ret = Address.fromBech32(addr, network);
       } catch (e) {
         ret = null;
       }
 
       if (ret === null) {
         try {
-          ret = Address.fromBech32(addr, 'testnet');
+          network = 'testnet';
+          ret = Address.fromBech32(addr, network);
         } catch (e) {
           ret = null;
         }
@@ -202,7 +205,7 @@ describe('Bech32', function() {
       const output = createProgram(ret.version, ret.hash);
       assert.bufferEqual(output, script);
 
-      const recreate = ret.toBech32();
+      const recreate = ret.toBech32(network);
       assert.strictEqual(recreate, addr.toLowerCase());
     });
   }

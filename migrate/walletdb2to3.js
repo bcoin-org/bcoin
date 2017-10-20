@@ -329,7 +329,6 @@ function keyFromRaw(data, network) {
   const ring = {};
   const p = new BufferReader(data);
 
-  ring.network = bcoin.network.get(network);
   ring.witness = p.readU8() === 1;
 
   const key = p.readVarBytes();

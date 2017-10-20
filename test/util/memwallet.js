@@ -87,8 +87,10 @@ MemWallet.prototype.init = function init() {
   if (!this.master)
     this.master = HD.PrivateKey.generate();
 
-  if (!this.key)
-    this.key = this.master.deriveAccount(44, this.account);
+  if (!this.key) {
+    const type = this.network.keyPrefix.coinType;
+    this.key = this.master.deriveAccount(44, type, this.account);
+  }
 
   i = this.receiveDepth;
   while (i--)
@@ -132,7 +134,8 @@ MemWallet.prototype.derivePath = function derivePath(path) {
 };
 
 MemWallet.prototype.deriveKey = function deriveKey(branch, index) {
-  let key = this.master.deriveAccount(44, this.account);
+  const type = this.network.keyPrefix.coinType;
+  let key = this.master.deriveAccount(44, type, this.account);
   key = key.derive(branch).derive(index);
   const ring = new KeyRing({
     network: this.network,
