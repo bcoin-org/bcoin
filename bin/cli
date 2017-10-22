@@ -7,6 +7,13 @@ const util = require('../lib/utils/util');
 const Client = require('../lib/http/client');
 const Wallet = require('../lib/http/wallet');
 
+const ports = {
+  main: 8332,
+  testnet: 18332,
+  regtest: 48332,
+  simnet: 18556
+};
+
 const ANTIREPLAY = ''
   + '6a2e426974636f696e3a204120506565722d746f2d5065657'
   + '220456c656374726f6e696320436173682053797374656d';
@@ -536,7 +543,10 @@ CLI.prototype.handleWallet = async function handleWallet() {
   this.wallet = new Wallet({
     url: this.config.str(['url', 'uri']),
     apiKey: this.config.str('api-key'),
-    network: this.config.str('network'),
+    host: this.config.str('http-host'),
+    port: this.config.uint('http-port')
+      || ports[this.config.str('network', '')]
+      || ports.main,
     id: this.config.str('id', 'primary'),
     token: this.config.str('token')
   });
@@ -695,7 +705,10 @@ CLI.prototype.handleNode = async function handleNode() {
   this.client = new Client({
     url: this.config.str(['url', 'uri']),
     apiKey: this.config.str('api-key'),
-    network: this.config.str('network')
+    host: this.config.str('http-host'),
+    port: this.config.uint('http-port')
+      || ports[this.config.str('network', '')]
+      || ports.main
   });
 
   switch (this.argv.shift()) {
