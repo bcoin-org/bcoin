@@ -534,7 +534,7 @@ CLI.prototype.rpc = async function rpc() {
 
 CLI.prototype.handleWallet = async function handleWallet() {
   this.wallet = new Wallet({
-    uri: this.config.str(['url', 'uri']),
+    url: this.config.str(['url', 'uri']),
     apiKey: this.config.str('api-key'),
     network: this.config.str('network'),
     id: this.config.str('id', 'primary'),
@@ -693,7 +693,7 @@ CLI.prototype.handleWallet = async function handleWallet() {
 
 CLI.prototype.handleNode = async function handleNode() {
   this.client = new Client({
-    uri: this.config.str(['url', 'uri']),
+    url: this.config.str(['url', 'uri']),
     apiKey: this.config.str('api-key'),
     network: this.config.str('network')
   });
@@ -776,14 +776,12 @@ CLI.prototype.open = async function open() {
   }
 };
 
-CLI.prototype.destroy = function destroy() {
-  if (this.wallet)
-    this.wallet.client.destroy();
+CLI.prototype.destroy = async function destroy() {
+  if (this.wallet && this.wallet.opened)
+    await this.wallet.close();
 
-  if (this.client)
-    this.client.destroy();
-
-  return Promise.resolve();
+  if (this.client && this.client.opened)
+    await this.client.close();
 };
 
 (async () => {

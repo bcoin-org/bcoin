@@ -14,6 +14,8 @@ const MTX = require('../lib/primitives/mtx');
 const HTTP = require('../lib/http');
 const FullNode = require('../lib/node/fullnode');
 const pkg = require('../lib/pkg');
+const Network = require('../lib/protocol/network');
+const network = Network.get('regtest');
 
 const node = new FullNode({
   network: 'regtest',
@@ -24,8 +26,13 @@ const node = new FullNode({
   plugins: [require('../lib/wallet/plugin')]
 });
 
+const client = new HTTP.Client({
+  port: network.rpcPort,
+  apiKey: 'foo'
+});
+
 const wallet = new HTTP.Wallet({
-  network: 'regtest',
+  port: network.rpcPort,
   apiKey: 'foo'
 });
 
@@ -40,6 +47,7 @@ describe('HTTP', function() {
   it('should open node', async () => {
     consensus.COINBASE_MATURITY = 0;
     await node.open();
+    await client.open();
   });
 
   it('should create wallet', async () => {
@@ -48,7 +56,7 @@ describe('HTTP', function() {
   });
 
   it('should get info', async () => {
-    const info = await wallet.client.getInfo();
+    const info = await client.getInfo();
     assert.strictEqual(info.network, node.network.type);
     assert.strictEqual(info.version, pkg.version);
     assert.typeOf(info.pool, 'object');
@@ -154,12 +162,12 @@ describe('HTTP', function() {
   });
 
   it('should execute an rpc call', async () => {
-    const info = await wallet.client.rpc.execute('getblockchaininfo', []);
+    const info = await client.execute('getblockchaininfo', []);
     assert.strictEqual(info.blocks, 0);
   });
 
   it('should execute an rpc call with bool parameter', async () => {
-    const info = await wallet.client.rpc.execute('getrawmempool', [true]);
+    const info = await client.execute('getrawmempool', [true]);
     assert.deepStrictEqual(info, {});
   });
 
@@ -188,7 +196,7 @@ describe('HTTP', function() {
   });
 
   it('should get a block template', async () => {
-    const json = await wallet.client.rpc.execute('getblocktemplate', []);
+    const json = await client.execute('getblocktemplate', []);
     assert.deepStrictEqual(json, {
       capabilities: ['proposal'],
       mutable: ['time', 'transactions', 'prevblock'],
@@ -223,7 +231,7 @@ describe('HTTP', function() {
     const attempt = await node.miner.createBlock();
     const block = attempt.toBlock();
     const hex = block.toRaw().toString('hex');
-    const json = await wallet.client.rpc.execute('getblocktemplate', [{
+    const json = await client.execute('getblocktemplate', [{
       mode: 'proposal',
       data: hex
     }]);
@@ -231,7 +239,7 @@ describe('HTTP', function() {
   });
 
   it('should validate an address', async () => {
-    const json = await wallet.client.rpc.execute('validateaddress', [
+    const json = await client.execute('validateaddress', [
       addr.toString(node.network)
     ]);
     assert.deepStrictEqual(json, {
@@ -246,6 +254,7 @@ describe('HTTP', function() {
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await wallet.close();
+    await client.close();
     await node.close();
   });
 });
