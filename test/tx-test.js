@@ -23,9 +23,10 @@ const Address = require('../lib/primitives/address');
 const BufferWriter = require('bufio').BufferWriter;
 const common = require('./util/common');
 
-const validTests = require('./data/tx-valid.json');
-const invalidTests = require('./data/tx-invalid.json');
-const sighashTests = require('./data/sighash-tests.json');
+// test files: https://github.com/bitcoin/bitcoin/tree/master/src/test/data
+const validTests = require('./data/core-data/tx-valid.json');
+const invalidTests = require('./data/core-data/tx-invalid.json');
+const sighashTests = require('./data/core-data/sighash-tests.json');
 
 const tx1 = common.readTX('tx1');
 const tx2 = common.readTX('tx2');
