@@ -26,12 +26,14 @@ const node = new FullNode({
   plugins: [require('../lib/wallet/plugin')]
 });
 
-const client = new HTTP.Client({
+const {NodeClient, WalletClient} = require('bclient');
+
+const client = new NodeClient({
   port: network.rpcPort,
   apiKey: 'foo'
 });
 
-const wallet = new HTTP.Wallet({
+const wallet = new WalletClient({
   port: network.rpcPort,
   apiKey: 'foo'
 });
