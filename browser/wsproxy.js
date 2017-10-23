@@ -2,8 +2,8 @@
 
 const assert = require('assert');
 const net = require('net');
-const EventEmitter = require('events').EventEmitter;
-const IOServer = require('socket.io');
+const EventEmitter = require('events');
+const bsock = require('bsock');
 const util = require('../lib/utils/util');
 const digest = require('../lib/crypto/digest');
 const IP = require('../lib/utils/ip');
@@ -26,7 +26,7 @@ function WSProxy(options) {
   this.target = options.target || TARGET;
   this.pow = options.pow === true;
   this.ports = new Set();
-  this.io = new IOServer();
+  this.io = bsock.server();
   this.sockets = new WeakMap();
 
   if (options.ports) {
@@ -44,7 +44,7 @@ WSProxy.prototype.init = function init() {
     this.emit('error', err);
   });
 
-  this.io.on('connection', (ws) => {
+  this.io.on('socket', (ws) => {
     this.handleSocket(ws);
   });
 };
@@ -56,13 +56,13 @@ WSProxy.prototype.handleSocket = function handleSocket(ws) {
   // mutating the websocket object.
   this.sockets.set(ws, state);
 
-  ws.emit('info', state.toInfo());
+  ws.fire('info', state.toInfo());
 
   ws.on('error', (err) => {
     this.emit('error', err);
   });
 
-  ws.on('tcp connect', (port, host, nonce) => {
+  ws.listen('tcp connect', (port, host, nonce) => {
     this.handleConnect(ws, port, host, nonce);
   });
 };
@@ -80,16 +80,16 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
       || typeof host !== 'string'
       || host.length === 0) {
     this.log('Client gave bad arguments (%s).', state.host);
-    ws.emit('tcp close');
-    ws.disconnect();
+    ws.fire('tcp close');
+    ws.destroy();
     return;
   }
 
   if (this.pow) {
     if (!util.isU32(nonce)) {
       this.log('Client did not solve proof of work (%s).', state.host);
-      ws.emit('tcp close');
-      ws.disconnect();
+      ws.fire('tcp close');
+      ws.destroy();
       return;
     }
 
@@ -103,8 +103,8 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
 
     if (digest.hash256(pow).compare(this.target) > 0) {
       this.log('Client did not solve proof of work (%s).', state.host);
-      ws.emit('tcp close');
-      ws.disconnect();
+      ws.fire('tcp close');
+      ws.destroy();
       return;
     }
   }
@@ -115,11 +115,11 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
     addr = IP.toString(raw);
   } catch (e) {
     this.log('Client gave a bad host: %s (%s).', host, state.host);
-    ws.emit('tcp error', {
+    ws.fire('tcp error', {
       message: 'EHOSTUNREACH',
       code: 'EHOSTUNREACH'
     });
-    ws.disconnect();
+    ws.destroy();
     return;
   }
 
@@ -127,21 +127,21 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
     this.log(
       'Client is trying to connect to a bad ip: %s (%s).',
       addr, state.host);
-    ws.emit('tcp error', {
+    ws.fire('tcp error', {
       message: 'ENETUNREACH',
       code: 'ENETUNREACH'
     });
-    ws.disconnect();
+    ws.destroy();
     return;
   }
 
   if (!this.ports.has(port)) {
     this.log('Client is connecting to non-whitelist port (%s).', state.host);
-    ws.emit('tcp error', {
+    ws.fire('tcp error', {
       message: 'ENETUNREACH',
       code: 'ENETUNREACH'
     });
-    ws.disconnect();
+    ws.destroy();
     return;
   }
 
@@ -152,66 +152,66 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
   } catch (e) {
     this.log(e.message);
     this.log('Closing %s (%s).', state.remoteHost, state.host);
-    ws.emit('tcp error', {
+    ws.fire('tcp error', {
       message: 'ENETUNREACH',
       code: 'ENETUNREACH'
     });
-    ws.disconnect();
+    ws.destroy();
     return;
   }
 
   socket.on('connect', () => {
-    ws.emit('tcp connect', socket.remoteAddress, socket.remotePort);
+    ws.fire('tcp connect', socket.remoteAddress, socket.remotePort);
   });
 
   socket.on('data', (data) => {
-    ws.emit('tcp data', data.toString('hex'));
+    ws.fire('tcp data', data.toString('hex'));
   });
 
   socket.on('error', (err) => {
-    ws.emit('tcp error', {
+    ws.fire('tcp error', {
       message: err.message,
       code: err.code || null
     });
   });
 
   socket.on('timeout', () => {
-    ws.emit('tcp timeout');
+    ws.fire('tcp timeout');
   });
 
   socket.on('close', () => {
     this.log('Closing %s (%s).', state.remoteHost, state.host);
-    ws.emit('tcp close');
-    ws.disconnect();
+    ws.fire('tcp close');
+    ws.destroy();
   });
 
-  ws.on('tcp data', (data) => {
+  ws.listen('tcp data', (data) => {
     if (typeof data !== 'string')
       return;
     socket.write(Buffer.from(data, 'hex'));
   });
 
-  ws.on('tcp keep alive', (enable, delay) => {
+  ws.listen('tcp keep alive', (enable, delay) => {
     socket.setKeepAlive(enable, delay);
   });
 
-  ws.on('tcp no delay', (enable) => {
+  ws.listen('tcp no delay', (enable) => {
     socket.setNoDelay(enable);
   });
 
-  ws.on('tcp set timeout', (timeout) => {
+  ws.listen('tcp set timeout', (timeout) => {
     socket.setTimeout(timeout);
   });
 
-  ws.on('tcp pause', () => {
+  ws.listen('tcp pause', () => {
     socket.pause();
   });
 
-  ws.on('tcp resume', () => {
+  ws.listen('tcp resume', () => {
     socket.resume();
   });
 
-  ws.on('disconnect', () => {
+  ws.listen('disconnect', () => {
     socket.destroy();
   });
 };
