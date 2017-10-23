@@ -4,8 +4,7 @@
 
 const Config = require('../lib/node/config');
 const util = require('../lib/utils/util');
-const Client = require('../lib/http/client');
-const Wallet = require('../lib/http/wallet');
+const {NodeClient, WalletClient} = require('bclient');
 
 const ports = {
   main: 8332,
@@ -540,7 +539,7 @@ CLI.prototype.rpc = async function rpc() {
 };
 
 CLI.prototype.handleWallet = async function handleWallet() {
-  this.wallet = new Wallet({
+  this.wallet = new WalletClient({
     url: this.config.str(['url', 'uri']),
     apiKey: this.config.str('api-key'),
     host: this.config.str('http-host'),
@@ -702,7 +701,7 @@ CLI.prototype.handleWallet = async function handleWallet() {
 };
 
 CLI.prototype.handleNode = async function handleNode() {
-  this.client = new Client({
+  this.client = new NodeClient({
     url: this.config.str(['url', 'uri']),
     apiKey: this.config.str('api-key'),
     host: this.config.str('http-host'),

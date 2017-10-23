@@ -25,14 +25,15 @@
   "dependencies": {
     "bn.js": "4.11.8",
     "elliptic": "6.4.0",
-    "n64": "0.0.18"
+    "n64": "0.0.18",
+    "breq": "^0.0.1",
+    "bclient": "^0.0.1",
+    "bweb": "^0.0.1"
   },
   "optionalDependencies": {
     "bcoin-native": "0.0.23",
     "leveldown": "1.7.2",
-    "secp256k1": "3.3.0",
-    "socket.io": "2.0.3",
-    "socket.io-client": "2.0.3"
+    "secp256k1": "3.3.0"
   },
   "devDependencies": {
     "babel-core": "^6.25.0",
