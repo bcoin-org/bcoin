@@ -28,7 +28,8 @@
     "n64": "0.0.18",
     "breq": "^0.0.1",
     "bclient": "^0.0.1",
-    "bweb": "^0.0.1"
+    "bweb": "^0.0.1",
+    "bsock": "^0.0.1"
   },
   "optionalDependencies": {
     "bcoin-native": "0.0.23",

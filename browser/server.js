@@ -1,7 +1,7 @@
 'use strict';
 
+const bweb = require('bweb');
 const fs = require('../lib/utils/fs');
-const HTTPBase = require('../lib/http/base');
 const WSProxy = require('./wsproxy');
 
 const index = fs.readFileSync(`${__dirname}/index.html`);
@@ -15,7 +15,7 @@ const proxy = new WSProxy({
   ports: [8333, 18333, 18444, 28333, 28901]
 });
 
-const server = new HTTPBase({
+const server = bweb.server({
   port: Number(process.argv[2]) || 8080,
   sockets: false
 });
@@ -52,6 +52,6 @@ server.get('/bcoin-worker.js', (req, res) => {
   res.send(200, worker, 'js');
 });
 
-proxy.attach(server.server);
+proxy.attach(server.http);
 
 server.open();
