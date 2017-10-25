@@ -48,7 +48,7 @@
     "level-js": "^2.2.4",
     "mocha": "^3.5.0",
     "node-loader": "^0.6.0",
-    "uglifyjs-webpack-plugin": "^1.0.0-beta.2",
+    "uglifyjs-webpack-plugin": "^1.0.1",
     "webpack": "^3.5.4"
   },
   "main": "./lib/bcoin.js",
