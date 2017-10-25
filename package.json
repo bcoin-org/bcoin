@@ -52,6 +52,7 @@
     "webpack": "^3.5.4"
   },
   "main": "./lib/bcoin.js",
+  "browser": "./browser/bcoin.js",
   "bin": {
     "bcoin": "./bin/bcoin",
     "bcoin-cli": "./bin/cli",
