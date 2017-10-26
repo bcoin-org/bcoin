@@ -37,7 +37,7 @@ const wallet = new WalletClient({
   apiKey: 'foo'
 });
 
-const wdb = node.require('walletdb');
+const {wdb} = node.require('walletdb');
 
 let addr = null;
 let hash = null;

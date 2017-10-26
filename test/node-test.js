@@ -24,7 +24,7 @@ const node = new FullNode({
 
 const chain = node.chain;
 const miner = node.miner;
-const wdb = node.require('walletdb');
+const {wdb} = node.require('walletdb');
 
 let wallet = null;
 let tip1 = null;

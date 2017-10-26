@@ -17,7 +17,11 @@ const ANTIREPLAY = ''
   + '220456c656374726f6e696320436173682053797374656d';
 
 function CLI() {
-  this.config = new Config('bcoin');
+  this.config = new Config('bcoin', {
+    suffix: 'network',
+    fallback: 'main',
+    alias: { 'n': 'network' }
+  });
 
   this.config.load({
     argv: true,
