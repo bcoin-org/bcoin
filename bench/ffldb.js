@@ -28,20 +28,6 @@ const rm = async (dir) => {
 (async () => {
   await ffldb.open();
 
-  // Write Block
-  {
-    const key = networks.main.genesis.hash;
-    const block = Buffer.from(networks.main.genesisBlock, 'hex');
-
-    const end = bench('write block');
-
-    for (let i = 0; i < 1000000; i++) {
-      await ffldb.putBlock(key, block);
-    }
-
-    end(1000000);
-  }
-
   // Read Block
   {
     const key = networks.main.genesis.hash;
@@ -54,11 +40,11 @@ const rm = async (dir) => {
 
     const end = bench('read block');
 
-    for (let i = 0; i < 1000000; i++) {
+    for (let i = 0; i < 100000; i++) {
       await ffldb.getBlock(key);
     }
 
-    end(1000000);
+    end(100000);
   }
 
   await ffldb.close();

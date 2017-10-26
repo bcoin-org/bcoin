@@ -31,21 +31,6 @@ const leveldb = new LevelDOWN(TESTDB);
   const open = co.promisify(leveldb.open);
   await open.call(leveldb);
 
-  // Write Block
-  {
-    const key = networks.main.genesis.hash;
-    const value = networks.main.genesisBlock;
-    const put = co.promisify(leveldb.put);
-
-    const end = bench('write block');
-
-    for (let i = 0; i < 1000000; i++) {
-      await put.call(leveldb, key, value);
-    }
-
-    end(1000000);
-  }
-
   // Read Block
   {
     const key = layout.b(networks.main.genesis.hash);
@@ -59,11 +44,11 @@ const leveldb = new LevelDOWN(TESTDB);
     const expected = await get.call(leveldb, key);
     assert.strictEqual(expected.toString(), value);
 
-    for (let i = 0; i < 1000000; i++) {
+    for (let i = 0; i < 100000; i++) {
       await get.call(leveldb, key);
     }
 
-    end(1000000);
+    end(100000);
   }
 
   const close = co.promisify(leveldb.close);
