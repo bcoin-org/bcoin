@@ -5,11 +5,18 @@
 const Config = require('../lib/node/config');
 const {NodeClient, WalletClient} = require('bclient');
 
-const ports = {
+const nports = {
   main: 8332,
   testnet: 18332,
   regtest: 48332,
   simnet: 18556
+};
+
+const wports = {
+  main: 8334,
+  testnet: 18334,
+  regtest: 48334,
+  simnet: 18558
 };
 
 const ANTIREPLAY = ''
@@ -20,7 +27,15 @@ function CLI() {
   this.config = new Config('bcoin', {
     suffix: 'network',
     fallback: 'main',
-    alias: { 'n': 'network' }
+    alias: {
+      'n': 'network',
+      'u': 'url',
+      'uri': 'url',
+      'k': 'api-key',
+      's': 'ssl',
+      'h': 'httphost',
+      'p': 'httpport'
+    }
   });
 
   this.config.load({
@@ -538,13 +553,16 @@ CLI.prototype.rpc = async function rpc() {
 };
 
 CLI.prototype.handleWallet = async function handleWallet() {
+  const network = this.config.str('network', 'main');
+
   this.wallet = new WalletClient({
-    url: this.config.str(['url', 'uri']),
+    url: this.config.str('url'),
     apiKey: this.config.str('api-key'),
+    ssl: this.config.bool('ssl'),
     host: this.config.str('http-host'),
     port: this.config.uint('http-port')
-      || ports[this.config.str('network', '')]
-      || ports.main,
+      || wports[network]
+      || wports.main,
     id: this.config.str('id', 'primary'),
     token: this.config.str('token')
   });
@@ -704,13 +722,16 @@ CLI.prototype.handleWallet = async function handleWallet() {
 };
 
 CLI.prototype.handleNode = async function handleNode() {
+  const network = this.config.str('network', 'main');
+
   this.client = new NodeClient({
-    url: this.config.str(['url', 'uri']),
+    url: this.config.str('url'),
     apiKey: this.config.str('api-key'),
+    ssl: this.config.bool('ssl'),
     host: this.config.str('http-host'),
     port: this.config.uint('http-port')
-      || ports[this.config.str('network', '')]
-      || ports.main
+      || nports[network]
+      || nports.main
   });
 
   switch (this.argv.shift()) {
