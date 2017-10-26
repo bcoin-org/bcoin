@@ -3,6 +3,7 @@
 
 'use strict';
 
+const {inspect} = require('util');
 const assert = require('./util/assert');
 const util = require('../lib/utils/util');
 const encoding = require('../lib/utils/encoding');
@@ -90,7 +91,7 @@ function parseTXTest(data) {
     flags: flags,
     view: view,
     comments: coin
-      ? util.inspectify(coin.script, false)
+      ? inspect(coin.script)
       : 'coinbase',
     data: data
   };

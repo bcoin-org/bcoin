@@ -54,7 +54,7 @@ function Coins(options) {
 
 Coins.prototype.fromOptions = function fromOptions(options) {
   if (options.version != null) {
-    assert(util.isU32(options.version));
+    assert((options.version >>> 0) === options.version);
     this.version = options.version;
   }
 
@@ -64,7 +64,7 @@ Coins.prototype.fromOptions = function fromOptions(options) {
   }
 
   if (options.height != null) {
-    assert(util.isInt(options.height));
+    assert(Number.isSafeInteger(options.height));
     this.height = options.height;
   }
 

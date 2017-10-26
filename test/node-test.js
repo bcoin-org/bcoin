@@ -498,7 +498,7 @@ describe('Node', function() {
         sigoplimit: 80000,
         sizelimit: 4000000,
         weightlimit: 4000000,
-        longpollid: node.chain.tip.rhash() + '0000000000',
+        longpollid: node.chain.tip.rhash() + '00000000',
         submitold: false,
         coinbaseaux: { flags: '6d696e65642062792062636f696e' },
         coinbasevalue: 1250000000,
