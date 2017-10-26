@@ -2,6 +2,13 @@ language: node_js
 node_js:
   - "node"
 
+os:
+  - linux
+  - osx
+env:
+  - BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1
+  - BCOIN_NO_NATIVE=0 BCOIN_NO_SECP256K1=0
+
 cache:
   directories:
     - "node_modules"
@@ -14,8 +21,6 @@ before_install:
   # Recompile modules
   - "test ! -d node_modules || npm prune"
   - "test ! -d node_modules || npm rebuild"
-env:
-  - BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1
-  - BCOIN_NO_NATIVE=0 BCOIN_NO_SECP256K1=0
+
 
 after_script: "npm install coveralls && cat ./coverage/lcov.info | coveralls"
