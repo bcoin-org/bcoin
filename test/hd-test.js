@@ -6,7 +6,8 @@
 const assert = require('./util/assert');
 const HD = require('../lib/hd');
 const base58 = require('../lib/utils/base58');
-const pbkdf2 = require('../lib/crypto/pbkdf2');
+const pbkdf2 = require('bcrypto/lib/pbkdf2');
+const sha512 = require('bcrypto/lib/sha512');
 const vectors = require('./data/hd.json');
 const vector1 = vectors.vector1;
 const vector2 = vectors.vector2;
@@ -21,8 +22,11 @@ function base58Equal(a, b) {
 
 describe('HD', function() {
   it('should create a pbkdf2 seed', () => {
-    const seed = pbkdf2.derive(
-      vectors.phrase, 'mnemonicfoo', 2048, 64, 'sha512');
+    const seed = pbkdf2.derive(sha512,
+      Buffer.from(vectors.phrase),
+      Buffer.from('mnemonicfoo'),
+      2048,
+      64);
     assert.strictEqual(seed.toString('hex'), vectors.seed);
   });
 

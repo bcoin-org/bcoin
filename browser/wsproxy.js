@@ -5,7 +5,7 @@ const net = require('net');
 const EventEmitter = require('events');
 const bsock = require('bsock');
 const util = require('../lib/utils/util');
-const digest = require('../lib/crypto/digest');
+const digest = require('bcrypto/lib/digest');
 const IP = require('../lib/utils/ip');
 const BufferWriter = require('../lib/utils/writer');
 

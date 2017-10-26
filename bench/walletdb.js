@@ -1,7 +1,7 @@
 'use strict';
 
 const bench = require('./bench');
-const random = require('../lib/crypto/random');
+const random = require('bcrypto/lib/random');
 const WalletDB = require('../lib/wallet/walletdb');
 const MTX = require('../lib/primitives/mtx');
 const Outpoint = require('../lib/primitives/outpoint');

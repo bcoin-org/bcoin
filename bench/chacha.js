@@ -1,8 +1,8 @@
 'use strict';
 
-const ChaCha20 = require('../lib/crypto/chacha20');
-const Poly1305 = require('../lib/crypto/poly1305');
-const digest = require('../lib/crypto/digest');
+const ChaCha20 = require('bcrypto/lib/chacha20');
+const Poly1305 = require('bcrypto/lib/poly1305');
+const digest = require('bcrypto/lib/digest');
 const bench = require('./bench');
 
 console.log('note: rate measured in kb/s');

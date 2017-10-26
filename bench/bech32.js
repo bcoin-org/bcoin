@@ -1,7 +1,7 @@
 'use strict';
 
 const Address = require('../lib/primitives/address');
-const random = require('../lib/crypto/random');
+const random = require('bcrypto/lib/random');
 const bench = require('./bench');
 const addrs = [];
 
