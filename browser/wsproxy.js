@@ -4,7 +4,6 @@ const assert = require('assert');
 const net = require('net');
 const EventEmitter = require('events');
 const bsock = require('bsock');
-const util = require('../lib/utils/util');
 const digest = require('bcrypto/lib/digest');
 const IP = require('../lib/utils/ip');
 const BufferWriter = require('../lib/utils/writer');
@@ -76,7 +75,7 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
     return;
   }
 
-  if (!util.isU16(port)
+  if ((port & 0xffff) !== port
       || typeof host !== 'string'
       || host.length === 0) {
     this.log('Client gave bad arguments (%s).', state.host);
@@ -86,7 +85,7 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
   }
 
   if (this.pow) {
-    if (!util.isU32(nonce)) {
+    if ((nonce >>> 0) !== nonce) {
       this.log('Client did not solve proof of work (%s).', state.host);
       ws.fire('tcp close');
       ws.destroy();
@@ -228,7 +227,7 @@ WSProxy.prototype.attach = function attach(server) {
 function SocketState(server, socket) {
   this.pow = server.pow;
   this.target = server.target;
-  this.snonce = util.nonce();
+  this.snonce = nonce();
   this.socket = null;
   this.host = IP.normalize(socket.conn.remoteAddress);
   this.remoteHost = null;
@@ -247,5 +246,12 @@ SocketState.prototype.connect = function connect(port, host) {
   this.remoteHost = IP.toHostname(host, port);
   return this.socket;
 };
+
+function nonce() {
+  const buf = Buffer.allocUnsafe(8);
+  buf.writeUInt32LE(Math.random() * 0x100000000, 0, true);
+  buf.writeUInt32LE(Math.random() * 0x100000000, 4, true);
+  return buf;
+}
 
 module.exports = WSProxy;

@@ -6,7 +6,6 @@ process.title = 'bcoin';
 
 const assert = require('assert');
 const SPVNode = require('../lib/node/spvnode');
-const util = require('../lib/utils/util');
 const Outpoint = require('../lib/primitives/outpoint');
 
 const node = SPVNode({
@@ -44,7 +43,7 @@ process.on('unhandledRejection', (err, promise) => {
     node.on('block', (block) => {
       assert(block.txs.length >= 1);
       if (block.txs.length > 1)
-        util.log(block.txs[1]);
+        console.log(block.txs[1]);
     });
   }
 

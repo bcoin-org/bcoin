@@ -51,7 +51,7 @@ describe('Protocol', function() {
     time: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
-    nonce: util.nonce(),
+    nonce: Buffer.allocUnsafe(8),
     agent: agent,
     height: 0,
     noRelay: false
@@ -70,7 +70,7 @@ describe('Protocol', function() {
     time: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
-    nonce: util.nonce(),
+    nonce: Buffer.allocUnsafe(8),
     agent: agent,
     height: 10,
     noRelay: true

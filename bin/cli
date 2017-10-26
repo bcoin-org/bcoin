@@ -3,7 +3,6 @@
 'use strict';
 
 const Config = require('../lib/node/config');
-const util = require('../lib/utils/util');
 const {NodeClient, WalletClient} = require('bclient');
 
 const ports = {
@@ -178,9 +177,9 @@ CLI.prototype.getWallet = async function getWallet() {
 };
 
 CLI.prototype.getTX = async function getTX() {
-  const hash = this.config.str(0);
+  const hash = this.config.str(0, '');
 
-  if (util.isBase58(hash) || util.isBech32(hash)) {
+  if (hash.length !== 64) {
     const txs = await this.client.getTXByAddress(hash);
     this.log(txs);
     return;
@@ -197,7 +196,7 @@ CLI.prototype.getTX = async function getTX() {
 };
 
 CLI.prototype.getBlock = async function getBlock() {
-  let hash = this.config.str(0);
+  let hash = this.config.str(0, '');
 
   if (hash.length !== 64)
     hash = parseInt(hash, 10);
@@ -213,10 +212,10 @@ CLI.prototype.getBlock = async function getBlock() {
 };
 
 CLI.prototype.getCoin = async function getCoin() {
-  const hash = this.config.str(0);
+  const hash = this.config.str(0, '');
   const index = this.config.uint(1);
 
-  if (util.isBase58(hash) || util.isBech32(hash)) {
+  if (hash.length !== 64) {
     const coins = await this.client.getCoinsByAddress(hash);
     this.log(coins);
     return;
@@ -471,19 +470,15 @@ CLI.prototype.importKey = async function importKey() {
   if (!key)
     throw new Error('No key for import.');
 
-  if (util.isBase58(key)) {
-    await this.wallet.importPrivate(account, key, passphrase);
-    this.log('Imported private key.');
-    return;
-  }
-
-  if (util.isHex(key)) {
+  if (key.length === 66 || key.length === 130) {
     await this.wallet.importPublic(account, key);
     this.log('Imported public key.');
     return;
   }
 
-  throw new Error('Bad key for import.');
+  await this.wallet.importPrivate(account, key, passphrase);
+
+  this.log('Imported private key.');
 };
 
 CLI.prototype.importAddress = async function importAddress() {

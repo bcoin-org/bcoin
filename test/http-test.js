@@ -11,7 +11,6 @@ const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
 const Outpoint = require('../lib/primitives/outpoint');
 const MTX = require('../lib/primitives/mtx');
-const HTTP = require('../lib/http');
 const FullNode = require('../lib/node/fullnode');
 const pkg = require('../lib/pkg');
 const Network = require('../lib/protocol/network');
@@ -221,7 +220,7 @@ describe('HTTP', function() {
       sizelimit: 1000000,
       longpollid:
         '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206'
-        + '0000000000',
+        + '00000000',
       submitold: false,
       coinbaseaux: { flags: '6d696e65642062792062636f696e' },
       coinbasevalue: 5000000000,

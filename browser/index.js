@@ -31,14 +31,15 @@ floating.onmouseup = function(ev) {
 };
 
 function show(obj) {
-  floating.innerHTML = escape(util.inspectify(obj, false));
+  const json = obj && obj.toJSON ? obj.toJSON() : null;
+  floating.innerHTML = escape(JSON.stringify(json, null, 2));
   floating.style.display = 'block';
 }
 
 logger = new bcoin.logger({ level: 'debug', console: true });
 logger.writeConsole = function(level, module, args) {
   var name = bcoin.logger.levelsByVal[level];
-  var msg = util.format(args, false);
+  var msg = this.fmt(args, false);
   if (++scrollback > 1000) {
     log.innerHTML = '';
     scrollback = 1;

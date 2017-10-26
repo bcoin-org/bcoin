@@ -9,7 +9,7 @@ const base58 = require('../lib/utils/base58');
 const encoding = require('../lib/utils/encoding');
 const Amount = require('../lib/btc/amount');
 const Validator = require('../lib/utils/validator');
-const util = require('../lib/utils/util');
+const fixed = require('../lib/utils/fixed');
 
 const base58Tests = [
   ['', ''],
@@ -30,16 +30,6 @@ const base58Tests = [
   ['ecac89cad93923c02321', 'EJDM8drfXA6uyA'],
   ['10c8511e', 'Rt5zm'],
   ['00000000000000000000', '1111111111']
-];
-
-const validBech32Tests = [
-  'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4',
-  'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7',
-  'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw50'
-  + '8d6qejxtdg4y5r3zarvary0c5xw7k7grplx',
-  'BC1SW50QA3JX3S',
-  'bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj',
-  'tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy'
 ];
 
 const unsigned = [
@@ -122,10 +112,10 @@ describe('Utils', function() {
     assert.strictEqual(parseFloat('0.15645647') * 1e8, 15645646.999999998);
     assert.strictEqual(15645647 / 1e8, 0.15645647);
 
-    assert.strictEqual(util.fromFixed('0.15645647', 8), 15645647);
-    assert.strictEqual(util.toFixed(15645647, 8), '0.15645647');
-    assert.strictEqual(util.fromFloat(0.15645647, 8), 15645647);
-    assert.strictEqual(util.toFloat(15645647, 8), 0.15645647);
+    assert.strictEqual(fixed.decode('0.15645647', 8), 15645647);
+    assert.strictEqual(fixed.encode(15645647, 8), '0.15645647');
+    assert.strictEqual(fixed.fromFloat(0.15645647, 8), 15645647);
+    assert.strictEqual(fixed.toFloat(15645647, 8), 0.15645647);
   });
 
   it('should write/read new varints', () => {
@@ -253,11 +243,5 @@ describe('Utils', function() {
     });
     assert.strictEqual(validator.bool('shouldBeTrue'), true);
     assert.strictEqual(validator.bool('shouldBeFalse'), false);
-  });
-
-  it('should validate bech32 addresses based only on string data', () => {
-    for (const bech32addr of validBech32Tests) {
-      assert.strictEqual(util.isBech32(bech32addr), true);
-    }
   });
 });
