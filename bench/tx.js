@@ -5,7 +5,7 @@ const TX = require('../lib/primitives/tx');
 const Script = require('../lib/script/script');
 const MTX = require('../lib/primitives/mtx');
 const encoding = require('../lib/utils/encoding');
-const random = require('../lib/crypto/random');
+const random = require('bcrypto/lib/random');
 const common = require('../test/util/common');
 const bench = require('./bench');
 

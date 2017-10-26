@@ -5,7 +5,7 @@
 
 const assert = require('./util/assert');
 const encoding = require('../lib/utils/encoding');
-const random = require('../lib/crypto/random');
+const random = require('bcrypto/lib/random');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
 const WorkerPool = require('../lib/workers/workerpool');

@@ -3,10 +3,10 @@
 const assert = require('assert');
 const encoding = require('../lib/utils/encoding');
 const BufferReader = require('../lib/utils/reader');
-const digest = require('../lib/crypto/digest');
+const digest = require('bcrypto/lib/digest');
 const util = require('../lib/utils/util');
 const LDB = require('../lib/db/ldb');
-const BN = require('../lib/crypto/bn');
+const BN = require('bcrypto/lib/bn');
 const DUMMY = Buffer.from([0]);
 let file = process.argv[2];
 let batch;

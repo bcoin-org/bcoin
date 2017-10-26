@@ -5,7 +5,7 @@
 
 const assert = require('./util/assert');
 const GCSFilter = require('../lib/utils/gcs');
-const random = require('../lib/crypto/random');
+const random = require('bcrypto/lib/random');
 const Outpoint = require('../lib/primitives/outpoint');
 const Address = require('../lib/primitives/address');
 const common = require('./util/common');
