@@ -430,7 +430,7 @@ CLI.prototype.retoken = async function retoken() {
 CLI.prototype.rescan = async function rescan() {
   const height = this.config.uint(0);
 
-  await this.client.rescan(height);
+  await this.wallet.rescan(height);
 
   this.log('Rescanning...');
 };
@@ -658,6 +658,9 @@ CLI.prototype.handleWallet = async function handleWallet() {
     case 'resend':
       await this.resendWallet();
       break;
+    case 'rescan':
+      await this.rescan();
+      break;
     default:
       this.log('Unrecognized command.');
       this.log('Commands:');
@@ -692,6 +695,7 @@ CLI.prototype.handleWallet = async function handleWallet() {
       this.log('  $ lock: Lock wallet.');
       this.log('  $ unlock [passphrase] [timeout?]: Unlock wallet.');
       this.log('  $ resend: Resend pending transactions.');
+      this.log('  $ rescan [height]: Rescan for transactions.');
       this.log('Other Options:');
       this.log('  --passphrase [passphrase]: For signing & account creation.');
       this.log('  --account [account-name]: Account name.');
@@ -734,9 +738,6 @@ CLI.prototype.handleNode = async function handleNode() {
     case 'block':
       await this.getBlock();
       break;
-    case 'rescan':
-      await this.rescan();
-      break;
     case 'reset':
       await this.reset();
       break;
@@ -760,7 +761,6 @@ CLI.prototype.handleNode = async function handleNode() {
       this.log('  $ tx [hash/address]: View transactions.');
       this.log('  $ coin [hash+index/address]: View coins.');
       this.log('  $ block [hash/height]: View block.');
-      this.log('  $ rescan [height]: Rescan for transactions.');
       this.log('  $ reset [height/hash]: Reset chain to desired block.');
       this.log('  $ resend: Resend pending transactions.');
       this.log('  $ backup [path]: Backup the wallet db.');
