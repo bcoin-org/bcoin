@@ -23,16 +23,16 @@
     "node": ">=7.6.0"
   },
   "dependencies": {
-    "n64": "0.0.18",
-    "breq": "^0.0.1",
     "bclient": "^0.0.1",
-    "bweb": "^0.0.1",
+    "bcrypto": "^0.0.1",
+    "bdb": "^0.0.1",
+    "breq": "^0.0.1",
     "bsock": "^0.0.1",
-    "bcrypto": "^0.0.1"
+    "bweb": "^0.0.1",
+    "n64": "^0.0.18"
   },
   "optionalDependencies": {
-    "bcoin-native": "0.0.23",
-    "leveldown": "1.7.2"
+    "bcoin-native": "0.0.23"
   },
   "devDependencies": {
     "babel-core": "^6.25.0",
@@ -45,7 +45,6 @@
     "eslint": "^4.4.1",
     "hash.js": "^1.1.3",
     "jsdoc": "^3.5.4",
-    "level-js": "^2.2.4",
     "mocha": "^3.5.0",
     "node-loader": "^0.6.0",
     "uglifyjs-webpack-plugin": "^1.0.0-beta.2",
@@ -65,10 +64,10 @@
     "lint-file": "eslint",
     "test": "mocha --reporter spec test/*.js",
     "test-browser":
-      "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec test/*.js",
+      "BCRYPTO_BACKEND=js mocha --reporter spec test/*.js",
     "test-file": "mocha --reporter spec",
     "test-file-browser":
-      "BCOIN_NO_NATIVE=1 BCOIN_NO_SECP256K1=1 mocha --reporter spec",
+      "BCRYPTO_BACKEND=js mocha --reporter spec",
     "webpack": "webpack --config webpack.browser.js",
     "webpack-browser": "webpack --config webpack.browser.js",
     "webpack-compat": "webpack --config webpack.compat.js",
