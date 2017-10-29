@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const BDB = require('bdb');
 const encoding = require('../lib/utils/encoding');
 const networks = require('../lib/protocol/networks');
 const co = require('../lib/utils/co');
@@ -11,7 +12,7 @@ const Coins = require('../lib/coins/coins');
 const UndoCoins = require('../lib/coins/undocoins');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
-const LDB = require('../lib/db/ldb');
+
 let file = process.argv[2];
 let batch;
 
@@ -19,7 +20,7 @@ assert(typeof file === 'string', 'Please pass in a database path.');
 
 file = file.replace(/\.ldb\/?$/, '');
 
-const db = LDB({
+const db = new BDB({
   location: file,
   db: 'leveldb',
   compression: true,

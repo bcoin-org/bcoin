@@ -16,6 +16,7 @@ if (process.argv.indexOf('-h') !== -1
 }
 
 const assert = require('assert');
+const BDB = require('bdb');
 const encoding = require('../lib/utils/encoding');
 const co = require('../lib/utils/co');
 const util = require('../lib/utils/util');
@@ -28,7 +29,6 @@ const OldUndoCoins = require('./coins/undocoins');
 const CoinEntry = require('../lib/coins/coinentry');
 const UndoCoins = require('../lib/coins/undocoins');
 const Block = require('../lib/primitives/block');
-const LDB = require('../lib/db/ldb');
 const LRU = require('../lib/utils/lru');
 
 const file = process.argv[2].replace(/\.ldb\/?$/, '');
@@ -37,7 +37,7 @@ let hasIndex = false;
 let hasPruned = false;
 let hasSPV = false;
 
-const db = LDB({
+const db = new BDB({
   location: file,
   db: 'leveldb',
   compression: true,
