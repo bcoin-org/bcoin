@@ -2,7 +2,7 @@
 
 const bcoin = require('../');
 const assert = require('assert');
-const BufferWriter = require('../lib/utils/writer');
+const BufferWriter = require('bbuf/lib/writer');
 let file = process.argv[2];
 
 assert(typeof file === 'string', 'Please pass in a database path.');

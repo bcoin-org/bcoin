@@ -9,8 +9,8 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const CoinView = require('../lib/coins/coinview');
 const CoinEntry = require('../lib/coins/coinentry');
-const StaticWriter = require('../lib/utils/staticwriter');
-const BufferReader = require('../lib/utils/reader');
+const StaticWriter = require('bbuf/lib/staticwriter');
+const BufferReader = require('bbuf/lib/reader');
 const common = require('./util/common');
 
 const tx1 = common.readTX('tx1');

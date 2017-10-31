@@ -6,7 +6,7 @@ const EventEmitter = require('events');
 const bsock = require('bsock');
 const digest = require('bcrypto/lib/digest');
 const IP = require('../lib/utils/ip');
-const BufferWriter = require('../lib/utils/writer');
+const BufferWriter = require('bbuf/lib/writer');
 
 const TARGET = Buffer.from(
   '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',

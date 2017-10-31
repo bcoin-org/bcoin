@@ -2,11 +2,11 @@
 
 const assert = require('assert');
 const BDB = require('bdb');
-const encoding = require('../lib/utils/encoding');
+const encoding = require('bbuf/lib/encoding');
 const networks = require('../lib/protocol/networks');
 const co = require('../lib/utils/co');
-const BufferWriter = require('../lib/utils/writer');
-const BufferReader = require('../lib/utils/reader');
+const BufferWriter = require('bbuf/lib/writer');
+const BufferReader = require('bbuf/lib/reader');
 const OldCoins = require('./coins-old');
 const Coins = require('../lib/coins/coins');
 const UndoCoins = require('../lib/coins/undocoins');

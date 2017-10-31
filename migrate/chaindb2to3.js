@@ -17,12 +17,12 @@ if (process.argv.indexOf('-h') !== -1
 
 const assert = require('assert');
 const BDB = require('bdb');
-const encoding = require('../lib/utils/encoding');
+const encoding = require('bbuf/lib/encoding');
 const co = require('../lib/utils/co');
 const digest = require('bcrypto/lib/digest');
 const BN = require('bcrypto/lib/bn');
-const StaticWriter = require('../lib/utils/staticwriter');
-const BufferReader = require('../lib/utils/reader');
+const StaticWriter = require('bbuf/lib/staticwriter');
+const BufferReader = require('bbuf/lib/reader');
 const OldCoins = require('./coins/coins');
 const OldUndoCoins = require('./coins/undocoins');
 const CoinEntry = require('../lib/coins/coinentry');

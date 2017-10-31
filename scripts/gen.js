@@ -1,7 +1,7 @@
 'use strict';
 
 const consensus = require('../lib/protocol/consensus');
-const encoding = require('../lib/utils/encoding');
+const encoding = require('bbuf/lib/encoding');
 const TX = require('../lib/primitives/tx');
 const Block = require('../lib/primitives/block');
 const Script = require('../lib/script/script');

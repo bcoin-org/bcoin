@@ -3,14 +3,14 @@
 const assert = require('assert');
 const bcoin = require('../');
 const walletdb = require('../lib/wallet/walletdb');
-const encoding = require('../lib/utils/encoding');
+const encoding = require('bbuf/lib/encoding');
 const Path = require('../lib/wallet/path');
 const MasterKey = require('../lib/wallet/masterkey');
 const Account = require('../lib/wallet/account');
 const Wallet = require('../lib/wallet/wallet');
 const KeyRing = require('../lib/primitives/keyring');
-const BufferReader = require('../lib/utils/reader');
-const BufferWriter = require('../lib/utils/writer');
+const BufferReader = require('bbuf/lib/reader');
+const BufferWriter = require('bbuf/lib/writer');
 const layout = walletdb.layout;
 let file = process.argv[2];
 let batch;

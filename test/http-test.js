@@ -5,7 +5,7 @@
 
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
-const encoding = require('../lib/utils/encoding');
+const encoding = require('bbuf/lib/encoding');
 const co = require('../lib/utils/co');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');

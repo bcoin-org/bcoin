@@ -10,11 +10,11 @@
 
 const assert = require('assert');
 const util = require('../lib/utils/util');
-const encoding = require('../lib/utils/encoding');
+const encoding = require('bbuf/lib/encoding');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
-const BufferReader = require('../lib/utils/reader');
-const BufferWriter = require('../lib/utils/writer');
+const BufferReader = require('bbuf/lib/reader');
+const BufferWriter = require('bbuf/lib/writer');
 const {compress, decompress} = require('./compress-old');
 
 /**
