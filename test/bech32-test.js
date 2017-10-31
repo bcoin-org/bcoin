@@ -27,18 +27,8 @@
 'use strict';
 
 const assert = require('./util/assert');
-const bech32 = require('../lib/utils/bech32');
+const bech32 = require('bstr/lib/bech32');
 const Address = require('../lib/primitives/address');
-
-const validChecksums = [
-  'A12UEL5L',
-  'an83characterlonghumanreadablepartthatcontains'
-  + 'thenumber1andtheexcludedcharactersbio1tt5tgs',
-  'abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw',
-  '11qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'
-  + 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc8247j',
-  'split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w'
-];
 
 const validAddresses = [
   [
@@ -104,16 +94,6 @@ const invalidAddresses = [
   'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv'
 ];
 
-const validBech32Tests = [
-  'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4',
-  'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7',
-  'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw50'
-  + '8d6qejxtdg4y5r3zarvary0c5xw7k7grplx',
-  'BC1SW50QA3JX3S',
-  'bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj',
-  'tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy'
-];
-
 function fromAddress(hrp, addr) {
   const dec = bech32.decode(addr);
 
@@ -146,49 +126,6 @@ function createProgram(version, program) {
 }
 
 describe('Bech32', function() {
-  for (const addr of validChecksums) {
-    it(`should have valid checksum for ${addr}`, () => {
-      assert(bech32.deserialize(addr));
-    });
-  }
-
-  for (const [addr, script] of validAddresses) {
-    it(`should have valid address for ${addr}`, () => {
-      let hrp = 'bc';
-      let ret = null;
-
-      try {
-        ret = fromAddress(hrp, addr);
-      } catch (e) {
-        ret = null;
-      }
-
-      if (ret === null) {
-        hrp = 'tb';
-        try {
-          ret = fromAddress(hrp, addr);
-        } catch (e) {
-          ret = null;
-        }
-      }
-
-      assert(ret !== null);
-
-      const output = createProgram(ret.version, ret.program);
-      assert.bufferEqual(output, script);
-
-      const recreate = toAddress(hrp, ret.version, ret.program);
-      assert.strictEqual(recreate, addr.toLowerCase());
-    });
-  }
-
-  for (const addr of invalidAddresses) {
-    it(`should have invalid address for ${addr}`, () => {
-      assert.throws(() => fromAddress('bc', addr));
-      assert.throws(() => fromAddress('tb', addr));
-    });
-  }
-
   for (const [addr, script] of validAddresses) {
     it(`should have valid address for ${addr}`, () => {
       let ret = null;
@@ -226,10 +163,4 @@ describe('Bech32', function() {
       assert.throws(() => Address.fromBech32(addr, 'testnet'));
     });
   }
-
-  it('should validate bech32 addresses based only on string data', () => {
-    for (const bech32addr of validBech32Tests) {
-      assert.strictEqual(bech32.isBech32(bech32addr), true);
-    }
-  });
 });
