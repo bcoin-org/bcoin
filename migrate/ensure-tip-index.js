@@ -5,7 +5,6 @@ const BDB = require('bdb');
 const encoding = require('../lib/utils/encoding');
 const BufferReader = require('../lib/utils/reader');
 const digest = require('bcrypto/lib/digest');
-const util = require('../lib/utils/util');
 const BN = require('bcrypto/lib/bn');
 const DUMMY = Buffer.from([0]);
 
@@ -114,7 +113,7 @@ async function indexTips() {
 
   for (let i = 0; i < tips.length; i++) {
     const tip = tips[i];
-    console.log('Indexing chain tip: %s.', util.revHex(tip));
+    console.log('Indexing chain tip: %s.', encoding.revHex(tip));
     batch.put(pair('p', tip), DUMMY);
   }
 }

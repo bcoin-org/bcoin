@@ -4,10 +4,10 @@
 'use strict';
 
 const Input = require('../lib/primitives/input');
-const util = require('../lib/utils/util');
 const BufferReader = require('../lib/utils/reader');
 const assert = require('./util/assert');
 const common = require('./util/common');
+const encoding = require('../lib/utils/encoding');
 
 // Take input rawbytes from the raw data format
 // p2pkh
@@ -236,7 +236,7 @@ describe('Input', function() {
         const inputs = test.inputs.map((prevout, i) => {
           const input = Input.fromOptions({
             prevout: {
-              hash: util.revHex(prevout.txId),
+              hash: encoding.revHex(prevout.txId),
               index: prevout.vout
             }
           });

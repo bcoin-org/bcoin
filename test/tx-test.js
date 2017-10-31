@@ -5,7 +5,6 @@
 
 const {inspect} = require('util');
 const assert = require('./util/assert');
-const util = require('../lib/utils/util');
 const encoding = require('../lib/utils/encoding');
 const random = require('bcrypto/lib/random');
 const consensus = require('../lib/protocol/consensus');
@@ -66,7 +65,7 @@ function parseTXTest(data) {
   const view = new CoinView();
 
   for (const [txid, index, str, amount] of coins) {
-    const hash = util.revHex(txid);
+    const hash = encoding.revHex(txid);
     const script = Script.fromString(str);
     const value = parseInt(amount || '0', 10);
 
@@ -103,7 +102,7 @@ function parseSighashTest(data) {
   const tx = TX.fromRaw(txHex, 'hex');
   const script = Script.fromRaw(scriptHex, 'hex');
 
-  const expected = util.revHex(hash);
+  const expected = encoding.revHex(hash);
 
   let hex = type & 3;
 
