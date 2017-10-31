@@ -1,7 +1,7 @@
 'use strict';
 
 const bweb = require('bweb');
-const fs = require('../lib/utils/fs');
+const fs = require('bfile');
 const WSProxy = require('./wsproxy');
 
 const index = fs.readFileSync(`${__dirname}/index.html`);
