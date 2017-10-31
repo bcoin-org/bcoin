@@ -5,7 +5,7 @@
 
 const assert = require('./util/assert');
 const common = require('./util/common');
-const Bloom = require('../lib/utils/bloom');
+const BloomFilter = require('bfilter/lib/bloom');
 const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
@@ -103,7 +103,7 @@ describe('Block', function() {
   });
 
   it('should create a merkle block', () => {
-    const filter = Bloom.fromRate(1000, 0.01, Bloom.flags.NONE);
+    const filter = BloomFilter.fromRate(1000, 0.01, BloomFilter.flags.NONE);
 
     const item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
     const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
