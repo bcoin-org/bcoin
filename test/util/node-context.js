@@ -4,7 +4,7 @@ const assert = require('assert');
 const FullNode = require('../../lib/node/fullnode');
 const Network = require('../../lib/protocol/network');
 const co = require('../../lib/utils/co');
-const Logger = require('../../lib/node/logger');
+const Logger = require('blgr');
 
 function NodeContext(network, size) {
   if (!(this instanceof NodeContext))
