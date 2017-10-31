@@ -19,7 +19,7 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
-const U32 = encoding.U32;
+const u32 = encoding.u32;
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -46,9 +46,9 @@ function nextBlock(wdb) {
 }
 
 function fakeBlock(height) {
-  const prev = digest.hash256(U32((height - 1) >>> 0));
-  const hash = digest.hash256(U32(height >>> 0));
-  const root = digest.hash256(U32((height | 0x80000000) >>> 0));
+  const prev = digest.hash256(u32((height - 1) >>> 0));
+  const hash = digest.hash256(u32(height >>> 0));
+  const root = digest.hash256(u32((height | 0x80000000) >>> 0));
 
   return {
     hash: hash.toString('hex'),
