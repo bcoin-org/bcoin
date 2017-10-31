@@ -23,17 +23,17 @@
     "node": ">=7.6.0"
   },
   "dependencies": {
+    "bbuf": "^0.0.1",
     "bclient": "^0.0.1",
     "bcrypto": "^0.0.1",
     "bdb": "^0.0.1",
     "bfile": "^0.0.1",
+    "bfilter": "^0.0.1",
     "breq": "^0.0.1",
     "bsock": "^0.0.1",
+    "bstr": "^0.0.1",
     "bweb": "^0.0.1",
     "n64": "^0.0.18"
-  },
-  "optionalDependencies": {
-    "bcoin-native": "0.0.23"
   },
   "devDependencies": {
     "babel-core": "^6.25.0",
