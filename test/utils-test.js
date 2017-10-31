@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {U64, I64} = require('../lib/utils/int64');
+const {U64, I64} = require('n64');
 const base58 = require('../lib/utils/base58');
 const encoding = require('../lib/utils/encoding');
 const Amount = require('../lib/btc/amount');

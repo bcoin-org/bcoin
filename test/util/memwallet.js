@@ -10,7 +10,7 @@ const assert = require('assert');
 const Network = require('../../lib/protocol/network');
 const MTX = require('../../lib/primitives/mtx');
 const HD = require('../../lib/hd/hd');
-const Bloom = require('../../lib/utils/bloom');
+const BloomFilter = require('bfilter/lib/bloom');
 const KeyRing = require('../../lib/primitives/keyring');
 const Outpoint = require('../../lib/primitives/outpoint');
 const Coin = require('../../lib/primitives/coin');
@@ -34,7 +34,7 @@ function MemWallet(options) {
   this.paths = new Map();
   this.balance = 0;
   this.txs = 0;
-  this.filter = Bloom.fromRate(1000000, 0.001, -1);
+  this.filter = BloomFilter.fromRate(1000000, 0.001, -1);
 
   if (options)
     this.fromOptions(options);
