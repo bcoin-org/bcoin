@@ -2,7 +2,7 @@
 
 'use strict';
 
-const Config = require('../lib/node/config');
+const Config = require('bcfg');
 const {NodeClient, WalletClient} = require('bclient');
 
 const nports = {
