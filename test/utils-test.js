@@ -8,7 +8,7 @@ const {U64, I64} = require('n64');
 const base58 = require('bstr/lib/base58');
 const encoding = require('bbuf/lib/encoding');
 const Amount = require('../lib/btc/amount');
-const Validator = require('../lib/utils/validator');
+const Validator = require('bval/lib/validator');
 const fixed = require('../lib/utils/fixed');
 
 const base58Tests = [
