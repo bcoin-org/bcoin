@@ -2,8 +2,8 @@
 
 const assert = require('assert');
 const BDB = require('bdb');
-const encoding = require('../lib/utils/encoding');
-const BufferReader = require('../lib/utils/reader');
+const encoding = require('bbuf/lib/encoding');
+const BufferReader = require('bbuf/lib/reader');
 const digest = require('bcrypto/lib/digest');
 const BN = require('bcrypto/lib/bn');
 const DUMMY = Buffer.from([0]);
