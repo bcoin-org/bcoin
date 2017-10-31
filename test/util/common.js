@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const path = require('path');
-const fs = require('../../lib/utils/fs');
+const fs = require('bfile');
 const Block = require('../../lib/primitives/block');
 const MerkleBlock = require('../../lib/primitives/merkleblock');
 const Headers = require('../../lib/primitives/headers');
