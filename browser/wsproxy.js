@@ -4,7 +4,7 @@ const assert = require('assert');
 const net = require('net');
 const EventEmitter = require('events');
 const bsock = require('bsock');
-const digest = require('bcrypto/lib/digest');
+const hash256 = require('bcrypto/lib/hash256');
 const IP = require('binet');
 const BufferWriter = require('bbuf/lib/writer');
 
@@ -100,7 +100,7 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
 
     const pow = bw.render();
 
-    if (digest.hash256(pow).compare(this.target) > 0) {
+    if (hash256.digest(pow).compare(this.target) > 0) {
       this.log('Client did not solve proof of work (%s).', state.host);
       ws.fire('tcp close');
       ws.destroy();

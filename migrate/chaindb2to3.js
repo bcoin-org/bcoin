@@ -18,7 +18,7 @@ if (process.argv.indexOf('-h') !== -1
 const assert = require('assert');
 const BDB = require('bdb');
 const encoding = require('bbuf/lib/encoding');
-const digest = require('bcrypto/lib/digest');
+const hash256 = require('bcrypto/lib/hash256');
 const BN = require('bcrypto/lib/bn');
 const StaticWriter = require('bbuf/lib/staticwriter');
 const BufferReader = require('bbuf/lib/reader');
@@ -578,7 +578,7 @@ async function isMainChain(entry, tip) {
 
 function entryFromRaw(data) {
   const br = new BufferReader(data, true);
-  const hash = digest.hash256(br.readBytes(80));
+  const hash = hash256.digest(br.readBytes(80));
 
   br.seek(-80);
 

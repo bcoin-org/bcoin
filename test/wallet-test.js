@@ -7,7 +7,7 @@ const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 const encoding = require('bbuf/lib/encoding');
-const digest = require('bcrypto/lib/digest');
+const hash256 = require('bcrypto/lib/hash256');
 const random = require('bcrypto/lib/random');
 const WalletDB = require('../lib/wallet/walletdb');
 const WorkerPool = require('../lib/workers/workerpool');
@@ -46,9 +46,9 @@ function nextBlock(wdb) {
 }
 
 function fakeBlock(height) {
-  const prev = digest.hash256(u32((height - 1) >>> 0));
-  const hash = digest.hash256(u32(height >>> 0));
-  const root = digest.hash256(u32((height | 0x80000000) >>> 0));
+  const prev = hash256.digest(u32((height - 1) >>> 0));
+  const hash = hash256.digest(u32(height >>> 0));
+  const root = hash256.digest(u32((height | 0x80000000) >>> 0));
 
   return {
     hash: hash.toString('hex'),

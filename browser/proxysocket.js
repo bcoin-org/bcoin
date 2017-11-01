@@ -9,7 +9,7 @@
 const assert = require('assert');
 const EventEmitter = require('events');
 const bsock = require('bsock');
-const digest = require('bcrypto/lib/digest');
+const hash256 = require('bcrypto/lib/hash256');
 const BufferWriter = require('bbuf/lib/writer');
 
 function ProxySocket(uri) {
@@ -133,7 +133,7 @@ ProxySocket.prototype.connect = function connect(port, host) {
       nonce++;
       assert(nonce <= 0xffffffff, 'Could not create socket.');
       pow.writeUInt32LE(nonce, 0, true);
-    } while (digest.hash256(pow).compare(this.target) > 0);
+    } while (hash256.digest(pow).compare(this.target) > 0);
 
     console.log('Solved proof of work: %d', nonce);
   }

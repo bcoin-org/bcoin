@@ -4,7 +4,7 @@ const assert = require('assert');
 const BDB = require('bdb');
 const encoding = require('bbuf/lib/encoding');
 const BufferReader = require('bbuf/lib/reader');
-const digest = require('bcrypto/lib/digest');
+const hash256 = require('bcrypto/lib/hash256');
 const BN = require('bcrypto/lib/bn');
 const DUMMY = Buffer.from([0]);
 
@@ -40,7 +40,7 @@ async function checkVersion() {
 
 function entryFromRaw(data) {
   const p = new BufferReader(data, true);
-  const hash = digest.hash256(p.readBytes(80));
+  const hash = hash256.digest(p.readBytes(80));
   const entry = {};
 
   p.seek(-80);
