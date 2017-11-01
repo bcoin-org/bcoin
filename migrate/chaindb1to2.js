@@ -4,7 +4,6 @@ const assert = require('assert');
 const BDB = require('bdb');
 const encoding = require('bbuf/lib/encoding');
 const networks = require('../lib/protocol/networks');
-const co = require('../lib/utils/co');
 const BufferWriter = require('bbuf/lib/writer');
 const BufferReader = require('bbuf/lib/reader');
 const OldCoins = require('./coins-old');
@@ -76,8 +75,7 @@ async function checkTipIndex() {
 
   if (keys.length < 3) {
     console.log('Note: please run ensure-tip-index.js if you haven\'t yet.');
-    await co.timeout(2000);
-    return;
+    return new Promise(r => setTimeout(r, 2000));
   }
 }
 
@@ -92,7 +90,7 @@ async function updateOptions() {
     console.log('`--network [name]`, `--spv`, `--witness`,');
     console.log('`--prune`, `--index-tx`, and `--index-address`.');
     console.log('Continuing migration in 5 seconds...');
-    await co.timeout(5000);
+    await new Promise(r => setTimeout(r, 5000));
   }
 
   batch.put('O', defaultOptions());
@@ -106,7 +104,7 @@ async function updateDeployments() {
     console.log('Warning: no deployment table found.');
     console.log('Make sure `--network` is set properly.');
     console.log('Continuing migration in 5 seconds...');
-    await co.timeout(5000);
+    await new Promise(r => setTimeout(r, 5000));
   }
 
   batch.put('v', defaultDeployments());

@@ -3,7 +3,6 @@
 const assert = require('assert');
 const FullNode = require('../../lib/node/fullnode');
 const Network = require('../../lib/protocol/network');
-const co = require('../../lib/utils/co');
 const Logger = require('blgr');
 
 function NodeContext(network, size) {
@@ -73,7 +72,7 @@ NodeContext.prototype.close = function close() {
 NodeContext.prototype.connect = async function connect() {
   for (const node of this.nodes) {
     await node.connect();
-    await co.timeout(1000);
+    await new Promise(r => setTimeout(r, 1000));
   }
 };
 
@@ -81,7 +80,7 @@ NodeContext.prototype.disconnect = async function disconnect() {
   for (let i = this.nodes.length - 1; i >= 0; i--) {
     const node = this.nodes[i];
     await node.disconnect();
-    await co.timeout(1000);
+    await new Promise(r => setTimeout(r, 1000));
   }
 };
 
@@ -118,7 +117,7 @@ NodeContext.prototype.height = function height(index) {
 };
 
 NodeContext.prototype.sync = async function sync() {
-  await co.timeout(3000);
+  return new Promise(r => setTimeout(r, 3000));
 };
 
 module.exports = NodeContext;
