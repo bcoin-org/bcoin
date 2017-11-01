@@ -27,7 +27,6 @@
 'use strict';
 
 const assert = require('./util/assert');
-const bech32 = require('bstr/lib/bech32');
 const Address = require('../lib/primitives/address');
 
 const validAddresses = [
@@ -93,29 +92,6 @@ const invalidAddresses = [
   'tb1pw508d6qejxtdg4y5r3zarqfsj6c3',
   'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv'
 ];
-
-function fromAddress(hrp, addr) {
-  const dec = bech32.decode(addr);
-
-  if (dec.hrp !== hrp)
-    throw new Error('Invalid bech32 prefix or data length.');
-
-  if (dec.version === 0 && dec.hash.length !== 20 && dec.hash.length !== 32)
-    throw new Error('Malformed witness program.');
-
-  return {
-    version: dec.version,
-    program: dec.hash
-  };
-}
-
-function toAddress(hrp, version, program) {
-  const ret = bech32.encode(hrp, version, program);
-
-  fromAddress(hrp, ret);
-
-  return ret;
-}
 
 function createProgram(version, program) {
   const data = Buffer.allocUnsafe(2 + program.length);

@@ -61,7 +61,7 @@ WSProxy.prototype.handleSocket = function handleSocket(ws) {
     this.emit('error', err);
   });
 
-  ws.listen('tcp connect', (port, host, nonce) => {
+  ws.bind('tcp connect', (port, host, nonce) => {
     this.handleConnect(ws, port, host, nonce);
   });
 };
@@ -184,33 +184,33 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
     ws.destroy();
   });
 
-  ws.listen('tcp data', (data) => {
+  ws.bind('tcp data', (data) => {
     if (typeof data !== 'string')
       return;
     socket.write(Buffer.from(data, 'hex'));
   });
 
-  ws.listen('tcp keep alive', (enable, delay) => {
+  ws.bind('tcp keep alive', (enable, delay) => {
     socket.setKeepAlive(enable, delay);
   });
 
-  ws.listen('tcp no delay', (enable) => {
+  ws.bind('tcp no delay', (enable) => {
     socket.setNoDelay(enable);
   });
 
-  ws.listen('tcp set timeout', (timeout) => {
+  ws.bind('tcp set timeout', (timeout) => {
     socket.setTimeout(timeout);
   });
 
-  ws.listen('tcp pause', () => {
+  ws.bind('tcp pause', () => {
     socket.pause();
   });
 
-  ws.listen('tcp resume', () => {
+  ws.bind('tcp resume', () => {
     socket.resume();
   });
 
-  ws.listen('disconnect', () => {
+  ws.bind('disconnect', () => {
     socket.destroy();
   });
 };
@@ -229,7 +229,7 @@ function SocketState(server, socket) {
   this.target = server.target;
   this.snonce = nonce();
   this.socket = null;
-  this.host = IP.normalize(socket.conn.remoteAddress);
+  this.host = socket.host;
   this.remoteHost = null;
 }
 
