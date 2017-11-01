@@ -2,7 +2,7 @@
 
 const ChaCha20 = require('bcrypto/lib/chacha20');
 const Poly1305 = require('bcrypto/lib/poly1305');
-const digest = require('bcrypto/lib/digest');
+const hash256 = require('bcrypto/lib/hash256');
 const bench = require('./bench');
 
 console.log('note: rate measured in kb/s');
@@ -51,6 +51,6 @@ poly.init(key);
 {
   const end = bench('sha256');
   for (let i = 0; i < 1000000; i++)
-    digest.hash256(data);
+    hash256.digest(data);
   end(1000000 * 32 / 1024);
 }
