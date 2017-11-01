@@ -18,7 +18,6 @@ if (process.argv.indexOf('-h') !== -1
 const assert = require('assert');
 const BDB = require('bdb');
 const encoding = require('bbuf/lib/encoding');
-const co = require('../lib/utils/co');
 const digest = require('bcrypto/lib/digest');
 const BN = require('bcrypto/lib/bn');
 const StaticWriter = require('bbuf/lib/staticwriter');
@@ -664,7 +663,7 @@ reserializeEntries;
   console.log('Starting migration in 3 seconds...');
   console.log('If you crash you can start over.');
 
-  await co.timeout(3000);
+  await new Promise(r => setTimeout(r, 3000));
 
   let [state, hash] = await readJournal();
 

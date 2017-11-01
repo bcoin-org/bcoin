@@ -5,7 +5,6 @@
 
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
-const co = require('../lib/utils/co');
 const Coin = require('../lib/primitives/coin');
 const Script = require('../lib/script/script');
 const Opcode = require('../lib/script/opcode');
@@ -125,7 +124,7 @@ describe('Node', function() {
 
       assert(!await chain.isMainChain(tip2));
 
-      await co.wait();
+      await new Promise(setImmediate);
     }
   });
 
@@ -136,7 +135,7 @@ describe('Node', function() {
   });
 
   it('should have correct balance', async () => {
-    await co.timeout(100);
+    await new Promise(r => setTimeout(r, 100));
 
     const balance = await wallet.getBalance();
     assert.strictEqual(balance.unconfirmed, 550 * 1e8);
@@ -173,7 +172,7 @@ describe('Node', function() {
   });
 
   it('should have correct balance', async () => {
-    await co.timeout(100);
+    await new Promise(r => setTimeout(r, 100));
 
     const balance = await wallet.getBalance();
     assert.strictEqual(balance.unconfirmed, 1100 * 1e8);
@@ -252,7 +251,7 @@ describe('Node', function() {
   });
 
   it('should get balance', async () => {
-    await co.timeout(100);
+    await new Promise(r => setTimeout(r, 100));
 
     const balance = await wallet.getBalance();
     assert.strictEqual(balance.unconfirmed, 1250 * 1e8);

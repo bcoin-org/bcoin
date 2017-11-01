@@ -2,7 +2,6 @@
 
 const bcoin = require('../..');
 const encoding = bcoin.encoding;
-const co = bcoin.co;
 const Outpoint = bcoin.outpoint;
 const MTX = bcoin.mtx;
 const HTTP = bcoin.http;
@@ -50,7 +49,7 @@ async function fundWallet(wdb, addr) {
   });
 
   await wdb.addTX(tx);
-  await co.timeout(300);
+  await new Promise(r => setTimeout(r, 300));
 }
 
 async function sendTX(addr, value) {
