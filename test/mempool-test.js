@@ -64,6 +64,8 @@ describe('Mempool', function() {
   this.timeout(5000);
 
   it('should open mempool', async () => {
+    await workers.open();
+    await chain.open();
     await mempool.open();
     chain.state.flags |= Script.flags.VERIFY_WITNESS;
   });
@@ -349,5 +351,7 @@ describe('Mempool', function() {
 
   it('should destroy mempool', async () => {
     await mempool.close();
+    await chain.close();
+    await workers.close();
   });
 });
