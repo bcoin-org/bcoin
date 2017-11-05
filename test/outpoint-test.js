@@ -10,14 +10,11 @@ const TX = require('../lib/primitives/tx');
 const OUTPOINT_SIZE = 36;
 
 describe('Outpoint', () => {
-  let raw1, raw2, tx1, tx2, out1, out2;
+  let raw1, tx1, out1;
   beforeEach(() => {
     tx1 = common.readTX('tx1').getRaw();
-    tx2 = common.readTX('tx3').getRaw();
     raw1 = tx1.slice(5, 5+OUTPOINT_SIZE);
-    raw2 = tx2.slice(5, 5+OUTPOINT_SIZE);
     out1 = Outpoint.fromRaw(raw1);
-    out2 = Outpoint.fromRaw(raw2);
   });
 
   it('should clone the outpoint correctly', () => {
