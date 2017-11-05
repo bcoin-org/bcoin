@@ -9,9 +9,6 @@ const util = require('../lib/utils/util');
 const TX = require('../lib/primitives/tx');
 const OUTPOINT_SIZE = 36;
 
-const raw3 = common.readTX('tx2').getRaw();
-const raw4 = common.readTX('tx1').getRaw();
-console.log(TX.fromRaw(raw3).inputs);
 describe('Outpoint', () => {
   let raw1, raw2, tx1, tx2, out1, out2;
   beforeEach(() => {
@@ -44,15 +41,23 @@ describe('Outpoint', () => {
   it('should check hash and index are equal', () => {
     const out1Clone = Outpoint.fromOptions(Object.assign(out1, {}));
 
-    assert(out1.equals(out2) === false, true);
-    assert(out1Clone.hash === out1.hash, out1Clone.equals(out1));
-    assert(out1Clone.index === out1.index, out1Clone.equals(out1));
+    assert(out1Clone.hash === out1.hash);
+    assert(out1Clone.index === out1.index);
   });
 
   it('should compare the indexes between outpoints', () => {
+    const out1RevHash = out1.clone();
+    out1RevHash.hash = out1RevHash.rhash();
+
+    const out1AdjIndex = out1.clone();
+    out1AdjIndex.index += 1;
+
     const index1 = out1.index;
-    const index2 = out2.index;
-    assert.equal(out1.compare(out2), index1 - index2);
+    const index2 = out1AdjIndex.index;
+    // assert that it compares txid first
+    assert(out1.compare(out1RevHash) !== 0, 'txid wasn\'t compared correctly');
+    assert(out1.compare(out1) === 0);
+    assert(out1.compare(out1AdjIndex) === index1 - index2);
   });
 
   it('should detect if the outpoint is null', () => {
@@ -105,9 +110,8 @@ describe('Outpoint', () => {
     assert.deepEqual(expected, out1.toJSON());
   });
 
-  it('should instantiate an outpoint fron a tx', () => {
-    const inputs = TX.fromRaw(tx1).inputs;
-    const tx = new TX({ inputs });
+  it('should instantiate an outpoint from a tx', () => {
+    const tx = TX.fromRaw(tx1);
     const index = 0;
     const fromTX = Outpoint.fromTX(tx, index);
 
