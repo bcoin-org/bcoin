@@ -1,5 +1,9 @@
 # Bcoin
 
+[![NPM Version][npm-version-img]][npm-version-url]
+[![Build Status][travis-status-img]][travis-status-url]
+[![Coverage Status][coverage-status-img]][coverage-status-url]
+
 __NOTE__: The latest release of bcoin contains a non-backward compatible change
 to the rest API. Please read the [changelog]'s "migrating" section for more
 details.
@@ -69,3 +73,10 @@ See LICENSE for more info.
 [freenode]: https://freenode.net/
 [irc]: irc://irc.freenode.net/bcoin
 [changelog]: https://github.com/bcoin-org/bcoin/blob/master/CHANGELOG.md
+
+[npm-version-img]: https://img.shields.io/npm/v/bcoin.svg
+[npm-version-url]: https://npmjs.org/package/bcoin
+[coverage-status-img]: https://coveralls.io/repos/github/bcoin-org/bcoin/badge.svg?branch=master
+[coverage-status-url]: https://coveralls.io/github/bcoin-org/bcoin?branch=master
+[travis-status-img]: https://travis-ci.org/bcoin-org/bcoin.svg?branch=master
+[travis-status-url]: https://travis-ci.org/bcoin-org/bcoin
