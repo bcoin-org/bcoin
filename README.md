@@ -1,7 +1,7 @@
 # Bcoin
 
 __NOTE__: The latest release of bcoin contains a non-backward compatible change
-to the rest API. Please read the [changelog]'s "migrating" section for more
+to the REST API. Please read the [changelog]'s "migrating" section for more
 details.
 
 ---
@@ -9,7 +9,7 @@ details.
 **Bcoin** is an alternative implementation of the bitcoin protocol, written in
 node.js.
 
-Although still in a beta state, bcoin is well tested and aware of all known
+Although still in beta, bcoin is well tested and aware of all known
 consensus rules. It is currently used in production as the consensus backend
 and wallet system for [purse.io][purse].
 
@@ -24,7 +24,7 @@ and wallet system for [purse.io][purse].
 
 Try it in the browser: http://bcoin.io/browser.html
 
-## Install
+## Installation
 
 ```
 $ git clone git://github.com/bcoin-org/bcoin.git
@@ -47,13 +47,13 @@ Join us on [freenode][freenode] in the [#bcoin][irc] channel.
 
 ## Disclaimer
 
-Bcoin does not guarantee you against theft or lost funds due to bugs, mishaps,
+Bcoin does not guarantee against theft or lost funds due to bugs, mishaps,
 or your own incompetence. You and you alone are responsible for securing your
 money.
 
 ## Contribution and License Agreement
 
-If you contribute code to this project, you are implicitly allowing your code
+If you want to contribute code to this project, you are implicitly allowing your code
 to be distributed under the MIT license. You are also implicitly verifying that
 all code is your original work. `</legalese>`
 
