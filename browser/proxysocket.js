@@ -10,7 +10,7 @@ const assert = require('assert');
 const EventEmitter = require('events');
 const bsock = require('bsock');
 const hash256 = require('bcrypto/lib/hash256');
-const BufferWriter = require('bbuf/lib/writer');
+const BufferWriter = require('bufio/lib/writer');
 
 function ProxySocket(uri) {
   if (!(this instanceof ProxySocket))

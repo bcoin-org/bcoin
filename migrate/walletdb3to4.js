@@ -2,9 +2,9 @@
 
 const assert = require('assert');
 const bcoin = require('../');
-const encoding = require('bbuf/lib/encoding');
+const encoding = require('bufio/lib/encoding');
 const WalletDB = require('../lib/wallet/walletdb');
-const BufferReader = require('bbuf/lib/reader');
+const BufferReader = require('bufio/lib/reader');
 const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
 let file = process.argv[2];

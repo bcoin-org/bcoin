@@ -2,9 +2,9 @@
 
 const assert = require('assert');
 const bcoin = require('../');
-const encoding = require('bbuf/lib/encoding');
-const BufferWriter = require('bbuf/lib/writer');
-const BufferReader = require('bbuf/lib/reader');
+const encoding = require('bufio/lib/encoding');
+const BufferWriter = require('bufio/lib/writer');
+const BufferReader = require('bufio/lib/reader');
 let file = process.argv[2];
 let batch;
 

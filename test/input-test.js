@@ -4,10 +4,10 @@
 'use strict';
 
 const Input = require('../lib/primitives/input');
-const BufferReader = require('bbuf/lib/reader');
+const BufferReader = require('bufio/lib/reader');
 const assert = require('./util/assert');
 const common = require('./util/common');
-const encoding = require('bbuf/lib/encoding');
+const encoding = require('bufio/lib/encoding');
 
 // Take input rawbytes from the raw data format
 // p2pkh
