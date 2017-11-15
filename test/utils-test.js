@@ -5,8 +5,8 @@
 
 const assert = require('./util/assert');
 const {U64, I64} = require('n64');
-const base58 = require('bstr/lib/base58');
-const encoding = require('bbuf/lib/encoding');
+const base58 = require('bstring/lib/base58');
+const encoding = require('bufio/lib/encoding');
 const Amount = require('../lib/btc/amount');
 const Validator = require('bval/lib/validator');
 const fixed = require('../lib/utils/fixed');

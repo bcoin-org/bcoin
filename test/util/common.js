@@ -10,8 +10,8 @@ const {CompactBlock} = require('../../lib/net/bip152');
 const TX = require('../../lib/primitives/tx');
 const Output = require('../../lib/primitives/output');
 const CoinView = require('../../lib/coins/coinview');
-const BufferReader = require('bbuf/lib/reader');
-const BufferWriter = require('bbuf/lib/writer');
+const BufferReader = require('bufio/lib/reader');
+const BufferWriter = require('bufio/lib/writer');
 
 const common = exports;
 
