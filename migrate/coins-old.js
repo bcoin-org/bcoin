@@ -9,13 +9,12 @@
 'use strict';
 
 const assert = require('assert');
+const bio = require('bufio');
 const util = require('../lib/utils/util');
-const encoding = require('bufio/lib/encoding');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
-const BufferReader = require('bufio/lib/reader');
-const BufferWriter = require('bufio/lib/writer');
 const {compress, decompress} = require('./compress-old');
+const {encoding} = bio;
 
 /**
  * Represents the outputs for a single transaction.
@@ -220,7 +219,7 @@ Coins.prototype.isEmpty = function isEmpty() {
  */
 
 Coins.prototype.toRaw = function toRaw() {
-  const bw = new BufferWriter();
+  const bw = bio.write();
   const length = this.size();
   const len = Math.ceil(length / 8);
 
@@ -300,7 +299,7 @@ Coins.prototype.toRaw = function toRaw() {
  */
 
 Coins.prototype.fromRaw = function fromRaw(data, hash, index) {
-  const br = new BufferReader(data);
+  const br = bio.read(data);
   let pos = 0;
 
   this.version = br.readVarint();
@@ -353,7 +352,7 @@ Coins.prototype.fromRaw = function fromRaw(data, hash, index) {
  */
 
 Coins.parseCoin = function parseCoin(data, hash, index) {
-  const br = new BufferReader(data);
+  const br = bio.read(data);
   const coin = new Coin();
   let pos = 0;
 
@@ -500,7 +499,7 @@ CoinEntry.prototype.toCoin = function toCoin(coins, index) {
     return coin;
   }
 
-  const br = new BufferReader(this.raw);
+  const br = bio.read(this.raw);
 
   // Seek to the coin's offset.
   br.seek(this.offset);

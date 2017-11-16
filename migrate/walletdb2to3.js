@@ -2,16 +2,16 @@
 
 const assert = require('assert');
 const bcoin = require('../');
+const bio = require('bufio');
 const walletdb = require('../lib/wallet/walletdb');
-const encoding = require('bufio/lib/encoding');
 const Path = require('../lib/wallet/path');
 const MasterKey = require('../lib/wallet/masterkey');
 const Account = require('../lib/wallet/account');
 const Wallet = require('../lib/wallet/wallet');
 const KeyRing = require('../lib/primitives/keyring');
-const BufferReader = require('bufio/lib/reader');
-const BufferWriter = require('bufio/lib/writer');
 const layout = walletdb.layout;
+const {encoding} = bio;
+
 let file = process.argv[2];
 let batch;
 
@@ -188,7 +188,7 @@ async function updateTXMap() {
 
 function pathFromRaw(data) {
   const path = {};
-  const p = new BufferReader(data);
+  const p = bio.read(data);
 
   path.wid = p.readU32();
   path.name = p.readVarString('utf8');
@@ -221,7 +221,7 @@ function pathFromRaw(data) {
 }
 
 function parsePaths(data, hash) {
-  const p = new BufferReader(data);
+  const p = bio.read(data);
   const out = {};
 
   while (p.left()) {
@@ -235,7 +235,7 @@ function parsePaths(data, hash) {
 }
 
 function parseWallets(data) {
-  const p = new BufferReader(data);
+  const p = bio.read(data);
   const wallets = [];
   while (p.left())
     wallets.push(p.readU32());
@@ -243,7 +243,7 @@ function parseWallets(data) {
 }
 
 function serializeWallets(wallets) {
-  const p = new BufferWriter();
+  const p = bio.write();
 
   for (let i = 0; i < wallets.length; i++) {
     const wid = wallets[i];
@@ -262,7 +262,7 @@ function readAccountKey(key) {
 
 function accountFromRaw(data, dbkey) {
   const account = {};
-  const p = new BufferReader(data);
+  const p = bio.read(data);
 
   dbkey = readAccountKey(dbkey);
   account.wid = dbkey.wid;
@@ -302,7 +302,7 @@ function accountFromRaw(data, dbkey) {
 
 function walletFromRaw(data) {
   const wallet = {};
-  const p = new BufferReader(data);
+  const p = bio.read(data);
 
   wallet.network = bcoin.network.fromMagic(p.readU32());
   wallet.wid = p.readU32();
@@ -327,7 +327,7 @@ function walletFromRaw(data) {
 
 function keyFromRaw(data, network) {
   const ring = {};
-  const p = new BufferReader(data);
+  const p = bio.read(data);
 
   ring.witness = p.readU8() === 1;
 

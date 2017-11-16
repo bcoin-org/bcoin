@@ -3,10 +3,10 @@
 
 'use strict';
 
+const {encoding} = require('bufio');
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
-const encoding = require('bufio/lib/encoding');
 const hash256 = require('bcrypto/lib/hash256');
 const random = require('bcrypto/lib/random');
 const WalletDB = require('../lib/wallet/walletdb');

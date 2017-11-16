@@ -2,7 +2,8 @@
 
 const bcoin = require('../');
 const assert = require('assert');
-const BufferWriter = require('bufio/lib/writer');
+const bio = require('bufio');
+
 let file = process.argv[2];
 
 assert(typeof file === 'string', 'Please pass in a database path.');
@@ -50,7 +51,7 @@ async function updateState() {
 
   const hash = data.slice(0, 32);
 
-  let p = new BufferWriter();
+  let p = bio.write();
   p.writeHash(hash);
   p.writeU64(0);
   p.writeU64(0);

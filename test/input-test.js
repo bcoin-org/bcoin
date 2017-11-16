@@ -3,11 +3,11 @@
 
 'use strict';
 
+const bio = require('bufio');
 const Input = require('../lib/primitives/input');
-const BufferReader = require('bufio/lib/reader');
 const assert = require('./util/assert');
 const common = require('./util/common');
-const encoding = require('bufio/lib/encoding');
+const {encoding} = bio;
 
 // Take input rawbytes from the raw data format
 // p2pkh
@@ -37,7 +37,7 @@ describe('Input', function() {
   it('should return same raw on fromReader', () => {
     [input1, input2, input3].forEach((rawinput) => {
       const raw = rawinput.slice();
-      const input = Input.fromReader(new BufferReader(raw));
+      const input = Input.fromReader(bio.read(raw));
 
       assert.bufferEqual(raw, input.toRaw());
     });

@@ -9,7 +9,7 @@ const Witness = require('../lib/script/witness');
 const Stack = require('../lib/script/stack');
 const Opcode = require('../lib/script/opcode');
 const TX = require('../lib/primitives/tx');
-const encoding = require('bufio/lib/encoding');
+const {encoding} = require('bufio');
 const {fromFloat} = require('../lib/utils/fixed');
 
 const scripts = require('./data/script-tests.json');

@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const encoding = require('bufio/lib/encoding');
+const {encoding} = require('bufio');
 const random = require('bcrypto/lib/random');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
@@ -19,6 +19,9 @@ const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
 const ALL = Script.hashType.ALL;
+
+const ONE_HASH = Buffer.alloc(32, 0x00);
+ONE_HASH[0] = 0x01;
 
 const workers = new WorkerPool({
   enabled: true
@@ -79,7 +82,7 @@ describe('Mempool', function() {
 
     const script = Script.fromPubkey(key.publicKey);
 
-    t1.addCoin(dummyInput(script, encoding.ONE_HASH.toString('hex')));
+    t1.addCoin(dummyInput(script, ONE_HASH.toString('hex')));
 
     const sig = t1.signature(0, script, 70000, key.privateKey, ALL, 0);
 

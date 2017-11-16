@@ -2,11 +2,12 @@
 
 const assert = require('assert');
 const bcoin = require('../');
-const encoding = require('bufio/lib/encoding');
+const bio = require('bufio');
 const WalletDB = require('../lib/wallet/walletdb');
-const BufferReader = require('bufio/lib/reader');
 const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
+const {encoding} = bio;
+
 let file = process.argv[2];
 let batch;
 
