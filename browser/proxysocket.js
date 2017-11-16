@@ -10,7 +10,7 @@ const assert = require('assert');
 const EventEmitter = require('events');
 const bsock = require('bsock');
 const hash256 = require('bcrypto/lib/hash256');
-const BufferWriter = require('bufio/lib/writer');
+const bio = require('bufio');
 
 function ProxySocket(uri) {
   if (!(this instanceof ProxySocket))
@@ -116,7 +116,7 @@ ProxySocket.prototype.connect = function connect(port, host) {
   let nonce = 0;
 
   if (this.info.pow) {
-    const bw = new BufferWriter();
+    const bw = bio.write();
 
     bw.writeU32(nonce);
     bw.writeBytes(this.snonce);
@@ -130,7 +130,7 @@ ProxySocket.prototype.connect = function connect(port, host) {
       port, host);
 
     do {
-      nonce++;
+      nonce += 1;
       assert(nonce <= 0xffffffff, 'Could not create socket.');
       pow.writeUInt32LE(nonce, 0, true);
     } while (hash256.digest(pow).compare(this.target) > 0);

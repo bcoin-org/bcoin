@@ -3,9 +3,9 @@
 
 'use strict';
 
+const {encoding} = require('bufio');
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
-const encoding = require('bufio/lib/encoding');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
 const Outpoint = require('../lib/primitives/outpoint');

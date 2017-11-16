@@ -6,7 +6,7 @@ const EventEmitter = require('events');
 const bsock = require('bsock');
 const hash256 = require('bcrypto/lib/hash256');
 const IP = require('binet');
-const BufferWriter = require('bufio/lib/writer');
+const bio = require('bufio');
 
 const TARGET = Buffer.from(
   '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
@@ -92,7 +92,7 @@ WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) 
       return;
     }
 
-    const bw = new BufferWriter();
+    const bw = bio.write();
     bw.writeU32(nonce);
     bw.writeBytes(state.snonce);
     bw.writeU32(port);

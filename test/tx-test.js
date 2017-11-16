@@ -4,8 +4,8 @@
 'use strict';
 
 const {inspect} = require('util');
+const {encoding} = require('bufio');
 const assert = require('./util/assert');
-const encoding = require('bufio/lib/encoding');
 const random = require('bcrypto/lib/random');
 const consensus = require('../lib/protocol/consensus');
 const TX = require('../lib/primitives/tx');

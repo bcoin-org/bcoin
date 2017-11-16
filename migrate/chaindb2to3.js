@@ -17,20 +17,20 @@ if (process.argv.indexOf('-h') !== -1
 
 const assert = require('assert');
 const BDB = require('bdb');
-const encoding = require('bufio/lib/encoding');
 const hash256 = require('bcrypto/lib/hash256');
 const BN = require('bcrypto/lib/bn');
-const StaticWriter = require('bufio/lib/staticwriter');
-const BufferReader = require('bufio/lib/reader');
+const bio = require('bufio');
 const OldCoins = require('./coins/coins');
 const OldUndoCoins = require('./coins/undocoins');
 const CoinEntry = require('../lib/coins/coinentry');
 const UndoCoins = require('../lib/coins/undocoins');
 const Block = require('../lib/primitives/block');
 const LRU = require('../lib/utils/lru');
+const {encoding} = bio;
 
 const file = process.argv[2].replace(/\.ldb\/?$/, '');
 const shouldPrune = process.argv.indexOf('--prune') !== -1;
+
 let hasIndex = false;
 let hasPruned = false;
 let hasSPV = false;
@@ -524,7 +524,7 @@ async function getMeta(coin, prevout) {
     return [1, 1, false];
   }
 
-  const br = new BufferReader(coinsRaw);
+  const br = bio.read(coinsRaw);
   const version = br.readVarint();
   const height = br.readU32();
 
@@ -577,7 +577,7 @@ async function isMainChain(entry, tip) {
 }
 
 function entryFromRaw(data) {
-  const br = new BufferReader(data, true);
+  const br = bio.read(data, true);
   const hash = hash256.digest(br.readBytes(80));
 
   br.seek(-80);
@@ -597,7 +597,7 @@ function entryFromRaw(data) {
 }
 
 function entryToRaw(entry, main) {
-  const bw = new StaticWriter(116 + 1);
+  const bw = bio.write(116 + 1);
 
   bw.writeU32(entry.version);
   bw.writeHash(entry.prevBlock);

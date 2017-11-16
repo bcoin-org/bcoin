@@ -2,10 +2,11 @@
 
 const assert = require('assert');
 const BDB = require('bdb');
-const encoding = require('bufio/lib/encoding');
-const BufferReader = require('bufio/lib/reader');
+const bio = require('bufio');
 const hash256 = require('bcrypto/lib/hash256');
 const BN = require('bcrypto/lib/bn');
+const {encoding} = bio;
+
 const DUMMY = Buffer.from([0]);
 
 let file = process.argv[2];
@@ -39,7 +40,7 @@ async function checkVersion() {
 }
 
 function entryFromRaw(data) {
-  const p = new BufferReader(data, true);
+  const p = bio.read(data, true);
   const hash = hash256.digest(p.readBytes(80));
   const entry = {};
 

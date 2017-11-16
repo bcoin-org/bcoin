@@ -5,7 +5,7 @@
 
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
-const encoding = require('bufio/lib/encoding');
+const {encoding} = require('bufio');
 const Coin = require('../lib/primitives/coin');
 const Script = require('../lib/script/script');
 const Chain = require('../lib/blockchain/chain');
@@ -18,6 +18,9 @@ const Output = require('../lib/primitives/output');
 const common = require('../lib/blockchain/common');
 const Opcode = require('../lib/script/opcode');
 const opcodes = Script.opcodes;
+
+const ONE_HASH = Buffer.alloc(32, 0x00);
+ONE_HASH[0] = 0x01;
 
 const network = Network.get('regtest');
 
@@ -555,7 +558,7 @@ describe('Chain', function() {
     const block = await cpu.mineBlock();
     const tx = block.txs[0];
     const input = tx.inputs[0];
-    input.witness.set(0, encoding.ONE_HASH);
+    input.witness.set(0, ONE_HASH);
     block.refresh(true);
     assert.strictEqual(await addBlock(block), 'bad-witness-merkle-match');
   });

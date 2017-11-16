@@ -2,15 +2,14 @@
 
 const assert = require('assert');
 const BDB = require('bdb');
-const encoding = require('bufio/lib/encoding');
+const bio = require('bufio');
 const networks = require('../lib/protocol/networks');
-const BufferWriter = require('bufio/lib/writer');
-const BufferReader = require('bufio/lib/reader');
 const OldCoins = require('./coins-old');
 const Coins = require('../lib/coins/coins');
 const UndoCoins = require('../lib/coins/undocoins');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
+const {encoding} = bio;
 
 let file = process.argv[2];
 let batch;
@@ -172,7 +171,7 @@ async function reserializeUndo() {
     if (!item)
       break;
 
-    const br = new BufferReader(item.value);
+    const br = bio.read(item.value);
     const undo = new UndoCoins();
 
     while (br.left()) {
@@ -217,7 +216,7 @@ function injectCoin(undo, coin) {
 }
 
 function defaultOptions() {
-  const bw = new BufferWriter();
+  const bw = bio.write();
   let flags = 0;
 
   if (options.spv)
@@ -242,7 +241,7 @@ function defaultOptions() {
 }
 
 function defaultDeployments() {
-  const bw = new BufferWriter();
+  const bw = bio.write();
 
   bw.writeU8(options.network.deploys.length);
 

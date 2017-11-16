@@ -2,9 +2,9 @@
 
 const assert = require('assert');
 const bcoin = require('../');
-const encoding = require('bufio/lib/encoding');
-const BufferWriter = require('bufio/lib/writer');
-const BufferReader = require('bufio/lib/reader');
+const bio = require('bufio');
+const {encoding} = bio;
+
 let file = process.argv[2];
 let batch;
 
@@ -121,7 +121,7 @@ async function patchPathMaps() {
 }
 
 function parseWallets(data) {
-  const p = new BufferReader(data);
+  const p = bio.read(data);
   const wids = [];
 
   while (p.left())
@@ -131,7 +131,7 @@ function parseWallets(data) {
 }
 
 function serializeWallets(wids) {
-  const p = new BufferWriter();
+  const p = bio.write();
 
   p.writeU32(wids.length);
 
@@ -144,7 +144,7 @@ function serializeWallets(wids) {
 }
 
 function accountToRaw(account) {
-  const p = new BufferWriter();
+  const p = bio.write();
 
   p.writeVarString(account.name, 'ascii');
   p.writeU8(account.initialized ? 1 : 0);
@@ -170,7 +170,7 @@ function accountToRaw(account) {
 
 function accountFromRaw(data) {
   const account = {};
-  const p = new BufferReader(data);
+  const p = bio.read(data);
 
   account.name = p.readVarString('ascii');
   account.initialized = p.readU8() === 1;
