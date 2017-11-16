@@ -5,7 +5,7 @@
 
 const assert = require('./util/assert');
 const common = require('./util/common');
-const BloomFilter = require('bfilter/lib/bloom');
+const {BloomFilter} = require('bfilter');
 const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
