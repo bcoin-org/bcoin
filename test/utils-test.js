@@ -3,12 +3,12 @@
 
 'use strict';
 
-const assert = require('./util/assert');
 const {U64, I64} = require('n64');
-const base58 = require('bstring/lib/base58');
+const Validator = require('bval');
+const {base58} = require('bstring');
 const encoding = require('bufio/lib/encoding');
+const assert = require('./util/assert');
 const Amount = require('../lib/btc/amount');
-const Validator = require('bval/lib/validator');
 const fixed = require('../lib/utils/fixed');
 
 const base58Tests = [
