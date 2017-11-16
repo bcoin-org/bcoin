@@ -168,7 +168,7 @@ MemWallet.prototype.getUndo = function getUndo(key) {
 };
 
 MemWallet.prototype.addCoin = function addCoin(coin) {
-  const op = Outpoint(coin.hash, coin.index);
+  const op = new Outpoint(coin.hash, coin.index);
   const key = op.toKey();
 
   this.filter.add(op.toRaw());
@@ -301,7 +301,7 @@ MemWallet.prototype.removeTX = function removeTX(tx, height) {
     return false;
 
   for (let i = 0; i < tx.outputs.length; i++) {
-    const op = Outpoint(hash, i).toKey();
+    const op = new Outpoint(hash, i).toKey();
     const coin = this.getCoin(op);
 
     if (!coin)
