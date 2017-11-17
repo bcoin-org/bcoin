@@ -5,6 +5,7 @@ const BDB = require('bdb');
 const bio = require('bufio');
 const hash256 = require('bcrypto/lib/hash256');
 const BN = require('bcrypto/lib/bn');
+const util = require('../lib/utils/util');
 const {encoding} = bio;
 
 const DUMMY = Buffer.from([0]);
@@ -114,7 +115,7 @@ async function indexTips() {
 
   for (let i = 0; i < tips.length; i++) {
     const tip = tips[i];
-    console.log('Indexing chain tip: %s.', encoding.revHex(tip));
+    console.log('Indexing chain tip: %s.', util.revHex(tip));
     batch.put(pair('p', tip), DUMMY);
   }
 }

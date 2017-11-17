@@ -20,6 +20,7 @@ const BDB = require('bdb');
 const hash256 = require('bcrypto/lib/hash256');
 const BN = require('bcrypto/lib/bn');
 const bio = require('bufio');
+const util = require('../lib/utils/util');
 const OldCoins = require('./coins/coins');
 const OldUndoCoins = require('./coins/undocoins');
 const CoinEntry = require('../lib/coins/coinentry');
@@ -131,7 +132,7 @@ async function reserializeUndo(hash) {
     tip = await getEntry(hash);
 
   console.log('Reserializing undo coins from tip %s.',
-    encoding.revHex(tip.hash));
+    util.revHex(tip.hash));
 
   let batch = db.batch();
   let pruning = false;
@@ -142,7 +143,7 @@ async function reserializeUndo(hash) {
     if (shouldPrune) {
       if (tip.height < height - 288) {
         console.log('Pruning block %s (%d).',
-          encoding.revHex(tip.hash), tip.height);
+          util.revHex(tip.hash), tip.height);
 
         batch.del(pair('u', tip.hash));
         batch.del(pair('b', tip.hash));
@@ -185,7 +186,7 @@ async function reserializeUndo(hash) {
 
     console.log(
       'Reserializing coins for block %s (%d).',
-      encoding.revHex(tip.hash), tip.height);
+      util.revHex(tip.hash), tip.height);
 
     for (let i = block.txs.length - 1; i >= 1; i--) {
       const tx = block.txs[i];
@@ -313,7 +314,7 @@ async function reserializeCoins(hash) {
       start = false;
   }
 
-  console.log('Reserializing coins from %s.', encoding.revHex(hash));
+  console.log('Reserializing coins from %s.', util.revHex(hash));
 
   let batch = db.batch();
   let total = 0;
@@ -388,7 +389,7 @@ async function reserializeEntries(hash) {
       assert(item.key.equals(pair('e', hash)));
   }
 
-  console.log('Reserializing entries from %s.', encoding.revHex(hash));
+  console.log('Reserializing entries from %s.', util.revHex(hash));
 
   const tip = await getTipHash();
 

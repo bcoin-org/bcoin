@@ -4,7 +4,6 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {encoding} = require('bufio');
 const random = require('bcrypto/lib/random');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
