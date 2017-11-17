@@ -5,7 +5,6 @@
 
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
-const {encoding} = require('bufio');
 const Coin = require('../lib/primitives/coin');
 const Script = require('../lib/script/script');
 const Chain = require('../lib/blockchain/chain');

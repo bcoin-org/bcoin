@@ -7,6 +7,7 @@ const {inspect} = require('util');
 const {encoding} = require('bufio');
 const assert = require('./util/assert');
 const random = require('bcrypto/lib/random');
+const util = require('../lib/utils/util');
 const consensus = require('../lib/protocol/consensus');
 const TX = require('../lib/primitives/tx');
 const Output = require('../lib/primitives/output');
@@ -65,7 +66,7 @@ function parseTXTest(data) {
   const view = new CoinView();
 
   for (const [txid, index, str, amount] of coins) {
-    const hash = encoding.revHex(txid);
+    const hash = util.revHex(txid);
     const script = Script.fromString(str);
     const value = parseInt(amount || '0', 10);
 
@@ -102,7 +103,7 @@ function parseSighashTest(data) {
   const tx = TX.fromRaw(txHex, 'hex');
   const script = Script.fromRaw(scriptHex, 'hex');
 
-  const expected = encoding.revHex(hash);
+  const expected = util.revHex(hash);
 
   let hex = type & 3;
 

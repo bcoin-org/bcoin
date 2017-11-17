@@ -4,10 +4,10 @@
 'use strict';
 
 const bio = require('bufio');
+const util = require('../lib/utils/util');
 const Input = require('../lib/primitives/input');
 const assert = require('./util/assert');
 const common = require('./util/common');
-const {encoding} = bio;
 
 // Take input rawbytes from the raw data format
 // p2pkh
@@ -236,7 +236,7 @@ describe('Input', function() {
         const inputs = test.inputs.map((prevout, i) => {
           const input = Input.fromOptions({
             prevout: {
-              hash: encoding.revHex(prevout.txId),
+              hash: util.revHex(prevout.txId),
               index: prevout.vout
             }
           });
