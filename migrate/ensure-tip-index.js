@@ -4,7 +4,7 @@ const assert = require('assert');
 const BDB = require('bdb');
 const bio = require('bufio');
 const hash256 = require('bcrypto/lib/hash256');
-const BN = require('bcrypto/lib/bn');
+const BN = require('bn.js');
 const util = require('../lib/utils/util');
 const {encoding} = bio;
 
