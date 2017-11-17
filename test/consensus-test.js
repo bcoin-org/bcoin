@@ -5,7 +5,7 @@
 
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
-const BN = require('bcrypto/lib/bn');
+const BN = require('bn.js');
 
 describe('Consensus', function() {
   it('should calculate reward properly', () => {

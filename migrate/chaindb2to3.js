@@ -18,7 +18,7 @@ if (process.argv.indexOf('-h') !== -1
 const assert = require('assert');
 const BDB = require('bdb');
 const hash256 = require('bcrypto/lib/hash256');
-const BN = require('bcrypto/lib/bn');
+const BN = require('bn.js');
 const bio = require('bufio');
 const util = require('../lib/utils/util');
 const OldCoins = require('./coins/coins');
