@@ -12,157 +12,163 @@ const bsock = require('bsock');
 const hash256 = require('bcrypto/lib/hash256');
 const bio = require('bufio');
 
-function ProxySocket(uri) {
-  if (!(this instanceof ProxySocket))
-    return new ProxySocket(uri);
+class ProxySocket extends EventEmitter {
+  constructor(uri) {
+    super();
 
-  EventEmitter.call(this);
+    this.info = null;
 
-  this.info = null;
+    this.socket = bsock.connect(uri);
+    this.sendBuffer = [];
+    this.recvBuffer = [];
+    this.paused = false;
+    this.snonce = null;
+    this.bytesWritten = 0;
+    this.bytesRead = 0;
+    this.remoteAddress = null;
+    this.remotePort = 0;
 
-  this.socket = bsock.connect(uri);
-  this.sendBuffer = [];
-  this.recvBuffer = [];
-  this.paused = false;
-  this.snonce = null;
-  this.bytesWritten = 0;
-  this.bytesRead = 0;
-  this.remoteAddress = null;
-  this.remotePort = 0;
+    this.closed = false;
 
-  this.closed = false;
+    this.init();
+  }
 
-  this.init();
-}
+  init() {
+    this.socket.bind('info', (info) => {
+      if (this.closed)
+        return;
 
-Object.setPrototypeOf(ProxySocket.prototype, EventEmitter.prototype);
+      this.info = info;
 
-ProxySocket.prototype.init = function init() {
-  this.socket.bind('info', (info) => {
-    if (this.closed)
-      return;
+      if (info.pow) {
+        this.snonce = Buffer.from(info.snonce, 'hex');
+        this.target = Buffer.from(info.target, 'hex');
+      }
 
-    this.info = info;
+      this.emit('info', info);
+    });
 
-    if (info.pow) {
-      this.snonce = Buffer.from(info.snonce, 'hex');
-      this.target = Buffer.from(info.target, 'hex');
-    }
+    this.socket.on('error', (err) => {
+      console.error(err);
+    });
 
-    this.emit('info', info);
-  });
+    this.socket.bind('tcp connect', (addr, port) => {
+      if (this.closed)
+        return;
+      this.remoteAddress = addr;
+      this.remotePort = port;
+      this.emit('connect');
+    });
 
-  this.socket.on('error', (err) => {
-    console.error(err);
-  });
+    this.socket.bind('tcp data', (data) => {
+      data = Buffer.from(data, 'hex');
+      if (this.paused) {
+        this.recvBuffer.push(data);
+        return;
+      }
+      this.bytesRead += data.length;
+      this.emit('data', data);
+    });
 
-  this.socket.bind('tcp connect', (addr, port) => {
-    if (this.closed)
-      return;
-    this.remoteAddress = addr;
+    this.socket.bind('tcp close', (data) => {
+      if (this.closed)
+        return;
+      this.closed = true;
+      this.emit('close');
+    });
+
+    this.socket.bind('tcp error', (e) => {
+      const err = new Error(e.message);
+      err.code = e.code;
+      this.emit('error', err);
+    });
+
+    this.socket.bind('tcp timeout', () => {
+      this.emit('timeout');
+    });
+
+    this.socket.bind('disconnect', () => {
+      if (this.closed)
+        return;
+      this.closed = true;
+      this.emit('close');
+    });
+  }
+
+  connect(port, host) {
+    this.remoteAddress = host;
     this.remotePort = port;
-    this.emit('connect');
-  });
 
-  this.socket.bind('tcp data', (data) => {
-    data = Buffer.from(data, 'hex');
-    if (this.paused) {
-      this.recvBuffer.push(data);
+    if (this.closed) {
+      this.sendBuffer.length = 0;
       return;
     }
-    this.bytesRead += data.length;
-    this.emit('data', data);
-  });
 
-  this.socket.bind('tcp close', (data) => {
-    if (this.closed)
+    if (!this.info) {
+      this.once('info', connect.bind(this, port, host));
       return;
-    this.closed = true;
-    this.emit('close');
-  });
+    }
 
-  this.socket.bind('tcp error', (e) => {
-    const err = new Error(e.message);
-    err.code = e.code;
-    this.emit('error', err);
-  });
+    let nonce = 0;
 
-  this.socket.bind('tcp timeout', () => {
-    this.emit('timeout');
-  });
+    if (this.info.pow) {
+      const bw = bio.write();
 
-  this.socket.bind('disconnect', () => {
-    if (this.closed)
-      return;
-    this.closed = true;
-    this.emit('close');
-  });
-};
+      bw.writeU32(nonce);
+      bw.writeBytes(this.snonce);
+      bw.writeU32(port);
+      bw.writeString(host, 'ascii');
 
-ProxySocket.prototype.connect = function connect(port, host) {
-  this.remoteAddress = host;
-  this.remotePort = port;
+      const pow = bw.render();
 
-  if (this.closed) {
+      console.log(
+        'Solving proof of work to create socket (%d, %s) -- please wait.',
+        port, host);
+
+      do {
+        nonce += 1;
+        assert(nonce <= 0xffffffff, 'Could not create socket.');
+        pow.writeUInt32LE(nonce, 0, true);
+      } while (hash256.digest(pow).compare(this.target) > 0);
+
+      console.log('Solved proof of work: %d', nonce);
+    }
+
+    this.socket.fire('tcp connect', port, host, nonce);
+
+    for (const chunk of this.sendBuffer)
+      this.write(chunk);
+
     this.sendBuffer.length = 0;
-    return;
   }
 
-  if (!this.info) {
-    this.once('info', connect.bind(this, port, host));
-    return;
+  setKeepAlive(enable, delay) {
+    this.socket.fire('tcp keep alive', enable, delay);
   }
 
-  let nonce = 0;
-
-  if (this.info.pow) {
-    const bw = bio.write();
-
-    bw.writeU32(nonce);
-    bw.writeBytes(this.snonce);
-    bw.writeU32(port);
-    bw.writeString(host, 'ascii');
-
-    const pow = bw.render();
-
-    console.log(
-      'Solving proof of work to create socket (%d, %s) -- please wait.',
-      port, host);
-
-    do {
-      nonce += 1;
-      assert(nonce <= 0xffffffff, 'Could not create socket.');
-      pow.writeUInt32LE(nonce, 0, true);
-    } while (hash256.digest(pow).compare(this.target) > 0);
-
-    console.log('Solved proof of work: %d', nonce);
+  setNoDelay(enable) {
+    this.socket.fire('tcp no delay', enable);
   }
 
-  this.socket.fire('tcp connect', port, host, nonce);
+  setTimeout(timeout, callback) {
+    this.socket.fire('tcp set timeout', timeout);
+    if (callback)
+      this.on('timeout', callback);
+  }
 
-  for (const chunk of this.sendBuffer)
-    this.write(chunk);
+  write(data, callback) {
+    if (!this.info) {
+      this.sendBuffer.push(data);
 
-  this.sendBuffer.length = 0;
-};
+      if (callback)
+        callback();
 
-ProxySocket.prototype.setKeepAlive = function setKeepAlive(enable, delay) {
-  this.socket.fire('tcp keep alive', enable, delay);
-};
+      return true;
+    }
 
-ProxySocket.prototype.setNoDelay = function setNoDelay(enable) {
-  this.socket.fire('tcp no delay', enable);
-};
+    this.bytesWritten += data.length;
 
-ProxySocket.prototype.setTimeout = function setTimeout(timeout, callback) {
-  this.socket.fire('tcp set timeout', timeout);
-  if (callback)
-    this.on('timeout', callback);
-};
-
-ProxySocket.prototype.write = function write(data, callback) {
-  if (!this.info) {
-    this.sendBuffer.push(data);
+    this.socket.fire('tcp data', data.toString('hex'));
 
     if (callback)
       callback();
@@ -170,43 +176,34 @@ ProxySocket.prototype.write = function write(data, callback) {
     return true;
   }
 
-  this.bytesWritten += data.length;
-
-  this.socket.fire('tcp data', data.toString('hex'));
-
-  if (callback)
-    callback();
-
-  return true;
-};
-
-ProxySocket.prototype.pause = function pause() {
-  this.paused = true;
-};
-
-ProxySocket.prototype.resume = function resume() {
-  const recv = this.recvBuffer;
-
-  this.paused = false;
-  this.recvBuffer = [];
-
-  for (const data of recv) {
-    this.bytesRead += data.length;
-    this.emit('data', data);
+  pause() {
+    this.paused = true;
   }
-};
 
-ProxySocket.prototype.destroy = function destroy() {
-  if (this.closed)
-    return;
-  this.closed = true;
-  this.socket.destroy();
-};
+  resume() {
+    const recv = this.recvBuffer;
 
-ProxySocket.connect = function connect(uri, port, host) {
-  const socket = new ProxySocket(uri);
-  socket.connect(port, host);
-  return socket;
-};
+    this.paused = false;
+    this.recvBuffer = [];
+
+    for (const data of recv) {
+      this.bytesRead += data.length;
+      this.emit('data', data);
+    }
+  }
+
+  destroy() {
+    if (this.closed)
+      return;
+    this.closed = true;
+    this.socket.destroy();
+  }
+
+  static connect(uri, port, host) {
+    const socket = new this(uri);
+    socket.connect(port, host);
+    return socket;
+  }
+}
 
 module.exports = ProxySocket;

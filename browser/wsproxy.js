@@ -12,240 +12,239 @@ const TARGET = Buffer.from(
   '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
   'hex');
 
-function WSProxy(options) {
-  if (!(this instanceof WSProxy))
-    return new WSProxy(options);
+class WSProxy extends EventEmitter {
+  constructor(options) {
+    super();
 
-  EventEmitter.call(this);
+    if (!options)
+      options = {};
 
-  if (!options)
-    options = {};
+    this.options = options;
+    this.target = options.target || TARGET;
+    this.pow = options.pow === true;
+    this.ports = new Set();
+    this.io = bsock.server();
+    this.sockets = new WeakMap();
 
-  this.options = options;
-  this.target = options.target || TARGET;
-  this.pow = options.pow === true;
-  this.ports = new Set();
-  this.io = bsock.server();
-  this.sockets = new WeakMap();
+    if (options.ports) {
+      for (const port of options.ports)
+        this.ports.add(port);
+    }
 
-  if (options.ports) {
-    for (const port of options.ports)
-      this.ports.add(port);
+    this.init();
   }
 
-  this.init();
-}
+  init() {
+    this.io.on('error', (err) => {
+      this.emit('error', err);
+    });
 
-Object.setPrototypeOf(WSProxy.prototype, EventEmitter.prototype);
-
-WSProxy.prototype.init = function init() {
-  this.io.on('error', (err) => {
-    this.emit('error', err);
-  });
-
-  this.io.on('socket', (ws) => {
-    this.handleSocket(ws);
-  });
-};
-
-WSProxy.prototype.handleSocket = function handleSocket(ws) {
-  const state = new SocketState(this, ws);
-
-  // Use a weak map to avoid
-  // mutating the websocket object.
-  this.sockets.set(ws, state);
-
-  ws.fire('info', state.toInfo());
-
-  ws.on('error', (err) => {
-    this.emit('error', err);
-  });
-
-  ws.bind('tcp connect', (port, host, nonce) => {
-    this.handleConnect(ws, port, host, nonce);
-  });
-};
-
-WSProxy.prototype.handleConnect = function handleConnect(ws, port, host, nonce) {
-  const state = this.sockets.get(ws);
-  assert(state);
-
-  if (state.socket) {
-    this.log('Client is trying to reconnect (%s).', state.host);
-    return;
+    this.io.on('socket', (ws) => {
+      this.handleSocket(ws);
+    });
   }
 
-  if ((port & 0xffff) !== port
-      || typeof host !== 'string'
-      || host.length === 0) {
-    this.log('Client gave bad arguments (%s).', state.host);
-    ws.fire('tcp close');
-    ws.destroy();
-    return;
+  handleSocket(ws) {
+    const state = new SocketState(this, ws);
+
+    // Use a weak map to avoid
+    // mutating the websocket object.
+    this.sockets.set(ws, state);
+
+    ws.fire('info', state.toInfo());
+
+    ws.on('error', (err) => {
+      this.emit('error', err);
+    });
+
+    ws.bind('tcp connect', (port, host, nonce) => {
+      this.handleConnect(ws, port, host, nonce);
+    });
   }
 
-  if (this.pow) {
-    if ((nonce >>> 0) !== nonce) {
-      this.log('Client did not solve proof of work (%s).', state.host);
+  handleConnect(ws, port, host, nonce) {
+    const state = this.sockets.get(ws);
+    assert(state);
+
+    if (state.socket) {
+      this.log('Client is trying to reconnect (%s).', state.host);
+      return;
+    }
+
+    if ((port & 0xffff) !== port
+        || typeof host !== 'string'
+        || host.length === 0) {
+      this.log('Client gave bad arguments (%s).', state.host);
       ws.fire('tcp close');
       ws.destroy();
       return;
     }
 
-    const bw = bio.write();
-    bw.writeU32(nonce);
-    bw.writeBytes(state.snonce);
-    bw.writeU32(port);
-    bw.writeString(host, 'ascii');
+    if (this.pow) {
+      if ((nonce >>> 0) !== nonce) {
+        this.log('Client did not solve proof of work (%s).', state.host);
+        ws.fire('tcp close');
+        ws.destroy();
+        return;
+      }
 
-    const pow = bw.render();
+      const bw = bio.write();
+      bw.writeU32(nonce);
+      bw.writeBytes(state.snonce);
+      bw.writeU32(port);
+      bw.writeString(host, 'ascii');
 
-    if (hash256.digest(pow).compare(this.target) > 0) {
-      this.log('Client did not solve proof of work (%s).', state.host);
-      ws.fire('tcp close');
+      const pow = bw.render();
+
+      if (hash256.digest(pow).compare(this.target) > 0) {
+        this.log('Client did not solve proof of work (%s).', state.host);
+        ws.fire('tcp close');
+        ws.destroy();
+        return;
+      }
+    }
+
+    let raw, addr;
+    try {
+      raw = IP.toBuffer(host);
+      addr = IP.toString(raw);
+    } catch (e) {
+      this.log('Client gave a bad host: %s (%s).', host, state.host);
+      ws.fire('tcp error', {
+        message: 'EHOSTUNREACH',
+        code: 'EHOSTUNREACH'
+      });
       ws.destroy();
       return;
     }
-  }
 
-  let raw, addr;
-  try {
-    raw = IP.toBuffer(host);
-    addr = IP.toString(raw);
-  } catch (e) {
-    this.log('Client gave a bad host: %s (%s).', host, state.host);
-    ws.fire('tcp error', {
-      message: 'EHOSTUNREACH',
-      code: 'EHOSTUNREACH'
-    });
-    ws.destroy();
-    return;
-  }
-
-  if (!IP.isRoutable(raw) || IP.isOnion(raw)) {
-    this.log(
-      'Client is trying to connect to a bad ip: %s (%s).',
-      addr, state.host);
-    ws.fire('tcp error', {
-      message: 'ENETUNREACH',
-      code: 'ENETUNREACH'
-    });
-    ws.destroy();
-    return;
-  }
-
-  if (!this.ports.has(port)) {
-    this.log('Client is connecting to non-whitelist port (%s).', state.host);
-    ws.fire('tcp error', {
-      message: 'ENETUNREACH',
-      code: 'ENETUNREACH'
-    });
-    ws.destroy();
-    return;
-  }
-
-  let socket;
-  try {
-    socket = state.connect(port, addr);
-    this.log('Connecting to %s (%s).', state.remoteHost, state.host);
-  } catch (e) {
-    this.log(e.message);
-    this.log('Closing %s (%s).', state.remoteHost, state.host);
-    ws.fire('tcp error', {
-      message: 'ENETUNREACH',
-      code: 'ENETUNREACH'
-    });
-    ws.destroy();
-    return;
-  }
-
-  socket.on('connect', () => {
-    ws.fire('tcp connect', socket.remoteAddress, socket.remotePort);
-  });
-
-  socket.on('data', (data) => {
-    ws.fire('tcp data', data.toString('hex'));
-  });
-
-  socket.on('error', (err) => {
-    ws.fire('tcp error', {
-      message: err.message,
-      code: err.code || null
-    });
-  });
-
-  socket.on('timeout', () => {
-    ws.fire('tcp timeout');
-  });
-
-  socket.on('close', () => {
-    this.log('Closing %s (%s).', state.remoteHost, state.host);
-    ws.fire('tcp close');
-    ws.destroy();
-  });
-
-  ws.bind('tcp data', (data) => {
-    if (typeof data !== 'string')
+    if (!IP.isRoutable(raw) || IP.isOnion(raw)) {
+      this.log(
+        'Client is trying to connect to a bad ip: %s (%s).',
+        addr, state.host);
+      ws.fire('tcp error', {
+        message: 'ENETUNREACH',
+        code: 'ENETUNREACH'
+      });
+      ws.destroy();
       return;
-    socket.write(Buffer.from(data, 'hex'));
-  });
+    }
 
-  ws.bind('tcp keep alive', (enable, delay) => {
-    socket.setKeepAlive(enable, delay);
-  });
+    if (!this.ports.has(port)) {
+      this.log('Client is connecting to non-whitelist port (%s).', state.host);
+      ws.fire('tcp error', {
+        message: 'ENETUNREACH',
+        code: 'ENETUNREACH'
+      });
+      ws.destroy();
+      return;
+    }
 
-  ws.bind('tcp no delay', (enable) => {
-    socket.setNoDelay(enable);
-  });
+    let socket;
+    try {
+      socket = state.connect(port, addr);
+      this.log('Connecting to %s (%s).', state.remoteHost, state.host);
+    } catch (e) {
+      this.log(e.message);
+      this.log('Closing %s (%s).', state.remoteHost, state.host);
+      ws.fire('tcp error', {
+        message: 'ENETUNREACH',
+        code: 'ENETUNREACH'
+      });
+      ws.destroy();
+      return;
+    }
 
-  ws.bind('tcp set timeout', (timeout) => {
-    socket.setTimeout(timeout);
-  });
+    socket.on('connect', () => {
+      ws.fire('tcp connect', socket.remoteAddress, socket.remotePort);
+    });
 
-  ws.bind('tcp pause', () => {
-    socket.pause();
-  });
+    socket.on('data', (data) => {
+      ws.fire('tcp data', data.toString('hex'));
+    });
 
-  ws.bind('tcp resume', () => {
-    socket.resume();
-  });
+    socket.on('error', (err) => {
+      ws.fire('tcp error', {
+        message: err.message,
+        code: err.code || null
+      });
+    });
 
-  ws.bind('disconnect', () => {
-    socket.destroy();
-  });
-};
+    socket.on('timeout', () => {
+      ws.fire('tcp timeout');
+    });
 
-WSProxy.prototype.log = function log(...args) {
-  process.stdout.write('wsproxy: ');
-  console.log(...args);
-};
+    socket.on('close', () => {
+      this.log('Closing %s (%s).', state.remoteHost, state.host);
+      ws.fire('tcp close');
+      ws.destroy();
+    });
 
-WSProxy.prototype.attach = function attach(server) {
-  this.io.attach(server);
-};
+    ws.bind('tcp data', (data) => {
+      if (typeof data !== 'string')
+        return;
+      socket.write(Buffer.from(data, 'hex'));
+    });
 
-function SocketState(server, socket) {
-  this.pow = server.pow;
-  this.target = server.target;
-  this.snonce = nonce();
-  this.socket = null;
-  this.host = socket.host;
-  this.remoteHost = null;
+    ws.bind('tcp keep alive', (enable, delay) => {
+      socket.setKeepAlive(enable, delay);
+    });
+
+    ws.bind('tcp no delay', (enable) => {
+      socket.setNoDelay(enable);
+    });
+
+    ws.bind('tcp set timeout', (timeout) => {
+      socket.setTimeout(timeout);
+    });
+
+    ws.bind('tcp pause', () => {
+      socket.pause();
+    });
+
+    ws.bind('tcp resume', () => {
+      socket.resume();
+    });
+
+    ws.bind('disconnect', () => {
+      socket.destroy();
+    });
+  }
+
+  log(...args) {
+    process.stdout.write('wsproxy: ');
+    console.log(...args);
+  }
+
+  attach(server) {
+    this.io.attach(server);
+  }
 }
 
-SocketState.prototype.toInfo = function toInfo() {
-  return {
-    pow: this.pow,
-    target: this.target.toString('hex'),
-    snonce: this.snonce.toString('hex')
-  };
-};
+class SocketState {
+  constructor(server, socket) {
+    this.pow = server.pow;
+    this.target = server.target;
+    this.snonce = nonce();
+    this.socket = null;
+    this.host = socket.host;
+    this.remoteHost = null;
+  }
 
-SocketState.prototype.connect = function connect(port, host) {
-  this.socket = net.connect(port, host);
-  this.remoteHost = IP.toHostname(host, port);
-  return this.socket;
-};
+  toInfo() {
+    return {
+      pow: this.pow,
+      target: this.target.toString('hex'),
+      snonce: this.snonce.toString('hex')
+    };
+  }
+
+  connect(port, host) {
+    this.socket = net.connect(port, host);
+    this.remoteHost = IP.toHostname(host, port);
+    return this.socket;
+  }
+}
 
 function nonce() {
   const buf = Buffer.allocUnsafe(8);
