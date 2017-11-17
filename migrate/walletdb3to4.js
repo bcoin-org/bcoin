@@ -91,7 +91,7 @@ async function updateTXDB() {
 
 function fromExtended(data, saveCoins) {
   const tx = new TX();
-  const p = BufferReader(data);
+  const p = bio.read(data);
 
   tx.fromRaw(p);
 

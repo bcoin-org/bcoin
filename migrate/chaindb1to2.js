@@ -69,13 +69,15 @@ async function checkTipIndex() {
     console.log('No tip index found.');
     console.log('Please run migrate/ensure-tip-index.js first!');
     process.exit(1);
-    return;
+    return undefined;
   }
 
   if (keys.length < 3) {
     console.log('Note: please run ensure-tip-index.js if you haven\'t yet.');
     return new Promise(r => setTimeout(r, 2000));
   }
+
+  return undefined;
 }
 
 async function updateOptions() {
