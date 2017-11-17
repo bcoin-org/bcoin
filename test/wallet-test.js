@@ -214,7 +214,7 @@ async function testP2SH(witness, nesting) {
   assert((await carol.changeAddress()).equals(change2));
 
   const input = tx.inputs[0];
-  input[vector].setData(2, encoding.ZERO_SIG);
+  input[vector].setData(2, Buffer.alloc(73, 0x00));
   input[vector].compile();
 
   assert(!tx.verify(view, flags));

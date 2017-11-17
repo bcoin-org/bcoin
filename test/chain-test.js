@@ -19,6 +19,8 @@ const common = require('../lib/blockchain/common');
 const Opcode = require('../lib/script/opcode');
 const opcodes = Script.opcodes;
 
+const ZERO_KEY = Buffer.alloc(33, 0x00);
+
 const ONE_HASH = Buffer.alloc(32, 0x00);
 ONE_HASH[0] = 0x01;
 
@@ -791,7 +793,7 @@ describe('Chain', function() {
     redeem.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      redeem.pushData(encoding.ZERO_KEY);
+      redeem.pushData(ZERO_KEY);
 
     redeem.pushInt(20);
     redeem.pushOp(opcodes.OP_CHECKMULTISIG);
@@ -834,7 +836,7 @@ describe('Chain', function() {
     script.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      script.pushData(encoding.ZERO_KEY);
+      script.pushData(ZERO_KEY);
 
     script.pushInt(20);
     script.pushOp(opcodes.OP_CHECKMULTISIG);

@@ -132,7 +132,7 @@ describe('Mempool', function() {
 
     // Fake signature
     const input = fake.inputs[0];
-    input.script.setData(0, encoding.ZERO_SIG);
+    input.script.setData(0, Buffer.alloc(73, 0x00));
     input.script.compile();
     // balance: 11000
 
