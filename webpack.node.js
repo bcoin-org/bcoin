@@ -41,8 +41,10 @@ module.exports = {
     }),
     new webpack.IgnorePlugin(/^utf-8-validate|bufferutil$/),
     new UglifyJsPlugin({
-      compress: {
-        warnings: true
+      uglifyOptions: {
+        compress: {
+          warnings: true
+        }
       }
     })
   ]
