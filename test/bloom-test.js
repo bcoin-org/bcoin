@@ -180,4 +180,29 @@ describe('Bloom', function() {
 
     assert(!filter.test('foobar 49', 'ascii'));
   });
+
+  // Regression test for missing filter.size setting
+  // in Bloom.prototype.fromReader
+  it('should serialize and inject properties from ' +
+          'serialized data correctly', () => {
+    // Hardcoded sample data for filter
+    const size = 32;
+    const filter = Buffer.from('deadbeef', 'hex');
+    const n = 9;
+    const tweak = 172012938;
+    const update = Bloom.flags.NONE;
+
+    const fooBloom = new Bloom(size, n, tweak, update);
+    fooBloom.filter = filter;
+    const serialized = fooBloom.toRaw();
+    const barBloom = Bloom.fromRaw(serialized);
+
+    for (let i = 0; i < fooBloom.filter.length; i++) {
+      assert.strictEqual(barBloom.filter[i], filter[i]);
+    }
+    assert.strictEqual(barBloom.size, 32);
+    assert.strictEqual(barBloom.n, 9);
+    assert.strictEqual(barBloom.tweak, 172012938);
+    assert.strictEqual(barBloom.update, Bloom.flags.NONE);
+  });
 });
