@@ -66,8 +66,12 @@ async function updateState() {
   if (!raw)
     return;
 
-  if (raw.length === 40)
+  console.log('Updating state...');
+
+  if (raw.length === 40) {
     batch.put(layout.R, c(raw, Buffer.from([1])));
+    console.log('State updated.');
+  }
 }
 
 async function updateBlockMap() {
@@ -77,6 +81,10 @@ async function updateBlockMap() {
     keys: true,
     values: true
   });
+
+  console.log('Updating block map...');
+
+  let total = 0;
 
   await iter.each((key, value) => {
     const height = layout.bb(key);
@@ -92,7 +100,11 @@ async function updateBlockMap() {
     serializeMap(bw, map);
 
     batch.put(key, bw.render());
+
+    total += 1;
   });
+
+  console.log('Updated %d block maps.', total);
 }
 
 async function updateTXDB() {
@@ -103,6 +115,10 @@ async function updateTXDB() {
     parse: k => layout.ww(k)
   });
 
+  console.log('Updating wallets...');
+
+  let total = 0;
+
   for (const wid of wids) {
     await updateInputs(wid);
     await updateCoins(wid);
@@ -110,7 +126,10 @@ async function updateTXDB() {
     await updateWalletBalance(wid);
     await updateAccountBalances(wid);
     await updateWallet(wid);
+    total += 1;
   }
+
+  console.log('Updated %d wallets.', total);
 }
 
 async function updateInputs(wid) {
@@ -122,6 +141,10 @@ async function updateInputs(wid) {
     keys: true
   });
 
+  console.log('Updating inputs for %d.', wid);
+
+  let total = 0;
+
   await iter.each(async (k, value) => {
     const key = k.slice(pre.length);
     const [height, hash] = tlayout.hh(key);
@@ -132,8 +155,11 @@ async function updateInputs(wid) {
     for (const {prevout} of tx.inputs) {
       const {hash, index} = prevout;
       batch.del(c(pre, tlayout.s(hash, index)));
+      total += 1;
     }
   });
+
+  console.log('Updated %d inputs for %d.', total, wid);
 }
 
 async function updateCoins(wid) {
@@ -146,15 +172,23 @@ async function updateCoins(wid) {
     values: true
   });
 
+  console.log('Updating coins for %d...', wid);
+
+  let total = 0;
+
   await iter.each((key, value) => {
     const br = bio.read(value, true);
 
     Coin.fromReader(br);
     br.readU8();
 
-    if (br.left() === 0)
+    if (br.left() === 0) {
       batch.put(key, c(value, Buffer.from([0])));
+      total += 1;
+    }
   });
+
+  console.log('Updated %d coins for %d.', total, wid);
 }
 
 async function updateTX(wid) {
@@ -165,6 +199,10 @@ async function updateTX(wid) {
     lte: c(pre, tlayout.p(encoding.HIGH_HASH)),
     keys: true
   });
+
+  console.log('Adding TX maps for %d...', wid);
+
+  let total = 0;
 
   await iter.each(async (k, value) => {
     const key = k.slice(pre.length);
@@ -185,7 +223,11 @@ async function updateTX(wid) {
     const bw = bio.write(sizeMap(map));
     serializeMap(bw, map);
     batch.put(layout.T(hash), bw.render());
+
+    total += 1;
   });
+
+  console.log('Added %d TX maps for %d.', total, wid);
 }
 
 async function updateWalletBalance(wid) {
@@ -207,6 +249,8 @@ async function updateWalletBalance(wid) {
     values: true
   });
 
+  console.log('Updating wallet balance for %d.', wid);
+
   await iter.each((key, value) => {
     const br = bio.read(value, true);
     const coin = Coin.fromReader(br);
@@ -222,6 +266,8 @@ async function updateWalletBalance(wid) {
   });
 
   batch.put(c(pre, tlayout.R), serializeBalance(bal));
+
+  console.log('Updated wallet balance for %d.', wid);
 }
 
 async function updateAccountBalances(wid) {
@@ -238,8 +284,12 @@ async function updateAccountBalances(wid) {
 
   const depth = br.readU32();
 
+  console.log('Updating account balances for %d...', wid);
+
   for (let acct = 0; acct < depth; acct++)
     await updateAccountBalance(wid, acct);
+
+  console.log('Updated %d account balances for %d.', depth, wid);
 }
 
 async function updateAccountBalance(wid, acct) {
@@ -260,6 +310,8 @@ async function updateAccountBalance(wid, acct) {
     keys: true
   });
 
+  console.log('Updating account balance for %d/%d...', wid, acct);
+
   await iter.each(async (k, value) => {
     const key = k.slice(pre.length);
     const [, hash, index] = tlayout.Cc(key);
@@ -279,11 +331,15 @@ async function updateAccountBalance(wid, acct) {
   });
 
   batch.put(c(pre, tlayout.r(acct)), serializeBalance(bal));
+
+  console.log('Updated account balance for %d/%d.', wid, acct);
 }
 
 async function updateWallet(wid) {
   const raw = await db.get(layout.w(wid));
   assert(raw);
+
+  console.log('Updating wallet: %d.', wid);
 
   const br = bio.read(raw, true);
 
@@ -360,13 +416,21 @@ async function updateWallet(wid) {
 
   batch.put(layout.w(wid), bw.render());
 
+  console.log('Updating accounts for %d...', wid);
+
   for (let acct = 0; acct < accountDepth; acct++)
     await updateAccount(wid, acct);
+
+  console.log('Updated %d accounts for %d.', accountDepth, wid);
+
+  console.log('Updated wallet: %d.', wid);
 }
 
 async function updateAccount(wid, acct) {
   const raw = await db.get(layout.a(wid, acct));
   assert(raw);
+
+  console.log('Updating account: %d/%d...', wid, acct);
 
   const br = bio.read(raw, true);
 
@@ -446,6 +510,8 @@ async function updateAccount(wid, acct) {
   }
 
   batch.put(layout.a(wid, acct), bw.render());
+
+  console.log('Updated account: %d/%d.', wid, acct);
 }
 
 async function updatePaths() {
@@ -455,6 +521,10 @@ async function updatePaths() {
     keys: true,
     values: true
   });
+
+  console.log('Updating paths....');
+
+  let total = 0;
 
   await iter.each((key, value) => {
     const br = bio.read(value, true);
@@ -527,7 +597,11 @@ async function updatePaths() {
     }
 
     batch.put(key, bw.render());
+
+    total += 1;
   });
+
+  console.log('Updated %d paths.', total);
 }
 
 /*
@@ -742,4 +816,7 @@ function serializeBalance(bal) {
 })().then(() => {
   console.log('Migration complete.');
   process.exit(0);
+}).catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
 });
