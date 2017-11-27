@@ -18,6 +18,9 @@ const {encoding} = bio;
 // coin `own` flag - no longer a soft fork
 // tx map - for unconfirmed
 // balances - index account balances
+// wallet - serialization
+// account - serialization
+// path - serialization
 
 let file = process.argv[2];
 let batch;
@@ -144,7 +147,7 @@ async function updateCoins(wid) {
   });
 
   await iter.each((key, value) => {
-    const br = bio.read(value);
+    const br = bio.read(value, true);
 
     Coin.fromReader(br);
     br.readU8();
@@ -173,7 +176,7 @@ async function updateTX(wid) {
     if (!raw) {
       map = new Set();
     } else {
-      const br = bio.read(raw);
+      const br = bio.read(raw, true);
       map = parseMap(br);
     }
 
@@ -205,7 +208,7 @@ async function updateWalletBalance(wid) {
   });
 
   await iter.each((key, value) => {
-    const br = bio.read(value);
+    const br = bio.read(value, true);
     const coin = Coin.fromReader(br);
     const spent = br.readU8() === 1;
 
@@ -225,7 +228,7 @@ async function updateAccountBalances(wid) {
   const raw = await db.get(layout.w(wid));
   assert(raw);
 
-  const br = bio.read(raw);
+  const br = bio.read(raw, true);
 
   br.readU32();
   br.readU32();
@@ -262,7 +265,7 @@ async function updateAccountBalance(wid, acct) {
     const [, hash, index] = tlayout.Cc(key);
     const raw = await db.get(c(pre, tlayout.c(hash, index)));
     assert(raw);
-    const br = bio.read(raw);
+    const br = bio.read(raw, true);
     const coin = Coin.fromReader(br);
     const spent = br.readU8() === 1;
 
@@ -285,7 +288,7 @@ async function updateWallet(wid) {
   const br = bio.read(raw, true);
 
   br.readU32(); // Skip network.
-  const wid = br.readU32();
+  br.readU32(); // Skip wid.
   const id = br.readVarString('ascii');
   const initialized = br.readU8() === 1;
   const watchOnly = br.readU8() === 1;
@@ -447,14 +450,79 @@ async function updateAccount(wid, acct) {
 
 async function updatePaths() {
   const iter = db.iterator({
-    gte: layout.p(encoding.NULL_HASH),
-    lte: layout.p(encoding.HIGH_HASH),
+    gte: layout.P(0, encoding.NULL_HASH),
+    lte: layout.P(0xffffffff, encoding.HIGH_HASH),
     keys: true,
     values: true
   });
 
   await iter.each((key, value) => {
-    const br = bio.read(value);
+    const br = bio.read(value, true);
+
+    const account = br.readU32();
+    const keyType = br.readU8();
+
+    let branch = -1;
+    let index = -1;
+    let encrypted = false;
+    let data = null;
+
+    switch (keyType) {
+      case 0:
+        branch = br.readU32();
+        index = br.readU32();
+        break;
+      case 1:
+        encrypted = br.readU8() === 1;
+        data = br.readVarBytes();
+        break;
+      case 2:
+        break;
+      default:
+        assert(false);
+        break;
+    }
+
+    const version = br.readI8();
+
+    let type = br.readU8();
+
+    if (type === 129 || type === 130)
+      type = 4;
+
+    type -= 2;
+
+    const bw = bio.write();
+
+    bw.writeU32(account);
+    bw.writeU8(keyType);
+
+    bw.writeU8(type);
+    bw.writeI8(version);
+
+    switch (keyType) {
+      case 0:
+        assert(!data);
+        assert(index !== -1);
+        bw.writeU32(branch);
+        bw.writeU32(index);
+        break;
+      case 1:
+        assert(data);
+        assert(index === -1);
+        bw.writeU8(encrypted ? 1 : 0);
+        bw.writeVarBytes(data);
+        break;
+      case 2:
+        assert(!data);
+        assert(index === -1);
+        break;
+      default:
+        assert(false);
+        break;
+    }
+
+    batch.put(key, bw.render());
   });
 }
 
@@ -663,6 +731,7 @@ function serializeBalance(bal) {
   await updateState();
   await updateBlockMap();
   await updateTXDB();
+  await updatePaths();
 
   await batch.write();
   await db.close();
