@@ -106,6 +106,7 @@ async function updateTXDB() {
     await updateTX(wid);
     await updateWalletBalance(wid);
     await updateAccountBalances(wid);
+    await updateWallet(wid);
   }
 }
 
@@ -275,6 +276,186 @@ async function updateAccountBalance(wid, acct) {
   });
 
   batch.put(c(pre, tlayout.r(acct)), serializeBalance(bal));
+}
+
+async function updateWallet(wid) {
+  const raw = await db.get(layout.w(wid));
+  assert(raw);
+
+  const br = bio.read(raw, true);
+
+  br.readU32(); // Skip network.
+  const wid = br.readU32();
+  const id = br.readVarString('ascii');
+  const initialized = br.readU8() === 1;
+  const watchOnly = br.readU8() === 1;
+  const accountDepth = br.readU32();
+  const token = br.readBytes(32);
+  const tokenDepth = br.readU32();
+
+  // We want to get the key
+  // _out of_ varint serialization.
+  let key = br.readVarBytes();
+
+  const kr = bio.read(key, true);
+
+  // Unencrypted?
+  if (kr.readU8() === 0) {
+    const bw = bio.write();
+    bw.writeU8(0);
+
+    // Skip useless varint.
+    kr.readVarint();
+
+    // Skip HD key params.
+    kr.seek(13);
+
+    // Read/write chain code.
+    bw.writeBytes(kr.readBytes(32));
+
+    // Skip zero byte.
+    assert(kr.readU8() === 0);
+
+    // Read/write private key.
+    bw.writeBytes(kr.readBytes(32));
+
+    // Skip checksum.
+    kr.seek(4);
+
+    // Include mnemonic.
+    if (kr.readU8() === 1) {
+      bw.writeU8(1);
+      const bits = kr.readU16();
+      assert(bits % 32 === 0);
+      const lang = kr.readU8();
+      const entropy = kr.readBytes(bits / 8);
+
+      bw.writeU16(bits);
+      bw.writeU8(lang);
+      bw.writeBytes(entropy);
+    } else {
+      bw.writeU8(0);
+    }
+
+    key = bw.render();
+  }
+
+  let flags = 0;
+
+  if (watchOnly)
+    flags |= 1;
+
+  // Concatenate wallet with key.
+  const bw = bio.write();
+  bw.writeU32(wid);
+  bw.writeVarString(id, 'ascii');
+  bw.writeU8(flags);
+  bw.writeU32(accountDepth);
+  bw.writeBytes(token);
+  bw.writeU32(tokenDepth);
+  bw.writeBytes(key);
+
+  batch.put(layout.w(wid), bw.render());
+
+  for (let acct = 0; acct < accountDepth; acct++)
+    await updateAccount(wid, acct);
+}
+
+async function updateAccount(wid, acct) {
+  const raw = await db.get(layout.a(wid, acct));
+  assert(raw);
+
+  const br = bio.read(raw, true);
+
+  const name = br.readVarString('ascii');
+  const initialized = br.readU8() === 1;
+  const witness = br.readU8() === 1;
+  const type = br.readU8();
+  const m = br.readU8();
+  const n = br.readU8();
+  const accountIndex = br.readU32();
+  const receiveDepth = br.readU32();
+  const changeDepth = br.readU32();
+  const nestedDepth = br.readU32();
+  const lookahead = br.readU8();
+  const accountKey = {
+    network: br.readU32BE(),
+    depth: br.readU8(),
+    parentFingerPrint: br.readU32BE(),
+    childIndex: br.readU32BE(),
+    chainCode: br.readBytes(32),
+    publicKey: br.readBytes(33),
+    checksum: br.readU32()
+  };
+
+  const count = br.readU8();
+
+  const keys = [];
+
+  for (let i = 0; i < count; i++) {
+    const key = {
+      network: br.readU32BE(),
+      depth: br.readU8(),
+      parentFingerPrint: br.readU32BE(),
+      childIndex: br.readU32BE(),
+      chainCode: br.readBytes(32),
+      publicKey: br.readBytes(33),
+      checksum: br.readU32()
+    };
+    keys.push(key);
+  }
+
+  const bw = bio.write();
+
+  let flags = 0;
+
+  if (initialized)
+    flags |= 1;
+
+  if (witness)
+    flags |= 2;
+
+  bw.writeU32(accountIndex);
+  bw.writeVarString(name, 'ascii');
+  bw.writeU8(flags);
+  bw.writeU8(type);
+  bw.writeU8(m);
+  bw.writeU8(n);
+  bw.writeU32(receiveDepth);
+  bw.writeU32(changeDepth);
+  bw.writeU32(nestedDepth);
+  bw.writeU8(lookahead);
+
+  bw.writeU8(accountKey.depth);
+  bw.writeU32BE(accountKey.parentFingerPrint);
+  bw.writeU32BE(accountKey.childIndex);
+  bw.writeBytes(accountKey.chainCode);
+  bw.writeBytes(accountKey.publicKey);
+
+  bw.writeU8(keys.length);
+
+  for (const key of keys) {
+    bw.writeU8(key.depth);
+    bw.writeU32BE(key.parentFingerPrint);
+    bw.writeU32BE(key.childIndex);
+    bw.writeBytes(key.chainCode);
+    bw.writeBytes(key.publicKey);
+  }
+
+  batch.put(layout.a(wid, acct), bw.render());
+}
+
+async function updatePaths() {
+  const iter = db.iterator({
+    gte: layout.p(encoding.NULL_HASH),
+    lte: layout.p(encoding.HIGH_HASH),
+    keys: true,
+    values: true
+  });
+
+  await iter.each((key, value) => {
+    const br = bio.read(value);
+  });
 }
 
 /*
