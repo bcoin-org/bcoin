@@ -483,7 +483,7 @@ async function updatePaths() {
         break;
     }
 
-    const version = br.readI8();
+    let version = br.readI8();
 
     let type = br.readU8();
 
@@ -497,8 +497,12 @@ async function updatePaths() {
     bw.writeU32(account);
     bw.writeU8(keyType);
 
-    bw.writeU8(type);
-    bw.writeI8(version);
+    if (version === -1)
+      version = 0x1f;
+
+    const flags = (version << 3) | type;
+
+    bw.writeU8(flags);
 
     switch (keyType) {
       case 0:
