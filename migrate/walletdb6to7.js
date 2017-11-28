@@ -456,7 +456,6 @@ async function updateAccount(wid, acct) {
   };
 
   const count = br.readU8();
-
   const keys = [];
 
   for (let i = 0; i < count; i++) {
