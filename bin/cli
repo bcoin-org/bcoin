@@ -541,7 +541,7 @@ class CLI {
 
     let result;
     try {
-      result = await this.client.rpc.execute(method, params);
+      result = await this.client.execute(method, params);
     } catch (e) {
       if (e.type === 'RPCError') {
         this.log(e.message);

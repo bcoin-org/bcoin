@@ -1,16 +1,16 @@
 'use strict';
 
 const assert = require('assert');
-const BDB = require('bdb');
+const bdb = require('bdb');
 const bio = require('bufio');
 const layouts = require('../lib/wallet/layout');
 const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
-const layout = layouts.walletdb;
+const layout = layouts.wdb;
 const tlayout = layouts.txdb;
-const {encoding} = bio;
 
 // changes:
+// db version record
 // headers - all headers
 // block map - just a map
 // input map - only on unconfirmed
@@ -21,21 +21,22 @@ const {encoding} = bio;
 // wallet - serialization
 // account - serialization
 // path - serialization
+// depth - counter record
+// hash/ascii - variable length key prefixes
 
 let file = process.argv[2];
-let batch;
+let parent = null;
 
 assert(typeof file === 'string', 'Please pass in a database path.');
 
 file = file.replace(/\.ldb\/?$/, '');
 
-const db = new BDB({
+const db = bdb.create({
   location: file,
   db: 'leveldb',
   compression: true,
   cacheSize: 32 << 20,
-  createIfMissing: false,
-  bufferKeys: true
+  createIfMissing: false
 });
 
 async function updateVersion() {
@@ -43,7 +44,7 @@ async function updateVersion() {
 
   console.log('Checking version.');
 
-  const data = await db.get('V');
+  const data = await db.get(layout.V.build());
   assert(data, 'No version.');
 
   const ver = data.readUInt32LE(0, true);
@@ -52,16 +53,65 @@ async function updateVersion() {
     throw Error(`DB is version ${ver}.`);
 
   console.log('Backing up DB to: %s.', bak);
+  console.log('Updating version to %d.', ver + 1);
 
   await db.backup(bak);
 
-  const buf = Buffer.allocUnsafe(4);
-  buf.writeUInt32LE(7, 0, true);
-  batch.put('V', buf);
+  const buf = Buffer.allocUnsafe(6 + 4);
+  buf.write('wallet', 0, 'ascii');
+  buf.writeUInt32LE(7, 6, true);
+
+  parent.put(layout.V.build(), buf);
+}
+
+async function migrateKeys(id, from, to) {
+  console.log('Migrating keys for %s.', String.fromCharCode(id));
+
+  const iter = db.iterator({
+    gt: Buffer.from([id]),
+    lt: Buffer.from([id + 1]),
+    keys: true,
+    values: true
+  });
+
+  let batch = db.batch();
+  let total = 0;
+  let items = 0;
+
+  await iter.each(async (key, value) => {
+    batch.put(to.build(...from(key)), value);
+    batch.del(key);
+
+    total += (key.length + 80) * 2;
+    total += value.length + 80;
+    items += 1;
+
+    if (total >= (128 << 20)) {
+      await batch.write();
+      batch = db.batch();
+      total = 0;
+    }
+  });
+
+  console.log('Migrated %d keys for %s.', items, String.fromCharCode(id));
+
+  return batch.write();
+}
+
+async function updateKeys() {
+  console.log('Updating keys...');
+
+  await migrateKeys(0x70, parsep, layout.p); // p
+  await migrateKeys(0x50, parseP, layout.P); // P
+  await migrateKeys(0x72, parser, layout.r); // r
+  await migrateKeys(0x6c, parsel, layout.l); // l
+  await migrateKeys(0x69, parsei, layout.i); // i
+
+  console.log('Updated keys.');
 }
 
 async function updateState() {
-  const raw = await db.get(layout.R);
+  const raw = await db.get(layout.R.build());
 
   if (!raw)
     return;
@@ -69,15 +119,25 @@ async function updateState() {
   console.log('Updating state...');
 
   if (raw.length === 40) {
-    batch.put(layout.R, c(raw, Buffer.from([1])));
+    const bw = bio.write(41);
+    bw.writeBytes(raw);
+    bw.writeU8(1);
+    parent.put(layout.R.build(), bw.render());
     console.log('State updated.');
   }
+
+  const depth = await getDepth();
+
+  const buf = Buffer.allocUnsafe(4);
+  buf.writeUInt32LE(depth, 0, true);
+
+  parent.put(layout.D.build(), buf);
 }
 
 async function updateBlockMap() {
   const iter = db.iterator({
-    gte: layout.b(0),
-    lte: layout.b(0xffffffff),
+    gte: layout.b.min(),
+    lte: layout.b.max(),
     keys: true,
     values: true
   });
@@ -87,7 +147,7 @@ async function updateBlockMap() {
   let total = 0;
 
   await iter.each((key, value) => {
-    const height = layout.bb(key);
+    const height = layout.b.parse(key);
     const block = BlockMapRecord.fromRaw(height, value);
     const map = new Set();
 
@@ -99,7 +159,7 @@ async function updateBlockMap() {
     const bw = bio.write(sizeMap(map));
     serializeMap(bw, map);
 
-    batch.put(key, bw.render());
+    parent.put(key, bw.render());
 
     total += 1;
   });
@@ -109,10 +169,10 @@ async function updateBlockMap() {
 
 async function updateTXDB() {
   const wids = await db.keys({
-    gte: layout.w(0),
-    lte: layout.w(0xffffffff),
+    gte: layout.w.min(),
+    lte: layout.w.max(),
     keys: true,
-    parse: k => layout.ww(k)
+    parse: key => layout.w.parse(key)
   });
 
   console.log('Updating wallets...');
@@ -120,41 +180,42 @@ async function updateTXDB() {
   let total = 0;
 
   for (const wid of wids) {
-    await updateInputs(wid);
-    await updateCoins(wid);
-    await updateTX(wid);
-    await updateWalletBalance(wid);
-    await updateAccountBalances(wid);
+    const bucket = db.bucket(layout.t.build(wid));
+    const batch = bucket.wrap(parent);
+
+    await updateInputs(wid, bucket, batch);
+    await updateCoins(wid, bucket, batch);
+    await updateTX(wid, bucket, batch);
+    await updateWalletBalance(wid, bucket, batch);
+    await updateAccountBalances(wid, bucket, batch);
     await updateWallet(wid);
+
     total += 1;
   }
 
   console.log('Updated %d wallets.', total);
 }
 
-async function updateInputs(wid) {
-  const pre = tlayout.prefix(wid);
-
-  const iter = db.iterator({
-    gte: c(pre, tlayout.h(0, encoding.NULL_HASH)),
-    lte: c(pre, tlayout.h(0xffffffff, encoding.HIGH_HASH)),
+async function updateInputs(wid, bucket, batch) {
+  const iter = bucket.iterator({
+    gte: tlayout.h.min(),
+    lte: tlayout.h.max(),
     keys: true
   });
 
-  console.log('Updating inputs for %d.', wid);
+  console.log('Updating inputs for %d...', wid);
 
   let total = 0;
 
-  await iter.each(async (k, value) => {
-    const key = k.slice(pre.length);
-    const [height, hash] = tlayout.hh(key);
-    const data = await db.get(c(pre, tlayout.t(hash)));
+  await iter.each(async (key, value) => {
+    const [, hash] = tlayout.h.parse(key);
+    const data = await bucket.get(tlayout.t.build(hash));
     assert(data);
     const tx = TX.fromRaw(data);
 
     for (const {prevout} of tx.inputs) {
       const {hash, index} = prevout;
-      batch.del(c(pre, tlayout.s(hash, index)));
+      batch.del(tlayout.s.build(hash, index));
       total += 1;
     }
   });
@@ -162,12 +223,10 @@ async function updateInputs(wid) {
   console.log('Updated %d inputs for %d.', total, wid);
 }
 
-async function updateCoins(wid) {
-  const pre = tlayout.prefix(wid);
-
-  const iter = db.iterator({
-    gte: c(pre, tlayout.c(encoding.NULL_HASH, 0)),
-    lte: c(pre, tlayout.c(encoding.HIGH_HASH, 0xffffffff)),
+async function updateCoins(wid, bucket, batch) {
+  const iter = bucket.iterator({
+    gte: tlayout.c.min(),
+    lte: tlayout.c.max(),
     keys: true,
     values: true
   });
@@ -183,7 +242,10 @@ async function updateCoins(wid) {
     br.readU8();
 
     if (br.left() === 0) {
-      batch.put(key, c(value, Buffer.from([0])));
+      const bw = bio.write(value.length + 1);
+      bw.writeBytes(value);
+      bw.writeU8(0);
+      batch.put(key, bw.render());
       total += 1;
     }
   });
@@ -191,12 +253,10 @@ async function updateCoins(wid) {
   console.log('Updated %d coins for %d.', total, wid);
 }
 
-async function updateTX(wid) {
-  const pre = tlayout.prefix(wid);
-
-  const iter = db.iterator({
-    gte: c(pre, tlayout.p(encoding.NULL_HASH)),
-    lte: c(pre, tlayout.p(encoding.HIGH_HASH)),
+async function updateTX(wid, bucket, batch) {
+  const iter = bucket.iterator({
+    gte: tlayout.p.min(),
+    lte: tlayout.p.max(),
     keys: true
   });
 
@@ -204,10 +264,9 @@ async function updateTX(wid) {
 
   let total = 0;
 
-  await iter.each(async (k, value) => {
-    const key = k.slice(pre.length);
-    const hash = tlayout.pp(key);
-    const raw = await db.get(layout.T(hash));
+  await iter.each(async (key, value) => {
+    const hash = tlayout.p.parse(key);
+    const raw = await db.get(layout.T.build(hash));
 
     let map = null;
 
@@ -222,7 +281,7 @@ async function updateTX(wid) {
 
     const bw = bio.write(sizeMap(map));
     serializeMap(bw, map);
-    batch.put(layout.T(hash), bw.render());
+    batch.put(layout.T.build(hash), bw.render());
 
     total += 1;
   });
@@ -230,26 +289,25 @@ async function updateTX(wid) {
   console.log('Added %d TX maps for %d.', total, wid);
 }
 
-async function updateWalletBalance(wid) {
-  const pre = tlayout.prefix(wid);
+async function updateWalletBalance(wid, bucket, batch) {
   const bal = newBalance();
 
-  const keys = await db.keys({
-    gte: c(pre, tlayout.t(encoding.NULL_HASH)),
-    lte: c(pre, tlayout.t(encoding.HIGH_HASH)),
+  const keys = await bucket.keys({
+    gte: tlayout.t.min(),
+    lte: tlayout.t.max(),
     keys: true
   });
 
   bal.tx = keys.length;
 
-  const iter = db.iterator({
-    gte: c(pre, tlayout.c(encoding.NULL_HASH, 0)),
-    lte: c(pre, tlayout.c(encoding.HIGH_HASH, 0xffffffff)),
+  const iter = bucket.iterator({
+    gte: tlayout.c.min(),
+    lte: tlayout.c.max(),
     keys: true,
     values: true
   });
 
-  console.log('Updating wallet balance for %d.', wid);
+  console.log('Updating wallet balance for %d...', wid);
 
   await iter.each((key, value) => {
     const br = bio.read(value, true);
@@ -265,13 +323,13 @@ async function updateWalletBalance(wid) {
       bal.unconfirmed += coin.value;
   });
 
-  batch.put(c(pre, tlayout.R), serializeBalance(bal));
+  batch.put(tlayout.R.build(), serializeBalance(bal));
 
   console.log('Updated wallet balance for %d.', wid);
 }
 
-async function updateAccountBalances(wid) {
-  const raw = await db.get(layout.w(wid));
+async function updateAccountBalances(wid, bucket, batch) {
+  const raw = await db.get(layout.w.build(wid));
   assert(raw);
 
   const br = bio.read(raw, true);
@@ -287,35 +345,33 @@ async function updateAccountBalances(wid) {
   console.log('Updating account balances for %d...', wid);
 
   for (let acct = 0; acct < depth; acct++)
-    await updateAccountBalance(wid, acct);
+    await updateAccountBalance(wid, acct, bucket, batch);
 
   console.log('Updated %d account balances for %d.', depth, wid);
 }
 
-async function updateAccountBalance(wid, acct) {
-  const pre = tlayout.prefix(wid);
+async function updateAccountBalance(wid, acct, bucket, batch) {
   const bal = newBalance();
 
-  const keys = await db.keys({
-    gte: c(pre, tlayout.T(acct, encoding.NULL_HASH)),
-    lte: c(pre, tlayout.T(acct, encoding.HIGH_HASH)),
+  const keys = await bucket.keys({
+    gte: tlayout.T.min(acct),
+    lte: tlayout.T.max(acct),
     keys: true
   });
 
   bal.tx = keys.length;
 
-  const iter = db.iterator({
-    gte: c(pre, tlayout.C(acct, encoding.NULL_HASH, 0)),
-    lte: c(pre, tlayout.C(acct, encoding.HIGH_HASH, 0xffffffff)),
+  const iter = bucket.iterator({
+    gte: tlayout.C.min(acct),
+    lte: tlayout.C.max(acct),
     keys: true
   });
 
   console.log('Updating account balance for %d/%d...', wid, acct);
 
-  await iter.each(async (k, value) => {
-    const key = k.slice(pre.length);
-    const [, hash, index] = tlayout.Cc(key);
-    const raw = await db.get(c(pre, tlayout.c(hash, index)));
+  await iter.each(async (key, value) => {
+    const [, hash, index] = tlayout.C.parse(key);
+    const raw = await bucket.get(tlayout.c.build(hash, index));
     assert(raw);
     const br = bio.read(raw, true);
     const coin = Coin.fromReader(br);
@@ -330,13 +386,13 @@ async function updateAccountBalance(wid, acct) {
       bal.unconfirmed += coin.value;
   });
 
-  batch.put(c(pre, tlayout.r(acct)), serializeBalance(bal));
+  batch.put(tlayout.r.build(acct), serializeBalance(bal));
 
   console.log('Updated account balance for %d/%d.', wid, acct);
 }
 
 async function updateWallet(wid) {
-  const raw = await db.get(layout.w(wid));
+  const raw = await db.get(layout.w.build(wid));
   assert(raw);
 
   console.log('Updating wallet: %d.', wid);
@@ -346,7 +402,7 @@ async function updateWallet(wid) {
   br.readU32(); // Skip network.
   br.readU32(); // Skip wid.
   const id = br.readVarString('ascii');
-  const initialized = br.readU8() === 1;
+  br.readU8(); // Skip initialized.
   const watchOnly = br.readU8() === 1;
   const accountDepth = br.readU32();
   const token = br.readBytes(32);
@@ -414,7 +470,7 @@ async function updateWallet(wid) {
   bw.writeU32(tokenDepth);
   bw.writeBytes(key);
 
-  batch.put(layout.w(wid), bw.render());
+  parent.put(layout.w.build(wid), bw.render());
 
   console.log('Updating accounts for %d...', wid);
 
@@ -427,7 +483,7 @@ async function updateWallet(wid) {
 }
 
 async function updateAccount(wid, acct) {
-  const raw = await db.get(layout.a(wid, acct));
+  const raw = await db.get(layout.a.build(wid, acct));
   assert(raw);
 
   console.log('Updating account: %d/%d...', wid, acct);
@@ -508,15 +564,15 @@ async function updateAccount(wid, acct) {
     bw.writeBytes(key.publicKey);
   }
 
-  batch.put(layout.a(wid, acct), bw.render());
+  parent.put(layout.a.build(wid, acct), bw.render());
 
   console.log('Updated account: %d/%d.', wid, acct);
 }
 
 async function updatePaths() {
   const iter = db.iterator({
-    gte: layout.P(0, encoding.NULL_HASH),
-    lte: layout.P(0xffffffff, encoding.HIGH_HASH),
+    gte: layout.P.min(),
+    lte: layout.P.max(),
     keys: true,
     values: true
   });
@@ -595,12 +651,32 @@ async function updatePaths() {
         break;
     }
 
-    batch.put(key, bw.render());
+    parent.put(key, bw.render());
 
     total += 1;
   });
 
   console.log('Updated %d paths.', total);
+}
+
+async function getDepth() {
+  const iter = db.iterator({
+    gte: layout.w.min(),
+    lte: layout.w.max(),
+    reverse: true,
+    limit: 1
+  });
+
+  if (!await iter.next())
+    return 1;
+
+  const {key} = iter;
+
+  await iter.end();
+
+  const depth = layout.w.parse(key);
+
+  return depth + 1;
 }
 
 /*
@@ -695,7 +771,7 @@ class BlockMapRecord {
 
 class TXMapRecord {
   constructor(hash, wids) {
-    this.hash = hash || encoding.NULL_HASH;
+    this.hash = hash || null;
     this.wids = wids || new Set();
   }
 
@@ -769,10 +845,6 @@ function serializeMap(bw, wids) {
  * Helpers
  */
 
-function c(a, b) {
-  return Buffer.concat([a, b]);
-}
-
 function newBalance() {
   return {
     tx: 0,
@@ -793,6 +865,40 @@ function serializeBalance(bal) {
   return bw.render();
 }
 
+function parsep(key) { // p[hash]
+  assert(Buffer.isBuffer(key));
+  assert(key.length >= 21);
+  return [key.toString('hex', 1)];
+}
+
+function parseP(key) { // P[wid][hash]
+  assert(Buffer.isBuffer(key));
+  assert(key.length >= 25);
+  return [key.readUInt32BE(1, true), key.toString('hex', 5)];
+}
+
+function parser(key) { // r[wid][index][hash]
+  assert(Buffer.isBuffer(key));
+  assert(key.length >= 29);
+  return [
+    key.readUInt32BE(1, true),
+    key.readUInt32BE(5, true),
+    key.toString('hex', 9)
+  ];
+}
+
+function parsel(key) { // l[id]
+  assert(Buffer.isBuffer(key));
+  assert(key.length >= 1);
+  return [key.toString('ascii', 1)];
+}
+
+function parsei(key) { // i[wid][name]
+  assert(Buffer.isBuffer(key));
+  assert(key.length >= 5);
+  return [key.readUInt32BE(1, true), key.toString('ascii', 5)];
+}
+
 /*
  * Execute
  */
@@ -802,15 +908,16 @@ function serializeBalance(bal) {
 
   console.log('Opened %s.', file);
 
-  batch = db.batch();
+  parent = db.batch();
 
   await updateVersion();
+  await updateKeys();
   await updateState();
   await updateBlockMap();
   await updateTXDB();
   await updatePaths();
 
-  await batch.write();
+  await parent.write();
   await db.close();
 })().then(() => {
   console.log('Migration complete.');
