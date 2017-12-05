@@ -3,7 +3,6 @@
 
 'use strict';
 
-const {encoding} = require('bufio');
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
@@ -679,7 +678,7 @@ describe('Wallet', function() {
 
     // Coinbase
     const t1 = new MTX();
-    t1.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
+    t1.addOutpoint(new Outpoint(consensus.NULL_HASH, 0));
     t1.addOutput(await alice.receiveAddress(), 5460);
     t1.addOutput(await alice.receiveAddress(), 5460);
     t1.addOutput(await alice.receiveAddress(), 5460);

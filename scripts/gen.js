@@ -1,7 +1,6 @@
 'use strict';
 
 const consensus = require('../lib/protocol/consensus');
-const {encoding} = require('bufio');
 const TX = require('../lib/primitives/tx');
 const Block = require('../lib/primitives/block');
 const Script = require('../lib/script/script');
@@ -31,7 +30,7 @@ function createGenesisBlock(options) {
     version: 1,
     inputs: [{
       prevout: {
-        hash: encoding.NULL_HASH,
+        hash: consensus.NULL_HASH,
         index: 0xffffffff
       },
       script: Script()
@@ -50,7 +49,7 @@ function createGenesisBlock(options) {
 
   const block = new Block({
     version: options.version,
-    prevBlock: encoding.NULL_HASH,
+    prevBlock: consensus.NULL_HASH,
     merkleRoot: tx.hash('hex'),
     time: options.time,
     bits: options.bits,

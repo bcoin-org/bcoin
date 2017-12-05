@@ -692,7 +692,7 @@ describe('TX', function() {
       const output = Script.fromProgram(0, key.getKeyHash());
       const ctx = sigopContext(input, witness, output);
 
-      ctx.spend.inputs[0].prevout.hash = encoding.NULL_HASH;
+      ctx.spend.inputs[0].prevout.hash = consensus.NULL_HASH;
       ctx.spend.inputs[0].prevout.index = 0xffffffff;
       ctx.spend.refresh();
 

@@ -1,9 +1,8 @@
 'use strict';
 
 const assert = require('assert');
-const bcoin = require('../');
+const bdb = require('bdb');
 const bio = require('bufio');
-const {encoding} = bio;
 
 let file = process.argv[2];
 let batch;
@@ -12,13 +11,12 @@ assert(typeof file === 'string', 'Please pass in a database path.');
 
 file = file.replace(/\.ldb\/?$/, '');
 
-const db = bcoin.ldb({
+const db = bdb.create({
   location: file,
   db: 'leveldb',
   compression: true,
   cacheSize: 32 << 20,
-  createIfMissing: false,
-  bufferKeys: true
+  createIfMissing: false
 });
 
 async function updateVersion() {
@@ -26,30 +24,27 @@ async function updateVersion() {
 
   console.log('Checking version.');
 
-  const data = await db.get('V');
-  assert(data, 'No version.');
+  const raw = await db.get('V');
+  assert(raw, 'No version.');
 
-  let ver = data.readUInt32LE(0, true);
+  const version = raw.readUInt32LE(0, true);
 
-  if (ver !== 5)
-    throw Error(`DB is version ${ver}.`);
+  if (version !== 5)
+    throw Error(`DB is version ${version}.`);
 
   console.log('Backing up DB to: %s.', bak);
 
   await db.backup(bak);
 
-  ver = Buffer.allocUnsafe(4);
-  ver.writeUInt32LE(6, 0, true);
-  batch.put('V', ver);
+  const data = Buffer.allocUnsafe(4);
+  data.writeUInt32LE(6, 0, true);
+  batch.put('V', data);
 }
 
 async function wipeTXDB() {
   let total = 0;
 
-  const keys = await db.keys({
-    gte: Buffer.from([0x00]),
-    lte: Buffer.from([0xff])
-  });
+  const keys = await db.keys();
 
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
@@ -61,7 +56,7 @@ async function wipeTXDB() {
       case 0x6f: // o
       case 0x68: // h
         batch.del(key);
-        total++;
+        total += 1;
         break;
     }
   }
@@ -73,8 +68,8 @@ async function wipeTXDB() {
 
 async function patchAccounts() {
   const items = await db.range({
-    gte: Buffer.from('610000000000000000', 'hex'), // a
-    lte: Buffer.from('61ffffffffffffffff', 'hex')  // a
+    gt: Buffer.from([0x61]), // a
+    lt: Buffer.from([0x62])
   });
 
   for (let i = 0; i < items.length; i++) {
@@ -91,8 +86,8 @@ async function patchAccounts() {
 
 async function indexPaths() {
   const items = await db.range({
-    gte: Buffer.from('5000000000' + encoding.NULL_HASH, 'hex'), // P
-    lte: Buffer.from('50ffffffff' + encoding.HIGH_HASH, 'hex')  // P
+    gt: Buffer.from([0x50]), // P
+    lt: Buffer.from([0x51])
   });
 
   for (let i = 0; i < items.length; i++) {
@@ -107,8 +102,8 @@ async function indexPaths() {
 
 async function patchPathMaps() {
   const items = await db.range({
-    gte: Buffer.from('70' + encoding.NULL_HASH, 'hex'), // p
-    lte: Buffer.from('70' + encoding.HIGH_HASH, 'hex')  // p
+    gt: Buffer.from([0x70]), // p
+    lt: Buffer.from([0x71])
   });
 
   for (let i = 0; i < items.length; i++) {
@@ -261,7 +256,7 @@ async function unstate() {
   await db.close();
 
   // Do not use:
-  await updateLookahead();
+  // await updateLookahead();
   await unstate();
 })().then(() => {
   console.log('Migration complete.');
