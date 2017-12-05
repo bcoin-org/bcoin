@@ -19,7 +19,6 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
-const u32 = encoding.u32;
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -37,6 +36,12 @@ let importedKey = null;
 let doubleSpendWallet = null;
 let doubleSpendCoin = null;
 
+function fromU32(num) {
+  const data = Buffer.allocUnsafe(4);
+  data.writeUInt32LE(num, 0, true);
+  return data;
+}
+
 function curBlock(wdb) {
   return fakeBlock(wdb.state.height);
 };
@@ -46,9 +51,9 @@ function nextBlock(wdb) {
 }
 
 function fakeBlock(height) {
-  const prev = hash256.digest(u32((height - 1) >>> 0));
-  const hash = hash256.digest(u32(height >>> 0));
-  const root = hash256.digest(u32((height | 0x80000000) >>> 0));
+  const prev = hash256.digest(fromU32((height - 1) >>> 0));
+  const hash = hash256.digest(fromU32(height >>> 0));
+  const root = hash256.digest(fromU32((height | 0x80000000) >>> 0));
 
   return {
     hash: hash.toString('hex'),
