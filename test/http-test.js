@@ -3,7 +3,6 @@
 
 'use strict';
 
-const {encoding} = require('bufio');
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
 const Address = require('../lib/primitives/address');
@@ -76,7 +75,7 @@ describe('HTTP', function() {
 
   it('should fill with funds', async () => {
     const mtx = new MTX();
-    mtx.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
+    mtx.addOutpoint(new Outpoint(consensus.NULL_HASH, 0));
     mtx.addOutput(addr, 50460);
     mtx.addOutput(addr, 50460);
     mtx.addOutput(addr, 50460);

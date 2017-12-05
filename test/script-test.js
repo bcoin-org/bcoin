@@ -9,7 +9,7 @@ const Witness = require('../lib/script/witness');
 const Stack = require('../lib/script/stack');
 const Opcode = require('../lib/script/opcode');
 const TX = require('../lib/primitives/tx');
-const {encoding} = require('bufio');
+const consensus = require('../lib/protocol/consensus');
 const {fromFloat} = require('../lib/utils/fixed');
 
 const scripts = require('./data/script-tests.json');
@@ -286,7 +286,7 @@ describe('Script', function() {
           version: 1,
           inputs: [{
             prevout: {
-              hash: encoding.NULL_HASH,
+              hash: consensus.NULL_HASH,
               index: 0xffffffff
             },
             script: [

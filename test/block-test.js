@@ -10,7 +10,6 @@ const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
-const {encoding} = require('bufio');
 const bip152 = require('../lib/net/bip152');
 const CompactBlock = bip152.CompactBlock;
 const TXRequest = bip152.TXRequest;
@@ -158,7 +157,7 @@ describe('Block', function() {
   it('should fail with a bad merkle root', () => {
     const [block] = block300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = encoding.NULL_HASH;
+    block.merkleRoot = consensus.NULL_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
@@ -172,7 +171,7 @@ describe('Block', function() {
   it('should fail on merkle block with a bad merkle root', () => {
     const [block] = merkle300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = encoding.NULL_HASH;
+    block.merkleRoot = consensus.NULL_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
