@@ -3,7 +3,6 @@
 const assert = require('assert');
 const bdb = require('bdb');
 const layout = require('../lib/blockchain/layout');
-const DUMMY = Buffer.alloc(1, 0x00);
 
 // changes:
 // db version record
@@ -59,7 +58,7 @@ async function migrateKeys(id, from, to) {
   let items = 0;
 
   await iter.each(async (key) => {
-    batch.put(to.build(...from(key)), DUMMY);
+    batch.put(to.build(...from(key)), null);
     batch.del(key);
 
     total += (key.length + 80) * 2;

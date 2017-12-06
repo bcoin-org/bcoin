@@ -235,6 +235,8 @@ async function updateLookahead() {
   await db.close();
 }
 
+updateLookahead;
+
 async function unstate() {
   await db.open();
   batch = db.batch();
