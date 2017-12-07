@@ -4,23 +4,19 @@ const assert = require('assert');
 const bdb = require('bdb');
 const bio = require('bufio');
 
-let file = process.argv[2];
+assert(process.argv.length > 2, 'Please pass in a database path.');
+
 let batch;
 
-assert(typeof file === 'string', 'Please pass in a database path.');
-
-file = file.replace(/\.ldb\/?$/, '');
-
 const db = bdb.create({
-  location: file,
-  db: 'leveldb',
+  location: process.argv[2],
   compression: true,
   cacheSize: 32 << 20,
   createIfMissing: false
 });
 
 async function updateVersion() {
-  const bak = `${process.env.HOME}/walletdb-bak-${Date.now()}.ldb`;
+  const bak = `${process.env.HOME}/wallet-bak-${Date.now()}`;
 
   console.log('Checking version.');
 
@@ -214,7 +210,7 @@ async function updateLookahead() {
   const db = new WalletDB({
     network: process.argv[3],
     db: 'leveldb',
-    location: file,
+    location: process.argv[2],
     witness: false,
     useCheckpoints: false,
     maxFiles: 64,
@@ -248,7 +244,7 @@ async function unstate() {
 (async () => {
   await db.open();
   batch = db.batch();
-  console.log('Opened %s.', file);
+  console.log('Opened %s.', process.argv[2]);
   await updateVersion();
   await wipeTXDB();
   await patchAccounts();

@@ -9,16 +9,12 @@ const layout = require('../lib/blockchain/layout');
 // deployment table v->D
 // C/T key format
 
-let file = process.argv[2];
+assert(process.argv.length > 2, 'Please pass in a database path.');
+
 let parent = null;
 
-assert(typeof file === 'string', 'Please pass in a database path.');
-
-file = file.replace(/\.ldb\/?$/, '');
-
 const db = bdb.create({
-  location: file,
-  db: 'leveldb',
+  location: process.argv[2],
   compression: true,
   cacheSize: 32 << 20,
   createIfMissing: false
@@ -144,7 +140,7 @@ function parseC(key) {
 (async () => {
   await db.open();
 
-  console.log('Opened %s.', file);
+  console.log('Opened %s.', process.argv[2]);
 
   parent = db.batch();
 

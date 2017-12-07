@@ -29,7 +29,6 @@ const Block = require('../lib/primitives/block');
 const LRU = require('../lib/utils/lru');
 const consensus = require('../lib/protocol/consensus');
 
-const file = process.argv[2].replace(/\.ldb\/?$/, '');
 const shouldPrune = process.argv.indexOf('--prune') !== -1;
 
 let hasIndex = false;
@@ -37,8 +36,7 @@ let hasPruned = false;
 let hasSPV = false;
 
 const db = bdb.create({
-  location: file,
-  db: 'leveldb',
+  location: process.argv[2],
   compression: true,
   cacheSize: 32 << 20,
   createIfMissing: false
@@ -77,11 +75,11 @@ async function readJournal() {
   if (!data)
     return [STATE_VERSION, consensus.NULL_HASH];
 
-  if (data[0] !== MIGRATION_ID)
-    throw new Error('Bad migration id.');
-
   if (data.length !== 34)
     throw new Error('Bad migration length.');
+
+  if (data[0] !== MIGRATION_ID)
+    throw new Error('Bad migration id.');
 
   const state = data.readUInt8(1, true);
   const hash = data.toString('hex', 2, 34);
@@ -125,6 +123,7 @@ async function updateVersion() {
 
 async function reserializeUndo(hash) {
   let tip = await getTip();
+
   const height = tip.height;
 
   if (hash !== consensus.NULL_HASH)
@@ -643,7 +642,7 @@ reserializeEntries;
 (async () => {
   await db.open();
 
-  console.log('Opened %s.', file);
+  console.log('Opened %s.', process.argv[2]);
 
   if (await isSPV())
     hasSPV = true;
@@ -690,7 +689,7 @@ reserializeEntries;
 
   assert(state === STATE_DONE);
 
-  console.log('Closing %s.', file);
+  console.log('Closing %s.', process.argv[2]);
 
   await db.close();
 
