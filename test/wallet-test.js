@@ -1498,6 +1498,15 @@ describe('Wallet', function() {
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
   });
 
+  it('should remove a wallet', async () => {
+    const wallet = await wdb.create({
+      id: 'alice100'
+    });
+    assert(await wdb.get('alice100'));
+    await wdb.remove('alice100');
+    assert(!await wdb.get('alice100'));
+  });
+
   it('should cleanup', () => {
     consensus.COINBASE_MATURITY = 100;
   });
