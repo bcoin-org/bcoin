@@ -25,7 +25,7 @@ class NodeContext {
 
       const node = new FullNode({
         network: this.network,
-        db: 'memory',
+        memory: true,
         logger: new Logger({
           level: 'debug',
           file: false,
