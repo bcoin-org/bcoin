@@ -19,10 +19,6 @@ const wports = {
   simnet: 18558
 };
 
-const ANTIREPLAY = ''
-  + '6a2e426974636f696e3a204120506565722d746f2d5065657'
-  + '220456c656374726f6e696320436173682053797374656d';
-
 class CLI {
   constructor() {
     this.config = new Config('bcoin', {
@@ -333,13 +329,6 @@ class CLI {
       outputs.push({
         address: this.config.str([0, 'address']),
         value: this.config.ufixed([1, 'value'], 8)
-      });
-    }
-
-    if (this.config.bool('no-replay')) {
-      outputs.push({
-        script: ANTIREPLAY,
-        value: 0
       });
     }
 
