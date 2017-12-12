@@ -30,7 +30,7 @@ const workers = new WorkerPool({
 });
 
 const chain = new Chain({
-  db: 'memory',
+  memory: true,
   network,
   workers
 });

@@ -27,13 +27,13 @@ const workers = new WorkerPool({
 });
 
 const chain = new Chain({
-  db: 'memory',
+  memory: true,
   workers
 });
 
 const mempool = new Mempool({
   chain,
-  db: 'memory',
+  memory: true,
   workers
 });
 

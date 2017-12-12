@@ -18,7 +18,7 @@ const node = new FullNode({
   network: 'regtest',
   apiKey: 'foo',
   walletAuth: true,
-  db: 'memory',
+  memory: true,
   workers: true,
   plugins: [require('../lib/wallet/plugin')]
 });
@@ -31,7 +31,7 @@ const client = new NodeClient({
 });
 
 const wallet = new WalletClient({
-  port: network.rpcPort,
+  port: network.walletPort,
   apiKey: 'foo'
 });
 
