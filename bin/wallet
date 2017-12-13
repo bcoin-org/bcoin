@@ -28,7 +28,7 @@ const node = new Node({
   logFile: true,
   logConsole: true,
   logLevel: 'debug',
-  db: 'leveldb',
+  memory: false,
   workers: true,
   listen: true,
   loader: require
