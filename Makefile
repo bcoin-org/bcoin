@@ -1,6 +1,9 @@
 all:
 	@npm run webpack
 
+app:
+	@npm run webpack-app
+
 browser:
 	@npm run webpack-browser
 
@@ -22,4 +25,4 @@ lint:
 test:
 	@npm test
 
-.PHONY: all browser compat node clean docs lint test
+.PHONY: all app browser compat node clean docs lint test

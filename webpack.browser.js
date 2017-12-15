@@ -1,7 +1,7 @@
 'use strict';
 
+const Path = require('path');
 const webpack = require('webpack');
-const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const str = JSON.stringify;
 const env = process.env;
@@ -9,11 +9,13 @@ const env = process.env;
 module.exports = {
   target: 'web',
   entry: {
-    'bcoin': './lib/bcoin-browser',
+    'bcoin': './lib/bcoin',
     'bcoin-worker': './lib/workers/worker'
   },
   output: {
-    path: path.join(__dirname, 'browser'),
+    library: 'bcoin',
+    libraryTarget: 'umd',
+    path: Path.join(__dirname, 'browser'),
     filename: '[name].js'
   },
   resolve: {
@@ -27,10 +29,6 @@ module.exports = {
       'process.env.BCOIN_WORKER_FILE':
         str(env.BCOIN_WORKER_FILE || '/bcoin-worker.js')
     }),
-    new UglifyJsPlugin({
-      compress: {
-        warnings: true
-      }
-    })
+    new UglifyJsPlugin()
   ]
 };

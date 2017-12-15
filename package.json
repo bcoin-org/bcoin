@@ -69,7 +69,7 @@
     "bcoin-spvnode": "./bin/spvnode"
   },
   "scripts": {
-    "clean": "rm -f {browser/,}{bcoin.js,bcoin-worker.js}",
+    "clean": "rm -f {browser/,}{bcoin.js,bcoin-worker.js,app.js,worker.js}",
     "docs": "jsdoc -c jsdoc.json",
     "lint": "eslint $(cat .eslintfiles) || exit 0",
     "lint-file": "eslint",
@@ -82,6 +82,6 @@
     "webpack": "webpack --config webpack.browser.js",
     "webpack-browser": "webpack --config webpack.browser.js",
     "webpack-compat": "webpack --config webpack.compat.js",
-    "webpack-node": "webpack --config webpack.node.js"
+    "webpack-app": "webpack --config webpack.app.js"
   }
 }
