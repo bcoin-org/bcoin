@@ -9,24 +9,16 @@ const env = process.env;
 module.exports = {
   target: 'web',
   entry: {
-    'bcoin': './lib/bcoin',
-    'bcoin-worker': './lib/workers/worker'
+    'app': './browser/src/app',
+    'worker': './lib/workers/worker'
   },
   output: {
-    library: 'bcoin',
-    libraryTarget: 'umd',
     path: Path.join(__dirname, 'browser'),
     filename: '[name].js'
   },
   resolve: {
     modules: ['node_modules'],
     extensions: ['-browser.js', '.js', '.json']
-  },
-  module: {
-    rules: [{
-      test: /\.js$/,
-      loader: 'babel-loader'
-    }]
   },
   plugins: [
     new webpack.DefinePlugin({

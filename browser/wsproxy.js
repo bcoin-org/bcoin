@@ -4,13 +4,7 @@ const assert = require('assert');
 const net = require('net');
 const EventEmitter = require('events');
 const bsock = require('bsock');
-const hash256 = require('bcrypto/lib/hash256');
 const IP = require('binet');
-const bio = require('bufio');
-
-const TARGET = Buffer.from(
-  '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-  'hex');
 
 class WSProxy extends EventEmitter {
   constructor(options) {
@@ -20,8 +14,6 @@ class WSProxy extends EventEmitter {
       options = {};
 
     this.options = options;
-    this.target = options.target || TARGET;
-    this.pow = options.pow === true;
     this.ports = new Set();
     this.io = bsock.server();
     this.sockets = new WeakMap();
@@ -51,18 +43,16 @@ class WSProxy extends EventEmitter {
     // mutating the websocket object.
     this.sockets.set(ws, state);
 
-    ws.fire('info', state.toInfo());
-
     ws.on('error', (err) => {
       this.emit('error', err);
     });
 
-    ws.bind('tcp connect', (port, host, nonce) => {
-      this.handleConnect(ws, port, host, nonce);
+    ws.bind('tcp connect', (port, host) => {
+      this.handleConnect(ws, port, host);
     });
   }
 
-  handleConnect(ws, port, host, nonce) {
+  handleConnect(ws, port, host) {
     const state = this.sockets.get(ws);
     assert(state);
 
@@ -78,30 +68,6 @@ class WSProxy extends EventEmitter {
       ws.fire('tcp close');
       ws.destroy();
       return;
-    }
-
-    if (this.pow) {
-      if ((nonce >>> 0) !== nonce) {
-        this.log('Client did not solve proof of work (%s).', state.host);
-        ws.fire('tcp close');
-        ws.destroy();
-        return;
-      }
-
-      const bw = bio.write();
-      bw.writeU32(nonce);
-      bw.writeBytes(state.snonce);
-      bw.writeU32(port);
-      bw.writeString(host, 'ascii');
-
-      const pow = bw.render();
-
-      if (hash256.digest(pow).compare(this.target) > 0) {
-        this.log('Client did not solve proof of work (%s).', state.host);
-        ws.fire('tcp close');
-        ws.destroy();
-        return;
-      }
     }
 
     let raw, addr;
@@ -206,7 +172,7 @@ class WSProxy extends EventEmitter {
       socket.resume();
     });
 
-    ws.bind('disconnect', () => {
+    ws.on('disconnect', () => {
       socket.destroy();
     });
   }
@@ -223,20 +189,9 @@ class WSProxy extends EventEmitter {
 
 class SocketState {
   constructor(server, socket) {
-    this.pow = server.pow;
-    this.target = server.target;
-    this.snonce = nonce();
     this.socket = null;
     this.host = socket.host;
     this.remoteHost = null;
-  }
-
-  toInfo() {
-    return {
-      pow: this.pow,
-      target: this.target.toString('hex'),
-      snonce: this.snonce.toString('hex')
-    };
   }
 
   connect(port, host) {
@@ -244,13 +199,6 @@ class SocketState {
     this.remoteHost = IP.toHostname(host, port);
     return this.socket;
   }
-}
-
-function nonce() {
-  const buf = Buffer.allocUnsafe(8);
-  buf.writeUInt32LE(Math.random() * 0x100000000, 0, true);
-  buf.writeUInt32LE(Math.random() * 0x100000000, 4, true);
-  return buf;
 }
 
 module.exports = WSProxy;

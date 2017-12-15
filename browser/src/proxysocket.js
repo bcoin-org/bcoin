@@ -9,20 +9,18 @@
 const assert = require('assert');
 const EventEmitter = require('events');
 const bsock = require('bsock');
-const hash256 = require('bcrypto/lib/hash256');
-const bio = require('bufio');
 
 class ProxySocket extends EventEmitter {
   constructor(uri) {
     super();
 
-    this.info = null;
+    this.socket = bsock.socket();
+    this.socket.reconnection = false;
+    this.socket.connect(uri);
 
-    this.socket = bsock.connect(uri);
     this.sendBuffer = [];
     this.recvBuffer = [];
     this.paused = false;
-    this.snonce = null;
     this.bytesWritten = 0;
     this.bytesRead = 0;
     this.remoteAddress = null;
@@ -34,20 +32,6 @@ class ProxySocket extends EventEmitter {
   }
 
   init() {
-    this.socket.bind('info', (info) => {
-      if (this.closed)
-        return;
-
-      this.info = info;
-
-      if (info.pow) {
-        this.snonce = Buffer.from(info.snonce, 'hex');
-        this.target = Buffer.from(info.target, 'hex');
-      }
-
-      this.emit('info', info);
-    });
-
     this.socket.on('error', (err) => {
       console.error(err);
     });
@@ -87,7 +71,7 @@ class ProxySocket extends EventEmitter {
       this.emit('timeout');
     });
 
-    this.socket.bind('disconnect', () => {
+    this.socket.on('disconnect', () => {
       if (this.closed)
         return;
       this.closed = true;
@@ -104,37 +88,7 @@ class ProxySocket extends EventEmitter {
       return;
     }
 
-    if (!this.info) {
-      this.once('info', connect.bind(this, port, host));
-      return;
-    }
-
-    let nonce = 0;
-
-    if (this.info.pow) {
-      const bw = bio.write();
-
-      bw.writeU32(nonce);
-      bw.writeBytes(this.snonce);
-      bw.writeU32(port);
-      bw.writeString(host, 'ascii');
-
-      const pow = bw.render();
-
-      console.log(
-        'Solving proof of work to create socket (%d, %s) -- please wait.',
-        port, host);
-
-      do {
-        nonce += 1;
-        assert(nonce <= 0xffffffff, 'Could not create socket.');
-        pow.writeUInt32LE(nonce, 0, true);
-      } while (hash256.digest(pow).compare(this.target) > 0);
-
-      console.log('Solved proof of work: %d', nonce);
-    }
-
-    this.socket.fire('tcp connect', port, host, nonce);
+    this.socket.fire('tcp connect', port, host);
 
     for (const chunk of this.sendBuffer)
       this.write(chunk);
@@ -157,15 +111,6 @@ class ProxySocket extends EventEmitter {
   }
 
   write(data, callback) {
-    if (!this.info) {
-      this.sendBuffer.push(data);
-
-      if (callback)
-        callback();
-
-      return true;
-    }
-
     this.bytesWritten += data.length;
 
     this.socket.fire('tcp data', data.toString('hex'));

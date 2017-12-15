@@ -5,13 +5,10 @@ const fs = require('bfile');
 const WSProxy = require('./wsproxy');
 
 const index = fs.readFileSync(`${__dirname}/index.html`);
-const indexjs = fs.readFileSync(`${__dirname}/index.js`);
-const debug = fs.readFileSync(`${__dirname}/debug.html`);
-const bcoin = fs.readFileSync(`${__dirname}/bcoin.js`);
-const worker = fs.readFileSync(`${__dirname}/bcoin-worker.js`);
+const app = fs.readFileSync(`${__dirname}/app.js`);
+const worker = fs.readFileSync(`${__dirname}/worker.js`);
 
 const proxy = new WSProxy({
-  pow: process.argv.indexOf('--pow') !== -1,
   ports: [8333, 18333, 18444, 28333, 28901]
 });
 
@@ -19,6 +16,8 @@ const server = bweb.server({
   port: Number(process.argv[2]) || 8080,
   sockets: false
 });
+
+server.use(server.router());
 
 proxy.on('error', (err) => {
   console.error(err.stack);
@@ -28,27 +27,15 @@ server.on('error', (err) => {
   console.error(err.stack);
 });
 
-server.get('/favicon.ico', (req, res) => {
-  res.send(404, '', 'txt');
-});
-
 server.get('/', (req, res) => {
   res.send(200, index, 'html');
 });
 
-server.get('/index.js', (req, res) => {
-  res.send(200, indexjs, 'js');
+server.get('/app.js', (req, res) => {
+  res.send(200, app, 'js');
 });
 
-server.get('/debug', (req, res) => {
-  res.send(200, debug, 'html');
-});
-
-server.get('/bcoin.js', (req, res) => {
-  res.send(200, bcoin, 'js');
-});
-
-server.get('/bcoin-worker.js', (req, res) => {
+server.get('/worker.js', (req, res) => {
   res.send(200, worker, 'js');
 });
 
