@@ -25,7 +25,6 @@ const logger = new Logger({
   console: true
 });
 
-if (0)
 logger.writeConsole = function writeConsole(level, module, args) {
   const name = Logger.levelsByVal[level];
   const msg = this.fmt(args, false);
