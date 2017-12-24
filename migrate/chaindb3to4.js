@@ -15,6 +15,7 @@ let parent = null;
 
 const db = bdb.create({
   location: process.argv[2],
+  memory: false,
   compression: true,
   cacheSize: 32 << 20,
   createIfMissing: false
