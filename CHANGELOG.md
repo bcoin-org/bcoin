@@ -1,5 +1,127 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.0
+
+### Migration
+
+The latest bcoin release contains almost a total rewrite of the wallet. A
+migration is required.
+
+Bcoin has also been modularized quite a bit. Users installing globally from npm
+should be sure to run:
+
+``` bash
+$ npm update -g bcoin
+```
+
+For users who cloned the respository themselves, it might be wise to simply
+remove the `node_modules` directory and do a fresh `npm install`.
+
+``` bash
+$ cd bcoin/
+$ git pull origin master
+$ rm -rf node_modules/
+$ npm install
+$ npm test
+```
+
+---
+
+Once upgrading is complete, a migration script must be executed. The migration
+script resides in `./migrate/latest` as an executable file.
+
+A bcoin __prefix directory__ must be passed as the first argument.
+
+Example:
+
+``` bash
+$ ./migrate/latest ~/.bcoin
+```
+
+What this does:
+
+- Renames `chain.ldb` to `chain`.
+- Renames `spvchain.ldb` to `spvchain`.
+- Renames `walletdb.ldb` to `wallet`.
+- Runs a migration (`chaindb3to4.js`) on `chain`.
+- Runs a migration (`chaindb3to4.js`) on `spvchain`.
+- Runs a migration (`walletdb6to7.js`) on `wallet`.
+
+The chain migration should be minor, and only taxing if you have
+`--index-address` enabled.
+
+If you have a testnet, regtest, or simnet directory, the migration must also be
+run on these, e.g.
+
+``` bash
+$ ./migrate/latest ~/.bcoin/testnet
+```
+
+Also note that the `--prefix` argument now __always__ creates a fully-fledged
+prefix directory. For example `--prefix ~/.bcoin_whatever --network testnet`
+will create a directory structure of `~/.bcoin_whatever/testnet/` instead of
+`~/.bcoin_whatever`. Please update your directory structure accordingly.
+
+### Bcoin Client Changes
+
+The `bcoin cli` interface has been deprecated and is now replaced with a
+separate tool: `bcoin-cli`. `bcoin wallet` has also been deprecated and is
+replaced with `bwallet-cli`. Both `bcoin-cli` and `bwallet-cli` can be
+installed with the `bclient` package in npm.
+
+### Wallet API Changes
+
+The main wallet API changes have to do with changes in the structure of the
+HTTP server itself. The bcoin wallet HTTP server will now always listen on it's
+own port. Standard ports are:
+
+```
+main: 8334
+testnet: 18334
+regtest: 48334
+simnet: 18558
+```
+
+The default account object is no longer present on the wallet. To retrieve it,
+request `/wallet/:id/account/default` instead. More minor changes to the JSON
+output include the removal of `id` and `wid` properties on a number of objects.
+Please update your code accordingly.
+
+For socket.io events, all `wallet ` prefixes have been removed. For example,
+`wallet join` should be replaced with simply `join`. All wallet-related events
+(`tx`, `confirmed`, etc) now receive the wallet ID as the first argument. The
+`tx` event will receive `[id, details]` instead of `[details]`.
+
+The `_admin` endpoints have been moved up a level. Instead of requesting
+`/wallet/_admin/backup` (for example), request `/backup` instead. If
+`--wallet-auth` is enabled, a new flag `--admin-token` is accepted. Admin token
+is a 64 character hex string and allows access to all admin routes. For
+example, `GET /backup?token=xxx...`. It also allows access to any wallet on the
+HTTP or websocket layer (websockets who use the admin token can join a wallet
+of `*`, which notifies them of events on _all_ wallets).
+
+### Notable Changes
+
+- __wallet/http__ - A `conflict` event will be correctly emitted for _all_
+  double spends.
+- __wallet/http__ - Account balances are now indexed and will appear on account
+  objects via the API.
+- __bcoin__ - Bcoin has been rewritten using class syntax. Objects will not be
+  inheritable with legacy prototypal inheritance.
+- __pkg__ - Bcoin is once again buildable with browserify.
+- __pkg__ - Numerous modules have been moved out to separate dependencies. For
+  example, the `lib/crypto` module has been moved to the `bcrypto` package (and
+  also heavily optimized even further).
+- __bcoin__ - The main `bcoin` module has been rewritten in terms of what it
+  exposes and how. Conventions have changed (`Address` instead of `address`).
+  Due to the use of class syntax, something like `bcoin.Address(str)` is no
+  longer possible. Please take a look at `lib/bcoin.js` to get a better idea of
+  what has changed.
+
+## v1.0.0-beta.15
+
+### Notable Changes
+
 ## v1.0.0-beta.14
 
 ### Notable Changes
