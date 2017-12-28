@@ -25,15 +25,17 @@ const node = new FullNode({
 
 const {NodeClient, WalletClient} = require('bclient');
 
-const client = new NodeClient({
+const nclient = new NodeClient({
   port: network.rpcPort,
   apiKey: 'foo'
 });
 
-const wallet = new WalletClient({
+const wclient = new WalletClient({
   port: network.walletPort,
   apiKey: 'foo'
 });
+
+let wallet = null;
 
 const {wdb} = node.require('walletdb');
 
@@ -46,16 +48,19 @@ describe('HTTP', function() {
   it('should open node', async () => {
     consensus.COINBASE_MATURITY = 0;
     await node.open();
-    await client.open();
+    await nclient.open();
+    await wclient.open();
   });
 
   it('should create wallet', async () => {
-    const info = await wallet.create({ id: 'test' });
+    const info = await wclient.createWallet('test');
     assert.strictEqual(info.id, 'test');
+    wallet = wclient.wallet('test', info.token);
+    await wallet.open();
   });
 
   it('should get info', async () => {
-    const info = await client.getInfo();
+    const info = await nclient.getInfo();
     assert.strictEqual(info.network, node.network.type);
     assert.strictEqual(info.version, pkg.version);
     assert.typeOf(info.pool, 'object');
@@ -150,9 +155,9 @@ describe('HTTP', function() {
 
   it('should generate new api key', async () => {
     const old = wallet.token.toString('hex');
-    const token = await wallet.retoken(null);
-    assert.strictEqual(token.length, 64);
-    assert.notStrictEqual(token, old);
+    const result = await wallet.retoken(null);
+    assert.strictEqual(result.token.length, 64);
+    assert.notStrictEqual(result.token, old);
   });
 
   it('should get balance', async () => {
@@ -161,12 +166,12 @@ describe('HTTP', function() {
   });
 
   it('should execute an rpc call', async () => {
-    const info = await client.execute('getblockchaininfo', []);
+    const info = await nclient.execute('getblockchaininfo', []);
     assert.strictEqual(info.blocks, 0);
   });
 
   it('should execute an rpc call with bool parameter', async () => {
-    const info = await client.execute('getrawmempool', [true]);
+    const info = await nclient.execute('getrawmempool', [true]);
     assert.deepStrictEqual(info, {});
   });
 
@@ -195,7 +200,7 @@ describe('HTTP', function() {
   });
 
   it('should get a block template', async () => {
-    const json = await client.execute('getblocktemplate', []);
+    const json = await nclient.execute('getblocktemplate', []);
     assert.deepStrictEqual(json, {
       capabilities: ['proposal'],
       mutable: ['time', 'transactions', 'prevblock'],
@@ -230,7 +235,7 @@ describe('HTTP', function() {
     const attempt = await node.miner.createBlock();
     const block = attempt.toBlock();
     const hex = block.toRaw().toString('hex');
-    const json = await client.execute('getblocktemplate', [{
+    const json = await nclient.execute('getblocktemplate', [{
       mode: 'proposal',
       data: hex
     }]);
@@ -238,7 +243,7 @@ describe('HTTP', function() {
   });
 
   it('should validate an address', async () => {
-    const json = await client.execute('validateaddress', [
+    const json = await nclient.execute('validateaddress', [
       addr.toString(node.network)
     ]);
     assert.deepStrictEqual(json, {
@@ -253,7 +258,7 @@ describe('HTTP', function() {
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await wallet.close();
-    await client.close();
+    await nclient.close();
     await node.close();
   });
 });
