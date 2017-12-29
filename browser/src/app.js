@@ -64,13 +64,16 @@ const node = new FullNode({
   workers: true,
   workerFile: '/worker.js',
   createSocket: (port, host) => {
-    return ProxySocket.connect('ws://127.0.0.1:8080', port, host);
+    const proto = global.location.protocol === 'https:' ? 'wss' : 'ws';
+    const hostname = global.location.host;
+    return ProxySocket.connect(`${proto}://${hostname}`, port, host);
   },
   logger: logger,
   plugins: [plugin]
 });
 
 const {wdb} = node.require('walletdb');
+wdb.options.witness = true;
 
 window.onunhandledrejection = function onunhandledrejection(event) {
   throw event.reason;
@@ -86,6 +89,11 @@ floating.onmouseup = function onmouseup(ev) {
 };
 
 function show(obj) {
+  if (obj instanceof Error) {
+    floating.innerHTML = obj.stack;
+    floating.style.display = 'block';
+    return;
+  }
   const json = obj && obj.toJSON ? obj.toJSON() : null;
   floating.innerHTML = escape(JSON.stringify(json, null, 2));
   floating.style.display = 'block';

@@ -7,12 +7,5 @@
       "useBuiltins": "usage",
       "loose": true
     }]
-  ],
-  "plugins": [
-    ["transform-runtime", {
-      "helpers": true,
-      "polyfill": true,
-      "regenerator": true
-    }]
   ]
 }
