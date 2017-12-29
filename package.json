@@ -1,6 +1,6 @@
 {
   "name": "bcoin",
-  "version": "1.0.0-beta.15",
+  "version": "1.0.0-pre",
   "description": "Bitcoin bike-shed",
   "license": "MIT",
   "repository": "git://github.com/bcoin-org/bcoin.git",
@@ -82,7 +82,7 @@
     "webpack-app": "webpack --config webpack.app.js"
   },
   "browser": {
-    "./lib/hd/nfkd": "./lib/hd/nfkd-browser.js",
+    "./lib/hd/nfkd": "./lib/hd/nfkd-compat.js",
     "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/workers/child": "./lib/workers/child-browser.js",
     "./lib/workers/parent": "./lib/workers/parent-browser.js",

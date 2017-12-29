@@ -20,7 +20,7 @@ module.exports = {
   },
   resolve: {
     modules: ['node_modules'],
-    extensions: ['-browser.js', '.js', '.json']
+    extensions: ['-compat.js', '-browser.js', '.js', '.json']
   },
   module: {
     rules: [{
