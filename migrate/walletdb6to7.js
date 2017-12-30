@@ -492,7 +492,7 @@ async function updateAccount(wid, acct) {
   const type = br.readU8();
   const m = br.readU8();
   const n = br.readU8();
-  const accountIndex = br.readU32();
+  br.readU32(); // accountIndex
   const receiveDepth = br.readU32();
   const changeDepth = br.readU32();
   const nestedDepth = br.readU32();

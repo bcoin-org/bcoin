@@ -1499,7 +1499,7 @@ describe('Wallet', function() {
   });
 
   it('should remove a wallet', async () => {
-    const wallet = await wdb.create({
+    await wdb.create({
       id: 'alice100'
     });
     assert(await wdb.get('alice100'));
