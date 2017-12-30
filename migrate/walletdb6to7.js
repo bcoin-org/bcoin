@@ -459,8 +459,6 @@ async function updateWallet(wid) {
 
   // Concatenate wallet with key.
   const bw = bio.write();
-  bw.writeU32(wid);
-  bw.writeVarString(id, 'ascii');
   bw.writeU8(flags);
   bw.writeU32(accountDepth);
   bw.writeBytes(token);
@@ -468,6 +466,7 @@ async function updateWallet(wid) {
   bw.writeBytes(key);
 
   parent.put(layout.w.build(wid), bw.render());
+  parent.put(layout.W.build(wid), fromString(id));
 
   console.log('Updating accounts for %d...', wid);
 
@@ -534,8 +533,6 @@ async function updateAccount(wid, acct) {
   if (witness)
     flags |= 2;
 
-  bw.writeU32(accountIndex);
-  bw.writeVarString(name, 'ascii');
   bw.writeU8(flags);
   bw.writeU8(type);
   bw.writeU8(m);
@@ -562,6 +559,7 @@ async function updateAccount(wid, acct) {
   }
 
   parent.put(layout.a.build(wid, acct), bw.render());
+  parent.put(layout.n.build(wid, acct), fromString(name));
 
   console.log('Updated account: %d/%d.', wid, acct);
 }
@@ -894,6 +892,13 @@ function parsei(key) { // i[wid][name]
   assert(Buffer.isBuffer(key));
   assert(key.length >= 5);
   return [key.readUInt32BE(1, true), key.toString('ascii', 5)];
+}
+
+function fromString(str) {
+  const buf = Buffer.alloc(1 + str.length);
+  buf[0] = str.length;
+  buf.write(str, 1, str.length, 'ascii');
+  return buf;
 }
 
 /*
