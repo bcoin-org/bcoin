@@ -62,7 +62,6 @@
   "main": "./lib/bcoin.js",
   "bin": {
     "bcoin": "./bin/bcoin",
-    "bcoin-cli": "./bin/cli",
     "bcoin-node": "./bin/node",
     "bcoin-spvnode": "./bin/spvnode"
   },
