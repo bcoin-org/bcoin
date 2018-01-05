@@ -38,6 +38,10 @@ process.on('unhandledRejection', (err, promise) => {
   throw err;
 });
 
+process.on('SIGINT', async () => {
+  await node.close();
+});
+
 (async () => {
   await node.ensure();
   await node.open();
