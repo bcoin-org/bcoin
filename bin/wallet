@@ -19,7 +19,7 @@ if (process.argv.indexOf('--version') !== -1
   throw new Error('Could not exit.');
 }
 
-const Node = require('../lib/wallet/server');
+const Node = require('../lib/wallet/node');
 
 const node = new Node({
   config: true,
