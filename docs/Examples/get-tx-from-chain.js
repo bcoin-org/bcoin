@@ -1,7 +1,11 @@
 'use strict';
 
 const bcoin = require('../..');
+<<<<<<< HEAD
 const Logger = require('blgr');
+=======
+const Index = require('bindex').Index;
+>>>>>>> 1b1e90a6... docs: update get-tx example
 
 // Setup logger to see what's Bcoin doing.
 const logger = new Logger({
@@ -19,7 +23,6 @@ const mempool = new bcoin.Mempool({ chain: chain });
 
 // Create a network pool of peers with a limit of 8 peers.
 const pool = new bcoin.Pool({
-  logger: logger,
   chain: chain,
   mempool: mempool,
   maxPeers: 8

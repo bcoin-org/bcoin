@@ -216,6 +216,7 @@ of `*`, which notifies them of events on _all_ wallets).
   longer possible. Please take a look at `lib/bcoin.js` to get a better idea of
   what has changed.
 - __net__ - Support for BIP151 and BIP150 has been dropped.
+- __/bcoin/blockchain/chain - getSpentView accepts a TXMeta insted of TX
 
 ## v1.0.0-beta.15
 

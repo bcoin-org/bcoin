@@ -23,8 +23,9 @@ const node = new FullNode({
   workers: true,
   indexTX: true,
   indexAddress: true,
-  plugins: [require('../lib/wallet/plugin')]
+  plugins: [require('../lib/wallet/plugin'), require('../lib/index/plugin')]
 });
+node.index = node.require('bindex');
 
 const chain = node.chain;
 const miner = node.miner;
@@ -787,7 +788,7 @@ describe('Node', function() {
 
     await new Promise(r => setTimeout(r, 300));
 
-    const txs = await node.getTXByAddress(addr.hash);
+    const txs = await node.getTXByAddress(addr);
     const tx2 = txs[0];
     assert.strictEqual(tx.txid(), tx2.txid());
 

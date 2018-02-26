@@ -30,6 +30,7 @@ async function removeKey(name, key) {
 
   while (await iter.next()) {
     const {key} = iter;
+
     batch.del(key);
 
     if (++total % 10000 === 0) {
@@ -38,6 +39,7 @@ async function removeKey(name, key) {
       batch = db.batch();
     }
   }
+
   await batch.write();
 
   console.log('Cleaned up %d %s index records.', total, name);
