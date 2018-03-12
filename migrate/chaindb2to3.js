@@ -20,13 +20,13 @@ const bdb = require('bdb');
 const hash256 = require('bcrypto/lib/hash256');
 const BN = require('bn.js');
 const bio = require('bufio');
+const LRU = require('blru');
 const util = require('../lib/utils/util');
 const OldCoins = require('./coins/coins');
 const OldUndoCoins = require('./coins/undocoins');
 const CoinEntry = require('../lib/coins/coinentry');
 const UndoCoins = require('../lib/coins/undocoins');
 const Block = require('../lib/primitives/block');
-const LRU = require('../lib/utils/lru');
 const consensus = require('../lib/protocol/consensus');
 
 const shouldPrune = process.argv.indexOf('--prune') !== -1;
