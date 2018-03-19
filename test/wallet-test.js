@@ -804,6 +804,37 @@ describe('Wallet', function() {
     await testP2SH(true, true);
   });
 
+  it('should create account', async () => {
+    const wallet = await wdb.create();
+    const account = await wallet.createAccount({
+      name: 'foo'
+    });
+
+    assert(account);
+    assert(account.initialized);
+    assert.strictEqual(account.name, 'foo');
+    assert.strictEqual(account.accountIndex, 1);
+    assert.strictEqual(account.m, 1);
+    assert.strictEqual(account.n, 1);
+  });
+
+  it('should fail to create duplicate account', async () => {
+    const wallet = await wdb.create();
+    const name = 'foo';
+
+    await wallet.createAccount({ name });
+
+    let err;
+    try {
+      await wallet.createAccount({ name });
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert.strictEqual(err.message, 'Account already exists.');
+  });
+
   it('should fill tx with account 1', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
