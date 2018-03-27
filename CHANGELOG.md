@@ -62,6 +62,23 @@ prefix directory. For example `--prefix ~/.bcoin_whatever --network testnet`
 will create a directory structure of `~/.bcoin_whatever/testnet/` instead of
 `~/.bcoin_whatever`. Please update your directory structure accordingly.
 
+### Configuration Changes
+
+Wallet and Node are now separated and use different persistent configuration files.
+Some configuration options will need to be moved to `wallet.conf`, which
+is stored in the prefix directory next to the existing `bcoin.conf`.
+
+Wallet-specific settings such as:
+`api-key` and `wallet-auth` should be moved to `wallet.conf`.
+
+Example wallet.conf:
+```
+network: main
+wallet-auth: true
+api-key: bcoin
+http-host: 0.0.0.0
+```
+
 ### Bcoin Client Changes
 
 The `bcoin cli` interface has been deprecated and is now replaced with a
