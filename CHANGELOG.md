@@ -65,19 +65,34 @@ will create a directory structure of `~/.bcoin_whatever/testnet/` instead of
 ### Configuration Changes
 
 Wallet and Node are now separated and use different persistent configuration files.
-Some configuration options will need to be moved to `wallet.conf`, which
-is stored in the prefix directory next to the existing `bcoin.conf`.
+Some configuration options have moved to `wallet.conf`, which is stored in the prefix
+directory next to the existing `bcoin.conf`.
 
-Wallet-specific settings such as:
-`api-key` and `wallet-auth` should be moved to `wallet.conf`.
+All configuration options in `wallet.conf` will have the `wallet-`
+prefix added implicitly. The prefix is still needed when using CLI/ENV configuration
+methods. The wallet now has it's own HTTP server, so options such as
+`wallet-http-host` must also be specified along with `http-host`
+if you require this setting (required for Docker networking).
 
-Example wallet.conf:
+Wallet-specific settings such as `api-key` and `wallet-auth`
+have moved to `wallet.conf`. If using CLI/ENV options, these are prefixed with `wallet-`.
+Various configuration method examples are shown below.
+Note some config options (eg. `network`) are automatically passed to wallet plugin
+if specified through CLI/ENV, but should be specified in `wallet.conf` for `bwallet-cli`.
+
+Example using wallet.conf:
 ```
-network: main
+network: testnet
 wallet-auth: true
-api-key: bcoin
+api-key: hunter2
 http-host: 0.0.0.0
 ```
+
+Example using CLI options:
+`./bin/node --network=testnet --http-host=0.0.0.0 --wallet-http-host=0.0.0.0 --wallet-api-key=hunter2 --wallet-wallet-auth=true`
+
+Example using ENV:
+`BCOIN_NETWORK=simnet BCOIN_HTTP_HOST=0.0.0.0 BCOIN_WALLET_HTTP_HOST=0.0.0.0 BCOIN_WALLET_API_KEY=hunter2 BCOIN_WALLET_WALLET_AUTH=true ./bin/node`
 
 ### Bcoin Client Changes
 
