@@ -92,7 +92,12 @@ Note that certain chain options affect the format and indexing of the chain data
 - `api-key`: API key (used for accessing all node APIs).
 - `wallet-auth`: Enable token auth for wallets (default: false).
 - `no-auth`: Disable auth for API server and wallets (default: false).
+- `cors`: Enable "Cross-Origin Resource Sharing" HTTP headers (default: false).
+
+Note: For security `cors` should not be used with `no-auth`.\
+If enabled you should also enable `wallet-auth` and set `api-key`.
 
 ## Sample Config File
 
-See https://github.com/bcoin-org/bcoin/blob/master/etc/sample.conf.
+See https://github.com/bcoin-org/bcoin/blob/master/etc/sample.conf
+and https://github.com/bcoin-org/bcoin/blob/master/etc/sample.wallet.conf
