@@ -69,7 +69,7 @@
     "bcoin": "./bin/bcoin",
     "bcoin-node": "./bin/node",
     "bcoin-spvnode": "./bin/spvnode",
-    "bcoin-wallet": "./bin/bwallet"
+    "bwallet": "./bin/bwallet"
   },
   "scripts": {
     "browserify": "browserify -s bcoin lib/bcoin-browser.js | uglifyjs -c > bcoin.js",
