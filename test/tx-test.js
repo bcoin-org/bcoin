@@ -18,6 +18,8 @@ const Opcode = require('../lib/script/opcode');
 const Input = require('../lib/primitives/input');
 const CoinView = require('../lib/coins/coinview');
 const KeyRing = require('../lib/primitives/keyring');
+const Address = require('../lib/primitives/address');
+const BufferWriter = require('../lib/utils/writer');
 const common = require('./util/common');
 
 const validTests = require('./data/tx-valid.json');
@@ -767,5 +769,337 @@ describe('TX', function() {
     const ctx = sigopContext(input, witness, output);
 
     assert.strictEqual(ctx.spend.getSigopsCost(ctx.view, flags), 2);
+  });
+
+  it('should return addresses for standard inputs', () => {
+    // txid: 7ef7cde4e4a7829ea6feaf377c924b36d0958e2231a31ff268bd33a59ac9e178
+    const [tx, view] = tx2.getTX();
+
+    const inputAddresses = [
+      Address.fromBase58('1Wjrrc2DrtB2CXRiPa3c8528fDdNHnQ2K')
+    ];
+
+    const inputAddressesView = tx.getInputAddresses(view);
+    const inputAddressesNoView = tx.getInputAddresses();
+
+    assert.strictEqual(inputAddresses.length, inputAddressesView.length);
+    assert.strictEqual(inputAddresses.length, inputAddressesNoView.length);
+
+    inputAddresses.forEach((inputAddr, i) => {
+      assert(inputAddr.equals(inputAddressesView[i]));
+      assert(inputAddr.equals(inputAddressesNoView[i]));
+    });
+  });
+
+  it('should return addresses for standard outputs', () => {
+    // txid: 7f2dc9bcc0b1b0d19a4cb62d0f6474990c12a5b996d2fa2c4be54ca1beb5d339
+    const [tx] = tx7.getTX();
+
+    // If you fetch only outputs they should be sorted
+    // by vouts, not merged.
+    const outputAddresses = [
+      Address.fromBase58('1fLeMazoEy8FfgeFcppRxNYZs54jyLccw'),
+      Address.fromBase58('1EeREnzQujX7CLgmzDSaebS48jxjeyBHQM')
+    ];
+
+    const getOutputAddresses = tx.getOutputAddresses();
+
+    assert.strictEqual(outputAddresses.length, getOutputAddresses.length);
+
+    outputAddresses.forEach((outputAddr, i) => {
+      assert(outputAddr.equals(getOutputAddresses[i]));
+    });
+  });
+
+  it('should return addresses for standard inputs and outputs', () => {
+    // txid: 7ef7cde4e4a7829ea6feaf377c924b36d0958e2231a31ff268bd33a59ac9e178
+    const [tx, view] = tx2.getTX();
+
+    const addresses = [
+      // inputs
+      Address.fromBase58('1Wjrrc2DrtB2CXRiPa3c8528fDdNHnQ2K'),
+      // outputs
+      Address.fromBase58('1GcKLBv6iFSCkbhht2m44qnZTYK8xV8nNA'),
+      Address.fromBase58('1EpKnnMo1rSkktYw8vPLtXGBRNLraXWd73')
+    ];
+
+    const addressesView = tx.getAddresses(view);
+    const addressesNoView = tx.getAddresses();
+
+    assert.strictEqual(addresses.length, addressesView.length);
+    assert.strictEqual(addresses.length, addressesNoView.length);
+
+    addresses.forEach((addr, i) => {
+      assert(addr.equals(addressesView[i]));
+      assert(addr.equals(addressesNoView[i]));
+    });
+  });
+
+  it('should return merged addresses for same input/output address', () => {
+    // txid: 7f2dc9bcc0b1b0d19a4cb62d0f6474990c12a5b996d2fa2c4be54ca1beb5d339
+    const [tx, view] = tx7.getTX();
+
+    const addresses = [
+      // this is input and output
+      Address.fromBase58('1EeREnzQujX7CLgmzDSaebS48jxjeyBHQM'),
+      Address.fromBase58('1fLeMazoEy8FfgeFcppRxNYZs54jyLccw')
+    ];
+
+    const addressesView = tx.getAddresses(view);
+    const addressesNoView = tx.getAddresses();
+
+    assert.strictEqual(addresses.length, addressesView.length);
+    assert.strictEqual(addresses.length, addressesNoView.length);
+
+    addresses.forEach((addr, i) => {
+      assert(addr.equals(addressesView[i]));
+      assert(addr.equals(addressesNoView[i]));
+    });
+  });
+
+  it('should return addresses with witness data', () => {
+    const [tx, view] = tx5.getTX();
+
+    const addresses = [
+      // inputs
+      Address.fromBech32('bc1qnjhhj5g8u46fvhnm34me52ahnx5vhhhuk6m7ng'),
+      Address.fromBech32('bc1q3ehzk5qa02sf05zyll0thth5t92kg6twah8hj3'),
+      Address.fromBase58('1C4irrkJiHhjKq62uPBw9huZnQsFSRHtjn'),
+      Address.fromBech32('bc1q4gzv2jkfnym3s8f69kj55l4yfh7aallphtzutp'),
+      Address.fromBech32('bc1q8838eem5cqqlxn34neay8sd7ru4nnm7yfv66xv'),
+
+      // outputs
+      Address.fromBech32('bc1q4uxyx3qaanm5elq4w2kxytvkpufa33s08vldx7'),
+      Address.fromBech32('bc1q8m66kw3789mvpfpcxxh880zg6jjwpyntspcnmy')
+    ];
+
+    const addressesView = tx.getAddresses(view);
+    const addressesNoView = tx.getAddresses();
+
+    assert.strictEqual(addresses.length, addressesView.length);
+    assert.strictEqual(addresses.length, addressesNoView.length);
+
+    addresses.forEach((addr, i) => {
+      assert(addr.equals(addressesView[i]));
+      assert(addr.equals(addressesNoView[i]));
+    });
+  });
+
+  it('should return address hashes for standard inputs and outputs', () => {
+    // txid: 7ef7cde4e4a7829ea6feaf377c924b36d0958e2231a31ff268bd33a59ac9e178
+    const [tx, view] = tx2.getTX();
+
+    const hashes = [
+      // inputs
+      Address.fromBase58('1Wjrrc2DrtB2CXRiPa3c8528fDdNHnQ2K').getHash(),
+      // outputs
+      Address.fromBase58('1GcKLBv6iFSCkbhht2m44qnZTYK8xV8nNA').getHash(),
+      Address.fromBase58('1EpKnnMo1rSkktYw8vPLtXGBRNLraXWd73').getHash()
+    ];
+
+    const hashesBuf = tx.getHashes(view);
+    const hashesHex = tx.getHashes(view, 'hex');
+
+    assert.strictEqual(hashes.length, hashesBuf.length);
+    assert.strictEqual(hashes.length, hashesHex.length);
+
+    hashes.forEach((hash, i) => {
+      assert.bufferEqual(hash, hashesBuf[i]);
+      assert.strictEqual(hash.toString('hex'), hashesHex[i]);
+    });
+  });
+
+  it('should return address hashes for standard inputs', () => {
+    // txid: 7ef7cde4e4a7829ea6feaf377c924b36d0958e2231a31ff268bd33a59ac9e178
+    const [tx, view] = tx2.getTX();
+
+    const inputHashes = [
+      Address.fromBase58('1Wjrrc2DrtB2CXRiPa3c8528fDdNHnQ2K').getHash()
+    ];
+
+    const hashesBuf = tx.getInputHashes(view);
+    const hashesHex = tx.getInputHashes(view, 'hex');
+
+    assert.strictEqual(inputHashes.length, hashesBuf.length);
+    assert.strictEqual(inputHashes.length, hashesHex.length);
+
+    inputHashes.forEach((hash, i) => {
+      assert.bufferEqual(hash, hashesBuf[i]);
+      assert.strictEqual(hash.toString('hex'), hashesHex[i]);
+    });
+  });
+
+  it('should return address hashes for standard outputs', () => {
+    // txid: 7ef7cde4e4a7829ea6feaf377c924b36d0958e2231a31ff268bd33a59ac9e178
+    const [tx] = tx2.getTX();
+
+    const outputHashes = [
+      Address.fromBase58('1GcKLBv6iFSCkbhht2m44qnZTYK8xV8nNA').getHash(),
+      Address.fromBase58('1EpKnnMo1rSkktYw8vPLtXGBRNLraXWd73').getHash()
+    ];
+
+    const hashesBuf = tx.getOutputHashes();
+    const hashesHex = tx.getOutputHashes('hex');
+
+    assert.strictEqual(outputHashes.length, hashesBuf.length);
+    assert.strictEqual(outputHashes.length, hashesHex.length);
+
+    outputHashes.forEach((hash, i) => {
+      assert.bufferEqual(hash, hashesBuf[i]);
+      assert.strictEqual(hash.toString('hex'), hashesHex[i]);
+    });
+  });
+
+  it('should return all prevouts', () => {
+    const [tx] = tx3.getTX();
+
+    const expectedPrevouts = [
+      '2f196cf1e5bd426a04f07b882c893b5b5edebad67da6eb50f066c372ed736d5f',
+      'ff8755f073f1170c0d519457ffc4acaa7cb2988148163b5dc457fae0fe42aa19'
+    ];
+
+    const prevouts = tx.getPrevout();
+
+    assert(expectedPrevouts.length, prevouts.length);
+    expectedPrevouts.forEach((prevout, i) => {
+      assert.strictEqual(prevout, prevouts[i]);
+    });
+  });
+
+  it('should serialize without witness data', () => {
+    const [tx] = tx2.getTX();
+    const [txWit] = tx5.getTX();
+
+    const bw1 = new BufferWriter();
+    const bw2 = new BufferWriter();
+
+    tx.toNormalWriter(bw1);
+    txWit.toNormalWriter(bw2);
+
+    const tx1normal = TX.fromRaw(bw1.render());
+    const tx2normal = TX.fromRaw(bw2.render());
+
+    assert.strictEqual(tx1normal.hasWitness(), false);
+    assert.strictEqual(tx2normal.hasWitness(), false);
+  });
+
+  it('should check if tx is free', () => {
+    const value = 100000000; // 1 btc
+    const height = 100;
+    const [input, view] = createInput(value);
+
+    // hack height into coinEntry
+    const entry = view.getEntry(input.prevout);
+    entry.height = height;
+
+    const tx = new TX({
+      version: 1,
+      inputs: [input],
+      outputs: [{
+        script: [],
+        value: value
+      }],
+      locktime: 0
+    });
+
+    // Priority should be more than FREE_THRESHOLD
+    // txsize: 60, value: 1 btc
+    // freeAfter: 144/250*txsize = 34.56
+    const size = tx.getSize();
+    const freeHeight = height + 35;
+    const freeAt34 = tx.isFree(view, freeHeight - 1);
+    const freeAt34size = tx.isFree(view, freeHeight - 1, tx, size);
+    const freeAt35 = tx.isFree(view, freeHeight);
+    const freeAt35size = tx.isFree(view, freeHeight, size);
+
+    assert.strictEqual(freeAt34, false);
+    assert.strictEqual(freeAt34size, false);
+    assert.strictEqual(freeAt35, true);
+    assert.strictEqual(freeAt35size, true);
+  });
+
+  it('should return correct minFee and roundedFee', () => {
+    const value = 100000000; // 1 btc
+
+    const [input] = createInput(value);
+    const tx = new TX({
+      version: 1,
+      inputs: [input],
+      outputs: [{
+        script: [],
+        value: value
+      }],
+      locktime: 0
+    });
+
+    // 1000 satoshis per kb
+    const rate = 1000;
+    const size = tx.getSize(); // 60 bytes
+
+    // doesn't round to KB
+    assert.strictEqual(tx.getMinFee(size, rate), 60);
+    assert.strictEqual(tx.getMinFee(size, rate * 10), 600);
+    assert.strictEqual(tx.getMinFee(size * 10, rate), 600);
+
+    // rounds to KB
+    assert.strictEqual(tx.getRoundFee(size, rate), 1000);
+    // still under kb
+    assert.strictEqual(tx.getRoundFee(size * 10, rate), 1000);
+    assert.strictEqual(tx.getRoundFee(size, rate * 10), 10000);
+
+    assert.strictEqual(tx.getRoundFee(1000, rate), 1000);
+    assert.strictEqual(tx.getRoundFee(1001, rate), 2000);
+  });
+
+  it('should return JSON for tx', () => {
+    const [tx, view] = tx2.getTX();
+    const hash = '7ef7cde4e4a7829ea6feaf377c924b36d0958e22'
+      + '31a31ff268bd33a59ac9e178';
+    const version = 0;
+    const locktime = 0;
+    const hex = tx2.getRaw().toString('hex');
+
+    // hack for ChainEntry
+    const entry = {
+      height: 1000,
+      hash: 'c82d447db6150d2308d9571c19bc3dc6efde97a8227d9e57bc77ec0900000000',
+      time: 1365870306
+    };
+    const network = 'testnet';
+    const index = 0;
+
+    const jsonDefault = tx.getJSON(network);
+    const jsonView = tx.getJSON(network, view);
+    const jsonEntry = tx.getJSON(network, null, entry);
+    const jsonIndex = tx.getJSON(network, null, null, index);
+    const jsonAll = tx.getJSON(network, view, entry, index);
+
+    for (const json of [jsonDefault, jsonView, jsonEntry, jsonIndex, jsonAll]) {
+      assert.strictEqual(json.hash, hash);
+      assert.strictEqual(json.witnessHash, hash);
+      assert.strictEqual(json.version, version);
+      assert.strictEqual(json.locktime, locktime);
+      assert.strictEqual(json.hex, hex);
+    }
+
+    const fee = 10000;
+    const rate = 44247;
+
+    for (const json of [jsonView, jsonAll]) {
+      assert.strictEqual(json.fee, fee);
+      assert.strictEqual(json.rate, rate);
+    }
+
+    const date = '2013-04-13T16:25:06Z';
+    for (const json of [jsonEntry, jsonAll]) {
+      assert.strictEqual(json.height, entry.height);
+      assert.strictEqual(json.block, util.revHex(entry.hash));
+      assert.strictEqual(json.time, entry.time);
+      assert.strictEqual(json.date, date);
+    }
+
+    for (const json of [jsonIndex, jsonAll]) {
+      assert.strictEqual(json.index, index);
+    }
   });
 });
