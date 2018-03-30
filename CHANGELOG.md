@@ -104,8 +104,8 @@ installed with the `bclient` package in npm.
 ### Wallet API Changes
 
 The main wallet API changes have to do with changes in the structure of the
-HTTP server itself. The bcoin wallet HTTP server will now always listen on it's
-own port. Standard ports are:
+HTTP server itself. The bcoin wallet HTTP server will now listen on it's own
+port. Standard ports are:
 
 ```
 main: 8334
@@ -113,6 +113,8 @@ testnet: 18334
 regtest: 48334
 simnet: 18558
 ```
+
+`wallet-port` option can be used to configure listening on a different port.
 
 The default account object is no longer present on the wallet. To retrieve it,
 request `/wallet/:id/account/default` instead. More minor changes to the JSON
