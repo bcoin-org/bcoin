@@ -19,7 +19,7 @@ const Input = require('../lib/primitives/input');
 const CoinView = require('../lib/coins/coinview');
 const KeyRing = require('../lib/primitives/keyring');
 const Address = require('../lib/primitives/address');
-const BufferWriter = require('../lib/utils/writer');
+const BufferWriter = require('bufio').BufferWriter;
 const common = require('./util/common');
 
 const validTests = require('./data/tx-valid.json');
