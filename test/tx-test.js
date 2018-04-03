@@ -10,6 +10,7 @@ const random = require('bcrypto/lib/random');
 const util = require('../lib/utils/util');
 const consensus = require('../lib/protocol/consensus');
 const TX = require('../lib/primitives/tx');
+const MTX = require('../lib/primitives/mtx');
 const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
@@ -1101,5 +1102,20 @@ describe('TX', function() {
     for (const json of [jsonIndex, jsonAll]) {
       assert.strictEqual(json.index, index);
     }
+  });
+
+  it('should recover coins from JSON', () => {
+    const [tx, view] = tx2.getTX();
+
+    const mtx = MTX.fromTX(tx);
+    mtx.view = view;
+
+    // get input value as example
+    const value1 = mtx.getInputValue();
+
+    const mtx2 = MTX.fromJSON(mtx.toJSON());
+    const value2 = mtx2.getInputValue();
+
+    assert.strictEqual(value1, value2);
   });
 });
