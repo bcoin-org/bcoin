@@ -78,6 +78,17 @@ describe('Address', function() {
     assert.strictEqual(addr.toString('main'), expectedAddr);
   });
 
+  it('should not find address in testnet OP_1 script', () => {
+    const raw = Buffer.from(''
+      + '51280fcf24999d398c39224d239c89098a841a58'
+      + 'd5f4443b0c0faf7a8ccf676d73986c2435abb52e'
+      + '5b98', 'hex'
+    );
+    const script = Script.fromRaw(raw);
+    const addr = Address.fromScript(script);
+    assert.strictEqual(addr, null);
+  });
+
   it('should match testnet p2sh address', () => {
     const raw = 'c579342c2c4c9220205e2cdc285617040c924a0a';
     const p2sh = Buffer.from(raw, 'hex');
