@@ -1,15 +1,11 @@
 'use strict';
 
 const bcoin = require('../..');
-const encoding = bcoin.encoding;
-const co = bcoin.co;
-const Outpoint = bcoin.outpoint;
-const MTX = bcoin.mtx;
-const HTTP = bcoin.http;
-const FullNode = bcoin.fullnode;
+const client = require('bclient');
 const plugin = bcoin.wallet.plugin;
+const network = bcoin.Network.get('regtest');
 
-const node = new FullNode({
+const node = new bcoin.FullNode({
   network: 'regtest',
   apiKey: 'foo',
   walletAuth: true,
@@ -18,15 +14,15 @@ const node = new FullNode({
 
 node.use(plugin);
 
-const wallet = new HTTP.Wallet({
-  network: 'regtest',
+const wallet = new client.WalletClient({
+  port: network.walletPort,
   apiKey: 'foo'
 });
 
 async function fundWallet(wdb, addr) {
   // Coinbase
-  const mtx = new MTX();
-  mtx.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
+  const mtx = new bcoin.MTX();
+  mtx.addOutpoint(new bcoin.Outpoint());
   mtx.addOutput(addr, 50460);
   mtx.addOutput(addr, 50460);
   mtx.addOutput(addr, 50460);
@@ -50,7 +46,7 @@ async function fundWallet(wdb, addr) {
   });
 
   await wdb.addTX(tx);
-  await co.timeout(300);
+  await new Promise(r => setTimeout(r, 300));
 }
 
 async function sendTX(addr, value) {
@@ -62,7 +58,7 @@ async function sendTX(addr, value) {
     }]
   };
 
-  const tx = await wallet.send(options);
+  const tx = await wallet.send('test', options);
 
   return tx.hash;
 }
@@ -80,24 +76,25 @@ async function callNodeApi() {
 }
 
 (async () => {
-  const wdb = node.require('walletdb');
+  const wdb = node.require('walletdb').wdb;
 
   await node.open();
 
-  const w = await wallet.create({ id: 'test' });
+  const w = await wallet.createWallet('test');
 
   console.log('Wallet:');
   console.log(w);
 
   // Fund default account.
-  await fundWallet(wdb, w.account.receiveAddress);
+  const receive = await wallet.createAddress('test', 'default');
+  await fundWallet(wdb, receive.address);
 
-  const balance = await wallet.getBalance();
+  const balance = await wallet.getBalance('test', 'default');
 
   console.log('Balance:');
   console.log(balance);
 
-  const acct = await wallet.createAccount('foo');
+  const acct = await wallet.createAccount('test', 'foo');
 
   console.log('Account:');
   console.log(acct);

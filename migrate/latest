@@ -1,0 +1,49 @@
+#!/usr/bin/env node
+
+const assert = require('assert');
+const fs = require('fs');
+const cp = require('child_process');
+const res = require('path').resolve;
+const {argv} = process;
+
+if (argv.length < 3) {
+  console.error('Usage: $ ./migrate/latest [bcoin-prefix]');
+  console.error('Example: $ ./migrate/latest ~/.bcoin');
+  process.exit(1);
+  return;
+}
+
+function mv(from, to) {
+  try {
+    fs.renameSync(from, to);
+  } catch (e) {
+    console.error(e.message);
+  }
+}
+
+function exec(file, ...args) {
+  try {
+    const result = cp.spawnSync(file, args, {
+      stdio: 'inherit',
+      env: process.env,
+      maxBuffer: -1 >>> 0,
+      windowsHide: true
+    });
+    if (result.error)
+      console.error(result.error.message);
+  } catch (e) {
+    console.error(e.message);
+  }
+}
+
+const node = argv[0];
+const prefix = argv[2];
+
+mv(res(prefix, 'chain.ldb'), res(prefix, 'chain'));
+mv(res(prefix, 'spvchain.ldb'), res(prefix, 'spvchain'));
+mv(res(prefix, 'mempool.ldb'), res(prefix, 'mempool'));
+mv(res(prefix, 'walletdb.ldb'), res(prefix, 'wallet'));
+
+exec(node, res(__dirname, 'chaindb3to4.js'), res(prefix, 'chain'));
+exec(node, res(__dirname, 'chaindb3to4.js'), res(prefix, 'spvchain'));
+exec(node, res(__dirname, 'walletdb6to7.js'), res(prefix, 'wallet'));

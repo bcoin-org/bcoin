@@ -9,9 +9,9 @@ details.
 **Bcoin** is an alternative implementation of the bitcoin protocol, written in
 node.js.
 
-Although still in a beta state, bcoin is well tested and aware of all known
-consensus rules. It is currently used in production as the consensus backend
-and wallet system for [purse.io][purse].
+Bcoin is well tested and aware of all known consensus rules. It is currently
+used in production as the consensus backend and wallet system for
+[purse.io][purse].
 
 ## Uses
 

@@ -1,17 +1,14 @@
 'use strict';
 
 const bcoin = require('../..');
-const random = bcoin.crypto.random;
-const WalletDB = bcoin.walletdb;
-const MTX = bcoin.mtx;
-const Outpoint = bcoin.outpoint;
+const random = require('bcrypto/lib/random');
 
 function dummy() {
   const hash = random.randomBytes(32).toString('hex');
-  return new Outpoint(hash, 0);
+  return new bcoin.Outpoint(hash, 0);
 }
 
-const walletdb = new WalletDB({
+const walletdb = new bcoin.wallet.WalletDB({
   network: 'testnet',
   db: 'memory'
 });
@@ -31,9 +28,9 @@ const walletdb = new WalletDB({
   console.log('Created account');
   console.log(acct);
 
-  const mtx = new MTX();
+  const mtx = new bcoin.MTX();
   mtx.addOutpoint(dummy());
-  mtx.addOutput(acct.getReceive(), 50460);
+  mtx.addOutput(acct.receiveAddress(), 50460);
 
   const tx = mtx.toTX();
 

@@ -2,24 +2,46 @@
 
 'use strict';
 
-process.title = 'bcoin-wallet';
+process.title = 'bwallet';
 
-const server = require('../lib/wallet/server');
+if (process.argv.indexOf('--help') !== -1
+    || process.argv.indexOf('-h') !== -1) {
+  console.error('See the bcoin wiki at: https://github.com/bcoin-org/bcoin/wiki.');
+  process.exit(1);
+  throw new Error('Could not exit.');
+}
 
-const wdb = server.create({
+if (process.argv.indexOf('--version') !== -1
+    || process.argv.indexOf('-v') !== -1) {
+  const pkg = require('../package.json');
+  console.log(pkg.version);
+  process.exit(0);
+  throw new Error('Could not exit.');
+}
+
+const Node = require('../lib/wallet/node');
+
+const node = new Node({
   config: true,
   argv: true,
   env: true,
   logFile: true,
   logConsole: true,
   logLevel: 'debug',
-  db: 'leveldb'
+  memory: false,
+  workers: true,
+  listen: true,
+  loader: require
 });
 
 process.on('unhandledRejection', (err, promise) => {
   throw err;
 });
 
-wdb.open().catch((err) => {
-  throw err;
+(async () => {
+  await node.ensure();
+  await node.open();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
 });

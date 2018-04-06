@@ -7,7 +7,7 @@
 const assert = require('./util/assert');
 const Network = require('../lib/protocol/network');
 const util = require('../lib/utils/util');
-const NetAddress = require('../lib/primitives/netaddress');
+const NetAddress = require('../lib/net/netaddress');
 const TX = require('../lib/primitives/tx');
 const Framer = require('../lib/net/framer');
 const Parser = require('../lib/net/parser');
@@ -51,7 +51,7 @@ describe('Protocol', function() {
     time: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
-    nonce: util.nonce(),
+    nonce: Buffer.allocUnsafe(8),
     agent: agent,
     height: 0,
     noRelay: false
@@ -70,7 +70,7 @@ describe('Protocol', function() {
     time: network.now(),
     remote: new NetAddress(),
     local: new NetAddress(),
-    nonce: util.nonce(),
+    nonce: Buffer.allocUnsafe(8),
     agent: agent,
     height: 10,
     noRelay: true

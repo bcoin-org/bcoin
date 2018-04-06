@@ -1,8 +1,8 @@
 'use strict';
 
 const assert = require('assert');
-const merkle = require('../lib/crypto/merkle');
-const random = require('../lib/crypto/random');
+const merkle = require('bcrypto/lib/merkle');
+const random = require('bcrypto/lib/random');
 const bench = require('./bench');
 
 const leaves = [];

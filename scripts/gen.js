@@ -1,8 +1,6 @@
 'use strict';
 
-const util = require('../lib/utils/util');
 const consensus = require('../lib/protocol/consensus');
-const encoding = require('../lib/utils/encoding');
 const TX = require('../lib/primitives/tx');
 const Block = require('../lib/primitives/block');
 const Script = require('../lib/script/script');
@@ -32,7 +30,7 @@ function createGenesisBlock(options) {
     version: 1,
     inputs: [{
       prevout: {
-        hash: encoding.NULL_HASH,
+        hash: consensus.NULL_HASH,
         index: 0xffffffff
       },
       script: Script()
@@ -51,7 +49,7 @@ function createGenesisBlock(options) {
 
   const block = new Block({
     version: options.version,
-    prevBlock: encoding.NULL_HASH,
+    prevBlock: consensus.NULL_HASH,
     merkleRoot: tx.hash('hex'),
     time: options.time,
     bits: options.bits,
@@ -106,31 +104,31 @@ const btcd = createGenesisBlock({
   nonce: 2
 });
 
-util.log(main);
-util.log('');
-util.log(testnet);
-util.log('');
-util.log(regtest);
-util.log('');
-util.log(segnet3);
-util.log('');
-util.log(segnet4);
-util.log('');
-util.log('');
-util.log('main hash: %s', main.rhash());
-util.log('main raw: %s', main.toRaw().toString('hex'));
-util.log('');
-util.log('testnet hash: %s', testnet.rhash());
-util.log('testnet raw: %s', testnet.toRaw().toString('hex'));
-util.log('');
-util.log('regtest hash: %s', regtest.rhash());
-util.log('regtest raw: %s', regtest.toRaw().toString('hex'));
-util.log('');
-util.log('segnet3 hash: %s', segnet3.rhash());
-util.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
-util.log('');
-util.log('segnet4 hash: %s', segnet4.rhash());
-util.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
-util.log('');
-util.log('btcd simnet hash: %s', btcd.rhash());
-util.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));
+console.log(main);
+console.log('');
+console.log(testnet);
+console.log('');
+console.log(regtest);
+console.log('');
+console.log(segnet3);
+console.log('');
+console.log(segnet4);
+console.log('');
+console.log('');
+console.log('main hash: %s', main.rhash());
+console.log('main raw: %s', main.toRaw().toString('hex'));
+console.log('');
+console.log('testnet hash: %s', testnet.rhash());
+console.log('testnet raw: %s', testnet.toRaw().toString('hex'));
+console.log('');
+console.log('regtest hash: %s', regtest.rhash());
+console.log('regtest raw: %s', regtest.toRaw().toString('hex'));
+console.log('');
+console.log('segnet3 hash: %s', segnet3.rhash());
+console.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
+console.log('');
+console.log('segnet4 hash: %s', segnet4.rhash());
+console.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
+console.log('');
+console.log('btcd simnet hash: %s', btcd.rhash());
+console.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));

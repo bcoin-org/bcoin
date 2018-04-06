@@ -3,12 +3,9 @@
 // Usage: $ node ./docs/Examples/connect-to-peer.js [ip]:[port]
 
 const bcoin = require('../..');
-const Peer = bcoin.peer;
-const NetAddress = bcoin.netaddress;
-const Network = bcoin.network;
-const network = Network.get('testnet');
+const network = bcoin.Network.get('testnet');
 
-const peer = Peer.fromOptions({
+const peer = bcoin.Peer.fromOptions({
   network: 'testnet',
   agent: 'my-subversion',
   hasWitness: () => {
@@ -16,7 +13,7 @@ const peer = Peer.fromOptions({
   }
 });
 
-const addr = NetAddress.fromHostname(process.argv[2], 'testnet');
+const addr = bcoin.net.NetAddress.fromHostname(process.argv[2], 'testnet');
 
 console.log(`Connecting to ${addr.hostname}`);
 
