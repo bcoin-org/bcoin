@@ -1,11 +1,11 @@
 'use strict';
 
+const random = require('bcrypto/lib/random');
 const Address = require('../lib/primitives/address');
 const TX = require('../lib/primitives/tx');
 const Script = require('../lib/script/script');
 const MTX = require('../lib/primitives/mtx');
-const encoding = require('../lib/utils/encoding');
-const random = require('../lib/crypto/random');
+const consensus = require('../lib/protocol/consensus');
 const common = require('../test/util/common');
 const bench = require('./bench');
 
@@ -156,7 +156,7 @@ const mtx = new MTX();
 for (let i = 0; i < 100; i++) {
   mtx.addInput({
     prevout: {
-      hash: encoding.NULL_HASH,
+      hash: consensus.NULL_HASH,
       index: 0
     },
     script: new Script()

@@ -1,26 +1,23 @@
 'use strict';
 
 const bcoin = require('../..');
-const Chain = bcoin.chain;
-const Pool = bcoin.pool;
-const WalletDB = bcoin.walletdb;
 
 bcoin.set('testnet');
 
 // SPV chains only store the chain headers.
-const chain = Chain({
-  db: 'leveldb',
-  location: process.env.HOME + '/spvchain',
+const chain = new bcoin.Chain({
+  memory: false,
+  location: '/tmp/bcoin/spvchain',
   spv: true
 });
 
-const pool = new Pool({
+const pool = new bcoin.Pool({
   chain: chain,
   spv: true,
   maxPeers: 8
 });
 
-const walletdb = new WalletDB({ db: 'memory' });
+const walletdb = new bcoin.wallet.WalletDB({ memory: true });
 
 (async () => {
   await pool.open();
@@ -28,10 +25,10 @@ const walletdb = new WalletDB({ db: 'memory' });
 
   const wallet = await walletdb.create();
 
-  console.log('Created wallet with address %s', wallet.getAddress('base58'));
+  console.log('Created wallet with address %s', await wallet.receiveAddress());
 
   // Add our address to the spv filter.
-  pool.watchAddress(wallet.getAddress());
+  pool.watchAddress(await wallet.receiveAddress());
 
   // Connect, start retrieving and relaying txs
   await pool.connect();

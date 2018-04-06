@@ -5,7 +5,6 @@
 
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
-const encoding = require('../lib/utils/encoding');
 const Coin = require('../lib/primitives/coin');
 const Script = require('../lib/script/script');
 const Chain = require('../lib/blockchain/chain');
@@ -19,6 +18,11 @@ const common = require('../lib/blockchain/common');
 const Opcode = require('../lib/script/opcode');
 const opcodes = Script.opcodes;
 
+const ZERO_KEY = Buffer.alloc(33, 0x00);
+
+const ONE_HASH = Buffer.alloc(32, 0x00);
+ONE_HASH[0] = 0x01;
+
 const network = Network.get('regtest');
 
 const workers = new WorkerPool({
@@ -26,7 +30,7 @@ const workers = new WorkerPool({
 });
 
 const chain = new Chain({
-  db: 'memory',
+  memory: true,
   network,
   workers
 });
@@ -555,7 +559,7 @@ describe('Chain', function() {
     const block = await cpu.mineBlock();
     const tx = block.txs[0];
     const input = tx.inputs[0];
-    input.witness.set(0, encoding.ONE_HASH);
+    input.witness.set(0, ONE_HASH);
     block.refresh(true);
     assert.strictEqual(await addBlock(block), 'bad-witness-merkle-match');
   });
@@ -788,7 +792,7 @@ describe('Chain', function() {
     redeem.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      redeem.pushData(encoding.ZERO_KEY);
+      redeem.pushData(ZERO_KEY);
 
     redeem.pushInt(20);
     redeem.pushOp(opcodes.OP_CHECKMULTISIG);
@@ -831,7 +835,7 @@ describe('Chain', function() {
     script.pushInt(20);
 
     for (let i = 0; i < 20; i++)
-      script.pushData(encoding.ZERO_KEY);
+      script.pushData(ZERO_KEY);
 
     script.pushInt(20);
     script.pushOp(opcodes.OP_CHECKMULTISIG);

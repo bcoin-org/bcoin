@@ -27,18 +27,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const bech32 = require('../lib/utils/bech32');
 const Address = require('../lib/primitives/address');
-
-const validChecksums = [
-  'A12UEL5L',
-  'an83characterlonghumanreadablepartthatcontains'
-  + 'thenumber1andtheexcludedcharactersbio1tt5tgs',
-  'abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw',
-  '11qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'
-  + 'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqc8247j',
-  'split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w'
-];
 
 const validAddresses = [
   [
@@ -104,29 +93,6 @@ const invalidAddresses = [
   'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv'
 ];
 
-function fromAddress(hrp, addr) {
-  const dec = bech32.decode(addr);
-
-  if (dec.hrp !== hrp)
-    throw new Error('Invalid bech32 prefix or data length.');
-
-  if (dec.version === 0 && dec.hash.length !== 20 && dec.hash.length !== 32)
-    throw new Error('Malformed witness program.');
-
-  return {
-    version: dec.version,
-    program: dec.hash
-  };
-}
-
-function toAddress(hrp, version, program) {
-  const ret = bech32.encode(hrp, version, program);
-
-  fromAddress(hrp, ret);
-
-  return ret;
-}
-
 function createProgram(version, program) {
   const data = Buffer.allocUnsafe(2 + program.length);
   data[0] = version ? version + 0x80 : 0;
@@ -136,62 +102,22 @@ function createProgram(version, program) {
 }
 
 describe('Bech32', function() {
-  for (const addr of validChecksums) {
-    it(`should have valid checksum for ${addr}`, () => {
-      assert(bech32.deserialize(addr));
-    });
-  }
-
-  for (const [addr, script] of validAddresses) {
-    it(`should have valid address for ${addr}`, () => {
-      let hrp = 'bc';
-      let ret = null;
-
-      try {
-        ret = fromAddress(hrp, addr);
-      } catch (e) {
-        ret = null;
-      }
-
-      if (ret === null) {
-        hrp = 'tb';
-        try {
-          ret = fromAddress(hrp, addr);
-        } catch (e) {
-          ret = null;
-        }
-      }
-
-      assert(ret !== null);
-
-      const output = createProgram(ret.version, ret.program);
-      assert.bufferEqual(output, script);
-
-      const recreate = toAddress(hrp, ret.version, ret.program);
-      assert.strictEqual(recreate, addr.toLowerCase());
-    });
-  }
-
-  for (const addr of invalidAddresses) {
-    it(`should have invalid address for ${addr}`, () => {
-      assert.throws(() => fromAddress('bc', addr));
-      assert.throws(() => fromAddress('tb', addr));
-    });
-  }
-
   for (const [addr, script] of validAddresses) {
     it(`should have valid address for ${addr}`, () => {
       let ret = null;
+      let network = null;
 
       try {
-        ret = Address.fromBech32(addr, 'main');
+        network = 'main';
+        ret = Address.fromBech32(addr, network);
       } catch (e) {
         ret = null;
       }
 
       if (ret === null) {
         try {
-          ret = Address.fromBech32(addr, 'testnet');
+          network = 'testnet';
+          ret = Address.fromBech32(addr, network);
         } catch (e) {
           ret = null;
         }
@@ -202,7 +128,7 @@ describe('Bech32', function() {
       const output = createProgram(ret.version, ret.hash);
       assert.bufferEqual(output, script);
 
-      const recreate = ret.toBech32();
+      const recreate = ret.toBech32(network);
       assert.strictEqual(recreate, addr.toLowerCase());
     });
   }

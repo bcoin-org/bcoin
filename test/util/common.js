@@ -2,7 +2,8 @@
 
 const assert = require('assert');
 const path = require('path');
-const fs = require('../../lib/utils/fs');
+const fs = require('bfile');
+const bio = require('bufio');
 const Block = require('../../lib/primitives/block');
 const MerkleBlock = require('../../lib/primitives/merkleblock');
 const Headers = require('../../lib/primitives/headers');
@@ -10,8 +11,6 @@ const {CompactBlock} = require('../../lib/net/bip152');
 const TX = require('../../lib/primitives/tx');
 const Output = require('../../lib/primitives/output');
 const CoinView = require('../../lib/coins/coinview');
-const BufferReader = require('../../lib/utils/reader');
-const BufferWriter = require('../../lib/utils/writer');
 
 const common = exports;
 
@@ -87,7 +86,7 @@ common.writeTX = function writeTX(name, tx, view) {
 };
 
 function parseUndo(data) {
-  const br = new BufferReader(data);
+  const br = bio.read(data);
   const items = [];
 
   while (br.left()) {
@@ -99,7 +98,7 @@ function parseUndo(data) {
 }
 
 function serializeUndo(items) {
-  const bw = new BufferWriter();
+  const bw = bio.write();
 
   for (const item of items) {
     bw.writeI64(item.value);

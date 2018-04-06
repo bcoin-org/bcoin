@@ -1,11 +1,10 @@
 'use strict';
 
 const bcoin = require('../..');
-const FullNode = bcoin.fullnode;
 
-const node = new FullNode({
+const node = new bcoin.FullNode({
+  memory: true,
   network: 'testnet',
-  db: 'memory',
   workers: true
 });
 

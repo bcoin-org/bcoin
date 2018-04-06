@@ -18,7 +18,7 @@ Will create a datadir of `~/.bcoin_spv`, containing a chain database, wallet dat
 ## Common Options
 
 - `config`: Points to a custom config file, not in the prefix directory.
-- `network`: Which network's chainparams to use for the node (main, testnet, regtest, or segnet4) (default: main).
+- `network`: Which network's chainparams to use for the node (main, testnet, regtest, or simnet) (default: main).
 - `workers`: Whether to use a worker process pool for transaction verification (default: true).
 - `workers-size`: Number of worker processes to spawn for transaction verification. By default, the worker pool will be sized based on the number of CPUs/cores in the machine.
 - `workers-timeout`: Worker process execution timeout in milliseconds (default: 120000).
@@ -92,7 +92,12 @@ Note that certain chain options affect the format and indexing of the chain data
 - `api-key`: API key (used for accessing all node APIs).
 - `wallet-auth`: Enable token auth for wallets (default: false).
 - `no-auth`: Disable auth for API server and wallets (default: false).
+- `cors`: Enable "Cross-Origin Resource Sharing" HTTP headers (default: false).
+
+Note: For security `cors` should not be used with `no-auth`.\
+If enabled you should also enable `wallet-auth` and set `api-key`.
 
 ## Sample Config File
 
-See https://github.com/bcoin-org/bcoin/blob/master/etc/sample.conf.
+See https://github.com/bcoin-org/bcoin/blob/master/etc/sample.conf
+and https://github.com/bcoin-org/bcoin/blob/master/etc/sample.wallet.conf

@@ -5,12 +5,11 @@
 
 const assert = require('./util/assert');
 const common = require('./util/common');
-const Bloom = require('../lib/utils/bloom');
+const {BloomFilter} = require('bfilter');
 const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
-const encoding = require('../lib/utils/encoding');
 const bip152 = require('../lib/net/bip152');
 const CompactBlock = bip152.CompactBlock;
 const TXRequest = bip152.TXRequest;
@@ -103,7 +102,7 @@ describe('Block', function() {
   });
 
   it('should create a merkle block', () => {
-    const filter = Bloom.fromRate(1000, 0.01, Bloom.flags.NONE);
+    const filter = BloomFilter.fromRate(1000, 0.01, BloomFilter.flags.NONE);
 
     const item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
     const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
@@ -158,7 +157,7 @@ describe('Block', function() {
   it('should fail with a bad merkle root', () => {
     const [block] = block300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = encoding.NULL_HASH;
+    block.merkleRoot = consensus.NULL_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
@@ -172,7 +171,7 @@ describe('Block', function() {
   it('should fail on merkle block with a bad merkle root', () => {
     const [block] = merkle300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = encoding.NULL_HASH;
+    block.merkleRoot = consensus.NULL_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
