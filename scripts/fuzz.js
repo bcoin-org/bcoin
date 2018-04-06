@@ -1,6 +1,5 @@
 'use strict';
 
-const util = require('../lib/utils/util');
 const Script = require('../lib/script/script');
 const Stack = require('../lib/script/stack');
 const Witness = require('../lib/script/witness');
@@ -8,8 +7,8 @@ const Input = require('../lib/primitives/input');
 const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
 const TX = require('../lib/primitives/tx');
-const random = require('../lib/crypto/random');
-const secp256k1 = require('../lib/crypto/secp256k1');
+const random = require('bcrypto/lib/random');
+const secp256k1 = require('bcrypto/lib/secp256k1');
 const flags = Script.flags;
 
 let consensus = null;
@@ -21,7 +20,7 @@ try {
 }
 
 if (consensus)
-  util.log('Running against bitcoinconsensus...');
+  console.log('Running against bitcoinconsensus...');
 
 const MANDATORY = flags.MANDATORY_VERIFY_FLAGS | flags.VERIFY_WITNESS;
 const STANDARD = flags.STANDARD_VERIFY_FLAGS;
@@ -39,13 +38,13 @@ function assertConsensus(tx, output, flags, code) {
   const err = verifyConsensus(tx, 0, output, 0, flags);
 
   if (err !== code) {
-    util.log('bitcoinconsensus mismatch!');
-    util.log(`${err} (bitcoin core) !== ${code} (bcoin)`);
-    util.log(tx);
-    util.log(output);
-    util.log(flags);
-    util.log('TX: %s', tx.toRaw().toString('hex'));
-    util.log('Output Script: %s', output.toRaw().toString('hex'));
+    console.log('bitcoinconsensus mismatch!');
+    console.log(`${err} (bitcoin core) !== ${code} (bcoin)`);
+    console.log(tx);
+    console.log(output);
+    console.log(flags);
+    console.log('TX: %s', tx.toRaw().toString('hex'));
+    console.log('Output Script: %s', output.toRaw().toString('hex'));
   }
 }
 
@@ -59,7 +58,7 @@ function randomKey() {
   const x = secp256k1.generatePrivateKey();
   const y = secp256k1.generatePrivateKey();
 
-  if (util.random(0, 2) === 0) {
+  if (rand(0, 2) === 0) {
     const p = Buffer.from([2 | (y[y.length - 1] & 1)]);
     return Buffer.concat([p, x]);
   }
@@ -70,28 +69,28 @@ function randomKey() {
 
 function randomOutpoint() {
   const hash = random.randomBytes(32).toString('hex');
-  return new Outpoint(hash, util.random(0, 0xffffffff));
+  return new Outpoint(hash, rand(0, 0xffffffff));
 }
 
 function randomInput() {
   const input = Input.fromOutpoint(randomOutpoint());
 
-  if (util.random(0, 5) === 0)
-    input.sequence = util.random(0, 0xffffffff);
+  if (rand(0, 5) === 0)
+    input.sequence = rand(0, 0xffffffff);
 
   return input;
 }
 
 function randomOutput() {
-  return Output.fromScript(randomScript(), util.random(0, 1e8));
+  return Output.fromScript(randomScript(), rand(0, 1e8));
 }
 
 function randomTX() {
   const tx = new TX();
-  const inputs = util.random(1, 5);
-  const outputs = util.random(0, 5);
+  const inputs = rand(1, 5);
+  const outputs = rand(0, 5);
 
-  tx.version = util.random(0, 0xffffffff);
+  tx.version = rand(0, 0xffffffff);
 
   for (let i = 0; i < inputs; i++)
     tx.inputs.push(randomInput());
@@ -99,8 +98,8 @@ function randomTX() {
   for (let i = 0; i < outputs; i++)
     tx.outputs.push(randomOutput());
 
-  if (util.random(0, 5) === 0)
-    tx.locktime = util.random(0, 0xffffffff);
+  if (rand(0, 5) === 0)
+    tx.locktime = rand(0, 0xffffffff);
 
   tx.refresh();
 
@@ -108,11 +107,11 @@ function randomTX() {
 }
 
 function randomWitness(redeem) {
-  const size = util.random(1, 100);
+  const size = rand(1, 100);
   const witness = new Witness();
 
   for (let i = 0; i < size; i++) {
-    const len = util.random(0, 100);
+    const len = rand(0, 100);
     witness.push(random.randomBytes(len));
   }
 
@@ -125,11 +124,11 @@ function randomWitness(redeem) {
 }
 
 function randomInputScript(redeem) {
-  const size = util.random(1, 100);
+  const size = rand(1, 100);
   const script = new Script();
 
   for (let i = 0; i < size; i++) {
-    const len = util.random(0, 100);
+    const len = rand(0, 100);
     script.pushData(random.randomBytes(len));
   }
 
@@ -140,7 +139,7 @@ function randomInputScript(redeem) {
 }
 
 function randomOutputScript() {
-  const size = util.random(1, 10000);
+  const size = rand(1, 10000);
   return Script.fromRaw(random.randomBytes(size));
 }
 
@@ -165,7 +164,7 @@ function isPushOnly(script) {
 }
 
 function randomPubkey() {
-  const len = util.random(0, 2) === 0 ? 33 : 65;
+  const len = rand(0, 2) === 0 ? 33 : 65;
   return Script.fromPubkey(random.randomBytes(len));
 }
 
@@ -174,12 +173,12 @@ function randomPubkeyhash() {
 }
 
 function randomMultisig() {
-  const n = util.random(1, 16);
-  const m = util.random(1, n);
+  const n = rand(1, 16);
+  const m = rand(1, n);
   const keys = [];
 
   for (let i = 0; i < n; i++) {
-    const len = util.random(0, 2) === 0 ? 33 : 65;
+    const len = rand(0, 2) === 0 ? 33 : 65;
     keys.push(random.randomBytes(len));
   }
 
@@ -199,13 +198,13 @@ function randomWitnessScripthash() {
 }
 
 function randomProgram() {
-  const version = util.random(0, 16);
-  const size = util.random(2, 41);
+  const version = rand(0, 16);
+  const size = rand(2, 41);
   return Script.fromProgram(version, random.randomBytes(size));
 }
 
 function randomRedeem() {
-  switch (util.random(0, 5)) {
+  switch (rand(0, 5)) {
     case 0:
       return randomPubkey();
     case 1:
@@ -221,7 +220,7 @@ function randomRedeem() {
 }
 
 function randomScript() {
-  switch (util.random(0, 7)) {
+  switch (rand(0, 7)) {
     case 0:
       return randomPubkey();
     case 1:
@@ -299,7 +298,7 @@ function randomWitnessNestedContext() {
 }
 
 function randomContext() {
-  switch (util.random(0, 6)) {
+  switch (rand(0, 6)) {
     case 0:
       return randomPubkeyContext();
     case 1:
@@ -322,7 +321,7 @@ function fuzzSimple(flags) {
 
   for (;;) {
     if (++total % 1000 === 0)
-      util.log('Fuzzed %d scripts.', total);
+      console.log('Fuzzed %d scripts.', total);
 
     if (total % 500 === 0)
       tx = randomTX();
@@ -357,16 +356,16 @@ function fuzzSimple(flags) {
     if (isPushOnly(output))
       continue;
 
-    util.log('Produced valid scripts:');
+    console.log('Produced valid scripts:');
 
-    util.log('Input:');
-    util.log(input);
+    console.log('Input:');
+    console.log(input);
 
-    util.log('Output:');
-    util.log(output);
+    console.log('Output:');
+    console.log(output);
 
-    util.log('Stack:');
-    util.log(stack);
+    console.log('Stack:');
+    console.log(stack);
 
     break;
   }
@@ -378,7 +377,7 @@ function fuzzVerify(flags) {
 
   for (;;) {
     if (++total % 1000 === 0)
-      util.log('Fuzzed %d scripts.', total);
+      console.log('Fuzzed %d scripts.', total);
 
     if (total % 500 === 0)
       tx = randomTX();
@@ -415,16 +414,16 @@ function fuzzVerify(flags) {
     if (isPushOnly(output))
       continue;
 
-    util.log('Produced valid scripts:');
+    console.log('Produced valid scripts:');
 
-    util.log('Input:');
-    util.log(input);
+    console.log('Input:');
+    console.log(input);
 
-    util.log('Witness:');
-    util.log(witness);
+    console.log('Witness:');
+    console.log(witness);
 
-    util.log('Output:');
-    util.log(output);
+    console.log('Output:');
+    console.log(output);
 
     break;
   }
@@ -436,7 +435,7 @@ function fuzzLess(flags) {
 
   for (;;) {
     if (++total % 1000 === 0)
-      util.log('Fuzzed %d scripts.', total);
+      console.log('Fuzzed %d scripts.', total);
 
     if (total % 500 === 0)
       tx = randomTX();
@@ -469,20 +468,20 @@ function fuzzLess(flags) {
 
     assertConsensus(tx, ctx.output, flags, 'OK');
 
-    util.log('Produced valid scripts:');
+    console.log('Produced valid scripts:');
 
-    util.log('Input:');
-    util.log(ctx.input);
+    console.log('Input:');
+    console.log(ctx.input);
 
-    util.log('Witness:');
-    util.log(ctx.witness);
+    console.log('Witness:');
+    console.log(ctx.witness);
 
-    util.log('Output:');
-    util.log(ctx.output);
+    console.log('Output:');
+    console.log(ctx.output);
 
     if (ctx.redeem) {
-      util.log('Redeem:');
-      util.log(ctx.redeem);
+      console.log('Redeem:');
+      console.log(ctx.redeem);
     }
 
     break;
@@ -505,11 +504,15 @@ function main() {
       fuzzLess(flags);
       break;
     default:
-      util.log('Please select a mode:');
-      util.log('simple, verify, less');
-      util.log('Optional `--standard` flag.');
+      console.log('Please select a mode:');
+      console.log('simple, verify, less');
+      console.log('Optional `--standard` flag.');
       break;
   }
+}
+
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
 }
 
 randomKey;

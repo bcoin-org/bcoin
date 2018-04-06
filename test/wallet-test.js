@@ -6,9 +6,8 @@
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
-const encoding = require('../lib/utils/encoding');
-const digest = require('../lib/crypto/digest');
-const random = require('../lib/crypto/random');
+const hash256 = require('bcrypto/lib/hash256');
+const random = require('bcrypto/lib/random');
 const WalletDB = require('../lib/wallet/walletdb');
 const WorkerPool = require('../lib/workers/workerpool');
 const Address = require('../lib/primitives/address');
@@ -26,15 +25,9 @@ const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
 const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
-const workers = new WorkerPool({
-  enabled: true
-});
-
-const wdb = new WalletDB({
-  db: 'memory',
-  verify: true,
-  workers
-});
+const enabled = true;
+const workers = new WorkerPool({ enabled });
+const wdb = new WalletDB({ workers });
 
 let currentWallet = null;
 let importedWallet = null;
@@ -42,27 +35,33 @@ let importedKey = null;
 let doubleSpendWallet = null;
 let doubleSpendCoin = null;
 
-let globalTime = util.now();
-let globalHeight = 1;
+function fromU32(num) {
+  const data = Buffer.allocUnsafe(4);
+  data.writeUInt32LE(num, 0, true);
+  return data;
+}
 
-function nextBlock() {
-  const height = globalHeight++;
-  const time = globalTime++;
+function curBlock(wdb) {
+  return fakeBlock(wdb.state.height);
+};
 
-  const prevHead = encoding.U32(height - 1);
-  const prevHash = digest.hash256(prevHead);
+function nextBlock(wdb) {
+  return fakeBlock(wdb.state.height + 1);
+}
 
-  const head = encoding.U32(height);
-  const hash = digest.hash256(head);
+function fakeBlock(height) {
+  const prev = hash256.digest(fromU32((height - 1) >>> 0));
+  const hash = hash256.digest(fromU32(height >>> 0));
+  const root = hash256.digest(fromU32((height | 0x80000000) >>> 0));
 
   return {
     hash: hash.toString('hex'),
-    height: height,
-    prevBlock: prevHash.toString('hex'),
-    time: time,
-    merkleRoot: encoding.NULL_HASH,
+    prevBlock: prev.toString('hex'),
+    merkleRoot: root.toString('hex'),
+    time: 500000000 + (height * (10 * 60)),
+    bits: 0,
     nonce: 0,
-    bits: 0
+    height: height
   };
 }
 
@@ -73,24 +72,24 @@ function dummyInput() {
 
 async function testP2PKH(witness, nesting) {
   const flags = Script.flags.STANDARD_VERIFY_FLAGS;
-
-  const wallet = await wdb.create({
-    witness
-  });
-
-  const addr = Address.fromString(wallet.getAddress('string'));
-
+  const receiveAddress = nesting ? 'nestedAddress' : 'receiveAddress';
   const type = witness ? Address.types.WITNESS : Address.types.PUBKEYHASH;
+  const wallet = await wdb.create({ witness });
+
+  const waddr = await wallet.receiveAddress();
+  const addr = Address.fromString(waddr.toString(wdb.network), wdb.network);
+
   assert.strictEqual(addr.type, type);
+  assert.strictEqual(addr.type, waddr.type);
 
   const src = new MTX();
   src.addInput(dummyInput());
-  src.addOutput(nesting ? wallet.getNested() : wallet.getAddress(), 5460 * 2);
+  src.addOutput(await wallet[receiveAddress](), 5460 * 2);
   src.addOutput(new Address(), 2 * 5460);
 
   const mtx = new MTX();
   mtx.addTX(src, 0);
-  mtx.addOutput(wallet.getAddress(), 5460);
+  mtx.addOutput(await wallet.receiveAddress(), 5460);
 
   await wallet.sign(mtx);
 
@@ -101,7 +100,7 @@ async function testP2PKH(witness, nesting) {
 
 async function testP2SH(witness, nesting) {
   const flags = Script.flags.STANDARD_VERIFY_FLAGS;
-  const receive = nesting ? 'nested' : 'receive';
+  const receiveAddress = nesting ? 'nestedAddress' : 'receiveAddress';
   const receiveDepth = nesting ? 'nestedDepth' : 'receiveDepth';
   const vector = witness ? 'witness' : 'script';
 
@@ -118,17 +117,17 @@ async function testP2SH(witness, nesting) {
   const carol = await wdb.create(options);
   const recipient = await wdb.create();
 
-  await alice.addSharedKey(bob.account.accountKey);
-  await alice.addSharedKey(carol.account.accountKey);
+  await alice.addSharedKey(0, await bob.accountKey(0));
+  await alice.addSharedKey(0, await carol.accountKey(0));
 
-  await bob.addSharedKey(alice.account.accountKey);
-  await bob.addSharedKey(carol.account.accountKey);
+  await bob.addSharedKey(0, await alice.accountKey(0));
+  await bob.addSharedKey(0, await carol.accountKey(0));
 
-  await carol.addSharedKey(alice.account.accountKey);
-  await carol.addSharedKey(bob.account.accountKey);
+  await carol.addSharedKey(0, await alice.accountKey(0));
+  await carol.addSharedKey(0, await bob.accountKey(0));
 
   // Our p2sh address
-  const addr1 = alice.account[receive].getAddress();
+  const addr1 = await alice[receiveAddress]();
 
   if (witness) {
     const type = nesting ? Address.types.SCRIPTHASH : Address.types.WITNESS;
@@ -137,17 +136,17 @@ async function testP2SH(witness, nesting) {
     assert.strictEqual(addr1.type, Address.types.SCRIPTHASH);
   }
 
-  assert(alice.account[receive].getAddress().equals(addr1));
-  assert(bob.account[receive].getAddress().equals(addr1));
-  assert(carol.account[receive].getAddress().equals(addr1));
+  assert((await alice[receiveAddress]()).equals(addr1));
+  assert((await bob[receiveAddress]()).equals(addr1));
+  assert((await carol[receiveAddress]()).equals(addr1));
 
-  const nestedAddr1 = alice.getNested();
+  const nestedAddr1 = await alice.nestedAddress();
 
   if (witness) {
     assert(nestedAddr1);
-    assert(alice.getNested().equals(nestedAddr1));
-    assert(bob.getNested().equals(nestedAddr1));
-    assert(carol.getNested().equals(nestedAddr1));
+    assert((await alice.nestedAddress()).equals(nestedAddr1));
+    assert((await bob.nestedAddress()).equals(nestedAddr1));
+    assert((await carol.nestedAddress()).equals(nestedAddr1));
   }
 
   {
@@ -157,27 +156,25 @@ async function testP2SH(witness, nesting) {
     fund.addOutput(nesting ? nestedAddr1 : addr1, 5460 * 10);
 
     // Simulate a confirmation
-    const block = nextBlock();
+    assert.strictEqual(await alice[receiveDepth](), 1);
 
-    assert.strictEqual(alice.account[receiveDepth], 1);
+    await wdb.addBlock(nextBlock(wdb), [fund.toTX()]);
 
-    await wdb.addBlock(block, [fund.toTX()]);
-
-    assert.strictEqual(alice.account[receiveDepth], 2);
-    assert.strictEqual(alice.account.changeDepth, 1);
+    assert.strictEqual(await alice[receiveDepth](), 2);
+    assert.strictEqual(await alice.changeDepth(), 1);
   }
 
-  const addr2 = alice.account[receive].getAddress();
+  const addr2 = await alice[receiveAddress]();
   assert(!addr2.equals(addr1));
 
-  assert(alice.account[receive].getAddress().equals(addr2));
-  assert(bob.account[receive].getAddress().equals(addr2));
-  assert(carol.account[receive].getAddress().equals(addr2));
+  assert((await alice[receiveAddress]()).equals(addr2));
+  assert((await bob[receiveAddress]()).equals(addr2));
+  assert((await carol[receiveAddress]()).equals(addr2));
 
   // Create a tx requiring 2 signatures
   const send = new MTX();
 
-  send.addOutput(recipient.getAddress(), 5460);
+  send.addOutput(await recipient.receiveAddress(), 5460);
 
   assert(!send.verify(flags));
 
@@ -195,35 +192,33 @@ async function testP2SH(witness, nesting) {
   const [tx, view] = send.commit();
   assert(tx.verify(view, flags));
 
-  assert.strictEqual(alice.account.changeDepth, 1);
+  assert.strictEqual(await alice.changeDepth(), 1);
 
-  const change = alice.account.change.getAddress();
+  const change = await alice.changeAddress();
 
-  assert(alice.account.change.getAddress().equals(change));
-  assert(bob.account.change.getAddress().equals(change));
-  assert(carol.account.change.getAddress().equals(change));
+  assert((await alice.changeAddress()).equals(change));
+  assert((await bob.changeAddress()).equals(change));
+  assert((await carol.changeAddress()).equals(change));
 
   // Simulate a confirmation
   {
-    const block = nextBlock();
+    await wdb.addBlock(nextBlock(wdb), [tx]);
 
-    await wdb.addBlock(block, [tx]);
+    assert.strictEqual(await alice[receiveDepth](), 2);
+    assert.strictEqual(await alice.changeDepth(), 2);
 
-    assert.strictEqual(alice.account[receiveDepth], 2);
-    assert.strictEqual(alice.account.changeDepth, 2);
-
-    assert(alice.account[receive].getAddress().equals(addr2));
-    assert(!alice.account.change.getAddress().equals(change));
+    assert((await alice[receiveAddress]()).equals(addr2));
+    assert(!(await alice.changeAddress()).equals(change));
   }
 
-  const change2 = alice.account.change.getAddress();
+  const change2 = await alice.changeAddress();
 
-  assert(alice.account.change.getAddress().equals(change2));
-  assert(bob.account.change.getAddress().equals(change2));
-  assert(carol.account.change.getAddress().equals(change2));
+  assert((await alice.changeAddress()).equals(change2));
+  assert((await bob.changeAddress()).equals(change2));
+  assert((await carol.changeAddress()).equals(change2));
 
   const input = tx.inputs[0];
-  input[vector].setData(2, encoding.ZERO_SIG);
+  input[vector].setData(2, Buffer.alloc(73, 0x00));
   input[vector].compile();
 
   assert(!tx.verify(view, flags));
@@ -241,36 +236,29 @@ describe('Wallet', function() {
   it('should generate new key and address', async () => {
     const wallet = await wdb.create();
 
-    const addr1 = wallet.getAddress();
+    const addr1 = await wallet.receiveAddress();
     assert(addr1);
 
-    const str = addr1.toString();
-    const addr2 = Address.fromString(str);
+    const str = addr1.toString(wdb.network);
+    const addr2 = Address.fromString(str, wdb.network);
 
     assert(addr2.equals(addr1));
   });
 
   it('should validate existing address', () => {
-    assert(Address.fromString('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc'));
+    assert(Address.fromString('1KQ1wMNwXHUYj1nV2xzsRcKUH8gVFpTFUc', 'main'));
   });
 
   it('should fail to validate invalid address', () => {
     assert.throws(() => {
-      Address.fromString('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc');
+      Address.fromString('1KQ1wMNwXHUYj1nv2xzsRcKUH8gVFpTFUc', 'main');
     });
   });
 
   it('should create and get wallet', async () => {
     const wallet1 = await wdb.create();
-
-    await wallet1.destroy();
-
     const wallet2 = await wdb.get(wallet1.id);
-
-    assert(wallet1 !== wallet2);
-    assert(wallet1.master !== wallet2.master);
-    assert(wallet1.master.key.equals(wallet2.master.key));
-    assert(wallet1.account.accountKey.equals(wallet2.account.accountKey));
+    assert(wallet1 === wallet2);
   });
 
   it('should sign/verify p2pkh tx', async () => {
@@ -293,12 +281,12 @@ describe('Wallet', function() {
     });
 
     const xpriv = HD.PrivateKey.generate();
-    const key = xpriv.deriveAccount(44, 0).toPublic();
+    const key = xpriv.deriveAccount(44, 0, 0).toPublic();
 
-    await wallet.addSharedKey(key);
+    await wallet.addSharedKey(0, key);
 
     const script = Script.fromMultisig(1, 2, [
-      wallet.account.receive.getPublicKey(),
+      (await wallet.receiveKey()).publicKey,
       key.derivePath('m/0/0').publicKey
     ]);
 
@@ -310,7 +298,7 @@ describe('Wallet', function() {
 
     const tx = new MTX();
     tx.addTX(src, 0);
-    tx.addOutput(wallet.getAddress(), 5460);
+    tx.addOutput(await wallet.receiveAddress(), 5460);
 
     const maxSize = await tx.estimateSize();
 
@@ -320,7 +308,7 @@ describe('Wallet', function() {
     assert(tx.verify());
   });
 
-  it('should handle missed and invalid txs', async () => {
+  it('should handle missed txs', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
 
@@ -328,13 +316,13 @@ describe('Wallet', function() {
     // balance: 51000
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(alice.getAddress(), 50000);
-    t1.addOutput(alice.getAddress(), 1000);
+    t1.addOutput(await alice.receiveAddress(), 50000);
+    t1.addOutput(await alice.receiveAddress(), 1000);
 
     const t2 = new MTX();
     t2.addTX(t1, 0); // 50000
-    t2.addOutput(alice.getAddress(), 24000);
-    t2.addOutput(alice.getAddress(), 24000);
+    t2.addOutput(await alice.receiveAddress(), 24000);
+    t2.addOutput(await alice.receiveAddress(), 24000);
 
     // Save for later.
     doubleSpendWallet = alice;
@@ -346,7 +334,7 @@ describe('Wallet', function() {
     const t3 = new MTX();
     t3.addTX(t1, 1); // 1000
     t3.addTX(t2, 0); // 24000
-    t3.addOutput(alice.getAddress(), 23000);
+    t3.addOutput(await alice.receiveAddress(), 23000);
 
     // balance: 47000
     await alice.sign(t3);
@@ -354,66 +342,52 @@ describe('Wallet', function() {
     const t4 = new MTX();
     t4.addTX(t2, 1); // 24000
     t4.addTX(t3, 0); // 23000
-    t4.addOutput(alice.getAddress(), 11000);
-    t4.addOutput(alice.getAddress(), 11000);
+    t4.addOutput(await alice.receiveAddress(), 11000);
+    t4.addOutput(await alice.receiveAddress(), 11000);
 
     // balance: 22000
     await alice.sign(t4);
 
     const f1 = new MTX();
     f1.addTX(t4, 1); // 11000
-    f1.addOutput(bob.getAddress(), 10000);
+    f1.addOutput(await bob.receiveAddress(), 10000);
 
     // balance: 11000
     await alice.sign(f1);
 
-    const fake = new MTX();
-    fake.addTX(t1, 1); // 1000 (already redeemed)
-    fake.addOutput(alice.getAddress(), 500);
-
-    // Script inputs but do not sign
-    await alice.template(fake);
-    // Fake signature
-    const input = fake.inputs[0];
-    input.script.setData(0, encoding.ZERO_SIG);
-    input.script.compile();
-    // balance: 11000
-
-    // Fake TX should temporarily change output.
     {
-      await wdb.addTX(fake.toTX());
       await wdb.addTX(t4.toTX());
-
-      const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 22500);
-    }
-
-    {
-      await wdb.addTX(t1.toTX());
-
-      const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 72500);
-    }
-
-    {
-      await wdb.addTX(t2.toTX());
-
-      const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 46500);
-    }
-
-    {
-      await wdb.addTX(t3.toTX());
 
       const balance = await alice.getBalance();
       assert.strictEqual(balance.unconfirmed, 22000);
     }
 
     {
+      await wdb.addTX(t1.toTX());
+
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 73000);
+    }
+
+    {
+      await wdb.addTX(t2.toTX());
+
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 71000);
+    }
+
+    {
+      await wdb.addTX(t3.toTX());
+
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 69000);
+    }
+
+    {
       await wdb.addTX(f1.toTX());
 
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.unconfirmed, 58000);
 
       const txs = await alice.getHistory();
       assert(txs.some((wtx) => {
@@ -430,10 +404,44 @@ describe('Wallet', function() {
         return wtx.tx.hash('hex') === f1.hash('hex');
       }));
     }
+
+    // Should recover from missed txs on block.
+    await wdb.addBlock(nextBlock(wdb), [
+      t1.toTX(),
+      t2.toTX(),
+      t3.toTX(),
+      t4.toTX(),
+      f1.toTX()
+    ]);
+
+    {
+      const balance = await alice.getBalance();
+      assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.confirmed, 11000);
+
+      const txs = await alice.getHistory();
+      assert(txs.some((wtx) => {
+        return wtx.hash === f1.hash('hex');
+      }));
+    }
+
+    {
+      const balance = await bob.getBalance();
+      assert.strictEqual(balance.unconfirmed, 10000);
+      assert.strictEqual(balance.confirmed, 10000);
+
+      const txs = await bob.getHistory();
+      assert(txs.some((wtx) => {
+        return wtx.tx.hash('hex') === f1.hash('hex');
+      }));
+    }
   });
 
   it('should cleanup spenders after double-spend', async () => {
     const wallet = doubleSpendWallet;
+
+    // Reorg and unconfirm all previous txs.
+    await wdb.removeBlock(curBlock(wdb));
 
     {
       const txs = await wallet.getHistory();
@@ -448,12 +456,13 @@ describe('Wallet', function() {
     {
       const balance = await wallet.getBalance();
       assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.confirmed, 0);
     }
 
     {
       const tx = new MTX();
       tx.addCoin(doubleSpendCoin);
-      tx.addOutput(wallet.getAddress(), 5000);
+      tx.addOutput(await wallet.receiveAddress(), 5000);
 
       await wallet.sign(tx);
 
@@ -474,30 +483,45 @@ describe('Wallet', function() {
     }
   });
 
-  it('should handle missed txs without resolution', async () => {
-    const wdb = new WalletDB({
-      name: 'wallet-test',
-      db: 'memory',
-      verify: false
+  it('should handle double-spend (not our input)', async () => {
+    const wallet = await wdb.create();
+
+    const t1 = new MTX();
+    const input = dummyInput();
+    t1.addInput(input);
+    t1.addOutput(await wallet.receiveAddress(), 50000);
+    await wdb.addTX(t1.toTX());
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+
+    let conflict = false;
+    wallet.on('conflict', () => {
+      conflict = true;
     });
 
-    await wdb.open();
+    const t2 = new MTX();
+    t2.addInput(input);
+    t2.addOutput(new Address(), 5000);
+    await wdb.addTX(t2.toTX());
+    assert(conflict);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 0);
+  });
 
+  it('should handle more missed txs', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
 
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(alice.getAddress(), 50000);
-    t1.addOutput(alice.getAddress(), 1000);
+    t1.addOutput(await alice.receiveAddress(), 50000);
+    t1.addOutput(await alice.receiveAddress(), 1000);
 
     // balance: 51000
 
     const t2 = new MTX();
     t2.addTX(t1, 0); // 50000
-    t2.addOutput(alice.getAddress(), 24000);
-    t2.addOutput(alice.getAddress(), 24000);
+    t2.addOutput(await alice.receiveAddress(), 24000);
+    t2.addOutput(await alice.receiveAddress(), 24000);
 
     // balance: 49000
     await alice.sign(t2);
@@ -505,7 +529,7 @@ describe('Wallet', function() {
     const t3 = new MTX();
     t3.addTX(t1, 1); // 1000
     t3.addTX(t2, 0); // 24000
-    t3.addOutput(alice.getAddress(), 23000);
+    t3.addOutput(await alice.receiveAddress(), 23000);
 
     // balance: 47000
     await alice.sign(t3);
@@ -513,15 +537,15 @@ describe('Wallet', function() {
     const t4 = new MTX();
     t4.addTX(t2, 1); // 24000
     t4.addTX(t3, 0); // 23000
-    t4.addOutput(alice.getAddress(), 11000);
-    t4.addOutput(alice.getAddress(), 11000);
+    t4.addOutput(await alice.receiveAddress(), 11000);
+    t4.addOutput(await alice.receiveAddress(), 11000);
 
     // balance: 22000
     await alice.sign(t4);
 
     const f1 = new MTX();
     f1.addTX(t4, 1); // 11000
-    f1.addOutput(bob.getAddress(), 10000);
+    f1.addOutput(await bob.receiveAddress(), 10000);
 
     // balance: 11000
     await alice.sign(f1);
@@ -541,20 +565,20 @@ describe('Wallet', function() {
     {
       await wdb.addTX(t2.toTX());
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 47000);
+      assert.strictEqual(balance.unconfirmed, 71000);
     }
 
     {
       await wdb.addTX(t3.toTX());
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 22000);
+      assert.strictEqual(balance.unconfirmed, 69000);
     }
 
     {
       await wdb.addTX(f1.toTX());
 
       const balance = await alice.getBalance();
-      assert.strictEqual(balance.unconfirmed, 11000);
+      assert.strictEqual(balance.unconfirmed, 58000);
 
       const txs = await alice.getHistory();
       assert(txs.some((wtx) => {
@@ -572,10 +596,14 @@ describe('Wallet', function() {
       }));
     }
 
-    await wdb.addTX(t2.toTX());
-    await wdb.addTX(t3.toTX());
-    await wdb.addTX(t4.toTX());
-    await wdb.addTX(f1.toTX());
+    // Should recover from missed txs on block.
+    await wdb.addBlock(nextBlock(wdb), [
+      t1.toTX(),
+      t2.toTX(),
+      t3.toTX(),
+      t4.toTX(),
+      f1.toTX()
+    ]);
 
     {
       const balance = await alice.getBalance();
@@ -595,16 +623,16 @@ describe('Wallet', function() {
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
     // Create new transaction
     const m2 = new MTX();
-    m2.addOutput(bob.getAddress(), 5460);
+    m2.addOutput(await bob.receiveAddress(), 5460);
 
     await alice.fund(m2, {
       rate: 10000,
@@ -623,7 +651,7 @@ describe('Wallet', function() {
 
     // Create new transaction
     const t3 = new MTX();
-    t3.addOutput(bob.getAddress(), 15000);
+    t3.addOutput(await bob.receiveAddress(), 15000);
 
     let err;
     try {
@@ -650,17 +678,17 @@ describe('Wallet', function() {
 
     // Coinbase
     const t1 = new MTX();
-    t1.addOutpoint(new Outpoint(encoding.NULL_HASH, 0));
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
+    t1.addOutpoint(new Outpoint(consensus.NULL_HASH, 0));
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
     // Create new transaction
     const m2 = new MTX();
-    m2.addOutput(bob.getAddress(), 5460);
+    m2.addOutput(await bob.receiveAddress(), 5460);
 
     await alice.fund(m2, {
       rate: 10000
@@ -684,7 +712,7 @@ describe('Wallet', function() {
     assert.strictEqual(t2.getSize(), 521);
     assert.strictEqual(t2.getVirtualSize(), 521);
 
-    let balance;
+    let balance = null;
     bob.once('balance', (b) => {
       balance = b;
     });
@@ -693,7 +721,7 @@ describe('Wallet', function() {
 
     // Create new transaction
     const t3 = new MTX();
-    t3.addOutput(bob.getAddress(), 15000);
+    t3.addOutput(await bob.receiveAddress(), 15000);
 
     let err;
     try {
@@ -717,25 +745,25 @@ describe('Wallet', function() {
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
 
     // Coinbase
     const t2 = new MTX();
     t2.addInput(dummyInput());
-    t2.addOutput(bob.getAddress(), 5460);
-    t2.addOutput(bob.getAddress(), 5460);
-    t2.addOutput(bob.getAddress(), 5460);
-    t2.addOutput(bob.getAddress(), 5460);
+    t2.addOutput(await bob.receiveAddress(), 5460);
+    t2.addOutput(await bob.receiveAddress(), 5460);
+    t2.addOutput(await bob.receiveAddress(), 5460);
+    t2.addOutput(await bob.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
     await wdb.addTX(t2.toTX());
 
     // Create our tx with an output
     const tx = new MTX();
-    tx.addOutput(carol.getAddress(), 5460);
+    tx.addOutput(await carol.receiveAddress(), 5460);
 
     const coins1 = await alice.getCoins();
     const coins2 = await bob.getCoins();
@@ -776,6 +804,37 @@ describe('Wallet', function() {
     await testP2SH(true, true);
   });
 
+  it('should create account', async () => {
+    const wallet = await wdb.create();
+    const account = await wallet.createAccount({
+      name: 'foo'
+    });
+
+    assert(account);
+    assert(account.initialized);
+    assert.strictEqual(account.name, 'foo');
+    assert.strictEqual(account.accountIndex, 1);
+    assert.strictEqual(account.m, 1);
+    assert.strictEqual(account.n, 1);
+  });
+
+  it('should fail to create duplicate account', async () => {
+    const wallet = await wdb.create();
+    const name = 'foo';
+
+    await wallet.createAccount({ name });
+
+    let err;
+    try {
+      await wallet.createAccount({ name });
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert.strictEqual(err.message, 'Account already exists.');
+  });
+
   it('should fill tx with account 1', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
@@ -795,16 +854,16 @@ describe('Wallet', function() {
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(account.receive.getAddress(), 5460);
-    t1.addOutput(account.receive.getAddress(), 5460);
-    t1.addOutput(account.receive.getAddress(), 5460);
-    t1.addOutput(account.receive.getAddress(), 5460);
+    t1.addOutput(account.receiveAddress(), 5460);
+    t1.addOutput(account.receiveAddress(), 5460);
+    t1.addOutput(account.receiveAddress(), 5460);
+    t1.addOutput(account.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
     // Create new transaction
     const t2 = new MTX();
-    t2.addOutput(bob.getAddress(), 5460);
+    t2.addOutput(await bob.receiveAddress(), 5460);
 
     await alice.fund(t2, {
       rate: 10000,
@@ -821,7 +880,7 @@ describe('Wallet', function() {
 
     // Create new transaction
     const t3 = new MTX();
-    t3.addOutput(bob.getAddress(), 15000);
+    t3.addOutput(await bob.receiveAddress(), 15000);
 
     let err;
     try {
@@ -854,27 +913,23 @@ describe('Wallet', function() {
     const account = await wallet.getAccount('foo');
     assert.strictEqual(account.name, 'foo');
     assert.strictEqual(account.accountIndex, 1);
-    assert.strictEqual(wallet.account.accountIndex, 0);
 
-    assert(!account.receive.getAddress().equals(
-      wallet.account.receive.getAddress()));
-
-    assert(wallet.getAddress().equals(wallet.account.receive.getAddress()));
+    assert(!account.receiveAddress().equals(await wallet.receiveAddress()));
 
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(wallet.getAddress(), 5460);
-    t1.addOutput(wallet.getAddress(), 5460);
-    t1.addOutput(wallet.getAddress(), 5460);
-    t1.addOutput(account.receive.getAddress(), 5460);
+    t1.addOutput(await wallet.receiveAddress(), 5460);
+    t1.addOutput(await wallet.receiveAddress(), 5460);
+    t1.addOutput(await wallet.receiveAddress(), 5460);
+    t1.addOutput(account.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
     // Should fill from `foo` and fail
     const t2 = new MTX();
 
-    t2.addOutput(wallet.getAddress(), 5460);
+    t2.addOutput(await wallet.receiveAddress(), 5460);
 
     let err;
     try {
@@ -891,7 +946,7 @@ describe('Wallet', function() {
 
     // Should fill from whole wallet and succeed
     const t3 = new MTX();
-    t3.addOutput(wallet.getAddress(), 5460);
+    t3.addOutput(await wallet.receiveAddress(), 5460);
 
     await wallet.fund(t3, {
       rate: 10000,
@@ -901,15 +956,15 @@ describe('Wallet', function() {
     // Coinbase
     const t4 = new MTX();
     t4.addInput(dummyInput());
-    t4.addOutput(account.receive.getAddress(), 5460);
-    t4.addOutput(account.receive.getAddress(), 5460);
-    t4.addOutput(account.receive.getAddress(), 5460);
+    t4.addOutput(await wallet.receiveAddress('foo'), 5460);
+    t4.addOutput(await wallet.receiveAddress('foo'), 5460);
+    t4.addOutput(await wallet.receiveAddress('foo'), 5460);
 
     await wdb.addTX(t4.toTX());
 
     // Should fill from `foo` and succeed
     const t5 = new MTX();
-    t5.addOutput(wallet.getAddress(), 5460);
+    t5.addOutput(await wallet.receiveAddress(), 5460);
 
     await wallet.fund(t5, {
       rate: 10000,
@@ -927,6 +982,7 @@ describe('Wallet', function() {
         passphrase: 'foo'
       });
       await wallet.destroy();
+      wdb.unregister(wallet);
     }
 
     const wallet = await wdb.get('foobar');
@@ -954,16 +1010,16 @@ describe('Wallet', function() {
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(wallet.getAddress(), 5460);
-    t1.addOutput(wallet.getAddress(), 5460);
-    t1.addOutput(wallet.getAddress(), 5460);
-    t1.addOutput(wallet.getAddress(), 5460);
+    t1.addOutput(await wallet.receiveAddress(), 5460);
+    t1.addOutput(await wallet.receiveAddress(), 5460);
+    t1.addOutput(await wallet.receiveAddress(), 5460);
+    t1.addOutput(await wallet.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
     // Create new transaction
     const t2 = new MTX();
-    t2.addOutput(wallet.getAddress(), 5460);
+    t2.addOutput(await wallet.receiveAddress(), 5460);
 
     await wallet.fund(t2, {
       rate: 10000,
@@ -993,16 +1049,16 @@ describe('Wallet', function() {
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
     // Create new transaction
     const t2 = new MTX();
-    t2.addOutput(bob.getAddress(), 21840);
+    t2.addOutput(await bob.receiveAddress(), 21840);
 
     await alice.fund(t2, {
       rate: 10000,
@@ -1026,10 +1082,10 @@ describe('Wallet', function() {
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
@@ -1037,7 +1093,7 @@ describe('Wallet', function() {
       subtractFee: true,
       rate: 10000,
       round: true,
-      outputs: [{ address: bob.getAddress(), value: 21840 }]
+      outputs: [{ address: await bob.receiveAddress(), value: 21840 }]
     };
 
     // Create new transaction
@@ -1058,24 +1114,22 @@ describe('Wallet', function() {
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
-    t1.addOutput(alice.getAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
 
     await wdb.addTX(t1.toTX());
 
     // Coinbase
     const t2 = new MTX();
     t2.addInput(dummyInput());
-    t2.addOutput(alice.getAddress(), 5460);
-    t2.addOutput(alice.getAddress(), 5460);
-    t2.addOutput(alice.getAddress(), 5460);
-    t2.addOutput(alice.getAddress(), 5460);
+    t2.addOutput(await alice.receiveAddress(), 5460);
+    t2.addOutput(await alice.receiveAddress(), 5460);
+    t2.addOutput(await alice.receiveAddress(), 5460);
+    t2.addOutput(await alice.receiveAddress(), 5460);
 
-    const block = nextBlock();
-
-    await wdb.addBlock(block, [t2.toTX()]);
+    await wdb.addBlock(nextBlock(wdb), [t2.toTX()]);
 
     {
       const coins = await alice.getSmartCoins();
@@ -1083,7 +1137,7 @@ describe('Wallet', function() {
 
       for (let i = 0; i < coins.length; i++) {
         const coin = coins[i];
-        assert.strictEqual(coin.height, block.height);
+        assert.strictEqual(coin.height, wdb.state.height);
       }
     }
 
@@ -1092,7 +1146,7 @@ describe('Wallet', function() {
       subtractFee: true,
       rate: 1000,
       depth: 1,
-      outputs: [{ address: bob.getAddress(), value: 1461 }]
+      outputs: [{ address: await bob.receiveAddress(), value: 1461 }]
     });
 
     const coins = await alice.getSmartCoins();
@@ -1110,7 +1164,7 @@ describe('Wallet', function() {
           assert(coin.value < 5460);
           found = true;
         } else {
-          assert.strictEqual(coin.height, block.height);
+          assert.strictEqual(coin.height, wdb.state.height);
         }
         total += coin.value;
       }
@@ -1124,7 +1178,7 @@ describe('Wallet', function() {
       smart: true,
       rate: 10000,
       outputs: [{
-        address: bob.getAddress(),
+        address: await bob.receiveAddress(),
         value: total
       }]
     };
@@ -1142,7 +1196,7 @@ describe('Wallet', function() {
           assert(coin.value < 5460);
           found = true;
         } else {
-          assert.strictEqual(coin.height, block.height);
+          assert.strictEqual(coin.height, wdb.state.height);
         }
       }
 
@@ -1156,7 +1210,7 @@ describe('Wallet', function() {
 
   it('should get range of txs', async () => {
     const wallet = currentWallet;
-    const txs = await wallet.getRange({
+    const txs = await wallet.getRange(null, {
       start: util.now() - 1000
     });
     assert.strictEqual(txs.length, 2);
@@ -1225,7 +1279,7 @@ describe('Wallet', function() {
       rate: 10000,
       round: true,
       outputs: [{
-        address: wallet.getAddress(),
+        address: await wallet.receiveAddress(),
         value: 7000
       }]
     };
@@ -1284,7 +1338,7 @@ describe('Wallet', function() {
     const details = await wallet.toDetails(txs);
 
     assert(details.some((tx) => {
-      return tx.toJSON().outputs[0].path.name === 'foo';
+      return tx.toJSON(wdb.network).outputs[0].path.name === 'foo';
     }));
   });
 
@@ -1299,7 +1353,8 @@ describe('Wallet', function() {
 
     const details = await wallet.toDetails(txs);
 
-    assert.strictEqual(details[0].toJSON().id, 'test');
+    assert(details.length > 0);
+    assert.strictEqual(wallet.id, 'test');
   });
 
   it('should change passphrase with encrypted imports', async () => {
@@ -1343,12 +1398,7 @@ describe('Wallet', function() {
   });
 
   it('should recover from a missed tx', async () => {
-    const wdb = new WalletDB({
-      name: 'wallet-test',
-      db: 'memory',
-      verify: false
-    });
-
+    const wdb = new WalletDB({ workers });
     await wdb.open();
 
     const alice = await wdb.create({
@@ -1359,15 +1409,14 @@ describe('Wallet', function() {
       master: KEY1
     });
 
-    const addr = alice.getAddress();
+    const addr = await alice.receiveAddress();
 
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
     t1.addOutput(addr, 50000);
 
-    await alice.add(t1.toTX());
-    await bob.add(t1.toTX());
+    await wdb.addTX(t1.toTX());
 
     // Bob misses this tx!
     const t2 = new MTX();
@@ -1393,27 +1442,24 @@ describe('Wallet', function() {
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 50000);
 
-    await alice.add(t3.toTX());
-    await bob.add(t3.toTX());
+    await wdb.addTX(t3.toTX());
 
     assert.strictEqual((await alice.getBalance()).unconfirmed, 30000);
 
+    // t1 gets confirmed.
+    await wdb.addBlock(nextBlock(wdb), [t1.toTX()]);
+
     // Bob sees t2 on the chain.
-    await bob.add(t2.toTX());
+    await wdb.addBlock(nextBlock(wdb), [t2.toTX()]);
 
     // Bob sees t3 on the chain.
-    await bob.add(t3.toTX());
+    await wdb.addBlock(nextBlock(wdb), [t3.toTX()]);
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
   });
 
   it('should recover from a missed tx and double spend', async () => {
-    const wdb = new WalletDB({
-      name: 'wallet-test',
-      db: 'memory',
-      verify: false
-    });
-
+    const wdb = new WalletDB({ workers });
     await wdb.open();
 
     const alice = await wdb.create({
@@ -1424,15 +1470,14 @@ describe('Wallet', function() {
       master: KEY1
     });
 
-    const addr = alice.getAddress();
+    const addr = await alice.receiveAddress();
 
     // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
     t1.addOutput(addr, 50000);
 
-    await alice.add(t1.toTX());
-    await bob.add(t1.toTX());
+    await wdb.addTX(t1.toTX());
 
     // Bob misses this tx!
     const t2a = new MTX();
@@ -1468,18 +1513,29 @@ describe('Wallet', function() {
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 20000);
 
-    await alice.add(t3.toTX());
-    await bob.add(t3.toTX());
+    await wdb.addTX(t3.toTX());
 
     assert.strictEqual((await alice.getBalance()).unconfirmed, 30000);
 
+    // t1 gets confirmed.
+    await wdb.addBlock(nextBlock(wdb), [t1.toTX()]);
+
     // Bob sees t2a on the chain.
-    await bob.add(t2a.toTX());
+    await wdb.addBlock(nextBlock(wdb), [t2a.toTX()]);
 
     // Bob sees t3 on the chain.
-    await bob.add(t3.toTX());
+    await wdb.addBlock(nextBlock(wdb), [t3.toTX()]);
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
+  });
+
+  it('should remove a wallet', async () => {
+    await wdb.create({
+      id: 'alice100'
+    });
+    assert(await wdb.get('alice100'));
+    await wdb.remove('alice100');
+    assert(!await wdb.get('alice100'));
   });
 
   it('should cleanup', () => {

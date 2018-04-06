@@ -3,9 +3,9 @@
 
 'use strict';
 
-const Input = require('../lib/primitives/input');
+const bio = require('bufio');
 const util = require('../lib/utils/util');
-const BufferReader = require('../lib/utils/reader');
+const Input = require('../lib/primitives/input');
 const assert = require('./util/assert');
 const common = require('./util/common');
 
@@ -37,7 +37,7 @@ describe('Input', function() {
   it('should return same raw on fromReader', () => {
     [input1, input2, input3].forEach((rawinput) => {
       const raw = rawinput.slice();
-      const input = Input.fromReader(new BufferReader(raw));
+      const input = Input.fromReader(bio.read(raw));
 
       assert.bufferEqual(raw, input.toRaw());
     });
@@ -51,7 +51,7 @@ describe('Input', function() {
     const input = Input.fromRaw(raw);
 
     const type = input.getType();
-    const addr = input.getAddress().toBase58();
+    const addr = input.getAddress().toBase58('main');
     const prevout = input.prevout.toRaw();
 
     assert.strictEqual(type, 'pubkeyhash');
@@ -100,7 +100,7 @@ describe('Input', function() {
 
     const type = input.getType();
     const subtype = input.getSubtype();
-    const addr = input.getAddress().toBase58();
+    const addr = input.getAddress().toBase58('main');
     const prevout = input.prevout.toRaw();
     const redeem = input.getRedeem().toRaw();
 

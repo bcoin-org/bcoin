@@ -9,8 +9,8 @@ const Witness = require('../lib/script/witness');
 const Stack = require('../lib/script/stack');
 const Opcode = require('../lib/script/opcode');
 const TX = require('../lib/primitives/tx');
-const util = require('../lib/utils/util');
-const encoding = require('../lib/utils/encoding');
+const consensus = require('../lib/protocol/consensus');
+const {fromFloat} = require('../lib/utils/fixed');
 
 const scripts = require('./data/script-tests.json');
 
@@ -39,7 +39,7 @@ function parseScriptTest(data) {
 
   let value = 0;
   if (witArr.length > 0)
-    value = util.fromFloat(witArr.pop(), 8);
+    value = fromFloat(witArr.pop(), 8);
 
   const witness = Witness.fromString(witArr);
   const input = Script.fromString(inpHex);
@@ -286,7 +286,7 @@ describe('Script', function() {
           version: 1,
           inputs: [{
             prevout: {
-              hash: encoding.NULL_HASH,
+              hash: consensus.NULL_HASH,
               index: 0xffffffff
             },
             script: [

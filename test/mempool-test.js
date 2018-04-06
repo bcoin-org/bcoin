@@ -4,8 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const encoding = require('../lib/utils/encoding');
-const random = require('../lib/crypto/random');
+const random = require('bcrypto/lib/random');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
 const WorkerPool = require('../lib/workers/workerpool');
@@ -20,18 +19,21 @@ const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
 const ALL = Script.hashType.ALL;
 
+const ONE_HASH = Buffer.alloc(32, 0x00);
+ONE_HASH[0] = 0x01;
+
 const workers = new WorkerPool({
   enabled: true
 });
 
 const chain = new Chain({
-  db: 'memory',
+  memory: true,
   workers
 });
 
 const mempool = new Mempool({
   chain,
-  db: 'memory',
+  memory: true,
   workers
 });
 
@@ -64,6 +66,8 @@ describe('Mempool', function() {
   this.timeout(5000);
 
   it('should open mempool', async () => {
+    await workers.open();
+    await chain.open();
     await mempool.open();
     chain.state.flags |= Script.flags.VERIFY_WITNESS;
   });
@@ -77,7 +81,7 @@ describe('Mempool', function() {
 
     const script = Script.fromPubkey(key.publicKey);
 
-    t1.addCoin(dummyInput(script, encoding.ONE_HASH.toString('hex')));
+    t1.addCoin(dummyInput(script, ONE_HASH.toString('hex')));
 
     const sig = t1.signature(0, script, 70000, key.privateKey, ALL, 0);
 
@@ -127,7 +131,7 @@ describe('Mempool', function() {
 
     // Fake signature
     const input = fake.inputs[0];
-    input.script.setData(0, encoding.ZERO_SIG);
+    input.script.setData(0, Buffer.alloc(73, 0x00));
     input.script.compile();
     // balance: 11000
 
@@ -349,5 +353,7 @@ describe('Mempool', function() {
 
   it('should destroy mempool', async () => {
     await mempool.close();
+    await chain.close();
+    await workers.close();
   });
 });

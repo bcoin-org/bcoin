@@ -3,14 +3,13 @@
 
 'use strict';
 
+const bio = require('bufio');
 const assert = require('./util/assert');
 const Output = require('../lib/primitives/output');
 const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const CoinView = require('../lib/coins/coinview');
 const CoinEntry = require('../lib/coins/coinentry');
-const StaticWriter = require('../lib/utils/staticwriter');
-const BufferReader = require('../lib/utils/reader');
 const common = require('./util/common');
 
 const tx1 = common.readTX('tx1');
@@ -88,9 +87,9 @@ describe('Coins', function() {
     const [tx, view] = tx1.getTX();
 
     const size = view.getSize(tx);
-    const bw = new StaticWriter(size);
+    const bw = bio.write(size);
     const raw = view.toWriter(bw, tx).render();
-    const br = new BufferReader(raw);
+    const br = bio.read(raw);
     const res = CoinView.fromReader(br, tx);
 
     const prev = tx.inputs[0].prevout;

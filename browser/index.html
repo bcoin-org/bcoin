@@ -1,106 +1,110 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>bcoin</title>
-<style>
-  html {
-    height: 100%;
-  }
-  body {
-    height: 90%;
-    padding: 20px;
-  }
-  h1 {
-    font: 3em monospace;
-    margin: 10px;
-    padding: 0;
-  }
-  small {
-    margin: 10px;
-    width: 50%;
-    display: block;
-  }
-  .log {
-    padding: 5px;
-    margin-left: 10px;
-    overflow-y: scroll;
-    border: 1px solid black;
-    white-space: pre-wrap;
-    height: 40%;
-    width: 40%;
-    font: 1em monospace;
-    margin-top: 10px;
-  }
-  .wallet {
-    padding: 5px;
-    margin-left: 5px;
-    margin-top: 10px;
-    font: 1em monospace;
-  }
-  .rpc, .send {
-    padding: 5px;
-    margin-left: 5px;
-    margin-top: 10px;
-    font: 1em monospace;
-  }
-  #newaddr{
-    display: block;
-    margin-left: 10px;
-  }
-  .tx {
-    float: right;
-    font: 1em monospace;
-    padding: 5px;
-    border: 1px solid black;
-    margin-top: 10px;
-  }
-  a {
-    text-decoration: none;
-  }
-  .floating {
-    font: 1em monospace;
-    white-space: pre-wrap;
-    position: absolute;
-    display: none;
-    padding: 5px;
-    background: white;
-    border: 1px solid black;
-    width: 40%;
-    height: 30%;
-    top: 50%;
-    left: 50%;
-    margin-left: -20%;
-    margin-top: -15%;
-    overflow-y: scroll;
-  }
-</style>
-<script src="/bcoin.js"></script>
-</head>
-<body>
-<h1>Bcoin, the browser full node</h1>
-<small>Welcome. Your machine is currently validating the blockchain.
-The blocks and wallet are stored on your local disk with indexed DB. You are
-connecting to the actual bitcoin P2P network via a websocket-&gt;tcp proxy.
-Enjoy. (See the <a href="https://github.com/bcoin-org/bcoin" target="_blank">bcoin repo</a> for
-more bitcoin magic).</small>
-<div class="tx">
-  <div>Chain State: <span id="state"></span></div>
-  <div>Last 20 Blocks/TXs:</div>
-  <div id="tx"></div>
-</div>
-<div id="log" class="log"></div>
-<form id="rpc" class="rpc" action="#">
-  <input type="text" name="cmd" id="cmd"
-    placeholder="RPC command (e.g. getblockchaininfo)">
-</form>
-<div id="wallet" class="wallet"></div>
-<form id="send" class="send" action="#">
-  <input type="text" name="address" id="address" placeholder="Address">
-  <input type="text" name="amount" id="amount" placeholder="Amount (BTC)">
-  <input type="submit" value="Send">
-</form>
-<input type="button" id="newaddr" value="New Address">
-<div id="floating" class="floating"></div>
-<script src="/index.js"></script>
-</body>
+<html lang="en">
+  <head>
+    <title>bcoin</title>
+    <meta charset="utf-8">
+    <style>
+      html {
+        height: 100%;
+      }
+      body {
+        height: 90%;
+        padding: 20px;
+      }
+      h1 {
+        font: 3em monospace;
+        margin: 10px;
+        padding: 0;
+      }
+      small {
+        margin: 10px;
+        width: 50%;
+        display: block;
+      }
+      .log {
+        padding: 5px;
+        margin-left: 10px;
+        overflow-y: scroll;
+        border: 1px solid black;
+        white-space: pre-wrap;
+        height: 40%;
+        width: 40%;
+        font: 1em monospace;
+        margin-top: 10px;
+      }
+      .wallet {
+        padding: 5px;
+        margin-left: 5px;
+        margin-top: 10px;
+        font: 1em monospace;
+      }
+      .rpc, .send {
+        padding: 5px;
+        margin-left: 5px;
+        margin-top: 10px;
+        font: 1em monospace;
+      }
+      #newaddr{
+        display: block;
+        margin-left: 10px;
+      }
+      .tx {
+        float: right;
+        font: 1em monospace;
+        padding: 5px;
+        border: 1px solid black;
+        margin-top: 10px;
+      }
+      a {
+        text-decoration: none;
+      }
+      .floating {
+        font: 1em monospace;
+        white-space: pre-wrap;
+        position: absolute;
+        display: none;
+        padding: 5px;
+        background: white;
+        border: 1px solid black;
+        width: 40%;
+        height: 30%;
+        top: 50%;
+        left: 50%;
+        margin-left: -20%;
+        margin-top: -15%;
+        overflow-y: scroll;
+      }
+    </style>
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <h1>Bcoin, the browser full node</h1>
+    <small>
+      Welcome. Your machine is currently validating the blockchain. The blocks
+      and wallet are stored on your local disk with indexed DB. You are
+      connecting to the actual bitcoin P2P network via a websocket-&gt;tcp
+      proxy. Enjoy. (See the
+      <a href="https://github.com/bcoin-org/bcoin"
+        target="_blank">bcoin repo</a>
+      for more bitcoin magic).
+    </small>
+    <div class="tx">
+      <div>Chain State: <span id="state"></span></div>
+      <div>Last 20 Blocks/TXs:</div>
+      <div id="tx"></div>
+    </div>
+    <div id="log" class="log"></div>
+    <form id="rpc" class="rpc" action="#">
+      <input type="text" name="cmd" id="cmd"
+        placeholder="RPC command (e.g. getblockchaininfo)">
+    </form>
+    <div id="wallet" class="wallet"></div>
+    <form id="send" class="send" action="#">
+      <input type="text" name="address" id="address" placeholder="Address">
+      <input type="text" name="amount" id="amount" placeholder="Amount (BTC)">
+      <input type="submit" value="Send">
+    </form>
+    <input type="button" id="newaddr" value="New Address">
+    <div id="floating" class="floating"></div>
+  </body>
 </html>
