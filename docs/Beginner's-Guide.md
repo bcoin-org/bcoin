@@ -38,6 +38,9 @@ $ git tag -v v1.0.0-alpha # verify signature
 $ git checkout v1.0.0-alpha
 $ npm install -g --production
 ```
+### Installing via Docker
+
+Check [bcoin-docker](https://github.com/bcoin-org/bcoin-docker)
 
 ### Troubleshooting
 
