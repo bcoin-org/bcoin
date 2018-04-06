@@ -65,6 +65,7 @@
     "webpack": "^4.1.1"
   },
   "main": "./lib/bcoin.js",
+  "browser": "./lib/bcoin-browser.js",
   "bin": {
     "bcoin": "./bin/bcoin",
     "bcoin-node": "./bin/node",
