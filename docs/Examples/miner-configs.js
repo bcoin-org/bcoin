@@ -1,23 +1,19 @@
 'use strict';
 
 const bcoin = require('../..');
-const KeyRing = bcoin.keyring;
-const WorkerPool = bcoin.workerpool;
-const Chain = bcoin.chain;
-const Miner = bcoin.miner;
 
-const key = KeyRing.generate('regtest');
+const key = bcoin.wallet.WalletKey.generate('regtest');
 
-const workers = new WorkerPool({
+const workers = new bcoin.WorkerPool({
   enabled: true
 });
 
-const chain = new Chain({
+const chain = new bcoin.Chain({
   network: 'regtest',
   workers: workers
 });
 
-const miner = new Miner({
+const miner = new bcoin.Miner({
   chain: chain,
   addresses: [key.getAddress()],
   coinbaseFlags: 'my-miner',
