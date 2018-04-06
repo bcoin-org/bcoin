@@ -2,7 +2,7 @@
 const bcoin = require('../..').set('main');
 const walletPlugin = bcoin.wallet.plugin;
 
-const node = bcoin.fullnode({
+const node = new bcoin.FullNode({
   checkpoints: true,
   // Primary wallet passphrase
   passsphrase: 'node',
@@ -32,12 +32,11 @@ const newReceiving = 'AddressHere';
     type: 'pubkeyhash'
   };
 
-  const walletdb = node.require('walletdb');
+  const walletdb = node.require('walletdb').wdb;
 
-  await walletdb.open();
   const wallet = await walletdb.create(options);
 
-  console.log('Created wallet with address: %s', wallet.getAddress('base58'));
+  console.log('Created wallet with address: %s', wallet.receiveAddress());
 
   await node.connect();
 

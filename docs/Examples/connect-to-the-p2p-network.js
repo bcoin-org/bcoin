@@ -1,29 +1,37 @@
 'use strict';
 const bcoin = require('../..').set('main');
-const Chain = bcoin.chain;
-const Mempool = bcoin.mempool;
-const Pool = bcoin.pool;
 
-// Create a blockchain and store it in leveldb.
-// `db` also accepts `rocksdb` and `lmdb`.
-const prefix = process.env.HOME + '/my-bcoin-environment';
-const chain = new Chain({
-  db: 'leveldb',
-  location: prefix + '/chain',
-  network: 'main'
+const Logger = require('blgr');
+
+// Setup logger to see what's Bcoin doing.
+const logger = new Logger({
+  level: 'debug'
 });
 
-const mempool = new Mempool({ chain: chain });
+// Create a blockchain and store it in memory.
+const chain = new bcoin.Chain({
+  memory: true,
+  network: 'main',
+  logger: logger
+});
+
+const mempool = new bcoin.Mempool({
+  chain: chain,
+  logger: logger
+});
 
 // Create a network pool of peers with a limit of 8 peers.
-const pool = new Pool({
+const pool = new bcoin.Pool({
   chain: chain,
   mempool: mempool,
-  maxPeers: 8
+  maxPeers: 8,
+  logger: logger
 });
 
-// Open the pool (implicitly opens mempool and chain).
 (async function() {
+  await logger.open();
+  await chain.open();
+
   await pool.open();
 
   // Connect, start retrieving and relaying txs
@@ -52,24 +60,29 @@ const pool = new Pool({
 // Start up a testnet sync in-memory
 // while we're at it (because we can).
 
-const tchain = new Chain({
+const tchain = new bcoin.Chain({
+  memory: true,
   network: 'testnet',
-  db: 'memory'
+  logger: logger
 });
 
-const tmempool = new Mempool({
+const tmempool = new bcoin.Mempool({
   network: 'testnet',
-  chain: tchain
+  chain: tchain,
+  logger: logger
 });
 
-const tpool = new Pool({
+const tpool = new bcoin.Pool({
   network: 'testnet',
   chain: tchain,
   mempool: tmempool,
-  size: 8
+  size: 8,
+  logger: logger
 });
 
 (async function() {
+  await tchain.open();
+
   await tpool.open();
 
   // Connect, start retrieving and relaying txs
