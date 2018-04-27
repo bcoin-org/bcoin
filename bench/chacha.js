@@ -42,7 +42,7 @@ poly.init(key);
   for (let i = 0; i < 1000000; i++) {
     poly.init(key);
     poly.update(data);
-    poly.finish();
+    poly.final();
   }
   end(1000000 * 32 / 1024);
 }
