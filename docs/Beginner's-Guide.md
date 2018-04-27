@@ -42,6 +42,26 @@ $ npm install -g --production
 
 Check [bcoin-docker](https://github.com/bcoin-org/bcoin-docker)
 
+### Installing on Windows
+
+Install OpenSSL v1.0.2L 64-Bit:
+
+https://slproweb.com/download/Win64OpenSSL-1_0_2L.exe
+
+As Administrator, open `cmd.exe` and run:
+
+```console
+C:\Users\bcoin\bcoin>npm install --global --production windows-build-tool
+```
+
+to install `VCBuild.exe` and `Python 2.7.x` both required by `node-gyp`
+for building native modules.
+
+Then continue [Installing via Git](#installing-via-git)
+
+Note that you need a shell that supports bash scripts, like Git Bash to launch
+bcoin.
+
 ### Troubleshooting
 
 If the build fails compilation for `bcoin-native` or `secp256k1-node` __validation will be slow__ (a block verification which should take 1 second on consumer grade hardware may take up to 15 seconds). Bcoin will throw a warning on boot if it detects a build failure. If you run into this issue, please post an issue on the repo.
