@@ -37,7 +37,7 @@ const walletdb = new WalletDB({
     end(1000);
 
     for (const addr of result)
-      addrs.push(addr.receive.getAddress());
+      addrs.push(addr.receiveAddress());
   }
 
   // Keys
