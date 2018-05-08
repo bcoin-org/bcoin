@@ -8,7 +8,7 @@ const assert = require('assert');
 const SPVNode = require('../lib/node/spvnode');
 const Outpoint = require('../lib/primitives/outpoint');
 
-const node = SPVNode({
+const node = new SPVNode({
   config: true,
   argv: true,
   env: true,
