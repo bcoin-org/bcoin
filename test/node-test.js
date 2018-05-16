@@ -12,6 +12,8 @@ const FullNode = require('../lib/node/fullnode');
 const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const Address = require('../lib/primitives/address');
+const KeyRing = require('../lib/primitives/keyring');
+const sha256 = require('bcrypto/lib/sha256');
 
 const node = new FullNode({
   memory: true,
@@ -699,6 +701,41 @@ describe('Node', function() {
     assert.strictEqual(result.transactions[0].hash, tx2.txid());
     assert.strictEqual(result.transactions[1].hash, tx1.txid());
     assert.strictEqual(result.coinbasevalue, 125e7 + fees);
+  });
+
+  describe('message signature', function () {
+    const msg = 'Message To Sign';
+    const key = sha256.digest(Buffer.from('private-key'));
+    const ring = KeyRing.fromKey(key, true);
+    const addr = ring.getAddress('base58', node.network);
+    const signature =
+      'H87wcBTu5HXBjBUwpsu+2U9q/0oVqPROSSG0kXaQEK4J' +
+      'AoZAUUtVagvd3AHfX7TS2bHEzDnbn7t/uiIcFeZznlI=';
+
+    it('should sign a message', async () => {
+      const json = await node.rpc.call({
+        method: 'signmessagewithprivkey',
+        params: [ring.toSecret(node.network), msg]
+      }, {});
+
+      assert.strictEqual(signature, json.result);
+    });
+
+    it('should verify message signature', async () => {
+      const json = await node.rpc.call({
+        method: 'verifymessage',
+        params: [addr, signature, msg]
+      }, {});
+      assert(true === json.result);
+    });
+
+    it('should reject invalid message signature', async () => {
+      const json = await node.rpc.call({
+        method: 'verifymessage',
+        params: [addr, signature.replace('g', 'G'), msg]
+      }, {});
+      assert(false === json.result);
+    });
   });
 
   it('should cleanup', async () => {
