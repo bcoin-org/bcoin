@@ -5,3 +5,4 @@ browser/bcoin*
 package-lock.json
 npm-debug.log
 coverage/
+*~
