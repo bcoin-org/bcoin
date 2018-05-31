@@ -36,6 +36,7 @@ Will create a datadir of `~/.bcoin_spv`, containing a chain database, wallet dat
 - `db`: Which database backend to use (default=leveldb).
 - `max-files`: Max open files for leveldb. Higher generally means more disk page cache benefits, but also more memory usage (default: 64).
 - `cache-size`: Size (in MB) of leveldb cache and write buffer (default: 32mb).
+- `spv`: Enable Simplified Payments Verification (SPV) mode
 
 ## Logger Options
 
