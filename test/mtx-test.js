@@ -15,7 +15,7 @@ const network = 'main';
 
 const alice = WalletKey.generate(compressed, network);
 
-function dummyCoins(num = 1000, value = 500) {
+function dummyCoins(num = 500, value = 500) {
   let count = 0;
   const coins = [];
 
@@ -68,8 +68,8 @@ describe('CoinSelector', () => {
     );
     const size = await selector.tx.estimateSize();
     assert(
-      size > policy.MAX_TX_WEIGHT,
-      `Selector's tx size should have exceeded weight limit
+      size > policy.MAX_TX_SIZE,
+      `Selector's tx size should have exceeded size limit
        as indication that tx is filled`
     );
   });
@@ -106,8 +106,8 @@ describe('MTX', () => {
 
     mtx.addOutput({ value: 5000, address: alice.getAddress('string', network)});
 
-    const smallCoin = { count: 1000, value: 500 };
-    const largeCoin = { count: 4000, value: 1000 };
+    const smallCoin = { count: 500, value: 500 };
+    const largeCoin = { count: 2000, value: 1000 };
 
     let coins = dummyCoins(smallCoin.count, smallCoin.value);
     const largerCoins = dummyCoins(largeCoin.count, largeCoin.value);
@@ -124,9 +124,9 @@ describe('MTX', () => {
       'MTX filled with too many coins'
     );
 
-    const size = await mtx.estimateSize();
+    const weight = await mtx.getWeight();
     assert(
-      size <= policy.MAX_TX_WEIGHT,
+      weight <= policy.MAX_TX_WEIGHT,
       'Filled mtx should not exceed policy weight'
     );
 

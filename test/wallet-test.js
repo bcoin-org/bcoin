@@ -18,6 +18,7 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
+const policy = require('../lib/protocol/policy');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -314,6 +315,46 @@ describe('Wallet', function() {
     assert(tx.toRaw().length <= maxSize);
     assert(tx.verify());
   });
+
+  it('should sweep and send coins', async () => {
+    const fullTxCount = 3;
+    const wallet = await wdb.create();
+    const txs = [];
+
+    // create dummy txs that send as many small utxos
+    // to our wallet as we can fit
+    for (let i = 1; i <= fullTxCount; i++) {
+      const funding = new MTX();
+      funding.addInput(dummyInput());
+      while(funding.getWeight() < policy.MAX_TX_WEIGHT) {
+        const value = 1000 * i;
+        funding.addOutput(await wallet.receiveAddress(), value);
+      }
+      // knock off last output that put tx over limit
+      funding.outputs.shift();
+      txs.push(funding.toTX());
+    }
+
+    await wdb.addBlock(nextBlock(wdb), txs);
+    // confirm wallet is fully funded
+    const coins = await wallet.getCoins();
+    assert(coins.length);
+
+    // set a threshold coin value where the largest coins
+    // won't get swept
+    const threshold = 1000 * fullTxCount;
+    await wallet.sweep({ rate: 500, threshold: threshold });
+    const newCoins = await wallet.getCoins();
+
+    assert(
+      newCoins.length < coins.length,
+      'wallet should have fewer coins after sweep'
+    );
+    assert(
+      newCoins[0].value >= threshold,
+      'Coins larger than threshold should not be swept'
+    );
+  }).timeout(10000);
 
   it('should handle missed txs', async () => {
     const alice = await wdb.create();
