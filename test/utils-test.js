@@ -3,7 +3,6 @@
 
 'use strict';
 
-const {U64, I64} = require('n64');
 const Validator = require('bval');
 const {base58} = require('bstring');
 const {encoding} = require('bufio');
@@ -30,30 +29,6 @@ const base58Tests = [
   ['ecac89cad93923c02321', 'EJDM8drfXA6uyA'],
   ['10c8511e', 'Rt5zm'],
   ['00000000000000000000', '1111111111']
-];
-
-const unsigned = [
-  new U64('ffeeffee', 16),
-  new U64('001fffeeffeeffee', 16),
-  new U64('eeffeeff', 16),
-  new U64('001feeffeeffeeff', 16),
-  new U64(0),
-  new U64(1)
-];
-
-const signed = [
-  new I64('ffeeffee', 16),
-  new I64('001fffeeffeeffee', 16),
-  new I64('eeffeeff', 16),
-  new I64('001feeffeeffeeff', 16),
-  new I64(0),
-  new I64(1),
-  new I64('ffeeffee', 16).ineg(),
-  new I64('001fffeeffeeffee', 16).ineg(),
-  new I64('eeffeeff', 16).ineg(),
-  new I64('001feeffeeffeeff', 16).ineg(),
-  new I64(0).ineg(),
-  new I64(1).ineg()
 ];
 
 describe('Utils', function() {
@@ -180,61 +155,6 @@ describe('Utils', function() {
     assert.strictEqual(encoding.readVarint2(b, 0).value, Math.pow(2, 32));
     assert.deepEqual(b, [0x8e, 0xfe, 0xfe, 0xff, 0x00]);
   });
-
-  for (const num of unsigned) {
-    const bits = num.bitLength();
-
-    it(`should write+read a ${bits} bit unsigned int`, () => {
-      const buf1 = Buffer.allocUnsafe(8);
-      const buf2 = Buffer.allocUnsafe(8);
-
-      encoding.writeU64N(buf1, num, 0);
-      encoding.writeU64(buf2, num.toNumber(), 0);
-      assert.bufferEqual(buf1, buf2);
-
-      const n1 = encoding.readU64N(buf1, 0);
-      const n2 = encoding.readU64(buf2, 0);
-
-      assert.strictEqual(n1.toNumber(), n2);
-    });
-  }
-
-  for (const num of signed) {
-    const bits = num.bitLength();
-    const sign = num.isNeg() ? 'negative' : 'positive';
-
-    it(`should write+read a ${bits} bit ${sign} int`, () => {
-      const buf1 = Buffer.allocUnsafe(8);
-      const buf2 = Buffer.allocUnsafe(8);
-
-      encoding.writeI64N(buf1, num, 0);
-      encoding.writeI64(buf2, num.toNumber(), 0);
-      assert.bufferEqual(buf1, buf2);
-
-      const n1 = encoding.readI64N(buf1, 0);
-      const n2 = encoding.readI64(buf2, 0);
-
-      assert.strictEqual(n1.toNumber(), n2);
-    });
-
-    it(`should write+read a ${bits} bit ${sign} int as unsigned`, () => {
-      const buf1 = Buffer.allocUnsafe(8);
-      const buf2 = Buffer.allocUnsafe(8);
-
-      encoding.writeU64N(buf1, num.toU64(), 0);
-      encoding.writeU64(buf2, num.toNumber(), 0);
-      assert.bufferEqual(buf1, buf2);
-
-      const n1 = encoding.readU64N(buf1, 0);
-
-      if (num.isNeg()) {
-        assert.throws(() => encoding.readU64(buf2, 0));
-      } else {
-        const n2 = encoding.readU64(buf2, 0);
-        assert.strictEqual(n1.toNumber(), n2);
-      }
-    });
-  }
 
   it('should validate integers 0 and 1 as booleans', () => {
     const validator = new Validator({
