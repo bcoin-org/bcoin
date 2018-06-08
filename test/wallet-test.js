@@ -319,6 +319,7 @@ describe('Wallet', function() {
   it('should sweep and send coins', async () => {
     const fullTxCount = 3;
     const wallet = await wdb.create();
+    const receiveSweep = await wdb.create();
     const txs = [];
 
     // create dummy txs that send as many small utxos
@@ -343,17 +344,37 @@ describe('Wallet', function() {
     // set a threshold coin value where the largest coins
     // won't get swept
     const threshold = 1000 * fullTxCount;
-    await wallet.sweep({ rate: 500, threshold: threshold });
-    const newCoins = await wallet.getCoins();
+    // generate some addresses to receive the sweep into
+    const addresses = [];
+    for (let i = 0; i <= fullTxCount; i++)
+      addresses.push(await receiveSweep.receiveAddress());
+
+    await wallet.sweep({ rate: 500, threshold, addresses });
+    const sweptCoins = await receiveSweep.getCoins();
+    const unsweptCoins = await wallet.getCoins();
 
     assert(
-      newCoins.length < coins.length,
-      'wallet should have fewer coins after sweep'
+      sweptCoins.length,
+      'Receiving addresses did not get swept funds'
     );
     assert(
-      newCoins[0].value >= threshold,
+      (sweptCoins.length + unsweptCoins.length) < coins.length,
+      `total coins in receiving wallet and original wallet should
+      be fewer than coin count before sweep`
+    );
+    assert(
+      sweptCoins[0].value >= threshold,
       'Coins larger than threshold should not be swept'
     );
+
+    // sweep whatever coins are left without threshold
+    // back to same wallet
+    await wallet.sweep({ rate: 500 });
+    const lastCoins = await wallet.getCoins();
+    assert(
+      lastCoins.length < unsweptCoins.length &&
+      lastCoins[0].value > unsweptCoins[0].value,
+      'Didn\'t sweep all coins');
   }).timeout(10000);
 
   it('should handle missed txs', async () => {
