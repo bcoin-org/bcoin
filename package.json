@@ -54,6 +54,7 @@
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.4",
     "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
     "browserify": "^16.2.2",
@@ -85,10 +86,10 @@
     "test-file": "mocha --reporter spec",
     "test-file-browser": "NODE_BACKEND=js mocha --reporter spec",
     "test-ci": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- --reporter spec test/*.js",
-    "webpack": "webpack --config webpack.browser.js",
-    "webpack-browser": "webpack --config webpack.browser.js",
-    "webpack-compat": "webpack --config webpack.compat.js",
-    "webpack-app": "webpack --config webpack.app.js"
+    "webpack": "webpack --mode production --config webpack.browser.js",
+    "webpack-browser": "webpack --mode production --config webpack.browser.js",
+    "webpack-compat": "webpack --mode production --config webpack.compat.js",
+    "webpack-app": "webpack --mode production --config webpack.app.js"
   },
   "browser": {
     "./lib/hd/nfkd": "./lib/hd/nfkd-compat.js",

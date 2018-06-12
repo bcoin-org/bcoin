@@ -20,7 +20,8 @@ module.exports = {
   },
   resolve: {
     modules: ['node_modules'],
-    extensions: ['-compat.js', '-browser.js', '.js', '.json']
+    extensions: ['-compat.js', '-browser.js', '.js', '.json'],
+    alias: require('bcrypto/compat')
   },
   module: {
     rules: [{
