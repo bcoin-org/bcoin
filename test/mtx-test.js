@@ -87,14 +87,11 @@ describe('CoinSelector', () => {
 
     const selector = new Selector(mtx, {
       fill: true,
-      selection: 'reverseValue',
       rate: 500,
       threshold
     });
 
     const selected = await selector.select(coins);
-    console.log('num selected coins:', selected.chosen.length);
-    console.log('coins at threshold:', coinsAtThreshold);
     assert(
       coins.length - selected.chosen.length === coinsAtThreshold,
       'Coins w/ value at threshold should not be selected'
