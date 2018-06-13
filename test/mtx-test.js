@@ -87,16 +87,34 @@ describe('CoinSelector', () => {
 
     const selector = new Selector(mtx, {
       fill: true,
-      select: 'value',
+      selection: 'reverseValue',
       rate: 500,
       threshold
     });
 
     const selected = await selector.select(coins);
+    console.log('num selected coins:', selected.chosen.length);
+    console.log('coins at threshold:', coinsAtThreshold);
     assert(
       coins.length - selected.chosen.length === coinsAtThreshold,
       'Coins w/ value at threshold should not be selected'
     );
+  });
+
+  it('should throw if threshold option but not reverseValue set', async () => {
+    let coins = dummyCoins();
+    const mtx = new MTX();
+    mtx.addOutput({ value: 0, address: alice.getAddress('string', network)});
+
+    let error;
+    try {
+      const selector = new Selector(mtx, { fill: true, threshold: 1000 });
+      await selector.select(coins);
+    } catch(e) {
+      error = e;
+    }
+
+    assert(error instanceof Error, 'Expected it to throw an error');
   });
 });
 
