@@ -11,37 +11,74 @@ const logger = new Logger({
 // Create chain for testnet, specify chain directory
 const chain = new bcoin.Chain({
   logger: logger,
-  network: 'testnet',
-  db: 'leveldb',
-  prefix: '/tmp/bcon-testnet',
-  indexTX: true,
-  indexAddress: true
+  memory: true,
+  network: 'testnet'
 });
 
-(async () => {
+const mempool = new bcoin.Mempool({ chain: chain });
+
+// Create a network pool of peers with a limit of 8 peers.
+const pool = new bcoin.Pool({
+  logger: logger,
+  chain: chain,
+  mempool: mempool,
+  maxPeers: 8
+});
+
+// Create a chain indexer which indexes tx by hash
+const indexer = new bcoin.TXIndexer({
+  logger: logger,
+  memory: true,
+  network: 'testnet',
+  chain: chain
+});
+
+// Open the chain, pool and indexer
+(async function() {
   await logger.open();
+
+  await pool.open();
+
+  // Connect, start retrieving and relaying txs
+  await pool.connect();
+
+  // Start the blockchain sync.
+  pool.startSync();
+
   await chain.open();
+
+  await indexer.open();
 
   console.log('Current height:', chain.height);
 
-  const entry = await chain.getEntry(50000);
-  console.log('Block at 50k:', entry);
+  // Watch the action
+  chain.on('block', (block) => {
+    console.log('block: %s', block.rhash());
+  });
 
-  // eslint-disable-next-line max-len
-  const txhash = '4dd628123dcde4f2fb3a8b8a18b806721b56007e32497ebe76cde598ce1652af';
-  const txmeta = await chain.db.getMeta(bcoin.util.revHex(txhash));
-  const tx = txmeta.tx;
-  const coinview = await chain.db.getSpentView(tx);
+  mempool.on('tx', (tx) => {
+    console.log('tx: %s', tx.rhash);
+  });
 
-  console.log(`Tx with hash ${txhash}:`, txmeta);
+  pool.on('tx', (tx) => {
+    console.log('tx: %s', tx.rhash);
+  });
+
+  await new Promise(r => setTimeout(r, 300));
+
+  await pool.stopSync();
+
+  const tip = await indexer.getTip();
+  const block = await chain.getBlock(tip.hash);
+  const meta = await indexer.getMeta(block.txs[0].hash());
+  const tx = meta.tx;
+  const coinview = await chain.db.getSpentView(meta);
+
+  console.log(`Tx with hash ${tx.rhash()}:`, meta);
   console.log(`Tx input: ${tx.getInputValue(coinview)},` +
     ` output: ${tx.getOutputValue()}, fee: ${tx.getFee(coinview)}`);
 
-  // eslint-disable-next-line max-len
-  const bhash = '00000000077eacdd2c803a742195ba430a6d9545e43128ba55ec3c80beea6c0c';
-  const block = await chain.db.getBlock(bcoin.util.revHex(bhash));
-  console.log(`Block with hash ${bhash}:`, block);
-})().catch((err) => {
-  console.error(err.stack);
-  process.exit(1);
-});
+  await indexer.close();
+  await chain.close();
+  await pool.close();
+})();

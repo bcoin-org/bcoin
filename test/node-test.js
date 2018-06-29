@@ -21,6 +21,8 @@ const node = new FullNode({
   apiKey: 'foo',
   network: 'regtest',
   workers: true,
+  indexTX: true,
+  indexAddress: true,
   plugins: [require('../lib/wallet/plugin')]
 });
 
@@ -743,6 +745,55 @@ describe('Node', function() {
     await node.sendTX(tx1); // add TX to inventory
     const tx2 = node.pool.getBroadcasted(dummyPeer, txItem);
     assert.strictEqual(tx1.txid(), tx2.txid());
+  });
+
+  it('should get tx by hash', async () => {
+    const block = await mineBlock();
+    await chain.add(block);
+
+    const tx = block.txs[0];
+    const hash = tx.hash('hex');
+    const hasTX = await node.hasTX(hash);
+
+    assert.strictEqual(hasTX, true);
+
+    const tx2 = await node.getTX(hash);
+    assert.strictEqual(tx.txid(), tx2.txid());
+
+    const meta = await node.getMeta(hash);
+    assert.strictEqual(meta.tx.txid(), tx2.txid());
+  });
+
+  it('should get coin/tx by addr', async () => {
+    const addr = await wallet.receiveAddress();
+    const mtx = await wallet.createTX({
+      rate: 100000,
+      outputs: [{
+        value: 100000,
+        address: addr
+      }]
+    });
+
+    await wallet.sign(mtx);
+
+    const tx = mtx.toTX();
+    const job = await miner.createJob();
+
+    job.addTX(tx, mtx.view);
+    job.refresh();
+
+    const block = await job.mineAsync();
+    await chain.add(block);
+
+    await new Promise(r => setTimeout(r, 300));
+
+    const txs = await node.getTXByAddress(addr);
+    const tx2 = txs[0];
+    assert.strictEqual(tx.txid(), tx2.txid());
+
+    const coins = await node.getCoinsByAddress(addr);
+    const coin = coins[0];
+    assert.strictEqual(tx.txid(), coin.txid());
   });
 
   it('should cleanup', async () => {
