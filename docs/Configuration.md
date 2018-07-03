@@ -1,4 +1,10 @@
-By default, the mainnet bcoin config file will reside in ~/.bcoin/bcoin.conf.
+By default, the mainnet bcoin config files will reside in `~/.bcoin/bcoin.conf` and `~/.bcoin/wallet.conf`.
+Any parameter passed to bcoin at startup will have precedence over the config file. 
+
+For example:
+
+Running `bcoin --network=regtest --api-key=menace --daemon` will read the config file at `~/.bcoin/regtest/bcoin.conf`
+and ignore any `network` or `api-key` parameters listed in that file.
 
 All bcoin configuration options work in the config file, CLI arguments, and
 process environment (with a `BCOIN_` prefix).
@@ -80,19 +86,50 @@ Note that certain chain options affect the format and indexing of the chain data
 ## HTTP
 
 - `http-host`: HTTP host to listen on (default: 127.0.0.1).
-- `http-port`: HTTP port to listen on (default: 8332).
+- `http-port`: HTTP port to listen on (default: 8332 for mainnet).
 - `ssl-cert`: Path to SSL cert.
 - `ssl-key`: Path to SSL key.
 - `service-key`: Service key (used for accessing wallet system only).
-- `api-key`: API key (used for accessing all node APIs).
-- `wallet-auth`: Enable token auth for wallets (default: false).
-- `no-auth`: Disable auth for API server and wallets (default: false).
+- `api-key`: API key (used for accessing all node APIs, may be different than API key for wallet server).
 - `cors`: Enable "Cross-Origin Resource Sharing" HTTP headers (default: false).
 
 Note: For security `cors` should not be used with `no-auth`.\
 If enabled you should also enable `wallet-auth` and set `api-key`.
 
-## Sample Config File
+## Wallet options
+
+These options must be saved in `wallet.conf`:
+
+### bcoin client:
+
+- `node-host`: Location of bcoin node HTTP server (default: localhost).
+- `node-port`: Port of bcoin node HTTP server (defaults to RPC port of network).
+- `node-ssl`: Whether to use SSL (default: false).
+- `node-api-key`: API-key for bcoin HTTP server.
+
+### Wallet database:
+
+- `memory`: Keep database in memory rather than write to disk.
+- `max-files`: Max open files for leveldb.
+- `cache-size`: Size (in MB) of leveldb cache and write buffer.
+- `witness`: Make SegWit enabled wallets.
+- `checkpoints`: Trust hard-coded blockchain checkpoints.
+
+### Wallet http server:
+
+- `ssl`: Whether to use SSL (default: false).
+- `ssl-key`: Path to SSL key.
+- `ssl-cert`: Path to SSL cert.
+- `http-host`: HTTP host to listen on (default: 127.0.0.1).
+- `http-port`: HTTP port to listen on (default: 8334 for mainnet).
+- `api-key`: API key (used for accessing all wallet APIs, may be different than API key for node server).
+- `cors`: Enable "Cross-Origin Resource Sharing" HTTP headers (default: false).
+- `no-auth`: Disable auth for API server and wallets (default: false).
+- `wallet-auth`: Enable token auth for wallets (default: false).
+- `admin-token`: Token required if `wallet-auth` is enabled: restricts access to [all wallet admin routes.](http://bcoin.io/api-docs/#wallet-admin-commands)
+
+
+## Sample Config Files
 
 See https://github.com/bcoin-org/bcoin/blob/master/etc/sample.conf
 and https://github.com/bcoin-org/bcoin/blob/master/etc/sample.wallet.conf
