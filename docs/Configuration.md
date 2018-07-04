@@ -59,7 +59,6 @@ Note that certain chain options affect the format and indexing of the chain data
 - `selfish`: Enable "selfish" mode (no relaying of txes or blocks) (default: false).
 - `compact`: Enable compact block relay (default: true).
 - `bip37`: Enable serving of bip37 merkleblocks (default: false).
-- `bip151`: Enable bip151 peer-to-peer encryption (default: false).
 - `listen`: Accept incoming connections (default: true).
 - `max-outbound`: Max number of outbound connections (default: 8).
 - `max-inbound`: Max number of inbound connections (default: 30).
@@ -68,10 +67,6 @@ Note that certain chain options affect the format and indexing of the chain data
 - `port`: Port to listen on (default: 8333).
 - `public-host`: Public host to advertise on network.
 - `public-port`: Public port to advertise on network.
-- `bip150`: Enable bip150 peer auth (default: false).
-- `identity-key`: BIP150 identity key (32 byte hex string).
-- `auth-peers`: Path to `authorized-peers` file for BIP150.
-- `known-peers`: Path to `known-peers` file for BIP150.
 - `nodes`: List of target nodes to connect to (comma-separated).
 
 ## Miner Options
