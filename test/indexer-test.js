@@ -4,12 +4,13 @@
 'use strict';
 
 const assert = require('./util/assert');
+const reorg = require('./util/reorg');
 const Chain = require('../lib/blockchain/chain');
 const WorkerPool = require('../lib/workers/workerpool');
 const Miner = require('../lib/mining/miner');
 const MemWallet = require('./util/memwallet');
-const TXIndexer = require('../lib/indexer/txindexer/txindexer');
-const AddrIndexer = require('../lib/indexer/addrindexer/addrindexer');
+const TXIndexer = require('../lib/indexer/txindexer');
+const AddrIndexer = require('../lib/indexer/addrindexer');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
 
@@ -111,50 +112,7 @@ describe('Indexer', function() {
   });
 
   it('should handle indexing a reorg', async () => {
-    let tip1, tip2 = null;
-    for (let i = 0; i < 10; i++) {
-      const job1 = await cpu.createJob(tip1);
-      const job2 = await cpu.createJob(tip2);
-
-      const blk1 = await job1.mineAsync();
-      const blk2 = await job2.mineAsync();
-
-      const hash1 = blk1.hash('hex');
-      const hash2 = blk2.hash('hex');
-
-      assert(await chain.add(blk1));
-      assert(await chain.add(blk2));
-
-      assert.strictEqual(chain.tip.hash, hash1);
-
-      tip1 = await chain.getEntry(hash1);
-      tip2 = await chain.getEntry(hash2);
-
-      assert(tip1);
-      assert(tip2);
-
-      assert(!await chain.isMainChain(tip2));
-    }
-
-    assert.strictEqual(chain.height, 30);
-
-    const entry = await chain.getEntry(tip2.hash);
-    assert(entry);
-    assert.strictEqual(chain.height, entry.height);
-
-    const block = await cpu.mineBlock(entry);
-    assert(block);
-
-    let forked = false;
-    chain.once('reorganize', () => {
-      forked = true;
-    });
-
-    assert(await chain.add(block));
-
-    assert(forked);
-    assert.strictEqual(chain.tip.hash, block.hash('hex'));
-    assert(chain.tip.chainwork.gt(tip1.chainwork));
+    await reorg(chain, cpu, 10);
 
     assert.strictEqual(txindexer.state.startHeight, 31);
     assert.strictEqual(addrindexer.state.startHeight, 31);
