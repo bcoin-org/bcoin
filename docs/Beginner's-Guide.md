@@ -51,7 +51,7 @@ https://slproweb.com/download/Win64OpenSSL-1_0_2L.exe
 As Administrator, open `cmd.exe` and run:
 
 ```console
-C:\Users\bcoin\bcoin>npm install --global --production windows-build-tool
+C:\Users\bcoin\bcoin>npm install --global --production windows-build-tools
 ```
 
 to install `VCBuild.exe` and `Python 2.7.x` both required by `node-gyp`
