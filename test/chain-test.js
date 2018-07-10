@@ -111,7 +111,7 @@ chain.on('disconnect', (entry, block) => {
 });
 
 describe('Chain', function() {
-  this.timeout(45000);
+  this.timeout(60000);
 
   it('should open chain and miner', async () => {
     await chain.open();
