@@ -102,7 +102,7 @@ describe('Node', function() {
     await chain.add(block);
   });
 
-  it('should mine competing chains', async () => {
+  it('should mine competing chains', async function () {
     this.timeout(20000);
     for (let i = 0; i < 10; i++) {
       const block1 = await mineBlock(tip1, cb1);
