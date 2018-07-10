@@ -1,5 +1,8 @@
 # Bcoin
 
+[![Build Status][circleci-status-img]][circleci-status-url]
+[![Coverage Status][coverage-status-img]][coverage-status-url]
+
 __NOTE__: The latest release of bcoin contains a non-backward compatible change
 to the rest API. Please read the [changelog]'s "migrating" section for more
 details.
@@ -69,3 +72,8 @@ See LICENSE for more info.
 [freenode]: https://freenode.net/
 [irc]: irc://irc.freenode.net/bcoin
 [changelog]: https://github.com/bcoin-org/bcoin/blob/master/CHANGELOG.md
+
+[coverage-status-img]: https://codecov.io/gh/bcoin-org/bcoin/badge.svg?branch=master
+[coverage-status-url]: https://codecov.io/gh/bcoin-org/bcoin?branch=master
+[circleci-status-img]: https://circleci.com/gh/bcoin-org/bcoin/tree/master.svg?style=shield
+[circleci-status-url]: https://circleci.com/gh/bcoin-org/bcoin/tree/master

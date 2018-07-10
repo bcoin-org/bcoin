@@ -258,6 +258,7 @@ describe('HTTP', function() {
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await wallet.close();
+    await wclient.close();
     await nclient.close();
     await node.close();
   });
