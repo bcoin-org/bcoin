@@ -1,6 +1,6 @@
 {
   "name": "bcoin",
-  "version": "1.0.0-pre",
+  "version": "1.0.0",
   "description": "Bitcoin bike-shed",
   "license": "MIT",
   "repository": "git://github.com/bcoin-org/bcoin.git",
@@ -26,7 +26,7 @@
     "bcfg": "~0.1.0",
     "bclient": "~0.1.1",
     "bcrypto": "~0.3.7",
-    "bdb": "~0.2.0",
+    "bdb": "~0.2.1",
     "bdns": "~0.1.0",
     "bevent": "~0.1.0",
     "bfile": "~0.1.0",
@@ -46,7 +46,7 @@
     "bufio": "~0.2.0",
     "bupnp": "~0.2.1",
     "bval": "~0.1.0",
-    "bweb": "~0.1.0",
+    "bweb": "~0.1.1",
     "mrmr": "~0.1.0",
     "n64": "~0.2.0"
   },
