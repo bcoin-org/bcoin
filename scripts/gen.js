@@ -30,7 +30,7 @@ function createGenesisBlock(options) {
     version: 1,
     inputs: [{
       prevout: {
-        hash: consensus.NULL_HASH,
+        hash: consensus.ZERO_HASH,
         index: 0xffffffff
       },
       script: Script()
@@ -49,8 +49,8 @@ function createGenesisBlock(options) {
 
   const block = new Block({
     version: options.version,
-    prevBlock: consensus.NULL_HASH,
-    merkleRoot: tx.hash('hex'),
+    prevBlock: consensus.ZERO_HASH,
+    merkleRoot: tx.hash(),
     time: options.time,
     bits: options.bits,
     nonce: options.nonce,

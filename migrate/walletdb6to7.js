@@ -689,7 +689,7 @@ class BlockMapRecord {
     const count = br.readU32();
 
     for (let i = 0; i < count; i++) {
-      const hash = br.readHash('hex');
+      const hash = br.readHash();
       const tx = TXMapRecord.fromReader(hash, br);
       this.txs.set(tx.hash, tx);
     }
@@ -863,13 +863,13 @@ function serializeBalance(bal) {
 function parsep(key) { // p[hash]
   assert(Buffer.isBuffer(key));
   assert(key.length >= 21);
-  return [key.toString('hex', 1)];
+  return [key.slice(1)];
 }
 
 function parseP(key) { // P[wid][hash]
   assert(Buffer.isBuffer(key));
   assert(key.length >= 25);
-  return [key.readUInt32BE(1, true), key.toString('hex', 5)];
+  return [key.readUInt32BE(1, true), key.slice(5)];
 }
 
 function parser(key) { // r[wid][index][hash]
@@ -878,7 +878,7 @@ function parser(key) { // r[wid][index][hash]
   return [
     key.readUInt32BE(1, true),
     key.readUInt32BE(5, true),
-    key.toString('hex', 9)
+    key.slice(9)
   ];
 }
 

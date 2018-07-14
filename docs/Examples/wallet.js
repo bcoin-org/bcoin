@@ -4,7 +4,7 @@ const bcoin = require('../..');
 const random = require('bcrypto/lib/random');
 
 function dummy() {
-  const hash = random.randomBytes(32).toString('hex');
+  const hash = random.randomBytes(32);
   return new bcoin.Outpoint(hash, 0);
 }
 
@@ -36,7 +36,7 @@ const walletdb = new bcoin.wallet.WalletDB({
 
   await walletdb.addTX(tx);
 
-  const wtx = await wallet.getTX(tx.hash('hex'));
+  const wtx = await wallet.getTX(tx.hash());
 
   console.log('Added transaction');
   console.log(wtx);

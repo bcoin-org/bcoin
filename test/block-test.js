@@ -6,6 +6,7 @@
 const assert = require('./util/assert');
 const common = require('./util/common');
 const {BloomFilter} = require('bfilter');
+const {BufferMap} = require('buffer-map');
 const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
@@ -52,7 +53,7 @@ describe('Block', function() {
     const tree = block.getTree();
 
     assert.strictEqual(tree.matches.length, 2);
-    assert.strictEqual(block.hash('hex'),
+    assert.strictEqual(block.hash().toString('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.strictEqual(block.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
@@ -94,23 +95,26 @@ describe('Block', function() {
   it('should parse JSON', () => {
     const [block1] = block300025.getBlock();
     const block2 = Block.fromJSON(block1.toJSON());
-    assert.strictEqual(block2.hash('hex'),
+    assert.strictEqual(block2.hash().toString('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.strictEqual(block2.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
-    assert.strictEqual(block2.merkleRoot, block2.createMerkleRoot('hex'));
+    assert.bufferEqual(block2.merkleRoot, block2.createMerkleRoot());
   });
 
   it('should create a merkle block', () => {
     const filter = BloomFilter.fromRate(1000, 0.01, BloomFilter.flags.NONE);
 
-    const item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
-    const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
-      + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
-      + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
+    const item1 = Buffer.from(
+      '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b',
+      'hex');
 
-    filter.add(item1, 'hex');
-    filter.add(item2, 'hex');
+    const item2 = Buffer.from('047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+      + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
+      + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e', 'hex');
+
+    filter.add(item1);
+    filter.add(item2);
 
     const [block1] = block300025.getBlock();
     const block2 = MerkleBlock.fromBlock(block1, filter);
@@ -157,7 +161,7 @@ describe('Block', function() {
   it('should fail with a bad merkle root', () => {
     const [block] = block300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = consensus.NULL_HASH;
+    block.merkleRoot = consensus.ZERO_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
@@ -171,7 +175,7 @@ describe('Block', function() {
   it('should fail on merkle block with a bad merkle root', () => {
     const [block] = merkle300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = consensus.NULL_HASH;
+    block.merkleRoot = consensus.ZERO_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
@@ -220,11 +224,11 @@ describe('Block', function() {
     assert.bufferEqual(cblock1.toRaw(), compact426884.getRaw());
     assert.bufferEqual(cblock2.toRaw(), compact426884.getRaw());
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < block.txs.length; i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -246,11 +250,11 @@ describe('Block', function() {
     assert.bufferEqual(cblock1.toRaw(), compact426884.getRaw());
     assert.bufferEqual(cblock2.toRaw(), compact426884.getRaw());
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < ((block.txs.length + 1) >>> 1); i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -258,7 +262,7 @@ describe('Block', function() {
 
     const rawReq = cblock1.toRequest().toRaw();
     const req = TXRequest.fromRaw(rawReq);
-    assert.strictEqual(req.hash, cblock1.hash('hex'));
+    assert.bufferEqual(req.hash, cblock1.hash());
 
     const rawRes = TXResponse.fromBlock(block, req).toRaw();
     const res = TXResponse.fromRaw(rawRes);
@@ -284,11 +288,11 @@ describe('Block', function() {
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < block.txs.length; i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -312,11 +316,11 @@ describe('Block', function() {
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < ((block.txs.length + 1) >>> 1); i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -324,7 +328,7 @@ describe('Block', function() {
 
     const rawReq = cblock1.toRequest().toRaw();
     const req = TXRequest.fromRaw(rawReq);
-    assert.strictEqual(req.hash, cblock1.hash('hex'));
+    assert.bufferEqual(req.hash, cblock1.hash());
     assert.deepStrictEqual(req.indexes, [5, 6, 7, 8, 9]);
 
     const rawRes = TXResponse.fromBlock(block, req).toRaw();
