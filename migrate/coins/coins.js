@@ -37,7 +37,7 @@ function Coins(options) {
     return new Coins(options);
 
   this.version = 1;
-  this.hash = encoding.NULL_HASH;
+  this.hash = encoding.ZERO_HASH;
   this.height = -1;
   this.coinbase = true;
   this.outputs = [];
@@ -59,7 +59,7 @@ Coins.prototype.fromOptions = function fromOptions(options) {
   }
 
   if (options.hash) {
-    assert(typeof options.hash === 'string');
+    assert(Buffer.isBuffer(options.hash));
     this.hash = options.hash;
   }
 
@@ -562,7 +562,7 @@ Coins.prototype.fromTX = function fromTX(tx, height) {
   assert(typeof height === 'number');
 
   this.version = tx.version;
-  this.hash = tx.hash('hex');
+  this.hash = tx.hash();
   this.height = height;
   this.coinbase = tx.isCoinbase();
 

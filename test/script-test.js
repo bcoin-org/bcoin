@@ -286,7 +286,7 @@ describe('Script', function() {
           version: 1,
           inputs: [{
             prevout: {
-              hash: consensus.NULL_HASH,
+              hash: consensus.ZERO_HASH,
               index: 0xffffffff
             },
             script: [
@@ -308,7 +308,7 @@ describe('Script', function() {
           version: 1,
           inputs: [{
             prevout: {
-              hash: prev.hash('hex'),
+              hash: prev.hash(),
               index: 0
             },
             script: input,

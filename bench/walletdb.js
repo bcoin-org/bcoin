@@ -7,7 +7,7 @@ const MTX = require('../lib/primitives/mtx');
 const Outpoint = require('../lib/primitives/outpoint');
 
 function dummy() {
-  const hash = random.randomBytes(32).toString('hex');
+  const hash = random.randomBytes(32);
   return new Outpoint(hash, 0);
 }
 

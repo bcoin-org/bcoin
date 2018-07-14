@@ -81,7 +81,7 @@ describe('Mempool', function() {
 
     const script = Script.fromPubkey(key.publicKey);
 
-    t1.addCoin(dummyInput(script, ONE_HASH.toString('hex')));
+    t1.addCoin(dummyInput(script, ONE_HASH));
 
     const sig = t1.signature(0, script, 70000, key.privateKey, ALL, 0);
 
@@ -173,7 +173,7 @@ describe('Mempool', function() {
 
     const txs = mempool.getHistory();
     assert(txs.some((tx) => {
-      return tx.hash('hex') === f1.hash('hex');
+      return tx.hash().equals(f1.hash());
     }));
   });
 
@@ -185,7 +185,7 @@ describe('Mempool', function() {
     tx.addOutput(wallet.getAddress(), 10000);
 
     const prev = Script.fromPubkey(key.publicKey);
-    const prevHash = random.randomBytes(32).toString('hex');
+    const prevHash = random.randomBytes(32);
 
     tx.addCoin(dummyInput(prev, prevHash));
     tx.setLocktime(200);
@@ -207,7 +207,7 @@ describe('Mempool', function() {
     tx.addOutput(wallet.getAddress(), 10000);
 
     const prev = Script.fromPubkey(key.publicKey);
-    const prevHash = random.randomBytes(32).toString('hex');
+    const prevHash = random.randomBytes(32);
 
     tx.addCoin(dummyInput(prev, prevHash));
     tx.setLocktime(200);
@@ -238,7 +238,7 @@ describe('Mempool', function() {
     tx.addOutput(wallet.getAddress(), 10000);
 
     const prev = Script.fromProgram(0, key.getKeyHash());
-    const prevHash = random.randomBytes(32).toString('hex');
+    const prevHash = random.randomBytes(32);
 
     tx.addCoin(dummyInput(prev, prevHash));
 
@@ -268,7 +268,7 @@ describe('Mempool', function() {
     tx.addOutput(wallet.getAddress(), 10000);
 
     const prev = Script.fromPubkey(key.publicKey);
-    const prevHash = random.randomBytes(32).toString('hex');
+    const prevHash = random.randomBytes(32);
 
     tx.addCoin(dummyInput(prev, prevHash));
 
@@ -297,7 +297,7 @@ describe('Mempool', function() {
     tx.addOutput(wallet.getAddress(), 10000);
 
     const prev = Script.fromProgram(0, key.getKeyHash());
-    const prevHash = random.randomBytes(32).toString('hex');
+    const prevHash = random.randomBytes(32);
 
     tx.addCoin(dummyInput(prev, prevHash));
 
@@ -321,7 +321,7 @@ describe('Mempool', function() {
     tx.addOutput(wallet.getAddress(), 10000);
 
     const prev = Script.fromPubkey(key.publicKey);
-    const prevHash = random.randomBytes(32).toString('hex');
+    const prevHash = random.randomBytes(32);
 
     tx.addCoin(dummyInput(prev, prevHash));
 

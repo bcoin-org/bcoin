@@ -216,8 +216,9 @@ describe('Input', function() {
 
     const options = {
       prevout: {
-        hash: '8759d7397a86d6c42dfe2c55612e523d' +
-              '171e51708fec9e289118deb5ba994001',
+        hash: Buffer.from(
+              '8759d7397a86d6c42dfe2c55612e523d' +
+              '171e51708fec9e289118deb5ba994001', 'hex'),
         index: 1
       },
       script: rawscript,
@@ -236,7 +237,7 @@ describe('Input', function() {
         const inputs = test.inputs.map((prevout, i) => {
           const input = Input.fromOptions({
             prevout: {
-              hash: util.revHex(prevout.txId),
+              hash: util.fromRev(prevout.txId),
               index: prevout.vout
             }
           });

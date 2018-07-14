@@ -80,7 +80,7 @@ describe('HTTP', function() {
 
   it('should fill with funds', async () => {
     const mtx = new MTX();
-    mtx.addOutpoint(new Outpoint(consensus.NULL_HASH, 0));
+    mtx.addOutpoint(new Outpoint(consensus.ZERO_HASH, 0));
     mtx.addOutput(addr, 50460);
     mtx.addOutput(addr, 50460);
     mtx.addOutput(addr, 50460);

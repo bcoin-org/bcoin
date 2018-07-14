@@ -69,7 +69,7 @@ function parseTXTest(data) {
   const view = new CoinView();
 
   for (const [txid, index, str, amount] of coins) {
-    const hash = util.revHex(txid);
+    const hash = util.fromRev(txid);
     const script = Script.fromString(str);
     const value = parseInt(amount || '0', 10);
 
@@ -106,7 +106,7 @@ function parseSighashTest(data) {
   const tx = TX.fromRaw(txHex, 'hex');
   const script = Script.fromRaw(scriptHex, 'hex');
 
-  const expected = util.revHex(hash);
+  const expected = util.fromRev(hash);
 
   let hex = type & 3;
 
@@ -130,7 +130,7 @@ function parseSighashTest(data) {
 }
 
 function createInput(value, view) {
-  const hash = random.randomBytes(32).toString('hex');
+  const hash = random.randomBytes(32);
 
   const input = {
     prevout: {
@@ -173,7 +173,7 @@ function sigopContext(scriptSig, witness, scriptPubkey) {
     spend.version = 1;
 
     const input = new Input();
-    input.prevout.hash = fund.hash('hex');
+    input.prevout.hash = fund.hash();
     input.prevout.index = 0;
     input.script = scriptSig;
     input.witness = witness;
@@ -235,7 +235,7 @@ describe('TX', function() {
       assert.strictEqual(tx.outputs.length, 1980);
       assert(tx.hasWitness());
       assert.notStrictEqual(tx.txid(), tx.wtxid());
-      assert.strictEqual(tx.witnessHash('hex'),
+      assert.strictEqual(tx.witnessHash().toString('hex'),
         '088c919cd8408005f255c411f786928385688a9e8fdb2db4c9bc3578ce8c94cf');
       assert.strictEqual(tx.getSize(), 62138);
       assert.strictEqual(tx.getVirtualSize(), 61813);
@@ -339,7 +339,7 @@ describe('TX', function() {
       it(`should get sighash of ${hash} (${hex}) ${suffix}`, () => {
         const subscript = script.getSubscript(0).removeSeparators();
         const hash = tx.signatureHash(index, subscript, 0, type, 0);
-        assert.strictEqual(hash.toString('hex'), expected);
+        assert.bufferEqual(hash, expected);
       });
     }
   }
@@ -695,7 +695,7 @@ describe('TX', function() {
       const output = Script.fromProgram(0, key.getKeyHash());
       const ctx = sigopContext(input, witness, output);
 
-      ctx.spend.inputs[0].prevout.hash = consensus.NULL_HASH;
+      ctx.spend.inputs[0].prevout.hash = consensus.ZERO_HASH;
       ctx.spend.inputs[0].prevout.index = 0xffffffff;
       ctx.spend.refresh();
 
@@ -899,14 +899,11 @@ describe('TX', function() {
     ];
 
     const hashesBuf = tx.getHashes(view);
-    const hashesHex = tx.getHashes(view, 'hex');
 
     assert.strictEqual(hashes.length, hashesBuf.length);
-    assert.strictEqual(hashes.length, hashesHex.length);
 
     hashes.forEach((hash, i) => {
       assert.bufferEqual(hash, hashesBuf[i]);
-      assert.strictEqual(hash.toString('hex'), hashesHex[i]);
     });
   });
 
@@ -919,14 +916,11 @@ describe('TX', function() {
     ];
 
     const hashesBuf = tx.getInputHashes(view);
-    const hashesHex = tx.getInputHashes(view, 'hex');
 
     assert.strictEqual(inputHashes.length, hashesBuf.length);
-    assert.strictEqual(inputHashes.length, hashesHex.length);
 
     inputHashes.forEach((hash, i) => {
       assert.bufferEqual(hash, hashesBuf[i]);
-      assert.strictEqual(hash.toString('hex'), hashesHex[i]);
     });
   });
 
@@ -940,14 +934,11 @@ describe('TX', function() {
     ];
 
     const hashesBuf = tx.getOutputHashes();
-    const hashesHex = tx.getOutputHashes('hex');
 
     assert.strictEqual(outputHashes.length, hashesBuf.length);
-    assert.strictEqual(outputHashes.length, hashesHex.length);
 
     outputHashes.forEach((hash, i) => {
       assert.bufferEqual(hash, hashesBuf[i]);
-      assert.strictEqual(hash.toString('hex'), hashesHex[i]);
     });
   });
 
@@ -963,7 +954,7 @@ describe('TX', function() {
 
     assert(expectedPrevouts.length, prevouts.length);
     expectedPrevouts.forEach((prevout, i) => {
-      assert.strictEqual(prevout, prevouts[i]);
+      assert.strictEqual(prevout, prevouts[i].toString('hex'));
     });
   });
 
@@ -1063,7 +1054,9 @@ describe('TX', function() {
     // hack for ChainEntry
     const entry = {
       height: 1000,
-      hash: 'c82d447db6150d2308d9571c19bc3dc6efde97a8227d9e57bc77ec0900000000',
+      hash: Buffer.from(
+        'c82d447db6150d2308d9571c19bc3dc6efde97a8227d9e57bc77ec0900000000',
+        'hex'),
       time: 1365870306
     };
     const network = 'testnet';

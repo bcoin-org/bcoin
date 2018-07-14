@@ -31,7 +31,7 @@ function deepCoinsEqual(a, b) {
 describe('Coins', function() {
   it('should instantiate coinview from tx', () => {
     const [tx] = tx1.getTX();
-    const hash = tx.hash('hex');
+    const hash = tx.hash();
     const view = new CoinView();
     const prevout = new Outpoint(hash, 0);
     const input = Input.fromOutpoint(prevout);
@@ -59,7 +59,7 @@ describe('Coins', function() {
 
   it('should spend an output', () => {
     const [tx] = tx1.getTX();
-    const hash = tx.hash('hex');
+    const hash = tx.hash();
     const view = new CoinView();
 
     view.addTX(tx, 1);
