@@ -69,11 +69,10 @@ security and performance implications.
 
 ### 3. Required Reading
 
-- TODO:
-- [Blocking vs Non-Blocking](https://nodejs.org/en/docs/guides/blocking-vs-non-blocking/)
+- [Original Satoshi Whitepaper](https://bitcoin.org/bitcoin.pdf) - This is the
+  white paper that started it all.  Having a solid foundation to build on will
+  make the code much more comprehensible.
 - [Don't block the Event Loop](https://nodejs.org/en/docs/guides/dont-block-the-event-loop/)
-- [Original Satoshi Whitepaper](http://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CCkQFjAA&url=http%3A%2F%2Fbitcoin.org%2Fbitcoin.pdf&ei=os3VUuH8G4SlsASV74GoAg&usg=AFQjCNEipPLigou_1MfB7DQjXCNdlylrBg&sig2=FaHDuT5z36GMWDEnybDJLg&bvm=bv.59378465,d.b2I) - This is the white paper that started it all.  Having a solid
-  foundation to build on will make the code much more comprehensible.
 
 <a name="DevelopmentPractices" />
 
@@ -113,7 +112,7 @@ This approach has several benefits:
 
 Some common mistakes that you might stumble across:
 
-- Not using sync/async correctly, see: [Required Reading](#ReqReading)
+- Not using sync/async correctly, see: [Required Reading #2](#ReqReading)
 
 <a name="Testing" />
 
@@ -144,11 +143,10 @@ A quick summary of test practices follows:
 
 - At a minimum every function must be commented with its intended purpose and
   any assumptions that it makes
-  - The general rule of thumb is to look at it as if you were completely
-    unfamiliar with the code and ask yourself, would this give me enough
-	information to understand what this function does and how I'd probably want
-	to use it?
-  - TODO
+- The general rule of thumb is to look at it as if you were completely
+  unfamiliar with the code and ask yourself, would this give me enough
+  information to understand what this function does and how I'd probably want
+  to use it?
 
 <a name="ModelGitCommitMessages" />
 
@@ -236,9 +234,10 @@ outlined above.
 
 ##### What is the review looking for?
 
-The review is mainly ensuring the code follows the [Development Practices](#DevelopmentPractices)
-and [Code Contribution Standards](#Standards).  However, there are a few other
-checks which are generally performed as follows:
+The review is mainly ensuring the code follows the [Development
+Practices](#DevelopmentPractices) and [Code Contribution
+Standards](#Standards).  However, there are a few other checks which are
+generally performed as follows:
 
 - The code is stable and has no stability or security concerns
 - The code is properly using existing APIs and generally fits well into the
@@ -269,7 +268,8 @@ keep a clean commit history over a tangled weave of merge commits.  However,
 regardless of the specific merge method used, the code will be integrated with
 the master branch and the pull request will be closed.
 
-Rejoice as you will now be listed as a [contributor](https://github.com/bcoin-org/bcoin/graphs/contributors)!
+Rejoice as you will now be listed as a
+[contributor](https://github.com/bcoin-org/bcoin/graphs/contributors)!
 
 <a name="Standards" />
 
@@ -279,9 +279,17 @@ Rejoice as you will now be listed as a [contributor](https://github.com/bcoin-or
 
 ### 6.1. Contribution Checklist
 
-- TODO
+- All changes are node >= 8.0.0 compliant
+- [&nbsp;&nbsp;] The code being submitted is commented according to the
+  [Code Documentation and Commenting](#CodeDocumentation) section
 - [&nbsp;&nbsp;] For new code: Code is accompanied by tests which exercise both
   the positive and negative (error paths) conditions (if applicable)
+- [&nbsp;&nbsp;] For bug fixes: Code is accompanied by new tests which trigger
+  the bug being fixed to prevent regressions
+- [&nbsp;&nbsp;] Any new logging statements use an appropriate subsystem and
+  logging level
+- [&nbsp;&nbsp;] Running `npm run lint` does not report any issues
+- [&nbsp;&nbsp;] Running `npm run test` does not fail any tests
 
 <a name="Licensing" />
 
@@ -290,3 +298,7 @@ Rejoice as you will now be listed as a [contributor](https://github.com/bcoin-or
 All contributions must be licensed with the
 [MIT license](https://github.com/bcoin-org/bcoin/blob/master/LICENSE).  This is
 the same license as all of the code in bcoin.
+
+This document is based on contribution guidelines for
+[btcd](https://github.com/btcsuite/btcd/), distributed under the [ISC
+LICENSE](https://github.com/btcsuite/btcd/blob/master/LICENSE).
