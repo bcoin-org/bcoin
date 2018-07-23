@@ -304,3 +304,5 @@ the same license as all of the code in bcoin.
 This document is based on contribution guidelines for
 [btcd](https://github.com/btcsuite/btcd/), distributed under the [ISC
 LICENSE](https://github.com/btcsuite/btcd/blob/master/LICENSE).
+
+TODO: Responsible Disclosure
