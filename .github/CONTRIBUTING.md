@@ -286,6 +286,8 @@ Rejoice as you will now be listed as a
   the positive and negative (error paths) conditions (if applicable)
 - [&nbsp;&nbsp;] For bug fixes: Code is accompanied by new tests which trigger
   the bug being fixed to prevent regressions
+- [&nbsp;&nbsp;] Changes to modules, classes or functions are documented
+  properly using jsdoc, running `npm run docs` does not report any issues
 - [&nbsp;&nbsp;] Any new logging statements use an appropriate subsystem and
   logging level
 - [&nbsp;&nbsp;] Running `npm run lint` does not report any issues
