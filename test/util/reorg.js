@@ -4,6 +4,14 @@ const assert = require('./assert');
 const Chain = require('../../lib/blockchain/chain');
 const CPUMiner = require('../../lib/mining/cpuminer');
 
+/**
+ * reorg
+ * using miner reorgs the chain to given height
+ * @param {Chain} chain chain
+ * @param {CPUMiner} cpu cpuminer
+ * @param {Number} height height
+ * @returns {Promise} null
+ */
 async function reorg(chain, cpu, height) {
     assert(chain instanceof Chain);
     assert(cpu instanceof CPUMiner);
