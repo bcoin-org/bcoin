@@ -123,6 +123,20 @@ describe('HTTP', function() {
     assert.strictEqual(balance.unconfirmed, 201840);
   });
 
+  it('should get rpc listreceivedbyaddress', async() => {
+    await wclient.execute('selectwallet',['test']);
+    const list = await wclient.execute('listreceivedbyaddress',
+     [0, false, false]);
+    assert.deepStrictEqual(list, [{
+        'involvesWatchonly': false,
+        'address': addr.toString('regtest'),
+        'account': 'default',
+        'amount': .00201840,
+        'confirmations': 0,
+        'label': ''
+      }]);
+  });
+
   it('should send a tx', async () => {
     const options = {
       rate: 10000,
