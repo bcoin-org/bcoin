@@ -29,7 +29,7 @@ jobs:
           - v1-dependencies-
       - run:
           name: Tests with coverage
-          command: npm run test-ci
+          command: npm run coverage
       - run:
           name: Install codecov
           command: npm i codecov
