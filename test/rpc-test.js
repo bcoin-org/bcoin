@@ -156,12 +156,21 @@ describe('RPC', function() {
     assert.deepStrictEqual(result, []);
   });
 
-  it('should rpv listsinceblock', async () => {
+  it('should rpc listsinceblock', async () => {
     const listNoBlock = await wclient.execute('listsinceblock', []);
     assert.strictEqual(listNoBlock.transactions[0].txid, txid);
 
     const block5 = blocks[5];
     const listOldBlock = await wclient.execute('listsinceblock', [block5]);
     assert.strictEqual(listOldBlock.transactions[0].txid, txid);
+  });
+
+  it('should cleanup', async () => {
+    consensus.COINBASE_MATURITY = 100;
+    await walletHot.close();
+    await walletMiner.close();
+    await wclient.close();
+    await nclient.close();
+    await node.close();
   });
 });
