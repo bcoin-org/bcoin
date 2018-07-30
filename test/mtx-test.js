@@ -13,7 +13,7 @@ const { policy } = require('../lib/protocol');
 const compressed = true;
 const network = 'main';
 
-const alice = WalletKey.generate(compressed, network);
+const alice = () => WalletKey.generate(compressed, network);
 
 function dummyCoins(num = 500, value = 500) {
   let count = 0;
@@ -26,9 +26,10 @@ function dummyCoins(num = 500, value = 500) {
       Script: new Script(),
       sequence: 0xffffffff
     });
+
     // dust output to alice
     cb.addOutput({
-      address: alice.getAddress('string', network),
+      address: alice().getAddress('string', network),
       value
     });
     coins.push(Coin.fromTX(cb, 0, 0));
@@ -41,23 +42,30 @@ describe('CoinSelector', () => {
   it('should select fill coins', async () => {
     const mtx = new MTX();
 
-    mtx.addOutput({ value: 0, address: alice.getAddress('string', network)});
+    mtx.addOutput({ value: 0, address: alice().getAddress('string', network)});
 
     let coins = dummyCoins();
-    const selector = new Selector(mtx, {
+    let selector = new Selector(mtx, {
       fill: true,
-      select: 'value',
+      select: 'reverseValue',
       rate: 500
     });
 
     let selected = await selector.select(coins);
-    assert(selected.chosen.length, 'No coins were selected');
+    assert(
+      selected.chosen.length === coins.length,
+      'Initial fill should use all coins'
+    );
 
     // try and provide number of coins that would
     // push the weight over the limit
     while (selected.chosen.length === coins.length) {
       const newCoins = dummyCoins();
       coins = coins.concat(newCoins);
+      selector = new Selector(mtx, {
+        fill: true,
+        rate: 500
+      });
       selected = await selector.select(coins);
     }
 
@@ -79,7 +87,7 @@ describe('CoinSelector', () => {
     const coinsAtThreshold = 5;
 
     const mtx = new MTX();
-    mtx.addOutput({ value: 0, address: alice.getAddress('string', network)});
+    mtx.addOutput({ value: 0, address: alice().getAddress('string', network)});
 
     let coins = dummyCoins();
     // add some coins at the threshold
@@ -99,9 +107,9 @@ describe('CoinSelector', () => {
   });
 
   it('should throw if threshold option but not reverseValue set', async () => {
-    let coins = dummyCoins();
+    const coins = dummyCoins();
     const mtx = new MTX();
-    mtx.addOutput({ value: 0, address: alice.getAddress('string', network)});
+    mtx.addOutput({ value: 0, address: alice().getAddress('string', network)});
 
     let error;
     try {
@@ -119,7 +127,10 @@ describe('MTX', () => {
   it('should fill with coins', async () => {
     const mtx = new MTX();
 
-    mtx.addOutput({ value: 5000, address: alice.getAddress('string', network)});
+    mtx.addOutput({
+      value: 5000,
+      address: alice().getAddress('string', network)
+    });
 
     const smallCoin = { count: 500, value: 500 };
     const largeCoin = { count: 2000, value: 1000 };
@@ -130,7 +141,7 @@ describe('MTX', () => {
     coins = coins.concat(largerCoins);
     await mtx.fill(coins, {
       rate: 500,
-      changeAddress: alice.getAddress('string', network)
+      changeAddress: alice().getAddress('string', network)
     });
 
     assert(mtx.inputs.length, 'mtx did not fill with coins');

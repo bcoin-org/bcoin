@@ -389,7 +389,7 @@ describe('Wallet', function() {
       lastCoins.length < unsweptCoins.length &&
       lastCoins[0].value > unsweptCoins[0].value,
       'Didn\'t sweep all coins');
-  }).timeout(10000);
+  }).timeout(15000);
 
   it('should sweep with rpc call', async () => {
     const {wdb, rpc} = node.require('walletdb');
