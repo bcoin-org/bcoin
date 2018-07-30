@@ -255,15 +255,16 @@ describe('Wallet', function() {
 
   before(async () => {
     await wdb.open();
+    await node.open();
   });
 
   after(async () => {
     await wdb.close();
+    await node.close();
   });
 
   it('should open walletdb and wallet node', async () => {
     consensus.COINBASE_MATURITY = 0;
-    await node.open();
   });
 
   it('should generate new key and address', async () => {
@@ -341,7 +342,8 @@ describe('Wallet', function() {
     assert(tx.verify());
   });
 
-  it('should sweep and send coins', async () => {
+  it('should sweep and send coins',  async function () {
+    this.timeout(20000);
     const fullTxCount = 3;
     const wallet = await wdb.create();
     const receiveSweep = await wdb.create();
@@ -389,7 +391,7 @@ describe('Wallet', function() {
       lastCoins.length < unsweptCoins.length &&
       lastCoins[0].value > unsweptCoins[0].value,
       'Didn\'t sweep all coins');
-  }).timeout(15000);
+  });
 
   it('should sweep with rpc call', async () => {
     const {wdb, rpc} = node.require('walletdb');
@@ -1727,6 +1729,5 @@ describe('Wallet', function() {
 
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
-    await node.close();
   });
 });
