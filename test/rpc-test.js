@@ -61,11 +61,11 @@ describe('RPC', function() {
     assert( await nclient.execute('help', []) );
     assert( await wclient.execute('help', []) );
 
-    await assert.rejects( async () => await nclient.execute('help',
-      ['getinfo']) );
+    await assert.asyncThrows( async () => await nclient.execute('help',
+      ['getinfo']), 'getinfo');
 
-    await assert.rejects( async () => await wclient.execute('help',
-      ['getbalance']) );
+    await assert.asyncThrows( async () => await wclient.execute('help',
+      ['getbalance']), 'getbalance');
   });
 
   it('should rpc getinfo', async () => {

@@ -107,6 +107,18 @@ assert.notBufferEqual = function notBufferEqual(actual, expected, message) {
   }
 };
 
+// node V10 implements assert.rejects() but this is compatible with V8
+assert.asyncThrows = async function asyncThrows(func, expectedError) {
+  let err = null;
+  try {
+    await func();
+  } catch (e) {
+    err = e;
+  }
+  const re = new RegExp('^' + expectedError);
+  assert(re.test(err.message));
+};
+
 function _isString(value, message, stackStartFunction) {
   if (typeof value !== 'string') {
     throw new assert.AssertionError({
