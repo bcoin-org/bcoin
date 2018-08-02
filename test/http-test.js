@@ -255,6 +255,42 @@ describe('HTTP', function() {
     });
   });
 
+  it('should rpc signrawtransaction multisig', async () => {
+    const rawtx = '010000000001019d5cd0f2b5189d306a0767314d64ba50544c8ab95b' +
+      'fff8cbfb6caa1776d36e9f0000000000ffffffff02c78aa90000000000160014df08' +
+      'ffbdcf266c576625fc2e5bc960d26d5ab4f425675c29010000002200204953e1d15b' +
+      'c70ad4b858ce5ca4b8e59190712a74673e797fa491fcc51d4cebe305000000006952' +
+      '2102a890b6d96b73a2496de20515409a3d427183613af109a0a201e7c82635636fce' +
+      '21030b4a5df576b3682a88834f29144f7256f7a426af1a466cf000ef20d0898b1b65' +
+      '2103503326c3e4af1c9da528d35ded2f49c683fe63501ad0c3ae2fc9d0f7af9c8174' +
+      '53ae00000000';
+    const txid = '9f6ed37617aa6cfbcbf8ff5bb98a4c5450ba644d3167076a309d18b5f' +
+      '2d05c9d';
+    const vout = 0;
+    const scriptPubKey = '00200729217ad1f3b1b26e9c55f3599fff0fdefe71cb0eea1' +
+      '6f5f90178f431b0bab1';
+    const redeemScript = '522102a890b6d96b73a2496de20515409a3d427183613af10' +
+      '9a0a201e7c82635636fce21030b4a5df576b3682a88834f29144f7256f7a426af1a4' +
+      '66cf000ef20d0898b1b652103503326c3e4af1c9da528d35ded2f49c683fe63501ad' +
+      '0c3ae2fc9d0f7af9c817453ae';
+    const amount = 50.00000000;
+    const privkey1 = 'EN8AMggHTHVDZ31vtbBQ7DmbpmskBmHV49QduvxgvkCZFAvnZLGD';
+    const privkey2 = 'ENG2xwvv93pgpwfyDoqCrzRtFzD4VJd2iQxd12X5G1sbosW1WyAp';
+    const privkey3 = 'EKhNK9y96rehBXvj8MfgUznXTxPoHTKiNuV4TNnQiJjK4q7P5yLa';
+
+    const result = await nclient.execute('signrawtransaction', [
+      rawtx,
+      [{txid: txid,
+        vout: vout,
+        scriptPubKey: scriptPubKey,
+        redeemScript: redeemScript,
+        amount: amount}],
+      [privkey1, privkey2, privkey3]
+    ]);
+
+    assert(result['complete']);
+  });
+
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await wallet.close();
