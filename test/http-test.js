@@ -41,6 +41,7 @@ const {wdb} = node.require('walletdb');
 
 let addr = null;
 let hash = null;
+let rawtx = null;
 
 describe('HTTP', function() {
   this.timeout(15000);
@@ -253,6 +254,97 @@ describe('HTTP', function() {
       ismine: false,
       iswatchonly: false
     });
+  });
+
+  it('should rpc createrawtransaction single pubkeyhash', async () => {
+    const txhash='0e690d6655767c8b388e7403d13dc9ebe49b68e3bd46248c840544f9d' +
+      'a87d1e8';
+    const txindex=1;
+
+    const address='RStiqGLWA3aSMrWDyJvur4287GQ81AtLh1';
+    const amount=48.99900000;
+    const sendTo = {};
+    sendTo[address] = amount;
+
+    rawtx = await nclient.execute('createrawtransaction',
+      [[{ txid: txhash, vout: txindex }], sendTo]);
+
+    assert(rawtx);
+  });
+
+  it('should rpc signrawtransaction single pubkeyhash', async () => {
+    const txhash='0e690d6655767c8b388e7403d13dc9ebe49b68e3bd46248c840544f9d' +
+      'a87d1e8';
+    const txindex=1;
+    const scriptPubKey='76a914af92ad98c7f77559f96430dfef2a6805b87b24f888ac';
+    const amount=48.99900000;
+    const privkey='ELvsQiH9X1kgmbzD1j4ESAJnN47whh8qZHVF8B9DpSpecKQDcfX6';
+
+    const signedTx = await nclient.execute('signrawtransaction', [
+      rawtx,
+      [{txid: txhash,
+      vout: txindex,
+      scriptPubKey: scriptPubKey,
+      amount: amount}],
+      [privkey]
+    ]);
+
+    assert(signedTx);
+  });
+
+    it('should rpc createrawtransaction 2-in 2-out pubkeyhash', async () => {
+    const txhash1='0e690d6655767c8b388e7403d13dc9ebe49b68e3bd46248c840544f9d' +
+      'a87d1e8';
+    const txindex1=1;
+
+    const txhash2='4c7846a8ff8415945e96937dea27bdb3144c15d793648d72560278482' +
+      '6052586';
+    const txindex2=4;
+
+    const address1='RStiqGLWA3aSMrWDyJvur4287GQ81AtLh1';
+    const amount1=48.99900000;
+    const address2='RBQUN7J1earPLbu97MyvG4zhW5b8RAQxoG';
+    const amount2=2.00003219;
+    const sendTo = {};
+    sendTo[address1] = amount1;
+    sendTo[address2] = amount2;
+
+    rawtx = await nclient.execute('createrawtransaction',
+      [[{ txid: txhash1, vout: txindex1 }, { txid: txhash2, vout: txindex2 }],
+      sendTo]);
+
+    assert(rawtx);
+  });
+
+  it('should rpc signrawtransaction 2-in 2-out pubkeyhash', async () => {
+    const txhash1='0e690d6655767c8b388e7403d13dc9ebe49b68e3bd46248c840544f9d' +
+      'a87d1e8';
+    const txindex1=1;
+    const scriptPubKey1='76a914af92ad98c7f77559f96430dfef2a6805b87b24f888ac';
+    const amount1=48.99900000;
+    const privkey1='ELvsQiH9X1kgmbzD1j4ESAJnN47whh8qZHVF8B9DpSpecKQDcfX6';
+
+    const txhash2='4c7846a8ff8415945e96937dea27bdb3144c15d793648d72560278482' +
+      '6052586';
+    const txindex2=4;
+    const scriptPubKey2='76a914af92ad98c7f77559f96430dfef2a6805b87b24f888ac';
+    const amount2=2.00003219;
+    const privkey2='EPni2gZW3WrTU9sKRL8j73cZEffujYwx81LSvpMATGYavC88QN63';
+
+    const signedTx = await nclient.execute('signrawtransaction', [
+      rawtx,
+      [{txid: txhash1,
+      vout: txindex1,
+      scriptPubKey: scriptPubKey1,
+      amount: amount1},
+      {txid: txhash2,
+      vout: txindex2,
+      scriptPubKey: scriptPubKey2,
+      amount: amount2}],
+      [privkey1, privkey2]
+    ]);
+
+    assert(signedTx);
   });
 
   it('should rpc signrawtransaction multisig', async () => {
