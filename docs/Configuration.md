@@ -1,4 +1,4 @@
-By default, the mainnet bcoin config file will reside in ~/.bcoin/bcoin.conf.
+By default, the mainnet bcoin config file will reside in ~/.bcoin/node.conf.
 
 All bcoin configuration options work in the config file, CLI arguments, and
 process environment (with a `BCOIN_` prefix).

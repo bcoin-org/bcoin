@@ -1,5 +1,11 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.x
+
+### Configuraiton Changes
+
+- Important: `bcoin.conf` has been renamed to `node.conf`
+
 ## v1.0.0
 
 ### Migration
