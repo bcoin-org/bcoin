@@ -264,6 +264,72 @@ describe('HTTP', function() {
     });
   });
 
+  for (const template of [true, false]) {
+    const suffix = template ? 'with template' : 'without template';
+    it(`should create and sign transaction ${suffix}`, async () => {
+      const change = await wallet.createChange('default');
+      const tx = await wallet.createTX({
+        template: template, // should not matter, sign = true
+        sign: true,
+        outputs: [{
+          address: change.address,
+          value: 50000
+        }]
+      });
+      const mtx = MTX.fromJSON(tx);
+
+      for (const input of tx.inputs) {
+        const script = input.script;
+
+        assert.notStrictEqual(script, '',
+          'Input must be signed.');
+      }
+
+      assert.strictEqual(mtx.verify(), true,
+        'Transaction must be signed.');
+    });
+  }
+
+  it('should create transaction without template', async () => {
+    const change = await wallet.createChange('default');
+    const tx = await wallet.createTX({
+      sign: false,
+      outputs: [{
+        address: change.address,
+        value: 50000
+      }]
+    });
+
+    for (const input of tx.inputs) {
+      const script = input.script;
+
+      assert.strictEqual(script.length, 0,
+        'Input must not be templated.');
+    }
+  });
+
+  it('should create transaction with template', async () => {
+    const change = await wallet.createChange('default');
+    const tx = await wallet.createTX({
+      sign: false,
+      template: true,
+      outputs: [{
+        address: change.address,
+        value: 20000
+      }]
+    });
+
+    for (const input of tx.inputs) {
+      const script = Buffer.from(input.script, 'hex');
+
+      // p2pkh
+      // 1 (OP_0 placeholder) + 1 (length) + 33 (pubkey)
+      assert.strictEqual(script.length, 35);
+      assert.strictEqual(script[0], 0x00,
+        'First item in stack must be a placeholder OP_0');
+    }
+  });
+
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await wallet.close();

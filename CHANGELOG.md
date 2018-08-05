@@ -9,8 +9,13 @@
 - `PUT /wallet/:id` Creating a watch-only wallet now requires an `accountKey`
   argument. This is to prevent bcoin from generating keys and addresses the
   user can not spend from.
-- `POST /wallet/:id/create` Now has a `sign` argument for optional signing
-  of transactions.
+- `POST /wallet/:id/create`
+  - Now has a `sign` argument for optional signing of transactions.
+  - Now has a `template` option, that will skip templating inputs when
+  `sign = false`, but you can enable it if necessary. It does not have an
+  effect when `sign = true`.
+  - Exposes `blocks`, which can will be used if there is no `rate` option.
+  - Exposes `sort` (Default `true`), that can be used to disable BIP69 sorting.
 
 #### RPC
 

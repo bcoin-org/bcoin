@@ -1220,6 +1220,40 @@ describe('Wallet', function() {
     assert(t3.verify());
   });
 
+  for (const witness of [true, false]) {
+    it(`should create non-templated tx (witness=${witness})`, async () => {
+      const wallet = await wdb.create({ witness });
+
+      // Fund wallet
+      const t1 = new MTX();
+      t1.addInput(dummyInput());
+      t1.addOutput(await wallet.receiveAddress(), 500000);
+
+      await wdb.addTX(t1.toTX());
+
+      const options = {
+        rate: 10000,
+        round: true,
+        outputs: [{
+          address: await wallet.receiveAddress(),
+          value: 7000
+        }],
+        template: false
+      };
+
+      const t2 = await wallet.createTX(options);
+
+      assert(t2, 'Could not create tx.');
+
+      for (const input of t2.inputs) {
+        const {script, witness} = input;
+
+        assert.strictEqual(script.length, 0, 'Input is templated.');
+        assert.strictEqual(witness.length, 0, 'Input is templated.');
+      }
+    });
+  }
+
   it('should get range of txs', async () => {
     const wallet = currentWallet;
     const txs = await wallet.getRange(null, {
