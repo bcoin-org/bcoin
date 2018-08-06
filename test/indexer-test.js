@@ -77,7 +77,7 @@ describe('Indexer', function() {
 
     for (const coin of coins) {
       const meta = await txindexer.getMeta(coin.hash);
-      assert.strictEqual(meta.tx.hash().toString('hex'), coin.hash);
+      assert.bufferEqual(meta.tx.hash(), coin.hash);
     }
   });
 
@@ -107,7 +107,7 @@ describe('Indexer', function() {
 
     for (const coin of coins) {
       const meta = await txindexer.getMeta(coin.hash);
-      assert.strictEqual(meta.tx.hash().toString('hex'), coin.hash);
+      assert.bufferEqual(meta.tx.hash(), coin.hash);
     }
   });
 
@@ -123,7 +123,7 @@ describe('Indexer', function() {
 
     for (const coin of coins) {
       const meta = await txindexer.getMeta(coin.hash);
-      assert.strictEqual(meta.tx.hash().toString('hex'), coin.hash);
+      assert.bufferEqual(meta.tx.hash(), coin.hash);
     }
   });
 });

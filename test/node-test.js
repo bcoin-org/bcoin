@@ -752,7 +752,7 @@ describe('Node', function() {
     await chain.add(block);
 
     const tx = block.txs[0];
-    const hash = tx.hash('hex');
+    const hash = tx.hash();
     const hasTX = await node.hasTX(hash);
 
     assert.strictEqual(hasTX, true);
@@ -787,11 +787,11 @@ describe('Node', function() {
 
     await new Promise(r => setTimeout(r, 300));
 
-    const txs = await node.getTXByAddress(addr);
+    const txs = await node.getTXByAddress(addr.hash);
     const tx2 = txs[0];
     assert.strictEqual(tx.txid(), tx2.txid());
 
-    const coins = await node.getCoinsByAddress(addr);
+    const coins = await node.getCoinsByAddress(addr.hash);
     const coin = coins[0];
     assert.strictEqual(tx.txid(), coin.txid());
   });

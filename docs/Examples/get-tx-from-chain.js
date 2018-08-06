@@ -72,11 +72,11 @@ const indexer = new bcoin.TXIndexer({
   const block = await chain.getBlock(tip.hash);
   const meta = await indexer.getMeta(block.txs[0].hash());
   const tx = meta.tx;
-  const coinview = await chain.db.getSpentView(meta);
+  const view = await indexer.getSpentView(tx);
 
   console.log(`Tx with hash ${tx.rhash()}:`, meta);
-  console.log(`Tx input: ${tx.getInputValue(coinview)},` +
-    ` output: ${tx.getOutputValue()}, fee: ${tx.getFee(coinview)}`);
+  console.log(`Tx input: ${tx.getInputValue(view)},` +
+    ` output: ${tx.getOutputValue()}, fee: ${tx.getFee(view)}`);
 
   await indexer.close();
   await chain.close();
