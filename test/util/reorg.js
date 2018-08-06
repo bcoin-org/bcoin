@@ -25,13 +25,13 @@ async function reorg(chain, cpu, height) {
       const blk1 = await job1.mineAsync();
       const blk2 = await job2.mineAsync();
 
-      const hash1 = blk1.hash('hex');
-      const hash2 = blk2.hash('hex');
+      const hash1 = blk1.hash();
+      const hash2 = blk2.hash();
 
       assert(await chain.add(blk1));
       assert(await chain.add(blk2));
 
-      assert.strictEqual(chain.tip.hash, hash1);
+      assert.bufferEqual(chain.tip.hash, hash1);
 
       tip1 = await chain.getEntry(hash1);
       tip2 = await chain.getEntry(hash2);
@@ -57,7 +57,7 @@ async function reorg(chain, cpu, height) {
     assert(await chain.add(block));
 
     assert(forked);
-    assert.strictEqual(chain.tip.hash, block.hash('hex'));
+    assert.bufferEqual(chain.tip.hash, block.hash());
     assert(chain.tip.chainwork.gt(tip1.chainwork));
 }
 

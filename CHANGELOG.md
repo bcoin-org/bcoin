@@ -53,6 +53,7 @@ An index can be dropped by just deleting the corresponding database.
   + `getMeta(hash)`
   + `getTX(hash)`
   + `hasTX(hash)`
+  + `getSpentView(tx)`
 
   `node.addrindex` implements:
 
