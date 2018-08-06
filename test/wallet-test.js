@@ -409,9 +409,10 @@ describe('Wallet', function() {
       method: 'selectwallet',
       params: [wallet.id]
     });
+    const address = await wallet.receiveAddress();
     await rpc.call({
       method: 'sweep',
-      params: ['', { feeRate: 0.000005, account: -1 }]
+      params: ['', { feeRate: 0.000005, account: -1, addresses: [address] }]
     });
     coins = await wallet.getCoins();
 
@@ -1727,7 +1728,7 @@ describe('Wallet', function() {
     });
   }
 
-  it('should cleanup', async () => {
+  it('should cleanup', () => {
     consensus.COINBASE_MATURITY = 100;
   });
 });
