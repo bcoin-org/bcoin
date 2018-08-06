@@ -1,19 +1,23 @@
 <!-- Thanks for filing an issue! Please help us debug the issue by providing the following info: -->
 
-**bcoin version** (use `bcoin --version` or `git rev-parse --verify HEAD` if installed from source):
+**Versions**
 
-**bcoin config** (`~/.bcoin/bcoin.conf` or flags / environment variables)
+<!-- Use bcoin --version or git rev-parse --verify HEAD if installed from source) -->
+<!-- Use node --version -->
+<!-- Include OS and architecture versions (if relevant) -->
 
-**Node version** (use `node --version`):
+**Expected**
 
-**OS and architecture**
+<!-- Describe expected behavior -->
 
-**What happened**:
+**Actual**
 
-**What you expected to happen**:
+<!-- Describe the actual behavior -->
 
-**How to reproduce it (as minimally and precisely as possible)**:
+**Reproduce**
 
-**Logs (you can paste a part showing an error or attach the whole file)**:
+<!-- Describe how to reproduce the issue as minimally as possible -->
 
-**Anything else do we need to know**:
+**Notes**
+
+<!-- Include any other details, logs, comments possible solutions and etc. -->
