@@ -17,10 +17,14 @@ const network = Network.get('regtest');
 const node = new FullNode({
   network: 'regtest',
   apiKey: 'foo',
-  walletAuth: true,
   memory: true,
   workers: true,
-  plugins: [require('../lib/wallet/plugin')]
+  plugins: [require('../lib/wallet/plugin')],
+  pluginOptions: {
+    walletAuth: true,
+    // prevents reading local wallet.conf file that could break tests
+    walletConfig: '/bad/path'
+  }
 });
 
 const {NodeClient, WalletClient} = require('bclient');
