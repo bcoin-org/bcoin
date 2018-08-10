@@ -175,7 +175,7 @@ describe('HTTP', function() {
     assert.deepStrictEqual(info, {});
   });
 
-  it('should create account', async () => {
+  it('should create P2PKH account', async () => {
     const info = await wallet.createAccount('foo1');
     assert(info);
     assert(info.initialized);
@@ -185,7 +185,45 @@ describe('HTTP', function() {
     assert.strictEqual(info.n, 1);
   });
 
-  it('should create account', async () => {
+  it('should create P2PKH recieve address', async () => {
+    const recaddr1 = await wallet.createAddress('foo1'); // index 1
+    assert(recaddr1);
+    assert.strictEqual(recaddr1.name, 'foo1');
+    assert.strictEqual(recaddr1.branch, 0);
+    assert.strictEqual(recaddr1.index, 1);
+    assert.strictEqual(recaddr1.witness, false);
+    assert.strictEqual(recaddr1.type, 'pubkeyhash');
+  });
+
+  // requires deriveReceive() from https://github.com/bcoin-org/bclient/pull/13
+  xit('should derive P2PKH recieve address at index', async () => {
+    await wallet.createAddress('foo1'); // index 2
+    const recaddr3 = await wallet.createAddress('foo1'); // index 3
+    await wallet.createAddress('foo1'); // index 4
+    await wallet.createAddress('foo1'); // index 5
+
+    const deraddr3 = await wallet.deriveReceive('foo1', 3);
+    assert.deepStrictEqual(recaddr3, deraddr3);
+
+    // will be easier with assert.asyncThrows()
+    // from https://github.com/bcoin-org/bcoin/pull/550
+    try {
+      await wallet.deriveReceive('foo1', 10);
+    } catch (e) {
+      assert.strictEqual(e.message,
+        'Requested index exceeds current receive depth');
+    }
+
+    const deraddr10force = await wallet.deriveReceive('foo1', 10, true);
+    assert(deraddr10force);
+    assert.strictEqual(deraddr10force.name, 'foo1');
+    assert.strictEqual(deraddr10force.branch, 0);
+    assert.strictEqual(deraddr10force.index, 10);
+    assert.strictEqual(deraddr10force.witness, false);
+    assert.strictEqual(deraddr10force.type, 'pubkeyhash');
+  });
+
+  it('should create legacy mutisig account', async () => {
     const info = await wallet.createAccount('foo2', {
       type: 'multisig',
       m: 1,
@@ -197,6 +235,52 @@ describe('HTTP', function() {
     assert.strictEqual(info.accountIndex, 2);
     assert.strictEqual(info.m, 1);
     assert.strictEqual(info.n, 2);
+  });
+
+  it('should add xpub to legacy multisig account', async () => {
+    const wife = await wallet.createAccount('wife');
+    const result = await wallet.addSharedKey('foo2', wife.accountKey);
+
+    assert(result.success);
+    assert(result.addedKey);
+  });
+
+  it('should create legacy multisig recieve address', async () => {
+    const recaddr1 = await wallet.createAddress('foo2'); // index 1
+    assert(recaddr1);
+    assert.strictEqual(recaddr1.name, 'foo2');
+    assert.strictEqual(recaddr1.branch, 0);
+    assert.strictEqual(recaddr1.index, 1);
+    assert.strictEqual(recaddr1.witness, false);
+    assert.strictEqual(recaddr1.type, 'scripthash');
+  });
+
+  // requires deriveReceive() from https://github.com/bcoin-org/bclient/pull/13
+  xit('should derive legacy multisig recieve address at index', async () => {
+    await wallet.createAddress('foo2'); // index 2
+    const recaddr3 = await wallet.createAddress('foo2'); // index 3
+    await wallet.createAddress('foo2'); // index 4
+    await wallet.createAddress('foo2'); // index 5
+
+    const deraddr3 = await wallet.deriveReceive('foo2', 3);
+    assert.deepStrictEqual(recaddr3, deraddr3);
+
+    // will be easier with assert.asyncThrows()
+    // from https://github.com/bcoin-org/bcoin/pull/550
+    try {
+      await wallet.deriveReceive('foo2', 10);
+    } catch (e) {
+      assert.strictEqual(e.message,
+        'Requested index exceeds current receive depth');
+    }
+
+    const deraddr10force = await wallet.deriveReceive('foo2', 10, true);
+    assert(deraddr10force);
+    assert.strictEqual(deraddr10force.name, 'foo2');
+    assert.strictEqual(deraddr10force.branch, 0);
+    assert.strictEqual(deraddr10force.index, 10);
+    assert.strictEqual(deraddr10force.witness, false);
+    assert.strictEqual(deraddr10force.type, 'scripthash');
   });
 
   it('should get a block template', async () => {
