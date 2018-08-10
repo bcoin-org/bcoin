@@ -24,7 +24,7 @@ const db = bdb.create({
 async function updateVersion() {
   console.log('Checking version.');
 
-  const data = await db.get(layout.V.build());
+  const data = await db.get(layout.V.encode());
   assert(data, 'No version.');
 
   const ver = data.readUInt32LE(0, true);
@@ -38,7 +38,7 @@ async function updateVersion() {
   buf.write('chain', 0, 'ascii');
   buf.writeUInt32LE(4, 5, true);
 
-  parent.put(layout.V.build(), buf);
+  parent.put(layout.V.encode(), buf);
 }
 
 async function migrateKeys(id, from, to) {
@@ -55,7 +55,7 @@ async function migrateKeys(id, from, to) {
   let items = 0;
 
   await iter.each(async (key) => {
-    batch.put(to.build(...from(key)), null);
+    batch.put(to.encode(...from(key)), null);
     batch.del(key);
 
     total += (key.length + 80) * 2;
@@ -81,10 +81,10 @@ async function updateKeys() {
   const table = await db.get(v);
   assert(table);
 
-  parent.put(layout.D.build(), table);
+  parent.put(layout.D.encode(), table);
   parent.del(v);
 
-  const raw = await db.get(layout.O.build());
+  const raw = await db.get(layout.O.encode());
   assert(raw);
 
   const flags = raw.readUInt32LE(8, true);
