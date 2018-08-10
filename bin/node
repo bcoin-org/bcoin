@@ -2,8 +2,6 @@
 
 'use strict';
 
-Buffer.poolSize = 2;
-
 process.title = 'bcoin';
 
 if (process.argv.indexOf('--help') !== -1
