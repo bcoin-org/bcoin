@@ -22,7 +22,7 @@ if (process.argv.indexOf('--version') !== -1
 const Node = require('../lib/wallet/node');
 
 const node = new Node({
-  config: true,
+  file: true,
   argv: true,
   env: true,
   logFile: true,
