@@ -44,6 +44,37 @@ See the [Beginner's Guide][guide] for more in-depth installation instructions.
 - REST Docs: http://bcoin.io/api-docs/index.html
 - Docs: [docs/](docs/README.md)
 
+## Development & Testing
+
+Development dependencies are not included in `package.json` and are expected to be installed on the development machine. This is to increase efficiency of auditing dependencies, as the code only need to be audited once, rather than for each repository and module.
+
+Install development dependencies _(if necessary)_:
+```
+npm install -g mocha@5.2.0 eslint@5.1.0 istanbul@1.1.0-alpha.1 jsdoc@3.5.5
+```
+
+To run tests:
+```
+npm run test
+```
+
+To run tests against a JS backend _(as with the case of a web browser)_:
+```
+npm run test-browser
+```
+
+To generate a test coverage report:
+```
+npm run test-ci
+```
+And open `./coverage/lcov-report/index.html` in your preferred web browser.
+
+To generate automated documentation:
+```
+npm run docs
+```
+And open `./docs/reference/` in your preferred web browser.
+
 ## Support
 
 Join us on [freenode][freenode] in the [#bcoin][irc] channel.

@@ -11,6 +11,7 @@ jobs:
           - v1-dependencies-{{ checksum "package.json" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
+      - run: ./scripts/lint-sha1.sh
       - run: npm install
       - save_cache:
           paths:
@@ -28,11 +29,11 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
       - run:
+          name: Install dependencies
+          command: npm install codecov@3.0.4 istanbul@1.1.0-alpha.1 mocha@5.2.0
+      - run:
           name: Tests with coverage
           command: npm run test-ci
-      - run:
-          name: Install codecov
-          command: npm i codecov
       - run:
           name: Submit coverage
           command: ./node_modules/.bin/codecov
@@ -49,6 +50,9 @@ jobs:
           - v1-dependencies-{{ checksum "package.json" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
+      - run:
+          name: Install dependencies
+          command: npm install eslint@5.1.0
       - run:
           name: Lint
           command: npm run lint-ci

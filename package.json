@@ -51,11 +51,6 @@
     "mrmr": "~0.1.1",
     "n64": "~0.2.1"
   },
-  "devDependencies": {
-    "eslint": "^5.1.0",
-    "istanbul": "^1.1.0-alpha.1",
-    "mocha": "^5.2.0"
-  },
   "main": "./lib/bcoin.js",
   "bin": {
     "bcoin": "./bin/bcoin",
@@ -74,7 +69,7 @@
     "test-browser": "NODE_BACKEND=js mocha --reporter spec test/*.js",
     "test-file": "mocha --reporter spec",
     "test-file-browser": "NODE_BACKEND=js mocha --reporter spec",
-    "test-ci": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- --reporter spec test/*.js",
+    "test-ci": "istanbul cover _mocha -- --reporter spec test/*.js",
     "webpack": "webpack --mode production --config webpack.browser.js",
     "webpack-browser": "webpack --mode production --config webpack.browser.js",
     "webpack-compat": "webpack --mode production --config webpack.compat.js",
