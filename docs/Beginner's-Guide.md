@@ -8,7 +8,7 @@ Bcoin is an _alternative_ implementation of the bitcoin protocol, written in nod
 - node.js >=v7.6.0
 - npm >=v4.0.0
 - python2 (for node-gyp)
-- gcc/g++ (for leveldb and secp256k1)
+- gcc/g++ (for leveldb and secp256k1). **Note**, if this isn't installed bcoin will work, just with degregaded peformance!
 - git (optional, see below)
 
 (\*): Note that bcoin works best with unix-like OSes, and has not yet been thoroughly tested on windows.
