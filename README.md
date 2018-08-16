@@ -29,6 +29,8 @@ Try it in the browser: http://bcoin.io/browser.html
 
 ## Install
 
+Note: if you don't have `build-essential` installed, bcoin will work but with degregaded performance, using native JS for crypto instead of C++. Read the `npm install` log for further details.
+
 ```
 $ git clone git://github.com/bcoin-org/bcoin.git
 $ cd bcoin
