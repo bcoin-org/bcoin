@@ -12,9 +12,12 @@
 5.1 [Code Review](#CodeReview)<br />
 5.2 [Rework Code (if needed)](#CodeRework)<br />
 5.3 [Acceptance](#CodeAcceptance)<br />
-6. [Contribution Standards](#Standards)<br />
-6.1. [Contribution Checklist](#Checklist)<br />
-6.2. [Licensing of Contributions](#Licensing)<br />
+6. [FAQs](#FrequentlyAskedQuestions)<br />
+6.1. [Balances](#Balances)<br />
+6.2. [Confirmations](#Confirmations)<br />
+7. [Contribution Standards](#Standards)<br />
+7.1. [Contribution Checklist](#Checklist)<br />
+7.2. [Licensing of Contributions](#Licensing)<br />
 
 <a name="Overview" />
 
@@ -52,7 +55,8 @@ contribute.
 
 - A reasonable understanding of bitcoin at a high level (see the
   [Required Reading](#ReqReading) section for the original white paper)
-- Experience in some type of C-like language
+- Experience in NodeJs and ES6+/Modern JS syntax (e.g. JS classes, async/await,
+  etc.).
 - An understanding of data structures and their performance implications
 - Familiarity with unit testing
 - Debugging experience
@@ -72,7 +76,11 @@ security and performance implications.
 - [Original Satoshi Whitepaper](https://bitcoin.org/bitcoin.pdf) - This is the
   white paper that started it all.  Having a solid foundation to build on will
   make the code much more comprehensible.
-- [Don't block the Event Loop](https://nodejs.org/en/docs/guides/dont-block-the-event-loop/)
+- [Mastering Bitcoin](https://github.com/bitcoinbook/bitcoinbook) - The Bitcoin
+  Book – Programming the Open Blockchain.  Great for understanding the nuts and bolts
+  behind the blockchain.
+- [bcoin guides](http://bcoin.io/guides.html) - Byte sized guides and tutorials
+  on using components from bcoin to do much more than just running a node.
 
 <a name="DevelopmentPractices" />
 
@@ -108,7 +116,7 @@ This approach has several benefits:
 
 <a name="CommonMistakes" />
 
-### 4.2 CommonMistakes
+### 4.2 Common Mistakes
 
 Some common mistakes that you might stumble across:
 
@@ -141,6 +149,8 @@ A quick summary of test practices follows:
 
 ### 4.4 Code Documentation and Commenting
 
+- Code must be documented using `jsdoc`. `valid-jsdoc` rule is enforced by the
+  [linter](#Checklist).
 - At a minimum every function must be commented with its intended purpose and
   any assumptions that it makes
 - The general rule of thumb is to look at it as if you were completely
@@ -271,13 +281,38 @@ the master branch and the pull request will be closed.
 Rejoice as you will now be listed as a
 [contributor](https://github.com/bcoin-org/bcoin/graphs/contributors)!
 
+<a name="FrequentlyAskedQuestions" />
+
+### 6. Frequently Asked Questions
+
+<a name="Balances" />
+
+### 6.1. Balances
+
+bcoin handles balances as follows:
+
+confirmed: balance secured by the blockchain
+
+unconfirmed: balance secured by the blockchain  + balance including
+transactions from the mempool
+
+This is done to properly handle change outputs of large withdrawals.
+
+<a name="Confirmations" />
+
+### 6.2. Confirmations
+
+bcoin wallet transactions are considered confirmed after 1 block. If your
+application needs to wait for more confirmations, you can wait for the
+corresponding number of blocks to be mined.
+
 <a name="Standards" />
 
-### 6. Contribution Standards
+### 7. Contribution Standards
 
 <a name="Checklist" />
 
-### 6.1. Contribution Checklist
+### 7.1. Contribution Checklist
 
 - All changes are node >= 8.0.0 compliant
 - [&nbsp;&nbsp;] The code being submitted is commented according to the
@@ -295,7 +330,7 @@ Rejoice as you will now be listed as a
 
 <a name="Licensing" />
 
-### 6.2. Licensing of Contributions
+### 7.2. Licensing of Contributions
 
 All contributions must be licensed with the
 [MIT license](https://github.com/bcoin-org/bcoin/blob/master/LICENSE).  This is
