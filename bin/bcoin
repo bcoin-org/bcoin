@@ -46,6 +46,9 @@ for arg in "$@"; do
     --spv)
       cmd='spvnode'
     ;;
+    --walletonly)
+      cmd='walletonlynode'
+    ;;
   esac
 done
 
