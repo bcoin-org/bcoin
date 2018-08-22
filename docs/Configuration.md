@@ -1,5 +1,5 @@
 By default, the mainnet bcoin config files will reside in `~/.bcoin/bcoin.conf` and `~/.bcoin/wallet.conf`.
-Any parameter passed to bcoin at startup will have precedence over the config file. 
+Any parameter passed to bcoin at startup will have precedence over the config file. Even if you are just running `bclient` without bcoin even installed (to access a remote server, for example) the configuration files would still reside in `~/.bcoin/`
 
 For example:
 
@@ -99,7 +99,12 @@ If enabled you should also enable `wallet-auth` and set `api-key`.
 
 ## Wallet options
 
-These options must be saved in `wallet.conf`:
+These options must be saved in `wallet.conf`. They can also be passed as environment variables or command-line variables 
+if they are preceeded with a `wallet-` prefix. (See https://github.com/bcoin-org/bcoin/blob/master/CHANGELOG.md#configuration-changes)
+
+For example, to run a bcoin and wallet node on a remote server that you can access from a local machine, you would launch bcoin with the command:
+
+`bcoin --network=testnet --http-host=0.0.0.0 --wallet-http-host=0.0.0.0 --wallet-api-key=hunter2 --wallet-wallet-auth=true`
 
 ### bcoin client:
 
