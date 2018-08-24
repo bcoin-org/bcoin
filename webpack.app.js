@@ -18,8 +18,7 @@ module.exports = {
   },
   resolve: {
     modules: ['node_modules'],
-    extensions: ['-browser.js', '.js', '.json'],
-    alias: require('bcrypto/compat')
+    extensions: ['-browser.js', '.js', '.json']
   },
   plugins: [
     new webpack.DefinePlugin({
