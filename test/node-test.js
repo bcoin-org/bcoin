@@ -23,9 +23,8 @@ const node = new FullNode({
   workers: true,
   indexTX: true,
   indexAddress: true,
-  plugins: [require('../lib/wallet/plugin'), require('../lib/index/plugin')]
+  plugins: [require('../lib/wallet/plugin')]
 });
-node.index = node.require('bindex');
 
 const chain = node.chain;
 const miner = node.miner;
