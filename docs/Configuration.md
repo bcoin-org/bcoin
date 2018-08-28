@@ -1,13 +1,29 @@
+
 By default, the mainnet bcoin config files will reside in `~/.bcoin/bcoin.conf` and `~/.bcoin/wallet.conf`.
-Any parameter passed to bcoin at startup will have precedence over the config file. Even if you are just running `bclient` without bcoin even installed (to access a remote server, for example) the configuration files would still reside in `~/.bcoin/`
+Any parameter passed to bcoin at startup will have precedence over the config file.
+Even if you are just running `bclient` without bcoin installed (to access a remote server, for example)
+the configuration files would still reside in `~/.bcoin/`
 
 For example:
 
-Running `bcoin --network=regtest --api-key=menace --daemon` will read the config file at `~/.bcoin/regtest/bcoin.conf`
+``` bash
+bcoin --network=regtest --api-key=menace --daemon
+```
+
+...will read the config file at `~/.bcoin/regtest/bcoin.conf`
 and ignore any `network` or `api-key` parameters listed in that file.
 
-All bcoin configuration options work in the config file, CLI arguments, and
-process environment (with a `BCOIN_` prefix).
+All bcoin configuration options work in the config file, CLI arguments, 
+process environment, and in the constructor parameters when instantiating new `node` objects in JavaScript.
+Each method has slightly different formatting. Note specifically the usage of hyphens and capital letters.
+See the examples below:
+
+| config file | CLI parameter | environment variable | JS object constructor |
+|---|---|---|---|
+| `network: testnet` | `--network=testnet` | `BCOIN_NETWORK=testnet` | `{network: 'testnet'}` |
+| `log-level: debug` | `--log-level=debug` | `BCOIN_LOG_LEVEL=debug` | `{logLevel: 'debug'}` |
+| `max-outbound: 8` | `--max-outbound=8` | `BCOIN_MAX_OUTBOUND=8` | `{maxOutbound: 8}`|
+
 
 ## Datadir/Prefix
 
