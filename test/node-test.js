@@ -12,6 +12,9 @@ const FullNode = require('../lib/node/fullnode');
 const MTX = require('../lib/primitives/mtx');
 const TX = require('../lib/primitives/tx');
 const Address = require('../lib/primitives/address');
+const Peer = require('../lib/net/peer');
+const InvItem = require('../lib/primitives/invitem');
+const invTypes = InvItem.types;
 
 const node = new FullNode({
   memory: true,
@@ -714,6 +717,29 @@ describe('Node', function() {
     assert.strictEqual(result.transactions[0].hash, tx2.txid());
     assert.strictEqual(result.transactions[1].hash, tx1.txid());
     assert.strictEqual(result.coinbasevalue, 125e7 + fees);
+  });
+
+  it('should broadcast a tx from inventory', async () => {
+    const rawTX1 =
+      '01000000011d06bce42b67f1de811a3444353fab5d400d82728a5bbf9c89978be37ad' +
+      '3eba9000000006a47304402200de4fd4ecc365ea90f93dbc85d219d7f1bd92ec87436' +
+      '48acb48b6602977e0b4302203ca2eeabed8e6f457234652a92711d66dd8eda71ed90f' +
+      'b6c49b3c12ce809a5d401210257654e1b0de2d8b08d514e51af5d770e9ef617ca2b25' +
+      '4d84dd26685fbc609ec3ffffffff0280969800000000001976a914a4ecde9642f8070' +
+      '241451c5851431be9b658a7fe88acc4506a94000000001976a914b9825cafc838c5b5' +
+      'befb70ecded7871d011af89d88ac00000000';
+    const tx1 = TX.fromRaw(rawTX1, 'hex');
+    const dummyPeer = Peer.fromOptions({
+      network: 'regtest',
+      agent: 'my-subversion',
+      hasWitness: () => {
+        return false;
+      }
+    });
+    const txItem = new InvItem(invTypes.TX, tx1.hash());
+    await node.sendTX(tx1); // add TX to inventory
+    const tx2 = node.pool.getBroadcasted(dummyPeer, txItem);
+    assert.strictEqual(tx1.txid(), tx2.txid());
   });
 
   it('should cleanup', async () => {
