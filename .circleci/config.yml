@@ -1,9 +1,12 @@
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:10.2
+
 version: 2.0
 jobs:
   install:
-    docker:
-      - image: circleci/node:10.2
-    working_directory: ~/repo
+    <<: *defaults
     steps:
       - checkout
       - restore_cache:
@@ -16,17 +19,15 @@ jobs:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
+      - persist_to_workspace:
+          root: .
+          paths: .
+
   test:
-    docker:
-      - image: circleci/node:10.2
-    working_directory: ~/repo
+    <<: *defaults
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+      - attach_workspace:
+          at: .
       - run:
           name: Tests with coverage
           command: npm run test-ci
@@ -38,17 +39,10 @@ jobs:
           command: ./node_modules/.bin/codecov
 
   lint:
-    docker:
-      - image: circleci/node:10.2
-
-    working_directory: ~/repo
+    <<: *defaults
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+      - attach_workspace:
+          at: .
       - run:
           name: Lint
           command: npm run lint-ci
@@ -64,5 +58,3 @@ workflows:
       - test:
           requires:
             - install
-
-
