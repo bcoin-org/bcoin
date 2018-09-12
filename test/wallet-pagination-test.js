@@ -14,7 +14,6 @@ const {
   initNodeClient,
   initWalletClient,
   initWallet,
-  generateBlock,
   generateInitialBlocks
 } = require('./util/regtest');
 

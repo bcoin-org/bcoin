@@ -97,8 +97,8 @@ async function initWallet(wclient) {
   return wallet;
 }
 
-async function generateBlock(nclient, coinbase) {
-  return await nclient.execute('generatetoaddress', [1, coinbase]);
+async function generateBlocks(count, nclient, coinbase) {
+  return await nclient.execute('generatetoaddress', [count, coinbase]);
 }
 
 async function generateTxs(options) {
@@ -130,7 +130,7 @@ async function generateInitialBlocks(options) {
     let blocktime = genesisTime + c * blockInterval;
     await nclient.execute('setmocktime', [blocktime]);
 
-    const blockhashes = await generateBlock(nclient, coinbase);
+    const blockhashes = await generateBlocks(1, nclient, coinbase);
     const block = await nclient.execute('getblock', [blockhashes[0]]);
 
     assert(block.time <= blocktime + 1);
@@ -152,7 +152,7 @@ async function generateInitialBlocks(options) {
     if (wclient && c > 110)
       await generateTxs({wclient: wclient, count: 50});
 
-    const blockhashes = await generateBlock(nclient, coinbase);
+    const blockhashes = await generateBlocks(1, nclient, coinbase);
     const block = await nclient.execute('getblock', [blockhashes[0]]);
 
     assert(block.time <= blocktime + 1);
@@ -166,6 +166,6 @@ module.exports = {
   initNodeClient,
   initWalletClient,
   initWallet,
-  generateBlock,
+  generateBlocks,
   generateInitialBlocks
 }
