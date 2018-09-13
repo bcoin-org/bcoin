@@ -58,6 +58,10 @@ function nextBlock(wdb) {
   return fakeBlock(wdb.state.height + 1);
 }
 
+function getFakeBlockTime(height) {
+  return 500000000 + (height * (10 * 60));
+}
+
 function fakeBlock(height) {
   const prev = hash256.digest(fromU32((height - 1) >>> 0));
   const hash = hash256.digest(fromU32(height >>> 0));
@@ -67,7 +71,7 @@ function fakeBlock(height) {
     hash: hash,
     prevBlock: prev,
     merkleRoot: root,
-    time: 500000000 + (height * (10 * 60)),
+    time: getFakeBlockTime(height),
     bits: 0,
     nonce: 0,
     height: height
@@ -1317,7 +1321,7 @@ describe('Wallet', function() {
   it('should get range of txs', async () => {
     const wallet = currentWallet;
     const txs = await wallet.getRange(null, {
-      start: util.now() - 1000
+      start: getFakeBlockTime(1)
     });
     assert.strictEqual(txs.length, 2);
   });
@@ -1325,7 +1329,7 @@ describe('Wallet', function() {
   it('should get range of txs from account', async () => {
     const wallet = currentWallet;
     const txs = await wallet.getRange('foo', {
-      start: util.now() - 1000
+      start: getFakeBlockTime(1)
     });
     assert.strictEqual(txs.length, 2);
   });
@@ -1458,7 +1462,7 @@ describe('Wallet', function() {
     const wallet = currentWallet;
 
     const txs = await wallet.getRange('foo', {
-      start: util.now() - 1000
+      start: getFakeBlockTime(1)
     });
 
     const details = await wallet.toDetails(txs);
@@ -1474,7 +1478,7 @@ describe('Wallet', function() {
     await wallet.rename('test');
 
     const txs = await wallet.getRange('foo', {
-      start: util.now() - 1000
+      start: getFakeBlockTime(1)
     });
 
     const details = await wallet.toDetails(txs);
