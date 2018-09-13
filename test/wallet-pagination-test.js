@@ -20,6 +20,7 @@ const {
 const testPrefix = '/tmp/bcoin-fullnode';
 const spvTestPrefix = '/tmp/bcoin-spvnode';
 const genesisTime = 1534965859;
+const genesisDate = new Date(genesisTime * 1000);
 
 const ports = {
   full: {
@@ -61,7 +62,7 @@ describe('Wallet TX Pagination', function() {
       wclient,
       coinbase,
       genesisTime,
-      blocks: 120
+      blocks: 125
     });
 
     // TODO use an event here instead.
@@ -80,7 +81,7 @@ describe('Wallet TX Pagination', function() {
 
   it('should get correct transaction count', async () => {
     const count = await wclient.execute('listhistorycount', ['blue']);
-    assert.strictEqual(count, 570);
+    assert.strictEqual(count, 575);
   });
 
   describe('get transaction history (dsc)', function() {
@@ -123,27 +124,27 @@ describe('Wallet TX Pagination', function() {
       const history = await wclient.execute('listhistory', ['blue', 12, false]);
       assert.strictEqual(history.length, 12);
       assert.strictEqual(history[0].account, 'blue');
-      assert.strictEqual(history[0].confirmations, 120);
+      assert.strictEqual(history[0].confirmations, 125);
       assert.strictEqual(history[11].account, 'blue');
-      assert.strictEqual(history[11].confirmations, 109);
+      assert.strictEqual(history[11].confirmations, 114);
     });
 
     it('second page', async () => {
       const one = await wclient.execute('listhistory', ['blue', 12, false]);
       assert.strictEqual(one.length, 12);
       assert.strictEqual(one[0].account, 'blue');
-      assert.strictEqual(one[0].confirmations, 120);
+      assert.strictEqual(one[0].confirmations, 125);
       assert.strictEqual(one[11].account, 'blue');
-      assert.strictEqual(one[11].confirmations, 109);
+      assert.strictEqual(one[11].confirmations, 114);
 
       const after = one[11].txid;
 
       const two = await wclient.execute('listhistoryafter', ['blue', after, 12, false]);
       assert.strictEqual(two.length, 12);
       assert.strictEqual(two[0].account, 'blue');
-      assert.strictEqual(two[0].confirmations, 108);
+      assert.strictEqual(two[0].confirmations, 113);
       assert.strictEqual(two[11].account, 'blue');
-      assert.strictEqual(two[11].confirmations, 97);
+      assert.strictEqual(two[11].confirmations, 102);
       assert.notStrictEqual(two[0].txid, one[11].txid);
     });
 
@@ -158,11 +159,21 @@ describe('Wallet TX Pagination', function() {
 
   describe('get transaction history by timestamp (asc)', () => {
     it('genesis to latest', async () => {
-
+      const history = await wclient.execute('listhistorybytime', ['blue', genesisDate, 12, false]);
+      assert.strictEqual(history.length, 12);
+      assert.strictEqual(history[0].account, 'blue');
+      assert.strictEqual(history[0].confirmations, 125);
+      assert.strictEqual(history[11].account, 'blue');
+      assert.strictEqual(history[11].confirmations, 114);
     });
 
     it('latest to genesis', async () => {
-
+      const history = await wclient.execute('listhistorybytime', ['blue', new Date(), 100, true]);
+      assert.strictEqual(history.length, 100);
+      assert.strictEqual(history[0].account, 'blue');
+      assert.strictEqual(history[0].confirmations, 1);
+      assert.strictEqual(history[99].account, 'blue');
+      assert.strictEqual(history[99].confirmations, 3);
     });
 
     it('arbitrary date', async () => {

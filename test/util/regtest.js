@@ -145,11 +145,15 @@ async function generateInitialBlocks(options) {
       blocktime -= timewarp;
     await nclient.execute('setmocktime', [blocktime]);
 
+    // TODO
+    // Use an event to wait for wallets to catch up so that
+    // funds can be spent
+
     // If the wallet client is available and there have been
     // enough blocks for coinbase to mature, generate transactions
     // for the block. Additionally the wallet may not be in lockstep
     // sync with the chain, so it's necessary to wait a few more blocks.
-    if (wclient && c > 110)
+    if (wclient && c > 115)
       await generateTxs({wclient: wclient, count: 50});
 
     const blockhashes = await generateBlocks(1, nclient, coinbase);
