@@ -9,7 +9,7 @@ const SPVNode = require('../lib/node/spvnode');
 const Outpoint = require('../lib/primitives/outpoint');
 
 const node = new SPVNode({
-  config: true,
+  file: true,
   argv: true,
   env: true,
   logFile: true,
