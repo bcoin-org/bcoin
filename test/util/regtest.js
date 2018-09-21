@@ -22,7 +22,7 @@ async function initFullNode(options) {
     memory: false,
     plugins: [require('../../lib/wallet/plugin')],
     env: {
-      'BCOIN_WALLETHTTPPORT': (options.ports.full.wallet).toString()
+      'BCOIN_WALLET_HTTP_PORT': (options.ports.full.wallet).toString()
     },
     logLevel: options.logLevel
   });
@@ -48,7 +48,7 @@ async function initSPVNode(options) {
     memory: false,
     plugins: [require('../../lib/wallet/plugin')],
     env: {
-      'BCOIN_WALLETHTTPPORT': (options.ports.spv.wallet).toString()
+      'BCOIN_WALLET_HTTP_PORT': (options.ports.spv.wallet).toString()
     },
     logLevel: options.logLevel
   })
@@ -99,6 +99,26 @@ async function initWallet(wclient) {
 
 async function generateBlocks(count, nclient, coinbase) {
   return await nclient.execute('generatetoaddress', [count, coinbase]);
+}
+
+async function generateReorg(depth, nclient, wclient, coinbase) {
+  let hashes = [];
+
+  for (let i = 0; i < depth; i++) {
+    const hash = await nclient.execute('getbestblockhash');
+    hashes.push(hash);
+    await nclient.execute('invalidateblock', [hash]);
+  }
+
+  const addr = await wclient.execute('getnewaddress', ['blue']);
+  const txid = await wclient.execute('sendtoaddress', [addr, 0.11111111]);
+
+  const blocks = await generateBlocks(depth, nclient, coinbase);
+
+  return {
+    invalidated: hashes,
+    validated: blocks
+  }
 }
 
 async function generateTxs(options) {
@@ -171,5 +191,6 @@ module.exports = {
   initWalletClient,
   initWallet,
   generateBlocks,
-  generateInitialBlocks
+  generateInitialBlocks,
+  generateReorg
 }
