@@ -14,7 +14,8 @@ const {
   initNodeClient,
   initWalletClient,
   initWallet,
-  generateInitialBlocks
+  generateInitialBlocks,
+  generateReorg
 } = require('./util/regtest');
 
 const testPrefix = '/tmp/bcoin-fullnode';
@@ -37,7 +38,7 @@ const ports = {
 async function testMonotonicTime(wclient) {
   const result = await wclient.execute('getblocksbytime', [genesisTime, 1000]);
 
-  assert.strictEqual(result.length, 100);
+  assert.strictEqual(result.length, 125);
   assert.strictEqual(result[0].time, genesisTime);
 
   let monotonic = true;
@@ -74,7 +75,13 @@ describe('Wallet Monotonic Time', function() {
     await wclient.execute('selectwallet', ['test']);
     coinbase = await wclient.execute('getnewaddress', ['blue']);
 
-    await generateInitialBlocks({nclient, coinbase, genesisTime});
+    await generateInitialBlocks({
+      nclient,
+      wclient,
+      coinbase,
+      genesisTime,
+      blocks: 125
+    });
 
     // TODO remove this, and use an event.
     // The wallet may not be lockstep sync with the node
@@ -97,5 +104,20 @@ describe('Wallet Monotonic Time', function() {
 
   it('time should be monotonic for spv node', async () => {
     await testMonotonicTime(spvwclient);
+  });
+
+  describe('chain reorganizations', function() {
+    before(async () => {
+      const result = await generateReorg(1, nclient, wclient, coinbase);
+      assert.notStrictEqual(result.invalidated[0], result.validated[0]);
+    });
+
+    it('should reorganize monotonic time for a full node', async() => {
+      // TODO
+    });
+
+    it('should reorganize monotonic time for a spv node', async() => {
+      // TODO
+    });
   });
 });
