@@ -49,14 +49,14 @@ function assertConsensus(tx, output, flags, code) {
 }
 
 function randomSignature() {
-  const r = secp256k1.generatePrivateKey();
-  const s = secp256k1.generatePrivateKey();
-  return secp256k1.toDER(Buffer.concat([r, s]));
+  const r = secp256k1.privateKeyGenerate();
+  const s = secp256k1.privateKeyGenerate();
+  return secp256k1.signatureExport(Buffer.concat([r, s]));
 }
 
 function randomKey() {
-  const x = secp256k1.generatePrivateKey();
-  const y = secp256k1.generatePrivateKey();
+  const x = secp256k1.privateKeyGenerate();
+  const y = secp256k1.privateKeyGenerate();
 
   if (rand(0, 2) === 0) {
     const p = Buffer.from([2 | (y[y.length - 1] & 1)]);
