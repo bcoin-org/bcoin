@@ -44,6 +44,9 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Install eslint
+          command: npm i eslint
+      - run:
           name: Lint
           command: npm run lint-ci
 
