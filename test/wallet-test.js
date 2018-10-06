@@ -1434,6 +1434,50 @@ describe('Wallet', function() {
     assert(wkey);
   });
 
+  // https://github.com/satoshilabs/slips/blob/master/slip-0132.md \
+  // #bitcoin-test-vectors
+  it('should import xpubkey', async () => {
+    const wallet = await wdb.create({
+      id: 'xpubtest',
+      watchOnly: true,
+      accountKey:
+      'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhawA7d4' +
+      'R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr = account.toJSON().receiveAddress;
+    assert.strictEqual(recAddr, '1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA');
+  });
+
+  it('should import ypubkey', async () => {
+    const wallet = await wdb.create({
+      id: 'ypubtest',
+      watchOnly: true,
+      accountKey:
+      'ypub6Ww3ibxVfGzLrAH1PNcjyAWenMTbbAosGNB6VvmSEgytSER9az' +
+      'LDWCxoJwW7Ke7icmizBMXrzBx9979FfaHxHcrArf3zbeJJJUZPf663zsP'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr = account.toJSON().receiveAddress;
+    assert.strictEqual(recAddr, '37VucYSaXLCAsxYyAPfbSi9eh4iEcbShgf');
+  });
+
+  it('should import zpubkey', async () => {
+    const wallet = await wdb.create({
+      id: 'zpubtest',
+      watchOnly: true,
+      accountKey:
+      'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhX' +
+      'NfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr = account.toJSON().receiveAddress;
+    assert.strictEqual(recAddr, 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu');
+  });
+
   it('should import address', async () => {
     const key = KeyRing.generate();
 
