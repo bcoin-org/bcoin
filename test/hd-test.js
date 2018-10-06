@@ -145,21 +145,21 @@ describe('HD', function() {
     const mne = HD.Mnemonic.fromPhrase(vectors.xyz.phrase);
 
     const xkey = HD.PrivateKey.fromMnemonic(mne);
-    xkey.keyType = 'x';
+    xkey.purpose = 'x';
     const xprv = xkey.derivePath(vectors.xyz.x.path);
     const xpub = xprv.toPublic();
     base58Equal(xprv.toBase58('main'), vectors.xyz.x.xprv);
     base58Equal(xpub.toBase58('main'), vectors.xyz.x.xpub);
 
     const ykey = HD.PrivateKey.fromMnemonic(mne);
-    ykey.keyType = 'y';
+    ykey.purpose = 'y';
     const yprv = ykey.derivePath(vectors.xyz.y.path);
     const ypub = yprv.toPublic();
     base58Equal(yprv.toBase58('main'), vectors.xyz.y.yprv);
     base58Equal(ypub.toBase58('main'), vectors.xyz.y.ypub);
 
     const zkey = HD.PrivateKey.fromMnemonic(mne);
-    zkey.keyType = 'z';
+    zkey.purpose = 'z';
     const zprv = zkey.derivePath(vectors.xyz.z.path);
     const zpub = zprv.toPublic();
     base58Equal(zprv.toBase58('main'), vectors.xyz.z.zprv);
