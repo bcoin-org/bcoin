@@ -95,8 +95,7 @@ function show(obj) {
     floating.style.display = 'block';
     return;
   }
-  const json = obj && obj.toJSON ? obj.toJSON() : null;
-  floating.innerHTML = escape(JSON.stringify(json, null, 2));
+  floating.innerHTML = escape(JSON.stringify(obj, null, 2));
   floating.style.display = 'block';
 }
 
