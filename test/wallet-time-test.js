@@ -53,6 +53,17 @@ async function testMonotonicTime(wclient) {
   assert(monotonic, 'Expected to be monotonic');
 }
 
+async function testReorg(wclient, previous, depth) {
+  const current = await wclient.execute('getblocksbytime', [genesisTime, 1000]);
+  assert.strictEqual(current.length, previous.length + 1);
+
+  const l = current.length;
+
+  for (let i = 1; i < depth + 1; i++) {
+    assert.notStrictEqual(previous[l - i].block, current[l - i].block);
+  }
+}
+
 describe('Wallet Monotonic Time', function() {
   this.timeout(10000);
 
@@ -64,8 +75,8 @@ describe('Wallet Monotonic Time', function() {
     await rimraf(testPrefix);
     await rimraf(spvTestPrefix);
 
-    node = await initFullNode({ports, prefix: testPrefix});
-    spvnode = await initSPVNode({ports, prefix: spvTestPrefix});
+    node = await initFullNode({ports, prefix: testPrefix, logLevel: 'none'});
+    spvnode = await initSPVNode({ports, prefix: spvTestPrefix, logLevel: 'none'});
 
     nclient = await initNodeClient({ports: ports.full});
     wclient = await initWalletClient({ports: ports.full});
@@ -106,18 +117,26 @@ describe('Wallet Monotonic Time', function() {
     await testMonotonicTime(spvwclient);
   });
 
-  describe('chain reorganizations', function() {
+  describe.skip('chain reorganizations', function() {
+    const depth = 3;
+    let previous = null;
+
     before(async () => {
-      const result = await generateReorg(1, nclient, wclient, coinbase);
+      previous = await wclient.execute('getblocksbytime', [genesisTime, 1000]);
+
+      const result = await generateReorg(depth, nclient, wclient, coinbase);
       assert.notStrictEqual(result.invalidated[0], result.validated[0]);
+
+      // TODO remove this
+      await sleep(5000);
     });
 
     it('should reorganize monotonic time for a full node', async() => {
-      // TODO
+      await testReorg(wclient, previous, depth);
     });
 
     it('should reorganize monotonic time for a spv node', async() => {
-      // TODO
+      await testReorg(spvwclient, previous, depth);
     });
   });
 });

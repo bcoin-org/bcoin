@@ -102,22 +102,52 @@ async function generateBlocks(count, nclient, coinbase) {
 }
 
 async function generateReorg(depth, nclient, wclient, coinbase) {
-  let hashes = [];
+  const blockInterval = 600;
 
+  let invalidated = [];
+  let lastTime = null;
+
+  // Invalidate blocks to the depth.
   for (let i = 0; i < depth; i++) {
     const hash = await nclient.execute('getbestblockhash');
-    hashes.push(hash);
+    invalidated.push(hash);
+
+    // Get the time for the block before it's removed.
+    const lastBlock = await nclient.execute('getblock', [hash]);
+    lastTime = lastBlock.time;
+
     await nclient.execute('invalidateblock', [hash]);
   }
 
+  // Increase time so that blocks do not have
+  // the same time stamp as before.
+  lastTime += 10000;
+
+  // Create a new transaction so that the transactions
+  // order is different after the reorg.
   const addr = await wclient.execute('getnewaddress', ['blue']);
   const txid = await wclient.execute('sendtoaddress', [addr, 0.11111111]);
 
-  const blocks = await generateBlocks(depth, nclient, coinbase);
+  let validated = [];
+
+  // Add new blocks back to the same height plus one
+  // so that it becomes the chain with the most work.
+  for (let c = 0; c < depth + 1; c++) {
+    let blocktime = lastTime + c * blockInterval;
+    await nclient.execute('setmocktime', [blocktime]);
+
+    const blockhashes = await generateBlocks(1, nclient, coinbase);
+    const block = await nclient.execute('getblock', [blockhashes[0]]);
+
+    validated.push(block.hash);
+
+    assert(block.time <= blocktime + 1);
+    assert(block.time >= blocktime);
+  }
 
   return {
-    invalidated: hashes,
-    validated: blocks
+    invalidated,
+    validated
   }
 }
 
