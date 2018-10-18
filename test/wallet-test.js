@@ -1478,6 +1478,29 @@ describe('Wallet', function() {
     assert.strictEqual(recAddr, 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu');
   });
 
+  it('should get x/y/zpub wallets by tx', async () => {
+    const xtx = new MTX();
+    xtx.addInput(dummyInput());
+    xtx.addOutput('1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA', 50000);
+    const xrecWallet = await wdb.getWalletsByTX(xtx);
+    const xexpectedWallet = await wdb.get('xpubtest');
+    assert(xrecWallet.has(xexpectedWallet.wid));
+
+    const ytx = new MTX();
+    ytx.addInput(dummyInput());
+    ytx.addOutput('37VucYSaXLCAsxYyAPfbSi9eh4iEcbShgf', 50000);
+    const yrecWallet = await wdb.getWalletsByTX(ytx);
+    const yexpectedWallet = await wdb.get('ypubtest');
+    assert(yrecWallet.has(yexpectedWallet.wid));
+
+    const ztx = new MTX();
+    ztx.addInput(dummyInput());
+    ztx.addOutput('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu', 50000);
+    const zrecWallet = await wdb.getWalletsByTX(ztx);
+    const zexpectedWallet = await wdb.get('zpubtest');
+    assert(zrecWallet.has(zexpectedWallet.wid));
+  });
+
   // https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki#test-vectors
   it('should create BIP49 wallet and addresses', async () => {
     // test vectors provided for testnet only
