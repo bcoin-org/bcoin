@@ -130,9 +130,9 @@ async function generateReorg(depth, nclient, wclient, coinbase) {
 
   let validated = [];
 
-  // Add new blocks back to the same height plus one
+  // Add new blocks back to the same height plus two
   // so that it becomes the chain with the most work.
-  for (let c = 0; c < depth + 1; c++) {
+  for (let c = 0; c < depth + 2; c++) {
     let blocktime = lastTime + c * blockInterval;
     await nclient.execute('setmocktime', [blocktime]);
 
