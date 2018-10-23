@@ -57,10 +57,13 @@ async function testReorg(wclient, previous, depth) {
   const current = await wclient.execute('getblocksbytime', [genesisTime, 1000]);
   assert.strictEqual(current.length, previous.length + 1);
 
-  const l = current.length;
+  const len = previous.length;
 
-  for (let i = 1; i < depth + 1; i++) {
-    assert.notStrictEqual(previous[l - i].block, current[l - i].block);
+  for (let i = 0; i < len; i++) {
+    if (i < len - depth)
+      assert.strictEqual(previous[i].block, current[i].block);
+    else
+      assert.notStrictEqual(previous[i].block, current[i].block);
   }
 }
 
@@ -117,7 +120,7 @@ describe('Wallet Monotonic Time', function() {
     await testMonotonicTime(spvwclient);
   });
 
-  describe.skip('chain reorganizations', function() {
+  describe('chain reorganizations', function() {
     const depth = 3;
     let previous = null;
 
@@ -135,7 +138,7 @@ describe('Wallet Monotonic Time', function() {
       await testReorg(wclient, previous, depth);
     });
 
-    it('should reorganize monotonic time for a spv node', async() => {
+    it.skip('should reorganize monotonic time for a spv node', async() => {
       await testReorg(spvwclient, previous, depth);
     });
   });
