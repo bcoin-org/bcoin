@@ -55,7 +55,7 @@ async function testMonotonicTime(wclient) {
 
 async function testReorg(wclient, previous, depth) {
   const current = await wclient.execute('getblocksbytime', [genesisTime, 1000]);
-  assert.strictEqual(current.length, previous.length + 1);
+  assert.strictEqual(current.length, previous.length + 2);
 
   const len = previous.length;
 
@@ -138,7 +138,7 @@ describe('Wallet Monotonic Time', function() {
       await testReorg(wclient, previous, depth);
     });
 
-    it.skip('should reorganize monotonic time for a spv node', async() => {
+    it('should reorganize monotonic time for a spv node', async() => {
       await testReorg(spvwclient, previous, depth);
     });
   });
