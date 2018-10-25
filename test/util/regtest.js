@@ -1,10 +1,11 @@
 'use strict';
 
+const {NodeClient, WalletClient} = require('bclient');
+
 const assert = require('./assert');
+const sleep = require('./sleep');
 const FullNode = require('../../lib/node/fullnode');
 const SPVNode = require('../../lib/node/spvnode');
-
-const {NodeClient, WalletClient} = require('bclient');
 
 async function initFullNode(options) {
   const node = new FullNode({
@@ -123,10 +124,13 @@ async function generateReorg(depth, nclient, wclient, coinbase) {
   // the same time stamp as before.
   lastTime += 10000;
 
-  // Create a new transaction so that the transactions
-  // order is different after the reorg.
-  const addr = await wclient.execute('getnewaddress', ['blue']);
-  const txid = await wclient.execute('sendtoaddress', [addr, 0.11111111]);
+  // TODO remove
+  await sleep(1000);
+
+  // Mature coinbase transactions past depth
+  await generateBlocks(depth, nclient, coinbase);
+
+  const txids = await wclient.execute('resendwallettransactions');
 
   let validated = [];
 
@@ -147,7 +151,8 @@ async function generateReorg(depth, nclient, wclient, coinbase) {
 
   return {
     invalidated,
-    validated
+    validated,
+    txids
   }
 }
 

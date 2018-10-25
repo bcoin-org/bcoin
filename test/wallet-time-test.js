@@ -55,7 +55,7 @@ async function testMonotonicTime(wclient) {
 
 async function testReorg(wclient, previous, depth) {
   const current = await wclient.execute('getblocksbytime', [genesisTime, 1000]);
-  assert.strictEqual(current.length, previous.length + 2);
+  assert.strictEqual(current.length, previous.length + 2 + depth);
 
   const len = previous.length;
 
