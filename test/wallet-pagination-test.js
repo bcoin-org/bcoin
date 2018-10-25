@@ -14,7 +14,8 @@ const {
   initNodeClient,
   initWalletClient,
   initWallet,
-  generateInitialBlocks
+  generateInitialBlocks,
+  generateReorg
 } = require('./util/regtest');
 
 const testPrefix = '/tmp/bcoin-fullnode';
@@ -173,11 +174,44 @@ describe('Wallet TX Pagination', function() {
       assert.strictEqual(history[0].account, 'blue');
       assert.strictEqual(history[0].confirmations, 1);
       assert.strictEqual(history[99].account, 'blue');
-      assert.strictEqual(history[99].confirmations, 3);
+      assert.strictEqual(history[99].confirmations, 3); // TODO this will sometimes be 2
     });
 
     it('arbitrary date', async () => {
 
     });
+  });
+
+  describe('chain reorganizations', () => {
+    const depth = 1;
+    let previous = null;
+    const now = new Date() + 10000;
+    let txids = new Map();
+
+    before(async () => {
+      previous = await wclient.execute('listhistorybytime', ['blue', now, 100, true]);
+
+      const result = await generateReorg(depth, nclient, wclient, coinbase);
+      assert.notStrictEqual(result.invalidated[0], result.validated[0]);
+
+      for (let txid of result.txids)
+        txids.set(txid);
+
+      // TODO remove this
+      await sleep(5000);
+    });
+
+    it('reorganize count and monotonic time indexes', async() => {
+      const current = await wclient.execute('listhistorybytime', ['blue', now, 100, true]);
+
+      let currentMap = new Map();
+
+      for (let p of current)
+        currentMap.set(p.txid, p);
+
+      for (let txid of txids.keys())
+        assert.strictEqual(currentMap.has(txid), true);
+    });
+
   });
 });
