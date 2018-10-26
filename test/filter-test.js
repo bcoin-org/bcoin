@@ -40,6 +40,9 @@ describe('BIP158 Filters', function() {
 
       const filter = GCSFilter.fromBlock(block, view);
       assert.strictEqual(filter.toRaw().toString('hex'), json[5]);
+
+      const header = filter.header(Buffer.from(json[4], 'hex').reverse());
+      assert.strictEqual(header.reverse().toString('hex'), json[6]);
     });
   }
 });
