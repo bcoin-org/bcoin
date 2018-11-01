@@ -6,6 +6,7 @@ const Amount = require('../../lib/btc/amount');
 const plugin = require('../../lib/wallet/plugin');
 const util = require('../../lib/utils/util');
 const ProxySocket = require('./proxysocket');
+const format = require('./format');
 
 const body = document.getElementsByTagName('body')[0];
 const log = document.getElementById('log');
@@ -28,7 +29,7 @@ const logger = new Logger({
 
 logger.writeConsole = function writeConsole(level, module, args) {
   const name = Logger.levelsByVal[level];
-  const msg = this.fmt(args, false);
+  const msg = format(args, false);
 
   if (++scrollback > 1000) {
     log.innerHTML = '';
