@@ -624,7 +624,8 @@ describe('Wallet', function() {
   });
 
   for (const testcase of [0, 1]) {
-    const description = testcase === 0 ? 'empty inputs' : 'funder has already partially funded'
+    const description = testcase === 0 ? 'empty inputs' :
+      'funder has already partially funded';
     it(`should fill tx with inputs (${description})`, async () => {
       const alice = await wdb.create();
       const bob = await wdb.create();
@@ -707,13 +708,13 @@ describe('Wallet', function() {
     try {
       await alice.fund(m2, {
         rate: 10000,
-        round: true,
+        round: true
       });
     } catch (e) {
       err = e;
     }
 
-    assert(err)
+    assert(err);
   });
 
   it('should fill tx with inputs with accurate fee', async () => {
