@@ -623,11 +623,72 @@ describe('Wallet', function() {
     }
   });
 
-  it('should fill tx with inputs', async () => {
+  for (const testcase of [0, 1]) {
+    const description = testcase === 0 ? 'empty inputs' : 'funder has already partially funded'
+    it(`should fill tx with inputs (${description})`, async () => {
+      const alice = await wdb.create();
+      const bob = await wdb.create();
+
+      // Coinbase
+      const t1 = new MTX();
+      t1.addInput(dummyInput());
+      t1.addOutput(await alice.receiveAddress(), 5460);
+      t1.addOutput(await alice.receiveAddress(), 5460);
+      t1.addOutput(await alice.receiveAddress(), 5460);
+      t1.addOutput(await alice.receiveAddress(), 5460);
+
+      await wdb.addTX(t1.toTX());
+
+      // Create new transaction
+      const m2 = new MTX();
+      m2.addOutput(await bob.receiveAddress(), 5460);
+
+      let preserveInput = false;
+      if (testcase === 1) {
+        m2.addTX(t1, 0, -1);
+        preserveInput = true;
+      }
+
+      await alice.fund(m2, {
+        rate: 10000,
+        round: true,
+        preserveInput
+      });
+
+      await alice.sign(m2);
+
+      const [t2, v2] = m2.commit();
+
+      assert(t2.verify(v2));
+
+      assert.strictEqual(t2.getInputValue(v2), 16380);
+      assert.strictEqual(t2.getOutputValue(), 6380);
+      assert.strictEqual(t2.getFee(v2), 10000);
+
+      // Create new transaction
+      const t3 = new MTX();
+      t3.addOutput(await bob.receiveAddress(), 15000);
+
+      let err;
+      try {
+        await alice.fund(t3, {
+          rate: 10000,
+          round: true,
+          preserveInput
+        });
+      } catch (e) {
+        err = e;
+      }
+
+      assert(err);
+      assert.strictEqual(err.requiredFunds, 25000);
+    });
+  }
+
+  it('should not fill tx with unknown inputs', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
-
-    // Coinbase
+      // Coinbase
     const t1 = new MTX();
     t1.addInput(dummyInput());
     t1.addOutput(await alice.receiveAddress(), 5460);
@@ -640,38 +701,19 @@ describe('Wallet', function() {
     // Create new transaction
     const m2 = new MTX();
     m2.addOutput(await bob.receiveAddress(), 5460);
-
-    await alice.fund(m2, {
-      rate: 10000,
-      round: true
-    });
-
-    await alice.sign(m2);
-
-    const [t2, v2] = m2.commit();
-
-    assert(t2.verify(v2));
-
-    assert.strictEqual(t2.getInputValue(v2), 16380);
-    assert.strictEqual(t2.getOutputValue(), 6380);
-    assert.strictEqual(t2.getFee(v2), 10000);
-
-    // Create new transaction
-    const t3 = new MTX();
-    t3.addOutput(await bob.receiveAddress(), 15000);
+    m2.addInput(new Input());
 
     let err;
     try {
-      await alice.fund(t3, {
+      await alice.fund(m2, {
         rate: 10000,
-        round: true
+        round: true,
       });
     } catch (e) {
       err = e;
     }
 
-    assert(err);
-    assert.strictEqual(err.requiredFunds, 25000);
+    assert(err)
   });
 
   it('should fill tx with inputs with accurate fee', async () => {
