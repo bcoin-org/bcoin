@@ -1315,19 +1315,15 @@ describe('Wallet', function() {
     });
   }
 
-  it('should get range of txs', async () => {
+  it('should get pending range of txs', async () => {
     const wallet = currentWallet;
-    const txs = await wallet.getRange(null, {
-      start: util.now() - 1000
-    });
+    const txs = await wallet.getPending(null);
     assert.strictEqual(txs.length, 2);
   });
 
-  it('should get range of txs from account', async () => {
+  it('should get pending range of txs from account', async () => {
     const wallet = currentWallet;
-    const txs = await wallet.getRange('foo', {
-      start: util.now() - 1000
-    });
+    const txs = await wallet.getPending('foo');
     assert.strictEqual(txs.length, 2);
   });
 
@@ -1458,9 +1454,7 @@ describe('Wallet', function() {
   it('should get details', async () => {
     const wallet = currentWallet;
 
-    const txs = await wallet.getRange('foo', {
-      start: util.now() - 1000
-    });
+    const txs = await wallet.getPending('foo');
 
     const details = await wallet.toDetails(txs);
 
@@ -1474,9 +1468,7 @@ describe('Wallet', function() {
 
     await wallet.rename('test');
 
-    const txs = await wallet.getRange('foo', {
-      start: util.now() - 1000
-    });
+    const txs = await wallet.getPending('foo');
 
     const details = await wallet.toDetails(txs);
 
