@@ -34,7 +34,7 @@ const wclient = new WalletClient({
 let wallet = null;
 
 describe('Pruned node', function() {
-  this.timeout(15000);
+  this.timeout(60000);
 
   it('should open node', async () => {
     consensus.COINBASE_MATURITY = 0;
