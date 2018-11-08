@@ -149,11 +149,11 @@ describe('Wallet TX Pagination', function() {
       assert.notStrictEqual(two[0].txid, one[11].txid);
     });
 
-    it('third page after new block (no shifting)', async () => {
+    it.skip('third page after new block (no shifting)', async () => {
 
     });
 
-    it('last page', async () => {
+    it.skip('last page', async () => {
 
     });
   });
@@ -177,7 +177,7 @@ describe('Wallet TX Pagination', function() {
       assert.strictEqual(history[99].confirmations, 3); // TODO this will sometimes be 2
     });
 
-    it('arbitrary date', async () => {
+    it.skip('arbitrary date', async () => {
 
     });
   });

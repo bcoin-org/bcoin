@@ -157,14 +157,17 @@ async function generateReorg(depth, nclient, wclient, coinbase) {
 }
 
 async function generateTxs(options) {
-  const {wclient, count} = options;
+  const {wclient, count, amount} = options;
   let addr, txid = null;
 
   await wclient.execute('selectwallet', ['test']);
 
   for (var i = 0; i < count; i++) {
+    if (options.gap && !(i % 50))
+      await sleep(1000);
+
     addr = await wclient.execute('getnewaddress', ['blue']);
-    txid = await wclient.execute('sendtoaddress', [addr, 0.11111111]);
+    txid = await wclient.execute('sendtoaddress', [addr, amount]);
   }
 }
 
@@ -209,7 +212,7 @@ async function generateInitialBlocks(options) {
     // for the block. Additionally the wallet may not be in lockstep
     // sync with the chain, so it's necessary to wait a few more blocks.
     if (wclient && c > 115)
-      await generateTxs({wclient: wclient, count: 50});
+      await generateTxs({wclient: wclient, count: 50, amount: 0.11111111});
 
     const blockhashes = await generateBlocks(1, nclient, coinbase);
     const block = await nclient.execute('getblock', [blockhashes[0]]);
@@ -227,5 +230,6 @@ module.exports = {
   initWallet,
   generateBlocks,
   generateInitialBlocks,
-  generateReorg
+  generateReorg,
+  generateTxs,
 }
