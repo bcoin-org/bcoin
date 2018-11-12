@@ -56,8 +56,6 @@ async function getAllUnconfirmed(wclient) {
   return txs;
 }
 
-
-
 describe('Wallet Unconfirmed TX', function() {
   this.timeout(30000);
 
