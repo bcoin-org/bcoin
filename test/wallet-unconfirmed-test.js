@@ -16,6 +16,8 @@ const {
   initWallet,
   generateInitialBlocks,
   generateReorg,
+  generateBlocks,
+  generateRollback,
   generateTxs
 } = require('./util/regtest');
 
@@ -36,6 +38,25 @@ const ports = {
     wallet: 49433
   }
 }
+
+async function getAllUnconfirmed(wclient) {
+  let txs = await wclient.execute('listunconfirmed', ['blue', 100, true]);
+
+  while (txs.length) {
+    let after = txs[txs.length - 1].txid;
+    let res = await wclient.execute('listunconfirmedafter',
+                                    ['blue', after, 100, true]);
+    if (res.length) {
+      txs = txs.concat(res);
+    } else {
+      break;
+    }
+  }
+
+  return txs;
+}
+
+
 
 describe('Wallet Unconfirmed TX', function() {
   this.timeout(30000);
@@ -240,19 +261,19 @@ describe('Wallet Unconfirmed TX', function() {
     });
   });
 
-  describe.skip('chain reorganizations', () => {
-    const depth = 1;
-    let previous = null;
-    const now = new Date() + 10000;
-    let txids = new Map();
+  describe('chain rollback', () => {
+    it('confirm and unconfirm indexes', async() => {
+      const validated = await generateBlocks(5, nclient, coinbase);
+      await sleep(1000);
 
-    before(async () => {
+      let txs = await getAllUnconfirmed(wclient);
+      assert.strictEqual(txs.length, 0);
 
+      const invalidated = await generateRollback(5, nclient);
+      await sleep(1000);
+
+      txs = await getAllUnconfirmed(wclient);
+      assert.strictEqual(txs.length, 196);
     });
-
-    it.skip('will put confirmed transactions back into unconfirmed', async() => {
-
-    });
-
   });
 });

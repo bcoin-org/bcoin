@@ -102,6 +102,18 @@ async function generateBlocks(count, nclient, coinbase) {
   return await nclient.execute('generatetoaddress', [count, coinbase]);
 }
 
+async function generateRollback(depth, nclient) {
+  let invalidated = [];
+
+  for (let i = 0; i < depth; i++) {
+    const hash = await nclient.execute('getbestblockhash');
+    invalidated.push(hash);
+    await nclient.execute('invalidateblock', [hash]);
+  }
+
+  return invalidated;
+}
+
 async function generateReorg(depth, nclient, wclient, coinbase) {
   const blockInterval = 600;
 
@@ -231,5 +243,6 @@ module.exports = {
   generateBlocks,
   generateInitialBlocks,
   generateReorg,
+  generateRollback,
   generateTxs,
 }
