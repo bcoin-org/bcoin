@@ -25,7 +25,7 @@ used in production as the consensus backend and wallet system for
 - Layer 2 Backend (lightning)
 - General Purpose Bitcoin Library
 
-Try it in the browser: http://bcoin.io/browser.html
+Try it in the browser: [https://bcoin.io/browser/](https://bcoin.io/browser/)
 
 ## Install
 
