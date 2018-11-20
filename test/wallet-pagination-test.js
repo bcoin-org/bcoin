@@ -68,7 +68,7 @@ describe('Wallet TX Pagination', function() {
 
     // TODO use an event here instead.
     // We need to wait for blocks to confirm.
-    await sleep(10000);
+    await sleep(5000);
   });
 
   after(async () => {

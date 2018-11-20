@@ -283,8 +283,17 @@ describe('Node', function() {
 
     assert.strictEqual(wdb.state.height, chain.height);
 
-    const txs = await wallet.getHistory();
-    assert.strictEqual(txs.length, 45);
+    const txs = await wallet.listHistory(null, {
+      limit: 100,
+      reverse: false
+    });
+    assert.strictEqual(txs.length, 26);
+
+    const utxs = await wallet.listUnconfirmed(null, {
+      limit: 100,
+      reverse: false
+    });
+    assert.strictEqual(utxs.length, 19);
   });
 
   it('should get tips and remove chains', async () => {
