@@ -37,12 +37,12 @@ const ports = {
   }
 }
 
-describe('Wallet TX Pagination', function() {
+describe('Wallet TX HTTP Pagination', function() {
   this.timeout(30000);
 
-  let node, spvnode, wallet = null;
+  let node, spvnode, wallet, spvwallet = null;
   let nclient, wclient, spvwclient = null;
-  let coinbase = null;
+  let coinbase, spvaddr = null;
   let unconfirmedTime = null;
 
   before(async () => {
@@ -56,13 +56,18 @@ describe('Wallet TX Pagination', function() {
     wclient = await initWalletClient({ports: ports.full});
     spvwclient = await initWalletClient({ports: ports.spv});
     wallet = await initWallet(wclient);
+    spvwallet = await initWallet(spvwclient);
 
     await wclient.execute('selectwallet', ['test']);
     coinbase = await wclient.execute('getnewaddress', ['blue']);
 
+    await spvwclient.execute('selectwallet', ['test']);
+    spvaddr = await spvwclient.execute('getnewaddress', ['blue']);
+
     await generateInitialBlocks({
       nclient,
       wclient,
+      spvwclient,
       coinbase,
       genesisTime,
       blocks: 125
@@ -75,12 +80,20 @@ describe('Wallet TX Pagination', function() {
 
     // Generate unconfirmed transactions for the
     // fullnode wallet
-    await generateTxs({
+    const txids = await generateTxs({
       wclient,
-      count: 195,
+      spvwclient,
+      count: 38,
       amount: 0.0001,
-      gap: true
+      gap: 12,
+      sleep: 2000
     });
+
+    // TODO remove this. It's necessary to wait because
+    // the transactions need to be broadcast to the
+    // spv node. However the above await continues
+    // before broadcast.
+    await sleep(5000);
   });
 
   after(async () => {
@@ -96,7 +109,6 @@ describe('Wallet TX Pagination', function() {
     describe('confirmed txs (dsc)', function() {
       it('first page', async () => {
         const history = await wclient.get('/wallet/test/tx/history', {
-          account: 'blue',
           limit: 100,
           reverse: true
         });
@@ -107,7 +119,6 @@ describe('Wallet TX Pagination', function() {
 
       it('second page', async () => {
         const one = await wclient.get('/wallet/test/tx/history', {
-          account: 'blue',
           limit: 100,
           reverse: true
         });
@@ -118,7 +129,6 @@ describe('Wallet TX Pagination', function() {
         const after = one[99].hash;
 
         const two = await wclient.get('/wallet/test/tx/history', {
-          account: 'blue',
           after: after,
           limit: 100,
           reverse: true
@@ -128,6 +138,39 @@ describe('Wallet TX Pagination', function() {
         assert.strictEqual(two[0].confirmations, 2);
         assert.strictEqual(two[99].confirmations, 4);
         assert.notStrictEqual(two[0].hash, one[11].hash);
+      });
+
+      it('first page (w/ account)', async () => {
+        const history = await wclient.get('/wallet/test/tx/history', {
+          account: 'blue',
+          limit: 100,
+          reverse: true
+        });
+        assert.strictEqual(history.length, 100);
+        assert.strictEqual(history[0].confirmations, 1);
+        assert.strictEqual(history[99].confirmations, 75);
+      });
+
+      it('second page (w/ account)', async () => {
+        const one = await wclient.get('/wallet/test/tx/history', {
+          account: 'blue',
+          limit: 100,
+          reverse: true
+        });
+        assert.strictEqual(one.length, 100);
+
+        const after = one[99].hash;
+
+        const two = await wclient.get('/wallet/test/tx/history', {
+          account: 'blue',
+          after: after,
+          limit: 100,
+          reverse: true
+        });
+        assert.strictEqual(two.length, 50);
+        assert.strictEqual(two[0].confirmations, 76);
+        assert.strictEqual(two[49].confirmations, 125);
+        assert.notStrictEqual(two[0].hash, one[99].hash);
       });
     });
 
@@ -171,121 +214,247 @@ describe('Wallet TX Pagination', function() {
     describe('unconfirmed txs (dsc)', function() {
       it('first page', async () => {
         const history = await wclient.get('/wallet/test/tx/unconfirmed', {
-          account: 'blue',
-          limit: 100,
+          limit: 50,
           reverse: true
         });
-        assert.strictEqual(history.length, 100);
+        assert.strictEqual(history.length, 38);
         assert.strictEqual(history[0].confirmations, 0);
         const a = history[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(history[99].confirmations, 0);
-        const b = history[99].mtime;
+        assert.strictEqual(history[37].confirmations, 0);
+        const b = history[37].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a > b, true);
       });
 
       it('second page', async () => {
         const one = await wclient.get('/wallet/test/tx/unconfirmed', {
-          account: 'blue',
-          limit: 100,
+          limit: 15,
           reverse: true
         });
 
-        const after = one[99].hash;
+        const after = one[14].hash;
 
         const two = await wclient.get('/wallet/test/tx/unconfirmed', {
-          account: 'blue',
           after: after,
-          limit: 100,
+          limit: 25,
           reverse: true
         });
 
-        assert.strictEqual(two.length, 95);
+        assert.strictEqual(two.length, 23);
         assert.strictEqual(two[0].confirmations, 0);
         const a = two[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(two[94].confirmations, 0);
-        const b = two[94].mtime;
+        assert.strictEqual(two[22].confirmations, 0);
+        const b = two[22].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a > b, true);
 
-        assert.notStrictEqual(two[0].hash, one[99].hash);
+        assert.notStrictEqual(two[0].hash, one[14].hash);
       });
     });
 
     describe('unconfirmed txs (asc)', function() {
       it('first page', async () => {
         const history = await wclient.get('/wallet/test/tx/unconfirmed', {
-          account: 'blue',
-          limit: 100,
+          limit: 50,
           reverse: false
         });
-        assert.strictEqual(history.length, 100);
+        assert.strictEqual(history.length, 38);
         assert.strictEqual(history[0].confirmations, 0);
         const a = history[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(history[99].confirmations, 0);
-        const b = history[99].mtime;
+        assert.strictEqual(history[37].confirmations, 0);
+        const b = history[37].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a < b, true);
       });
+
+      it('first page (w/ account)', async () => {
+        const history = await wclient.get('/wallet/test/tx/unconfirmed', {
+          account: 'blue',
+          limit: 50,
+          reverse: false
+        });
+        assert.strictEqual(history.length, 1);
+      });
+
       it('second page', async () => {
         const one = await wclient.get('/wallet/test/tx/unconfirmed', {
-          account: 'blue',
-          limit: 100,
+          limit: 15,
           reverse: false
         });
+        assert.strictEqual(one.length, 15);
 
-        const after = one[99].hash;
+        const after = one[14].hash;
 
         const two = await wclient.get('/wallet/test/tx/unconfirmed', {
-          account: 'blue',
           after: after,
-          limit: 100,
+          limit: 25,
           reverse: false
         });
 
-        assert.strictEqual(two.length, 95);
+        assert.strictEqual(two.length, 23);
         assert.strictEqual(two[0].confirmations, 0);
         const a = two[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(two[94].confirmations, 0);
-        const b = two[94].mtime;
+        assert.strictEqual(two[22].confirmations, 0);
+        const b = two[22].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a < b, true);
 
-        assert.notStrictEqual(two[0].hash, one[99].hash);
+        assert.notStrictEqual(two[0].hash, one[14].hash);
       });
     });
   });
 
-  describe.skip('spv node', function() {
+  describe('spv node', function() {
     describe('confirmed txs (dsc)', function() {
       it('first page', async () => {
+        const history = await spvwclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          reverse: true
+        });
+        assert.strictEqual(history.length, 100);
+        assert.strictEqual(
+          history[0].confirmations < history[99].confirmations, true);
       });
       it('second page', async () => {
+        const one = await spvwclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          reverse: true
+        });
+        assert.strictEqual(one.length, 100);
+        assert.strictEqual(one[0].confirmations < one[99].confirmations, true);
+
+        const after = one[99].hash;
+
+        const two = await spvwclient.get('/wallet/test/tx/history', {
+          after: after,
+          limit: 100,
+          reverse: true
+        });
+
+        assert.strictEqual(two.length, 100);
+        assert.strictEqual(
+          two[0].confirmations < two[99].confirmations, true);
+        assert.notStrictEqual(two[0].hash, one[11].hash);
       });
     });
 
     describe('confirmed txs (asc)', function() {
       it('first page', async () => {
+        const history = await spvwclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          reverse: false
+        });
+        assert.strictEqual(history.length, 100);
+        assert.strictEqual(
+          history[0].confirmations > history[99].confirmations, true);
       });
       it('second page', async () => {
+        const one = await spvwclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          reverse: false
+        });
+        assert.strictEqual(one.length, 100);
+
+        const after = one[99].hash;
+
+        const two = await spvwclient.get('/wallet/test/tx/history', {
+          after: after,
+          limit: 100,
+          reverse: false
+        });
+
+        assert.strictEqual(two.length, 100);
+        assert.strictEqual(
+          two[0].confirmations > two[99].confirmations, true);
+        assert.notStrictEqual(two[0].hash, one[11].hash);
       });
     });
 
     describe('unconfirmed txs (dsc)', function() {
       it('first page', async () => {
+        const history = await spvwclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 50,
+          reverse: true
+        });
+        assert.strictEqual(history.length, 38);
+        assert.strictEqual(history[0].confirmations, 0);
+        const a = history[0].mtime;
+        assert.strictEqual(Number.isInteger(a), true);
+        assert.strictEqual(history[37].confirmations, 0);
+        const b = history[37].mtime;
+        assert.strictEqual(Number.isInteger(b), true);
+        assert.strictEqual(a > b, true);
       });
       it('second page', async () => {
+        const one = await spvwclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 15,
+          reverse: true
+        });
+        assert.strictEqual(one.length, 15);
+
+        const after = one[14].hash;
+
+        const two = await spvwclient.get('/wallet/test/tx/unconfirmed', {
+          after: after,
+          limit: 25,
+          reverse: true
+        });
+
+        assert.strictEqual(two.length, 23);
+        assert.strictEqual(two[0].confirmations, 0);
+        const a = two[0].mtime;
+        assert.strictEqual(Number.isInteger(a), true);
+        assert.strictEqual(two[22].confirmations, 0);
+        const b = two[22].mtime;
+        assert.strictEqual(Number.isInteger(b), true);
+        assert.strictEqual(a > b, true);
+        assert.notStrictEqual(two[0].hash, one[14].hash);
       });
     });
 
     describe('unconfirmed txs (asc)', function() {
       it('first page', async () => {
+        const history = await spvwclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 50,
+          reverse: false
+        });
+        assert.strictEqual(history.length, 38);
+        assert.strictEqual(history[0].confirmations, 0);
+        const a = history[0].mtime;
+        assert.strictEqual(Number.isInteger(a), true);
+        assert.strictEqual(history[37].confirmations, 0);
+        const b = history[37].mtime;
+        assert.strictEqual(Number.isInteger(b), true);
+        assert.strictEqual(a < b, true);
       });
       it('second page', async () => {
+        const one = await spvwclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 15,
+          reverse: false
+        });
+        assert.strictEqual(one.length, 15);
+
+        const after = one[14].hash;
+
+        const two = await spvwclient.get('/wallet/test/tx/unconfirmed', {
+          after: after,
+          limit: 25,
+          reverse: false
+        });
+
+        assert.strictEqual(two.length, 23);
+        assert.strictEqual(two[0].confirmations, 0);
+        const a = two[0].mtime;
+        assert.strictEqual(Number.isInteger(a), true);
+        assert.strictEqual(two[22].confirmations, 0);
+        const b = two[22].mtime;
+        assert.strictEqual(Number.isInteger(b), true);
+        assert.strictEqual(a <= b, true);
+        assert.notStrictEqual(two[0].hash, one[14].hash);
       });
     });
   });

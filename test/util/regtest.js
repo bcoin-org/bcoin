@@ -169,22 +169,38 @@ async function generateReorg(depth, nclient, wclient, coinbase) {
 }
 
 async function generateTxs(options) {
-  const {wclient, count, amount} = options;
+  const {wclient, spvwclient, count, amount} = options;
   let addr, txid = null;
 
   await wclient.execute('selectwallet', ['test']);
 
-  for (var i = 0; i < count; i++) {
-    if (options.gap && !(i % 50))
-      await sleep(1000);
+  let txids = [];
 
-    addr = await wclient.execute('getnewaddress', ['blue']);
+  for (var i = 0; i < count; i++) {
+    if (options.gap && !(i % options.gap))
+      await sleep(options.sleep);
+
+    if (spvwclient)
+      addr = await spvwclient.execute('getnewaddress', ['blue']);
+    else
+      addr = await wclient.execute('getnewaddress', ['blue']);
+
     txid = await wclient.execute('sendtoaddress', [addr, amount]);
+    txids.push(txid);
   }
+
+  return txids;
 }
 
 async function generateInitialBlocks(options) {
-  const {nclient, wclient, coinbase, genesisTime} = options;
+  const {
+    nclient,
+    wclient,
+    spvwclient,
+    coinbase,
+    genesisTime
+  } = options;
+
   let {blocks} = options;
 
   if (!blocks)
@@ -224,7 +240,7 @@ async function generateInitialBlocks(options) {
     // for the block. Additionally the wallet may not be in lockstep
     // sync with the chain, so it's necessary to wait a few more blocks.
     if (wclient && c > 115)
-      await generateTxs({wclient: wclient, count: 50, amount: 0.11111111});
+      await generateTxs({wclient, spvwclient, count: 50, amount: 0.11111111});
 
     const blockhashes = await generateBlocks(1, nclient, coinbase);
     const block = await nclient.execute('getblock', [blockhashes[0]]);
