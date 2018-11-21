@@ -96,7 +96,8 @@ describe('Wallet Unconfirmed TX', function() {
       wclient,
       count: 195,
       amount: 0.0001,
-      gap: true
+      gap: 50,
+      sleep: 1000
     });
   });
 
