@@ -18,6 +18,7 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
+const PrivateKey = require('../lib/hd/private');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -34,6 +35,7 @@ let importedWallet = null;
 let importedKey = null;
 let doubleSpendWallet = null;
 let doubleSpendCoin = null;
+let watchWallet = null;
 
 function fromU32(num) {
   const data = Buffer.allocUnsafe(4);
@@ -1301,37 +1303,49 @@ describe('Wallet', function() {
     importedKey = key;
   });
 
+  it('should require account key to create watch only wallet', async () => {
+    try {
+      watchWallet = await wdb.create({
+        watchOnly: true
+      });
+    } catch (e) {
+      assert.strictEqual(
+        e.message,
+        'Must add HD public keys to watch only wallet.'
+      );
+    }
+
+    const privateKey = PrivateKey.generate();
+    const xpub = privateKey.xpubkey('main');
+    watchWallet = await wdb.create({
+      watchOnly: true,
+      accountKey: xpub
+    });
+  });
+
   it('should import pubkey', async () => {
     const key = KeyRing.generate();
     const pub = new KeyRing(key.publicKey);
 
-    const wallet = await wdb.create({
-      watchOnly: true
-    });
+    await watchWallet.importKey('default', pub);
 
-    await wallet.importKey('default', pub);
-
-    const path = await wallet.getPath(pub.getHash());
+    const path = await watchWallet.getPath(pub.getHash());
     assert.bufferEqual(path.hash, pub.getHash());
 
-    const wkey = await wallet.getKey(pub.getHash());
+    const wkey = await watchWallet.getKey(pub.getHash());
     assert(wkey);
   });
 
   it('should import address', async () => {
     const key = KeyRing.generate();
 
-    const wallet = await wdb.create({
-      watchOnly: true
-    });
+    await watchWallet.importAddress('default', key.getAddress());
 
-    await wallet.importAddress('default', key.getAddress());
-
-    const path = await wallet.getPath(key.getHash());
+    const path = await watchWallet.getPath(key.getHash());
     assert(path);
     assert.bufferEqual(path.hash, key.getHash());
 
-    const wkey = await wallet.getKey(key.getHash());
+    const wkey = await watchWallet.getKey(key.getHash());
     assert(!wkey);
   });
 
