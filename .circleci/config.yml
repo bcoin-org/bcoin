@@ -7,6 +7,9 @@ version: 2.0
 jobs:
   install:
     <<: *defaults
+    docker:
+      - image: circleci/node:10.2
+    working_directory: ~/repo
     steps:
       - checkout
       - restore_cache:
@@ -15,6 +18,7 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
       - run: npm install
+      - run: npm install eslint istanbul@1.1.0-alpha.1 codecov
       - save_cache:
           paths:
             - node_modules
@@ -32,9 +36,6 @@ jobs:
           name: Tests with coverage
           command: npm run test-ci
       - run:
-          name: Install codecov
-          command: npm i codecov
-      - run:
           name: Submit coverage
           command: ./node_modules/.bin/codecov
 
@@ -43,9 +44,6 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: Install eslint
-          command: npm i eslint
       - run:
           name: Lint
           command: npm run lint-ci
