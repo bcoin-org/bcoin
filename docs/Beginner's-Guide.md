@@ -5,8 +5,8 @@ Bcoin is an _alternative_ implementation of the bitcoin protocol, written in nod
 ## Requirements
 
 - Linux, OSX, or Windows (\*) (\*\*)
-- node.js >=v7.6.0
-- npm >=v4.0.0
+- node.js >=v8.14.0
+- npm >=v6.4.1
 - python2 (for node-gyp)
 - gcc/g++ (for leveldb and secp256k1)
 - git (optional, see below)
@@ -17,13 +17,7 @@ Bcoin is an _alternative_ implementation of the bitcoin protocol, written in nod
 
 ## Build & Install
 
-Bcoin is meant to be installed via npm, but for the security conscious, it may be better to clone from github. All tagged commits for release should be signed by @chjj's [PGP key][keybase] (`B4B1F62DBAC084E333F3A04A8962AB9DE6666BBD`). Signed copies of node.js are available from [nodejs.org][node], or from your respective OS's package repositories.
-
-### Installing via NPM
-
-``` bash
-$ npm install -g bcoin --production
-```
+Bcoin is meant to be installed via git for security purposes, as there are security issues when installing via npm. All tagged commits for release should be signed by @chjj's [PGP key][keybase] (`B4B1F62DBAC084E333F3A04A8962AB9DE6666BBD`). Signed copies of node.js are available from [nodejs.org][node], or from your respective OS's package repositories.
 
 ### Installing via Git
 
@@ -31,13 +25,22 @@ $ npm install -g bcoin --production
 $ curl https://keybase.io/chjj/pgp_keys.asc | gpg --import
 $ git clone git://github.com/bcoin-org/bcoin.git
 $ cd bcoin
-$ git tag
-...
-v1.0.0-alpha # latest version
-$ git tag -v v1.0.0-alpha # verify signature
-$ git checkout v1.0.0-alpha
-$ npm install -g --production
 ```
+
+For a specific release:
+```
+$ git tag
+$ git tag -v <version> # verify signature
+$ git checkout <version>
+```
+
+Install dependencies:
+```
+$ npm install
+$ npm install -g # link globally
+```
+**Note:** Dependencies are checked for integrity using `package-lock.json`. However `npm` _will not_ make these checks with `npm install -g` and it will link your installation globally so that `bcoin` is in your path _(e.g. $ bcoin)_.
+
 ### Installing via Docker
 
 Check [bcoin-docker](https://github.com/bcoin-org/bcoin-docker)
