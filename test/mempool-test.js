@@ -5,6 +5,8 @@
 
 const assert = require('./util/assert');
 const random = require('bcrypto/lib/random');
+const common = require('../lib/blockchain/common');
+const Block = require('../lib/primitives/block');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
 const WorkerPool = require('../lib/workers/workerpool');
@@ -14,10 +16,14 @@ const Coin = require('../lib/primitives/coin');
 const KeyRing = require('../lib/primitives/keyring');
 const Address = require('../lib/primitives/address');
 const Outpoint = require('../lib/primitives/outpoint');
+const Input = require('../lib/primitives/input');
 const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
+const MempoolIndexer = require('../lib/mempool/indexer');
+
 const ALL = Script.hashType.ALL;
+const VERIFY_NONE = common.flags.VERIFY_NONE;
 
 const ONE_HASH = Buffer.alloc(32, 0x00);
 ONE_HASH[0] = 0x01;
@@ -33,15 +39,15 @@ const chain = new Chain({
 
 const mempool = new Mempool({
   chain,
-  memory: true,
-  workers
+  workers,
+  memory: true
 });
 
 const wallet = new MemWallet();
 
 let cachedTX = null;
 
-function dummyInput(script, hash) {
+function dummyInput(mempool, script, hash, value = 70000) {
   const coin = new Coin();
   coin.height = 0;
   coin.value = 0;
@@ -51,7 +57,7 @@ function dummyInput(script, hash) {
 
   const fund = new MTX();
   fund.addCoin(coin);
-  fund.addOutput(script, 70000);
+  fund.addOutput(script, value);
 
   const [tx, view] = fund.commit();
 
@@ -61,15 +67,42 @@ function dummyInput(script, hash) {
 
   return Coin.fromTX(fund, 0, -1);
 }
+async function getMockBlock(chain, txs = [], cb = true) {
+  if (cb) {
+    const raddr = KeyRing.generate().getAddress();
+    const mtx = new MTX();
+    mtx.addInput(new Input());
+    mtx.addOutput(raddr, 0);
+
+    txs = [mtx.toTX(), ...txs];
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const time = chain.tip.time <= now ? chain.tip.time + 1 : now;
+
+  const block = new Block();
+  block.txs = txs;
+  block.prevBlock = chain.tip.hash;
+  block.time = time;
+  block.bits = await chain.getTarget(block.time, chain.tip);
+
+  return block;
+}
 
 describe('Mempool', function() {
   this.timeout(5000);
 
-  it('should open mempool', async () => {
+  before(async () => {
     await workers.open();
     await chain.open();
     await mempool.open();
     chain.state.flags |= Script.flags.VERIFY_WITNESS;
+  });
+
+  after(async () => {
+    await workers.close();
+    await chain.close();
+    await mempool.close();
   });
 
   it('should handle incoming orphans and TXs', async () => {
@@ -81,7 +114,7 @@ describe('Mempool', function() {
 
     const script = Script.fromPubkey(key.publicKey);
 
-    t1.addCoin(dummyInput(script, ONE_HASH));
+    t1.addCoin(dummyInput(mempool, script, ONE_HASH));
 
     const sig = t1.signature(0, script, 70000, key.privateKey, ALL, 0);
 
@@ -187,7 +220,7 @@ describe('Mempool', function() {
     const prev = Script.fromPubkey(key.publicKey);
     const prevHash = random.randomBytes(32);
 
-    tx.addCoin(dummyInput(prev, prevHash));
+    tx.addCoin(dummyInput(mempool, prev, prevHash));
     tx.setLocktime(200);
 
     chain.tip.height = 200;
@@ -209,7 +242,7 @@ describe('Mempool', function() {
     const prev = Script.fromPubkey(key.publicKey);
     const prevHash = random.randomBytes(32);
 
-    tx.addCoin(dummyInput(prev, prevHash));
+    tx.addCoin(dummyInput(mempool, prev, prevHash));
     tx.setLocktime(200);
     chain.tip.height = 200 - 1;
 
@@ -323,7 +356,7 @@ describe('Mempool', function() {
     const prev = Script.fromPubkey(key.publicKey);
     const prevHash = random.randomBytes(32);
 
-    tx.addCoin(dummyInput(prev, prevHash));
+    tx.addCoin(dummyInput(mempool, prev, prevHash));
 
     let err;
     try {
@@ -346,14 +379,467 @@ describe('Mempool', function() {
 
     assert(mempool.hasReject(cachedTX.hash()));
 
-    await mempool.addBlock({ height: 1 }, [tx.toTX()]);
+    await mempool.addBlock({ height: 1 }, [null, tx.toTX()]);
 
     assert(!mempool.hasReject(cachedTX.hash()));
   });
 
-  it('should destroy mempool', async () => {
-    await mempool.close();
-    await chain.close();
-    await workers.close();
+  describe('Index', function () {
+    const workers = new WorkerPool({
+      enabled: true
+    });
+
+    const chain = new Chain({
+      memory: true,
+      workers
+    });
+
+    const mempool = new Mempool({
+      chain,
+      workers,
+      memory: true,
+      indexAddress: true
+    });
+
+    const indexer = new MempoolIndexer({ mempool });
+
+    before(async () => {
+      await mempool.open();
+      await chain.open();
+      await workers.open();
+    });
+
+    after(async () => {
+      await mempool.close();
+      await chain.close();
+      await workers.close();
+    });
+
+    // keys that we will use
+    const N = 100;
+    const chaincoins = new MemWallet();
+    const wallet = new MemWallet();
+
+    it('should create coins in chain', async () => {
+      const mtx = new MTX();
+      mtx.addInput(new Input());
+
+      for (let i = 0; i < N; i++) {
+        const addr = chaincoins.createReceive().getAddress();
+        mtx.addOutput(addr, 100000);
+      }
+
+      const cb = mtx.toTX();
+      const block = await getMockBlock(chain, [cb], false);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // add 100 blocks
+      // so we don't get premature spend of coinbase.
+      for (let i = 0; i < 100; i++) {
+        const block = await getMockBlock(chain);
+        const entry = await chain.add(block, VERIFY_NONE);
+
+        await mempool._addBlock(entry, block.txs);
+      }
+
+      chaincoins.addTX(cb);
+    });
+
+    it('should spend txs and coins in the mempool', async () => {
+      // verify coins are removed from the coin index
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+
+      const mtx1 = new MTX();
+
+      mtx1.addCoin(coin);
+      mtx1.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx1);
+
+      const tx1 = mtx1.toTX();
+
+      chaincoins.addTX(tx1, -1);
+      wallet.addTX(tx1, -1);
+
+      {
+        const missing = await mempool.addTX(tx1);
+        assert.strictEqual(missing, null);
+      }
+
+      assert(mempool.hasCoin(tx1.hash(), 0));
+
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const metas = indexer.getMetaByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(metas.length, 1);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(txs[0].hash(), tx1.hash());
+        assert.bufferEqual(coins[0].hash, tx1.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
+
+      const mtx2 = new MTX();
+
+      mtx2.addTX(tx1, 0, -1);
+      mtx2.addOutput(addr, 80000);
+
+      wallet.sign(mtx2);
+
+      const tx2 = mtx2.toTX();
+
+      {
+        const missing = await mempool.addTX(tx2);
+        assert.strictEqual(missing, null);
+      }
+
+      wallet.addTX(tx2, -1);
+
+      assert(!mempool.hasCoin(tx1.hash(), 0));
+      assert(mempool.hasCoin(tx2.hash(), 0));
+
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 2);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(coins[0].hash, tx2.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
+    });
+
+    it('should spend resolved orphans', async () => {
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+
+      const pmtx = new MTX();
+
+      pmtx.addOutput(addr, 90000);
+      pmtx.addCoin(coin);
+
+      chaincoins.sign(pmtx);
+
+      const parentTX = pmtx.toTX();
+
+      const cmtx = new MTX();
+
+      cmtx.addTX(pmtx.toTX(), 0, -1);
+      cmtx.addOutput(addr, 80000);
+
+      wallet.sign(cmtx);
+
+      const childTX = cmtx.toTX();
+
+      {
+        // create orphan
+        const missing = await mempool.addTX(childTX);
+
+        // we only have one input missing
+        assert.strictEqual(missing.length, 1);
+      }
+
+      // TODO: make sure indexes have not changed.
+
+      {
+        // orphans are not coins
+        const childCoin = mempool.getCoin(childTX.hash(), 0);
+        assert.strictEqual(childCoin, null);
+      }
+
+      {
+        // orphans should be resolved.
+        const missing = await mempool.addTX(parentTX);
+        assert.strictEqual(missing, null);
+
+        // coins should be available once they are resolved
+        const parentCoin = mempool.getCoin(parentTX.hash(), 0);
+        assert.strictEqual(parentCoin, null); // we spent this.
+
+        const childCoin = mempool.getCoin(childTX.hash(), 0);
+        assert(childCoin);
+      }
+
+      // TODO: make sure indexes are updated correctly
+
+      // update coins in wallets
+      for (const tx of [parentTX, childTX]) {
+        chaincoins.addTX(tx);
+        wallet.addTX(tx);
+      }
+    });
+
+    it('should remove double spend tx from mempool', async () => {
+      const coin = chaincoins.getCoins()[0];
+
+      const addr = wallet.createReceive().getAddress();
+      const randomAddress = KeyRing.generate().getAddress();
+
+      // we check double spending our mempool tx
+      const mtx1 = new MTX();
+
+      mtx1.addCoin(coin);
+      mtx1.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx1);
+
+      // this will double spend in block
+      const mtx2 = new MTX();
+
+      mtx2.addCoin(coin);
+      mtx2.addOutput(randomAddress, 90000);
+
+      chaincoins.sign(mtx2);
+
+      const tx1 = mtx1.toTX();
+      const tx2 = mtx2.toTX();
+
+      {
+        const missing = await mempool.addTX(tx1);
+        assert.strictEqual(missing, null);
+      }
+
+      // TODO: verify we have coin/tx in indexer
+      assert(mempool.hasCoin(tx1.hash(), 0));
+
+      const block = await getMockBlock(chain, [tx2]);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // TODO: verify we don't have coin/tx in indexer anymore.
+      assert(!mempool.hasCoin(tx1.hash(), 0));
+
+      chaincoins.addTX(tx2);
+    });
+
+    it('should remove confirmed txs from indexer', async () => {
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+
+      const mtx = new MTX();
+
+      mtx.addCoin(coin);
+      mtx.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx);
+
+      const tx = mtx.toTX();
+
+      await mempool.addTX(tx);
+
+      assert(mempool.hasCoin(tx.hash(), 0));
+
+      // TODO: verify we have coin in indexer.
+
+      const block = await getMockBlock(chain, [tx]);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // TODO: verify we don't have coin in indexer anymore.
+      assert(!mempool.hasCoin(tx.hash(), 0));
+
+      chaincoins.addTX(tx);
+      wallet.addTX(tx);
+    });
+
+    it('should add coin from orphan once resolved in a block', async () => {
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+
+      const pmtx = new MTX();
+
+      pmtx.addCoin(coin);
+      pmtx.addOutput(addr, 90000);
+
+      chaincoins.sign(pmtx);
+
+      const parentTX = pmtx.toTX();
+      const cmtx = new MTX();
+
+      cmtx.addTX(parentTX, 0, -1);
+      cmtx.addOutput(addr, 80000);
+
+      wallet.sign(cmtx);
+
+      const childTX = cmtx.toTX();
+
+      {
+        const missing = await mempool.addTX(childTX);
+        assert.strictEqual(missing.length, 1);
+      }
+
+      // TODO: verify we don't have coins have not changed.
+
+      const block = await getMockBlock(chain, [parentTX]);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      assert(mempool.hasCoin(childTX.hash(), 0));
+
+      // TODO: verify resolved orphan is new coin
+
+      chaincoins.addTX(parentTX);
+      wallet.addTX(parentTX);
+      wallet.addTX(childTX);
+    });
+
+    it('should recover coin form partial double spend', async () => {
+      const coins = chaincoins.getCoins();
+      const coin1 = coins[0];
+      const coin2 = coins[1];
+      const addr = wallet.createReceive().getAddress();
+      const raddr = KeyRing.generate().getAddress();
+
+      // this will get double spent in a block
+      const mtx1 = new MTX();
+
+      mtx1.addCoin(coin1);
+      mtx1.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx1);
+
+      const tx1 = mtx1.toTX();
+
+      // this should recover as coin
+      const mtx2 = new MTX();
+
+      mtx2.addCoin(coin2);
+      mtx2.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx2);
+
+      const tx2 = mtx2.toTX();
+
+      // this will get orphaned because of double spend
+      const mtx3 = new MTX();
+
+      mtx3.addTX(tx1, 0, -1);
+      mtx3.addTX(tx2, 0, -1);
+      mtx3.addOutput(raddr, 170000);
+
+      wallet.sign(mtx3);
+      const tx3 = mtx3.toTX();
+
+      // this double spends mtx1
+      const mtx4 = new MTX();
+
+      mtx4.addCoin(coin1);
+      mtx4.addOutput(raddr, 90000);
+
+      chaincoins.sign(mtx4);
+
+      const tx4 = mtx4.toTX();
+
+      {
+        const missing = await mempool.addTX(tx1);
+        assert.strictEqual(missing, null);
+
+        assert(mempool.hasCoin(tx1.hash(), 0));
+      }
+
+      {
+        const missing = await mempool.addTX(tx2);
+        assert.strictEqual(missing, null);
+
+        assert(mempool.hasCoin(tx1.hash(), 0));
+        assert(mempool.hasCoin(tx2.hash(), 0));
+      }
+
+      {
+        const missing = await mempool.addTX(tx3);
+        assert.strictEqual(missing, null);
+
+        assert(!mempool.hasCoin(tx1.hash(), 0));
+        assert(!mempool.hasCoin(tx2.hash(), 0));
+        assert(mempool.hasCoin(tx3.hash(), 0));
+      }
+
+      // TODO: verify indexer has the right state
+
+      const block = await getMockBlock(chain, [tx4]);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+      assert(!mempool.hasCoin(tx1.hash(), 0));
+      assert(mempool.hasCoin(tx2.hash(), 0));
+      assert(!mempool.hasCoin(tx3.hash(), 0));
+      assert(!mempool.hasCoin(tx4.hash(), 0));
+
+      // TODO: verify we only have tx2 coins in indexer
+
+      chaincoins.addBlock(entry, block.txs);
+      wallet.addBlock(entry, block.txs);
+
+      chaincoins.addTX(tx2);
+      wallet.addTX(tx2);
+    });
+
+    it('should make unconfirmed coins available', async () => {
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+      const raddr = KeyRing.generate().getAddress();
+
+      const pmtx = new MTX();
+
+      pmtx.addCoin(coin);
+      pmtx.addOutput(addr, 90000);
+
+      chaincoins.sign(pmtx);
+
+      const ptx = pmtx.toTX();
+
+      const cmtx = new MTX();
+
+      cmtx.addTX(ptx, 0, -1);
+      cmtx.addOutput(raddr, 80000);
+
+      wallet.sign(cmtx);
+
+      const ctx = cmtx.toTX();
+
+      {
+        const missing = await mempool.addTX(ptx);
+        assert.strictEqual(missing, null);
+      }
+
+      assert(mempool.hasCoin(ptx.hash(), 0));
+      // TODO: make sure we have coin in indexer,
+      // even though we test this in previous tests.
+
+      {
+        const missing = await mempool.addTX(ctx);
+        assert.strictEqual(missing, null);
+      }
+
+      assert(!mempool.hasCoin(ptx.hash(), 0));
+      assert(mempool.hasCoin(ctx.hash(), 0));
+
+      const block = await getMockBlock(chain, [ptx]);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      assert(!mempool.hasCoin(ptx.hash(), 0));
+      assert(mempool.hasCoin(ctx.hash(), 0));
+
+      // TODO: make sure we don't have coin/tx in indexer anymore
+
+      await chain.disconnect(entry);
+      await mempool._removeBlock(entry, block.txs);
+
+      assert(!mempool.hasCoin(ptx.hash(), 0));
+      assert(mempool.hasCoin(ctx.hash(), 0));
+      // TODO: verify we have coins in indexer
+    });
   });
 });
