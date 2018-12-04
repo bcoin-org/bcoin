@@ -67,6 +67,7 @@ function dummyInput(mempool, script, hash, value = 70000) {
 
   return Coin.fromTX(fund, 0, -1);
 }
+
 async function getMockBlock(chain, txs = [], cb = true) {
   if (cb) {
     const raddr = KeyRing.generate().getAddress();
@@ -415,7 +416,7 @@ describe('Mempool', function() {
       await workers.close();
     });
 
-    // keys that we will use
+    // number of coins available in chaincoins. (100k satoshi per coin)
     const N = 100;
     const chaincoins = new MemWallet();
     const wallet = new MemWallet();
@@ -546,7 +547,13 @@ describe('Mempool', function() {
         assert.strictEqual(missing.length, 1);
       }
 
-      // TODO: make sure indexes have not changed.
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 0);
+        assert.strictEqual(coins.length, 0);
+      }
 
       {
         // orphans are not coins
@@ -567,7 +574,16 @@ describe('Mempool', function() {
         assert(childCoin);
       }
 
-      // TODO: make sure indexes are updated correctly
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 2);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(coins[0].hash, childTX.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
 
       // update coins in wallets
       for (const tx of [parentTX, childTX]) {
@@ -578,7 +594,6 @@ describe('Mempool', function() {
 
     it('should remove double spend tx from mempool', async () => {
       const coin = chaincoins.getCoins()[0];
-
       const addr = wallet.createReceive().getAddress();
       const randomAddress = KeyRing.generate().getAddress();
 
@@ -606,7 +621,17 @@ describe('Mempool', function() {
         assert.strictEqual(missing, null);
       }
 
-      // TODO: verify we have coin/tx in indexer
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(coins[0].hash, tx1.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
+
       assert(mempool.hasCoin(tx1.hash(), 0));
 
       const block = await getMockBlock(chain, [tx2]);
@@ -614,7 +639,14 @@ describe('Mempool', function() {
 
       await mempool._addBlock(entry, block.txs);
 
-      // TODO: verify we don't have coin/tx in indexer anymore.
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 0);
+        assert.strictEqual(coins.length, 0);
+      }
+
       assert(!mempool.hasCoin(tx1.hash(), 0));
 
       chaincoins.addTX(tx2);
@@ -637,14 +669,30 @@ describe('Mempool', function() {
 
       assert(mempool.hasCoin(tx.hash(), 0));
 
-      // TODO: verify we have coin in indexer.
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(coins[0].hash, tx.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
 
       const block = await getMockBlock(chain, [tx]);
       const entry = await chain.add(block, VERIFY_NONE);
 
       await mempool._addBlock(entry, block.txs);
 
-      // TODO: verify we don't have coin in indexer anymore.
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 0);
+        assert.strictEqual(coins.length, 0);
+      }
+
       assert(!mempool.hasCoin(tx.hash(), 0));
 
       chaincoins.addTX(tx);
@@ -677,7 +725,14 @@ describe('Mempool', function() {
         assert.strictEqual(missing.length, 1);
       }
 
-      // TODO: verify we don't have coins have not changed.
+      {
+        // verify we don't have coins have not changed.
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 0);
+        assert.strictEqual(coins.length, 0);
+      }
 
       const block = await getMockBlock(chain, [parentTX]);
       const entry = await chain.add(block, VERIFY_NONE);
@@ -686,7 +741,18 @@ describe('Mempool', function() {
 
       assert(mempool.hasCoin(childTX.hash(), 0));
 
-      // TODO: verify resolved orphan is new coin
+      {
+        // verify resolved orphan is new coin
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(txs[0].hash(), childTX.hash());
+        assert.bufferEqual(coins[0].hash, childTX.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
 
       chaincoins.addTX(parentTX);
       wallet.addTX(parentTX);
@@ -764,7 +830,13 @@ describe('Mempool', function() {
         assert(mempool.hasCoin(tx3.hash(), 0));
       }
 
-      // TODO: verify indexer has the right state
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 3);
+        assert.strictEqual(coins.length, 0);
+      }
 
       const block = await getMockBlock(chain, [tx4]);
       const entry = await chain.add(block, VERIFY_NONE);
@@ -775,7 +847,25 @@ describe('Mempool', function() {
       assert(!mempool.hasCoin(tx3.hash(), 0));
       assert(!mempool.hasCoin(tx4.hash(), 0));
 
-      // TODO: verify we only have tx2 coins in indexer
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(coins[0].hash, tx2.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
+
+      {
+        // raddr does not have anything left in the mempool
+        const txs = indexer.getTXByAddress(raddr);
+        const coins = indexer.getCoinsByAddress(raddr);
+
+        assert.strictEqual(txs.length, 0);
+        assert.strictEqual(coins.length, 0);
+      }
 
       chaincoins.addBlock(entry, block.txs);
       wallet.addBlock(entry, block.txs);
@@ -813,8 +903,17 @@ describe('Mempool', function() {
       }
 
       assert(mempool.hasCoin(ptx.hash(), 0));
-      // TODO: make sure we have coin in indexer,
-      // even though we test this in previous tests.
+
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(coins.length, 1);
+
+        assert.bufferEqual(coins[0].hash, ptx.hash());
+        assert.strictEqual(coins[0].index, 0);
+      }
 
       {
         const missing = await mempool.addTX(ctx);
@@ -824,6 +923,14 @@ describe('Mempool', function() {
       assert(!mempool.hasCoin(ptx.hash(), 0));
       assert(mempool.hasCoin(ctx.hash(), 0));
 
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 2);
+        assert.strictEqual(coins.length, 0);
+      }
+
       const block = await getMockBlock(chain, [ptx]);
       const entry = await chain.add(block, VERIFY_NONE);
 
@@ -832,14 +939,27 @@ describe('Mempool', function() {
       assert(!mempool.hasCoin(ptx.hash(), 0));
       assert(mempool.hasCoin(ctx.hash(), 0));
 
-      // TODO: make sure we don't have coin/tx in indexer anymore
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(coins.length, 0);
+      }
 
       await chain.disconnect(entry);
       await mempool._removeBlock(entry, block.txs);
 
       assert(!mempool.hasCoin(ptx.hash(), 0));
       assert(mempool.hasCoin(ctx.hash(), 0));
-      // TODO: verify we have coins in indexer
+
+      {
+        const txs = indexer.getTXByAddress(addr);
+        const coins = indexer.getCoinsByAddress(addr);
+
+        assert.strictEqual(txs.length, 2);
+        assert.strictEqual(coins.length, 0);
+      }
     });
   });
 });
