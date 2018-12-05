@@ -21,6 +21,7 @@ const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
 const MempoolIndexer = require('../lib/mempool/indexer');
+const {BufferSet} = require('buffer-map');
 
 const ALL = Script.hashType.ALL;
 const VERIFY_NONE = common.flags.VERIFY_NONE;
@@ -40,7 +41,8 @@ const chain = new Chain({
 const mempool = new Mempool({
   chain,
   workers,
-  memory: true
+  memory: true,
+  indexAddress: true
 });
 
 const wallet = new MemWallet();
@@ -398,8 +400,7 @@ describe('Mempool', function() {
     const mempool = new Mempool({
       chain,
       workers,
-      memory: true,
-      indexAddress: true
+      memory: true
     });
 
     const indexer = new MempoolIndexer({ mempool });
@@ -960,6 +961,263 @@ describe('Mempool', function() {
         assert.strictEqual(txs.length, 2);
         assert.strictEqual(coins.length, 0);
       }
+    });
+  });
+
+  describe('Mempool persistent cache', function () {
+    const workers = new WorkerPool({
+      enabled: true
+    });
+
+    const chain = new Chain({
+      memory: true,
+      workers
+    });
+
+    const mempool = new Mempool({
+      chain,
+      workers,
+      memory: true,
+      persistent: true
+    });
+
+    const indexer = new MempoolIndexer({ mempool });
+
+    before(async () => {
+      await mempool.open();
+      await chain.open();
+      await workers.open();
+    });
+
+    after(async () => {
+      await mempool.close();
+      await chain.close();
+      await workers.close();
+    });
+
+    // number of coins available in chaincoins. (100k satoshi per coin)
+    const N = 100;
+    const chaincoins = new MemWallet();
+    const wallet = new MemWallet();
+
+    it('should create coins in chain', async () => {
+      const mtx = new MTX();
+      mtx.addInput(new Input());
+
+      for (let i = 0; i < N; i++) {
+        const addr = chaincoins.createReceive().getAddress();
+        mtx.addOutput(addr, 100000);
+      }
+
+      const cb = mtx.toTX();
+      const block = await getMockBlock(chain, [cb], false);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // add 100 blocks
+      // so we don't get premature spend of coinbase.
+      for (let i = 0; i < 100; i++) {
+        const block = await getMockBlock(chain);
+        const entry = await chain.add(block, VERIFY_NONE);
+
+        await mempool._addBlock(entry, block.txs);
+      }
+
+      chaincoins.addTX(cb);
+    });
+
+    it('should create txs and coins in the mempool', async () => {
+      const coins = chaincoins.getCoins();
+
+      assert.strictEqual(coins.length, N);
+
+      const addrs = [];
+      const txs = 20;
+      const spend = 5;
+
+      for (let i = 0; i < txs; i++)
+        addrs.push(wallet.createReceive().getAddress());
+
+      const mempoolTXs = new BufferSet();
+      const mempoolCoins = new BufferSet();
+
+      // send 15 txs to the wallet
+      for (let i = 0; i < txs - spend; i++) {
+        const mtx = new MTX();
+
+        mtx.addCoin(coins[i]);
+        mtx.addOutput(addrs[i], 90000);
+
+        chaincoins.sign(mtx);
+
+        const tx = mtx.toTX();
+        const missing = await mempool.addTX(tx);
+
+        assert.strictEqual(missing, null);
+        assert(mempool.hasCoin(tx.hash(), 0));
+
+        // indexer checks
+        {
+          const txs = indexer.getTXByAddress(addrs[i]);
+          const coins = indexer.getCoinsByAddress(addrs[i]);
+
+          assert.strictEqual(txs.length, 1);
+          assert.strictEqual(coins.length, 1);
+          assert.bufferEqual(txs[0].hash(), tx.hash());
+          assert.bufferEqual(coins[0].hash, tx.hash());
+          assert.strictEqual(coins[0].index, 0);
+        }
+
+        wallet.addTX(tx);
+
+        mempoolTXs.add(tx.hash());
+        mempoolCoins.add(Outpoint.fromTX(tx, 0).toKey());
+      }
+
+      // spend first 5 coins from the mempool
+      for (let i = 0; i < spend; i++) {
+        const coin = wallet.getCoins()[0];
+        const addr = addrs[txs - spend + i];
+        const mtx = new MTX();
+
+        mtx.addCoin(coin);
+        mtx.addOutput(addr, 80000);
+
+        wallet.sign(mtx);
+
+        const tx = mtx.toTX();
+        const missing = await mempool.addTX(tx);
+
+        assert.strictEqual(missing, null);
+        assert(!mempool.hasCoin(coin.hash, 0));
+        assert(mempool.hasCoin(tx.hash(), 0));
+
+        {
+          const txs = indexer.getTXByAddress(addr);
+          const coins = indexer.getCoinsByAddress(addr);
+
+          assert.strictEqual(txs.length, 1);
+          assert.strictEqual(coins.length, 1);
+        }
+
+        {
+          const txs = indexer.getTXByAddress(addrs[i]);
+          const coins = indexer.getCoinsByAddress(addrs[i]);
+
+          assert.strictEqual(txs.length, 2);
+          assert.strictEqual(coins.length, 0);
+        }
+
+        mempoolTXs.add(tx.hash());
+        mempoolCoins.delete(coin.toKey());
+        mempoolCoins.add(Outpoint.fromTX(tx, 0).toKey());
+
+        wallet.addTX(tx);
+      }
+
+      const verifyMempoolState = (mempool, indexer) => {
+        // verify general state of the mempool
+        assert.strictEqual(mempool.map.size, txs);
+        assert.strictEqual(mempool.spents.size, txs);
+
+        assert.strictEqual(indexer.txIndex.map.size, txs);
+        assert.strictEqual(indexer.coinIndex.map.size, txs - spend);
+
+        // verify txs are same
+        for (const val of mempoolTXs.values())
+          assert(mempool.getTX(val));
+
+        for (const opkey of mempoolCoins.values()) {
+          const outpoint = Outpoint.fromRaw(opkey);
+          assert(mempool.hasCoin(outpoint.hash, outpoint.index));
+        }
+
+        // coins in these txs are spent
+        for (let i = 0; i < spend; i++) {
+          const addr = addrs[i];
+
+          {
+            const txs = indexer.getTXByAddress(addr);
+            const coins = indexer.getCoinsByAddress(addr);
+
+            assert.strictEqual(txs.length, 2);
+            assert.strictEqual(coins.length, 0);
+          }
+        }
+
+        // these txs are untouched
+        for (let i = spend; i < txs - spend; i++) {
+          const addr = addrs[i];
+
+          {
+            const txs = indexer.getTXByAddress(addr);
+            const coins = indexer.getCoinsByAddress(addr);
+
+            assert.strictEqual(txs.length, 1);
+            assert.strictEqual(coins.length, 1);
+          }
+        }
+
+        // these are txs spending mempool txs
+        for (let i = txs - spend; i < txs; i++) {
+          const addr = addrs[i];
+
+          {
+            const txs = indexer.getTXByAddress(addr);
+            const coins = indexer.getCoinsByAddress(addr);
+
+            assert.strictEqual(txs.length, 1);
+            assert.strictEqual(coins.length, 1);
+          }
+        }
+      };
+
+      verifyMempoolState(mempool, indexer);
+
+      // hack: to get in memory cache in new mempool.
+      const cache = mempool.cache;
+
+      // we need to manually sync because
+      // when first block was mined there were no mempool txs.
+      await cache.sync(chain.tip.hash);
+
+      // and apply batch to the memdb.
+      await cache.flush();
+      await mempool.close();
+
+      let err;
+      {
+        const mempool = new Mempool({
+          chain,
+          workers,
+          memory: true,
+          persistent: true
+        });
+
+        mempool.cache = cache;
+
+        const indexer = new MempoolIndexer({ mempool });
+
+        // this needs to come after `indexer` initialization
+        // otherwise indexer wont get add entry events from the mempool.
+        await mempool.open();
+
+        try {
+          verifyMempoolState(mempool, indexer);
+        } catch (e) {
+          err = e;
+        } finally {
+          await cache.wipe();
+          await mempool.close();
+        }
+      }
+
+      // reopen for after cleanup
+      await mempool.open();
+
+      if (err)
+        throw err;
     });
   });
 });
