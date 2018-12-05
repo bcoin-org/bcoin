@@ -276,7 +276,7 @@ describe('Mempool', function() {
     const prev = Script.fromProgram(0, key.getKeyHash());
     const prevHash = random.randomBytes(32);
 
-    tx.addCoin(dummyInput(prev, prevHash));
+    tx.addCoin(dummyInput(mempool, prev, prevHash));
 
     const prevs = Script.fromPubkeyhash(key.getKeyHash());
 
@@ -306,7 +306,7 @@ describe('Mempool', function() {
     const prev = Script.fromPubkey(key.publicKey);
     const prevHash = random.randomBytes(32);
 
-    tx.addCoin(dummyInput(prev, prevHash));
+    tx.addCoin(dummyInput(mempool, prev, prevHash));
 
     const sig = tx.signature(0, prev, 70000, key.privateKey, ALL, 0);
     tx.inputs[0].script = Script.fromItems([sig]);
@@ -335,7 +335,7 @@ describe('Mempool', function() {
     const prev = Script.fromProgram(0, key.getKeyHash());
     const prevHash = random.randomBytes(32);
 
-    tx.addCoin(dummyInput(prev, prevHash));
+    tx.addCoin(dummyInput(mempool, prev, prevHash));
 
     let err;
     try {
