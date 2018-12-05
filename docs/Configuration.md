@@ -54,6 +54,11 @@ Will create a datadir of `~/.bcoin_spv`, containing a chain database, wallet dat
 - `cache-size`: Size (in MB) of leveldb cache and write buffer (default: 32mb).
 - `spv`: Enable Simplified Payments Verification (SPV) mode
 
+*Note: The `spv` and `daemon` options can not be entered in `bcoin.conf`. They will only work when passed as a launch argument:*
+```
+bcoin --spv --daemon
+```
+
 ## Logger Options
 
 - `log-level`: `error`, `warning`, `info`, `debug`, or `spam` (default: debug).
