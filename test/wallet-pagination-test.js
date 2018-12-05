@@ -112,12 +112,9 @@ describe('Wallet TX Pagination', function() {
       assert.strictEqual(two[99].confirmations, 4);
     });
 
-    it('third page after new block (no shifting)', async () => {
-
-    });
-
-    it('last page', async () => {
-    });
+    // TODO
+    // - third page after new block (no shifting)
+    // - last page
   });
 
   describe('get transaction history (asc)', () => {
@@ -149,13 +146,9 @@ describe('Wallet TX Pagination', function() {
       assert.notStrictEqual(two[0].txid, one[11].txid);
     });
 
-    it.skip('third page after new block (no shifting)', async () => {
-
-    });
-
-    it.skip('last page', async () => {
-
-    });
+    // TODO
+    // - third page after new block (no shifting)
+    // - last page
   });
 
   describe('get transaction history by timestamp (asc)', () => {
@@ -177,9 +170,8 @@ describe('Wallet TX Pagination', function() {
       assert.strictEqual(history[99].confirmations, 3); // TODO this will sometimes be 2
     });
 
-    it.skip('arbitrary date', async () => {
-
-    });
+    // TODO
+    // - last arbitrary date
   });
 
   describe('chain reorganizations', () => {
