@@ -157,13 +157,9 @@ describe('Wallet Unconfirmed TX', function() {
       assert.strictEqual(a > b, true);
     });
 
-    it.skip('third page after new block (no shifting)', async () => {
-
-    });
-
-    it.skip('last page', async () => {
-
-    });
+    // TODO
+    // - third page after new block (no shifting)
+    // - last page
   });
 
   describe('get transaction history (asc)', () => {
@@ -211,13 +207,9 @@ describe('Wallet Unconfirmed TX', function() {
       assert.notStrictEqual(two[0].txid, one[99].txid);
     });
 
-    it.skip('third page after new block (no shifting)', async () => {
-
-    });
-
-    it.skip('last page', async () => {
-
-    });
+    // TODO
+    // - third page after new block (no shifting)
+    // - last page
   });
 
   describe('get transaction history by timestamp (asc)', () => {
@@ -255,9 +247,8 @@ describe('Wallet Unconfirmed TX', function() {
       assert.strictEqual(a > b, true);
     });
 
-    it.skip('arbitrary date', async () => {
-
-    });
+    // TODO
+    // - arbitrary date
   });
 
   describe('chain rollback', () => {
