@@ -85,7 +85,10 @@ async function mineCSV(fund) {
 }
 
 describe('Node', function() {
-  this.timeout(5000);
+  this.timeout(process.browser ? 20000 : 5000);
+
+  if (process.browser)
+    return;
 
   it('should open chain and miner', async () => {
     miner.mempool = null;

@@ -103,7 +103,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [3], [5]]);
+      assert.deepEqual(stack.items, [[1], [3], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -128,7 +128,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [4], [5]]);
+      assert.deepEqual(stack.items, [[1], [4], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -151,7 +151,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [3], [5]]);
+      assert.deepEqual(stack.items, [[1], [3], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -174,7 +174,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [5]]);
+      assert.deepEqual(stack.items, [[1], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -197,7 +197,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [3], [5]]);
+      assert.deepEqual(stack.items, [[1], [3], [5]].map(a => Buffer.from(a)));
     }
   });
 

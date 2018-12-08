@@ -106,54 +106,54 @@ describe('Utils', function() {
     let b = Buffer.alloc(1, 0xff);
     encoding.writeVarint2(b, 0, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 0);
-    assert.deepEqual(b, [0]);
+    assert.strictEqual(b.toString('hex'), '00');
 
     b = Buffer.alloc(1, 0xff);
     encoding.writeVarint2(b, 1, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 1);
-    assert.deepEqual(b, [1]);
+    assert.strictEqual(b.toString('hex'), '01');
 
     b = Buffer.alloc(1, 0xff);
     encoding.writeVarint2(b, 127, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 127);
-    assert.deepEqual(b, [0x7f]);
+    assert.strictEqual(b.toString('hex'), '7f');
 
     b = Buffer.alloc(2, 0xff);
     encoding.writeVarint2(b, 128, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 128);
-    assert.deepEqual(b, [0x80, 0x00]);
+    assert.strictEqual(b.toString('hex'), '8000');
 
     b = Buffer.alloc(2, 0xff);
     encoding.writeVarint2(b, 255, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 255);
-    assert.deepEqual(b, [0x80, 0x7f]);
+    assert.strictEqual(b.toString('hex'), '807f');
 
     b = Buffer.alloc(2, 0xff);
     encoding.writeVarint2(b, 16383, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 16383);
-    assert.deepEqual(b, [0xfe, 0x7f]);
+    assert.strictEqual(b.toString('hex'), 'fe7f');
 
     b = Buffer.alloc(2, 0xff);
     encoding.writeVarint2(b, 16384, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 16384);
-    assert.deepEqual(b, [0xff, 0x00]);
+    assert.strictEqual(b.toString('hex'), 'ff00');
 
     b = Buffer.alloc(3, 0xff);
     encoding.writeVarint2(b, 16511, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 16511);
-    assert.deepEqual(b.slice(0, 2), [0xff, 0x7f]);
-    // assert.deepEqual(b, [0x80, 0xff, 0x7f]);
+    assert.strictEqual(b.slice(0, 2).toString('hex'), 'ff7f');
+    // assert.strictEqual(b.toString('hex'), '80ff7f');
 
     b = Buffer.alloc(3, 0xff);
     encoding.writeVarint2(b, 65535, 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, 65535);
-    assert.deepEqual(b, [0x82, 0xfe, 0x7f]);
-    // assert.deepEqual(b, [0x82, 0xfd, 0x7f]);
+    assert.strictEqual(b.toString('hex'), '82fe7f');
+    // assert.strictEqual(b.toString('hex'), '82fd7f');
 
     b = Buffer.alloc(5, 0xff);
     encoding.writeVarint2(b, Math.pow(2, 32), 0);
     assert.strictEqual(encoding.readVarint2(b, 0).value, Math.pow(2, 32));
-    assert.deepEqual(b, [0x8e, 0xfe, 0xfe, 0xff, 0x00]);
+    assert.strictEqual(b.toString('hex'), '8efefeff00');
   });
 
   it('should validate integers 0 and 1 as booleans', () => {

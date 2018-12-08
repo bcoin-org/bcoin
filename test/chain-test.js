@@ -111,7 +111,7 @@ chain.on('disconnect', (entry, block) => {
 });
 
 describe('Chain', function() {
-  this.timeout(60000);
+  this.timeout(process.browser ? 1200000 : 60000);
 
   it('should open chain and miner', async () => {
     await chain.open();
@@ -648,6 +648,9 @@ describe('Chain', function() {
 
     assert(await chain.add(block));
   });
+
+  if (process.browser)
+    return;
 
   it('should mine fail to connect too much weight', async () => {
     const start = chain.height - 2000;

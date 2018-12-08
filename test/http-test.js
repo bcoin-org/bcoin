@@ -14,6 +14,9 @@ const pkg = require('../lib/pkg');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
 
+if (process.browser)
+  return;
+
 const node = new FullNode({
   network: 'regtest',
   apiKey: 'foo',
