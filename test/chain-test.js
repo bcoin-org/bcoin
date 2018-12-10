@@ -114,7 +114,6 @@ describe('Chain', function() {
   this.timeout(process.browser ? 1200000 : 60000);
 
   it('should open chain and miner', async () => {
-    throw new Error('test');
     await chain.open();
     await miner.open();
   });
