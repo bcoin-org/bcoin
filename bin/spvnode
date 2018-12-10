@@ -24,7 +24,7 @@ const node = new SPVNode({
 });
 
 // Temporary hack
-if (!node.has('walletdb')) {
+if (!node.config.bool('no-wallet') && !node.has('walletdb')) {
   const plugin = require('../lib/wallet/plugin');
   node.use(plugin);
 }
