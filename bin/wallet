@@ -6,7 +6,7 @@ process.title = 'bwallet';
 
 if (process.argv.indexOf('--help') !== -1
     || process.argv.indexOf('-h') !== -1) {
-  console.error('See the bcoin wiki at: https://github.com/bcoin-org/bcoin/wiki.');
+  console.error('See the bcoin docs at: https://github.com/bcoin-org/bcoin/tree/master/docs.');
   process.exit(1);
   throw new Error('Could not exit.');
 }
