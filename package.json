@@ -37,7 +37,7 @@
     "blru": "~0.1.4",
     "blst": "~0.1.3",
     "bmutex": "~0.1.4",
-    "bsert": "~0.0.6",
+    "bsert": "~0.0.7",
     "bsip": "~0.1.4",
     "bsock": "~0.1.4",
     "bsocks": "~0.2.3",
@@ -52,7 +52,7 @@
     "n64": "~0.2.5"
   },
   "devDependencies": {
-    "bmocha": "^0.1.5"
+    "bmocha": "^0.1.6"
   },
   "main": "./lib/bcoin.js",
   "bin": {
