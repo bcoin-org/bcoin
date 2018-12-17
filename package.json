@@ -52,7 +52,7 @@
     "n64": "~0.2.5"
   },
   "devDependencies": {
-    "bmocha": "^0.1.6"
+    "bmocha": "^0.1.7"
   },
   "main": "./lib/bcoin.js",
   "bin": {
