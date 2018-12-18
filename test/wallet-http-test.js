@@ -79,7 +79,7 @@ describe('Wallet TX HTTP Pagination', function() {
     unconfirmedTime = new Date();
 
     // Generate unconfirmed transactions for the
-    // fullnode wallet
+    // fullnode and spv wallet
     const txids = await generateTxs({
       wclient,
       spvwclient,

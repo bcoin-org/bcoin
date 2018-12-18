@@ -6,6 +6,8 @@ const assert = require('./assert');
 const sleep = require('./sleep');
 const FullNode = require('../../lib/node/fullnode');
 const SPVNode = require('../../lib/node/spvnode');
+const Coin = require('../../lib/primitives/coin');
+const MTX = require('../../lib/primitives/mtx');
 
 async function initFullNode(options) {
   const node = new FullNode({
@@ -192,6 +194,43 @@ async function generateTxs(options) {
   return txids;
 }
 
+async function sendCoinbase(options) {
+  const {
+    nclient,
+    height,
+    address,
+    coinbaseKey
+  } = options;
+
+  const hash = await nclient.execute('getblockhash', [height]);
+  const block = await nclient.execute('getblock', [hash, true, true]);
+
+  const script = Buffer.from(block.tx[0].vout[0].scriptPubKey.hex, 'hex');
+  const prevhash = Buffer.from(block.tx[0].hash, 'hex');
+  prevhash.reverse();
+
+  const mtx = new MTX();
+
+  mtx.addCoin(Coin.fromOptions({
+    value: 5000000000,
+    script: script,
+    hash: prevhash,
+    index: 0
+  }));
+
+  mtx.addOutput({
+    address: address,
+    value: 4999000000
+  });
+
+  mtx.sign(coinbaseKey);
+
+  const tx = mtx.toTX();
+
+  const result = await nclient.execute('sendrawtransaction',
+                                       [tx.toRaw().toString('hex')]);
+}
+
 async function generateInitialBlocks(options) {
   const {
     nclient,
@@ -261,4 +300,5 @@ module.exports = {
   generateReorg,
   generateRollback,
   generateTxs,
+  sendCoinbase
 }
