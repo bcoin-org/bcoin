@@ -110,11 +110,6 @@ describe('Wallet Unconfirmed TX', function() {
     await spvnode.close();
   });
 
-  it('should get correct transaction count', async () => {
-    const count = await wclient.execute('listhistorycount', ['blue']);
-    assert.strictEqual(count, 575);
-  });
-
   describe('get unconfirmed transaction history (dsc)', function() {
     it('first page', async () => {
       const history = await wclient.execute('listunconfirmed', ['blue', 100, true]);

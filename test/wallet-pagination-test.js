@@ -80,11 +80,6 @@ describe('Wallet TX Pagination', function() {
     await spvnode.close();
   });
 
-  it('should get correct transaction count', async () => {
-    const count = await wclient.execute('listhistorycount', ['blue']);
-    assert.strictEqual(count, 575);
-  });
-
   describe('get transaction history (dsc)', function() {
     it('first page', async () => {
       const history = await wclient.execute('listhistory', ['blue', 100, true]);
@@ -114,7 +109,7 @@ describe('Wallet TX Pagination', function() {
 
     // TODO
     // - third page after new block (no shifting)
-    // - last page
+    // - last page (575 txs total)
   });
 
   describe('get transaction history (asc)', () => {
