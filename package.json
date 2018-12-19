@@ -23,6 +23,8 @@
     "node": ">=8.0.0"
   },
   "dependencies": {
+    "bcurl": "pinheadmz/bcurl#patch-1",
+    "brq": "pinheadmz/brq#patch-1",
     "bcfg": "~0.1.4",
     "bclient": "~0.1.5",
     "bcrypto": "~3.0.1",
