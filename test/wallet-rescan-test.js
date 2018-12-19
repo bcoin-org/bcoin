@@ -76,7 +76,7 @@ describe('Wallet Rescan', function() {
     });
 
     // TODO remove this
-    await sleep(5000);
+    await sleep(1000);
 
     key1 = KeyRing.generate();
     key2 = KeyRing.generate();
@@ -95,7 +95,8 @@ describe('Wallet Rescan', function() {
     await generateBlocks(1, nclient, coinbase);
 
     // Send funds to the addresses to be imported
-    for (++height; height < 13; height++) {
+    let importTotal = 0;
+    for (++height; height < 14; height++) {
       const address = key1.getAddress('base58', 'regtest').toString();
       await sendCoinbase({
         nclient,
@@ -103,7 +104,10 @@ describe('Wallet Rescan', function() {
         coinbaseKey,
         address
       });
+      importTotal++;
     }
+
+    assert.strictEqual(importTotal, 12);
 
     await generateBlocks(1, nclient, coinbase);
 
@@ -118,12 +122,18 @@ describe('Wallet Rescan', function() {
 
     await generateBlocks(1, nclient, coinbase);
 
+    // TODO remove this
+    await sleep(1000);
+
+    const history = await wclient.execute('listhistory', [null, 100, true]);
+    assert.strictEqual(history.length, 2);
+
     // Import keys into wallets and rescan
     const key1Priv = key1.getPrivateKey('base58', 'regtest');
     await wclient.execute('importprivkey', [key1Priv, null, true]);
 
     // TODO remove this
-    await sleep(5000);
+    await sleep(1000);
   });
 
   after(async () => {
@@ -133,12 +143,19 @@ describe('Wallet Rescan', function() {
     await node.close();
   });
 
-  it('has the correct number of txs', async () => {
-    const history = await wclient.execute('listhistory', ['blue', 100, true]);
+  it('will include txs of imported addresses', async () => {
+    const history = await wclient.execute('listhistory', [null, 100, true]);
     assert.strictEqual(history.length, 14);
   });
 
-  it('wallet should include txs of imported addresses', async () => {
+  it('will include txs in correct order', async() => {
+    const history = await wclient.execute('listhistory', [null, 100, true]);
+    assert.strictEqual(history[0].account, 'blue');
+
+    for (let i = 1; i < 13; i++)
+      assert.strictEqual(history[i].account, 'default');
+
+    assert.strictEqual(history[13].account, 'blue');
   });
 
 });
