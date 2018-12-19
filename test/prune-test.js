@@ -52,8 +52,16 @@ describe('Pruned node', function() {
 
   it('should generate 1000 blocks', async () => {
     const addr = await wallet.createAddress('default');
-    assert(await nclient.execute('generatetoaddress', [500, addr.address]));
-    assert(await nclient.execute('generatetoaddress', [500, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
+    assert(await nclient.execute('generatetoaddress', [100, addr.address]));
     const info = await nclient.getInfo();
     assert.strictEqual(1000, info.chain.height);
   });
