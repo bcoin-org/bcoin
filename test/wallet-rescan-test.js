@@ -11,7 +11,6 @@ const KeyRing = require('../lib/primitives/keyring');
 
 const {
   initFullNode,
-  initSPVNode,
   initNodeClient,
   initWalletClient,
   initWallet,
@@ -23,7 +22,6 @@ const {
 } = require('./util/regtest');
 
 const testPrefix = '/tmp/bcoin-fullnode';
-const spvTestPrefix = '/tmp/bcoin-spvnode';
 const genesisTime = 1534965859;
 const genesisDate = new Date(genesisTime * 1000);
 
@@ -32,43 +30,38 @@ const ports = {
     p2p: 49331,
     node: 49332,
     wallet: 49333
-  },
-  spv: {
-    p2p: 49431,
-    node: 49432,
-    wallet: 49433
   }
 }
 
 describe('Wallet Rescan', function() {
   this.timeout(30000);
 
-  let node, spvnode, wallet, spvwallet = null;
-  let nclient, wclient, spvwclient = null;
+  // SPV isn't tested here as rescanning will
+  // not work in that case, furthermore it will also
+  // not work for pruned nodes. There may need to be
+  // additional error messages on related APIs that
+  // assume use of rescan.
+
+  let node, wallet = null;
+  let nclient, wclient = null;
   let coinbase, coinbaseKey = null;
-  let fulladdr, spvaddr = null;
+  let fulladdr = null;
   let key1, key2, key3 = null;
 
   before(async () => {
     await rimraf(testPrefix);
-    await rimraf(spvTestPrefix);
 
     node = await initFullNode({ports, prefix: testPrefix, logLevel: 'none'});
-    spvnode = await initSPVNode({ports, prefix: spvTestPrefix, logLevel: 'none'});
 
     nclient = await initNodeClient({ports: ports.full});
     wclient = await initWalletClient({ports: ports.full});
-    spvwclient = await initWalletClient({ports: ports.spv});
     wallet = await initWallet(wclient);
-    spvwallet = await initWallet(spvwclient);
 
     coinbaseKey = KeyRing.generate();
 
     await wclient.execute('selectwallet', ['test']);
-    await spvwclient.execute('selectwallet', ['test']);
 
     fulladdr = await wclient.execute('getnewaddress', ['blue']);
-    spvaddr = await spvwclient.execute('getnewaddress', ['blue']);
 
     // Use coinbase outside of any wallet so
     // that we can send funds to various addresses
@@ -99,13 +92,6 @@ describe('Wallet Rescan', function() {
       address: fulladdr
     });
 
-    await sendCoinbase({
-      nclient,
-      height: ++height,
-      coinbaseKey,
-      address: spvaddr
-    });
-
     await generateBlocks(1, nclient, coinbase);
 
     // Send funds to the addresses to be imported
@@ -130,19 +116,11 @@ describe('Wallet Rescan', function() {
       address: fulladdr
     });
 
-    await sendCoinbase({
-      nclient,
-      height: ++height,
-      coinbaseKey,
-      address: spvaddr
-    });
-
     await generateBlocks(1, nclient, coinbase);
 
     // Import keys into wallets and rescan
     const key1Priv = key1.getPrivateKey('base58', 'regtest');
     await wclient.execute('importprivkey', [key1Priv, null, true]);
-    await spvwclient.execute('importprivkey', [key1Priv, null, true]);
 
     // TODO remove this
     await sleep(5000);
@@ -151,29 +129,16 @@ describe('Wallet Rescan', function() {
   after(async () => {
     await wallet.close();
     await wclient.close();
-    await spvwclient.close();
     await nclient.close();
     await node.close();
-    await spvnode.close();
   });
 
-  describe('full node wallet', function() {
-    it('has the correct number of txs', async () => {
-      const history = await wclient.execute('listhistory', ['blue', 100, true]);
-      assert.strictEqual(history.length, 14);
-    });
-
-    it('wallet should include txs of imported addresses', async () => {
-    });
+  it('has the correct number of txs', async () => {
+    const history = await wclient.execute('listhistory', ['blue', 100, true]);
+    assert.strictEqual(history.length, 14);
   });
 
-  describe('spv node wallet', function() {
-    it('has the correct number of txs', async () => {
-      const history = await spvwclient.execute('listhistory', ['blue', 100, true]);
-      assert.strictEqual(history.length, 14);
-    });
-
-    it('wallet should include txs of imported addresses', async () => {
-    });
+  it('wallet should include txs of imported addresses', async () => {
   });
+
 });
