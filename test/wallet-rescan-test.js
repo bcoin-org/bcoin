@@ -85,9 +85,6 @@ describe('Wallet Rescan', function() {
     // TODO remove this
     await sleep(5000);
 
-    const count = await wclient.execute('listhistorycount', ['blue']);
-    assert.strictEqual(count, 0);
-
     key1 = KeyRing.generate();
     key2 = KeyRing.generate();
     key3 = KeyRing.generate();
@@ -162,8 +159,8 @@ describe('Wallet Rescan', function() {
 
   describe('full node wallet', function() {
     it('has the correct number of txs', async () => {
-      const count = await wclient.execute('listhistorycount', ['blue']);
-      assert.strictEqual(count, 14);
+      const history = await wclient.execute('listhistory', ['blue', 100, true]);
+      assert.strictEqual(history.length, 14);
     });
 
     it('wallet should include txs of imported addresses', async () => {
@@ -172,8 +169,8 @@ describe('Wallet Rescan', function() {
 
   describe('spv node wallet', function() {
     it('has the correct number of txs', async () => {
-      const count = await spvwclient.execute('listhistorycount', ['blue']);
-      assert.strictEqual(count, 14);
+      const history = await spvwclient.execute('listhistory', ['blue', 100, true]);
+      assert.strictEqual(history.length, 14);
     });
 
     it('wallet should include txs of imported addresses', async () => {
