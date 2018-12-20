@@ -85,9 +85,9 @@ describe('Wallet TX HTTP Pagination', function() {
     await generateTxs({
       wclient,
       spvwclient,
-      count: 38,
+      count: 19,
       amount: 0.0001,
-      gap: 12,
+      gap: 6,
       sleep: 2000
     });
 
@@ -219,23 +219,23 @@ describe('Wallet TX HTTP Pagination', function() {
           limit: 50,
           reverse: true
         });
-        assert.strictEqual(history.length, 38);
+        assert.strictEqual(history.length, 19);
         assert.strictEqual(history[0].confirmations, 0);
         const a = history[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(history[37].confirmations, 0);
-        const b = history[37].mtime;
+        assert.strictEqual(history[18].confirmations, 0);
+        const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a > b, true);
       });
 
       it('second page', async () => {
         const one = await wclient.get('/wallet/test/tx/unconfirmed', {
-          limit: 15,
+          limit: 4,
           reverse: true
         });
 
-        const after = one[14].hash;
+        const after = one[3].hash;
 
         const two = await wclient.get('/wallet/test/tx/unconfirmed', {
           after: after,
@@ -243,16 +243,16 @@ describe('Wallet TX HTTP Pagination', function() {
           reverse: true
         });
 
-        assert.strictEqual(two.length, 23);
+        assert.strictEqual(two.length, 15);
         assert.strictEqual(two[0].confirmations, 0);
         const a = two[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(two[22].confirmations, 0);
-        const b = two[22].mtime;
+        assert.strictEqual(two[14].confirmations, 0);
+        const b = two[14].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a > b, true);
 
-        assert.notStrictEqual(two[0].hash, one[14].hash);
+        assert.notStrictEqual(two[0].hash, one[3].hash);
       });
     });
 
@@ -262,12 +262,12 @@ describe('Wallet TX HTTP Pagination', function() {
           limit: 50,
           reverse: false
         });
-        assert.strictEqual(history.length, 38);
+        assert.strictEqual(history.length, 19);
         assert.strictEqual(history[0].confirmations, 0);
         const a = history[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(history[37].confirmations, 0);
-        const b = history[37].mtime;
+        assert.strictEqual(history[18].confirmations, 0);
+        const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a < b, true);
       });
@@ -283,12 +283,12 @@ describe('Wallet TX HTTP Pagination', function() {
 
       it('second page', async () => {
         const one = await wclient.get('/wallet/test/tx/unconfirmed', {
-          limit: 15,
+          limit: 4,
           reverse: false
         });
-        assert.strictEqual(one.length, 15);
+        assert.strictEqual(one.length, 4);
 
-        const after = one[14].hash;
+        const after = one[3].hash;
 
         const two = await wclient.get('/wallet/test/tx/unconfirmed', {
           after: after,
@@ -296,16 +296,16 @@ describe('Wallet TX HTTP Pagination', function() {
           reverse: false
         });
 
-        assert.strictEqual(two.length, 23);
+        assert.strictEqual(two.length, 15);
         assert.strictEqual(two[0].confirmations, 0);
         const a = two[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(two[22].confirmations, 0);
-        const b = two[22].mtime;
+        assert.strictEqual(two[14].confirmations, 0);
+        const b = two[14].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a < b, true);
 
-        assert.notStrictEqual(two[0].hash, one[14].hash);
+        assert.notStrictEqual(two[0].hash, one[3].hash);
       });
     });
   });
@@ -382,23 +382,23 @@ describe('Wallet TX HTTP Pagination', function() {
           limit: 50,
           reverse: true
         });
-        assert.strictEqual(history.length, 38);
+        assert.strictEqual(history.length, 19);
         assert.strictEqual(history[0].confirmations, 0);
         const a = history[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(history[37].confirmations, 0);
-        const b = history[37].mtime;
+        assert.strictEqual(history[18].confirmations, 0);
+        const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a > b, true);
       });
       it('second page', async () => {
         const one = await spvwclient.get('/wallet/test/tx/unconfirmed', {
-          limit: 15,
+          limit: 4,
           reverse: true
         });
-        assert.strictEqual(one.length, 15);
+        assert.strictEqual(one.length, 4);
 
-        const after = one[14].hash;
+        const after = one[3].hash;
 
         const two = await spvwclient.get('/wallet/test/tx/unconfirmed', {
           after: after,
@@ -406,15 +406,16 @@ describe('Wallet TX HTTP Pagination', function() {
           reverse: true
         });
 
-        assert.strictEqual(two.length, 23);
+        assert.strictEqual(two.length, 15);
         assert.strictEqual(two[0].confirmations, 0);
         const a = two[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(two[22].confirmations, 0);
-        const b = two[22].mtime;
+        assert.strictEqual(two[14].confirmations, 0);
+        const b = two[14].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a > b, true);
-        assert.notStrictEqual(two[0].hash, one[14].hash);
+
+        assert.notStrictEqual(two[0].hash, one[3].hash);
       });
     });
 
@@ -424,23 +425,23 @@ describe('Wallet TX HTTP Pagination', function() {
           limit: 50,
           reverse: false
         });
-        assert.strictEqual(history.length, 38);
+        assert.strictEqual(history.length, 19);
         assert.strictEqual(history[0].confirmations, 0);
         const a = history[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(history[37].confirmations, 0);
-        const b = history[37].mtime;
+        assert.strictEqual(history[18].confirmations, 0);
+        const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a < b, true);
       });
       it('second page', async () => {
         const one = await spvwclient.get('/wallet/test/tx/unconfirmed', {
-          limit: 15,
+          limit: 4,
           reverse: false
         });
-        assert.strictEqual(one.length, 15);
+        assert.strictEqual(one.length, 4);
 
-        const after = one[14].hash;
+        const after = one[3].hash;
 
         const two = await spvwclient.get('/wallet/test/tx/unconfirmed', {
           after: after,
@@ -448,15 +449,15 @@ describe('Wallet TX HTTP Pagination', function() {
           reverse: false
         });
 
-        assert.strictEqual(two.length, 23);
+        assert.strictEqual(two.length, 15);
         assert.strictEqual(two[0].confirmations, 0);
         const a = two[0].mtime;
         assert.strictEqual(Number.isInteger(a), true);
-        assert.strictEqual(two[22].confirmations, 0);
-        const b = two[22].mtime;
+        assert.strictEqual(two[14].confirmations, 0);
+        const b = two[14].mtime;
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a <= b, true);
-        assert.notStrictEqual(two[0].hash, one[14].hash);
+        assert.notStrictEqual(two[0].hash, one[3].hash);
       });
     });
   });
