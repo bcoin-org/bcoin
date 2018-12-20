@@ -35,7 +35,7 @@ const ports = {
 };
 
 describe('Wallet TX HTTP Pagination', function() {
-  this.timeout(30000);
+  this.timeout(60000);
 
   let node, spvnode, wallet = null;
   let nclient, wclient, spvwclient = null;
