@@ -11,7 +11,7 @@ function wrapAsync(fn) {
       fn(p, (err, result) => {
         if (err && err.code !== 'ENOENT')
           return reject(err);
-        resolve(result);
+        return resolve(result);
       });
     });
   };

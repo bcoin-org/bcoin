@@ -3,7 +3,6 @@
 
 'use strict';
 
-const path = require('path');
 const assert = require('./util/assert');
 const rimraf = require('./util/rimraf');
 const sleep = require('./util/sleep');
@@ -34,7 +33,7 @@ const ports = {
     node: 49432,
     wallet: 49433
   }
-}
+};
 
 describe('Wallet TX Pagination', function() {
   this.timeout(30000);
@@ -47,8 +46,17 @@ describe('Wallet TX Pagination', function() {
     await rimraf(testPrefix);
     await rimraf(spvTestPrefix);
 
-    node = await initFullNode({ports, prefix: testPrefix, logLevel: 'none'});
-    spvnode = await initSPVNode({ports, prefix: spvTestPrefix, logLevel: 'none'});
+    node = await initFullNode({
+      ports,
+      prefix: testPrefix,
+      logLevel: 'none'
+    });
+
+    spvnode = await initSPVNode({
+      ports,
+      prefix: spvTestPrefix,
+      logLevel: 'none'
+    });
 
     nclient = await initNodeClient({ports: ports.full});
     wclient = await initWalletClient({ports: ports.full});
@@ -82,7 +90,8 @@ describe('Wallet TX Pagination', function() {
 
   describe('get transaction history (dsc)', function() {
     it('first page', async () => {
-      const history = await wclient.execute('listhistory', ['blue', 100, true]);
+      const history = await wclient.execute('listhistory',
+                                            ['blue', 100, true]);
       assert.strictEqual(history.length, 100);
       assert.strictEqual(history[0].account, 'blue');
       assert.strictEqual(history[0].confirmations, 1);
@@ -91,7 +100,8 @@ describe('Wallet TX Pagination', function() {
     });
 
     it('second page', async () => {
-      const one = await wclient.execute('listhistory', ['blue', 100, true]);
+      const one = await wclient.execute('listhistory',
+                                        ['blue', 100, true]);
       assert.strictEqual(one[0].account, 'blue');
       assert.strictEqual(one[0].confirmations, 1);
       assert.strictEqual(one[99].account, 'blue');
@@ -99,7 +109,8 @@ describe('Wallet TX Pagination', function() {
 
       const after = one[99].txid;
 
-      const two = await wclient.execute('listhistoryafter', ['blue', after, 100, true]);
+      const two = await wclient.execute('listhistoryafter',
+                                        ['blue', after, 100, true]);
       assert.strictEqual(two.length, 100);
       assert.strictEqual(two[0].account, 'blue');
       assert.strictEqual(two[0].confirmations, 2);
@@ -114,7 +125,8 @@ describe('Wallet TX Pagination', function() {
 
   describe('get transaction history (asc)', () => {
     it('first page', async () => {
-      const history = await wclient.execute('listhistory', ['blue', 12, false]);
+      const history = await wclient.execute('listhistory',
+                                            ['blue', 12, false]);
       assert.strictEqual(history.length, 12);
       assert.strictEqual(history[0].account, 'blue');
       assert.strictEqual(history[0].confirmations, 125);
@@ -123,7 +135,8 @@ describe('Wallet TX Pagination', function() {
     });
 
     it('second page', async () => {
-      const one = await wclient.execute('listhistory', ['blue', 12, false]);
+      const one = await wclient.execute('listhistory',
+                                        ['blue', 12, false]);
       assert.strictEqual(one.length, 12);
       assert.strictEqual(one[0].account, 'blue');
       assert.strictEqual(one[0].confirmations, 125);
@@ -132,7 +145,8 @@ describe('Wallet TX Pagination', function() {
 
       const after = one[11].txid;
 
-      const two = await wclient.execute('listhistoryafter', ['blue', after, 12, false]);
+      const two = await wclient.execute('listhistoryafter',
+                                        ['blue', after, 12, false]);
       assert.strictEqual(two.length, 12);
       assert.strictEqual(two[0].account, 'blue');
       assert.strictEqual(two[0].confirmations, 113);
@@ -148,7 +162,8 @@ describe('Wallet TX Pagination', function() {
 
   describe('get transaction history by timestamp (asc)', () => {
     it('genesis to latest', async () => {
-      const history = await wclient.execute('listhistorybytime', ['blue', genesisDate, 12, false]);
+      const history = await wclient.execute('listhistorybytime',
+                                            ['blue', genesisDate, 12, false]);
       assert.strictEqual(history.length, 12);
       assert.strictEqual(history[0].account, 'blue');
       const a = history[0].confirmations;
@@ -158,7 +173,8 @@ describe('Wallet TX Pagination', function() {
     });
 
     it('latest to genesis', async () => {
-      const history = await wclient.execute('listhistorybytime', ['blue', new Date(), 100, true]);
+      const history = await wclient.execute('listhistorybytime',
+                                            ['blue', new Date(), 100, true]);
       assert.strictEqual(history.length, 100);
       assert.strictEqual(history[0].account, 'blue');
       const a = history[0].confirmations;
@@ -173,17 +189,16 @@ describe('Wallet TX Pagination', function() {
 
   describe('chain reorganizations', () => {
     const depth = 1;
-    let previous = null;
     const now = new Date() + 10000;
-    let txids = new Map();
+    const txids = new Map();
 
     before(async () => {
-      previous = await wclient.execute('listhistorybytime', ['blue', now, 100, true]);
+      await wclient.execute('listhistorybytime', ['blue', now, 100, true]);
 
       const result = await generateReorg(depth, nclient, wclient, coinbase);
       assert.notStrictEqual(result.invalidated[0], result.validated[0]);
 
-      for (let txid of result.txids)
+      for (const txid of result.txids)
         txids.set(txid);
 
       // TODO remove this
@@ -191,16 +206,16 @@ describe('Wallet TX Pagination', function() {
     });
 
     it('reorganize count and monotonic time indexes', async() => {
-      const current = await wclient.execute('listhistorybytime', ['blue', now, 100, true]);
+      const current = await wclient.execute('listhistorybytime',
+                                            ['blue', now, 100, true]);
 
-      let currentMap = new Map();
+      const currentMap = new Map();
 
-      for (let p of current)
+      for (const p of current)
         currentMap.set(p.txid, p);
 
-      for (let txid of txids.keys())
+      for (const txid of txids.keys())
         assert.strictEqual(currentMap.has(txid), true);
     });
-
   });
 });

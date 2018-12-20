@@ -3,7 +3,6 @@
 
 'use strict';
 
-const path = require('path');
 const assert = require('./util/assert');
 const rimraf = require('./util/rimraf');
 const sleep = require('./util/sleep');
@@ -15,14 +14,12 @@ const {
   initWalletClient,
   initWallet,
   generateInitialBlocks,
-  generateReorg,
   generateTxs
 } = require('./util/regtest');
 
 const testPrefix = '/tmp/bcoin-fullnode';
 const spvTestPrefix = '/tmp/bcoin-spvnode';
 const genesisTime = 1534965859;
-const genesisDate = new Date(genesisTime * 1000);
 
 const ports = {
   full: {
@@ -35,34 +32,41 @@ const ports = {
     node: 49432,
     wallet: 49433
   }
-}
+};
 
 describe('Wallet TX HTTP Pagination', function() {
   this.timeout(30000);
 
-  let node, spvnode, wallet, spvwallet = null;
+  let node, spvnode, wallet = null;
   let nclient, wclient, spvwclient = null;
-  let coinbase, spvaddr = null;
-  let unconfirmedTime = null;
+  let coinbase = null;
 
   before(async () => {
     await rimraf(testPrefix);
     await rimraf(spvTestPrefix);
 
-    node = await initFullNode({ports, prefix: testPrefix, logLevel: 'none'});
-    spvnode = await initSPVNode({ports, prefix: spvTestPrefix, logLevel: 'none'});
+    node = await initFullNode({
+      ports,
+      prefix: testPrefix,
+      logLevel: 'none'
+    });
+
+    spvnode = await initSPVNode({
+      ports,
+      prefix: spvTestPrefix,
+      logLevel: 'none'
+    });
 
     nclient = await initNodeClient({ports: ports.full});
     wclient = await initWalletClient({ports: ports.full});
     spvwclient = await initWalletClient({ports: ports.spv});
     wallet = await initWallet(wclient);
-    spvwallet = await initWallet(spvwclient);
+    await initWallet(spvwclient);
 
     await wclient.execute('selectwallet', ['test']);
     coinbase = await wclient.execute('getnewaddress', ['blue']);
 
     await spvwclient.execute('selectwallet', ['test']);
-    spvaddr = await spvwclient.execute('getnewaddress', ['blue']);
 
     await generateInitialBlocks({
       nclient,
@@ -76,11 +80,9 @@ describe('Wallet TX HTTP Pagination', function() {
     // TODO remove this
     await sleep(5000);
 
-    unconfirmedTime = new Date();
-
     // Generate unconfirmed transactions for the
     // fullnode and spv wallet
-    const txids = await generateTxs({
+    await generateTxs({
       wclient,
       spvwclient,
       count: 38,

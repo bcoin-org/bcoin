@@ -5,7 +5,6 @@
 
 const assert = require('bsert');
 const consensus = require('../lib/protocol/consensus');
-const util = require('../lib/utils/util');
 const hash256 = require('bcrypto/lib/hash256');
 const random = require('bcrypto/lib/random');
 const WalletDB = require('../lib/wallet/walletdb');
