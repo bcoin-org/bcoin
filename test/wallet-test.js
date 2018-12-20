@@ -6,7 +6,6 @@
 const assert = require('bsert');
 const {WalletClient} = require('../lib/client');
 const consensus = require('../lib/protocol/consensus');
-const util = require('../lib/utils/util');
 const hash256 = require('bcrypto/lib/hash256');
 const random = require('bcrypto/lib/random');
 const FullNode = require('../lib/node/fullnode');

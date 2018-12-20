@@ -3,7 +3,6 @@
 
 'use strict';
 
-const path = require('path');
 const assert = require('./util/assert');
 const rimraf = require('./util/rimraf');
 const sleep = require('./util/sleep');
@@ -16,14 +15,11 @@ const {
   initWallet,
   generateInitialBlocks,
   generateBlocks,
-  generateReorg,
-  generateTxs,
   sendCoinbase
 } = require('./util/regtest');
 
 const testPrefix = '/tmp/bcoin-fullnode';
 const genesisTime = 1534965859;
-const genesisDate = new Date(genesisTime * 1000);
 
 const ports = {
   full: {
@@ -31,7 +27,7 @@ const ports = {
     node: 49332,
     wallet: 49333
   }
-}
+};
 
 describe('Wallet Rescan', function() {
   this.timeout(30000);
@@ -46,12 +42,16 @@ describe('Wallet Rescan', function() {
   let nclient, wclient = null;
   let coinbase, coinbaseKey = null;
   let fulladdr = null;
-  let key1, key2, key3 = null;
+  let key1 = null;
 
   before(async () => {
     await rimraf(testPrefix);
 
-    node = await initFullNode({ports, prefix: testPrefix, logLevel: 'none'});
+    node = await initFullNode({
+      ports,
+      prefix: testPrefix,
+      logLevel: 'none'
+    });
 
     nclient = await initNodeClient({ports: ports.full});
     wclient = await initWalletClient({ports: ports.full});
@@ -79,8 +79,6 @@ describe('Wallet Rescan', function() {
     await sleep(1000);
 
     key1 = KeyRing.generate();
-    key2 = KeyRing.generate();
-    key3 = KeyRing.generate();
 
     let height = 0;
 
@@ -125,12 +123,14 @@ describe('Wallet Rescan', function() {
     // TODO remove this
     await sleep(1000);
 
-    const history = await wclient.execute('listhistory', [null, 100, true]);
+    const history = await wclient.execute('listhistory',
+                                          [null, 100, true]);
     assert.strictEqual(history.length, 2);
 
     // Import keys into wallets and rescan
     const key1Priv = key1.getPrivateKey('base58', 'regtest');
-    await wclient.execute('importprivkey', [key1Priv, null, true]);
+    await wclient.execute('importprivkey',
+                          [key1Priv, null, true]);
 
     // TODO remove this
     await sleep(1000);
@@ -144,12 +144,14 @@ describe('Wallet Rescan', function() {
   });
 
   it('will include txs of imported addresses', async () => {
-    const history = await wclient.execute('listhistory', [null, 100, true]);
+    const history = await wclient.execute('listhistory',
+                                          [null, 100, true]);
     assert.strictEqual(history.length, 14);
   });
 
   it('will include txs in correct order', async() => {
-    const history = await wclient.execute('listhistory', [null, 100, true]);
+    const history = await wclient.execute('listhistory',
+                                          [null, 100, true]);
     assert.strictEqual(history[0].account, 'blue');
 
     for (let i = 1; i < 13; i++)
@@ -157,5 +159,4 @@ describe('Wallet Rescan', function() {
 
     assert.strictEqual(history[13].account, 'blue');
   });
-
 });

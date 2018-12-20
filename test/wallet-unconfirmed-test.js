@@ -3,7 +3,6 @@
 
 'use strict';
 
-const path = require('path');
 const assert = require('./util/assert');
 const rimraf = require('./util/rimraf');
 const sleep = require('./util/sleep');
@@ -15,7 +14,6 @@ const {
   initWalletClient,
   initWallet,
   generateInitialBlocks,
-  generateReorg,
   generateBlocks,
   generateRollback,
   generateTxs
@@ -24,7 +22,6 @@ const {
 const testPrefix = '/tmp/bcoin-fullnode';
 const spvTestPrefix = '/tmp/bcoin-spvnode';
 const genesisTime = 1534965859;
-const genesisDate = new Date(genesisTime * 1000);
 
 const ports = {
   full: {
@@ -37,15 +34,16 @@ const ports = {
     node: 49432,
     wallet: 49433
   }
-}
+};
 
 async function getAllUnconfirmed(wclient) {
-  let txs = await wclient.execute('listunconfirmed', ['blue', 100, true]);
+  let txs = await wclient.execute('listunconfirmed',
+                                  ['blue', 100, true]);
 
   while (txs.length) {
-    let after = txs[txs.length - 1].txid;
-    let res = await wclient.execute('listunconfirmedafter',
-                                    ['blue', after, 100, true]);
+    const after = txs[txs.length - 1].txid;
+    const res = await wclient.execute('listunconfirmedafter',
+                                      ['blue', after, 100, true]);
     if (res.length) {
       txs = txs.concat(res);
     } else {
@@ -68,8 +66,17 @@ describe('Wallet Unconfirmed TX', function() {
     await rimraf(testPrefix);
     await rimraf(spvTestPrefix);
 
-    node = await initFullNode({ports, prefix: testPrefix, logLevel: 'none'});
-    spvnode = await initSPVNode({ports, prefix: spvTestPrefix, logLevel: 'none'});
+    node = await initFullNode({
+      ports,
+      prefix: testPrefix,
+      logLevel: 'none'
+    });
+
+    spvnode = await initSPVNode({
+      ports,
+      prefix: spvTestPrefix,
+      logLevel: 'none'
+    });
 
     nclient = await initNodeClient({ports: ports.full});
     wclient = await initWalletClient({ports: ports.full});
@@ -112,7 +119,8 @@ describe('Wallet Unconfirmed TX', function() {
 
   describe('get unconfirmed transaction history (dsc)', function() {
     it('first page', async () => {
-      const history = await wclient.execute('listunconfirmed', ['blue', 100, true]);
+      const history = await wclient.execute('listunconfirmed',
+                                            ['blue', 100, true]);
       assert.strictEqual(history.length, 100);
       assert.strictEqual(history[0].account, 'blue');
       assert.strictEqual(history[0].confirmations, 0);
@@ -126,7 +134,8 @@ describe('Wallet Unconfirmed TX', function() {
     });
 
     it('second page', async () => {
-      const one = await wclient.execute('listunconfirmed', ['blue', 100, true]);
+      const one = await wclient.execute('listunconfirmed',
+                                        ['blue', 100, true]);
       assert.strictEqual(one[0].account, 'blue');
       assert.strictEqual(one[0].confirmations, 0);
       const a = one[0].timereceived;
@@ -139,7 +148,8 @@ describe('Wallet Unconfirmed TX', function() {
 
       const after = one[99].txid;
 
-      const two = await wclient.execute('listunconfirmedafter', ['blue', after, 100, true]);
+      const two = await wclient.execute('listunconfirmedafter',
+                                        ['blue', after, 100, true]);
       assert.strictEqual(two.length, 95);
       assert.strictEqual(two[0].account, 'blue');
       assert.strictEqual(two[0].confirmations, 0);
@@ -159,7 +169,8 @@ describe('Wallet Unconfirmed TX', function() {
 
   describe('get transaction history (asc)', () => {
     it('first page', async () => {
-      const history = await wclient.execute('listunconfirmed', ['blue', 100, false]);
+      const history = await wclient.execute('listunconfirmed',
+                                            ['blue', 100, false]);
       assert.strictEqual(history.length, 100);
       assert.strictEqual(history[0].account, 'blue');
       assert.strictEqual(history[0].confirmations, 0);
@@ -173,7 +184,8 @@ describe('Wallet Unconfirmed TX', function() {
     });
 
     it('second page', async () => {
-      const one = await wclient.execute('listunconfirmed', ['blue', 100, false]);
+      const one = await wclient.execute('listunconfirmed',
+                                        ['blue', 100, false]);
       assert.strictEqual(one.length, 100);
       assert.strictEqual(one[0].account, 'blue');
       assert.strictEqual(one[0].confirmations, 0);
@@ -187,7 +199,8 @@ describe('Wallet Unconfirmed TX', function() {
 
       const after = one[99].txid;
 
-      const two = await wclient.execute('listunconfirmedafter', ['blue', after, 95, false]);
+      const two = await wclient.execute('listunconfirmedafter',
+                                        ['blue', after, 95, false]);
       assert.strictEqual(two.length, 95);
       assert.strictEqual(two[0].account, 'blue');
       assert.strictEqual(two[0].confirmations, 0);
@@ -248,13 +261,13 @@ describe('Wallet Unconfirmed TX', function() {
 
   describe('chain rollback', () => {
     it('confirm and unconfirm indexes', async() => {
-      const validated = await generateBlocks(5, nclient, coinbase);
+      await generateBlocks(5, nclient, coinbase);
       await sleep(1000);
 
       let txs = await getAllUnconfirmed(wclient);
       assert.strictEqual(txs.length, 0);
 
-      const invalidated = await generateRollback(5, nclient);
+      await generateRollback(5, nclient);
       await sleep(1000);
 
       txs = await getAllUnconfirmed(wclient);

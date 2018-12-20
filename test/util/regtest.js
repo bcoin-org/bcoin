@@ -54,7 +54,8 @@ async function initSPVNode(options) {
       'BCOIN_WALLET_HTTP_PORT': (options.ports.spv.wallet).toString()
     },
     logLevel: options.logLevel
-  })
+  });
+
   await node.ensure();
   await node.open();
   await node.connect();
@@ -105,7 +106,7 @@ async function generateBlocks(count, nclient, coinbase) {
 }
 
 async function generateRollback(depth, nclient) {
-  let invalidated = [];
+  const invalidated = [];
 
   for (let i = 0; i < depth; i++) {
     const hash = await nclient.execute('getbestblockhash');
@@ -119,7 +120,7 @@ async function generateRollback(depth, nclient) {
 async function generateReorg(depth, nclient, wclient, coinbase) {
   const blockInterval = 600;
 
-  let invalidated = [];
+  const invalidated = [];
   let lastTime = null;
 
   // Invalidate blocks to the depth.
@@ -146,12 +147,12 @@ async function generateReorg(depth, nclient, wclient, coinbase) {
 
   const txids = await wclient.execute('resendwallettransactions');
 
-  let validated = [];
+  const validated = [];
 
   // Add new blocks back to the same height plus two
   // so that it becomes the chain with the most work.
   for (let c = 0; c < depth + 2; c++) {
-    let blocktime = lastTime + c * blockInterval;
+    const blocktime = lastTime + c * blockInterval;
     await nclient.execute('setmocktime', [blocktime]);
 
     const blockhashes = await generateBlocks(1, nclient, coinbase);
@@ -167,7 +168,7 @@ async function generateReorg(depth, nclient, wclient, coinbase) {
     invalidated,
     validated,
     txids
-  }
+  };
 }
 
 async function generateTxs(options) {
@@ -176,9 +177,9 @@ async function generateTxs(options) {
 
   await wclient.execute('selectwallet', ['test']);
 
-  let txids = [];
+  const txids = [];
 
-  for (var i = 0; i < count; i++) {
+  for (let i = 0; i < count; i++) {
     if (options.gap && !(i % options.gap))
       await sleep(options.sleep);
 
@@ -227,8 +228,8 @@ async function sendCoinbase(options) {
 
   const tx = mtx.toTX();
 
-  const result = await nclient.execute('sendrawtransaction',
-                                       [tx.toRaw().toString('hex')]);
+  await nclient.execute('sendrawtransaction',
+                        [tx.toRaw().toString('hex')]);
 }
 
 async function generateInitialBlocks(options) {
@@ -252,7 +253,7 @@ async function generateInitialBlocks(options) {
 
   // Establish baseline block interval for a median time
   for (; c < 11; c++) {
-    let blocktime = genesisTime + c * blockInterval;
+    const blocktime = genesisTime + c * blockInterval;
     await nclient.execute('setmocktime', [blocktime]);
 
     const blockhashes = await generateBlocks(1, nclient, coinbase);
@@ -301,4 +302,4 @@ module.exports = {
   generateRollback,
   generateTxs,
   sendCoinbase
-}
+};
