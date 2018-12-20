@@ -69,14 +69,26 @@ describe('Pruned node', function() {
   it('should fail to rescan past prune height', async () => {
     const pruneHeight = 1000 - 288;
 
+    // This block is not on disk
     try {
       await nclient.getBlock(pruneHeight);
     } catch(e) {
       assert.strictEqual(e.message, 'Block not found.');
     }
 
+    // HTTP API call
     try {
       await wclient.rescan(pruneHeight);
+    } catch(e) {
+      assert.strictEqual(
+        e.message,
+        'Cannot rescan past prune depth of ' + pruneHeight
+      );
+    }
+
+    // direct WalletDB call
+    try {
+      await node.plugins.walletdb.wdb.rescan(pruneHeight);
     } catch(e) {
       assert.strictEqual(
         e.message,
