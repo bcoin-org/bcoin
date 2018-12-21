@@ -406,6 +406,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(
           history[0].confirmations < history[99].confirmations, true);
       });
+
       it('second page', async () => {
         const one = await spvwclient.get('/wallet/test/tx/history', {
           limit: 100,
@@ -439,6 +440,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(
           history[0].confirmations > history[99].confirmations, true);
       });
+
       it('second page', async () => {
         const one = await spvwclient.get('/wallet/test/tx/history', {
           limit: 100,
@@ -476,6 +478,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a > b, true);
       });
+
       it('second page', async () => {
         const one = await spvwclient.get('/wallet/test/tx/unconfirmed', {
           limit: 4,
@@ -519,6 +522,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(Number.isInteger(b), true);
         assert.strictEqual(a < b, true);
       });
+
       it('second page', async () => {
         const one = await spvwclient.get('/wallet/test/tx/unconfirmed', {
           limit: 4,
