@@ -380,9 +380,8 @@ describe('Wallet TX HTTP Pagination', function() {
           date: unconfirmedDate.toString(),
           reverse: false
         });
-        // TODO
-        // assert.strictEqual(history.length, 19);
-        assert(history[0].mtime < history[10].mtime);
+        assert.strictEqual(history.length, 19);
+        assert(history[0].mtime < history[18].mtime);
       });
 
       it('with datetime (MTP in epoch seconds)', async () => {
@@ -391,9 +390,8 @@ describe('Wallet TX HTTP Pagination', function() {
           time: unconfirmedTime,
           reverse: false
         });
-        // TODO
-        // assert.strictEqual(history.length, 19);
-        assert(history[0].mtime < history[10].mtime);
+        assert.strictEqual(history.length, 19);
+        assert(history[0].mtime < history[18].mtime);
       });
     });
   });
