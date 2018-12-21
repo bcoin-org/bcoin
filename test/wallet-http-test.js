@@ -381,7 +381,7 @@ describe('Wallet TX HTTP Pagination', function() {
           reverse: false
         });
         // TODO
-        //assert.strictEqual(history.length, 19);
+        // assert.strictEqual(history.length, 19);
         assert(history[0].mtime < history[10].mtime);
       });
 
