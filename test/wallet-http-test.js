@@ -20,6 +20,7 @@ const {
 const testPrefix = '/tmp/bcoin-fullnode';
 const spvTestPrefix = '/tmp/bcoin-spvnode';
 const genesisTime = 1534965859;
+const genesisDate = new Date(genesisTime * 1000);
 
 const ports = {
   full: {
@@ -40,6 +41,8 @@ describe('Wallet TX HTTP Pagination', function() {
   let node, spvnode, wallet = null;
   let nclient, wclient, spvwclient = null;
   let coinbase = null;
+  let unconfirmedTime = null;
+  let unconfirmedDate = null;
 
   before(async () => {
     await rimraf(testPrefix);
@@ -77,11 +80,14 @@ describe('Wallet TX HTTP Pagination', function() {
       blocks: 125
     });
 
+    // Generate unconfirmed transactions for the
+    // fullnode and spv wallet
+    unconfirmedTime = Math.floor(Date.now() / 1000);
+    unconfirmedDate = new Date(unconfirmedTime * 1000);
+
     // TODO remove this
     await sleep(5000);
 
-    // Generate unconfirmed transactions for the
-    // fullnode and spv wallet
     await generateTxs({
       wclient,
       spvwclient,
@@ -174,6 +180,26 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(two[49].confirmations, 125);
         assert.notStrictEqual(two[0].hash, one[99].hash);
       });
+
+      it('with datetime (MTP in ISO 8601)', async () => {
+        const history = await wclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          date: new Date(),
+          reverse: true
+        });
+        assert.strictEqual(history.length, 100);
+        assert(history[0].confirmations < history[99].confirmations);
+      });
+
+      it('with datetime (MTP in epoch seconds)', async () => {
+        const history = await wclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          time: Math.ceil(Date.now() / 1000),
+          reverse: true
+        });
+        assert.strictEqual(history.length, 100);
+        assert(history[0].confirmations < history[99].confirmations);
+      });
     });
 
     describe('confirmed txs (asc)', function() {
@@ -210,6 +236,26 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(two[0].confirmations, 113);
         assert.strictEqual(two[11].confirmations, 102);
         assert.notStrictEqual(two[0].hash, one[11].hash);
+      });
+
+      it('with datetime (MTP in ISO 8601)', async () => {
+        const history = await wclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          date: genesisDate.toString(),
+          reverse: false
+        });
+        assert.strictEqual(history.length, 100);
+        assert(history[0].confirmations > history[99].confirmations);
+      });
+
+      it('with datetime (MTP in epoch seconds)', async () => {
+        const history = await wclient.get('/wallet/test/tx/history', {
+          limit: 100,
+          time: genesisTime,
+          reverse: false
+        });
+        assert.strictEqual(history.length, 100);
+        assert(history[0].confirmations > history[99].confirmations);
       });
     });
 
@@ -253,6 +299,26 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(a > b, true);
 
         assert.notStrictEqual(two[0].hash, one[3].hash);
+      });
+
+      it('with datetime (MTP in ISO 8601)', async () => {
+        const history = await wclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 100,
+          date: new Date(Date.now() + 2000),
+          reverse: true
+        });
+        assert.strictEqual(history.length, 19);
+        assert(history[0].mtime > history[18].mtime);
+      });
+
+      it('with datetime (MTP in epoch seconds)', async () => {
+        const history = await wclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 100,
+          time: Math.ceil((Date.now() + 2000) / 1000),
+          reverse: true
+        });
+        assert.strictEqual(history.length, 19);
+        assert(history[0].mtime > history[18].mtime);
       });
     });
 
@@ -306,6 +372,28 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(a < b, true);
 
         assert.notStrictEqual(two[0].hash, one[3].hash);
+      });
+
+      it('with datetime (MTP in ISO 8601)', async () => {
+        const history = await wclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 100,
+          date: unconfirmedDate.toString(),
+          reverse: false
+        });
+        // TODO
+        //assert.strictEqual(history.length, 19);
+        assert(history[0].mtime < history[10].mtime);
+      });
+
+      it('with datetime (MTP in epoch seconds)', async () => {
+        const history = await wclient.get('/wallet/test/tx/unconfirmed', {
+          limit: 100,
+          time: unconfirmedTime,
+          reverse: false
+        });
+        // TODO
+        // assert.strictEqual(history.length, 19);
+        assert(history[0].mtime < history[10].mtime);
       });
     });
   });
