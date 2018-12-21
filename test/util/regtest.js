@@ -3,7 +3,7 @@
 const {NodeClient, WalletClient} = require('bclient');
 
 const assert = require('./assert');
-const sleep = require('./sleep');
+const {sleep} = require('./common');
 const FullNode = require('../../lib/node/fullnode');
 const SPVNode = require('../../lib/node/spvnode');
 const Coin = require('../../lib/primitives/coin');
