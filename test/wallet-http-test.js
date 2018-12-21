@@ -4,8 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const rimraf = require('./util/rimraf');
-const sleep = require('./util/sleep');
+const {rimraf, sleep} = require('./util/common');
 
 const {
   initFullNode,
