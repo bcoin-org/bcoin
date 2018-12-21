@@ -160,15 +160,17 @@ describe('Wallet TX Pagination', function() {
     // - last page
   });
 
-  describe('get transaction history by timestamp (asc)', () => {
+  describe('get transaction history by timestamp', () => {
     it('genesis to latest', async () => {
       const history = await wclient.execute('listhistorybytime',
                                             ['blue', genesisDate, 12, false]);
       assert.strictEqual(history.length, 12);
       assert.strictEqual(history[0].account, 'blue');
       const a = history[0].confirmations;
+      assert.strictEqual(history[0].confirmations, 125);
       assert.strictEqual(history[11].account, 'blue');
       const b = history[11].confirmations;
+      assert.strictEqual(history[11].confirmations, 114);
       assert(a > b);
     });
 
@@ -178,8 +180,10 @@ describe('Wallet TX Pagination', function() {
       assert.strictEqual(history.length, 100);
       assert.strictEqual(history[0].account, 'blue');
       const a = history[0].confirmations;
+      assert.strictEqual(history[0].confirmations, 1);
       assert.strictEqual(history[99].account, 'blue');
       const b = history[99].confirmations;
+      assert.strictEqual(history[99].confirmations, 2);
       assert(a < b);
     });
 
