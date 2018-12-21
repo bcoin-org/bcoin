@@ -1360,8 +1360,9 @@ describe('Wallet', function() {
 
     let txs, err;
     try {
-      txs = await wallet.getRange('bad', {
-        start: 0xdeadbeef - 1000
+      txs = await wallet.listUnconfirmed('bad', {
+        limit: 100,
+        reverse: false
       });
     } catch (e) {
       err = e;
