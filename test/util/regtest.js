@@ -241,10 +241,13 @@ async function generateInitialBlocks(options) {
     genesisTime
   } = options;
 
-  let {blocks} = options;
+  let {blocks, count} = options;
 
   if (!blocks)
     blocks = 100;
+
+  if (!count)
+    count = 50;
 
   const blockInterval = 600;
   const timewarp = 3200;
@@ -280,7 +283,7 @@ async function generateInitialBlocks(options) {
     // for the block. Additionally the wallet may not be in lockstep
     // sync with the chain, so it's necessary to wait a few more blocks.
     if (wclient && c > 115)
-      await generateTxs({wclient, spvwclient, count: 50, amount: 0.11111111});
+      await generateTxs({wclient, spvwclient, count, amount: 0.11111111});
 
     const blockhashes = await generateBlocks(1, nclient, coinbase);
     const block = await nclient.execute('getblock', [blockhashes[0]]);
