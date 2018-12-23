@@ -90,8 +90,14 @@ async function initWallet(wclient) {
   await wallet.open();
 
   // We don't use witness here yet, as there is an activation
-  // threshold before segwit can be activated.
-  const info = await wallet.createAccount('blue', {witness: false});
+  // threshold before segwit can be activated. A lookahead is
+  // increased to avoid timing issues with bloom filters not
+  // being loaded in time and transactions not being broadcast
+  // to spv node wallets.
+  const info = await wallet.createAccount('blue', {
+    witness: false,
+    lookahead: 40
+  });
   assert(info.initialized);
   assert.strictEqual(info.name, 'blue');
   assert.strictEqual(info.accountIndex, 1);
