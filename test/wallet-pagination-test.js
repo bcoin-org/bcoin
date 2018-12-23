@@ -19,7 +19,6 @@ const {
 const testPrefix = '/tmp/bcoin-fullnode';
 const spvTestPrefix = '/tmp/bcoin-spvnode';
 const genesisTime = 1534965859;
-const genesisDate = new Date(genesisTime * 1000);
 
 const ports = {
   full: {
@@ -162,7 +161,7 @@ describe('Wallet TX Pagination', function() {
   describe('get transaction history by timestamp', () => {
     it('genesis to latest', async () => {
       const history = await wclient.execute('listhistorybytime',
-                                            ['blue', genesisDate, 12, false]);
+                                            ['blue', genesisTime, 12, false]);
       assert.strictEqual(history.length, 12);
       assert.strictEqual(history[0].account, 'blue');
       const a = history[0].confirmations;
@@ -174,8 +173,9 @@ describe('Wallet TX Pagination', function() {
     });
 
     it('latest to genesis', async () => {
+      const now = Date.now() / 1000 | 0;
       const history = await wclient.execute('listhistorybytime',
-                                            ['blue', new Date(), 100, true]);
+                                            ['blue', now, 100, true]);
       assert.strictEqual(history.length, 100);
       assert.strictEqual(history[0].account, 'blue');
       const a = history[0].confirmations;
@@ -192,7 +192,7 @@ describe('Wallet TX Pagination', function() {
 
   describe('chain reorganizations', () => {
     const depth = 1;
-    const now = new Date() + 10000;
+    const now = (Date.now() + 10000) / 1000 | 0;
     const txids = new Map();
 
     before(async () => {

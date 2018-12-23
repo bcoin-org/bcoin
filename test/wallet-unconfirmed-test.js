@@ -96,7 +96,7 @@ describe('Wallet Unconfirmed TX', function() {
     // TODO remove this
     await sleep(5000);
 
-    unconfirmedTime = new Date();
+    unconfirmedTime = Date.now() / 1000 | 0;
 
     await generateTxs({
       wclient,
@@ -238,9 +238,10 @@ describe('Wallet Unconfirmed TX', function() {
     });
 
     it('newer to older', async () => {
+      const now = Date.now() / 1000 | 0;
       const history = await wclient.execute(
         'listunconfirmedbytime',
-        ['blue', new Date(), 100, true]
+        ['blue', now, 100, true]
       );
       assert.strictEqual(history.length, 100);
       assert.strictEqual(history[0].account, 'blue');
