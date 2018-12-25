@@ -272,23 +272,15 @@ async function generateInitialBlocks(options) {
     assert(block.time >= blocktime);
   }
 
-  // Generate time warping blocks that have time previous
-  // to the previous block
-  for (; c < blocks; c++) {
+  async function makeBlock(includeTxs) {
+    // Time warping blocks that have time previous
+    // to the previous block
     let blocktime = genesisTime + c * blockInterval;
     if (c % 5)
       blocktime -= timewarp;
     await nclient.execute('setmocktime', [blocktime]);
 
-    // TODO
-    // Use an event to wait for wallets to catch up so that
-    // funds can be spent
-
-    // If the wallet client is available and there have been
-    // enough blocks for coinbase to mature, generate transactions
-    // for the block. Additionally the wallet may not be in lockstep
-    // sync with the chain, so it's necessary to wait a few more blocks.
-    if (wclient && c > 115)
+    if (wclient && includeTxs)
       await generateTxs({wclient, spvwclient, count, amount: 0.11111111});
 
     const blockhashes = await generateBlocks(1, nclient, coinbase);
@@ -296,6 +288,19 @@ async function generateInitialBlocks(options) {
 
     assert(block.time <= blocktime + 1);
     assert(block.time >= blocktime);
+  }
+
+  // Mature coinbase transactions
+  for (; c < 116; c++) {
+    await makeBlock(false);
+  }
+
+  // Wait for wallet to sync with chain
+  await sleep(1000);
+
+  // Create blocks sending transactions
+  for (; c < blocks; c++) {
+    await makeBlock(true);
   }
 }
 
