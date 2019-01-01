@@ -40,8 +40,8 @@ See the [Beginner's Guide][guide] for more in-depth installation instructions.
 
 ## Documentation
 
-- API Docs: http://bcoin.io/docs/
-- REST Docs: http://bcoin.io/api-docs/index.html
+- API Docs: https://bcoin.io/docs/
+- REST Docs: https://bcoin.io/api-docs/
 - Docs: [docs/](docs/README.md)
 
 ## Support
