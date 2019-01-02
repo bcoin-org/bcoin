@@ -43,6 +43,11 @@ describe('Pruned node', function() {
     await wclient.open();
   });
 
+  it('should indicate prune in getInfo', async () => {
+    const info = await nclient.getInfo();
+    assert.strictEqual(true, info.chain.prune);
+  });
+
   it('should create wallet', async () => {
     const info = await wclient.createWallet('test');
     assert.strictEqual(info.id, 'test');
