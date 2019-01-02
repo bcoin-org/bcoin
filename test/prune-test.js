@@ -82,7 +82,7 @@ describe('Pruned node', function() {
     } catch(e) {
       assert.strictEqual(
         e.message,
-        'Cannot rescan past prune depth of ' + pruneHeight
+        'Rescan height must be greater than prune height of ' + pruneHeight
       );
     }
 
@@ -92,7 +92,7 @@ describe('Pruned node', function() {
     } catch(e) {
       assert.strictEqual(
         e.message,
-        'Cannot rescan past prune depth of ' + pruneHeight
+        'Rescan height must be greater than prune height of ' + pruneHeight
       );
     }
   });
