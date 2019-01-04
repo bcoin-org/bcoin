@@ -1,5 +1,13 @@
 # Bcoin Release Notes & Changelog
 
+## v1.0.x
+
+### Wallet API changes
+
+Creating a watch-only wallet now requires an `account-key` (or `accountKey`)
+argument. This is to prevent bcoin from generating keys and addresses the user
+can not spend from.
+
 ## v1.0.0
 
 ### Migration
