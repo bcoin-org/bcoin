@@ -1,53 +1,29 @@
-Welcome to the bcoin docs!
-
 ## Getting Started
-- [Getting Started][getting-started]
-- [Configuration][configuration]
-- [Wallet System][wallet-system]
-- [Design][design]
-- [Guides][guides]
+- [Getting Started](Beginner's-Guide.md)
+- [Configuration](Configuration.md)
+- [Wallet System](Wallet-System.md)
+- [Design](Design.md)
+- [Guides](https://bcoin.io/guides.html)
 
 ## Running
-- [Bcoin CLI][cli]
-- [Running in the Browser][browser]
-- [REST and RPC API][rest-rpc]
+- [Bcoin CLI](CLI.md)
+- [Running in the Browser](https://bcoin.io/guides/browser.html)
+- [REST and RPC API](https://bcoin.io/api-docs/index.html#introduction)
 
 ## Code Examples
-- [Simple Fullnode][example-simple-fullnode]
-- [Connect to Peer][example-connect-peer]
-- [Connecting to the P2P Network][example-p2p]
-- [Creating a Blockchain and Mempool][example-blockchain]
-- [Wallet with Dummy TX][example-wallet-dummy]
-- [Fullnode Object][example-fullnode-wallet]
-- [SPV Sync][example-spv]
-- [Plugin Example][example-peers-plugin]
-- [Client API Usage][example-client-api]
-- [Miner with WorkerPool][example-miner-configs]
-- [Create and Sign TX][example-tx-create-sign]
-- [Get Transaction from Chain][example-tx-from-chain]
-- [Create Watch Only Wallet][example-watch-only-wallet]
 
+These code examples are designed to demonstrate how to integrate bcoin modules
+with minimal configuration.
 
-[getting-started]: Beginner's-Guide.md
-[configuration]: Configuration.md
-[design]: Design.md
-[wallet-system]: Wallet-System.md
-[guides]: http://bcoin.io/guides.html
-
-[cli]: CLI.md
-[browser]: Running-in-the-browser.md
-[rest-rpc]: http://bcoin.io/api-docs/index.html#introduction
-
-[example-p2p]: Examples/connect-to-the-p2p-network.js
-[example-blockchain]: Examples/create-a-blockchain-and-mempool.js
-[example-fullnode-wallet]: Examples/fullnode-and-wallet.js
-[example-spv]: Examples/spv-sync-wallet.js
-[example-wallet-dummy]: Examples/wallet.js
-[example-peers-plugin]: Examples/peers-plugin.js
-[example-client-api]: Examples/client-api.js
-[example-miner-configs]: Examples/miner-configs.js
-[example-connect-peer]: Examples/connect-to-peer.js
-[example-simple-fullnode]: Examples/fullnode.js
-[example-tx-create-sign]: Examples/create-sign-tx.js
-[example-tx-from-chain]: Examples/get-tx-from-chain.js
-[example-watch-only-wallet]: Examples/watch-only-wallet.js
+- [Simple Fullnode](Examples/fullnode.js) - Creates a `FullNode` object and connects to `testnet`.
+- [Connect to Peer](Examples/connect-to-peer.js) - Connects to a user-defined peer in `regtest` mode.
+- [Connecting to the P2P Network](Examples/connect-to-the-p2p-network.js) - Creates `chain`, `pool`, and `mempool` objects for both main and testnet networks.
+- [Creating a Blockchain and Mempool](Examples/create-a-blockchain-and-mempool.js) - Mines a block from the mempool to the chain.
+- [Wallet with Dummy TX](Examples/wallet.js) - Adds a "dummy" transaction to the wallet and `tx` event is handled.
+- [SPV Sync](Examples/spv-sync-wallet.js) - A transaction matching the SPV node's bloom filter is broadcast by a minimal full node to the SPV node.
+- [Plugin Example](Examples/peers-plugin.js) - Demonstrates the `plugin` feature of bcoin's `node` object.
+- [Client API Usage](Examples/client-api.js) - Demonstrates usage of the node and wallet API.
+- [Miner with WorkerPool](Examples/miner-configs.js) - Creates a regtest `chain` and `miner`, which mines a block using workers.
+- [Create and Sign TX](Examples/create-sign-tx.js) - Demonstrates how to use `mtx` and `keyring` modules to sign a transaction.
+- [Get Transaction from Chain](Examples/get-tx-from-chain.js) - Connects to live testnet network and syncs the first 1000 blocks with tx indexing active.
+- [Create Watch Only Wallet](Examples/watch-only-wallet.js) - Imports an `xpub` into a new watch-only wallet that can derive addresses.

@@ -1,46 +1,80 @@
 'use strict';
 
 const bcoin = require('../..');
-const Logger = require('blgr');
+const fs = require('bfile');
 
-// Setup logger to see what's Bcoin doing.
-const logger = new Logger({
-  level: 'debug'
+// Create chain for testnet, stored in memory by default.
+// To store the chain on disk at the `prefix` location,
+// set `memory: false`.
+const chain = new bcoin.Chain({
+  network: 'testnet',
+  indexTX: true,
+  indexAddress: true,
+  db: 'leveldb',
+  prefix: '/tmp/bcoin-testnet-example',
+  memory: true
 });
 
-// Create chain for testnet, specify chain directory
-const chain = new bcoin.Chain({
-  logger: logger,
-  network: 'testnet',
-  db: 'leveldb',
-  prefix: '/tmp/bcon-testnet',
-  indexTX: true,
-  indexAddress: true
+// Create a network pool of peers with a limit of 8 peers.
+const pool = new bcoin.Pool({
+  chain: chain,
+  maxPeers: 8
 });
 
 (async () => {
-  await logger.open();
+  // Ensure the directory exists if we are writing to disk
+  if (!chain.options.memory)
+    await fs.mkdirp(chain.options.prefix);
+
   await chain.open();
 
-  console.log('Current height:', chain.height);
+  // Connect the blockchain to the network
+  await pool.open();
+  await pool.connect();
+  pool.startSync();
 
-  const entry = await chain.getEntry(50000);
-  console.log('Block at 50k:', entry);
+  // Monitor blockchain height and react when we hit the target
+  chain.on('connect', async (entry, block) => {
+    const height = entry.height;
+    console.log(
+      `Height: ${chain.height} ` +
+      `Block: ${entry.rhash()} ` +
+      `TXs: ${block.txs.length}`
+    );
 
-  // eslint-disable-next-line max-len
-  const txhash = '4dd628123dcde4f2fb3a8b8a18b806721b56007e32497ebe76cde598ce1652af';
-  const txmeta = await chain.db.getMeta(bcoin.util.revHex(txhash));
-  const tx = txmeta.tx;
-  const coinview = await chain.db.getSpentView(tx);
+    if (height === 1000) {
+      const entry = await chain.getEntry(1000);
+      console.log('Block at height 1000:\n', entry);
 
-  console.log(`Tx with hash ${txhash}:`, txmeta);
-  console.log(`Tx input: ${tx.getInputValue(coinview)},` +
-    ` output: ${tx.getOutputValue()}, fee: ${tx.getFee(coinview)}`);
+      // testnet tx at height 500
+      const txhash =
+        'fc407d7a3b819daa5cf1ecc2c2a4b103c3782104d1425d170993bd534779a0da';
+      const txhashBuffer = Buffer.from(txhash, 'hex').reverse();
 
-  // eslint-disable-next-line max-len
-  const bhash = '00000000077eacdd2c803a742195ba430a6d9545e43128ba55ec3c80beea6c0c';
-  const block = await chain.db.getBlock(bcoin.util.revHex(bhash));
-  console.log(`Block with hash ${bhash}:`, block);
+      const txmeta = await chain.db.getMeta(txhashBuffer);
+      const tx = txmeta.tx;
+      const coinview = await chain.db.getSpentView(tx);
+
+      console.log(`Tx with hash ${txhash}:\n`, txmeta);
+      console.log(
+        `\n  Input value: ${tx.getInputValue(coinview)}` +
+        `\n  Output value: ${tx.getOutputValue()}` +
+        `\n  Fee: ${tx.getFee(coinview)}`
+      );
+
+      // testnet block at height 800
+      const hash =
+        Buffer.from(
+          '000000004df86f64cca38c6587df348e0c6849ebee628b3f840f552c707cc862',
+          'hex'
+        );
+      // chainDB indexes blocks by the REVERSE (little endian) hash
+      const block = await chain.getBlock(hash.reverse());
+      console.log(`Block with hash ${hash.toString('hex')}:`, block);
+
+      process.exit(1);
+    }
+  });
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);

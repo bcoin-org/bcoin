@@ -1,19 +1,25 @@
 'use strict';
 
-// Usage: $ node ./docs/Examples/connect-to-peer.js [ip]:[port]
+/*
+ * Usage:
+ *  Run another Bitcoin node on local regtest network, for example
+ *    $ ../../bin/bcoin --network=regtest
+ *  Execute this script with the other node's address and port
+ *    $ node connect-to-peer.js 127.0.0.1:48444
+ */
 
 const bcoin = require('../..');
-const network = bcoin.Network.get('testnet');
+const network = bcoin.Network.get('regtest');
 
 const peer = bcoin.Peer.fromOptions({
-  network: 'testnet',
+  network: 'regtest',
   agent: 'my-subversion',
   hasWitness: () => {
     return false;
   }
 });
 
-const addr = bcoin.net.NetAddress.fromHostname(process.argv[2], 'testnet');
+const addr = bcoin.net.NetAddress.fromHostname(process.argv[2], 'regtest');
 
 console.log(`Connecting to ${addr.hostname}`);
 

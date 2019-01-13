@@ -7,7 +7,7 @@ const assert = require('assert');
 
 (async () => {
   const master = bcoin.hd.generate();
-  const key = master.derivePath('m/44/0/0/0/0');
+  const key = master.derivePath("m/44'/0'/0'/0/0");
   const keyring = new bcoin.wallet.WalletKey(key.privateKey);
   const cb = new bcoin.MTX();
 

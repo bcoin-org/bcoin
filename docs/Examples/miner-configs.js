@@ -16,12 +16,12 @@ const chain = new bcoin.Chain({
 const miner = new bcoin.Miner({
   chain: chain,
   addresses: [key.getAddress()],
-  coinbaseFlags: 'my-miner',
-  workers: workers
+  coinbaseFlags: 'my-miner'
 });
 
 (async () => {
   await miner.open();
+  await chain.open();
 
   const tmpl = await miner.createBlock();
 
@@ -33,12 +33,16 @@ const miner = new bcoin.Miner({
 
   console.log('Mined block:');
   console.log(block);
+
+  console.log('Coinbase transaction:');
   console.log(block.txs[0]);
 
   await chain.add(block);
 
   console.log('New tip:');
   console.log(chain.tip);
+
+  await workers.close();
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);

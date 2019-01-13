@@ -20,7 +20,8 @@ http client -> tx -> http server -> mempool
 ```
 
 Not only does the loose coupling make testing easier, it ensures people can
-utilize bcoin for many use cases.
+utilize bcoin for many use cases. Learn more about specific events and
+event emitters at http://bcoin.io/guides/events.html
 
 ### Performance
 
@@ -43,19 +44,19 @@ blockchain and mempool do not block the master process very much. It also means
 transaction verification can be parallelized.
 
 Strangely enough, workers are faster in the browser than they are in node since
-you are allowed to share memory between threads using the transferrable api
+you are allowed to share memory between threads using the transferable API
 (Uint8Arrays can be "transferred" to another thread). In node, you have to pipe
 data to another process.
 
 But of course, there is a benefit to having a multi-process architecture: the
 worker processes can die on their own without disturbing the master process.
 
-Bcoin uses [secp256k1-node][secp256k1-node] for ecdsa verification, which is a
+Bcoin uses [secp256k1-node][secp256k1-node] for ECDSA verification, which is a
 node.js binding to Pieter Wuille's blazingly fast [libsecp256k1][libsecp256k1]
 library.
 
 In the browser, bcoin will use [elliptic][elliptic], the fastest javascript
-ecdsa implementation. It will obviously never beat C and hand-optimized
+ECDSA implementation. It will obviously never beat C and hand-optimized
 assembly, but it's still usable.
 
 #### Benefits

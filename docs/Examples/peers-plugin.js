@@ -43,15 +43,7 @@ node.use(MyPlugin);
 
   plugin.sayPeers();
 
-  node.on('connect', (entry, block) => {
-    console.log('%s (%d) added to chain.', entry.rhash(), entry.height);
-  });
-
-  node.on('tx', (tx) => {
-    console.log('%s added to mempool.', tx.txid());
-  });
-
-  node.startSync();
+  await node.close();
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);
