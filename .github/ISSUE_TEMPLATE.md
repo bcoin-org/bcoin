@@ -4,7 +4,9 @@
 
 <!-- Use bcoin --version or git rev-parse --verify HEAD if installed from source) -->
 <!-- Use node --version -->
+<!-- Use npm --version -->
 <!-- Include OS and architecture versions (if relevant) -->
+<!-- Include RPC results (if relevant) -->
 
 **Expected**
 
