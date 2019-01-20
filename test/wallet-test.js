@@ -12,6 +12,7 @@ const WalletDB = require('../lib/wallet/walletdb');
 const WorkerPool = require('../lib/workers/workerpool');
 const Address = require('../lib/primitives/address');
 const MTX = require('../lib/primitives/mtx');
+const PSBT = require('../lib/primitives/psbt');
 const Coin = require('../lib/primitives/coin');
 const KeyRing = require('../lib/primitives/keyring');
 const Input = require('../lib/primitives/input');
@@ -1534,6 +1535,104 @@ describe('Wallet', function() {
     await wdb.addBlock(nextBlock(wdb), [t3.toTX()]);
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
+  });
+
+  it('should fill psbt for mixed tx type', async () => {
+    const options = {
+      witness: true,
+      type: 'multisig',
+      m: 2,
+      n: 2
+    };
+    const alice = await wdb.create(options); // multisig payer 1
+    const bob = await wdb.create(options); // multisig payer 2
+    await alice.addSharedKey(0, await bob.accountKey(0));
+    await bob.addSharedKey(0, await alice.accountKey(0));
+
+    const cbA = new MTX();
+    cbA.addInput(dummyInput());
+    cbA.addOutput(await alice.receiveAddress(), 5460);
+    cbA.addOutput(await alice.receiveAddress(), 5460);
+    cbA.addOutput(await alice.receiveAddress(), 5460);
+    cbA.addOutput(await alice.receiveAddress(), 5460);
+    cbA.addOutput(await alice.receiveAddress(), 5460);
+    await wdb.addTX(cbA.toTX());
+
+    const carol = await wdb.create(); // solo payer
+    const cbC = new MTX();
+    cbC.addInput(dummyInput());
+    cbC.addOutput(await carol.receiveAddress(), 5460);
+    await wdb.addTX(cbC.toTX());
+
+    const recipient = await wdb.create();
+
+    const fundTX = new MTX();
+    fundTX.addOutput(await recipient.receiveAddress(), 5460);
+    fundTX.addOutput(await carol.changeAddress(), 4460);
+
+    await alice.fund(fundTX, {
+      rate: 10000,
+      round: true
+    });
+    fundTX.addTX(cbC.toTX(), 0);
+    // fundTx has 5 inputs (4 from multisig and 1 from carol)
+    // and 3 outputs (1 for recipient, 1 for carol and 1 for multisig)
+    // with this order.
+    const [ftx, view] = fundTX.commit();
+    const psbt = PSBT.fromTX(ftx, view);
+    const psbtBob = psbt.clone();
+
+    // 1. multisig payer 1 fills psbt.
+    const fundOptions1 = {
+      bip32: false,
+      sign: true
+    };
+    await alice.fillPSBT(psbt, fundOptions1);
+
+    let fundedInputs = psbt.inputs.filter(p => !p.nonWitnessUTXO.isNull());
+    assert.strictEqual(psbt.inputs.length, 5);
+    assert.strictEqual(fundedInputs.length, 4);
+    for (const psbtin of fundedInputs) {
+      assert.strictEqual(psbtin.signatures.size, 1);
+      assert.strictEqual(psbtin.keyInfo.size, 0);
+      assert(psbtin.witness.code.length > 0);
+    }
+    assert.strictEqual(psbt.outputs[2].witness.getType(), 4);
+
+    // 2. solo payer fills psbt.
+    const fundOptions2 = {
+      bip32: true,
+      sign: true
+    };
+    await carol.fillPSBT(psbt, fundOptions2);
+    fundedInputs = psbt.inputs.filter(p => !p.nonWitnessUTXO.isNull());
+    assert.strictEqual(fundedInputs.length, 5);
+    for (const psbtin of fundedInputs) {
+      assert.strictEqual(psbtin.signatures.size, 1);
+    }
+    // TODO: assert keyInfo is really carol's more carefully
+    assert.strictEqual(psbt.inputs[4].keyInfo.size, 1);
+
+    // 3. multisig payer 2 fills psbt independently from others.
+    const fundOptions3 = {
+      bip32: true,
+      sign: true
+    };
+    await bob.fillPSBT(psbtBob, fundOptions3);
+    const fundedOutputs = psbtBob.outputs.filter(o => o.keyInfo.size > 1);
+    // We have know way to know the bip32 path for a shared key...
+    assert.strictEqual(fundedOutputs.length, 0);
+
+    // 4. combine and finalize.
+    psbt.combine(psbtBob);
+    for (let i = 0; i < 4; i++) {
+      assert.strictEqual(psbt.inputs[i].signatures.size, 2);
+      assert.strictEqual(psbt.inputs[i].witness.code.length > 0, true);
+    }
+    assert.strictEqual(psbt.inputs[4].signatures.size, 1);
+    psbt.finalize();
+    const tx = psbt.toTX();
+    assert(tx.verify(view));
   });
 
   it('should remove a wallet', async () => {
