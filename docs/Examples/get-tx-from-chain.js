@@ -1,11 +1,7 @@
 'use strict';
 
 const bcoin = require('../..');
-<<<<<<< HEAD
 const Logger = require('blgr');
-=======
-const Index = require('bindex').Index;
->>>>>>> 1b1e90a6... docs: update get-tx example
 
 // Setup logger to see what's Bcoin doing.
 const logger = new Logger({
