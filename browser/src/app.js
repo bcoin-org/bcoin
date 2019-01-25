@@ -1,3 +1,4 @@
+/* eslint-env browser */
 'use strict';
 
 const Logger = require('blgr');
