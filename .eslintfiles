@@ -9,5 +9,3 @@ lib/
 migrate/
 scripts/
 test/
-webpack.browser.js
-webpack.compat.js
