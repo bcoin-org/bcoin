@@ -43,7 +43,7 @@ An index can be dropped by just deleting the corresponding database.
   Default locations are `prefix` + `/index` e.g.: `~/.bcoin/testnet/index/tx`,
   `~/.bcoin/testnet/index/addr`.
 
-- `__/lib/blockchain/chain__` - `getSpentView` accepts a `TXMeta` insted of `TX`
+- `__/lib/blockchain/chain__` - `getSpentView` accepts a `TXMeta` instead of `TX`
 
 - `__/lib/blockchain/chain__` - the following methods have been moved out of
   the chain to the indexers. Using the methods on the chain is deprecated:
@@ -216,7 +216,7 @@ of `*`, which notifies them of events on _all_ wallets).
   longer possible. Please take a look at `lib/bcoin.js` to get a better idea of
   what has changed.
 - __net__ - Support for BIP151 and BIP150 has been dropped.
-- __/bcoin/blockchain/chain - getSpentView accepts a TXMeta insted of TX
+- __/bcoin/blockchain/chain - getSpentView accepts a TXMeta instead of TX
 
 ## v1.0.0-beta.15
 
