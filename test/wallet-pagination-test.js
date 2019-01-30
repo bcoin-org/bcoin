@@ -109,6 +109,7 @@ describe('Wallet TX Pagination', function() {
 
       const two = await wclient.execute('listhistoryafter',
                                         ['blue', after, 100, true]);
+
       assert.strictEqual(two.length, 100);
       assert.strictEqual(two[0].account, 'blue');
       assert.strictEqual(two[0].confirmations, 2);

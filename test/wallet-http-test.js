@@ -113,14 +113,16 @@ describe('Wallet TX HTTP Pagination', function() {
   });
 
   describe('full node', function() {
-    describe('confirmed txs (dsc)', function() {
+    describe('confirmed and unconfirmed txs (dsc)', function() {
       it('first page', async () => {
         const history = await wclient.get('/wallet/test/tx/history', {
           limit: 100,
           reverse: true
         });
         assert.strictEqual(history.length, 100);
-        assert.strictEqual(history[0].confirmations, 1);
+        assert.strictEqual(history[0].confirmations, 0);
+        assert.strictEqual(history[18].confirmations, 0);
+        assert.strictEqual(history[19].confirmations, 1);
         assert.strictEqual(history[99].confirmations, 2);
       });
 
@@ -130,7 +132,9 @@ describe('Wallet TX HTTP Pagination', function() {
           reverse: true
         });
         assert.strictEqual(one.length, 100);
-        assert.strictEqual(one[0].confirmations, 1);
+        assert.strictEqual(one[0].confirmations, 0);
+        assert.strictEqual(one[18].confirmations, 0);
+        assert.strictEqual(one[19].confirmations, 1);
         assert.strictEqual(one[99].confirmations, 2);
 
         const after = one[99].hash;
@@ -154,8 +158,9 @@ describe('Wallet TX HTTP Pagination', function() {
           reverse: true
         });
         assert.strictEqual(history.length, 100);
-        assert.strictEqual(history[0].confirmations, 1);
-        assert.strictEqual(history[99].confirmations, 75);
+        assert.strictEqual(history[0].confirmations, 0);
+        assert.strictEqual(history[1].confirmations, 1);
+        assert.strictEqual(history[99].confirmations, 74);
       });
 
       it('second page (w/ account)', async () => {
@@ -174,9 +179,9 @@ describe('Wallet TX HTTP Pagination', function() {
           limit: 100,
           reverse: true
         });
-        assert.strictEqual(two.length, 50);
-        assert.strictEqual(two[0].confirmations, 76);
-        assert.strictEqual(two[49].confirmations, 125);
+        assert.strictEqual(two.length, 51);
+        assert.strictEqual(two[0].confirmations, 75);
+        assert.strictEqual(two[50].confirmations, 125);
         assert.notStrictEqual(two[0].hash, one[99].hash);
       });
 
