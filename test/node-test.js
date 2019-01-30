@@ -287,13 +287,7 @@ describe('Node', function() {
       limit: 100,
       reverse: false
     });
-    assert.strictEqual(txs.length, 26);
-
-    const utxs = await wallet.listUnconfirmed(null, {
-      limit: 100,
-      reverse: false
-    });
-    assert.strictEqual(utxs.length, 19);
+    assert.strictEqual(txs.length, 45);
   });
 
   it('should get tips and remove chains', async () => {
