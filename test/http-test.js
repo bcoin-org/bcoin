@@ -203,12 +203,14 @@ describe('HTTP', function() {
   });
 
   it('should get a block template', async () => {
-    const json = await nclient.execute('getblocktemplate', []);
+    const json = await nclient.execute('getblocktemplate', [{
+      rules: ['segwit']
+    }]);
     assert.deepStrictEqual(json, {
       capabilities: ['proposal'],
       mutable: ['time', 'transactions', 'prevblock'],
       version: 536870912,
-      rules: [],
+      rules: ['!segwit'],
       vbavailable: {},
       vbrequired: 0,
       height: 1,
@@ -222,15 +224,19 @@ describe('HTTP', function() {
       mintime: 1296688603,
       maxtime: json.maxtime,
       expires: json.expires,
-      sigoplimit: 20000,
-      sizelimit: 1000000,
+      sigoplimit: 80000,
+      sizelimit: 4000000,
+      weightlimit: 4000000,
       longpollid:
         '0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206'
         + '00000000',
       submitold: false,
       coinbaseaux: { flags: '6d696e65642062792062636f696e' },
       coinbasevalue: 5000000000,
-      transactions: []
+      transactions: [],
+      default_witness_commitment:
+        '6a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48beb'
+        + 'd836974e8cf9'
     });
   });
 
