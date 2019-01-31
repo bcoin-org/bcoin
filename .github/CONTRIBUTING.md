@@ -69,6 +69,11 @@ if you wish to contribute to the cryptography code, you should have a good
 understanding of the various aspects involved with cryptography such as the
 security and performance implications.
 
+While the standards to merge code is high, there are many opportunities to
+contribute outside of consensus critical or implementing highly performant
+code.  A good place to get started would be adding more examples to the docs
+and reading through the tests to understand how the code works in practice.
+
 <a name="ReqReading" />
 
 ### 3. Required Reading
@@ -291,10 +296,9 @@ Rejoice as you will now be listed as a
 
 bcoin handles balances as follows:
 
-confirmed: balance secured by the blockchain
+confirmed: balance computed only using confirmed transactions.
 
-unconfirmed: balance secured by the blockchain  + balance including
-transactions from the mempool
+unconfirmed: balance computed using both confirmed transactions and transactions pending in the mempool.
 
 This is done to properly handle change outputs of large withdrawals.
 
