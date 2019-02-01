@@ -156,7 +156,7 @@ const mtx = new MTX();
 for (let i = 0; i < 100; i++) {
   mtx.addInput({
     prevout: {
-      hash: consensus.NULL_HASH,
+      hash: consensus.ZERO_HASH,
       index: 0
     },
     script: new Script()
