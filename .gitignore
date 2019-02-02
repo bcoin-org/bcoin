@@ -4,3 +4,4 @@ docker_data/
 browser/bcoin*
 npm-debug.log
 coverage/
+.DS_Store
