@@ -25,6 +25,7 @@ Welcome to the bcoin docs!
 - [Miner with WorkerPool][example-miner-configs]
 - [Create and Sign TX][example-tx-create-sign]
 - [Get Transaction from Chain][example-tx-from-chain]
+- [Create Watch Only Wallet][example-watch-only-wallet]
 
 
 [getting-started]: Beginner's-Guide.md
@@ -49,3 +50,4 @@ Welcome to the bcoin docs!
 [example-simple-fullnode]: Examples/fullnode.js
 [example-tx-create-sign]: Examples/create-sign-tx.js
 [example-tx-from-chain]: Examples/get-tx-from-chain.js
+[example-watch-only-wallet]: Examples/watch-only-wallet.js
