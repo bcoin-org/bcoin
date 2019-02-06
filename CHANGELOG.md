@@ -1,5 +1,14 @@
 # Bcoin Release Notes & Changelog
 
+## vX.Y.Z
+
+### Regtest pruning policy changed
+
+In the old configuration, a pruned node on Regtest would start pruning at height
+1000 and then keep the last 1000 blocks on disk (pruning anything older). This
+has been changed to facilitate testing. The new parameters are
+`pruneAfterHeight: 500, keepBlocks: 288`.
+
 ## v1.0.0
 
 ### Migration
