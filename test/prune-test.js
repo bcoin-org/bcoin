@@ -5,6 +5,7 @@
 
 const assert = require('./util/assert');
 const FullNode = require('../lib/node/fullnode');
+const Block = require('../lib/primitives/block');
 
 const node = new FullNode({
   network: 'regtest',
@@ -37,13 +38,9 @@ describe('Pruned node', function() {
     const pruneHeight = 1000 - 288;
 
     // This block is not on disk
-    try {
-      await node.getBlock(pruneHeight);
-    } catch(e) {
-      assert.strictEqual(e.message, 'Block not found.');
-    }
+    assert.strictEqual(null, await node.getBlock(pruneHeight));
 
-    // direct WalletDB call
+    // Try to rescan it anyway
     try {
       await node.plugins.walletdb.wdb.rescan(pruneHeight);
     } catch(e) {
@@ -57,7 +54,7 @@ describe('Pruned node', function() {
   it('should succeed to rescan within prune height', async () => {
     const pruneHeight = 1000 - 288;
     // This block *IS* on disk
-    assert(await node.getBlock(pruneHeight + 1));
+    assert((await node.getBlock(pruneHeight + 1)) instanceof Block);
     await node.plugins.walletdb.wdb.rescan(pruneHeight + 1);
   });
 
