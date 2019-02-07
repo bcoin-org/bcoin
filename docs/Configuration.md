@@ -96,6 +96,7 @@ Note that certain chain options affect the format and indexing of the chain data
 - `public-host`: Public host to advertise on network.
 - `public-port`: Public port to advertise on network.
 - `nodes`: List of target nodes to connect to (comma-separated).
+- `only`: List of nodes to ONLY connect to (no other nodes or dns seeds will be contacted).
 
 ## Miner Options
 
