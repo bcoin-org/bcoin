@@ -165,4 +165,51 @@ describe('HD', function() {
     base58Equal(zprv.toBase58('main'), vectors.xyz.z.zprv);
     base58Equal(zpub.toBase58('main'), vectors.xyz.z.zpub);
   });
+
+  it('should test for base58 network matches', () => {
+    assert(HD.fromBase58(
+      'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhawA7d4' +
+      'R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj',
+      'main'
+    ));
+
+    assert(HD.fromBase58(
+      'ypub6Ww3ibxVfGzLrAH1PNcjyAWenMTbbAosGNB6VvmSEgytSER9az' +
+      'LDWCxoJwW7Ke7icmizBMXrzBx9979FfaHxHcrArf3zbeJJJUZPf663zsP',
+      'main'
+    ));
+
+    assert(HD.fromBase58(
+      'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhX' +
+      'NfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs',
+      'main'
+    ));
+
+    assert(HD.fromBase58(
+      'zprvAWgYBBk7JR8Gjrh4UJQ2uJdG1r3WNRRfURiABBE3RvMXYSrRJL' +
+      '62XuezvGdPvG6GFBZduosCc1YP5wixPox7zhZLfiUm8aunE96BBa4Kei5',
+      'main'
+    ));
+
+    // oops wrong network
+    let err = null;
+    try {
+      assert(HD.fromBase58(
+        'tprv8gRrNu65W2Msef2BdBSUgFdRTGzC8EwVXnV7UGS3faeXtuMVtG' +
+        'fEdidVeGbThs4ELEoayCAzZQ4uUji9DUiAs7erdVskqju7hrBcDvDsdbY',
+        'main'
+      ));
+    } catch (e) {
+      err = e;
+    }
+    assert(err);
+    assert.strictEqual(err.message, 'Network mismatch for xprivkey.');
+
+    // there we go
+    assert(HD.fromBase58(
+      'tprv8gRrNu65W2Msef2BdBSUgFdRTGzC8EwVXnV7UGS3faeXtuMVtG' +
+      'fEdidVeGbThs4ELEoayCAzZQ4uUji9DUiAs7erdVskqju7hrBcDvDsdbY',
+      'testnet'
+    ));
+  });
 });
