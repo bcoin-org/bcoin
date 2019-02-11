@@ -25,6 +25,10 @@ const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
 const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
 
+// abandon abandon... about key at m'/44'/0'/0'
+const PUBKEY = 'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhaw'
+  + 'A7d4R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj';
+
 const enabled = true;
 const workers = new WorkerPool({ enabled });
 const wdb = new WalletDB({ workers });
@@ -1301,12 +1305,31 @@ describe('Wallet', function() {
     importedKey = key;
   });
 
+  it('should require account key to create watch only wallet', async () => {
+    let err = null;
+
+    try {
+      await wdb.create({
+        watchOnly: true
+      });
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert.strictEqual(
+      err.message,
+      'Must add HD public keys to watch only wallet.'
+    );
+  });
+
   it('should import pubkey', async () => {
     const key = KeyRing.generate();
     const pub = new KeyRing(key.publicKey);
 
     const wallet = await wdb.create({
-      watchOnly: true
+      watchOnly: true,
+      accountKey: PUBKEY
     });
 
     await wallet.importKey('default', pub);
@@ -1322,7 +1345,8 @@ describe('Wallet', function() {
     const key = KeyRing.generate();
 
     const wallet = await wdb.create({
-      watchOnly: true
+      watchOnly: true,
+      accountKey: PUBKEY
     });
 
     await wallet.importAddress('default', key.getAddress());
