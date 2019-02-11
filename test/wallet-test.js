@@ -18,13 +18,16 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
-const PrivateKey = require('../lib/hd/private');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
 
 const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
   + 'faKekc2m4AChLYH1XDzANhrSdxHYWUeTWjYJwFwWFyHkTMnMeAcW4JyRCZa';
+
+// abandon abandon... about key at m'/44'/0'/0'
+const PUBKEY = 'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhaw'
+  + 'A7d4R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj';
 
 const enabled = true;
 const workers = new WorkerPool({ enabled });
@@ -35,7 +38,6 @@ let importedWallet = null;
 let importedKey = null;
 let doubleSpendWallet = null;
 let doubleSpendCoin = null;
-let watchWallet = null;
 
 function fromU32(num) {
   const data = Buffer.allocUnsafe(4);
@@ -1304,48 +1306,56 @@ describe('Wallet', function() {
   });
 
   it('should require account key to create watch only wallet', async () => {
+    let err = null;
+
     try {
-      watchWallet = await wdb.create({
+      await wdb.create({
         watchOnly: true
       });
     } catch (e) {
-      assert.strictEqual(
-        e.message,
-        'Must add HD public keys to watch only wallet.'
-      );
+      err = e;
     }
 
-    const privateKey = PrivateKey.generate();
-    const xpub = privateKey.xpubkey('main');
-    watchWallet = await wdb.create({
-      watchOnly: true,
-      accountKey: xpub
-    });
+    assert(err);
+    assert.strictEqual(
+      err.message,
+      'Must add HD public keys to watch only wallet.'
+    );
   });
 
   it('should import pubkey', async () => {
     const key = KeyRing.generate();
     const pub = new KeyRing(key.publicKey);
 
-    await watchWallet.importKey('default', pub);
+    const wallet = await wdb.create({
+      watchOnly: true,
+      accountKey: PUBKEY
+    });
 
-    const path = await watchWallet.getPath(pub.getHash());
+    await wallet.importKey('default', pub);
+
+    const path = await wallet.getPath(pub.getHash());
     assert.bufferEqual(path.hash, pub.getHash());
 
-    const wkey = await watchWallet.getKey(pub.getHash());
+    const wkey = await wallet.getKey(pub.getHash());
     assert(wkey);
   });
 
   it('should import address', async () => {
     const key = KeyRing.generate();
 
-    await watchWallet.importAddress('default', key.getAddress());
+    const wallet = await wdb.create({
+      watchOnly: true,
+      accountKey: PUBKEY
+    });
 
-    const path = await watchWallet.getPath(key.getHash());
+    await wallet.importAddress('default', key.getAddress());
+
+    const path = await wallet.getPath(key.getHash());
     assert(path);
     assert.bufferEqual(path.hash, key.getHash());
 
-    const wkey = await watchWallet.getKey(key.getHash());
+    const wkey = await wallet.getKey(key.getHash());
     assert(!wkey);
   });
 
