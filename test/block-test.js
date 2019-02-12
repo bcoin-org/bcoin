@@ -28,6 +28,9 @@ const compact426884 = common.readCompact('compact426884');
 const block898352 = common.readBlock('block898352');
 const compact898352 = common.readCompact('compact898352');
 
+// Small SegWit block test vector
+const block482683 = common.readBlock('block482683');
+
 // Sigops counting test vectors
 // Format: [name, sigops, weight]
 const sigopsVectors = [
@@ -100,6 +103,11 @@ describe('Block', function() {
     assert.strictEqual(block2.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
     assert.bufferEqual(block2.merkleRoot, block2.createMerkleRoot());
+  });
+
+  it('should inspect a block with a witness commitment', () => {
+    const [block] = block482683.getBlock();
+    assert(block.inspect());
   });
 
   it('should create a merkle block', () => {
