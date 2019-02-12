@@ -574,7 +574,7 @@ describe('Wallet RPC', function() {
         it('will get the correct balance', async () => {
           const bal = await wclient.execute('getreceivedbyaccount',
                                             ['blue']);
-          assert.strictEqual(bal, 6250.0004086);
+          assert.strictEqual(bal, 6250.0002574);
         });
       });
 
@@ -582,7 +582,7 @@ describe('Wallet RPC', function() {
         it('will get the correct balance', async () => {
           const bal = await wclient.execute('getreceivedbyaddress',
                                             [coinbase]);
-          assert.strictEqual(bal, 6250.0004086);
+          assert.strictEqual(bal, 6250.0002574);
         });
       });
 

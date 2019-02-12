@@ -89,13 +89,11 @@ async function initWallet(wclient) {
   const wallet = wclient.wallet('test', winfo.token);
   await wallet.open();
 
-  // We don't use witness here yet, as there is an activation
-  // threshold before segwit can be activated. A lookahead is
-  // increased to avoid timing issues with bloom filters not
-  // being loaded in time and transactions not being broadcast
-  // to spv node wallets.
+  // A lookahead is increased to avoid timing issues with bloom
+  // filters not being loaded in time and transactions not being
+  // broadcast to spv node wallets.
   const info = await wallet.createAccount('blue', {
-    witness: false,
+    witness: true,
     lookahead: 40
   });
   assert(info.initialized);
@@ -213,7 +211,7 @@ async function sendCoinbase(options) {
   const block = await nclient.execute('getblock', [hash, true, true]);
 
   const script = Buffer.from(block.tx[0].vout[0].scriptPubKey.hex, 'hex');
-  const prevhash = Buffer.from(block.tx[0].hash, 'hex');
+  const prevhash = Buffer.from(block.tx[0].txid, 'hex');
   prevhash.reverse();
 
   const mtx = new MTX();
