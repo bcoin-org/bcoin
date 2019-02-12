@@ -7,6 +7,12 @@ const assert = require('./util/assert');
 const {rimraf, sleep} = require('./util/common');
 const KeyRing = require('../lib/primitives/keyring');
 
+const COINBASE = Buffer.from(
+  'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'hex');
+
+const KEY1 = Buffer.from(
+  '3d35a74bb0a8b883682bfe3209e967aeda3bfd73fe8e740bc700f5fe5c4c265d', 'hex');
+
 const {
   initFullNode,
   initNodeClient,
@@ -33,9 +39,7 @@ describe('Wallet Rescan', function() {
 
   // SPV isn't tested here as rescanning will
   // not work in that case, furthermore it will also
-  // not work for pruned nodes. There may need to be
-  // additional error messages on related APIs that
-  // assume use of rescan.
+  // not work for pruned nodes.
 
   let node, wallet = null;
   let nclient, wclient = null;
@@ -56,7 +60,15 @@ describe('Wallet Rescan', function() {
     wclient = await initWalletClient({ports: ports.full});
     wallet = await initWallet(wclient);
 
-    coinbaseKey = KeyRing.generate();
+    coinbaseKey = new KeyRing({
+      privateKey: COINBASE,
+      witness: true
+    });
+
+    key1 = new KeyRing({
+      privateKey: KEY1,
+      witness: true
+    });
 
     await wclient.execute('selectwallet', ['test']);
 
@@ -65,7 +77,7 @@ describe('Wallet Rescan', function() {
     // Use coinbase outside of any wallet so
     // that we can send funds to various addresses
     // without affecting the wallets.
-    coinbase = coinbaseKey.getAddress('base58', 'regtest').toString();
+    coinbase = coinbaseKey.getAddress('string', 'regtest').toString();
 
     await generateInitialBlocks({
       nclient,
@@ -76,8 +88,6 @@ describe('Wallet Rescan', function() {
 
     // TODO remove this
     await sleep(1000);
-
-    key1 = KeyRing.generate();
 
     let height = 0;
 
@@ -94,7 +104,7 @@ describe('Wallet Rescan', function() {
     // Send funds to the addresses to be imported
     let importTotal = 0;
     for (++height; height < 14; height++) {
-      const address = key1.getAddress('base58', 'regtest').toString();
+      const address = key1.getAddress('string', 'regtest').toString();
       await sendCoinbase({
         nclient,
         height,
