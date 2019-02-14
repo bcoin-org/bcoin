@@ -15,6 +15,7 @@ const KeyRing = require('../lib/primitives/keyring');
 const Address = require('../lib/primitives/address');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
+const opcodes = Script.opcodes;
 const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
 const ALL = Script.hashType.ALL;
@@ -335,6 +336,54 @@ describe('Mempool', function() {
 
     assert(err);
     assert(!mempool.hasReject(tx.hash()));
+  });
+
+  it('should cache a non-malleated tx with non-empty stack', async () => {
+    // Wrap in P2SH, so we pass standardness checks.
+    const key = KeyRing.generate();
+
+    {
+      const script = new Script();
+      script.pushOp(opcodes.OP_1);
+      script.compile();
+      key.script = script;
+    }
+
+    const wallet = new MemWallet();
+    const script = Script.fromAddress(wallet.getAddress());
+    const dummyCoin = dummyInput(script, random.randomBytes(32));
+
+    // spend first output
+    const t1 = new MTX();
+    t1.addOutput(key.getAddress(), 50000);
+    t1.addCoin(dummyCoin);
+    wallet.sign(t1);
+
+    const t2 = new MTX();
+    t2.addCoin(Coin.fromTX(t1, 0, 0));
+    t2.addOutput(wallet.getAddress(), 40000);
+
+    {
+      const script = new Script();
+      script.pushOp(opcodes.OP_1);
+      script.pushData(key.script.toRaw());
+      script.compile();
+
+      t2.inputs[0].script = script;
+    }
+
+    await mempool.addTX(t1.toTX());
+
+    let err;
+    try {
+      await mempool.addTX(t2.toTX());
+    } catch (e) {
+      err = e;
+    }
+
+    assert(err);
+    assert(!err.malleated);
+    assert(mempool.hasReject(t2.hash()));
   });
 
   it('should not cache a malleated wtx with wit removed', async () => {
