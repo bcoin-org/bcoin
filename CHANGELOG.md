@@ -1,12 +1,78 @@
 # Bcoin Release Notes & Changelog
 
-## v1.0.x
+## v2.0.0
 
 ### Wallet API changes
 
-Creating a watch-only wallet now requires an `account-key` (or `accountKey`)
-argument. This is to prevent bcoin from generating keys and addresses the user
-can not spend from.
+#### HTTP
+
+- `PUT /wallet/:id` Creating a watch-only wallet now requires an `accountKey`
+  argument. This is to prevent bcoin from generating keys and addresses the
+  user can not spend from.
+- `POST /wallet/:id/create` Now has a `sign` argument for optional signing
+  of transactions.
+
+#### RPC
+
+- Bug fix addresses for the `getnewaddress` command with various networks.
+
+### Network changes
+
+- Regtest params have been updated to correspond with other bitcoin
+  implementations for cross testing. Key prefixes have been updated and
+  segwit is always active (39684df6051b599da9ed1383cb7e3f8605806a74). The
+  regtest seeds have also been cleared so that the node will not attempt
+  to connect to itself.
+- Testnet seeds have been updated (8b6eba165b090edfc1ff5dbc9c422758d60b6342)
+
+### Logging changes
+
+- Wallet and node HTTP and RPC is now more clearly identified. The wallet
+  HTTP server will log with the context `wallet-http` and the RPC as
+  `wallet-rpc`. The node HTTP will log with the context `node-http` and the
+  RPC as `node-rpc`. There was also a reduction in the duplicate logs in
+  the case of an error for the node RPC, and the addition of method logging
+  for the wallet RPC.
+- There is now also additional logging during wallet rescans.
+
+### Configuration changes
+
+- Pool options now has a `--discover` option exposed, and the `--only` node
+  option will disable discovery of new nodes.
+
+### Script changes
+
+- Script has been updated for policy flags. For example
+  `VERIFY_CONST_SCRIPTCODE` to disable `OP_CODESEPARATOR` in non-segwit
+  scripts and make a positive `findAndDelete` result invalid.
+- Segwit scripts that terminate with a stack size not equal to one
+  now has as error of `CLEANSTACK` instead of `EVAL_FALSE`.
+- `VERIFY_UPGRADABLE_NOPS` now does not apply to `OP_CHECKLOCKTIMEVERIFY`
+  and `OP_CHECKSEQUENCEVERIFY`.
+
+### Testing changes
+
+- Switched to use a security focused rewrite of `mocha` called
+  `bmocha`, for further details see: https://github.com/bcoin-org/bmocha
+- Data has been updated to be in sync with other implementations
+  around policy-only script validation.
+- Tests now cleanly close with all timers being cleared.
+- Config file `wallet.conf` won't be read during test runs that was
+  causing issues with some testing environments.
+
+### Other changes
+
+- Use of `buffer-map` for storing hashes
+  (see https://github.com/bcoin-org/bcoin/issues/533).
+- Use of `bsert` for assertions.
+- `SIGINT` handling will close the full node, spvnode and wallet.
+- Using the bcoin library in a REPL now has auto-completion by pressing tab.
+- Various documentation updates.
+- Mempool fix to add non-standard (non-segwit) to reject cache.
+- A lockfile is now included and all dependencies integrity verified
+  with sha512 hash and not the vulnerable sha1 hash.
+- Updates to dependencies including `bcrypto` to version > 3.
+- Various small fixes to run bcoin in a browser.
 
 ## v1.0.0
 
