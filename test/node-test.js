@@ -776,6 +776,29 @@ describe('Node', function() {
     assert.strictEqual(meta.tx.txid(), tx2.txid());
   });
 
+  it('should wake listeners of \'tx\' when sending', async () => {
+    let notified = false;
+    const notifier = () => {
+      notified = true;
+    };
+    node.on('tx', notifier);
+
+    const addr = Address.fromString(
+      '17SXrfEbhsLme7HSspiLSoWGMGTchMMr3P');
+    const mtx = await wallet.createTX({
+      outputs: [{
+        value: 10 * 1e8,
+        address: addr.toString(node.network)
+      }]
+    }, false);
+    await wallet.sign(mtx);
+
+    await node.sendTX(mtx.toTX());
+
+    assert(notified);
+    node.removeListener('tx', notifier);
+  });
+
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
     await node.close();
