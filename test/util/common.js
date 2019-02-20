@@ -85,6 +85,14 @@ common.writeTX = function writeTX(name, tx, view) {
   common.writeFile(`${name}-undo.raw`, undoRaw);
 };
 
+common.rimraf = async function(p) {
+  const allowed = new RegExp('^\/tmp\/(.*)$');
+  if (!allowed.test(p))
+    throw new Error(`Path not allowed: ${p}.`);
+
+  return await fs.rimraf(p);
+};
+
 function parseUndo(data) {
   const br = bio.read(data);
   const items = [];
