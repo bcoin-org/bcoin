@@ -59,7 +59,9 @@
     "bcoin": "./bin/bcoin",
     "bcoin-node": "./bin/node",
     "bcoin-spvnode": "./bin/spvnode",
-    "bwallet": "./bin/bwallet"
+    "bwallet": "./bin/bwallet",
+    "bcoin-cli": "./bin/bcoin-cli",
+    "bwallet-cli": "./bin/bwallet-cli"
   },
   "scripts": {
     "browserify": "browserify -s bcoin lib/bcoin-browser.js | uglifyjs -c > bcoin.js",
@@ -76,7 +78,8 @@
     "webpack": "webpack --mode production --config webpack.browser.js",
     "webpack-browser": "webpack --mode production --config webpack.browser.js",
     "webpack-compat": "webpack --mode production --config webpack.compat.js",
-    "webpack-app": "webpack --mode production --config webpack.app.js"
+    "webpack-app": "webpack --mode production --config webpack.app.js",
+    "postinstall": "node ./scripts/bclient-bin.js"
   },
   "browser": {
     "./lib/hd/nfkd": "./lib/hd/nfkd-compat.js",
