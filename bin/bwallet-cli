@@ -3,4 +3,3 @@
 'use strict';
 
 require('bclient/bin/bwallet-cli');
-
