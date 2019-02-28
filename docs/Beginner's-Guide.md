@@ -99,7 +99,7 @@ To advertise your node on the P2P network `--public-host=[your-public-ip]` and `
 
 ## Using an API Key
 
-If listening publicly on the HTTP server, an API key is required. One will be generated and reported in the logs automatically if no key was chosen. An api key can be chosen with the `--api-key` option.
+If listening publicly on the HTTP server, an API key is required. One will be randomly generated if no key was chosen, but not explicitly reported to the user. An API key can be chosen with the `--api-key` option.
 
 Example:
 
@@ -113,11 +113,12 @@ API keys are used with HTTP Basic Auth:
 $ curl http://x:hunter2@localhost:8332/
 ```
 
-Bcoin CLI is the prepackaged tool for hitting both the REST and RPC api.
+[bclient](https://github.com/bcoin-org/bclient) is the prepackaged tool for querying both the REST and RPC APIs. If bcoin is installed globally, both `bcoin-cli` and `bwallet-cli` should be on your path.
 
 ``` bash
-$ bcoin cli info --api-key hunter2
-$ bcoin rpc getblockchaininfo --api-key hunter2
+$ bcoin-cli info --api-key hunter2
+$ bcoin-cli rpc getblockchaininfo --api-key hunter2
+$ bwallet-cli balance
 ```
 
 ## Using Tor/SOCKS
@@ -144,10 +145,10 @@ $ bcoin --nodes foo.example.com:8333,1.2.3.4:8333,5.6.7.8:8333
 
 If chosen, bcoin will _always_ try to connect to these nodes as outbound peers. They are top priority and whitelisted (not susceptible to permanent bans, only disconnections).
 
-To _only_ connect to these nodes. `--max-outbound` could be set to 3:
+To _only_ connect to these nodes, use `--only`
 
 ``` bash
-$ bcoin --nodes foo.example.com,1.2.3.4,5.6.7.8 --max-outbound 3
+$ bcoin --only foo.example.com,1.2.3.4,5.6.7.8
 ```
 
 ## Disabling Listening
@@ -169,5 +170,5 @@ Note: Selfish mode is not recommended. We encourage you to _help_ the network by
 See [Configuration][configuration].
 
 [keybase]: https://keybase.io/chjj#show-public
-[node]: https://nodejs.org/dist/v7.5.0/
+[node]: https://nodejs.org
 [configuration]: Configuration.md

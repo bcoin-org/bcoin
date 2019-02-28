@@ -1,11 +1,12 @@
 'use strict';
+
 const bcoin = require('../..').set('main');
 
 const Logger = require('blgr');
 
 // Setup logger to see what's Bcoin doing.
 const logger = new Logger({
-  level: 'debug'
+  level: 'info'
 });
 
 // Create a blockchain and store it in memory.
@@ -41,21 +42,25 @@ const pool = new bcoin.Pool({
   pool.startSync();
 
   // Watch the action
+  const color = '\x1b[31m';
   chain.on('block', (block) => {
-    console.log('Connected block to blockchain:');
-    console.log(block);
+    console.log(color, 'Added mainnet block:');
+    console.log(block.rhash());
   });
 
   mempool.on('tx', (tx) => {
-    console.log('Added tx to mempool:');
-    console.log(tx);
+    console.log(color, 'Added mainnet tx to mempool:');
+    console.log(tx.rhash);
   });
 
   pool.on('tx', (tx) => {
-    console.log('Saw transaction:');
+    console.log(color, 'Saw mainnet transaction:');
     console.log(tx.rhash);
   });
-})();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});;
 
 // Start up a testnet sync in-memory
 // while we're at it (because we can).
@@ -91,19 +96,20 @@ const tpool = new bcoin.Pool({
   // Start the blockchain sync.
   tpool.startSync();
 
+  const color = '\x1b[32m';
   tchain.on('block', (block) => {
-    console.log('Added testnet block:');
-    console.log(block);
+    console.log(color, 'Added testnet block:');
+    console.log(block.rhash());
   });
 
   tmempool.on('tx', (tx) => {
-    console.log('Added testnet tx to mempool:');
-    console.log(tx);
+    console.log(color, 'Added testnet tx to mempool:');
+    console.log(tx.rhash);
   });
 
   tpool.on('tx', (tx) => {
-    console.log('Saw testnet transaction:');
-    console.log(tx);
+    console.log(color, 'Saw testnet transaction:');
+    console.log(tx.rhash);
   });
 })().catch((err) => {
   console.error(err.stack);

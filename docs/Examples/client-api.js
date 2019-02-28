@@ -7,22 +7,23 @@ const network = bcoin.Network.get('regtest');
 
 const node = new bcoin.FullNode({
   network: 'regtest',
-  apiKey: 'foo',
-  walletAuth: true,
   db: 'memory'
 });
 
 node.use(plugin);
 
-const wallet = new client.WalletClient({
-  port: network.walletPort,
-  apiKey: 'foo'
+const walletClient = new client.WalletClient({
+  port: network.walletPort
+});
+
+const nodeClient = new client.NodeClient({
+  port: network.rpcPort
 });
 
 async function fundWallet(wdb, addr) {
   // Coinbase
   const mtx = new bcoin.MTX();
-  mtx.addOutpoint(new bcoin.Outpoint());
+  mtx.addOutpoint(new bcoin.Outpoint(bcoin.consensus.ZERO_HASH, 0));
   mtx.addOutput(addr, 50460);
   mtx.addOutput(addr, 50460);
   mtx.addOutput(addr, 50460);
@@ -30,19 +31,19 @@ async function fundWallet(wdb, addr) {
 
   const tx = mtx.toTX();
 
-  wallet.once('balance', (balance) => {
+  walletClient.bind('balance', (walletID, balance) => {
     console.log('New Balance:');
-    console.log(balance);
+    console.log(walletID, balance);
   });
 
-  wallet.once('address', (receive) => {
+  walletClient.bind('address', (walletID, receive) => {
     console.log('New Receiving Address:');
-    console.log(receive);
+    console.log(walletID, receive);
   });
 
-  wallet.once('tx', (details) => {
+  walletClient.bind('tx', (walletID, details) => {
     console.log('New Wallet TX:');
-    console.log(details);
+    console.log(walletID, details);
   });
 
   await wdb.addTX(tx);
@@ -58,18 +59,23 @@ async function sendTX(addr, value) {
     }]
   };
 
-  const tx = await wallet.send('test', options);
+  // API call: walletClient.send('test', options)
+  const tx = await walletClient.request('POST', '/wallet/test/send', options);
 
   return tx.hash;
 }
 
 async function callNodeApi() {
-  const info = await wallet.client.getInfo();
+  // API call: nodeClient.getInfo()
+  const info = await nodeClient.request('GET', '/');
 
   console.log('Server Info:');
   console.log(info);
 
-  const json = await wallet.client.rpc.execute('getblocktemplate', []);
+  const json = await nodeClient.execute(
+    'getblocktemplate',
+    [{rules: ['segwit']}]
+  );
 
   console.log('Block Template (RPC):');
   console.log(json);
@@ -80,21 +86,39 @@ async function callNodeApi() {
 
   await node.open();
 
-  const w = await wallet.createWallet('test');
+  // API call: walletClient.createWallet('test')
+  const testWallet = await walletClient.request('PUT', '/wallet/test');
 
   console.log('Wallet:');
-  console.log(w);
+  console.log(testWallet);
+
+  // open socket to listen for events
+  await walletClient.open();
+
+  // subscribe to events from all wallets
+  walletClient.all()
 
   // Fund default account.
-  const receive = await wallet.createAddress('test', 'default');
+  // API call: walletClient.createAddress('test', 'default')
+  const receive = await walletClient.request(
+    'POST',
+    '/wallet/test/address',
+    {account: 'default'}
+  );
   await fundWallet(wdb, receive.address);
 
-  const balance = await wallet.getBalance('test', 'default');
+  // API call: walletClient.getBalance('test', 'default')
+  const balance = await walletClient.request(
+    'GET',
+    '/wallet/test/balance',
+    {account: 'default'}
+  );
 
   console.log('Balance:');
   console.log(balance);
 
-  const acct = await wallet.createAccount('test', 'foo');
+  // API call: walletClient.createAccount('test', 'foo')
+  const acct = await walletClient.request('PUT', '/wallet/test/account/foo');
 
   console.log('Account:');
   console.log(acct);
@@ -105,12 +129,15 @@ async function callNodeApi() {
   console.log('Sent TX:');
   console.log(hash);
 
-  const tx = await wallet.getTX(hash);
+  // API call: walletClient.getTX('test', hash)
+  const tx = await walletClient.request('GET', `/wallet/test/tx/${hash}`);
 
   console.log('Sent TX details:');
   console.log(tx);
 
   await callNodeApi();
+  await walletClient.close();
+  await node.close();
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);
