@@ -61,7 +61,7 @@ const config = {
   },
   'output': {
     value: true,
-    valid: a => (a === 'json' || a === 'bench'),
+    valid: a => (a === 'json' || a === 'bench' || a === 'benchjson'),
     fallback: 'bench'
   },
   'unsafe': {
@@ -139,6 +139,8 @@ const distribution = [
 
   if (settings.output === 'bench') {
     output = new BenchOutput();
+  } else if (settings.output === 'benchjson') {
+    output = new BenchJSONOutput();
   } else if (settings.output === 'json') {
     output = new JSONOutput();
   }
@@ -235,8 +237,8 @@ class JSONOutput {
       process.stdout.write(',');
 
     const since = [start[0] - this.time[0], start[1] - this.time[1]];
-    const smicro = (since[0] * 1000000) + (since[1] / 1000);
-    const emicro = (elapsed[0] * 1000000) + (elapsed[1] / 1000);
+    const smicro = hrToMicro(since);
+    const emicro = hrToMicro(elapsed);
 
     process.stdout.write(`{"type":"${type}","start":${smicro},`);
     process.stdout.write(`"elapsed":${emicro},"length":${length},`);
@@ -267,7 +269,7 @@ class BenchOutput {
   }
 
   result(type, start, elapsed, length) {
-    const micro = (elapsed[0] * 1000000) + (elapsed[1] / 1000);
+    const micro = hrToMicro(elapsed);
 
     if (!this.results[type])
       this.results[type] = {};
@@ -325,40 +327,109 @@ class BenchOutput {
       this.stdout.write(`${'-'.repeat(85)}\n`);
 
       for (const length in this.results[type]) {
-        const times = this.results[type][length];
-
-        times.sort((a, b) => a - b);
-
-        let min = Infinity;
-        let max = 0;
-
-        let total = 0;
-
-        for (const micro of times) {
-          if (micro < min)
-            min = micro;
-
-          if (micro > max)
-            max = micro;
-
-          total += micro;
-        }
-
-        const average = total / times.length;
-        const median = times[times.length / 2 | 0];
+        const cal = calculate(this.results[type][length]);
 
         this.stdout.write(`${format(length)}`);
-        this.stdout.write(`${format(times.length.toString())}`);
-        this.stdout.write(`${format(min)}`);
-        this.stdout.write(`${format(max)}`);
-        this.stdout.write(`${format(average)}`);
-        this.stdout.write(`${format(median)}`);
+        this.stdout.write(`${format(cal.operations.toString())}`);
+        this.stdout.write(`${format(cal.min)}`);
+        this.stdout.write(`${format(cal.max)}`);
+        this.stdout.write(`${format(cal.average)}`);
+        this.stdout.write(`${format(cal.median)}`);
         this.stdout.write('\n');
       }
       this.stdout.write('\n');
     }
     this.stdout.write('\n');
   }
+}
+
+class BenchJSONOutput {
+  constructor() {
+    this.time = null;
+    this.results = {};
+    this.stdout = process.stdout;
+  }
+
+  start() {
+    this.time = process.hrtime();
+  }
+
+  result(type, start, elapsed, length) {
+    const micro = hrToMicro(elapsed);
+
+    if (!this.results[type])
+      this.results[type] = {};
+
+    if (!this.results[type][length])
+      this.results[type][length] = [];
+
+    this.results[type][length].push(micro);
+  }
+
+  end() {
+    const report = {
+      summary: [],
+      time: hrToMicro(process.hrtime(this.time)),
+      elapsed: 0
+    };
+
+    for (const type in this.results) {
+      for (const length in this.results[type]) {
+        const cal = calculate(this.results[type][length]);
+
+        report.elapsed += cal.total;
+
+        report.summary.push({
+          type: type,
+          length: length,
+          operations: cal.operations,
+          min: cal.min,
+          max: cal.max,
+          average: cal.average,
+          median: cal.median
+        });
+      }
+    }
+
+    this.stdout.write(JSON.stringify(report, null, 2));
+    this.stdout.write('\n');
+  }
+}
+
+function hrToMicro(time) {
+  return (time[0] * 1000000) + (time[1] / 1000);
+}
+
+function calculate(times) {
+  times.sort((a, b) => a - b);
+
+  let min = Infinity;
+  let max = 0;
+
+  let total = 0;
+
+  for (const micro of times) {
+    if (micro < min)
+      min = micro;
+
+    if (micro > max)
+      max = micro;
+
+    total += micro;
+  }
+
+  const average = total / times.length;
+  const median = times[times.length / 2 | 0];
+  const operations = times.length;
+
+  return {
+    total,
+    operations,
+    min,
+    max,
+    average,
+    median
+  };
 }
 
 function processArgs(argv, config) {
