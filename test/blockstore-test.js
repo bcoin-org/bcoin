@@ -4,6 +4,7 @@
 'use strict';
 
 const Logger = require('blgr');
+const bio = require('bufio');
 const assert = require('./util/assert');
 const common = require('./util/common');
 const {resolve} = require('path');
@@ -425,6 +426,54 @@ describe('BlockStore', function() {
         const expect = blocks[i];
         const block = await store.read(expect.hash);
         assert.bufferEqual(block, expect.block);
+      }
+    });
+
+    it('will recover from interrupt during block write', async () => {
+      {
+        const block = random.randomBytes(128);
+        const hash = random.randomBytes(32);
+        await store.write(hash, block);
+
+        const block2 = await store.read(hash);
+        assert.bufferEqual(block2, block);
+      }
+
+      // Manually insert a partially written block to the
+      // end of file as would be the case of an untimely
+      // interrupted write of a block. The file record
+      // would not be updated to include the used bytes and
+      // thus this data should be overwritten.
+      {
+        const filepath = store.filepath(0);
+
+        const fd = await fs.open(filepath, 'a');
+
+        const bw = bio.write(8);
+        bw.writeU32(store.network.magic);
+        bw.writeU32(73);
+        const magic = bw.render();
+
+        const failblock = random.randomBytes(73);
+
+        const mwritten = await fs.write(fd, magic, 0, 8);
+        const bwritten = await fs.write(fd, failblock, 0, 73);
+
+        await fs.close(fd);
+
+        assert.equal(mwritten, 8);
+        assert.equal(bwritten, 73);
+      }
+
+      // Now check that this block has the correct position
+      // in the file and that it can be read correctly.
+      {
+        const block = random.randomBytes(128);
+        const hash = random.randomBytes(32);
+        await store.write(hash, block);
+
+        const block2 = await store.read(hash);
+        assert.bufferEqual(block2, block);
       }
     });
 
