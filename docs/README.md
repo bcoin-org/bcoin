@@ -23,7 +23,6 @@ with minimal configuration.
 - [SPV Sync](Examples/spv-sync-wallet.js) - A transaction matching the SPV node's bloom filter is broadcast by a minimal full node to the SPV node.
 - [Plugin Example](Examples/peers-plugin.js) - Demonstrates the `plugin` feature of bcoin's `node` object.
 - [Client API Usage](Examples/client-api.js) - Demonstrates usage of the node and wallet API.
-- [Miner with WorkerPool](Examples/miner-configs.js) - Creates a regtest `chain` and `miner`, which mines a block using workers.
 - [Create and Sign TX](Examples/create-sign-tx.js) - Demonstrates how to use `mtx` and `keyring` modules to sign a transaction.
 - [Get Transaction from Chain](Examples/get-tx-from-chain.js) - Connects to live testnet network and syncs the first 1000 blocks with tx indexing active.
 - [Create Watch Only Wallet](Examples/watch-only-wallet.js) - Imports an `xpub` into a new watch-only wallet that can derive addresses.
