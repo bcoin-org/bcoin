@@ -1,5 +1,8 @@
-Bcoin ships with [bclient](https://github.com/bcoin-org/bclient) as its default client
-to the [API](https://bcoin.io/api-docs) for command line access.
+# Node and wallet CLI
+
+Bcoin ships with [bclient](https://github.com/bcoin-org/bclient) as its
+default client to the [API](https://bcoin.io/api-docs) for command
+line access.
 
 ## Configuration
 
@@ -17,7 +20,8 @@ With command-line arguments:
 $ bcoin-cli --network=testnet --api-key=hunter2 info
 ```
 
-You can also use `~/.bcoin/bcoin.conf` for configuration options, see [Configuration](Configuration.md) for the full details.
+You can also use `~/.bcoin/bcoin.conf` for configuration options,
+see [Configuration](configuration.md) for the full details.
 
 ## Examples
 
