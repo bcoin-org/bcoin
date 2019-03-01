@@ -9,6 +9,7 @@ const util = require('../lib/utils/util');
 const hash256 = require('bcrypto/lib/hash256');
 const random = require('bcrypto/lib/random');
 const WalletDB = require('../lib/wallet/walletdb');
+const FullNode = require('../lib/node/fullnode');
 const WorkerPool = require('../lib/workers/workerpool');
 const Address = require('../lib/primitives/address');
 const MTX = require('../lib/primitives/mtx');
@@ -18,6 +19,7 @@ const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
+const policy = require('../lib/protocol/policy');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -32,6 +34,13 @@ const PUBKEY = 'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhaw'
 const enabled = true;
 const workers = new WorkerPool({ enabled });
 const wdb = new WalletDB({ workers });
+const node = new FullNode({
+  memory: true,
+  apiKey: 'foo',
+  network: 'regtest',
+  workers: true,
+  plugins: [require('../lib/wallet/plugin')]
+});
 
 let currentWallet = null;
 let importedWallet = null;
@@ -229,18 +238,36 @@ async function testP2SH(witness, nesting) {
   assert.strictEqual(tx.getFee(view), 10000);
 }
 
+async function testSweepTx(wallet, fullTxCount) {
+  const txs = [];
+  for (let i = 1; i <= fullTxCount; i++) {
+    const funding = new MTX();
+    funding.addInput(dummyInput());
+    while(funding.getWeight() < policy.MAX_TX_WEIGHT) {
+      const value = 1000 * i;
+      funding.addOutput(await wallet.receiveAddress(), value);
+    }
+    // knock off last output that put tx over limit
+    funding.outputs.shift();
+    txs.push(funding.toTX());
+  }
+  return txs;
+}
+
 describe('Wallet', function() {
   this.timeout(process.browser ? 20000 : 5000);
 
   before(async () => {
     await wdb.open();
+    await node.open();
   });
 
   after(async () => {
     await wdb.close();
+    await node.close();
   });
 
-  it('should open walletdb', () => {
+  it('should open walletdb and wallet node', async () => {
     consensus.COINBASE_MATURITY = 0;
   });
 
@@ -318,6 +345,89 @@ describe('Wallet', function() {
     assert(tx.toRaw().length <= maxSize);
     assert(tx.verify());
   });
+
+  it('should sweep and send coins',  async function () {
+    this.timeout(20000);
+    const fullTxCount = 3;
+    const wallet = await wdb.create();
+    const receiveSweep = await wdb.create();
+
+    // create dummy txs that send as many small utxos
+    // to our wallet as we can fit
+    const txs = await testSweepTx(wallet, fullTxCount);
+
+    await wdb.addBlock(nextBlock(wdb), txs);
+    // confirm wallet is fully funded
+    const coins = await wallet.getCoins();
+    assert(coins.length);
+
+    // set a threshold coin value where the largest coins
+    // won't get swept
+    const threshold = 1000 * fullTxCount;
+    // generate some addresses to receive the sweep into
+    const addresses = [];
+    for (let i = 0; i <= fullTxCount; i++)
+      addresses.push(await receiveSweep.receiveAddress());
+
+    await wallet.sweep({ rate: 500, threshold, addresses });
+    const sweptCoins = await receiveSweep.getCoins();
+    const unsweptCoins = await wallet.getCoins();
+
+    assert(
+      sweptCoins.length,
+      'Receiving addresses did not get swept funds'
+    );
+    assert(
+      (sweptCoins.length + unsweptCoins.length) < coins.length,
+      `total coins in receiving wallet and original wallet should
+      be fewer than coin count before sweep`
+    );
+    assert(
+      sweptCoins[0].value >= threshold,
+      'Coins larger than threshold should not be swept'
+    );
+
+    // sweep whatever coins are left without threshold
+    // back to same wallet
+    await wallet.sweep({ rate: 500 });
+    const lastCoins = await wallet.getCoins();
+    assert(
+      lastCoins.length < unsweptCoins.length &&
+      lastCoins[0].value > unsweptCoins[0].value,
+      'Didn\'t sweep all coins');
+  });
+
+  it('should sweep with rpc call', async () => {
+    const {wdb, rpc} = node.require('walletdb');
+    const wallet = await wdb.create();
+    const txs = await testSweepTx(wallet, 1);
+
+    await wdb.addBlock(nextBlock(wdb), txs);
+    // confirm wallet is fully funded
+    let coins = await wallet.getCoins();
+    assert(coins.length);
+    const initialLength = coins.length;
+
+    // select the wallet to operate on w/ rpc
+    await rpc.call({
+      method: 'selectwallet',
+      params: [wallet.id]
+    });
+    const address = await wallet.receiveAddress();
+    await rpc.call({
+      method: 'sweep',
+      params: ['', { feeRate: 0.000005, account: -1, addresses: [address] }]
+    });
+    coins = await wallet.getCoins();
+
+    // this doesn't really test if coins were
+    // efficiently swept but does assert the goal
+    // of reducing coin count
+    assert(
+      initialLength > coins.length,
+      'Coin count should decrease after sweep'
+    );
+  }).timeout(10000);
 
   it('should handle missed txs', async () => {
     const alice = await wdb.create();
