@@ -76,7 +76,7 @@ describe('KeyRing', function() {
       compressed.witness = false;
     });
 
-    it('should get uncompressed program', () => {
+    it('should get program from uncompressed public key', () => {
       const op = Buffer.from(
         'b5bd079c4d57cc7fc28ecf8213a6b791625b8183', 'hex');
       const script = Script.fromOptions({
@@ -91,7 +91,7 @@ describe('KeyRing', function() {
         uncompressed.getProgram());
     });
 
-    it('should get program from uncompressed script', () => {
+    it('should get program from script from uncompressed public key', () => {
       const keyring = KeyRing.fromOptions({
         witness: true,
         key: uncompressed.privateKey,
@@ -112,7 +112,7 @@ describe('KeyRing', function() {
       assert.deepStrictEqual(script, keyring.getProgram());
     });
 
-    it('should get compressed program', () => {
+    it('should get program from compressed public key', () => {
       const op = Buffer.from(
         '9a1c78a507689f6f54b847ad1cef1e614ee23f1e', 'hex');
       const script = Script.fromOptions({
@@ -127,7 +127,7 @@ describe('KeyRing', function() {
         compressed.getProgram());
     });
 
-    it('should get program from compressed script', () => {
+    it('should get program from script from compressed public key', () => {
       const keyring = KeyRing.fromOptions({
         witness: true,
         key: compressed.privateKey,
