@@ -1,4 +1,4 @@
-## Notes on Design
+# Design
 
 Bcoin is thoroughly event driven. It has a fullnode object, but Bcoin was
 specifically designed so the mempool, blockchain, p2p pool, and wallet database
@@ -21,23 +21,23 @@ http client -> tx -> http server -> mempool
 
 Not only does the loose coupling make testing easier, it ensures people can
 utilize bcoin for many use cases. Learn more about specific events and
-event emitters at http://bcoin.io/guides/events.html
+event emitters at https://bcoin.io/guides/events.html
 
-### Performance
+## Performance
 
-Non-javscript people reading this may think using javascript isn't a wise
+Non-javscript people reading this may think using JavaScript isn't a wise
 decision.
 
-#### Javascript
+### JavaScript
 
-Javascript is inherently slow due to how dynamic it is, but modern JITs have
+JavaScript is inherently slow due to how dynamic it is, but modern JITs have
 solved this issue using very clever optimization and dynamic recompilation
 techniques. v8 in some cases can [rival the speed of C++][v8] if the code is
 well-written.
 
-#### Concurrency
+### Concurrency
 
-Bcoin runs in node.js, so the javascript code is limited to one thread. We
+Bcoin runs in node.js, so the JavaScript code is limited to one thread. We
 solve this limitation by spinning up persistent worker processes for
 transaction verification (webworkers when in the browser). This ensures the
 blockchain and mempool do not block the master process very much. It also means
@@ -55,13 +55,13 @@ Bcoin uses [secp256k1-node][secp256k1-node] for ECDSA verification, which is a
 node.js binding to Pieter Wuille's blazingly fast [libsecp256k1][libsecp256k1]
 library.
 
-In the browser, bcoin will use [elliptic][elliptic], the fastest javascript
+In the browser, bcoin will use [elliptic][elliptic], the fastest JavaScript
 ECDSA implementation. It will obviously never beat C and hand-optimized
 assembly, but it's still usable.
 
-#### Benefits
+### Benefits
 
-The real feature of javascript is that your code will run almost anywhere. With
+The real feature of JavaScript is that your code will run almost anywhere. With
 bcoin, we now have a full node that will run on almost any browser, on laptops,
 on servers, on smartphones, on most devices you can imagine, even by simply
 visiting a webpage.

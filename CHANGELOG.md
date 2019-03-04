@@ -1,4 +1,4 @@
-# Bcoin Release Notes & Changelog
+# Bcoin release notes & changelog
 
 ## v2.0.0
 
@@ -136,7 +136,7 @@ prefix directory. For example `--prefix ~/.bcoin_whatever --network testnet`
 will create a directory structure of `~/.bcoin_whatever/testnet/` instead of
 `~/.bcoin_whatever`. Please update your directory structure accordingly.
 
-### Configuration Changes
+### Configuration changes
 
 Wallet and Node are now separated and use different persistent configuration files.
 Some configuration options have moved to `wallet.conf`, which is stored in the prefix
@@ -168,14 +168,14 @@ Example using CLI options:
 Example using ENV:
 `BCOIN_NETWORK=simnet BCOIN_HTTP_HOST=0.0.0.0 BCOIN_WALLET_HTTP_HOST=0.0.0.0 BCOIN_WALLET_API_KEY=hunter2 BCOIN_WALLET_WALLET_AUTH=true ./bin/node`
 
-### Bcoin Client Changes
+### Bcoin client changes
 
 The `bcoin cli` interface has been deprecated and is now replaced with a
 separate tool: `bcoin-cli`. `bcoin wallet` has also been deprecated and is
 replaced with `bwallet-cli`. Both `bcoin-cli` and `bwallet-cli` can be
 installed with the `bclient` package in npm.
 
-### Wallet API Changes
+### Wallet API changes
 
 The main wallet API changes have to do with changes in the structure of the
 HTTP server itself. The bcoin wallet HTTP server will now always listen on it's
@@ -206,7 +206,7 @@ example, `GET /backup?token=xxx...`. It also allows access to any wallet on the
 HTTP or websocket layer (websockets who use the admin token can join a wallet
 of `*`, which notifies them of events on _all_ wallets).
 
-### Notable Changes
+### Notable changes
 
 - __wallet/http__ - A `conflict` event will be correctly emitted for _all_
   double spends.
@@ -227,18 +227,18 @@ of `*`, which notifies them of events on _all_ wallets).
 
 ## v1.0.0-beta.15
 
-### Notable Changes
+### Notable changes
 
 ## v1.0.0-beta.14
 
-### Notable Changes
+### Notable changes
 
 - __pkg__ - Ignored `bcoin*` files in npmignore have been removed. This fixes
   the npm install.
 
 ## v1.0.0-beta.13
 
-### Notable Changes
+### Notable changes
 
 - __config__ - Options using megabyte units are now calculated properly again
   (6182df044228f9215938e7d314435f3f2640acca,
@@ -356,7 +356,7 @@ Becomes this:
 
 ## v1.0.0-beta.12
 
-### Notable Changes
+### Notable changes
 
 - __networks__ - Fixed simnet wpkh prefix.
 - __http__ - `wallet join` without wallet auth has been fixed for responses.
@@ -364,14 +364,14 @@ Becomes this:
 
 ## v1.0.0-beta.11
 
-### Notable Changes
+### Notable changes
 
 - __networks__ - Simnet params have been fixed.
 - __cli__ - Chain reset call has been fixed.
 
 ## v1.0.0-beta.10
 
-### Notable Changes
+### Notable changes
 
 - __wallet/http__ - Create wallet route modified
   (`POST /wallet/:id?` changed to `PUT /wallet/:id`).
@@ -407,7 +407,7 @@ Becomes this:
 
 ## v1.0.0-beta.9
 
-### Notable Changes
+### Notable changes
 
 - __mempool__ - Trimming now removes dependency chains by cumulative fee rate.
 - __mempool__ - Cumulative descendant fees are now updated properly when
@@ -419,14 +419,14 @@ Becomes this:
 
 ## v1.0.0-beta.8
 
-### Notable Changes
+### Notable changes
 
 - __mempool__ - Fixed critical fee estimator bug causing throwing in the
   mempool.
 
 ## v1.0.0-beta.7
 
-### Notable Changes
+### Notable changes
 
 - __http__ - Always display spent coins in tx routes (e.g. `/tx/[txid]`).
 - __mempool__ - An on-disk mempool is now exposed via `--persistent-mempool`
@@ -438,20 +438,20 @@ Becomes this:
 
 ## v1.0.0-beta.6
 
-### Notable Changes
+### Notable changes
 
 - __http__ - Better bitcoind compatability for JSON-RPC.
 
 ## v1.0.0-beta.5
 
-### Notable Changes
+### Notable changes
 
 - __miner__ - Better fee rate comparisons.
 - __deps__ - Upgrade deps, fix build on arm and windows.
 
 ## v1.0.0-beta.4
 
-### Notable Changes
+### Notable changes
 
 - __miner__ - Optimized TX sorting.
 - __rpc__ - Improved getblocktemplate to provide more
@@ -459,21 +459,21 @@ Becomes this:
 
 ## v1.0.0-beta.3
 
-### Notable Changes
+### Notable changes
 
 - __miner__ - Improved fee rate sorting.
 - __rpc__ - Fix incompatibilities in rpc api (getblocktemplate & submitblock).
 
 ## v1.0.0-beta.2
 
-### Notable Changes
+### Notable changes
 
 - __pool__ - Increase max header chain failures to 500 (prevents the initial
   sync from reverting to getblocks so frequently).
 
 ## v1.0.0-beta.1
 
-### Notable Changes
+### Notable changes
 
 - __wsproxy__: Fixed proof of work handling in websocket proxy (43c491b).
 - __chain__: Optimized MTP and network target calculations (1e07d1b).
@@ -485,6 +485,6 @@ Becomes this:
 
 ## v1.0.0-beta
 
-### Notable Changes
+### Notable changes
 
 - Initial tagged release.

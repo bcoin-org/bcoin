@@ -36,13 +36,14 @@ $ npm install
 $ ./bin/bcoin
 ```
 
-See the [Beginner's Guide][guide] for more in-depth installation instructions.
+See the [Getting started][guide] guide for more in-depth installation
+instructions, including verifying releases.
 
 ## Documentation
 
-- API Docs: https://bcoin.io/docs/
-- REST Docs: https://bcoin.io/api-docs/
-- Docs: [docs/](docs/README.md)
+- General docs: [docs/](docs/README.md)
+- Wallet and node API docs: https://bcoin.io/api-docs/
+- Library API docs: https://bcoin.io/docs/
 
 ## Support
 
@@ -68,10 +69,10 @@ all code is your original work. `</legalese>`
 See LICENSE for more info.
 
 [purse]: https://purse.io
-[guide]: https://github.com/bcoin-org/bcoin/blob/master/docs/Beginner's-Guide.md
+[guide]: docs/getting-started.md
 [freenode]: https://freenode.net/
 [irc]: irc://irc.freenode.net/bcoin
-[changelog]: https://github.com/bcoin-org/bcoin/blob/master/CHANGELOG.md
+[changelog]: CHANGELOG.md
 
 [coverage-status-img]: https://codecov.io/gh/bcoin-org/bcoin/badge.svg?branch=master
 [coverage-status-url]: https://codecov.io/gh/bcoin-org/bcoin?branch=master
