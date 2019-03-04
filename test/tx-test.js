@@ -22,6 +22,7 @@ const KeyRing = require('../lib/primitives/keyring');
 const Address = require('../lib/primitives/address');
 const BufferWriter = require('bufio').BufferWriter;
 const common = require('./util/common');
+const nodejsUtil = require('util');
 
 // test files: https://github.com/bitcoin/bitcoin/tree/master/src/test/data
 const validTests = require('./data/core-data/tx-valid.json');
@@ -1111,5 +1112,14 @@ describe('TX', function() {
     const value2 = mtx2.getInputValue();
 
     assert.strictEqual(value1, value2);
+  });
+
+  it('should inspect TX', () => {
+    const tx = new TX();
+    const fmt = nodejsUtil.format(tx);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('hash'));
+    assert(fmt.includes('version'));
+    assert(fmt.includes('locktime'));
   });
 });

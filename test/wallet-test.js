@@ -19,6 +19,7 @@ const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
 const Wallet = require('../lib/wallet/wallet');
+const nodejsUtil = require('util');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -828,6 +829,30 @@ describe('Wallet', function() {
     assert.strictEqual(account.accountIndex, 1);
     assert.strictEqual(account.m, 1);
     assert.strictEqual(account.n, 1);
+  });
+
+  it('should inspect Wallet', async () => {
+    const wallet = await wdb.create();
+
+    const fmt = nodejsUtil.format(wallet);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('master'));
+    assert(fmt.includes('network'));
+    assert(fmt.includes('accountDepth'));
+  });
+
+  it('should inspect Account', async () => {
+    const wallet = await wdb.create();
+    const account = await wallet.createAccount({
+      name: 'foo'
+    });
+
+    const fmt = nodejsUtil.format(account);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('name'));
+    assert(fmt.includes('foo'));
+    assert(fmt.includes('initialized'));
+    assert(fmt.includes('lookahead'));
   });
 
   it('should fail to create duplicate account', async () => {

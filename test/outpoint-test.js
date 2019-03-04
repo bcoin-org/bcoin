@@ -7,6 +7,7 @@ const assert = require('./util/assert');
 const common = require('./util/common');
 const util = require('../lib/utils/util');
 const TX = require('../lib/primitives/tx');
+const nodejsUtil = require('util');
 const OUTPOINT_SIZE = 36;
 
 describe('Outpoint', () => {
@@ -115,5 +116,14 @@ describe('Outpoint', () => {
 
     assert.bufferEqual(fromTX.hash, tx.hash());
     assert.strictEqual(fromTX.index, index);
+  });
+
+  it('should inspect Outpoint', () => {
+    const outpoint = new Outpoint();
+    const fmt = nodejsUtil.format(outpoint);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('Outpoint'));
+    assert(fmt.includes(
+      '0000000000000000000000000000000000000000000000000000000000000000'));
   });
 });
