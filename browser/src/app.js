@@ -2,8 +2,11 @@
 'use strict';
 
 const Logger = require('blgr');
-const { FullNode, Amount, util } = require('bcoin');
+const { FullNode, Amount, util, wallet } = require('bcoin');
+const { plugin } = wallet;
+
 const ProxySocket = require('./proxysocket');
+const format = require('./format');
 
 const body = document.getElementsByTagName('body')[0];
 const log = document.getElementById('log');
@@ -26,7 +29,7 @@ const logger = new Logger({
 
 logger.writeConsole = function writeConsole(level, module, args) {
   const name = Logger.levelsByVal[level];
-  const msg = this.fmt(args, false);
+  const msg = format(args, false);
 
   if (++scrollback > 1000) {
     log.innerHTML = '';
@@ -56,8 +59,8 @@ const node = new FullNode({
   hash: true,
   query: true,
   prune: true,
-  network: 'main',
-  memory: false,
+  network: 'testnet',
+  memory: true,
   coinCache: 30,
   logConsole: true,
   workers: true,
@@ -68,7 +71,7 @@ const node = new FullNode({
     return ProxySocket.connect(`${proto}://${hostname}`, port, host);
   },
   logger: logger,
-  plugins: []
+  plugins: [plugin]
 });
 
 const { wdb } = node.require('walletdb');

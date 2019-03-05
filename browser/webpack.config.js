@@ -14,10 +14,10 @@ module.exports = {
     path: __dirname,
     filename: '[name].js'
   },
-  // resolve: {
-  //   modules: ['node_modules']
-  //   extensions: ['-browser.js', '.js', '.json']
-  // },
+  resolve: {
+    modules: ['node_modules'],
+    extensions: ['-browser.js', '.js', '.json']
+  },
   plugins: [
     new webpack.DefinePlugin({
       'process.env.BCOIN_NETWORK':
