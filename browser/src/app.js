@@ -60,7 +60,7 @@ const node = new FullNode({
   query: true,
   prune: true,
   network: 'testnet',
-  memory: true,
+  memory: false,
   coinCache: 30,
   logConsole: true,
   workers: true,
