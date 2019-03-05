@@ -2,10 +2,7 @@
 'use strict';
 
 const Logger = require('blgr');
-const FullNode = require('../../lib/node/fullnode');
-const Amount = require('../../lib/btc/amount');
-const plugin = require('../../lib/wallet/plugin');
-const util = require('../../lib/utils/util');
+const { FullNode, Amount, util  } = require('bcoin');
 const ProxySocket = require('./proxysocket');
 
 const body = document.getElementsByTagName('body')[0];
@@ -71,7 +68,7 @@ const node = new FullNode({
     return ProxySocket.connect(`${proto}://${hostname}`, port, host);
   },
   logger: logger,
-  plugins: [plugin]
+  plugins: []
 });
 
 const {wdb} = node.require('walletdb');
