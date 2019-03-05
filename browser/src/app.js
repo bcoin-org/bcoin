@@ -2,7 +2,7 @@
 'use strict';
 
 const Logger = require('blgr');
-const { FullNode, Amount, util  } = require('bcoin');
+const { FullNode, Amount, util } = require('bcoin');
 const ProxySocket = require('./proxysocket');
 
 const body = document.getElementsByTagName('body')[0];
@@ -71,7 +71,7 @@ const node = new FullNode({
   plugins: []
 });
 
-const {wdb} = node.require('walletdb');
+const { wdb } = node.require('walletdb');
 wdb.options.witness = true;
 
 window.onunhandledrejection = function onunhandledrejection(event) {
@@ -233,7 +233,7 @@ async function formatWallet(wallet) {
 }
 
 async function _formatWallet(wallet) {
-  const {key, mnemonic} = wallet.master.toJSON(node.network, true);
+  const { key, mnemonic } = wallet.master.toJSON(node.network, true);
   const account = await wallet.getAccount('default');
   const receive = account.receiveAddress();
   const nested = account.nestedAddress();
