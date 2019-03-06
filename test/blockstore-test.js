@@ -26,6 +26,7 @@ const {
 } = require('../lib/blockstore');
 
 const layout = require('../lib/blockstore/layout');
+const {types} = require('../lib/blockstore/common');
 
 const {
   BlockRecord,
@@ -281,7 +282,7 @@ describe('BlockStore', function() {
       it('will fail with length above file max', async () => {
         let err = null;
         try {
-          await store.allocate(1025);
+          await store.allocate(types.BLOCK, 1025);
         } catch (e) {
           err = e;
         }
@@ -292,45 +293,50 @@ describe('BlockStore', function() {
 
     describe('filepath', function() {
       it('will give correct path (0)', () => {
-        const filepath = store.filepath(0);
+        const filepath = store.filepath(types.BLOCK, 0);
         assert.equal(filepath, '/tmp/.bcoin/blocks/blk00000.dat');
       });
 
       it('will give correct path (1)', () => {
-        const filepath = store.filepath(7);
+        const filepath = store.filepath(types.BLOCK, 7);
         assert.equal(filepath, '/tmp/.bcoin/blocks/blk00007.dat');
       });
 
       it('will give correct path (2)', () => {
-        const filepath = store.filepath(23);
+        const filepath = store.filepath(types.BLOCK, 23);
         assert.equal(filepath, '/tmp/.bcoin/blocks/blk00023.dat');
       });
 
       it('will give correct path (3)', () => {
-        const filepath = store.filepath(456);
+        const filepath = store.filepath(types.BLOCK, 456);
         assert.equal(filepath, '/tmp/.bcoin/blocks/blk00456.dat');
       });
 
       it('will give correct path (4)', () => {
-        const filepath = store.filepath(8999);
+        const filepath = store.filepath(types.BLOCK, 8999);
         assert.equal(filepath, '/tmp/.bcoin/blocks/blk08999.dat');
       });
 
       it('will give correct path (5)', () => {
-        const filepath = store.filepath(99999);
+        const filepath = store.filepath(types.BLOCK, 99999);
         assert.equal(filepath, '/tmp/.bcoin/blocks/blk99999.dat');
       });
 
       it('will fail over max size', () => {
         let err = null;
         try {
-          store.filepath(100000);
+          store.filepath(types.BLOCK, 100000);
         } catch (e) {
           err = e;
         }
 
         assert(err);
         assert.equal(err.message, 'File number too large.');
+      });
+
+      it('will give undo type', () => {
+        const filepath = store.filepath(types.UNDO, 99999);
+        assert.equal(filepath, '/tmp/.bcoin/blocks/blu99999.dat');
       });
     });
   });
@@ -362,6 +368,17 @@ describe('BlockStore', function() {
       await store.write(hash, block1);
 
       const block2 = await store.read(hash);
+
+      assert.bufferEqual(block1, block2);
+    });
+
+    it('will write and read block undo coins', async () => {
+      const block1 = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+
+      await store.writeUndo(hash, block1);
+
+      const block2 = await store.readUndo(hash);
 
       assert.bufferEqual(block1, block2);
     });
@@ -412,9 +429,9 @@ describe('BlockStore', function() {
         assert.bufferEqual(block2, block);
       }
 
-      const first = await fs.stat(store.filepath(0));
-      const second = await fs.stat(store.filepath(1));
-      const third = await fs.stat(store.filepath(2));
+      const first = await fs.stat(store.filepath(types.BLOCK, 0));
+      const second = await fs.stat(store.filepath(types.BLOCK, 1));
+      const third = await fs.stat(store.filepath(types.BLOCK, 2));
       assert.equal(first.size, 952);
       assert.equal(second.size, 952);
       assert.equal(third.size, 272);
@@ -425,6 +442,35 @@ describe('BlockStore', function() {
       for (let i = 0; i < 16; i++) {
         const expect = blocks[i];
         const block = await store.read(expect.hash);
+        assert.bufferEqual(block, expect.block);
+      }
+    });
+
+    it('will allocate new files with block undo coins', async () => {
+      const blocks = [];
+
+      for (let i = 0; i < 16; i++) {
+        const block = random.randomBytes(128);
+        const hash = random.randomBytes(32);
+        blocks.push({hash, block});
+        await store.writeUndo(hash, block);
+        const block2 = await store.readUndo(hash);
+        assert.bufferEqual(block2, block);
+      }
+
+      const first = await fs.stat(store.filepath(types.UNDO, 0));
+      const second = await fs.stat(store.filepath(types.UNDO, 1));
+      const third = await fs.stat(store.filepath(types.UNDO, 2));
+      assert.equal(first.size, 952);
+      assert.equal(second.size, 952);
+      assert.equal(third.size, 272);
+
+      const len = first.size + second.size + third.size - (8 * 16);
+      assert.equal(len, 128 * 16);
+
+      for (let i = 0; i < 16; i++) {
+        const expect = blocks[i];
+        const block = await store.readUndo(expect.hash);
         assert.bufferEqual(block, expect.block);
       }
     });
@@ -445,7 +491,7 @@ describe('BlockStore', function() {
       // would not be updated to include the used bytes and
       // thus this data should be overwritten.
       {
-        const filepath = store.filepath(0);
+        const filepath = store.filepath(types.BLOCK, 0);
 
         const fd = await fs.open(filepath, 'a');
 
@@ -522,6 +568,20 @@ describe('BlockStore', function() {
       assert.strictEqual(exists, true);
     });
 
+    it('will check if block undo coins exists (false)', async () => {
+      const hash = random.randomBytes(32);
+      const exists = await store.hasUndo(hash);
+      assert.strictEqual(exists, false);
+    });
+
+    it('will check if block undo coins exists (true)', async () => {
+      const block = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+      await store.writeUndo(hash, block);
+      const exists = await store.hasUndo(hash);
+      assert.strictEqual(exists, true);
+    });
+
     it('will prune blocks', async () => {
       const hashes = [];
       for (let i = 0; i < 16; i++) {
@@ -531,9 +591,9 @@ describe('BlockStore', function() {
         await store.write(hash, block);
       }
 
-      const first = await fs.stat(store.filepath(0));
-      const second = await fs.stat(store.filepath(1));
-      const third = await fs.stat(store.filepath(2));
+      const first = await fs.stat(store.filepath(types.BLOCK, 0));
+      const second = await fs.stat(store.filepath(types.BLOCK, 1));
+      const third = await fs.stat(store.filepath(types.BLOCK, 2));
 
       const len = first.size + second.size + third.size - (8 * 16);
       assert.equal(len, 128 * 16);
@@ -543,16 +603,50 @@ describe('BlockStore', function() {
         assert.strictEqual(pruned, true);
       }
 
-      assert.equal(await fs.exists(store.filepath(0)), false);
-      assert.equal(await fs.exists(store.filepath(1)), false);
-      assert.equal(await fs.exists(store.filepath(2)), false);
+      assert.equal(await fs.exists(store.filepath(types.BLOCK, 0)), false);
+      assert.equal(await fs.exists(store.filepath(types.BLOCK, 1)), false);
+      assert.equal(await fs.exists(store.filepath(types.BLOCK, 2)), false);
 
       for (let i = 0; i < 16; i++) {
         const exists = await store.has(hashes[i]);
         assert.strictEqual(exists, false);
       }
 
-      const exists = await store.db.has(layout.f.encode(0));
+      const exists = await store.db.has(layout.f.encode(types.BLOCK, 0));
+      assert.strictEqual(exists, false);
+    });
+
+    it('will prune block undo coins', async () => {
+      const hashes = [];
+      for (let i = 0; i < 16; i++) {
+        const block = random.randomBytes(128);
+        const hash = random.randomBytes(32);
+        hashes.push(hash);
+        await store.writeUndo(hash, block);
+      }
+
+      const first = await fs.stat(store.filepath(types.UNDO, 0));
+      const second = await fs.stat(store.filepath(types.UNDO, 1));
+      const third = await fs.stat(store.filepath(types.UNDO, 2));
+
+      const len = first.size + second.size + third.size - (8 * 16);
+      assert.equal(len, 128 * 16);
+
+      for (let i = 0; i < 16; i++) {
+        const pruned = await store.pruneUndo(hashes[i]);
+        assert.strictEqual(pruned, true);
+      }
+
+      assert.equal(await fs.exists(store.filepath(types.UNDO, 0)), false);
+      assert.equal(await fs.exists(store.filepath(types.UNDO, 1)), false);
+      assert.equal(await fs.exists(store.filepath(types.UNDO, 2)), false);
+
+      for (let i = 0; i < 16; i++) {
+        const exists = await store.hasUndo(hashes[i]);
+        assert.strictEqual(exists, false);
+      }
+
+      const exists = await store.db.has(layout.f.encode(types.UNDO, 0));
       assert.strictEqual(exists, false);
     });
   });
@@ -639,6 +733,17 @@ describe('BlockStore', function() {
       assert.bufferEqual(block1, block2);
     });
 
+    it('will write and read block undo coins', async () => {
+      const block1 = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+
+      await store.writeUndo(hash, block1);
+
+      const block2 = await store.readUndo(hash);
+
+      assert.bufferEqual(block1, block2);
+    });
+
     it('will read a block w/ offset and length', async () => {
       const block1 = random.randomBytes(128);
       const hash = random.randomBytes(32);
@@ -687,6 +792,20 @@ describe('BlockStore', function() {
       assert.strictEqual(exists, true);
     });
 
+    it('will check if block undo coins exists (false)', async () => {
+      const hash = random.randomBytes(32);
+      const exists = await store.has(hash);
+      assert.strictEqual(exists, false);
+    });
+
+    it('will check if block undo coins exists (true)', async () => {
+      const block = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+      await store.writeUndo(hash, block);
+      const exists = await store.hasUndo(hash);
+      assert.strictEqual(exists, true);
+    });
+
     it('will prune blocks (true)', async () => {
       const block = random.randomBytes(128);
       const hash = random.randomBytes(32);
@@ -702,6 +821,24 @@ describe('BlockStore', function() {
       const exists = await store.has(hash);
       assert.strictEqual(exists, false);
       const pruned = await store.prune(hash);
+      assert.strictEqual(pruned, false);
+    });
+
+    it('will prune block undo coins (true)', async () => {
+      const block = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+      await store.writeUndo(hash, block);
+      const pruned = await store.pruneUndo(hash);
+      assert.strictEqual(pruned, true);
+      const block2 = await store.readUndo(hash);
+      assert.strictEqual(block2, null);
+    });
+
+    it('will prune block undo coins (false)', async () => {
+      const hash = random.randomBytes(32);
+      const exists = await store.hasUndo(hash);
+      assert.strictEqual(exists, false);
+      const pruned = await store.pruneUndo(hash);
       assert.strictEqual(pruned, false);
     });
   });
