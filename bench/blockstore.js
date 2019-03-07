@@ -1,5 +1,5 @@
 /*!
- * bench/blockstore.js - benchmark block store for bcoin
+ * bench/blockstore.js - benchmark blockstore for bcoin
  *
  * This can be run to benchmark the performance of the blockstore
  * module for writing, reading and pruning block data. Results are
@@ -7,14 +7,15 @@
  *
  * Usage:
  * node ./blockstore.js [--maxfile=<bytes>] [--total=<bytes>]
-                        [--location=<path>] [--store=<name>] [--unsafe]
+ *                      [--location=<path>] [--store=<name>]
+ *                      [--output=<name>] [--unsafe]
  *
  * Options:
  * - `maxfile`  The maximum file size (applies to "file" store).
  * - `total`    The total number of block bytes to write.
  * - `location` The location to store block data.
  * - `store`    This can be "file" or "level".
- * - `output`   This can be "json" or "bench".
+ * - `output`   This can be "json", "bench" or "benchjson".
  * - `unsafe`   This will allocate block data directly from memory
  *              instead of random, it is faster.
  *
