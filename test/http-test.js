@@ -11,11 +11,15 @@ const Outpoint = require('../lib/primitives/outpoint');
 const MTX = require('../lib/primitives/mtx');
 const FullNode = require('../lib/node/fullnode');
 const pkg = require('../lib/pkg');
-const Network = require('../lib/protocol/network');
-const network = Network.get('regtest');
 
 if (process.browser)
   return;
+
+const ports = {
+  p2p: 49331,
+  node: 49332,
+  wallet: 49333
+};
 
 const node = new FullNode({
   network: 'regtest',
@@ -23,18 +27,22 @@ const node = new FullNode({
   walletAuth: true,
   memory: true,
   workers: true,
-  plugins: [require('../lib/wallet/plugin')]
-});
+  plugins: [require('../lib/wallet/plugin')],
+  port: ports.p2p,
+  httpPort: ports.node,
+  env: {
+    'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
+  }});
 
 const {NodeClient, WalletClient} = require('bclient');
 
 const nclient = new NodeClient({
-  port: network.rpcPort,
+  port: ports.node,
   apiKey: 'foo'
 });
 
 const wclient = new WalletClient({
-  port: network.walletPort,
+  port: ports.wallet,
   apiKey: 'foo'
 });
 
