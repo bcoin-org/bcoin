@@ -191,4 +191,73 @@ describe('Address', function() {
     assert(fmt.includes('Address'));
     assert(fmt.includes('str='));
   });
+
+  // addresses pulled from mainnet block 566,000 and testnet block 1,483,000
+  const networkAddrs = [
+    ['1VVVVVVvzycHkuGinFxUnFgn5kqwFuV9P', 'main'],
+    ['3A8WoYwkFi8o6kG7a9bjQwNwzsDUqgXPPr', 'main'],
+    ['bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej', 'main'],
+    ['bc1qes3zyz5ut9prjvnx2cany3hjskcd5ypfqu0s89', 'main'],
+    ['tb1ql5f8fkf88r24fe23uc6xmw88jy7x68p6rpf9jy', 'testnet'],
+    ['2MwozWKyfFDUnvfvMvDV8RKtKWSQXTFHbSa', 'testnet'],
+    ['mmTGdcpZ8iY8pN34VqPyrictThtwydHdiA', 'testnet'],
+    ['n4hPuEzKFjUFpVfbMDJMFoLrDUTD8GHuaf', 'testnet']
+  ];
+
+  for (const [addr, network] of networkAddrs) {
+    it(`should derive ${network} network property from string`, () => {
+      const addrObject = Address.fromString(addr);
+      assert.strictEqual(addrObject.network.toString(), network);
+      // Expect the same string in and out because network property is set
+      assert.strictEqual(addrObject.toString(), addr);
+    });
+  }
+
+  it('should create address with network option', () => {
+    const ZERO_HASH160 = Buffer.alloc(20, 0x00);
+
+    // network as an option
+    const addr1 = new Address({
+      network: 'testnet',
+      hash: ZERO_HASH160
+    });
+    // network as param #1
+    const addr2 = new Address({
+      hash: ZERO_HASH160
+    },'testnet');
+    // default network is `main`
+    const addr3 = new Address({
+      hash: ZERO_HASH160
+    });
+
+    // base58
+    assert.strictEqual(addr1.toString(), 'mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8');
+    assert.strictEqual(addr2.toString(), 'mfWxJ45yp2SFn7UciZyNpvDKrzbhyfKrY8');
+    assert.strictEqual(addr3.toString(), '1111111111111111111114oLvT2');
+
+    // override object network property when forced
+    assert.strictEqual(addr1.toString('main'), '1111111111111111111114oLvT2');
+
+    // witness version 0 bech32
+    addr1.version = 0;
+    addr2.version = 0;
+    addr3.version = 0;
+
+    assert.strictEqual(addr1.toString(),
+      'tb1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0l98cr');
+    assert.strictEqual(addr2.toString(),
+      'tb1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0l98cr');
+    assert.strictEqual(addr3.toString(),
+      'bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9e75rs');
+
+    // override object network property when forced
+    assert.strictEqual(addr1.toString('main'),
+      'bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9e75rs');
+  });
+
+  it('should handle invalid base58 prefix', () => {
+    assert.throws(() =>
+      Address.fromString('1111111111111111111114oLvT2', 'testnet')
+    );
+  });
 });
