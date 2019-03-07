@@ -18,6 +18,7 @@ const Script = require('../lib/script/script');
 const opcodes = Script.opcodes;
 const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
+const BlockStore = require('../lib/blockstore/level');
 const ALL = Script.hashType.ALL;
 
 const ONE_HASH = Buffer.alloc(32, 0x00);
@@ -27,9 +28,14 @@ const workers = new WorkerPool({
   enabled: true
 });
 
+const blocks = new BlockStore({
+  memory: true
+});
+
 const chain = new Chain({
   memory: true,
-  workers
+  workers,
+  blocks
 });
 
 const mempool = new Mempool({
@@ -68,6 +74,7 @@ describe('Mempool', function() {
 
   it('should open mempool', async () => {
     await workers.open();
+    await blocks.open();
     await chain.open();
     await mempool.open();
     chain.state.flags |= Script.flags.VERIFY_WITNESS;
@@ -453,6 +460,7 @@ describe('Mempool', function() {
   it('should destroy mempool', async () => {
     await mempool.close();
     await chain.close();
+    await blocks.close();
     await workers.close();
   });
 });

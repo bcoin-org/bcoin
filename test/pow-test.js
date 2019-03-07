@@ -7,6 +7,7 @@ const assert = require('./util/assert');
 const Chain = require('../lib/blockchain/chain');
 const ChainEntry = require('../lib/blockchain/chainentry');
 const Network = require('../lib/protocol/network');
+const BlockStore = require('../lib/blockstore/level');
 
 const network = Network.get('main');
 
@@ -14,13 +15,20 @@ function random(max) {
   return Math.floor(Math.random() * max);
 }
 
-const chain = new Chain({
+const blocks = new BlockStore({
   memory: true,
   network
 });
 
+const chain = new Chain({
+  memory: true,
+  network,
+  blocks
+});
+
 describe('Difficulty', function() {
   it('should open chain', async () => {
+    await blocks.open();
     await chain.open();
   });
 
