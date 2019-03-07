@@ -10,7 +10,6 @@ const common = require('./util/common');
 const {resolve} = require('path');
 const fs = require('bfile');
 const {rimraf} = require('./util/common');
-const {mkdirp} = require('bfile');
 const random = require('bcrypto/lib/random');
 
 const vectors = [
@@ -347,13 +346,13 @@ describe('BlockStore', function() {
 
     beforeEach(async () => {
       await rimraf(location);
-      await mkdirp(location);
 
       store = new FileBlockStore({
         location: location,
         maxFileLength: 1024
       });
 
+      await store.ensure();
       await store.open();
     });
 
@@ -657,13 +656,13 @@ describe('BlockStore', function() {
 
     beforeEach(async () => {
       await rimraf(location);
-      await mkdirp(location);
 
       store = new FileBlockStore({
         location: location,
         maxFileLength: 1024 * 1024
       });
 
+      await store.ensure();
       await store.open();
     });
 
@@ -709,12 +708,12 @@ describe('BlockStore', function() {
 
     beforeEach(async () => {
       await rimraf(location);
-      await mkdirp(location);
 
       store = new LevelBlockStore({
         location: location
       });
 
+      await store.ensure();
       await store.open();
     });
 
