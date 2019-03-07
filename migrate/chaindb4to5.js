@@ -4,7 +4,6 @@ const assert = require('assert');
 const bdb = require('bdb');
 const layout = require('../lib/blockchain/layout');
 const FileBlockStore = require('../lib/blockstore/file');
-const fs = require('bfile');
 const {resolve} = require('path');
 
 assert(process.argv.length > 2, 'Please pass in a database path.');
@@ -19,13 +18,6 @@ const db = bdb.create({
   cacheSize: 32 << 20,
   createIfMissing: false
 });
-
-async function ensure(location) {
-  if (fs.unsupported)
-    return undefined;
-
-  return fs.mkdirp(location);
-}
 
 const location = resolve(process.argv[2], '../blocks');
 
@@ -61,6 +53,36 @@ async function checkVersion() {
   return ver;
 }
 
+async function migrateUndoBlocks() {
+  console.log('Migrating undo blocks');
+
+  let parent = db.batch();
+
+  const iter = db.iterator({
+    gte: layout.u.min(),
+    lte: layout.u.max(),
+    keys: true,
+    values: true
+  });
+
+  let total = 0;
+
+  await iter.each(async (key, value) => {
+    const hash = key.slice(1);
+    await blockStore.writeUndo(hash, value);
+    parent.del(key);
+
+    if (++total % 10000 === 0) {
+      console.log('Migrated up %d undo blocks.', total);
+      await parent.write();
+      parent = db.batch();
+    }
+  });
+
+  console.log('Migrated all %d undo blocks.', total);
+  await parent.write();
+}
+
 async function migrateBlocks() {
   console.log('Migrating blocks');
 
@@ -74,6 +96,7 @@ async function migrateBlocks() {
   });
 
   let total = 0;
+
   await iter.each(async (key, value) => {
     const hash = key.slice(1);
     await blockStore.write(hash, value);
@@ -85,6 +108,8 @@ async function migrateBlocks() {
       parent = db.batch();
     }
   });
+
+  console.log('Migrated all %d blocks.', total);
   await parent.write();
 }
 
@@ -94,13 +119,14 @@ async function migrateBlocks() {
 
 (async () => {
   await db.open();
-  await ensure(location);
+  await blockStore.ensure();
   await blockStore.open();
 
   console.log('Opened %s.', process.argv[2]);
 
   await checkVersion();
   await migrateBlocks();
+  await migrateUndoBlocks();
   await updateVersion();
 
   await db.compactRange();
