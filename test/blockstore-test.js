@@ -492,6 +492,10 @@ describe('BlockStore', function() {
       await store.close();
     });
 
+    after(async () => {
+      await rimraf(location);
+    });
+
     it('will write and read a block', async () => {
       const block1 = random.randomBytes(128);
       const hash = random.randomBytes(32);
@@ -567,7 +571,8 @@ describe('BlockStore', function() {
       assert.equal(second.size, 952);
       assert.equal(third.size, 272);
 
-      const len = first.size + second.size + third.size - (8 * 16);
+      const magic = (8 * 16);
+      const len = first.size + second.size + third.size - magic;
       assert.equal(len, 128 * 16);
 
       for (let i = 0; i < 16; i++) {
@@ -596,7 +601,8 @@ describe('BlockStore', function() {
       assert.equal(second.size, 952);
       assert.equal(third.size, 272);
 
-      const len = first.size + second.size + third.size - (8 * 16);
+      const magic = (8 * 16);
+      const len = first.size + second.size + third.size - magic;
       assert.equal(len, 128 * 16);
 
       for (let i = 0; i < 16; i++) {
@@ -726,7 +732,8 @@ describe('BlockStore', function() {
       const second = await fs.stat(store.filepath(types.BLOCK, 1));
       const third = await fs.stat(store.filepath(types.BLOCK, 2));
 
-      const len = first.size + second.size + third.size - (8 * 16);
+      const magic = (8 * 16);
+      const len = first.size + second.size + third.size - magic;
       assert.equal(len, 128 * 16);
 
       for (let i = 0; i < 16; i++) {
@@ -760,7 +767,8 @@ describe('BlockStore', function() {
       const second = await fs.stat(store.filepath(types.UNDO, 1));
       const third = await fs.stat(store.filepath(types.UNDO, 2));
 
-      const len = first.size + second.size + third.size - (8 * 16);
+      const magic = (8 * 16);
+      const len = first.size + second.size + third.size - magic;
       assert.equal(len, 128 * 16);
 
       for (let i = 0; i < 16; i++) {
@@ -800,6 +808,10 @@ describe('BlockStore', function() {
 
     afterEach(async () => {
       await store.close();
+    });
+
+    after(async () => {
+      await rimraf(location);
     });
 
     it('will import from files (e.g. db corruption)', async () => {
@@ -851,6 +863,10 @@ describe('BlockStore', function() {
 
     afterEach(async () => {
       await store.close();
+    });
+
+    after(async () => {
+      await rimraf(location);
     });
 
     it('will write and read a block', async () => {
