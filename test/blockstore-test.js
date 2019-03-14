@@ -530,7 +530,7 @@ describe('BlockStore', function() {
         const block = random.randomBytes(128);
         const hash = random.randomBytes(32);
 
-        // Accidently don't use `await` and attempt to
+        // Accidentally don't use `await` and attempt to
         // write multiple blocks in parallel and at the
         // same file position.
         const promise = store.write(hash, block);
