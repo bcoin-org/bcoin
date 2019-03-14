@@ -64,8 +64,9 @@ describe('BlockStore', function() {
     });
 
     it('has unimplemented base methods', async () => {
-      const methods = ['open', 'close', 'write', 'read',
-                       'prune', 'has'];
+      const methods = ['open', 'close', 'write', 'writeUndo',
+                       'read', 'readUndo', 'prune', 'pruneUndo',
+                       'has', 'hasUndo', 'ensure'];
 
       const store = new AbstractBlockStore();
 
@@ -277,6 +278,40 @@ describe('BlockStore', function() {
       });
     });
 
+    describe('constructor', function() {
+      it('will error with invalid location', () => {
+        let err = null;
+
+        try {
+          new FileBlockStore({
+            location: 'tmp/.bcoin/blocks',
+            maxFileLength: 1024
+          });
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err);
+        assert.equal(err.message, 'Location not absolute.');
+      });
+
+      it('will error with invalid max file length', () => {
+        let err = null;
+
+        try {
+          new FileBlockStore({
+            location: location,
+            maxFileLength: 'notanumber'
+          });
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err);
+        assert.equal(err.message, 'Invalid max file length.');
+      });
+    });
+
     describe('allocate', function() {
       it('will fail with length above file max', async () => {
         let err = null;
@@ -336,6 +371,103 @@ describe('BlockStore', function() {
       it('will give undo type', () => {
         const filepath = store.filepath(types.UNDO, 99999);
         assert.equal(filepath, '/tmp/.bcoin/blocks/blu99999.dat');
+      });
+
+      it('will fail for unknown prefix', () => {
+        let err = null;
+        try {
+          store.filepath(0, 1234);
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err);
+        assert.equal(err.message, 'Unknown file prefix.');
+      });
+    });
+
+    describe('write', function() {
+      const write = fs.write;
+      const open = fs.open;
+      const close = fs.close;
+      let allocate = null;
+
+      beforeEach(() => {
+        allocate = store.allocate;
+      });
+
+      afterEach(() => {
+        // Restore stubbed methods.
+        fs.write = write;
+        fs.open = open;
+        fs.close = close;
+        store.allocate = allocate;
+      });
+
+      it('will error if total magic bytes not written', async () => {
+        let err = null;
+
+        store.allocate = () => {
+          return {
+            fileno: 20,
+            filerecord: {
+              used: 0
+            },
+            filepath: '/tmp/.bcoin/blocks/blk00020.dat'
+          };
+        };
+        fs.open = () => 7;
+        fs.close = () => undefined;
+        fs.write = () => 0;
+
+        try {
+          const hash = random.randomBytes(128);
+          const block = random.randomBytes(32);
+          await store.write(hash, block);
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err, 'Expected error.');
+        assert.equal(err.message, 'Could not write block magic.');
+      });
+
+      it('will error if total block bytes not written', async () => {
+        let err = 0;
+
+        let called = 0;
+        store.allocate = () => {
+          return {
+            fileno: 20,
+            filerecord: {
+              used: 0
+            },
+            filepath: '/tmp/.bcoin/blocks/blk00020.dat'
+          };
+        };
+        fs.open = () => 7;
+        fs.close = () => undefined;
+        fs.write = (fd, buffer, offset, length, position) => {
+          let written = 0;
+
+          if (called === 0)
+            written = length;
+
+          called += 1;
+
+          return written;
+        };
+
+        try {
+          const hash = random.randomBytes(128);
+          const block = random.randomBytes(32);
+          await store.write(hash, block);
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err, 'Expected error.');
+        assert.equal(err.message, 'Could not write block.');
       });
     });
   });
