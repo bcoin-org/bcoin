@@ -18,6 +18,10 @@ const vectors = [
   common.readBlock('block898352')
 ];
 
+const extra = [
+  common.readBlock('block482683')
+];
+
 const {
   AbstractBlockStore,
   FileBlockStore,
@@ -856,6 +860,72 @@ describe('BlockStore', function() {
       });
 
       await store.open();
+
+      for (let i = 0; i < vectors.length; i++) {
+        const expect = blocks[i];
+        const block = await store.read(expect.hash);
+        assert.equal(block.length, expect.block.length);
+        assert.bufferEqual(block, expect.block);
+      }
+    });
+
+    it('will import from files after write interrupt', async () => {
+      const blocks = [];
+
+      for (let i = 0; i < vectors.length; i++) {
+        const [block] = vectors[i].getBlock();
+        const hash = block.hash();
+        const raw = block.toRaw();
+
+        blocks.push({hash, block: raw});
+        await store.write(hash, raw);
+      }
+
+      await store.close();
+
+      assert.equal(await fs.exists(store.filepath(types.BLOCK, 0)), true);
+      assert.equal(await fs.exists(store.filepath(types.BLOCK, 1)), true);
+      assert.equal(await fs.exists(store.filepath(types.BLOCK, 2)), false);
+
+      // Write partial block as would be the case in a
+      // block write interrupt.
+      const [partial] = extra[0].getBlock();
+      {
+        // Include all of the header, but not the block.
+        let raw = partial.toRaw();
+        const actual = raw.length;
+        const part = raw.length - 1;
+        raw = raw.slice(0, part);
+
+        const filepath = store.filepath(types.BLOCK, 1);
+
+        const fd = await fs.open(filepath, 'a');
+
+        const bw = bio.write(8);
+        bw.writeU32(store.network.magic);
+        bw.writeU32(actual);
+        const magic = bw.render();
+
+        const mwritten = await fs.write(fd, magic, 0, 8);
+        const bwritten = await fs.write(fd, raw, 0, part);
+
+        await fs.close(fd);
+
+        assert.equal(mwritten, 8);
+        assert.equal(bwritten, part);
+      }
+
+      await rimraf(resolve(location, './index'));
+
+      store = new FileBlockStore({
+        location: location,
+        maxFileLength: 1024
+      });
+
+      await store.open();
+
+      const incomplete = await store.read(partial.hash());
+      assert(incomplete === null);
 
       for (let i = 0; i < vectors.length; i++) {
         const expect = blocks[i];
