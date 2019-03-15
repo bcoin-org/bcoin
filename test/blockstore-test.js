@@ -391,9 +391,11 @@ describe('BlockStore', function() {
       const open = fs.open;
       const close = fs.close;
       let allocate = null;
+      let has = null;
 
       beforeEach(() => {
         allocate = store.allocate;
+        has = store.db.has;
       });
 
       afterEach(() => {
@@ -402,6 +404,7 @@ describe('BlockStore', function() {
         fs.open = open;
         fs.close = close;
         store.allocate = allocate;
+        store.db.has = has;
       });
 
       it('will error if total magic bytes not written', async () => {
@@ -416,6 +419,7 @@ describe('BlockStore', function() {
             filepath: '/tmp/.bcoin/blocks/blk00020.dat'
           };
         };
+        store.db.has = () => false;
         fs.open = () => 7;
         fs.close = () => undefined;
         fs.write = () => 0;
@@ -445,6 +449,7 @@ describe('BlockStore', function() {
             filepath: '/tmp/.bcoin/blocks/blk00020.dat'
           };
         };
+        store.db.has = () => false;
         fs.open = () => 7;
         fs.close = () => undefined;
         fs.write = (fd, buffer, offset, length, position) => {
@@ -683,6 +688,21 @@ describe('BlockStore', function() {
           }
         });
       }
+    });
+
+    it('will not duplicate a block on disk', async () => {
+      const block = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+
+      const first = await store.write(hash, block);
+      assert.equal(first, true);
+      const second = await store.write(hash, block);
+      assert.equal(second, false);
+
+      const pruned = await store.prune(hash);
+      assert.equal(pruned, true);
+
+      assert.equal(await fs.exists(store.filepath(types.BLOCK, 0)), false);
     });
 
     it('will return null if block not found', async () => {
