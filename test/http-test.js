@@ -267,8 +267,108 @@ describe('HTTP', function() {
       isvalid: true,
       address: addr.toString(node.network),
       scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
-      ismine: false,
-      iswatchonly: false
+      iswitness: false,
+      isscript: false
+    });
+  });
+
+  it('should not validate invalid address', async () => {
+    // send an address for the wrong network
+    const json = await nclient.execute('validateaddress', [
+      addr.toString('main')
+    ]);
+    assert.deepStrictEqual(json, {
+      isvalid: false
+    });
+  });
+
+  it('should validate a p2wpkh address', async () => {
+    const info = await wallet.createAccount('foo3', {
+      witness: true
+    });
+    const json = await nclient.execute('validateaddress', [
+      info.receiveAddress
+    ]);
+    const addr = Address.fromString(info.receiveAddress);
+    const script = Script.fromAddress(addr);
+
+    assert.deepStrictEqual(json, {
+      isvalid: true,
+      iswitness: true,
+      address: info.receiveAddress,
+      isscript: addr.isScripthash(),
+      scriptPubKey: script.toJSON(),
+      witness_version: addr.version,
+      witness_program: addr.hash.toString('hex')
+    });
+  });
+
+  it('should validate a p2sh address', async () => {
+    await wallet.createAccount('foo4');
+
+    const pubkeys = [];
+    for (let i = 0; i < 2; i++) {
+      const result = await wallet.createAddress('foo4', 'default');
+      pubkeys.push(Buffer.from(result.publicKey, 'hex'));
+    }
+
+    const script = Script.fromMultisig(2, 2, pubkeys);
+    const address = Address.fromScript(script);
+
+    // test the valid case
+    {
+      const json = await nclient.execute('validateaddress', [
+        address.toString(node.network)
+      ]);
+
+      assert.deepEqual(json, {
+        isvalid: true,
+        address: address.toString(node.network),
+        scriptPubKey: Script.fromAddress(address).toJSON(),
+        isscript: true,
+        iswitness: false
+      });
+    }
+
+    // test the invalid case
+    {
+      const json = await nclient.execute('validateaddress', [
+        address.toString('main')
+      ]);
+
+      assert.deepEqual(json, {
+        isvalid: false
+      });
+    }
+  });
+
+  it('should validate a p2wsh address', async () => {
+    await wallet.createAccount('foo5', {
+      witness: true
+    });
+
+    const pubkeys = [];
+    for (let i = 0; i < 2; i++) {
+      const result = await wallet.createAddress('foo5', 'default');
+      pubkeys.push(Buffer.from(result.publicKey, 'hex'));
+    }
+    const script = Script.fromMultisig(2, 2, pubkeys);
+    const scriptPubKey = script.forWitness();
+    const program = script.sha256();
+    const address = Address.fromProgram(0, program);
+
+    const json = await nclient.execute('validateaddress', [
+      address.toString(node.network)
+    ]);
+
+    assert.deepEqual(json, {
+      isvalid: true,
+      address: address.toString(node.network),
+      scriptPubKey: scriptPubKey.toJSON(),
+      isscript: true,
+      iswitness: true,
+      witness_version: 0,
+      witness_program: program.toString('hex')
     });
   });
 
