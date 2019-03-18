@@ -1,6 +1,26 @@
 # Bcoin release notes & changelog
 
-## v2.0.0
+## v2.0.0-dev
+
+### How to upgrade
+
+The way that block data is stored has changed for greater performance,
+efficiency, reliability and portability. To upgrade to the new disk layout
+it's necessary to move block data from LevelDB (e.g. `~/.bcoin/chain`) to
+a new file based block storage (e.g. `~./.bcoin/blocks`).
+
+To do this you can run:
+```
+node ./migrate/chaindb4to5.js /path/to/bcoin/chain
+```
+
+The block data will now be stored at `/path/to/bcoin/blocks`, after
+the data has been moved the chain database will be compacted to free
+disk space.
+
+Alternatively, you can also sync the chain again, however the above
+migration will be faster as additional network bandwidth won't be used
+for downloading the blocks again.
 
 ### Wallet API changes
 
@@ -79,6 +99,7 @@
 
 ### Other changes
 
+- A new module for storing block data in files.
 - Use of `buffer-map` for storing hashes
   (see https://github.com/bcoin-org/bcoin/issues/533).
 - Use of `bsert` for assertions.
