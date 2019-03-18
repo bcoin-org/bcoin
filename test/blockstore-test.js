@@ -22,6 +22,15 @@ const extra = [
   common.readBlock('block482683')
 ];
 
+const undos = [
+  common.readBlock('block300025'),
+  common.readBlock('block928816'),
+  common.readBlock('block928828'),
+  common.readBlock('block928831'),
+  common.readBlock('block928848'),
+  common.readBlock('block928849')
+];
+
 const {
   AbstractBlockStore,
   FileBlockStore,
@@ -606,11 +615,8 @@ describe('BlockStore', function() {
       const first = await fs.stat(store.filepath(types.UNDO, 0));
       const second = await fs.stat(store.filepath(types.UNDO, 1));
       const third = await fs.stat(store.filepath(types.UNDO, 2));
-      assert.equal(first.size, 952);
-      assert.equal(second.size, 952);
-      assert.equal(third.size, 272);
 
-      const magic = (8 * 16);
+      const magic = (40 * 16);
       const len = first.size + second.size + third.size - magic;
       assert.equal(len, 128 * 16);
 
@@ -791,7 +797,7 @@ describe('BlockStore', function() {
       const second = await fs.stat(store.filepath(types.UNDO, 1));
       const third = await fs.stat(store.filepath(types.UNDO, 2));
 
-      const magic = (8 * 16);
+      const magic = (40 * 16);
       const len = first.size + second.size + third.size - magic;
       assert.equal(len, 128 * 16);
 
@@ -930,6 +936,37 @@ describe('BlockStore', function() {
       for (let i = 0; i < vectors.length; i++) {
         const expect = blocks[i];
         const block = await store.read(expect.hash);
+        assert.equal(block.length, expect.block.length);
+        assert.bufferEqual(block, expect.block);
+      }
+    });
+
+    it('will import undo blocks from files', async () => {
+      const blocks = [];
+
+      for (let i = 0; i < undos.length; i++) {
+        const [block] = undos[i].getBlock();
+        const raw = undos[i].undoRaw;
+        const hash = block.hash();
+
+        blocks.push({hash, block: raw});
+        await store.writeUndo(hash, raw);
+      }
+
+      await store.close();
+
+      await rimraf(resolve(location, './index'));
+
+      store = new FileBlockStore({
+        location: location,
+        maxFileLength: 1024
+      });
+
+      await store.open();
+
+      for (let i = 0; i < undos.length; i++) {
+        const expect = blocks[i];
+        const block = await store.readUndo(expect.hash);
         assert.equal(block.length, expect.block.length);
         assert.bufferEqual(block, expect.block);
       }
