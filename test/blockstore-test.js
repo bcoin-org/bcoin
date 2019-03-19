@@ -292,6 +292,23 @@ describe('BlockStore', function() {
     });
 
     describe('constructor', function() {
+      it('will pass options to super', () => {
+        const info = () => 'info';
+        const logger = {
+          context: () => {
+            return {info};
+          }
+        };
+
+        const store = new FileBlockStore({
+          location: '/tmp/.bcoin/blocks',
+          maxFileLength: 1024,
+          logger: logger
+        });
+
+        assert.strictEqual(store.logger.info, info);
+      });
+
       it('will error with invalid location', () => {
         let err = null;
 
