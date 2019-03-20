@@ -29,6 +29,9 @@
 const assert = require('./util/assert');
 const Address = require('../lib/primitives/address');
 
+// see https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+// for test vectors, they include both the valid and invalid addresses
+
 const validAddresses = [
   [
     'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4',
@@ -80,8 +83,6 @@ const validAddresses = [
   ]
 ];
 
-// see https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
-// for test cases
 const invalidAddresses = [
   // invalid hrp
   'tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty',
