@@ -44,6 +44,9 @@
 
 - Pool options now has a `--discover` option exposed, and the `--only` node
   option will disable discovery of new nodes.
+- The option for `coin-cache` has been removed, this setting was causing
+  issues during the sync with out-of-memory errors and was making performance
+  worse instead of better.
 
 ### Script changes
 

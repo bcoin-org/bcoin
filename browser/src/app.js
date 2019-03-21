@@ -61,7 +61,6 @@ const node = new FullNode({
   prune: true,
   network: 'main',
   memory: false,
-  coinCache: 30,
   logConsole: true,
   workers: true,
   workerFile: '/worker.js',
