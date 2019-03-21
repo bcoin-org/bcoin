@@ -56,11 +56,59 @@ describe('KeyRing', function() {
       compressed.getPublicKey(),
       uncompressed.getPublicKey()]);
 
-    assert.strictEqual(
+    assert.bufferEqual(
       compressed.getPublicKey(),
       KeyRing.fromMultisigScript(script, 1).getPublicKey());
-    assert.strictEqual(
+    assert.bufferEqual(
       uncompressed.getPublicKey(),
       KeyRing.fromMultisigScript(script, 2).getPublicKey());
+  });
+
+  it('should get compressed public key address from private key', () => {
+    const privateKey = uncompressed.getPrivateKey();
+    const ring = KeyRing.fromOptions({ privateKey, compressed: true });
+    assert.strictEqual(
+      '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV',
+      ring.getKeyAddress('base58', 'main'));
+  });
+
+  it('should get uncompressed public key address from private key', () => {
+    const privateKey = uncompressed.getPrivateKey();
+    const ring = KeyRing.fromOptions({ privateKey, compressed: false });
+    assert.strictEqual(
+      '1HZwkjkeaoZfTSaJxDw6aKkxp45agDiEzN',
+      ring.getKeyAddress('base58', 'main'));
+  });
+
+  it('should get compressed public key address from compressed', () => {
+    const publicKey = compressed.getPublicKey();
+    const ring = KeyRing.fromOptions({ publicKey, compressed: true });
+    assert.strictEqual(
+      '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV',
+      ring.getKeyAddress('base58', 'main'));
+  });
+
+  it('should get compressed public key address from uncompressed', () => {
+    const publicKey = uncompressed.getPublicKey();
+    const ring = KeyRing.fromOptions({ publicKey, compressed: true });
+    assert.strictEqual(
+      '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV',
+      ring.getKeyAddress('base58', 'main'));
+  });
+
+  it('should get uncompressed public key address from compressed', () => {
+    const publicKey = compressed.getPublicKey();
+    const ring = KeyRing.fromOptions({ publicKey, compressed: false });
+    assert.strictEqual(
+      '1HZwkjkeaoZfTSaJxDw6aKkxp45agDiEzN',
+      ring.getKeyAddress('base58', 'main'));
+  });
+
+  it('should get uncompressed public key address from uncompressed', () => {
+    const publicKey = uncompressed.getPublicKey();
+    const ring = KeyRing.fromOptions({ publicKey, compressed: false });
+    assert.strictEqual(
+      '1HZwkjkeaoZfTSaJxDw6aKkxp45agDiEzN',
+      ring.getKeyAddress('base58', 'main'));
   });
 });
