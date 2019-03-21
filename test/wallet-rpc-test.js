@@ -227,30 +227,6 @@ describe('Wallet RPC', function() {
       assert.deepStrictEqual(listTooManyConf, []);
     });
 
-    it('should rpc listtransactions with no args', async () => {
-      const txs = await wclient.execute('listtransactions', []);
-      assert.strictEqual(txs.length, 2);
-      assert.strictEqual(txs[0].amount + txs[1].amount, 1.1234);
-      assert.strictEqual(txs[0].account, 'default');
-    });
-
-    it('should rpc listtransactions from specified account', async () => {
-      const wallet = await wclient.wallet('hot');
-      await wallet.createAccount('foo');
-
-      const txs = await wclient.execute('listtransactions', ['foo']);
-      assert.strictEqual(txs.length, 0);
-    });
-
-    it('should fail rpc listtransactions from missing account', async () => {
-      assert.rejects(async () => {
-        await wclient.execute('listtransactions', ['nonexistent']);
-      }, {
-        name: 'Error',
-        message: 'Account not found.'
-      });
-    });
-
     it('should rpc listunspent', async () => {
       utxo = await wclient.execute('listunspent', []);
       assert.strictEqual(utxo.length, 2);
