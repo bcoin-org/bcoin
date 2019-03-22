@@ -44,15 +44,17 @@ const wallet = new MemWallet({
 });
 
 const txindexer = new TXIndexer({
-  'memory': true,
-  'network': network,
-  'chain': chain
+  memory: true,
+  network,
+  chain,
+  blocks
 });
 
 const addrindexer = new AddrIndexer({
-  'memory': true,
-  'network': network,
-  'chain': chain
+  memory: true,
+  network,
+  chain,
+  blocks
 });
 
 describe('Indexer', function() {
@@ -90,9 +92,6 @@ describe('Indexer', function() {
   });
 
   it('should rescan and reindex 10 missed blocks', async () => {
-    await txindexer.disconnect();
-    await addrindexer.disconnect();
-
     for (let i = 0; i < 10; i++) {
       const block = await cpu.mineBlock();
       assert(block);
@@ -100,17 +99,10 @@ describe('Indexer', function() {
     }
 
     assert.strictEqual(chain.height, 20);
-
-    await txindexer.connect();
-    await addrindexer.connect();
-
-    await new Promise(r => addrindexer.once('chain tip', r));
-
     assert.strictEqual(txindexer.state.startHeight, 20);
     assert.strictEqual(addrindexer.state.startHeight, 20);
 
-    const coins =
-      await addrindexer.getCoinsByAddress(miner.getAddress());
+    const coins = await addrindexer.getCoinsByAddress(miner.getAddress());
     assert.strictEqual(coins.length, 20);
 
     for (const coin of coins) {
