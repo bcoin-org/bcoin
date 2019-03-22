@@ -11,6 +11,7 @@ const Miner = require('../lib/mining/miner');
 const MemWallet = require('./util/memwallet');
 const TXIndexer = require('../lib/indexer/txindexer');
 const AddrIndexer = require('../lib/indexer/addrindexer');
+const BlockStore = require('../lib/blockstore/level');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
 
@@ -18,10 +19,16 @@ const workers = new WorkerPool({
   enabled: true
 });
 
+const blocks = new BlockStore({
+  memory: true,
+  network
+});
+
 const chain = new Chain({
   memory: true,
   network,
-  workers
+  workers,
+  blocks
 });
 
 const miner = new Miner({
@@ -52,6 +59,7 @@ describe('Indexer', function() {
   this.timeout(45000);
 
   it('should open indexer', async () => {
+    await blocks.open();
     await chain.open();
     await miner.open();
     await txindexer.open();
