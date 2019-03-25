@@ -20,6 +20,15 @@
 #### RPC
 
 - Bug fix addresses for the `getnewaddress` command with various networks.
+- Deprecate the `ismine` and `iswatchonly` fields from the `validateaddress`
+  command and add `isscript`, `iswitness`, `ischange`, `witness_version`
+  and `witness_program` to partially match the v0.18.0 Bitcoin Core release
+  (26a2000b0177fd2668b7d82e5aa52829cf2bfdf6)
+- Add wallet RPC `getaddressinfo` to return `ismine` and `iswatchonly`
+  with the correct values instead of their previous values which were
+  hardcoded to false. Also returns `address`, `scriptPubKey`, `isscript`,
+  `iswitness`, `witness_version` and `witness_program`.
+  (a28ffa272a3c4d90d0273d9aa223a23becc08e0e)
 
 ### Network changes
 
