@@ -14,6 +14,8 @@ efficiency, reliability and portability.
   half for those running with `txindex` enabled.
 - The `txindex` and `addrindex` can now be enabled after the initial
   block download.
+- The `addrindex` has been sorted to support querying for large sets
+  of results, and will no longer cause CPU and memory exhaustion issues.
 
 To upgrade to the new disk layout it's necessary to move block data
 from LevelDB (e.g. `~/.bcoin/chain`) to a new file based block
@@ -70,6 +72,30 @@ re-indexing into account before upgrading.
   hardcoded to false. Also returns `address`, `scriptPubKey`, `isscript`,
   `iswitness`, `witness_version` and `witness_program`.
   (a28ffa272a3c4d90d0273d9aa223a23becc08e0e)
+
+### Node API changes
+
+#### HTTP
+
+Several CPU and memory exhaustion issues have been resolved with some
+additional arguments for querying multiple sets of results for addresses
+that have many transactions.
+
+- `GET /tx/address/:address` has several new arguments: `after`, `reverse`
+  and `limit`. The `after` argument is a txid, for querying additional results
+  after a previous result. The `reverse` argument will change the order that
+  results are returned, the default order is oldest to latest. The `limit`
+  argument can be used to give results back in smaller sets if necessary.
+- `POST /tx/address` This has been deprecated, instead query for each address
+  individually with `GET /tx/address/:address` with the expectation that
+  there could be _many_ results that would additionally need to be queried
+  in a subsequent query using the `after` argument to request the next set.
+- `POST /coin/address` and `GET /coin/address/:address` are deprecated as
+  coins can be generated using results from `/tx/address/:address` and
+  querying by only a range of the latest transactions to stay synchronized.
+  Coins could otherwise be removed from results at any point, and thus the
+  entire set of results would need to be queried every time to discover
+  which coins have been spent and are currently available.
 
 ### Network changes
 
@@ -129,13 +155,14 @@ re-indexing into account before upgrading.
   - `getTX(hash)`
   - `hasTX(hash)`
   - `getSpentView(tx)`
-- The address index methods are now implemented at `node.addrindex`:
-  - `getCoinsByAddress(addrs)`
+- The address index method is now implemented at `node.addrindex`:
   - `getHashesByAddress(addrs)`
 - The following methods require `getHashesByAddress` in conjunction with
   `node.txindex.getTX` and `node.txindex.getMeta` respectively.
   - `getTXByAddress(addrs)`
   - `getMetaByAddress(addrs)`
+- The following method has been deprecated:
+  - `getCoinsByAddress(addrs)`
 
 ### Other changes
 
