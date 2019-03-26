@@ -198,6 +198,12 @@ that have many transactions.
 - The database location for indexes can be configured via the
   `--index-prefix` option. Default locations are `prefix` + `/index`
   (e.g. `~/.bcoin/testnet/index/tx` and `~/.bcoin/testnet/index/addr`).
+- To resolve CPU and memory exhaustion issues for wallets with many
+  transactions, an new option was introduced to for the maximum number
+  of transactions returned in a page of results for wallets. The maximum
+  number can be changed based on individual resource limits with the
+  configuration option `wallet-max-txs`, it's unlikely that this value
+  should need to be changed.
 
 ### Script changes
 
