@@ -12,8 +12,10 @@ const MemWallet = require('./util/memwallet');
 const TXIndexer = require('../lib/indexer/txindexer');
 const AddrIndexer = require('../lib/indexer/addrindexer');
 const BlockStore = require('../lib/blockstore/level');
+const FullNode = require('../lib/node/fullnode');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
+const {NodeClient, WalletClient} = require('bclient');
 
 const workers = new WorkerPool({
   enabled: true
@@ -58,7 +60,7 @@ const addrindexer = new AddrIndexer({
 });
 
 describe('Indexer', function() {
-  this.timeout(45000);
+  this.timeout(120000);
 
   before(async () => {
     await blocks.open();
@@ -194,6 +196,114 @@ describe('Indexer', function() {
       for (const hash of hashes) {
         const meta = await txindexer.getMeta(hash);
         assert.bufferEqual(meta.tx.hash(), hash);
+      }
+    });
+  });
+
+  describe('http', function() {
+    this.timeout(120000);
+
+    let node, nclient, wclient = null;
+
+    const vectors = [
+      // Secret for the vectors:
+      // cVDJUtDjdaM25yNVVDLLX3hcHUfth4c7tY3rSc4hy9e8ibtCuj6G
+      // {addr: 'bcrt1qngw83fg8dz0k749cg7k3emc7v98wy0c7azaa6h', amount: 19.99},
+      {addr: 'muZpTpBYhxmRFuCjLc7C6BBDF32C8XVJUi', amount: 1.99}
+    ];
+
+    const txids = [];
+
+    const ports = {
+      p2p: 49331,
+      node: 49332,
+      wallet: 49333
+    };
+
+    before(async () => {
+      this.timeout(120000);
+
+      // Setup a testing node with txindex and addrindex
+      // both enabled.
+      node = new FullNode({
+        network: 'regtest',
+        apiKey: 'foo',
+        walletAuth: true,
+        memory: true,
+        workers: true,
+        indexTX: true,
+        indexAddress: true,
+        port: ports.p2p,
+        httpPort: ports.node,
+        plugins: [require('../lib/wallet/plugin')],
+        env: {
+          'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
+        }
+      });
+
+      await node.open();
+
+      // Setup the node client to make calls to the node
+      // to generate blocks and other tasks.
+      nclient = new NodeClient({
+        port: ports.node,
+        apiKey: 'foo',
+        timeout: 120000
+      });
+
+      await nclient.open();
+
+      // Setup a test wallet to generate transactions for
+      // testing various scenarios.
+      wclient = new WalletClient({
+        port: ports.wallet,
+        apiKey: 'foo',
+        timeout: 120000
+      });
+
+      await wclient.open();
+
+      // Generate initial set of transactions and
+      // send the coinbase to alice.
+      const coinbase = await wclient.execute(
+        'getnewaddress', ['default']);
+
+      const blocks = await nclient.execute(
+        'generatetoaddress', [120, coinbase]);
+
+      assert.equal(blocks.length, 120);
+
+      // Send to the vector addresses for several blocks.
+      for (let i = 0; i < 10; i++) {
+        for (const v of vectors) {
+          const txid = await wclient.execute(
+            'sendtoaddress', [v.addr, v.amount]);
+
+          txids.push(txid);
+        }
+
+        const blocks = await nclient.execute(
+          'generatetoaddress', [1, coinbase]);
+
+        assert.equal(blocks.length, 1);
+      }
+    });
+
+    after(async () => {
+      await nclient.close();
+      await wclient.close();
+      await node.close();
+    });
+
+    it('will get txs by address', async () => {
+      for (const v of vectors) {
+        const res = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {});
+
+        assert.equal(res.length, 10);
+
+        for (const tx of res)
+          assert(txids.includes(tx.hash));
       }
     });
   });
