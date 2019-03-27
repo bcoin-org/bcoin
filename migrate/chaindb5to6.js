@@ -17,6 +17,34 @@ const db = bdb.create({
   createIfMissing: false
 });
 
+async function updateVersion() {
+  const ver = await checkVersion();
+
+  console.log('Updating version to %d.', ver + 1);
+
+  const buf = Buffer.allocUnsafe(5 + 4);
+  buf.write('chain', 0, 'ascii');
+  buf.writeUInt32LE(6, 5, true);
+
+  const parent = db.batch();
+  parent.put(layout.V.encode(), buf);
+  await parent.write();
+}
+
+async function checkVersion() {
+  console.log('Checking version.');
+
+  const data = await db.get(layout.V.encode());
+  assert(data, 'No version.');
+
+  const ver = data.readUInt32LE(5, true);
+
+  if (ver !== 5)
+    throw Error(`DB is version ${ver}.`);
+
+  return ver;
+}
+
 async function removeKey(name, key) {
   const iter = db.iterator({
     gte: key.min(),
@@ -43,6 +71,16 @@ async function removeKey(name, key) {
   console.log('Cleaned up %d %s index records.', total, name);
 }
 
+async function migrateIndexes() {
+  const t = bdb.key('t', ['hash256']);
+  const T = bdb.key('T', ['hash', 'hash256']);
+  const C = bdb.key('C', ['hash', 'hash256', 'uint32']);
+
+  await removeKey('hash -> tx', t);
+  await removeKey('addr -> tx', T);
+  await removeKey('addr -> coin', C);
+}
+
 /*
  * Execute
  */
@@ -51,24 +89,12 @@ async function removeKey(name, key) {
   await db.open();
 
   console.log('Opened %s.', process.argv[2]);
-  console.log('Checking version.');
-  await db.verify(layout.V.build(), 'chain', 5);
 
-  const t = bdb.key('t', ['hash256']);
-  const T = bdb.key('T', ['hash', 'hash256']);
-  const C = bdb.key('C', ['hash', 'hash256', 'uint32']);
+  await checkVersion();
+  await migrateIndexes();
+  await updateVersion();
 
-  await removeKey('hash -> tx', t);
-  await removeKey('addr -> tx', T);
-  await removeKey('addr -> coin', C);
-
-  console.log('Compacting database...');
   await db.compactRange();
-
-  console.log('Updating version to %d.', 6);
-  await db.del(layout.V.build());
-  await db.verify(layout.V.build(), 'chain', 6);
-
   await db.close();
 })().then(() => {
   console.log('Migration complete.');
