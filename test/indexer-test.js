@@ -208,7 +208,7 @@ describe('Indexer', function() {
     const vectors = [
       // Secret for the vectors:
       // cVDJUtDjdaM25yNVVDLLX3hcHUfth4c7tY3rSc4hy9e8ibtCuj6G
-      // {addr: 'bcrt1qngw83fg8dz0k749cg7k3emc7v98wy0c7azaa6h', amount: 19.99},
+      {addr: 'bcrt1qngw83fg8dz0k749cg7k3emc7v98wy0c7azaa6h', amount: 19.99},
       {addr: 'muZpTpBYhxmRFuCjLc7C6BBDF32C8XVJUi', amount: 1.99}
     ];
 
