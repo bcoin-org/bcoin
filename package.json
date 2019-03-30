@@ -74,11 +74,7 @@
     "test-browser": "NODE_BACKEND=js bmocha --reporter spec test/*.js",
     "test-file": "bmocha --reporter spec",
     "test-file-browser": "NODE_BACKEND=js bmocha --reporter spec",
-    "test-ci": "istanbul cover --report lcovonly node_modules/.bin/bmocha -- --reporter spec test/*-test.js",
-    "webpack": "webpack --mode production --config webpack.browser.js",
-    "webpack-browser": "webpack --mode production --config webpack.browser.js",
-    "webpack-compat": "webpack --mode production --config webpack.compat.js",
-    "webpack-app": "webpack --mode production --config webpack.app.js"
+    "test-ci": "istanbul cover --report lcovonly node_modules/.bin/bmocha -- --reporter spec test/*-test.js"
   },
   "browser": {
     "./lib/hd/nfkd": "./lib/hd/nfkd-compat.js",
