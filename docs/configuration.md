@@ -87,9 +87,6 @@ database and must be passed in consistently.
 - `prune`: Prune from the last 288 blocks (default: false).
 - `checkpoints`: Use checkpoints and getheaders for the initial
   sync (default: true).
-- `coin-cache`: The size (in MB) of the in-memory UTXO cache. By default,
-  there is no UTXO cache enabled. To get a good number of cache hits per
-  block, the coin cache has to be fairly large (60-100mb recommended at least).
 - `index-tx`: Index transactions (enables transaction endpoints in REST api)
   (default: false).
 - `index-address`: Index transactions and utxos by address (default: false).
