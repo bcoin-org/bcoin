@@ -3,6 +3,7 @@
 
 'use strict';
 
+const {BloomFilter} = require('bfilter');
 const assert = require('./util/assert');
 const consensus = require('../lib/protocol/consensus');
 const Address = require('../lib/primitives/address');
@@ -10,6 +11,7 @@ const Script = require('../lib/script/script');
 const Outpoint = require('../lib/primitives/outpoint');
 const MTX = require('../lib/primitives/mtx');
 const FullNode = require('../lib/node/fullnode');
+const ChainEntry = require('../lib/blockchain/chainentry');
 const pkg = require('../lib/pkg');
 
 if (process.browser)
@@ -52,6 +54,7 @@ const {wdb} = node.require('walletdb');
 
 let addr = null;
 let hash = null;
+let blocks = null;
 
 describe('HTTP', function() {
   this.timeout(15000);
@@ -432,6 +435,55 @@ describe('HTTP', function() {
       assert.strictEqual(script[0], 0x00,
         'First item in stack must be a placeholder OP_0');
     }
+  });
+
+  it('should generate 10 blocks from RPC call', async () => {
+    blocks = await nclient.execute(
+      'generatetoaddress',
+      [10, addr.toString('regtest')]
+    );
+    assert.strictEqual(blocks.length, 10);
+  });
+
+  it('should initiate rescan from socket without a bloom filter', async () => {
+    // Rescan from height 5. Without a filter loaded = no response, but no error
+    const response = await nclient.call('rescan', 5);
+    assert.strictEqual(null, response);
+  });
+
+  it('should initiate rescan from socket WITH a bloom filter', async () => {
+    // Create an SPV-standard Bloom filter and add one of our wallet addresses
+    const filter = BloomFilter.fromRate(20000, 0.001, BloomFilter.flags.ALL);
+    const walletAddr = addr.toString('regtest');
+    filter.add(walletAddr, 'ascii');
+
+    // Send Bloom filter to server
+    await nclient.call('set filter', filter.filter);
+
+    // `rescan` commands the node server to check blocks against a bloom filter.
+    // When the server matches a transaction in a block to the filter, it
+    // sends a socket call BACK to the client with the ChainEntry of the block,
+    // and an array of matched transactions. Because of this callback, the
+    // CLIENT MUST have a `block rescan` hook in place or the server will throw.
+    const matchingBlocks = [];
+    nclient.hook('block rescan', (entry, txs) => {
+      // Coinbase transactions were mined to our watch address, matching filter.
+      assert.strictEqual(txs.length, 1);
+      const cbtx = MTX.fromRaw(txs[0]);
+      assert.strictEqual(
+        cbtx.outputs[0].getAddress().toString('regtest'),
+        walletAddr
+      );
+
+      // Blocks are returned as raw ChainEntry
+      matchingBlocks.push(
+        ChainEntry.fromRaw(entry).rhash().toString('hex')
+      );
+    });
+
+    // Rescan from height 5 -- should return blocks 5 through 10, inclusive.
+    await nclient.call('rescan', 5);
+    assert.deepStrictEqual(matchingBlocks, blocks.slice(4));
   });
 
   it('should cleanup', async () => {
