@@ -14,9 +14,9 @@ To do this you can run:
 node ./migrate/chaindb4to5.js /path/to/bcoin/chain
 ```
 
-The block data will now be stored at `/path/to/bcoin/blocks`, after
-the data has been moved the chain database will be compacted to free
-disk space.
+The migration will take 1-3 hours, depending on hardware. The block data
+will now be stored at `/path/to/bcoin/blocks`, after the data has been moved
+the chain database will be compacted to free disk space.
 
 Alternatively, you can also sync the chain again, however the above
 migration will be faster as additional network bandwidth won't be used

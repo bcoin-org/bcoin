@@ -129,6 +129,7 @@ async function migrateBlocks() {
   await migrateUndoBlocks();
   await updateVersion();
 
+  console.log('Compacting database');
   await db.compactRange();
   await db.close();
   await blockStore.close();
