@@ -504,6 +504,41 @@ describe('BlockStore', function() {
         assert(err, 'Expected error.');
         assert.equal(err.message, 'Could not write block.');
       });
+
+      it('will close file if write throws', async () => {
+        let err = null;
+        let closed = null;
+
+        store.allocate = () => {
+          return {
+            fileno: 20,
+            filerecord: {
+              used: 0
+            },
+            filepath: '/tmp/.bcoin/blocks/blk00020.dat'
+          };
+        };
+        store.db.has = () => false;
+        fs.open = () => 7;
+        fs.close = (fd) => {
+          closed = fd;
+        };
+        fs.write = () => {
+          throw new Error('Test.');
+        };
+
+        try {
+          const hash = random.randomBytes(128);
+          const block = random.randomBytes(32);
+          await store.write(hash, block);
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err, 'Expected error.');
+        assert.equal(err.message, 'Test.');
+        assert.equal(closed, 7);
+      });
     });
 
     describe('read', function() {
@@ -552,6 +587,32 @@ describe('BlockStore', function() {
 
         assert(err, 'Expected error.');
         assert.equal(err.message, 'Wrong number of bytes read.');
+      });
+
+      it('will close file if read throws', async () => {
+        let err = null;
+        let closed = null;
+
+        store.db.get = () => raw;
+        fs.open = () => 7;
+        fs.close = (fd) => {
+          closed = fd;
+        };
+        fs.read = () => {
+          throw new Error('Test.');
+        };
+
+        try {
+          const hash = random.randomBytes(128);
+          const block = random.randomBytes(32);
+          await store.read(hash, block);
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err, 'Expected error.');
+        assert.equal(err.message, 'Test.');
+        assert.equal(closed, 7);
       });
     });
   });
