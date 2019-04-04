@@ -505,6 +505,55 @@ describe('BlockStore', function() {
         assert.equal(err.message, 'Could not write block.');
       });
     });
+
+    describe('read', function() {
+      const read = fs.read;
+      const open = fs.open;
+      const close = fs.close;
+      let get = null;
+      let raw = null;
+
+      before(() => {
+        const record = new BlockRecord({
+          file: 1,
+          position: 8,
+          length: 100
+        });
+        raw = record.toRaw();
+      });
+
+      beforeEach(() => {
+        get = store.db.get;
+      });
+
+      afterEach(() => {
+        // Restore stubbed methods.
+        store.db.get = get;
+        fs.read = read;
+        fs.open = open;
+        fs.close = close;
+      });
+
+      it('will error if total read bytes not correct', async () => {
+        let err = null;
+
+        store.db.get = () => raw;
+        fs.open = () => 7;
+        fs.close = () => undefined;
+        fs.read = () => 99;
+
+        try {
+          const hash = random.randomBytes(128);
+          const block = random.randomBytes(32);
+          await store.read(hash, block);
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err, 'Expected error.');
+        assert.equal(err.message, 'Wrong number of bytes read.');
+      });
+    });
   });
 
   describe('FileBlockStore (Integration 1)', function() {
