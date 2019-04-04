@@ -1694,6 +1694,7 @@ describe('Wallet', function() {
 
   it('should cleanup', async () => {
     consensus.COINBASE_MATURITY = 100;
+    await workers.close();
     // await wdb.close();
   });
 });

@@ -886,5 +886,6 @@ describe('Chain', function() {
   it('should cleanup', async () => {
     await miner.close();
     await chain.close();
+    await workers.close();
   });
 });
