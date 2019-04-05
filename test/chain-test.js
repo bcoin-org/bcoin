@@ -15,6 +15,7 @@ const MemWallet = require('./util/memwallet');
 const Network = require('../lib/protocol/network');
 const Output = require('../lib/primitives/output');
 const common = require('../lib/blockchain/common');
+const nodejsUtil = require('util');
 const Opcode = require('../lib/script/opcode');
 const opcodes = Script.opcodes;
 
@@ -881,6 +882,14 @@ describe('Chain', function() {
     job.refresh();
 
     assert.strictEqual(await mineBlock(job), 'bad-blk-sigops');
+  });
+
+  it('should inspect ChainEntry', async () => {
+    const fmt = nodejsUtil.format(tip1);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('hash'));
+    assert(fmt.includes('version'));
+    assert(fmt.includes('chainwork'));
   });
 
   it('should cleanup', async () => {

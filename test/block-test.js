@@ -11,6 +11,7 @@ const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
+const nodejsUtil = require('util');
 const bip152 = require('../lib/net/bip152');
 const CompactBlock = bip152.CompactBlock;
 const TXRequest = bip152.TXRequest;
@@ -107,7 +108,10 @@ describe('Block', function() {
 
   it('should inspect a block with a witness commitment', () => {
     const [block] = block482683.getBlock();
-    assert(block.inspect());
+    const fmt = nodejsUtil.format(block);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('Block'));
+    assert(fmt.includes('commitmentHash'));
   });
 
   it('should create a merkle block', () => {
