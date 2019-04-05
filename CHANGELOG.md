@@ -109,6 +109,9 @@ HTTP API call during `open()`.
 - Tests now cleanly close with all timers being cleared.
 - Config file `wallet.conf` won't be read during test runs that was
   causing issues with some testing environments.
+- The pruning configuration has been changed for `regtest` network: The new
+  settings will start pruning after height 500, and the node will keep 288
+  blocks. The previous settings were 1000 and 10000, respectively.
 
 ### Other changes
 
