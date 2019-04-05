@@ -43,6 +43,13 @@ take multiple hours (e.g. 8 hours) depending on hardware and the
 index. Please take the potential downtime in re-indexing into account
 before upgrading.
 
+### Node API changes
+
+#### HTTP
+
+- `GET /` (get info) Now includes boolean properties `spv` and `prune` of
+`node`.
+
 ### Wallet API changes
 
 #### HTTP
@@ -95,6 +102,12 @@ that have many transactions.
   entire set of results would need to be queried every time to discover
   which coins have been spent and are currently available.
 - `GET /` has new fields `.indexes.{addr,tx}` for the status of indexers.
+
+### Wallet changes
+
+- `WalletDB` has new boolean properties `spv` and `prune`. When wallet is
+remote, this info is determined by a `getInfo` HTTP API call during
+`syncNode()`.
 
 ### Network changes
 
