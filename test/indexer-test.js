@@ -90,8 +90,8 @@ describe('Indexer', function() {
       }
 
       assert.strictEqual(chain.height, 10);
-      assert.strictEqual(txindexer.state.startHeight, 10);
-      assert.strictEqual(addrindexer.state.startHeight, 10);
+      assert.strictEqual(txindexer.height, 10);
+      assert.strictEqual(addrindexer.height, 10);
     });
 
     it('should get txs by address', async () => {
@@ -172,8 +172,8 @@ describe('Indexer', function() {
       }
 
       assert.strictEqual(chain.height, 20);
-      assert.strictEqual(txindexer.state.startHeight, 20);
-      assert.strictEqual(addrindexer.state.startHeight, 20);
+      assert.strictEqual(txindexer.height, 20);
+      assert.strictEqual(addrindexer.height, 20);
 
       const hashes = await addrindexer.getHashesByAddress(miner.getAddress());
       assert.strictEqual(hashes.length, 20);
@@ -187,8 +187,8 @@ describe('Indexer', function() {
     it('should handle indexing a reorg', async () => {
       await reorg(chain, cpu, 10);
 
-      assert.strictEqual(txindexer.state.startHeight, 31);
-      assert.strictEqual(addrindexer.state.startHeight, 31);
+      assert.strictEqual(txindexer.height, 31);
+      assert.strictEqual(addrindexer.height, 31);
 
       const hashes = await addrindexer.getHashesByAddress(miner.getAddress());
       assert.strictEqual(hashes.length, 31);
@@ -269,9 +269,9 @@ describe('Indexer', function() {
         'getnewaddress', ['default']);
 
       const blocks = await nclient.execute(
-        'generatetoaddress', [120, coinbase]);
+        'generatetoaddress', [150, coinbase]);
 
-      assert.equal(blocks.length, 120);
+      assert.equal(blocks.length, 150);
 
       // Send to the vector addresses for several blocks.
       for (let i = 0; i < 10; i++) {
