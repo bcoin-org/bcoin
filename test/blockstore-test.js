@@ -9,7 +9,7 @@ const assert = require('./util/assert');
 const common = require('./util/common');
 const {resolve} = require('path');
 const fs = require('bfile');
-const {rimraf} = require('./util/common');
+const {rimraf, testdir} = require('./util/common');
 const random = require('bcrypto/lib/random');
 
 const vectors = [
@@ -618,7 +618,7 @@ describe('BlockStore', function() {
   });
 
   describe('FileBlockStore (Integration 1)', function() {
-    const location = '/tmp/bcoin-blockstore-test';
+    const location = testdir('blockstore');
     let store = null;
 
     beforeEach(async () => {
@@ -948,7 +948,7 @@ describe('BlockStore', function() {
   });
 
   describe('FileBlockStore (Integration 2)', function() {
-    const location = '/tmp/bcoin-blockstore-test';
+    const location = testdir('blockstore');
     let store = null;
 
     beforeEach(async () => {
@@ -1101,7 +1101,7 @@ describe('BlockStore', function() {
   });
 
   describe('LevelBlockStore', function() {
-    const location = '/tmp/bcoin-blockstore-test';
+    const location = testdir('blockstore');
     let store = null;
 
     beforeEach(async () => {
