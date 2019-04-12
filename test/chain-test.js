@@ -17,6 +17,7 @@ const Output = require('../lib/primitives/output');
 const common = require('../lib/blockchain/common');
 const nodejsUtil = require('util');
 const Opcode = require('../lib/script/opcode');
+const BlockStore = require('../lib/blockstore/level');
 const opcodes = Script.opcodes;
 
 const ZERO_KEY = Buffer.alloc(33, 0x00);
@@ -30,8 +31,14 @@ const workers = new WorkerPool({
   enabled: true
 });
 
+const blocks = new BlockStore({
+  memory: true,
+  network
+});
+
 const chain = new Chain({
   memory: true,
+  blocks,
   network,
   workers
 });
@@ -115,6 +122,7 @@ describe('Chain', function() {
   this.timeout(process.browser ? 1200000 : 60000);
 
   it('should open chain and miner', async () => {
+    await blocks.open();
     await chain.open();
     await miner.open();
   });
@@ -895,5 +903,6 @@ describe('Chain', function() {
   it('should cleanup', async () => {
     await miner.close();
     await chain.close();
+    await blocks.close();
   });
 });
