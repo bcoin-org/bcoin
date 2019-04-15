@@ -129,8 +129,8 @@ describe('Indexer', function() {
 
       const txid = hashes[4];
 
-      const next = await addrindexer.getHashesByAddressAfter(
-        addr, {txid: txid, limit: 5});
+      const next = await addrindexer.getHashesByAddress(
+        addr, {after: txid, limit: 5});
 
       assert.strictEqual(next.length, 5);
 
@@ -149,8 +149,8 @@ describe('Indexer', function() {
 
       const txid = hashes[4];
 
-      const next = await addrindexer.getHashesByAddressAfter(
-        addr, {txid: txid, limit: 5, reverse: true});
+      const next = await addrindexer.getHashesByAddress(
+        addr, {after: txid, limit: 5, reverse: true});
 
       assert.strictEqual(next.length, 5);
 
