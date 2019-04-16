@@ -16,6 +16,7 @@ const FullNode = require('../lib/node/fullnode');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
 const {NodeClient, WalletClient} = require('bclient');
+const {forValue} = require('./util/common');
 
 const workers = new WorkerPool({
   enabled: true
@@ -297,6 +298,8 @@ describe('Indexer', function() {
         assert.equal(blocks.length, 1);
       }
 
+      await forValue(node.chain, 'height', 160);
+
       // Send unconfirmed to the vector addresses.
       for (let i = 0; i < 3; i++) {
         for (const v of vectors) {
@@ -306,6 +309,8 @@ describe('Indexer', function() {
           unconfirmed.push(txid);
         }
       }
+
+      await forValue(node.mempool.map, 'size', 6);
     });
 
     after(async () => {
