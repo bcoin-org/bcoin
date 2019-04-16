@@ -220,7 +220,8 @@ describe('Indexer', function() {
       }
     ];
 
-    const txids = [];
+    const confirmed = [];
+    const unconfirmed = [];
 
     const ports = {
       p2p: 49331,
@@ -287,13 +288,23 @@ describe('Indexer', function() {
           const txid = await wclient.execute(
             'sendtoaddress', [v.addr, v.amount]);
 
-          txids.push(txid);
+          confirmed.push(txid);
         }
 
         const blocks = await nclient.execute(
           'generatetoaddress', [1, coinbase]);
 
         assert.equal(blocks.length, 1);
+      }
+
+      // Send unconfirmed to the vector addresses.
+      for (let i = 0; i < 3; i++) {
+        for (const v of vectors) {
+          const txid = await wclient.execute(
+            'sendtoaddress', [v.addr, v.amount]);
+
+          unconfirmed.push(txid);
+        }
       }
     });
 
@@ -304,36 +315,69 @@ describe('Indexer', function() {
     });
 
     for (const v of vectors) {
-      it(`will get txs by ${v.label} address`, async () => {
+      it(`txs by ${v.label} address`, async () => {
         const res = await nclient.request(
           'GET', `/tx/address/${v.addr}`, {});
 
-        assert.equal(res.length, 10);
+        assert.equal(res.length, 13);
 
-        for (const tx of res)
-          assert(txids.includes(tx.hash));
+        for (let i = 0; i < 10; i++)
+          assert(confirmed.includes(res[i].hash));
+
+        for (let i = 10; i < 13; i++)
+          assert(unconfirmed.includes(res[i].hash));
       });
 
-      it(`will get txs by ${v.label} address (limit)`, async () => {
+      it(`txs by ${v.label} address (limit)`, async () => {
         const res = await nclient.request(
           'GET', `/tx/address/${v.addr}`, {limit: 3});
 
+        assert.equal(res.length, 3);
+
         for (const tx of res)
-          assert(txids.includes(tx.hash));
+          assert(confirmed.includes(tx.hash));
+      });
+
+      it(`txs by ${v.label} address (limit w/ unconf)`, async () => {
+        const res = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {limit: 11});
+
+        assert.equal(res.length, 11);
+
+        for (let i = 0; i < 10; i++)
+          assert(confirmed.includes(res[i].hash));
+
+        for (let i = 10; i < 11; i++)
+          assert(unconfirmed.includes(res[i].hash));
       });
 
       it(`txs by ${v.label} address (reverse)`, async () => {
         const asc = await nclient.request(
           'GET', `/tx/address/${v.addr}`, {reverse: false});
 
+        assert.equal(asc.length, 13);
+
         const dsc = await nclient.request(
           'GET', `/tx/address/${v.addr}`, {reverse: true});
 
-        for (let i = 0; i < dsc.length; i++)
-          assert.equal(asc[i].hash, dsc[dsc.length - i - 1].hash);
+        assert.equal(asc.length, 13);
+
+        for (let i = 0; i < 10; i++)
+          assert(confirmed.includes(asc[i].hash));
+
+        for (let i = 10; i < 13; i++)
+          assert(unconfirmed.includes(asc[i].hash));
+
+        // Check the the results are reverse
+        // of each other.
+        for (let i = 0; i < dsc.length; i++) {
+          const atx = asc[i];
+          const dtx = dsc[dsc.length - i - 1];
+          assert.equal(atx.hash, dtx.hash);
+        }
       });
 
-      it(`txs by ${v.label} address after txid`, async () => {
+      it(`txs by ${v.label} address (after)`, async () => {
         const one = await nclient.request(
           'GET', `/tx/address/${v.addr}`, {limit: 3});
         assert.strictEqual(one.length, 3);
@@ -351,26 +395,105 @@ describe('Indexer', function() {
         assert.deepEqual(one.concat(two), all);
       });
 
-      it(`txs by ${v.label} address after txid (reverse)`, async () => {
+      it(`txs by ${v.label} address (after w/ unconf)`, async () => {
+        const one = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {limit: 11});
+        assert.strictEqual(one.length, 11);
+
+        for (let i = 0; i < 10; i++)
+          assert(confirmed.includes(one[i].hash));
+
+        for (let i = 10; i < 11; i++)
+          assert(unconfirmed.includes(one[i].hash));
+
+        // The after hash is within the
+        // unconfirmed transactions.
+        const hash = one[10].hash;
+
+        const two = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {after: hash, limit: 1});
+        assert.strictEqual(two.length, 1);
+        assert(unconfirmed.includes(two[0].hash));
+
+        const all = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {limit: 12});
+        assert.strictEqual(all.length, 12);
+
+        assert.deepEqual(one.concat(two), all);
+      });
+
+      it(`txs by ${v.label} address (after, reverse)`, async () => {
+        const one = await nclient.request(
+          'GET', `/tx/address/${v.addr}`,
+          {limit: 5, reverse: true});
+
+        assert.strictEqual(one.length, 5);
+
+        for (let i = 0; i < 3; i++)
+          assert(unconfirmed.includes(one[i].hash));
+
+        for (let i = 3; i < 5; i++)
+          assert(confirmed.includes(one[i].hash));
+
+        // The after hash is within the
+        // confirmed transactions.
+        const hash = one[4].hash;
+
+        const two = await nclient.request(
+          'GET', `/tx/address/${v.addr}`,
+          {after: hash, limit: 3, reverse: true});
+
+        assert.strictEqual(two.length, 3);
+        for (let i = 0; i < 3; i++)
+          assert(confirmed.includes(two[i].hash));
+
+        const all = await nclient.request(
+          'GET', `/tx/address/${v.addr}`,
+          {limit: 8, reverse: true});
+
+        assert.strictEqual(all.length, 8);
+
+        for (let i = 0; i < 3; i++)
+          assert(unconfirmed.includes(all[i].hash));
+
+        for (let i = 3; i < 8; i++)
+          assert(confirmed.includes(all[i].hash));
+
+        assert.deepEqual(one.concat(two), all);
+      });
+
+      it(`txs by ${v.label} address (after, reverse w/ unconf)`, async () => {
         const one = await nclient.request(
           'GET', `/tx/address/${v.addr}`,
           {limit: 3, reverse: true});
 
         assert.strictEqual(one.length, 3);
+        for (let i = 0; i < 3; i++)
+          assert(unconfirmed.includes(one[i].hash));
 
+        // The after hash is within the
+        // unconfirmed transactions.
         const hash = one[2].hash;
 
         const two = await nclient.request(
           'GET', `/tx/address/${v.addr}`,
           {after: hash, limit: 3, reverse: true});
 
-        assert.strictEqual(one.length, 3);
+        assert.strictEqual(two.length, 3);
+        for (let i = 0; i < 3; i++)
+          assert(confirmed.includes(two[i].hash));
 
         const all = await nclient.request(
           'GET', `/tx/address/${v.addr}`,
           {limit: 6, reverse: true});
 
-        assert.strictEqual(one.length, 3);
+        assert.strictEqual(all.length, 6);
+
+        for (let i = 0; i < 3; i++)
+          assert(unconfirmed.includes(all[i].hash));
+
+        for (let i = 3; i < 6; i++)
+          assert(confirmed.includes(all[i].hash));
 
         assert.deepEqual(one.concat(two), all);
       });
