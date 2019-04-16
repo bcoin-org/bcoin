@@ -89,6 +89,13 @@ describe('HTTP', function() {
     assert.strictEqual(info.pool.agent, node.pool.options.agent);
     assert.typeOf(info.chain, 'object');
     assert.strictEqual(info.chain.height, 0);
+    assert.typeOf(info.indexes, 'object');
+    assert.typeOf(info.indexes.addr, 'object');
+    assert.equal(info.indexes.addr.enabled, false);
+    assert.equal(info.indexes.addr.height, 0);
+    assert.typeOf(info.indexes.tx, 'object');
+    assert.equal(info.indexes.addr.enabled, false);
+    assert.equal(info.indexes.tx.height, 0);
   });
 
   it('should get wallet info', async () => {
