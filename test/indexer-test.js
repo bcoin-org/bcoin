@@ -208,8 +208,16 @@ describe('Indexer', function() {
     const vectors = [
       // Secret for the vectors:
       // cVDJUtDjdaM25yNVVDLLX3hcHUfth4c7tY3rSc4hy9e8ibtCuj6G
-      {addr: 'bcrt1qngw83fg8dz0k749cg7k3emc7v98wy0c7azaa6h', amount: 19.99},
-      {addr: 'muZpTpBYhxmRFuCjLc7C6BBDF32C8XVJUi', amount: 1.99}
+      {
+        addr: 'bcrt1qngw83fg8dz0k749cg7k3emc7v98wy0c7azaa6h',
+        amount: 19.99,
+        label: 'p2wpkh'
+      },
+      {
+        addr: 'muZpTpBYhxmRFuCjLc7C6BBDF32C8XVJUi',
+        amount: 1.99,
+        label: 'p2pkh'
+      }
     ];
 
     const txids = [];
@@ -295,8 +303,8 @@ describe('Indexer', function() {
       await node.close();
     });
 
-    it('will get txs by address', async () => {
-      for (const v of vectors) {
+    for (const v of vectors) {
+      it(`will get txs by ${v.label} address`, async () => {
         const res = await nclient.request(
           'GET', `/tx/address/${v.addr}`, {});
 
@@ -304,7 +312,68 @@ describe('Indexer', function() {
 
         for (const tx of res)
           assert(txids.includes(tx.hash));
-      }
-    });
+      });
+
+      it(`will get txs by ${v.label} address (limit)`, async () => {
+        const res = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {limit: 3});
+
+        for (const tx of res)
+          assert(txids.includes(tx.hash));
+      });
+
+      it(`txs by ${v.label} address (reverse)`, async () => {
+        const asc = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {reverse: false});
+
+        const dsc = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {reverse: true});
+
+        for (let i = 0; i < dsc.length; i++)
+          assert.equal(asc[i].hash, dsc[dsc.length - i - 1].hash);
+      });
+
+      it(`txs by ${v.label} address after txid`, async () => {
+        const one = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {limit: 3});
+        assert.strictEqual(one.length, 3);
+
+        const hash = one[2].hash;
+
+        const two = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {after: hash, limit: 3});
+        assert.strictEqual(one.length, 3);
+
+        const all = await nclient.request(
+          'GET', `/tx/address/${v.addr}`, {limit: 6});
+        assert.strictEqual(one.length, 3);
+
+        assert.deepEqual(one.concat(two), all);
+      });
+
+      it(`txs by ${v.label} address after txid (reverse)`, async () => {
+        const one = await nclient.request(
+          'GET', `/tx/address/${v.addr}`,
+          {limit: 3, reverse: true});
+
+        assert.strictEqual(one.length, 3);
+
+        const hash = one[2].hash;
+
+        const two = await nclient.request(
+          'GET', `/tx/address/${v.addr}`,
+          {after: hash, limit: 3, reverse: true});
+
+        assert.strictEqual(one.length, 3);
+
+        const all = await nclient.request(
+          'GET', `/tx/address/${v.addr}`,
+          {limit: 6, reverse: true});
+
+        assert.strictEqual(one.length, 3);
+
+        assert.deepEqual(one.concat(two), all);
+      });
+    }
   });
 });
