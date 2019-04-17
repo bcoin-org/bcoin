@@ -492,6 +492,294 @@ describe('Mempool', function() {
     await workers.close();
   });
 
+  describe('Index', function () {
+    const workers = new WorkerPool({
+      enabled: true
+    });
+
+    const blocks = new BlockStore({
+      memory: true
+    });
+
+    const chain = new Chain({
+      memory: true,
+      workers,
+      blocks
+    });
+
+    const mempool = new Mempool({
+      chain,
+      workers,
+      memory: true,
+      indexAddress: true
+    });
+
+    before(async () => {
+      await blocks.open();
+      await mempool.open();
+      await chain.open();
+      await workers.open();
+    });
+
+    after(async () => {
+      await workers.close();
+      await chain.close();
+      await mempool.close();
+      await blocks.close();
+    });
+
+    // Number of coins available in
+    // chaincoins (100k satoshi per coin).
+    const N = 100;
+    const chaincoins = new MemWallet();
+    const wallet = new MemWallet();
+
+    it('should create coins in chain', async () => {
+      const mtx = new MTX();
+      mtx.addInput(new Input());
+
+      for (let i = 0; i < N; i++) {
+        const addr = chaincoins.createReceive().getAddress();
+        mtx.addOutput(addr, 100000);
+      }
+
+      const cb = mtx.toTX();
+      const block = await getMockBlock(chain, [cb], false);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // Add 100 blocks so we don't get
+      // premature spend of coinbase.
+      for (let i = 0; i < 100; i++) {
+        const block = await getMockBlock(chain);
+        const entry = await chain.add(block, VERIFY_NONE);
+
+        await mempool._addBlock(entry, block.txs);
+      }
+
+      chaincoins.addTX(cb);
+    });
+
+    it('should spend txs and coins in the mempool', async () => {
+      // Verify coins are removed from the coin index.
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+
+      const mtx1 = new MTX();
+
+      mtx1.addCoin(coin);
+      mtx1.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx1);
+
+      const tx1 = mtx1.toTX();
+
+      chaincoins.addTX(tx1, -1);
+      wallet.addTX(tx1, -1);
+
+      {
+        const missing = await mempool.addTX(tx1);
+        assert.strictEqual(missing, null);
+      }
+
+      assert(mempool.hasCoin(tx1.hash(), 0));
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+        const metas = mempool.getMetaByAddress(addr);
+
+        assert.strictEqual(txs.length, 1);
+        assert.strictEqual(metas.length, 1);
+
+        assert.bufferEqual(txs[0].hash(), tx1.hash());
+      }
+
+      const mtx2 = new MTX();
+
+      mtx2.addTX(tx1, 0, -1);
+      mtx2.addOutput(addr, 80000);
+
+      wallet.sign(mtx2);
+
+      const tx2 = mtx2.toTX();
+
+      {
+        const missing = await mempool.addTX(tx2);
+        assert.strictEqual(missing, null);
+      }
+
+      wallet.addTX(tx2, -1);
+
+      assert(!mempool.hasCoin(tx1.hash(), 0));
+      assert(mempool.hasCoin(tx2.hash(), 0));
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+
+        assert.strictEqual(txs.length, 2);
+      }
+    });
+
+    it('should spend resolved orphans', async () => {
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+
+      const pmtx = new MTX();
+
+      pmtx.addOutput(addr, 90000);
+      pmtx.addCoin(coin);
+
+      chaincoins.sign(pmtx);
+
+      const parentTX = pmtx.toTX();
+
+      const cmtx = new MTX();
+
+      cmtx.addTX(pmtx.toTX(), 0, -1);
+      cmtx.addOutput(addr, 80000);
+
+      wallet.sign(cmtx);
+
+      const childTX = cmtx.toTX();
+
+      {
+        // Create orphan tx.
+        const missing = await mempool.addTX(childTX);
+
+        // We only have one input missing.
+        assert.strictEqual(missing.length, 1);
+      }
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+
+        assert.strictEqual(txs.length, 0);
+      }
+
+      {
+        // Orphans are not coins.
+        const childCoin = mempool.getCoin(childTX.hash(), 0);
+        assert.strictEqual(childCoin, null);
+      }
+
+      {
+        // Orphans should be resolved.
+        const missing = await mempool.addTX(parentTX);
+        assert.strictEqual(missing, null);
+
+        // Coins should be available once they are resolved.
+        const parentCoin = mempool.getCoin(parentTX.hash(), 0);
+
+        // We spent this.
+        assert.strictEqual(parentCoin, null);
+
+        const childCoin = mempool.getCoin(childTX.hash(), 0);
+        assert(childCoin);
+      }
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+        assert.strictEqual(txs.length, 2);
+      }
+
+      // Update coins in wallets.
+      for (const tx of [parentTX, childTX]) {
+        chaincoins.addTX(tx);
+        wallet.addTX(tx);
+      }
+    });
+
+    it('should remove double spend tx from mempool', async () => {
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+      const randomAddress = KeyRing.generate().getAddress();
+
+      // We check double spending our mempool tx.
+      const mtx1 = new MTX();
+
+      mtx1.addCoin(coin);
+      mtx1.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx1);
+
+      // This will double spend in block.
+      const mtx2 = new MTX();
+
+      mtx2.addCoin(coin);
+      mtx2.addOutput(randomAddress, 90000);
+
+      chaincoins.sign(mtx2);
+
+      const tx1 = mtx1.toTX();
+      const tx2 = mtx2.toTX();
+
+      {
+        const missing = await mempool.addTX(tx1);
+        assert.strictEqual(missing, null);
+      }
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+        assert.strictEqual(txs.length, 1);
+      }
+
+      assert(mempool.hasCoin(tx1.hash(), 0));
+
+      const block = await getMockBlock(chain, [tx2]);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+        assert.strictEqual(txs.length, 0);
+      }
+
+      assert(!mempool.hasCoin(tx1.hash(), 0));
+
+      chaincoins.addTX(tx2);
+    });
+
+    it('should remove confirmed txs from mempool', async () => {
+      const coin = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+
+      const mtx = new MTX();
+
+      mtx.addCoin(coin);
+      mtx.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx);
+
+      const tx = mtx.toTX();
+
+      await mempool.addTX(tx);
+
+      assert(mempool.hasCoin(tx.hash(), 0));
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+        assert.strictEqual(txs.length, 1);
+      }
+
+      const block = await getMockBlock(chain, [tx]);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      {
+        const txs = mempool.getTXByAddress(addr);
+        assert.strictEqual(txs.length, 0);
+      }
+
+      assert(!mempool.hasCoin(tx.hash(), 0));
+
+      chaincoins.addTX(tx);
+      wallet.addTX(tx);
+    });
+  });
+
   describe('Mempool persistent cache', function () {
     const workers = new WorkerPool({
       enabled: true
