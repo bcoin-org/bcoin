@@ -115,8 +115,11 @@ assert.asyncThrows = async function asyncThrows(func, expectedError) {
   } catch (e) {
     err = e;
   }
-  const re = new RegExp('^' + expectedError);
-  assert(re.test(err.message));
+  assert(err, 'Expected error.');
+  if (expectedError) {
+    const re = new RegExp('^' + expectedError);
+    assert(re.test(err.message), err.message);
+  }
 };
 
 function _isString(value, message, stackStartFunction) {

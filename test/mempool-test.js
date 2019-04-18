@@ -9,6 +9,7 @@ const common = require('../lib/blockchain/common');
 const Block = require('../lib/primitives/block');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
+const AddrIndexer = require('../lib/mempool/addrindexer');
 const WorkerPool = require('../lib/workers/workerpool');
 const Chain = require('../lib/blockchain/chain');
 const MTX = require('../lib/primitives/mtx');
@@ -18,6 +19,7 @@ const Address = require('../lib/primitives/address');
 const Outpoint = require('../lib/primitives/outpoint');
 const Input = require('../lib/primitives/input');
 const Script = require('../lib/script/script');
+const Opcode = require('../lib/script/opcode');
 const opcodes = Script.opcodes;
 const Witness = require('../lib/script/witness');
 const MemWallet = require('./util/memwallet');
@@ -777,6 +779,40 @@ describe('Mempool', function() {
 
       chaincoins.addTX(tx);
       wallet.addTX(tx);
+    });
+  });
+
+  describe('AddrIndexer', function () {
+    it('will not get key for witness program v1', function() {
+      const addrindex = new AddrIndexer();
+
+      // Create a witness program version 1 with
+      // 40 byte data push.
+      const script = new Script();
+      script.push(Opcode.fromSmall(1));
+      script.push(Opcode.fromData(Buffer.alloc(40)));
+      script.compile();
+      const addr = Address.fromScript(script);
+
+      const key = addrindex.getKey(addr);
+
+      assert.strictEqual(key, null);
+    });
+
+    it('will get key for witness program v0', function() {
+      const addrindex = new AddrIndexer();
+
+      // Create a witness program version 0 with
+      // 32 byte data push.
+      const script = new Script();
+      script.push(Opcode.fromSmall(0));
+      script.push(Opcode.fromData(Buffer.alloc(32)));
+      script.compile();
+      const addr = Address.fromScript(script);
+
+      const key = addrindex.getKey(addr);
+
+      assert.bufferEqual(key, Buffer.from('0a' + '00'.repeat(32), 'hex'));
     });
   });
 
