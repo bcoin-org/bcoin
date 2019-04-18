@@ -80,9 +80,13 @@ describe('Indexer', function() {
   });
 
   describe('index 10 blocks', function() {
+    let addr = null;
+
     before(async () => {
       miner.addresses.length = 0;
       miner.addAddress(wallet.getReceive());
+
+      addr = miner.getAddress();
 
       for (let i = 0; i < 10; i++) {
         const block = await cpu.mineBlock();
@@ -101,13 +105,11 @@ describe('Indexer', function() {
     });
 
     it('should get txs by address (limit)', async () => {
-      const addr = miner.getAddress();
       const hashes = await addrindexer.getHashesByAddress(addr, {limit: 1});
       assert.strictEqual(hashes.length, 1);
     });
 
     it('should get txs by address (reverse)', async () => {
-      const addr = miner.getAddress();
       const hashes = await addrindexer.getHashesByAddress(
         addr, {reverse: false});
 
@@ -122,8 +124,7 @@ describe('Indexer', function() {
         assert.deepEqual(hashes[i], reversed[9 - i]);
     });
 
-    it('should txs by address after txid', async () => {
-      const addr = miner.getAddress();
+    it('should get txs by address after txid', async () => {
       const hashes = await addrindexer.getHashesByAddress(addr, {limit: 5});
 
       assert.strictEqual(hashes.length, 5);
@@ -141,8 +142,7 @@ describe('Indexer', function() {
       assert.deepEqual(hashes.concat(next), all);
     });
 
-    it('should txs by address after txid (reverse)', async () => {
-      const addr = miner.getAddress();
+    it('should get txs by address after txid (reverse)', async () => {
       const hashes = await addrindexer.getHashesByAddress(
         addr, {limit: 5, reverse: true});
 
@@ -161,6 +161,31 @@ describe('Indexer', function() {
       assert.strictEqual(all.length, 10);
 
       assert.deepEqual(hashes.concat(next), all);
+    });
+
+    it('should get tx and meta', async () => {
+      const hashes = await addrindexer.getHashesByAddress(addr, {limit: 1});
+      assert.equal(hashes.length, 1);
+      const hash = hashes[0];
+
+      const tx = await txindexer.getTX(hash);
+      const meta = await txindexer.getMeta(hash);
+
+      assert(meta.height);
+      assert(meta.block);
+      assert(meta.time);
+
+      assert.deepEqual(meta.tx, tx);
+    });
+
+    it('should get null if not found for tx and meta', async () => {
+      const hash = Buffer.alloc(32);
+
+      const tx = await txindexer.getTX(hash);
+      const meta = await txindexer.getMeta(hash);
+
+      assert.strictEqual(tx, null);
+      assert.strictEqual(meta, null);
     });
   });
 
