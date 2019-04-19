@@ -420,10 +420,205 @@ describe('Indexer', function() {
           assert(node.txindex);
           assert.equal(node.txindex.height, 0);
 
-          node.txindex.sync();
+          node.startSync();
 
           await forValue(node.txindex, 'height', 150);
         } finally {
+          if (node)
+            await node.close();
+        }
+      });
+
+      it('will sync if disabled during reorganization', async () => {
+        let node, nclient, wclient = null;
+
+        try {
+          // Generate initial set of blocks that are are spending
+          // coins and therefore data in undo blocks.
+          node = new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            apiKey: 'foo',
+            memory: false,
+            indexTX: true,
+            indexAddress: false,
+            port: ports.p2p,
+            httpPort: ports.node,
+            plugins: [require('../lib/wallet/plugin')],
+            env: {
+              'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
+            },
+            logLevel: 'none'
+          });
+
+          await node.ensure();
+          await node.open();
+
+          nclient = new NodeClient({
+            port: ports.node,
+            apiKey: 'foo',
+            timeout: 120000
+          });
+
+          await nclient.open();
+
+          wclient = new WalletClient({
+            port: ports.wallet,
+            apiKey: 'foo',
+            timeout: 120000
+          });
+
+          await wclient.open();
+
+          const coinbase = await wclient.execute(
+            'getnewaddress', ['default']);
+
+          const blocks = await nclient.execute(
+            'generatetoaddress', [150, coinbase]);
+
+          assert.equal(blocks.length, 150);
+
+          for (let i = 0; i < 10; i++) {
+            for (const v of vectors)
+              await wclient.execute('sendtoaddress', [v.addr, v.amount]);
+
+            const blocks = await nclient.execute(
+              'generatetoaddress', [1, coinbase]);
+
+            assert.equal(blocks.length, 1);
+          }
+
+          await forValue(node.chain, 'height', 160);
+          await forValue(node.txindex, 'height', 160);
+        } finally {
+          if (wclient)
+            await wclient.close();
+
+          if (nclient)
+            await nclient.close();
+
+          if (node)
+            await node.close();
+        }
+
+        try {
+          // Now create a reorganization in the chain while
+          // the indexer is disabled.
+          node = new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            apiKey: 'foo',
+            memory: false,
+            indexTX: false,
+            indexAddress: false,
+            port: ports.p2p,
+            httpPort: ports.node,
+            logLevel: 'none'
+          });
+
+          await node.ensure();
+          await node.open();
+
+          nclient = new NodeClient({
+            port: ports.node,
+            apiKey: 'foo',
+            timeout: 120000
+          });
+
+          await nclient.open();
+
+          for (let i = 0; i < 10; i++) {
+            const hash = await nclient.execute('getbestblockhash');
+            await nclient.execute('invalidateblock', [hash]);
+          }
+
+          await forValue(node.chain, 'height', 150);
+
+          const blocks = await nclient.execute(
+            'generatetoaddress', [20, vectors[0].addr]);
+
+          assert.equal(blocks.length, 20);
+
+          await forValue(node.chain, 'height', 170);
+        } finally {
+          if (nclient)
+            await nclient.close();
+
+          if (node)
+            await node.close();
+        }
+
+        try {
+          // Now turn the indexer back on and check that it
+          // is able to disconnect blocks and add the new blocks.
+          node = new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            apiKey: 'foo',
+            memory: false,
+            indexTX: true,
+            indexAddress: false,
+            port: ports.p2p,
+            httpPort: ports.node,
+            logLevel: 'none'
+          });
+
+          await node.ensure();
+          await node.open();
+
+          assert(node.txindex);
+          assert.equal(node.txindex.height, 160);
+
+          node.txindex.sync();
+
+          await forValue(node.txindex, 'height', 170, 5000);
+        } finally {
+          if (node)
+            await node.close();
+        }
+      });
+
+      it('will reset indexes', async () => {
+        let node, nclient = null;
+
+        try {
+          node = new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            apiKey: 'foo',
+            memory: false,
+            indexTX: true,
+            indexAddress: false,
+            port: ports.p2p,
+            httpPort: ports.node,
+            logLevel: 'none'
+          });
+
+          await node.ensure();
+          await node.open();
+
+          nclient = new NodeClient({
+            port: ports.node,
+            apiKey: 'foo',
+            timeout: 120000
+          });
+
+          await nclient.open();
+
+          const blocks = await nclient.execute(
+            'generatetoaddress', [150, vectors[0].addr]);
+
+          assert.equal(blocks.length, 150);
+
+          await forValue(node.txindex, 'height', 150);
+
+          await node.chain.reset(0);
+
+          await forValue(node.txindex, 'height', 1);
+        } finally {
+          if (nclient)
+            await nclient.close();
+
           if (node)
             await node.close();
         }

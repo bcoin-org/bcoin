@@ -102,7 +102,7 @@ common.rimraf = async function(p) {
   return await fs.rimraf(p);
 };
 
-common.forValue = async function(obj, key, val, timeout = 60000) {
+common.forValue = async function(obj, key, val, timeout = 30000) {
   assert(typeof obj === 'object');
   assert(typeof key === 'string');
 
