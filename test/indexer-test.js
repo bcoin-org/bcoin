@@ -19,7 +19,13 @@ const FullNode = require('../lib/node/fullnode');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
 const {NodeClient, WalletClient} = require('bclient');
-const {forValue} = require('./util/common');
+const {forValue, testdir, rimraf} = require('./util/common');
+
+const ports = {
+  p2p: 49331,
+  node: 49332,
+  wallet: 49333
+};
 
 const vectors = [
   // Secret for the public key vectors:
@@ -302,7 +308,7 @@ describe('Indexer', function() {
     });
   });
 
-  describe('Rescan and reorg', function() {
+  describe('Reorg and rescan', function() {
     it('should rescan and reindex 10 missed blocks', async () => {
       for (let i = 0; i < 10; i++) {
         const block = await cpu.mineBlock();
@@ -337,6 +343,92 @@ describe('Indexer', function() {
         assert.bufferEqual(meta.tx.hash(), hash);
       }
     });
+
+    describe('Integration', function() {
+      const prefix = testdir('indexer');
+
+      beforeEach(async () => {
+        await rimraf(prefix);
+      });
+
+      after(async () => {
+        await rimraf(prefix);
+      });
+
+      it('will enable indexes retroactively', async () => {
+        let node, nclient = null;
+
+        try {
+          node = new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            apiKey: 'foo',
+            memory: false,
+            indexTX: false,
+            indexAddress: false,
+            port: ports.p2p,
+            httpPort: ports.node
+          });
+
+          await node.ensure();
+          await node.open();
+
+          nclient = new NodeClient({
+            port: ports.node,
+            apiKey: 'foo',
+            timeout: 120000
+          });
+
+          await nclient.open();
+
+          const blocks = await nclient.execute(
+            'generatetoaddress', [150, vectors[0].addr]);
+
+          assert.equal(blocks.length, 150);
+
+          await forValue(node.chain, 'height', 150);
+
+          const info = await nclient.request('GET', '/');
+
+          assert.equal(info.chain.height, 150);
+          assert.equal(info.indexes.addr.enabled, false);
+          assert.equal(info.indexes.addr.height, 0);
+          assert.equal(info.indexes.tx.enabled, false);
+          assert.equal(info.indexes.tx.height, 0);
+        } finally {
+          if (nclient)
+            await nclient.close();
+
+          if (node)
+            await node.close();
+        }
+
+        try {
+          node = new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            memory: false,
+            indexTX: true,
+            indexAddress: false,
+            port: ports.p2p,
+            httpPort: ports.node
+          });
+
+          await node.ensure();
+          await node.open();
+
+          assert(node.txindex);
+          assert.equal(node.txindex.height, 0);
+
+          node.txindex.sync();
+
+          await forValue(node.txindex, 'height', 150);
+        } finally {
+          if (node)
+            await node.close();
+        }
+      });
+    });
   });
 
   describe('HTTP', function() {
@@ -346,12 +438,6 @@ describe('Indexer', function() {
 
     const confirmed = [];
     const unconfirmed = [];
-
-    const ports = {
-      p2p: 49331,
-      node: 49332,
-      wallet: 49333
-    };
 
     function sanitize(txs) {
       return txs.map((tx) => {
