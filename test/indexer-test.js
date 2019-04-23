@@ -119,6 +119,122 @@ describe('Indexer', function() {
   });
 
   describe('Unit', function() {
+    it('should connect block', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: {}
+      });
+
+      indexer.height = 9;
+
+      indexer.getBlockMeta = (height) => {
+        return {
+          hash: Buffer.alloc(32, 0x00),
+          height: height
+        };
+      };
+
+      let called = false;
+      indexer._addBlock = async () => {
+        called = true;
+      };
+
+      const meta = {height: 10};
+      const block = {prevBlock: Buffer.alloc(32, 0x00)};
+      const view = {};
+
+      const connected = await indexer._syncBlock(meta, block, view);
+      assert.equal(connected, true);
+      assert.equal(called, true);
+    });
+
+    it('should not connect block', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: {}
+      });
+
+      indexer.height = 9;
+
+      indexer.getBlockMeta = (height) => {
+        return {
+          hash: Buffer.alloc(32, 0x02),
+          height: height
+        };
+      };
+
+      let called = false;
+      indexer._addBlock = async () => {
+        called = true;
+      };
+
+      const meta = {height: 10};
+      const block = {prevBlock: Buffer.alloc(32, 0x01)};
+      const view = {};
+
+      const connected = await indexer._syncBlock(meta, block, view);
+      assert.equal(connected, false);
+      assert.equal(called, false);
+    });
+
+    it('should disconnect block', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: {}
+      });
+
+      indexer.height = 9;
+
+      indexer.getBlockMeta = (height) => {
+        return {
+          hash: Buffer.alloc(32, 0x00),
+          height: height
+        };
+      };
+
+      let called = false;
+      indexer._removeBlock = async () => {
+        called = true;
+      };
+
+      const meta = {height: 9};
+      const block = {hash: () => Buffer.alloc(32, 0x00)};
+      const view = {};
+
+      const connected = await indexer._syncBlock(meta, block, view);
+      assert.equal(connected, true);
+      assert.equal(called, true);
+    });
+
+    it('should not disconnect block', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: {}
+      });
+
+      indexer.height = 9;
+
+      indexer.getBlockMeta = (height) => {
+        return {
+          hash: Buffer.alloc(32, 0x01),
+          height: height
+        };
+      };
+
+      let called = false;
+      indexer._removeBlock = async () => {
+        called = true;
+      };
+
+      const meta = {height: 9};
+      const block = {hash: () => Buffer.alloc(32, 0x02)};
+      const view = {};
+
+      const connected = await indexer._syncBlock(meta, block, view);
+      assert.equal(connected, false);
+      assert.equal(called, false);
+    });
+
     it('should not index transaction w/ invalid address', async () => {
       const indexer = new AddrIndexer({
         blocks: {},
