@@ -8,6 +8,7 @@ const reorg = require('./util/reorg');
 const Script = require('../lib/script/script');
 const Opcode = require('../lib/script/opcode');
 const Address = require('../lib/primitives/address');
+const Block = require('../lib/primitives/block');
 const Chain = require('../lib/blockchain/chain');
 const WorkerPool = require('../lib/workers/workerpool');
 const Miner = require('../lib/mining/miner');
@@ -305,6 +306,21 @@ describe('Indexer', function() {
 
       assert.strictEqual(tx, null);
       assert.strictEqual(meta, null);
+    });
+
+    it('should get unspendable genesis tx', async () => {
+      const block = Block.fromRaw(Buffer.from(network.genesisBlock, 'hex'));
+      const hash = block.txs[0].hash();
+
+      const tx = await txindexer.getTX(hash);
+      const meta = await txindexer.getMeta(hash);
+
+      assert(meta);
+      assert.equal(meta.height, 0);
+      assert(meta.block);
+      assert(meta.time);
+
+      assert.deepEqual(meta.tx, tx);
     });
   });
 
