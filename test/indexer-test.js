@@ -17,6 +17,7 @@ const TXIndexer = require('../lib/indexer/txindexer');
 const AddrIndexer = require('../lib/indexer/addrindexer');
 const BlockStore = require('../lib/blockstore/level');
 const FullNode = require('../lib/node/fullnode');
+const SPVNode = require('../lib/node/spvnode');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
 const {NodeClient, WalletClient} = require('bclient');
@@ -638,6 +639,45 @@ describe('Indexer', function() {
           if (node)
             await node.close();
         }
+      });
+
+      it('will not index if pruned', async () => {
+        let err = null;
+
+        try {
+          new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            apiKey: 'foo',
+            memory: false,
+            prune: true,
+            indexTX: true,
+            indexAddress: true,
+            port: ports.p2p,
+            httpPort: ports.node
+          });
+        } catch (e) {
+          err = e;
+        }
+
+        assert(err);
+        assert.equal(err.message, 'Can not index while pruned.');
+      });
+
+      it('will not index if spv', async () => {
+        const node = new SPVNode({
+          prefix: prefix,
+          network: 'regtest',
+          apiKey: 'foo',
+          memory: false,
+          indexTX: true,
+          indexAddress: true,
+          port: ports.p2p,
+          httpPort: ports.node
+        });
+
+        assert.equal(node.txindex, undefined);
+        assert.equal(node.addrindex, undefined);
       });
     });
   });
