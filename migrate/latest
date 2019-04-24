@@ -3,7 +3,8 @@
 'use strict';
 
 const cp = require('child_process');
-const res = require('path').resolve;
+const fs = require('bfile');
+const {resolve} = require('path');
 const {argv} = process;
 
 if (argv.length < 3) {
@@ -31,8 +32,16 @@ function exec(file, ...args) {
 const node = argv[0];
 const prefix = argv[2];
 
-exec(node, res(__dirname, 'chaindb3to4.js'), res(prefix, 'chain'));
-exec(node, res(__dirname, 'chaindb3to4.js'), res(prefix, 'spvchain'));
-exec(node, res(__dirname, 'chaindb4to5.js'), res(prefix, 'chain'));
-exec(node, res(__dirname, 'chaindb5to6.js'), res(prefix, 'chain'));
-exec(node, res(__dirname, 'walletdb6to7.js'), res(prefix, 'wallet'));
+const chain = resolve(prefix, 'chain');
+const spvchain = resolve(prefix, 'spvchain');
+
+(async () => {
+  if (await fs.exists(chain))
+    exec(node, resolve(__dirname, 'chaindb4to6.js'), chain);
+
+  if (await fs.exists(spvchain))
+    exec(node, resolve(__dirname, 'chaindb4to6.js'), spvchain);
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});
