@@ -17,8 +17,17 @@ jobs:
           - v1-dependencies-{{ checksum "package.json" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
+      # Install latest bitcoind executable and add to PATH
+      - run: wget https://bitcoincore.org/bin/bitcoin-core-0.17.1/bitcoin-0.17.1-x86_64-linux-gnu.tar.gz
+      - run: tar -xvf bitcoin-0.17.1-x86_64-linux-gnu.tar.gz
+      - run: echo 'export PATH=./bitcoin-0.17.1/bin/:$PATH' >> $BASH_ENV
+      - run: source $BASH_ENV
+      # Install bcoin and testing utilities
       - run: npm install
       - run: npm install eslint istanbul@1.1.0-alpha.1 codecov
+      # Uncomment the following line to test locally with command:
+      # circleci local execute --job install
+      # - run: npm run test-ci
       - save_cache:
           paths:
             - node_modules
@@ -32,6 +41,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - run: echo 'export PATH=./bitcoin-0.17.1/bin/:$PATH' >> $BASH_ENV
+      - run: source $BASH_ENV
       - run:
           name: Tests with coverage
           command: npm run test-ci

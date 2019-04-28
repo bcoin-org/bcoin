@@ -71,10 +71,11 @@
     "lint-ci": "eslint $(cat .eslintfiles)",
     "lint-file": "eslint",
     "test": "bmocha --reporter spec test/*.js",
+    "bitcoind-test": "bmocha --reporter spec test/bitcoind-sync/*.js",
     "test-browser": "NODE_BACKEND=js bmocha --reporter spec test/*.js",
     "test-file": "bmocha --reporter spec",
     "test-file-browser": "NODE_BACKEND=js bmocha --reporter spec",
-    "test-ci": "istanbul cover --report lcovonly node_modules/.bin/bmocha -- --reporter spec test/*-test.js"
+    "test-ci": "istanbul cover --report lcovonly node_modules/.bin/bmocha -- --reporter spec test/*-test.js test/bitcoind-sync/*-test.js"
   },
   "browser": {
     "./lib/hd/nfkd": "./lib/hd/nfkd-compat.js",
