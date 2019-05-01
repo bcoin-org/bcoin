@@ -16,6 +16,11 @@ const bip152 = require('../lib/net/bip152');
 const CompactBlock = bip152.CompactBlock;
 const TXRequest = bip152.TXRequest;
 const TXResponse = bip152.TXResponse;
+const filterTests = require('../test/data/filter-valid.json');
+const CoinView = require('../lib/coins/coinview');
+const random = require('bcrypto/lib/random');
+const Output = require('../lib/primitives/output');
+const Outpoint = require('../lib/primitives/outpoint');
 
 // Block test vectors
 const block300025 = common.readBlock('block300025');
@@ -462,4 +467,34 @@ describe('Block', function() {
 
     assert.equal(total, 284231);
   });
+
+  for (const json of filterTests) {
+    if (json.length === 1)
+      continue;
+
+    const height = json[0];
+
+    it(`should match basic block filter for block ${height}`, async () => {
+      const hash = json[1];
+      const raw = json[2];
+
+      const block = Block.fromRaw(raw, 'hex');
+      assert.strictEqual(hash, block.rhash());
+
+      const view = new CoinView();
+      for (const raw of json[3]) {
+        const hash = random.randomBytes(32);
+
+        const output = new Output();
+        output.script = Script.fromRaw(raw, 'hex');
+        view.addOutput(new Outpoint(hash, 0), output);
+      }
+
+      const filter = block.toFilter(view);
+      assert.strictEqual(filter.toRaw().toString('hex'), json[5]);
+
+      const header = filter.header(Buffer.from(json[4], 'hex').reverse());
+      assert.strictEqual(header.reverse().toString('hex'), json[6]);
+    });
+  }
 });
