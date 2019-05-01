@@ -121,15 +121,19 @@ chain.on('disconnect', (entry, block) => {
 describe('Chain', function() {
   this.timeout(process.browser ? 1200000 : 60000);
 
-  it('should open chain and miner', async () => {
+  before(async () => {
     await blocks.open();
     await chain.open();
     await miner.open();
-  });
 
-  it('should add addrs to miner', async () => {
     miner.addresses.length = 0;
     miner.addAddress(wallet.getReceive());
+  });
+
+  after(async () => {
+    await miner.close();
+    await chain.close();
+    await blocks.close();
   });
 
   it('should mine 200 blocks', async () => {
@@ -900,9 +904,44 @@ describe('Chain', function() {
     assert(fmt.includes('chainwork'));
   });
 
-  it('should cleanup', async () => {
-    await miner.close();
-    await chain.close();
-    await blocks.close();
+  describe('Checkpoints', function() {
+    before(async () => {
+      const entry = await chain.getEntry(chain.tip.height - 5);
+      assert(Buffer.isBuffer(entry.hash));
+      assert(Number.isInteger(entry.height));
+
+      network.checkpointMap[entry.height] = entry.hash;
+      network.lastCheckpoint = entry.height;
+    });
+
+    after(async () => {
+      network.checkpointMap = {};
+      network.lastCheckpoint = 0;
+    });
+
+    it('will reject blocks before last checkpoint', async () => {
+      const entry = await chain.getEntry(chain.tip.height - 10);
+      const block = await cpu.mineBlock(entry);
+
+      let err = null;
+
+      try {
+        await chain.add(block);
+      } catch (e) {
+        err = e;
+      }
+
+      assert(err);
+      assert.equal(err.type, 'VerifyError');
+      assert.equal(err.reason, 'bad-fork-prior-to-checkpoint');
+      assert.equal(err.score, 100);
+    });
+
+    it('will accept blocks after last checkpoint', async () => {
+      const entry = await chain.getEntry(chain.tip.height - 4);
+      const block = await cpu.mineBlock(entry);
+
+      assert(await chain.add(block));
+    });
   });
 });
