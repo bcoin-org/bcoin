@@ -96,7 +96,7 @@ async function callNodeApi() {
   await walletClient.open();
 
   // subscribe to events from all wallets
-  walletClient.all()
+  walletClient.all();
 
   // Fund default account.
   // API call: walletClient.createAddress('test', 'default')
