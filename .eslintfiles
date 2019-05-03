@@ -10,3 +10,4 @@ lib/
 migrate/
 scripts/
 test/
+docs/examples

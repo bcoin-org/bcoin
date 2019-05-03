@@ -36,7 +36,7 @@ const walletdb = new bcoin.wallet.WalletDB({
 
   wallet.on('tx', (tx) => {
     console.log('Received transaciton:\n', tx);
-  })
+  });
 
   await walletdb.addTX(tx);
 })().catch((err) => {
