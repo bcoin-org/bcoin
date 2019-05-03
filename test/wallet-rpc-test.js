@@ -46,6 +46,9 @@ const wclient = new WalletClient({
 });
 
 describe('Wallet RPC Methods', function() {
+  if (process.browser)
+    return;
+
   this.timeout(15000);
 
   // Define an account level hd extended public key to be

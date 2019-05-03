@@ -51,6 +51,9 @@ let txid = null;
 let utxo = null;
 
 describe('RPC', function() {
+  if (process.browser)
+    return;
+
   this.timeout(15000);
 
   before(() => {
