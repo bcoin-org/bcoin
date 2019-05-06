@@ -835,12 +835,14 @@ describe('Chain', function() {
 
     consensus.MAX_MONEY = tx1.getFee() + tx2.getFee() - 1;
 
-    job.refresh();
-    assert.strictEqual(await mineBlock(job),
-      'bad-txns-accumulated-fee-outofrange');
-
-    consensus.MAX_MONEY = 21000000 * consensus.COIN;
-    Selector.MAX_FEE = consensus.COIN / 10;
+    try {
+      job.refresh();
+      assert.strictEqual(await mineBlock(job),
+        'bad-txns-accumulated-fee-outofrange');
+    } finally {
+      consensus.MAX_MONEY = 21000000 * consensus.COIN;
+      Selector.MAX_FEE = consensus.COIN / 10;
+    }
   });
 
   it('should mine 111 multisig blocks', async () => {
