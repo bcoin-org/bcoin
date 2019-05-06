@@ -817,31 +817,33 @@ describe('Chain', function() {
 
   it('should fail to connect total fee toolarge', async () => {
     const job = await cpu.createJob();
+    const outputs = [{ address: wallet.getAddress(), value: 0 }];
 
     Selector.MAX_FEE = 50 * consensus.COIN;
-
-    const outputs = [{ address: wallet.getAddress(), value: 0 }];
-    const tx1 = await wallet.send({
-      outputs: outputs,
-      hardFee: Selector.MAX_FEE
-    });
-    job.pushTX(tx1.toTX());
-
-    const tx2 = await wallet.send({
-      outputs: outputs,
-      hardFee: Selector.MAX_FEE
-    });
-    job.pushTX(tx2.toTX());
-
-    consensus.MAX_MONEY = tx1.getFee() + tx2.getFee() - 1;
+    const maxFee = Selector.MAX_FEE;
+    const maxMoney = consensus.MAX_MONEY;
 
     try {
+      const tx1 = await wallet.send({
+        outputs: outputs,
+        hardFee: Selector.MAX_FEE
+      });
+      job.pushTX(tx1.toTX());
+
+      const tx2 = await wallet.send({
+        outputs: outputs,
+        hardFee: Selector.MAX_FEE
+      });
+      job.pushTX(tx2.toTX());
+
+      consensus.MAX_MONEY = tx1.getFee() + tx2.getFee() - 1;
+
       job.refresh();
       assert.strictEqual(await mineBlock(job),
         'bad-txns-accumulated-fee-outofrange');
     } finally {
-      consensus.MAX_MONEY = 21000000 * consensus.COIN;
-      Selector.MAX_FEE = consensus.COIN / 10;
+      Selector.MAX_FEE = maxFee;
+      consensus.MAX_MONEY = maxMoney;
     }
   });
 
