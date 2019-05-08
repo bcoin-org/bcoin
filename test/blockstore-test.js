@@ -677,6 +677,18 @@ describe('BlockStore', function() {
       assert.bufferEqual(block1.slice(offset, offset + size), block2);
     });
 
+    it('will read a block w/ offset w/o length', async () => {
+      const block1 = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+
+      await store.write(hash, block1);
+
+      const offset = 79;
+      const block2 = await store.read(hash, offset);
+
+      assert.bufferEqual(block1.slice(offset, block1.length), block2);
+    });
+
     it('will fail to read w/ out-of-bounds length', async () => {
       const block1 = random.randomBytes(128);
       const hash = random.randomBytes(32);
