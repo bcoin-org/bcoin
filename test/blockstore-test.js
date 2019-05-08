@@ -830,6 +830,30 @@ describe('BlockStore', function() {
       }
     });
 
+    it('will write different types in parallel', (done) => {
+      let finished = 0;
+
+      const write = async (type) => {
+        for (let i = 0; i < 4; i++) {
+          const block = random.randomBytes(128);
+          const hash = random.randomBytes(32);
+
+          await store._write(type, hash, block);
+          const block2 = await store._read(type, hash);
+          assert.bufferEqual(block2, block);
+        }
+
+        finished += 1;
+
+        if (finished === 3)
+          done();
+      };
+
+      write(1);
+      write(2);
+      write(3);
+    });
+
     it('will not duplicate a block on disk', async () => {
       const block = random.randomBytes(128);
       const hash = random.randomBytes(32);
