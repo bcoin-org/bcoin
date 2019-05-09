@@ -22,6 +22,13 @@ Alternatively, you can also sync the chain again, however the above
 migration will be faster as additional network bandwidth won't be used
 for downloading the blocks again.
 
+### Node API changes
+
+#### HTTP
+
+- `GET /` (get info) Return object `chain` now includes boolean properties `spv`
+  and `prune`.
+
 ### Wallet API changes
 
 #### HTTP
@@ -49,6 +56,12 @@ for downloading the blocks again.
   hardcoded to false. Also returns `address`, `scriptPubKey`, `isscript`,
   `iswitness`, `witness_version` and `witness_program`.
   (a28ffa272a3c4d90d0273d9aa223a23becc08e0e)
+
+### Wallet changes
+
+- `WalletDB` has a new property `chainInfo` object with boolean properties
+`spv` and `prune`. When wallet is remote, this info is determined by a `getInfo`
+HTTP API call during `open()`.
 
 ### Network changes
 
@@ -96,6 +109,9 @@ for downloading the blocks again.
 - Tests now cleanly close with all timers being cleared.
 - Config file `wallet.conf` won't be read during test runs that was
   causing issues with some testing environments.
+- The pruning configuration has been changed for `regtest` network: The new
+  settings will start pruning after height 500, and the node will keep 288
+  blocks. The previous settings were 1000 and 10000, respectively.
 
 ### Other changes
 
