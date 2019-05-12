@@ -107,7 +107,8 @@ stored in the metadata db using the key `layout.b`:
 
     b['block']['hash'] => [0, 8, 285] // 'hash' points to file blk00000.dat, position 8, size 285
 
-Using this we know that our block is in `blk00000.dat`, bytes 8 through 293.
+Using this we know that our block is in `blk00000.dat`, bytes 8 through 293 and its size
+is 285 bytes.
 
 Note that the position indicates that the block data is preceded by 8 bytes of
 the magic marker.
