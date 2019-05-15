@@ -14,7 +14,7 @@ const Script = require('../lib/script/script');
 const Address = require('../lib/primitives/address');
 const network = Network.get('regtest');
 const mnemonics = require('./data/mnemonic-english.json');
-const {forValue, rimraf, sleep} = require('./util/common');
+const {forValue, testdir, rimraf, sleep} = require('./util/common');
 
 const {
   initFullNode,
@@ -474,8 +474,8 @@ describe('Wallet RPC', function() {
   describe('transactions', function() {
     this.timeout(60000);
 
-    const testPrefix = '/tmp/bcoin-fullnode';
-    const spvTestPrefix = '/tmp/bcoin-spvnode';
+    const testPrefix = testdir('fullnode');
+    const spvTestPrefix = testdir('spvnode');
     const genesisTime = 1534965859;
 
     const ports = {
