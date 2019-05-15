@@ -93,6 +93,7 @@ that have many transactions.
   Coins could otherwise be removed from results at any point, and thus the
   entire set of results would need to be queried every time to discover
   which coins have been spent and are currently available.
+- `GET /` has new fields `.indexes.{addr,tx}` for the status of indexers.
 
 ### Network changes
 
