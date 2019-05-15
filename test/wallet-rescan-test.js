@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {rimraf, sleep} = require('./util/common');
+const {rimraf, testdir, sleep} = require('./util/common');
 const KeyRing = require('../lib/primitives/keyring');
 
 const COINBASE = Buffer.from(
@@ -23,7 +23,7 @@ const {
   sendCoinbase
 } = require('./util/regtest');
 
-const testPrefix = '/tmp/bcoin-fullnode';
+const testPrefix = testdir('fullnode');
 const genesisTime = 1534965859;
 
 const ports = {

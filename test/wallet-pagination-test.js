@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {rimraf, sleep} = require('./util/common');
+const {rimraf, testdir, sleep} = require('./util/common');
 
 const {
   initFullNode,
@@ -16,8 +16,8 @@ const {
   generateReorg
 } = require('./util/regtest');
 
-const testPrefix = '/tmp/bcoin-fullnode';
-const spvTestPrefix = '/tmp/bcoin-spvnode';
+const testPrefix = testdir('fullnode');
+const spvTestPrefix = testdir('spvnode');
 const genesisTime = 1534965859;
 
 const ports = {
