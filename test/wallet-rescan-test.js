@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {rimraf, testdir, sleep} = require('./util/common');
+const {rimraf, testdir, forValue} = require('./util/common');
 const KeyRing = require('../lib/primitives/keyring');
 
 const COINBASE = Buffer.from(
@@ -56,6 +56,8 @@ describe('Wallet Rescan', function() {
       logLevel: 'none'
     });
 
+    const walletdb = node.require('walletdb');
+
     nclient = await initNodeClient({ports: ports.full});
     wclient = await initWalletClient({ports: ports.full});
     wallet = await initWallet(wclient);
@@ -86,8 +88,7 @@ describe('Wallet Rescan', function() {
       blocks: 200
     });
 
-    // TODO remove this
-    await sleep(1000);
+    await forValue(walletdb.wdb, 'height', 200);
 
     let height = 0;
 
@@ -129,20 +130,24 @@ describe('Wallet Rescan', function() {
 
     await generateBlocks(1, nclient, coinbase);
 
-    // TODO remove this
-    await sleep(1000);
+    await forValue(walletdb.wdb, 'height', 203);
 
     const history = await wclient.execute('listhistory',
                                           [null, 100, true]);
     assert.strictEqual(history.length, 2);
+
+    let rollback = null;
+    walletdb.wdb.on('rollback', (tip) => {
+      rollback = tip;
+    });
 
     // Import keys into wallets and rescan
     const key1Priv = key1.getPrivateKey('base58', 'regtest');
     await wclient.execute('importprivkey',
                           [key1Priv, null, true]);
 
-    // TODO remove this
-    await sleep(1000);
+    assert.equal(rollback.height, 0);
+    await forValue(walletdb.wdb, 'height', 203);
   });
 
   after(async () => {

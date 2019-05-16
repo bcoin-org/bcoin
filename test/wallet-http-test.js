@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {rimraf, testdir, sleep} = require('./util/common');
+const {rimraf, testdir, forValue} = require('./util/common');
 
 const {
   initFullNode,
@@ -84,8 +84,12 @@ describe('Wallet TX HTTP Pagination', function() {
     unconfirmedTime = Math.floor(Date.now() / 1000);
     unconfirmedDate = new Date(unconfirmedTime * 1000);
 
-    // TODO remove this
-    await sleep(5000);
+    await forValue(node.chain, 'height', 125);
+
+    const spv = {txs: 0};
+    spvnode.on('tx', (tx) => {
+      spv.txs += 1;
+    });
 
     await generateTxs({
       wclient,
@@ -96,11 +100,7 @@ describe('Wallet TX HTTP Pagination', function() {
       sleep: 2000
     });
 
-    // TODO remove this. It's necessary to wait because
-    // the transactions need to be broadcast to the
-    // spv node. However the above await continues
-    // before broadcast.
-    await sleep(5000);
+    await forValue(spv, 'txs', 19);
   });
 
   after(async () => {

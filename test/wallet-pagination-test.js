@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {rimraf, testdir, sleep} = require('./util/common');
+const {rimraf, testdir, forValue} = require('./util/common');
 
 const {
   initFullNode,
@@ -72,9 +72,8 @@ describe('Wallet TX Pagination', function() {
       blocks: 125
     });
 
-    // TODO use an event here instead.
-    // We need to wait for blocks to confirm.
-    await sleep(1000);
+    await forValue(node.plugins.walletdb.wdb, 'height', 125);
+    await forValue(spvnode.plugins.walletdb.wdb, 'height', 125);
   });
 
   after(async () => {
@@ -192,12 +191,18 @@ describe('Wallet TX Pagination', function() {
   });
 
   describe('chain reorganizations', () => {
-    const depth = 1;
+    const depth = 5;
     const now = (Date.now() + 10000) / 1000 | 0;
     const txids = new Map();
 
     before(async () => {
       await wclient.execute('listhistorybytime', ['blue', now, 100, true]);
+
+      const info = {start: node.chain.height, reset: 0};
+
+      node.chain.on('reset', () => {
+        info.reset += 1;
+      });
 
       const result = await generateReorg(depth, nclient, wclient, coinbase);
       assert.notStrictEqual(result.invalidated[0], result.validated[0]);
@@ -205,8 +210,9 @@ describe('Wallet TX Pagination', function() {
       for (const txid of result.txids)
         txids.set(txid);
 
-      // TODO remove this
-      await sleep(5000);
+      await forValue(info, 'reset', depth);
+      await forValue(node.chain, 'height', info.start + 7);
+      await forValue(node.plugins.walletdb.wdb, 'height', info.start + 7);
     });
 
     it('reorganize count and monotonic time indexes', async() => {
