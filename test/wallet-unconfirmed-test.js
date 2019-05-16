@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('./util/assert');
-const {rimraf, testdir, sleep} = require('./util/common');
+const {rimraf, testdir, forValue} = require('./util/common');
 
 const {
   initFullNode,
@@ -93,8 +93,8 @@ describe('Wallet Unconfirmed TX', function() {
       blocks: 125
     });
 
-    // TODO remove this
-    await sleep(5000);
+    await forValue(node.plugins.walletdb.wdb, 'height', 125);
+    await forValue(spvnode.plugins.walletdb.wdb, 'height', 125);
 
     unconfirmedTime = Date.now() / 1000 | 0;
 
@@ -262,13 +262,17 @@ describe('Wallet Unconfirmed TX', function() {
   describe('chain rollback', () => {
     it('confirm and unconfirm indexes', async() => {
       await generateBlocks(5, nclient, coinbase);
-      await sleep(1000);
+
+      await forValue(node.chain, 'height', 130);
+      await forValue(node.plugins.walletdb.wdb, 'height', 130);
 
       let txs = await getAllUnconfirmed(wclient);
       assert.strictEqual(txs.length, 0);
 
       await generateRollback(5, nclient);
-      await sleep(1000);
+
+      await forValue(node.chain, 'height', 125);
+      await forValue(node.plugins.walletdb.wdb, 'height', 125);
 
       txs = await getAllUnconfirmed(wclient);
       assert.strictEqual(txs.length, 196);

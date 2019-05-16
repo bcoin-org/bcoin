@@ -14,7 +14,7 @@ const HDPrivateKey = require('../lib/hd/private');
 const Script = require('../lib/script/script');
 const Address = require('../lib/primitives/address');
 const mnemonics = require('./data/mnemonic-english.json');
-const {forValue, testdir, rimraf, sleep} = require('./util/common');
+const {forValue, testdir, rimraf} = require('./util/common');
 
 const {
   initFullNode,
@@ -583,8 +583,8 @@ describe('Wallet RPC', function() {
         count: 1
       });
 
-      // TODO remove this
-      await sleep(1000);
+      await forValue(node.plugins.walletdb.wdb, 'height', 125);
+      await forValue(spvnode.plugins.walletdb.wdb, 'height', 125);
     });
 
     after(async () => {
