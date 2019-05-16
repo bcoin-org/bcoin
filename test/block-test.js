@@ -375,4 +375,91 @@ describe('Block', function() {
       });
     }
   }
+
+  it('should deserialize with offset positions for txs (witness)', () => {
+    const [block] = block482683.getBlock();
+
+    const expected = [
+      {offset: 81, size: 217},
+      {offset: 298, size: 815},
+      {offset: 1113, size: 192},
+      {offset: 1305, size: 259},
+      {offset: 1564, size: 223},
+      {offset: 1787, size: 1223},
+      {offset: 3010, size: 486},
+      {offset: 3496, size: 665},
+      {offset: 4161, size: 3176},
+      {offset: 7337, size: 225},
+      {offset: 7562, size: 1223},
+      {offset: 8785, size: 503}
+    ];
+
+    assert.equal(expected.length, block.txs.length);
+    assert.equal(block.getSize(), expected.reduce((a, b) => a + b.size, 81));
+
+    for (let i = 0; i < block.txs.length; i++) {
+      const {offset, size} = block.txs[i].getPosition();
+
+      assert.strictEqual(offset, expected[i].offset);
+      assert.strictEqual(size, expected[i].size);
+    }
+  });
+
+  it('should serialize with offset positions for txs (witness)', () => {
+    const [block] = block482683.getBlock();
+
+    const expected = [
+      {offset: 81, size: 217},
+      {offset: 298, size: 815},
+      {offset: 1113, size: 192},
+      {offset: 1305, size: 259},
+      {offset: 1564, size: 223},
+      {offset: 1787, size: 1223},
+      {offset: 3010, size: 486},
+      {offset: 3496, size: 665},
+      {offset: 4161, size: 3176},
+      {offset: 7337, size: 225},
+      {offset: 7562, size: 1223},
+      {offset: 8785, size: 503}
+    ];
+
+    assert.equal(expected.length, block.txs.length);
+    assert.equal(block.getSize(), expected.reduce((a, b) => a + b.size, 81));
+
+    // Reset the offset for all transactions, and clear
+    // any cached values for the block.
+    block.refresh(true);
+    for (let i = 0; i < block.txs.length; i++)
+      assert.equal(block.txs[i]._offset, -1);
+
+    // Serialize the block, as done before saving to disk.
+    const raw = block.toRaw();
+    assert(raw);
+
+    for (let i = 0; i < block.txs.length; i++) {
+      const {offset, size} = block.txs[i].getPosition();
+
+      assert.strictEqual(offset, expected[i].offset);
+      assert.strictEqual(size, expected[i].size);
+    }
+  });
+
+  it('should deserialize with offset positions for txs', () => {
+    const [block] = block300025.getBlock();
+
+    assert.equal(block.txs.length, 461);
+
+    let expect = 83;
+    let total = 83;
+
+    for (let i = 0; i < block.txs.length; i++) {
+      const {offset, size} = block.txs[i].getPosition();
+
+      assert.strictEqual(offset, expect);
+      expect += size;
+      total += size;
+    }
+
+    assert.equal(total, 284231);
+  });
 });
