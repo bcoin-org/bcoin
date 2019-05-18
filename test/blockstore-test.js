@@ -813,17 +813,20 @@ describe('BlockStore', function() {
         // Accidentally don't use `await` and attempt to
         // write multiple blocks in parallel and at the
         // same file position.
-        const promise = store.write(hash, block);
-        promise.catch((e) => {
-          err = e;
-        }).finally(() => {
-          finished += 1;
-          if (finished >= 16) {
-            assert(err);
-            assert(err.message, 'Already writing.');
-            done();
+        (async () => {
+          try {
+            await store.write(hash, block);
+          } catch (e) {
+            err = e;
+          } finally {
+            finished += 1;
+            if (finished >= 16) {
+              assert(err);
+              assert(err.message, 'Already writing.');
+              done();
+            }
           }
-        });
+        })();
       }
     });
 
