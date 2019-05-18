@@ -111,6 +111,7 @@ describe('Mempool', function() {
   });
 
   it('should handle incoming orphans and TXs', async () => {
+    this.timeout(20000);
     const key = KeyRing.generate();
 
     const t1 = new MTX();
@@ -887,6 +888,7 @@ describe('Mempool', function() {
     });
 
     it('should restore txs in the mempool', async () => {
+      this.timeout(20000);
       const coins = chaincoins.getCoins();
 
       assert.strictEqual(coins.length, N);

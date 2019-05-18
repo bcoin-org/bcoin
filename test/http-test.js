@@ -40,7 +40,8 @@ const {NodeClient, WalletClient} = require('bclient');
 
 const nclient = new NodeClient({
   port: ports.node,
-  apiKey: 'foo'
+  apiKey: 'foo',
+  timeout: 15000
 });
 
 const wclient = new WalletClient({
