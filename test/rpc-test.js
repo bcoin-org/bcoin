@@ -20,6 +20,7 @@ const node = new FullNode({
   walletAuth: true,
   memory: true,
   workers: true,
+  workersSize: 2,
   plugins: [require('../lib/wallet/plugin')],
   port: ports.p2p,
   httpPort: ports.node,

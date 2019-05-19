@@ -33,7 +33,8 @@ const ONE_HASH = Buffer.alloc(32, 0x00);
 ONE_HASH[0] = 0x01;
 
 const workers = new WorkerPool({
-  enabled: true
+  enabled: true,
+  size: 2
 });
 
 const blocks = new BlockStore({
@@ -497,7 +498,8 @@ describe('Mempool', function() {
 
   describe('Index', function () {
     const workers = new WorkerPool({
-      enabled: true
+      enabled: true,
+      size: 2
     });
 
     const blocks = new BlockStore({
@@ -819,7 +821,8 @@ describe('Mempool', function() {
 
   describe('Mempool persistent cache', function () {
     const workers = new WorkerPool({
-      enabled: true
+      enabled: true,
+      size: 2
     });
 
     const blocks = new BlockStore({
