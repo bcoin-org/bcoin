@@ -4,25 +4,28 @@
 'use strict';
 
 const assert = require('./util/assert');
-const common = require('./util/common');
+const test = require('./util/common');
 const {BloomFilter} = require('bfilter');
-const {nonce} = require('../lib/net/common');
+const common = require('../lib/net/common');
+const services = common.services;
 const Framer = require('../lib/net/framer');
 const packets = require('../lib/net/packets');
 const NetAddress = require('../lib/net/netaddress');
 const {CompactBlock, TXRequest, TXResponse} = require('../lib/net/bip152');
+const Peer = require('../lib/net/peer');
 const InvItem = require('../lib/primitives/invitem');
 const Headers = require('../lib/primitives/headers');
 const Network = require('../lib/protocol/network');
+const consensus = require('../lib/protocol/consensus');
 
 // Block test vectors
-const block300025 = common.readBlock('block300025');
+const block300025 = test.readBlock('block300025');
 
 // Merkle block test vectors
-const merkle300025 = common.readMerkle('merkle300025');
+const merkle300025 = test.readMerkle('merkle300025');
 
 // Small SegWit block test vector
-const block482683 = common.readBlock('block482683');
+const block482683 = test.readBlock('block482683');
 
 describe('Net', function() {
   describe('Packets', function() {
@@ -763,6 +766,529 @@ describe('Net', function() {
     });
   });
 
+  describe('Peer', function() {
+    describe('handlePacket', function() {
+      it('will throw if destroyed', async () => {
+        const peer = Peer.fromOptions({});
+        let err = null;
+
+        peer.destroyed = true;
+
+        try {
+          await peer.handlePacket();
+        } catch(e) {
+          err = e;
+        }
+
+        assert(err);
+        assert(err.message, 'Destroyed peer sent a packet.');
+      });
+
+      it('will handle types correctly', async () => {
+        const map = new Map();
+        map.set(packets.types.VERSION, 'handleVersion');
+        map.set(packets.types.VERACK, 'handleVerack');
+        map.set(packets.types.PING, 'handlePing');
+        map.set(packets.types.PONG, 'handlePong');
+        map.set(packets.types.GETADDR, false);
+        map.set(packets.types.ADDR, false);
+        map.set(packets.types.INV, false);
+        map.set(packets.types.GETDATA, false);
+        map.set(packets.types.NOTFOUND, false);
+        map.set(packets.types.GETBLOCKS, false);
+        map.set(packets.types.GETHEADERS, false);
+        map.set(packets.types.HEADERS, false);
+        map.set(packets.types.SENDHEADERS, 'handleSendHeaders');
+        map.set(packets.types.BLOCK, false);
+        map.set(packets.types.TX, false);
+        map.set(packets.types.REJECT, false);
+        map.set(packets.types.MEMPOOL, false);
+        map.set(packets.types.FILTERLOAD, 'handleFilterLoad');
+        map.set(packets.types.FILTERADD, 'handleFilterAdd');
+        map.set(packets.types.FILTERCLEAR, 'handleFilterClear');
+        map.set(packets.types.MERKLEBLOCK, false);
+        map.set(packets.types.FEEFILTER, 'handleFeeFilter');
+        map.set(packets.types.SENDCMPCT, 'handleSendCmpct');
+        map.set(packets.types.CMPCTBLOCK, false);
+        map.set(packets.types.GETBLOCKTXN, false);
+        map.set(packets.types.BLOCKTXN, false);
+        map.set(packets.types.UNKNOWN, false);
+        map.set(packets.types.INTERNAL, false);
+        map.set(packets.types.DATA, false);
+
+        const wrap = (type, handler) => {
+          const peer = Peer.fromOptions({});
+          const result = {count: 0, peer};
+
+          for (const fn of map.values()) {
+            if (fn) {
+              peer[fn] = (packet) => {
+                assert.equal(fn, handler);
+                assert(packet);
+                assert.equal(packet.type, type);
+                result.count += 1;
+              };
+            }
+          }
+
+          return result;
+        };
+
+        for (const [type, handler] of map) {
+          const stub = wrap(type, handler);
+          const packet = {type};
+
+          await stub.peer.handlePacket(packet);
+          if (handler)
+            assert.equal(stub.count, 1);
+          else
+            assert.equal(stub.count, 0);
+        }
+      });
+    });
+
+    describe('handleVersion', function() {
+      it('will error if already sent version', async () => {
+        const peer = Peer.fromOptions({});
+        peer.version = 1000;
+        const pkt = new packets.VersionPacket();
+        let err = null;
+
+        try {
+          await peer.handleVersion(pkt);
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+      });
+
+      it('will not connect to self', async () => {
+        const peer = Peer.fromOptions({});
+        peer.options.hasNonce = () => true;
+
+        const pkt = new packets.VersionPacket();
+        let err = null;
+
+        try {
+          await peer.handleVersion(pkt);
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+        assert.equal(err.message, 'We connected to ourself. Oops.');
+      });
+
+      it('will error if below min version', async () => {
+        const peer = Peer.fromOptions({});
+
+        const pkt = new packets.VersionPacket({version: 70000});
+        let err = null;
+
+        try {
+          await peer.handleVersion(pkt);
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+        const msg = 'Peer does not support required protocol version.';
+        assert.equal(err.message, msg);
+      });
+
+      it('will error if w/o network service (outbound)', async () => {
+        const peer = Peer.fromOptions({});
+        peer.outbound = true;
+
+        const pkt = new packets.VersionPacket({services: 0});
+
+        let err = null;
+
+        try {
+          await peer.handleVersion(pkt);
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+        const msg = 'Peer does not support network services.';
+        assert.equal(err.message, msg);
+      });
+
+      it('will error if w/o bloom service (outbound)', async () => {
+        const peer = Peer.fromOptions({spv: true});
+        peer.outbound = true;
+
+        const pkt = new packets.VersionPacket({
+          services: 0 | services.NETWORK
+        });
+
+        let err = null;
+
+        try {
+          await peer.handleVersion(pkt);
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+        const msg = 'Peer does not support BIP37.';
+        assert.equal(err.message, msg);
+      });
+
+      it('will error if w/o bloom version (outbound)', async () => {
+        const peer = Peer.fromOptions({spv: true});
+        peer.outbound = true;
+
+        const pkt = new packets.VersionPacket({
+          services: 0 | services.NETWORK | services.BLOOM,
+          version: common.BLOOM_VERSION - 1
+        });
+
+        let err = null;
+
+        try {
+          await peer.handleVersion(pkt);
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+        const msg = 'Peer does not support BIP37.';
+        assert.equal(err.message, msg);
+      });
+
+      it('will error if w/o witness service (outbound)', async () => {
+        const peer = Peer.fromOptions({});
+        peer.outbound = true;
+
+        const pkt = new packets.VersionPacket({
+          services: 0 | services.NETWORK
+        });
+
+        let err = null;
+
+        try {
+          await peer.handleVersion(pkt);
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+        const msg = 'Peer does not support segregated witness.';
+        assert.equal(err.message, msg);
+      });
+
+      it('will send ack (outbound)', async () => {
+        const peer = Peer.fromOptions({});
+        peer.outbound = true;
+
+        const pkt = new packets.VersionPacket({
+          services: 0 | services.NETWORK | services.WITNESS
+        });
+
+        let called = false;
+
+        peer.send = (packet) => {
+          assert(packet);
+          assert.equal(packet.type, packets.types.VERACK);
+          called = true;
+        };
+
+        await peer.handleVersion(pkt);
+        assert(called);
+      });
+
+      it('will send ack (outbound=false)', async () => {
+        const peer = Peer.fromOptions({});
+        peer.outbound = false;
+
+        const pkt = new packets.VersionPacket();
+
+        let called = false;
+
+        peer.send = (packet) => {
+          assert(packet);
+          assert.equal(packet.type, packets.types.VERACK);
+          called = true;
+        };
+
+        await peer.handleVersion(pkt);
+        assert(called);
+      });
+    });
+
+    describe('handleVerack', function() {
+      it('will set ack', async () => {
+        const peer = Peer.fromOptions({});
+        assert.equal(peer.ack, false);
+        const pkt = new packets.VerackPacket();
+        await peer.handleVerack(pkt);
+        assert.equal(peer.ack, true);
+      });
+    });
+
+    describe('handlePing', function() {
+      it('will not send pong without nonce', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.PingPacket();
+
+        let called = false;
+        peer.send = (packet) => {
+          called = true;
+        };
+
+        await peer.handlePing(pkt);
+        assert.equal(called, false);
+      });
+
+      it('will send pong', async () => {
+        const peer = Peer.fromOptions({});
+        const nonce = common.nonce();
+        const pkt = new packets.PingPacket(nonce);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert(packet);
+          assert.equal(packet.type, packets.types.PONG);
+          assert.bufferEqual(packet.nonce, nonce);
+          called = true;
+        };
+
+        await peer.handlePing(pkt);
+        assert.equal(called, true);
+      });
+    });
+
+    describe('handlePong', function() {
+      it('will not update last pong w/o challenge', async () => {
+        const peer = Peer.fromOptions({});
+        peer.challenge = null;
+        peer.lastPong = -1;
+        peer.minPing = -1;
+
+        const pkt = new packets.PongPacket();
+        await peer.handlePong(pkt);
+
+        assert.equal(peer.lastPong, -1);
+        assert.equal(peer.minPing, -1);
+      });
+
+      it('will not update last pong w/ wrong nonce', async () => {
+        const peer = Peer.fromOptions({});
+        peer.challenge = common.nonce();
+        peer.lastPong = -1;
+        peer.minPing = -1;
+
+        const pkt = new packets.PongPacket(common.nonce());
+        await peer.handlePong(pkt);
+
+        assert.equal(peer.lastPong, -1);
+        assert.equal(peer.minPing, -1);
+      });
+
+      it('will update last pong and min ping', async () => {
+        const now = Date.now();
+
+        const peer = Peer.fromOptions({});
+        const nonce = common.nonce();
+        peer.challenge = nonce;
+        peer.lastPong = -1;
+        peer.minPing = -1;
+
+        const pkt = new packets.PongPacket(nonce);
+        await peer.handlePong(pkt);
+
+        assert(peer.lastPong >= now);
+        assert(peer.minPing >= now - 1);
+      });
+    });
+
+    describe('handleSendHeaders', function() {
+      it('will set prefer headers', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendHeadersPacket();
+        await peer.handleSendHeaders(pkt);
+        assert.equal(peer.preferHeaders, true);
+      });
+    });
+
+    describe('handleFilterLoad', function() {
+      it('will load spv filter', async () => {
+        const peer = Peer.fromOptions({});
+        const filter = new BloomFilter();
+        const pkt = new packets.FilterLoadPacket(filter);
+        peer.handleFilterLoad(pkt);
+        assert.strictEqual(peer.spvFilter, filter);
+      });
+
+      it('will increase ban if not within constraints', async () => {
+        const peer = Peer.fromOptions({});
+        const filter = new BloomFilter();
+        const pkt = new packets.FilterLoadPacket(filter);
+
+        let called = false;
+        peer.increaseBan = (score) => {
+          assert.equal(score, 100);
+          called = true;
+        };
+
+        pkt.isWithinConstraints = () => false;
+        await peer.handleFilterLoad(pkt);
+
+        assert.equal(called, true);
+        assert.strictEqual(peer.spvFilter, null);
+      });
+    });
+
+    describe('handleFilterAdd', function() {
+      it('will add to spv filter', async () => {
+        const peer = Peer.fromOptions({});
+        peer.spvFilter = BloomFilter.fromRate(
+          20000, 0.001, BloomFilter.flags.ALL);
+
+        const data = Buffer.alloc(32, 0x01);
+
+        const pkt = new packets.FilterAddPacket(data);
+        await peer.handleFilterAdd(pkt);
+
+        assert.equal(peer.spvFilter.test(data), true);
+        assert.equal(peer.noRelay, false);
+
+        peer.spvFilter = null;
+
+        await peer.handleFilterAdd(pkt);
+        assert.equal(peer.spvFilter, null);
+      });
+
+      it('will increase ban with max push', async () => {
+        const peer = Peer.fromOptions({});
+        peer.noRelay = true;
+        peer.spvFilter = BloomFilter.fromRate(
+          20000, 0.001, BloomFilter.flags.ALL);
+
+        let called = false;
+        peer.increaseBan = (score) => {
+          assert.equal(score, 100);
+          called = true;
+        };
+
+        const data = Buffer.alloc(521, 0x01);
+
+        const pkt = new packets.FilterAddPacket(data);
+        await peer.handleFilterAdd(pkt);
+
+        assert(called);
+        assert.equal(peer.spvFilter.test(data), false);
+        assert.equal(peer.noRelay, true);
+      });
+    });
+
+    describe('handleFilterClear', function() {
+      it('will reset spv filter', async () => {
+        const peer = Peer.fromOptions({});
+        peer.spvFilter = BloomFilter.fromRate(
+          20000, 0.001, BloomFilter.flags.ALL);
+
+        const data = Buffer.alloc(32, 0x01);
+        peer.spvFilter.add(data);
+        assert.equal(peer.spvFilter.test(data), true);
+
+        const pkt = new packets.FilterClearPacket();
+        await peer.handleFilterClear(pkt);
+
+        assert.equal(peer.spvFilter.test(data), false);
+        assert.equal(peer.noRelay, false);
+      });
+
+      it('will clear if not set', async () => {
+        const peer = Peer.fromOptions({});
+        peer.spvFilter = null;
+
+        const pkt = new packets.FilterClearPacket();
+        await peer.handleFilterClear(pkt);
+
+        assert.equal(peer.spvFilter, null);
+        assert.equal(peer.noRelay, false);
+      });
+    });
+
+    describe('handleFeeFilter', function() {
+      it('will set fee rate', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.FeeFilterPacket(120000);
+        await peer.handleFeeFilter(pkt);
+        assert.equal(peer.feeRate, 120000);
+      });
+
+      it('will increase ban if > max money or negative', async () => {
+        const peer = Peer.fromOptions({});
+        let called = 0;
+
+        peer.increaseBan = (score) => {
+          assert.equal(score, 100);
+          called += 1;
+        };
+
+        let pkt = new packets.FeeFilterPacket(consensus.MAX_MONEY + 1);
+        await peer.handleFeeFilter(pkt);
+        assert.equal(called, 1);
+
+        pkt = new packets.FeeFilterPacket(-100);
+        await peer.handleFeeFilter(pkt);
+        assert.equal(called, 2);
+      });
+    });
+
+    describe('handleSendCmpct', function() {
+      it('will not set compact mode (already set)', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendCmpctPacket(1, 1);
+        peer.compactMode = 2;
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, 2);
+      });
+
+      it('will set low-bandwidth mode (mode=0)', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendCmpctPacket(0, 1);
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, 0);
+      });
+
+      it('will set high-bandwidth mode (mode=1)', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendCmpctPacket(1, 1);
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, 1);
+      });
+
+      it('will not set compact mode (mode=2)', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendCmpctPacket(2, 1);
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, -1);
+        assert.equal(peer.compactWitness, false);
+      });
+
+      it('will set witness=false (version=1)', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendCmpctPacket(0, 1);
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactWitness, false);
+      });
+
+      it('will set witness=true (version=2)', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendCmpctPacket(0, 2);
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactWitness, true);
+      });
+
+      it('will not set compact mode (version=3)', async () => {
+        const peer = Peer.fromOptions({});
+        const pkt = new packets.SendCmpctPacket(0, 3);
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, -1);
+        assert.equal(peer.compactWitness, false);
+      });
+    });
+  });
+
   describe('Framer', function() {
     it('will construct with network (primary)', () => {
       const framer = new Framer();
@@ -823,7 +1349,7 @@ describe('Net', function() {
 
   describe('Common', function() {
     it('will give nonce', async () => {
-      const n = nonce();
+      const n = common.nonce();
       assert(Buffer.isBuffer(n));
       assert.equal(n.length, 8);
     });
