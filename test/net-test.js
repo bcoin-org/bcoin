@@ -6,6 +6,7 @@
 const assert = require('./util/assert');
 const test = require('./util/common');
 const {BloomFilter} = require('bfilter');
+const Logger = require('blgr');
 const common = require('../lib/net/common');
 const services = common.services;
 const Framer = require('../lib/net/framer');
@@ -13,10 +14,12 @@ const packets = require('../lib/net/packets');
 const NetAddress = require('../lib/net/netaddress');
 const {CompactBlock, TXRequest, TXResponse} = require('../lib/net/bip152');
 const Peer = require('../lib/net/peer');
+const Pool = require('../lib/net/pool');
 const InvItem = require('../lib/primitives/invitem');
 const Headers = require('../lib/primitives/headers');
 const Network = require('../lib/protocol/network');
 const consensus = require('../lib/protocol/consensus');
+const util = require('../lib/utils/util');
 
 // Block test vectors
 const block300025 = test.readBlock('block300025');
@@ -1285,6 +1288,605 @@ describe('Net', function() {
         await peer.handleSendCmpct(pkt);
         assert.equal(peer.compactMode, -1);
         assert.equal(peer.compactWitness, false);
+      });
+    });
+  });
+
+  describe('Pool', function() {
+    describe('handleVersion', function() {
+      it('will update pool time and nonce data', async () => {
+        const network = Network.get('regtest');
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        const pkt = new packets.VersionPacket({
+          time: util.now(),
+          remote: {
+            host: '127.0.0.1',
+            port: 8334
+          },
+          local: {
+            host: '127.0.0.1',
+            port: 8335
+          },
+          nonce: Buffer.alloc(8, 0x00)
+        });
+
+        assert(!pool.network.time.known.has(peer.hostname()));
+        const nonce = pool.nonces.alloc(peer.hostname());
+        assert(pool.nonces.has(nonce));
+
+        await pool.handleVersion(peer, pkt);
+
+        assert(pool.network.time.known.has(peer.hostname()));
+        assert(!pool.nonces.has(nonce));
+      });
+
+      it('will update local address score', async () => {
+        const network = Network.get('regtest');
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        let called = false;
+
+        const local = new NetAddress({
+          host: '5.19.5.127',
+          port: 8334
+        });
+
+        pool.hosts = {
+          markLocal: (addr) => {
+            assert(addr);
+            assert.equal(addr.host, local.host);
+            assert.equal(addr.port, local.port);
+            called = true;
+          }
+        };
+
+        const peer = Peer.fromOptions(pool.options);
+
+        // The remote address in this case is the address
+        // of the receiver of the message, it is the local.
+        const pkt = new packets.VersionPacket({remote: local});
+
+        await pool.handleVersion(peer, pkt);
+
+        assert(called);
+      });
+    });
+
+    describe('handleAddr', function() {
+      it('will add addrs to hosts list', async () => {
+        const network = Network.get('regtest');
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {
+              checkpoints: true
+            },
+            on: () => {},
+            state: {
+              hasWitness: () => true
+            }
+          }
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        const items = [
+          // Routable and has required services
+          new NetAddress({
+            host: '5.19.5.127',
+            port: 8334,
+            services: 0 | services.NETWORK | services.WITNESS,
+            time: 1558405603
+          }),
+          // Routable and missing services
+          new NetAddress({
+            host: '5.29.139.120',
+            port: 8335,
+            services: 0 | services.NETWORK,
+            time: 1558405603
+          }),
+          // Not routable
+          new NetAddress({
+            host: '127.0.0.3',
+            port: 8333,
+            services: 0 | services.NETWORK | services.WITNESS,
+            time: 1558405602
+          })
+        ];
+
+        const pkt = new packets.AddrPacket(items);
+
+        assert.equal(pool.hosts.totalFresh, 0);
+
+        await pool.handleAddr(peer, pkt);
+
+        assert.equal(pool.hosts.totalFresh, 1);
+      });
+    });
+
+    describe('handleInv', function() {
+      const network = Network.get('regtest');
+
+      it('will ban with too many inv', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        let handleTXInv = false;
+        pool.handleTXInv = () => {
+          handleTXInv = true;
+        };
+
+        let increaseBan = false;
+        const peer = Peer.fromOptions(pool.options);
+        peer.increaseBan = (score) => {
+          assert.equal(score, 100);
+          increaseBan = true;
+        };
+
+        const items = [];
+        for (let i = 0; i < common.MAX_INV + 1; i++)
+          items.push(new InvItem(InvItem.types.TX, Buffer.alloc(32, 0x01)));
+
+        const pkt = new packets.InvPacket(items);
+
+        await pool.handleInv(peer, pkt);
+
+        assert(increaseBan);
+        assert(!handleTXInv);
+      });
+
+      it('will handle block inventory', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let handleBlockInv = false;
+        pool.handleBlockInv = (_peer, blocks) => {
+          assert.strictEqual(_peer, peer);
+          assert.bufferEqual(blocks[0], Buffer.alloc(32, 0x01));
+          handleBlockInv = true;;
+        };
+
+        const pkt = new packets.InvPacket([
+          new InvItem(InvItem.types.BLOCK, Buffer.alloc(32, 0x01))
+        ]);
+
+        await pool.handleInv(peer, pkt);
+
+        assert(handleBlockInv);
+      });
+
+      it('will handle tx inventory', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let handleTXInv = false;
+        pool.handleTXInv = (_peer, txs) => {
+          assert.strictEqual(_peer, peer);
+          assert.bufferEqual(txs[0], Buffer.alloc(32, 0x01));
+          handleTXInv = true;;
+        };
+
+        const pkt = new packets.InvPacket([
+          new InvItem(InvItem.types.TX, Buffer.alloc(32, 0x01))
+        ]);
+
+        await pool.handleInv(peer, pkt);
+
+        assert(handleTXInv);
+      });
+    });
+
+    describe('handleGetData', function() {
+      const network = Network.get('regtest');
+
+      it('will ban with too many items', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        let increaseBan = false;
+        let destroy = false;
+        const peer = Peer.fromOptions(pool.options);
+        peer.increaseBan = (score) => {
+          assert.equal(score, 100);
+          increaseBan = true;
+        };
+        peer.destroy = () => {
+          destroy = true;
+        };
+
+        const items = [];
+        for (let i = 0; i < common.MAX_INV + 1; i++)
+          items.push(new InvItem(InvItem.types.TX, Buffer.alloc(32, 0x01)));
+
+        const pkt = new packets.GetDataPacket(items);
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(increaseBan);
+        assert(destroy);
+      });
+
+      it('will send tx packets', async () => {
+        const [block] = block482683.getBlock();
+
+        const tx = block.txs[10];
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        const item = new InvItem(InvItem.types.TX, tx.hash());
+
+        const pkt = new packets.GetDataPacket([item]);
+        const peer = Peer.fromOptions(pool.options);
+
+        pool.getItem = (_peer, _item) => {
+          assert(_peer, peer);
+
+          if (_item.hash.compare(tx.hash()) === 0)
+            return tx;
+
+          return null;
+        };
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.TX);
+          assert.strictEqual(packet.tx, tx);
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will send tx not found', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        pool.getItem = () => null;
+
+        const pkt = new packets.GetDataPacket([
+          new InvItem(InvItem.types.TX, Buffer.alloc(32, 0x01))
+        ]);
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.NOTFOUND);
+          assert.equal(packet.items[0].type, InvItem.types.TX);
+          assert.bufferEqual(packet.items[0].hash, Buffer.alloc(32, 0x01));
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will send block (witness)', async () => {
+        const [block] = block482683.getBlock();
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {checkpoints: true},
+            on: () => {},
+            state: {
+              hasWitness: () => true
+            },
+            getRawBlock: (hash) => {
+              assert.bufferEqual(hash, block.hash());
+              return block.toRaw();
+            }
+          }
+        });
+
+        const pkt = new packets.GetDataPacket([
+          new InvItem(InvItem.types.WITNESS_BLOCK, block.hash())
+        ]);
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let called = false;
+        peer.sendRaw = (cmd, body) => {
+          assert.equal(cmd, 'block');
+          assert.bufferEqual(body, block.toRaw());
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will send block (non-witness)', async () => {
+        const [block] = block482683.getBlock();
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {checkpoints: true},
+            on: () => {},
+            state: {
+              hasWitness: () => true
+            },
+            getBlock: (hash) => {
+              assert.bufferEqual(hash, block.hash());
+              return block;
+            }
+          }
+        });
+
+        const pkt = new packets.GetDataPacket([
+          new InvItem(InvItem.types.BLOCK, block.hash())
+        ]);
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.BLOCK);
+          assert.strictEqual(packet.block, block);
+          assert.equal(packet.witness, false);
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will send block not found', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {checkpoints: true},
+            on: () => {},
+            state: {
+              hasWitness: () => true
+            },
+            getRawBlock: () => null
+          }
+        });
+
+        const pkt = new packets.GetDataPacket([
+          new InvItem(InvItem.types.WITNESS_BLOCK, Buffer.alloc(32, 0x01))
+        ]);
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.NOTFOUND);
+          assert.equal(packet.items[0].type, InvItem.types.WITNESS_BLOCK);
+          assert.bufferEqual(packet.items[0].hash, Buffer.alloc(32, 0x01));
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will destroy if filtered block (bip37=false)', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}},
+          bip37: false
+        });
+
+        const pkt = new packets.GetDataPacket([
+          new InvItem(InvItem.types.WITNESS_FILTERED_BLOCK,
+                      Buffer.alloc(32, 0x01))
+        ]);
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let called = false;
+        peer.destroy = () => {
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will send filtered block and txs', async () => {
+        const [block] = block300025.getBlock();
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}},
+          bip37: true
+        });
+
+        const filter = BloomFilter.fromRate(20000, 0.001,
+                                            BloomFilter.flags.ALL);
+        filter.add(block.txs[10].hash());
+        filter.add(block.txs[12].hash());
+
+        const peer = Peer.fromOptions(pool.options);
+        peer.spvFilter = filter;
+
+        const item = new InvItem(InvItem.types.WITNESS_FILTERED_BLOCK,
+                                 block.hash());
+
+        pool.getItem = (_peer, _item) => {
+          assert(_peer, peer);
+
+          if (_item.hash.compare(block.hash()) === 0)
+            return block;
+
+          return null;
+        };
+
+        const pkt = new packets.GetDataPacket([item]);
+
+        let called = 0;
+        peer.send = (packet) => {
+          switch (called) {
+            case 0:
+              assert.equal(packet.type, packets.types.MERKLEBLOCK);
+              assert.bufferEqual(packet.block.hash(), block.hash());
+              break;
+            case 1:
+              assert.equal(packet.type, packets.types.TX);
+              assert.bufferEqual(packet.tx.hash(), block.txs[10].hash());
+              break;
+            case 2:
+              assert.equal(packet.type, packets.types.TX);
+              assert.bufferEqual(packet.tx.hash(), block.txs[12].hash());
+              break;
+          }
+
+          called += 1;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert.equal(called, 3);
+      });
+
+      it('will send filtered block not found', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}},
+          bip37: true
+        });
+
+        pool.getItem = () => null;
+
+        const pkt = new packets.GetDataPacket([
+          new InvItem(InvItem.types.WITNESS_FILTERED_BLOCK,
+                      Buffer.alloc(32, 0x01))
+        ]);
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.NOTFOUND);
+          assert.equal(packet.items[0].type,
+                       InvItem.types.WITNESS_FILTERED_BLOCK);
+          assert.bufferEqual(packet.items[0].hash, Buffer.alloc(32, 0x01));
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will send compact block not found', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {checkpoints: true},
+            on: () => {},
+            getHeight: () => 500001,
+            tip: {
+              height: 500001
+            }
+          }
+        });
+
+        pool.getItem = () => null;
+
+        const pkt = new packets.GetDataPacket([
+          new InvItem(InvItem.types.CMPCT_BLOCK, Buffer.alloc(32, 0x01))
+        ]);
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.NOTFOUND);
+          assert.equal(packet.items[0].type, InvItem.types.CMPCT_BLOCK);
+          assert.bufferEqual(packet.items[0].hash, Buffer.alloc(32, 0x01));
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+
+      it('will send compact block', async () => {
+        const [block] = block300025.getBlock();
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {checkpoints: true},
+            on: () => {},
+            getHeight: () => 500001,
+            tip: {
+              height: 500001
+            }
+          }
+        });
+
+        const item = new InvItem(InvItem.types.CMPCT_BLOCK, block.hash());
+        const peer = Peer.fromOptions(pool.options);
+
+        pool.getItem = (_peer, _item) => {
+          assert(_peer, peer);
+
+          if (_item.hash.compare(block.hash()) === 0)
+            return block;
+
+          return null;
+        };
+
+        const pkt = new packets.GetDataPacket([item]);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.CMPCTBLOCK);
+          assert.bufferEqual(packet.block.hash(), block.hash());
+          called = true;
+        };
+
+        await pool.handleGetData(peer, pkt);
+
+        assert(called);
       });
     });
   });
