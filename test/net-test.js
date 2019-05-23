@@ -17,7 +17,10 @@ const Peer = require('../lib/net/peer');
 const Pool = require('../lib/net/pool');
 const InvItem = require('../lib/primitives/invitem');
 const Headers = require('../lib/primitives/headers');
+const MerkleBlock = require('../lib/primitives/merkleblock');
+const ChainEntry = require('../lib/blockchain/chainentry');
 const Network = require('../lib/protocol/network');
+const {VerifyError} = require('../lib/protocol/errors');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 
@@ -427,7 +430,7 @@ describe('Net', function() {
       check(pkt, true);
     });
 
-    it('sendheaders', () => {
+    it('sendheaders (BIP130)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'sendheaders');
         assert.equal(pkt.type, packets.types.SENDHEADERS);
@@ -543,7 +546,7 @@ describe('Net', function() {
       check(pkt);
     });
 
-    it('mempool', () => {
+    it('mempool (BIP35)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'mempool');
         assert.equal(pkt.type, packets.types.MEMPOOL);
@@ -555,7 +558,7 @@ describe('Net', function() {
       pkt = packets.MempoolPacket.fromRaw(pkt.toRaw());
     });
 
-    it('filterload', () => {
+    it('filterload (BIP37)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'filterload');
         assert.equal(pkt.type, packets.types.FILTERLOAD);
@@ -574,7 +577,7 @@ describe('Net', function() {
       check(pkt);
     });
 
-    it('filteradd', () => {
+    it('filteradd (BIP37)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'filteradd');
         assert.equal(pkt.type, packets.types.FILTERADD);
@@ -588,7 +591,7 @@ describe('Net', function() {
       check(pkt);
     });
 
-    it('filterclear', () => {
+    it('filterclear (BIP37)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'filterclear');
         assert.equal(pkt.type, packets.types.FILTERCLEAR);
@@ -601,7 +604,7 @@ describe('Net', function() {
       check(pkt);
     });
 
-    it('merkleblock', () => {
+    it('merkleblock (BIP37)', () => {
       const [block] = merkle300025.getBlock();
 
       const check = (pkt) => {
@@ -618,7 +621,7 @@ describe('Net', function() {
       check(pkt);
     });
 
-    it('feefilter', () => {
+    it('feefilter (BIP133)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'feefilter');
         assert.equal(pkt.type, packets.types.FEEFILTER);
@@ -633,7 +636,7 @@ describe('Net', function() {
       check(pkt);
     });
 
-    it('sendcmpct', () => {
+    it('sendcmpct (BIP152)', () => {
       const check = (pkt, mode, version) => {
         assert.equal(pkt.cmd, 'sendcmpct');
         assert.equal(pkt.type, packets.types.SENDCMPCT);
@@ -655,7 +658,7 @@ describe('Net', function() {
       check(pkt, 1, 2);
     });
 
-    it('cmpctblock', () => {
+    it('cmpctblock (BIP152)', () => {
       const [block] = block300025.getBlock();
       const [witnessBlock] = block482683.getBlock();
 
@@ -690,7 +693,7 @@ describe('Net', function() {
       check(pkt, true, true);
     });
 
-    it('getblocktxn', () => {
+    it('getblocktxn (BIP152)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'getblocktxn');
         assert.equal(pkt.type, packets.types.GETBLOCKTXN);
@@ -711,7 +714,7 @@ describe('Net', function() {
       check(pkt);
     });
 
-    it('blocktxn', () => {
+    it('blocktxn (BIP152)', () => {
       const [block] = block482683.getBlock();
 
       const tx = block.txs[9];
@@ -1101,7 +1104,7 @@ describe('Net', function() {
       });
     });
 
-    describe('handleSendHeaders', function() {
+    describe('handleSendHeaders (BIP130)', function() {
       it('will set prefer headers', async () => {
         const peer = Peer.fromOptions({});
         const pkt = new packets.SendHeadersPacket();
@@ -1110,7 +1113,7 @@ describe('Net', function() {
       });
     });
 
-    describe('handleFilterLoad', function() {
+    describe('handleFilterLoad (BIP37)', function() {
       it('will load spv filter', async () => {
         const peer = Peer.fromOptions({});
         const filter = new BloomFilter();
@@ -1138,7 +1141,7 @@ describe('Net', function() {
       });
     });
 
-    describe('handleFilterAdd', function() {
+    describe('handleFilterAdd (BIP37)', function() {
       it('will add to spv filter', async () => {
         const peer = Peer.fromOptions({});
         peer.spvFilter = BloomFilter.fromRate(
@@ -1181,7 +1184,7 @@ describe('Net', function() {
       });
     });
 
-    describe('handleFilterClear', function() {
+    describe('handleFilterClear (BIP37)', function() {
       it('will reset spv filter', async () => {
         const peer = Peer.fromOptions({});
         peer.spvFilter = BloomFilter.fromRate(
@@ -1210,7 +1213,7 @@ describe('Net', function() {
       });
     });
 
-    describe('handleFeeFilter', function() {
+    describe('handleFeeFilter (BIP133)', function() {
       it('will set fee rate', async () => {
         const peer = Peer.fromOptions({});
         const pkt = new packets.FeeFilterPacket(120000);
@@ -1237,7 +1240,7 @@ describe('Net', function() {
       });
     });
 
-    describe('handleSendCmpct', function() {
+    describe('handleSendCmpct (BIP152)', function() {
       it('will not set compact mode (already set)', async () => {
         const peer = Peer.fromOptions({});
         const pkt = new packets.SendCmpctPacket(1, 1);
@@ -1885,6 +1888,270 @@ describe('Net', function() {
         };
 
         await pool.handleGetData(peer, pkt);
+
+        assert(called);
+      });
+    });
+
+    describe('handleGetHeaders', function() {
+      function mockHash(height) {
+        const hash = Buffer.alloc(32, 0x00);
+        hash.writeUInt32LE(height);
+        return hash;
+      }
+
+      const network = Network.get('regtest');
+      let pool = null;
+
+      before(async () => {
+        pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {checkpoints: true},
+            on: () => {},
+            synced: true,
+            findLocator: (locators) => {
+              assert.bufferEqual(locators[0], mockHash(0));
+
+              return locators[0];
+            },
+            getNextHash: (hash) => {
+              assert.bufferEqual(hash, mockHash(0));
+
+              return mockHash(1);
+            },
+            getEntry: (hash) => {
+              assert.bufferEqual(hash, mockHash(1));
+
+              return new ChainEntry({
+                version: 1,
+                hash: mockHash(1),
+                prevBlock: mockHash(0),
+                merkleRoot: Buffer.alloc(32, 0x00),
+                time: 1558629632,
+                bits: 486604799,
+                nonce: 10,
+                height: 1
+              });
+            },
+            getNext: (entry) => {
+              const height = entry.height + 1;
+
+              return new ChainEntry({
+                version: 1,
+                hash: mockHash(height),
+                prevBlock: entry.hash,
+                merkleRoot: Buffer.alloc(32, 0x00),
+                time: 1558629632,
+                bits: 486604799,
+                nonce: 10,
+                height: height
+              });
+            }
+          }
+        });
+      });
+
+      it('will send max headers from chain', async () => {
+        const peer = Peer.fromOptions(pool.options);
+        peer.handshake = true;
+
+        const locators = [mockHash(0)];
+        const stop = mockHash(7500);
+
+        const pkt = new packets.GetHeadersPacket(locators, stop);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.HEADERS);
+          assert.equal(packet.items.length, 2000);
+          called = true;
+        };
+
+        await pool.handleGetHeaders(peer, pkt);
+        assert(called);
+      });
+
+      it('will continue until stop point', async () => {
+        const peer = Peer.fromOptions(pool.options);
+        peer.handshake = true;
+
+        const locators = [mockHash(0)];
+        const stop = mockHash(1500);
+
+        const pkt = new packets.GetHeadersPacket(locators, stop);
+
+        let called = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.HEADERS);
+          assert.equal(packet.items.length, 1500);
+          assert.bufferEqual(packet.items[0].hash(), mockHash(1));
+          assert.bufferEqual(packet.items[1499].hash(), mockHash(1500));
+          called = true;
+        };
+
+        await pool.handleGetHeaders(peer, pkt);
+        assert(called);
+      });
+    });
+
+    describe('handleTX', function() {
+      const [block] = block300025.getBlock();
+
+      const network = Network.get('regtest');
+
+      it('will destroy if unrequested', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {checkpoints: true}, on: () => {}}
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        pool.resolveTX = (_peer, hash) => {
+          assert.strictEqual(_peer, peer);
+          assert.bufferEqual(hash, block.txs[10].hash());
+          return false;
+        };
+
+        let called = false;
+        peer.destroy = () => {
+          called = true;
+        };
+
+        const pkt = new packets.TXPacket(block.txs[10]);
+
+        await pool.handleTX(peer, pkt);
+        assert(called);
+      });
+
+      it('will add tx to mempool', async () => {
+        let added = false;
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {
+              checkpoints: true
+            },
+            on: () => {}
+          }
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        pool.resolveTX = () => true;
+        pool.mempool = {
+          addTX: (tx, id) => {
+            assert.strictEqual(tx, block.txs[10]);
+            assert.equal(id, peer.id);
+            added = true;
+            return false;
+          },
+          on: () => {}
+        };
+
+        const pkt = new packets.TXPacket(block.txs[10]);
+
+        await pool.handleTX(peer, pkt);
+        assert(added);
+      });
+
+      it('will increase ban if invalid', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {
+              checkpoints: true
+            },
+            on: () => {}
+          },
+          mempool: {
+            addTX: (tx) => {
+              throw new VerifyError(tx, 'invalid', 'test-reason', 10);
+            },
+            on: () => {}
+          }
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        let increaseBan = false;
+        peer.increaseBan = (score) => {
+          assert.equal(score, 10);
+          increaseBan = true;
+        };
+
+        let send = false;
+        peer.send = (packet) => {
+          assert.equal(packet.type, packets.types.REJECT);
+          send = true;
+        };
+
+        pool.resolveTX = () => true;
+
+        const pkt = new packets.TXPacket(block.txs[10]);
+
+        await pool.handleTX(peer, pkt);
+        assert(increaseBan);
+        assert(send);
+      });
+    });
+
+    describe('handleMerkleBlock/handleTX (BIP37)', function() {
+      const network = Network.get('regtest');
+
+      it('will add block w/ merkle block and txs', async () => {
+        const [block] = block300025.getBlock();
+
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {
+            network,
+            options: {
+              checkpoints: true,
+              spv: true
+            },
+            on: () => {}
+          },
+          spv: true
+        });
+        pool.syncing = true;
+
+        const filter = BloomFilter.fromRate(20000, 0.001,
+                                            BloomFilter.flags.ALL);
+        filter.add(block.txs[10].hash());
+        filter.add(block.txs[12].hash());
+
+        // Serialize the block as the txs are not included
+        // over the network, however the txs are included in
+        // the data structure.
+        const merkle = MerkleBlock.fromRaw(block.toMerkle(filter).toRaw());
+
+        const blkpkt = new packets.MerkleBlockPacket(merkle);
+        const tx1pkt = new packets.TXPacket(block.txs[10]);
+        const tx2pkt = new packets.TXPacket(block.txs[12]);
+
+        const peer = Peer.fromOptions(pool.options);
+        peer.blockMap.set(block.hash(), Date.now());
+
+        let called = false;
+
+        pool._addBlock = (_peer, _block, flags) => {
+          assert.strictEqual(_peer, peer);
+          assert.bufferEqual(_block.hash(), block.hash());
+          assert.equal(_block.txs.length, 2);
+          assert.strictEqual(_block.txs[0], block.txs[10]);
+          assert.strictEqual(_block.txs[1], block.txs[12]);
+          called = true;
+        };
+
+        await pool.handleMerkleBlock(peer, blkpkt);
+        await pool.handleTX(peer, tx1pkt);
+        await pool.handleTX(peer, tx2pkt);
 
         assert(called);
       });
