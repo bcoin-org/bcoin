@@ -20,39 +20,39 @@
     "wallet"
   ],
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.6.0"
   },
   "dependencies": {
-    "bcfg": "~0.1.5",
-    "bclient": "~0.1.6",
-    "bcrypto": "~3.0.2",
-    "bdb": "~1.1.5",
-    "bdns": "~0.1.4",
-    "bevent": "~0.1.4",
-    "bfile": "~0.1.4",
-    "bfilter": "~1.0.4",
-    "bheep": "~0.1.4",
-    "binet": "~0.3.4",
-    "blgr": "~0.1.5",
-    "blru": "~0.1.5",
-    "blst": "~0.1.4",
-    "bmutex": "~0.1.5",
-    "bsert": "~0.0.8",
-    "bsip": "~0.1.5",
-    "bsock": "~0.1.5",
-    "bsocks": "~0.2.4",
-    "bstring": "~0.3.5",
-    "btcp": "~0.1.4",
-    "buffer-map": "~0.0.5",
-    "bufio": "~1.0.4",
-    "bupnp": "~0.2.5",
-    "bval": "~0.1.5",
-    "bweb": "~0.1.7",
-    "mrmr": "~0.1.5",
-    "n64": "~0.2.6"
+    "bcfg": "~0.1.6",
+    "bclient": "~0.1.7",
+    "bcrypto": "~3.1.11",
+    "bdb": "~1.1.7",
+    "bdns": "~0.1.5",
+    "bevent": "~0.1.5",
+    "bfile": "~0.2.1",
+    "bfilter": "~1.0.5",
+    "bheep": "~0.1.5",
+    "binet": "~0.3.5",
+    "blgr": "~0.1.7",
+    "blru": "~0.1.6",
+    "blst": "~0.1.5",
+    "bmutex": "~0.1.6",
+    "bsert": "~0.0.10",
+    "bsip": "~0.1.9",
+    "bsock": "~0.1.9",
+    "bsocks": "~0.2.5",
+    "bstring": "~0.3.9",
+    "btcp": "~0.1.5",
+    "buffer-map": "~0.0.7",
+    "bufio": "~1.0.6",
+    "bupnp": "~0.2.6",
+    "bval": "~0.1.6",
+    "bweb": "~0.1.9",
+    "mrmr": "~0.1.8",
+    "n64": "~0.2.10"
   },
   "devDependencies": {
-    "bmocha": "^1.0.0"
+    "bmocha": "^2.1.2"
   },
   "main": "./lib/bcoin.js",
   "bin": {
@@ -74,7 +74,7 @@
     "test-browser": "NODE_BACKEND=js bmocha --reporter spec test/*.js",
     "test-file": "bmocha --reporter spec",
     "test-file-browser": "NODE_BACKEND=js bmocha --reporter spec",
-    "test-ci": "istanbul cover --report lcovonly node_modules/.bin/bmocha -- --reporter spec test/*-test.js"
+    "test-ci": "nyc -a -n 'lib/**/*.js' --reporter=lcov --reporter=text npm run test"
   },
   "browser": {
     "./lib/hd/nfkd": "./lib/hd/nfkd-compat.js",

@@ -29,6 +29,7 @@ const node = new FullNode({
   walletAuth: true,
   memory: true,
   workers: true,
+  workersSize: 2,
   plugins: [require('../lib/wallet/plugin')],
   port: ports.p2p,
   httpPort: ports.node,
@@ -40,7 +41,8 @@ const {NodeClient, WalletClient} = require('bclient');
 
 const nclient = new NodeClient({
   port: ports.node,
-  apiKey: 'foo'
+  apiKey: 'foo',
+  timeout: 15000
 });
 
 const wclient = new WalletClient({

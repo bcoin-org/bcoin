@@ -4,8 +4,53 @@
     "node": true
   },
   "extends": "eslint:recommended",
+  "globals": {
+    "Atomics": "readable",
+    "BigInt": "readable",
+    "BigInt64Array": "readable",
+    "BigUint64Array": "readable",
+    "queueMicrotask": "readable",
+    "SharedArrayBuffer": "readable",
+    "TextEncoder": "readable",
+    "TextDecoder": "readable"
+  },
+  "overrides": [
+    {
+      "files": ["*.mjs"],
+      "parserOptions": {
+        "sourceType": "module"
+      }
+    },
+    {
+      "files": ["*.cjs"],
+      "parserOptions": {
+        "sourceType": "script"
+      }
+    },
+    {
+      "files": [
+        "test/{,**/}*.{mjs,cjs,js}"
+      ],
+      "env": {
+        "mocha": true
+      },
+      "globals": {
+        "register": "readable"
+      },
+      "rules": {
+        "max-len": "off",
+        "prefer-arrow-callback": "off"
+      }
+    }
+  ],
+  "parser": "babel-eslint",
   "parserOptions": {
-    "ecmaVersion": 9
+    "ecmaVersion": 10,
+    "ecmaFeatures": {
+      "globalReturn": true
+    },
+    "requireConfigFile": false,
+    "sourceType": "script"
   },
   "root": true,
   "rules": {
@@ -27,11 +72,20 @@
     }],
     "func-name-matching": "error",
     "indent": ["off", 2, {
+      "ArrayExpression": "off",
       "SwitchCase": 1,
       "CallExpression": {
         "arguments": "off"
       },
-      "ArrayExpression": "off"
+      "FunctionDeclaration": {
+        "parameters": "off"
+      },
+      "FunctionExpression": {
+        "parameters": "off"
+      },
+      "MemberExpression": "off",
+      "ObjectExpression": "off",
+      "ImportDeclaration": "off"
     }],
     "handle-callback-err": "off",
     "linebreak-style": ["error", "unix"],

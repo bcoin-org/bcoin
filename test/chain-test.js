@@ -28,7 +28,8 @@ ONE_HASH[0] = 0x01;
 const network = Network.get('regtest');
 
 const workers = new WorkerPool({
-  enabled: true
+  enabled: true,
+  size: 2
 });
 
 const blocks = new BlockStore({
@@ -125,12 +126,14 @@ describe('Chain', function() {
     await blocks.open();
     await chain.open();
     await miner.open();
+    await workers.open();
 
     miner.addresses.length = 0;
     miner.addAddress(wallet.getReceive());
   });
 
   after(async () => {
+    await workers.close();
     await miner.close();
     await chain.close();
     await blocks.close();

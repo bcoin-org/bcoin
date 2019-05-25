@@ -1,6 +1,9 @@
 node_modules/
+.nyc_output
 docs/reference/
 docker_data/
 browser/bcoin*
 npm-debug.log
 coverage/
+yarn.lock
+webpack.*.js

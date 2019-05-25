@@ -58,7 +58,8 @@ const vectors = [
 ];
 
 const workers = new WorkerPool({
-  enabled: true
+  enabled: true,
+  size: 2
 });
 
 const blocks = new BlockStore({
@@ -108,9 +109,11 @@ describe('Indexer', function() {
     await miner.open();
     await txindexer.open();
     await addrindexer.open();
+    await workers.open();
   });
 
   after(async () => {
+    await workers.close();
     await blocks.close();
     await chain.close();
     await miner.close();
@@ -826,6 +829,7 @@ describe('Indexer', function() {
         walletAuth: true,
         memory: true,
         workers: true,
+        workersSize: 2,
         indexTX: true,
         indexAddress: true,
         port: ports.p2p,

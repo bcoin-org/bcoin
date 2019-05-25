@@ -31,8 +31,11 @@ const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
 const PUBKEY = 'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhaw'
   + 'A7d4R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj';
 
-const enabled = true;
-const workers = new WorkerPool({ enabled });
+const workers = new WorkerPool({
+  enabled: true,
+  size: 2
+});
+
 const wdb = new WalletDB({ workers });
 
 let currentWallet = null;
@@ -236,10 +239,12 @@ describe('Wallet', function() {
 
   before(async () => {
     await wdb.open();
+    await workers.open();
   });
 
   after(async () => {
     await wdb.close();
+    await workers.close();
   });
 
   it('should open walletdb', () => {

@@ -27,6 +27,7 @@ const node = new FullNode({
   apiKey: 'foo',
   network: 'regtest',
   workers: true,
+  workersSize: 2,
   plugins: [require('../lib/wallet/plugin')],
   indexTX: true,
   indexAddress: true,
