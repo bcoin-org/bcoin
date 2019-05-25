@@ -33,7 +33,7 @@
     "bfilter": "~1.0.5",
     "bheep": "~0.1.5",
     "binet": "~0.3.5",
-    "blgr": "~0.1.7",
+    "blgr": "bcoin-org/blgr#5242a72a16daf9b53ffc456ca23658edf8819aed",
     "blru": "~0.1.6",
     "blst": "~0.1.5",
     "bmutex": "~0.1.6",
