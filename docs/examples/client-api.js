@@ -7,7 +7,7 @@ const network = bcoin.Network.get('regtest');
 
 const node = new bcoin.FullNode({
   network: 'regtest',
-  db: 'memory'
+  memory: true
 });
 
 node.use(plugin);
