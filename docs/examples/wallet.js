@@ -10,7 +10,7 @@ function dummy() {
 
 const walletdb = new bcoin.wallet.WalletDB({
   network: 'testnet',
-  db: 'memory'
+  memory: true
 });
 
 (async () => {
