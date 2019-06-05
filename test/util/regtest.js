@@ -16,6 +16,7 @@ async function initFullNode(options) {
     apiKey: 'foo',
     walletAuth: true,
     workers: true,
+    workersSize: 2,
     listen: true,
     bip37: true,
     port: options.ports.full.p2p,
@@ -42,6 +43,7 @@ async function initSPVNode(options) {
     apiKey: 'foo',
     walletAuth: true,
     workers: true,
+    workersSize: 2,
     listen: true,
     port: options.ports.spv.p2p,
     httpPort: options.ports.spv.node,
@@ -67,7 +69,8 @@ async function initNodeClient(options) {
   const nclient = new NodeClient({
     network: 'regtest',
     port: options.ports.node,
-    apiKey: 'foo'
+    apiKey: 'foo',
+    timeout: 15000
   });
   await nclient.open();
   return nclient;
@@ -77,7 +80,8 @@ async function initWalletClient(options) {
   const wclient = new WalletClient({
     network: 'regtest',
     port: options.ports.wallet,
-    apiKey: 'foo'
+    apiKey: 'foo',
+    timeout: 15000
   });
   await wclient.open();
   return wclient;
