@@ -160,10 +160,6 @@ describe('Wallet Unconfirmed TX', function() {
       assert.strictEqual(Number.isInteger(d), true);
       assert.strictEqual(a > b, true);
     });
-
-    // TODO
-    // - third page after new block (no shifting)
-    // - last page
   });
 
   describe('get transaction history (asc)', () => {
@@ -213,10 +209,6 @@ describe('Wallet Unconfirmed TX', function() {
 
       assert.notStrictEqual(two[0].txid, one[99].txid);
     });
-
-    // TODO
-    // - third page after new block (no shifting)
-    // - last page
   });
 
   describe('get transaction history by timestamp (asc)', () => {
@@ -254,9 +246,6 @@ describe('Wallet Unconfirmed TX', function() {
       assert.strictEqual(Number.isInteger(b), true);
       assert.strictEqual(a > b, true);
     });
-
-    // TODO
-    // - arbitrary date
   });
 
   describe('chain rollback', () => {
