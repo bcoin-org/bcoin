@@ -276,7 +276,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(history[18].confirmations, 0);
         const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
-        assert.strictEqual(a > b, true);
+        assert.strictEqual(a >= b, true);
       });
 
       it('second page', async () => {
@@ -300,7 +300,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(two[14].confirmations, 0);
         const b = two[14].mtime;
         assert.strictEqual(Number.isInteger(b), true);
-        assert.strictEqual(a > b, true);
+        assert.strictEqual(a >= b, true);
 
         assert.notStrictEqual(two[0].hash, one[3].hash);
       });
@@ -339,7 +339,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(history[18].confirmations, 0);
         const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
-        assert.strictEqual(a < b, true);
+        assert.strictEqual(a <= b, true);
       });
 
       it('first page (w/ account)', async () => {
@@ -373,7 +373,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(two[14].confirmations, 0);
         const b = two[14].mtime;
         assert.strictEqual(Number.isInteger(b), true);
-        assert.strictEqual(a < b, true);
+        assert.strictEqual(a <= b, true);
 
         assert.notStrictEqual(two[0].hash, one[3].hash);
       });
@@ -481,7 +481,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(history[18].confirmations, 0);
         const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
-        assert.strictEqual(a > b, true);
+        assert.strictEqual(a >= b, true);
       });
 
       it('second page', async () => {
@@ -506,7 +506,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(two[14].confirmations, 0);
         const b = two[14].mtime;
         assert.strictEqual(Number.isInteger(b), true);
-        assert.strictEqual(a > b, true);
+        assert.strictEqual(a >= b, true);
 
         assert.notStrictEqual(two[0].hash, one[3].hash);
       });
@@ -525,7 +525,7 @@ describe('Wallet TX HTTP Pagination', function() {
         assert.strictEqual(history[18].confirmations, 0);
         const b = history[18].mtime;
         assert.strictEqual(Number.isInteger(b), true);
-        assert.strictEqual(a < b, true);
+        assert.strictEqual(a <= b, true);
       });
 
       it('second page', async () => {
