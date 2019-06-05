@@ -5,7 +5,7 @@
 
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const nodejsUtil = require('util');
 
 describe('Address', function() {

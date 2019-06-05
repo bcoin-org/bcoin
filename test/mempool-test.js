@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const random = require('bcrypto/lib/random');
 const common = require('../lib/blockchain/common');
 const Block = require('../lib/primitives/block');

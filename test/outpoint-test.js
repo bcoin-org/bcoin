@@ -3,7 +3,7 @@
 'use strict';
 
 const Outpoint = require('../lib/primitives/outpoint');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const common = require('./util/common');
 const util = require('../lib/utils/util');
 const TX = require('../lib/primitives/tx');

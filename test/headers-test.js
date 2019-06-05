@@ -4,7 +4,7 @@
 'use strict';
 
 const Headers = require('../lib/primitives/headers');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const common = require('./util/common');
 
 const block1 = common.readBlock('block1');

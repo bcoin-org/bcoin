@@ -6,7 +6,7 @@
 const bio = require('bufio');
 const util = require('../lib/utils/util');
 const Input = require('../lib/primitives/input');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const common = require('./util/common');
 
 // Take input rawbytes from the raw data format

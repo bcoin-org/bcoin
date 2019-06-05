@@ -3,7 +3,7 @@
 'use strict';
 
 const {NodeClient, WalletClient} = require('bclient');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const FullNode = require('../lib/node/fullnode');
 const Network = require('../lib/protocol/network');
 const Mnemonic = require('../lib/hd/mnemonic');
@@ -259,7 +259,10 @@ describe('Wallet RPC Methods', function() {
       // Match the bitcoind response when sending the incorrect
       // network. Expect an RPC error
       const fn = async () => await wclient.execute('getaddressinfo', [failed]);
-      await assert.asyncThrows(fn, 'Invalid address.');
+      await assert.rejects(fn, {
+        name: 'Error',
+        message: 'Invalid address.'
+      });
     });
 
     it('should fail for invalid address', async () => {
@@ -269,7 +272,10 @@ describe('Wallet RPC Methods', function() {
       failed = failed.slice(1, failed.length);
 
       const fn = async () => await wclient.execute('getaddressinfo', [failed]);
-      await assert.asyncThrows(fn, 'Invalid address.');
+      await assert.rejects(fn, {
+        name: 'Error',
+        message: 'Invalid address.'
+      });
     });
   });
 });

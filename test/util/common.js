@@ -1,6 +1,6 @@
 'use strict';
 
-const assert = require('assert');
+const assert = require('bsert');
 const {tmpdir} = require('os');
 const path = require('path');
 const fs = require('bfile');
