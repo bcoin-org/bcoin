@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const common = require('./util/common');
 const {BloomFilter} = require('bfilter');
 const {BufferMap} = require('buffer-map');

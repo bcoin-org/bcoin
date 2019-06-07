@@ -26,7 +26,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Address = require('../lib/primitives/address');
 
 // see https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki

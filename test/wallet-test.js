@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 const hash256 = require('bcrypto/lib/hash256');

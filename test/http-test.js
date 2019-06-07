@@ -4,7 +4,7 @@
 'use strict';
 
 const {BloomFilter} = require('bfilter');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const consensus = require('../lib/protocol/consensus');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
@@ -87,15 +87,15 @@ describe('HTTP', function() {
     const info = await nclient.getInfo();
     assert.strictEqual(info.network, node.network.type);
     assert.strictEqual(info.version, pkg.version);
-    assert.typeOf(info.pool, 'object');
+    assert(typeof info.pool === 'object');
     assert.strictEqual(info.pool.agent, node.pool.options.agent);
-    assert.typeOf(info.chain, 'object');
+    assert(typeof info.chain === 'object');
     assert.strictEqual(info.chain.height, 0);
-    assert.typeOf(info.indexes, 'object');
-    assert.typeOf(info.indexes.addr, 'object');
+    assert(typeof info.indexes === 'object');
+    assert(typeof info.indexes.addr === 'object');
     assert.equal(info.indexes.addr.enabled, false);
     assert.equal(info.indexes.addr.height, 0);
-    assert.typeOf(info.indexes.tx, 'object');
+    assert(typeof info.indexes.tx === 'object');
     assert.equal(info.indexes.addr.enabled, false);
     assert.equal(info.indexes.tx.height, 0);
   });
@@ -105,7 +105,7 @@ describe('HTTP', function() {
     assert.strictEqual(info.id, 'test');
     const acct = await wallet.getAccount('default');
     const str = acct.receiveAddress;
-    assert.typeOf(str, 'string');
+    assert(typeof str === 'string');
     addr = Address.fromString(str, node.network);
   });
 

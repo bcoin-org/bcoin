@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const consensus = require('../lib/protocol/consensus');
 const Address = require('../lib/primitives/address');
 const FullNode = require('../lib/node/fullnode');
@@ -80,13 +80,19 @@ describe('RPC', function() {
     assert(await nclient.execute('help', []));
     assert(await wclient.execute('help', []));
 
-    await assert.asyncThrows(async () => {
+    await assert.rejects(async () => {
       await nclient.execute('help', ['getinfo']);
-    }, 'getinfo');
+    }, {
+      name: 'Error',
+      message: /^getinfo/
+    });
 
-    await assert.asyncThrows(async () => {
+    await assert.rejects(async () => {
       await wclient.execute('help', ['getbalance']);
-    }, 'getbalance');
+    }, {
+      name: 'Error',
+      message: /^getbalance/
+    });
   });
 
   it('should rpc getinfo', async () => {
@@ -105,9 +111,12 @@ describe('RPC', function() {
   });
 
   it('should fail rpc getnewaddress from nonexistent account', async () => {
-    await assert.asyncThrows(async () => {
+    await assert.rejects(async () => {
       await wclient.execute('getnewaddress', ['bad-account-name']);
-    }, 'Account not found.');
+    }, {
+      name: 'Error',
+      message: 'Account not found.'
+    });
   });
 
   it('should rpc getaccountaddress', async () => {
@@ -138,15 +147,21 @@ describe('RPC', function() {
   });
 
   it('should fail malformed rpc sendmany', async () => {
-    await assert.asyncThrows(async () => {
+    await assert.rejects(async () => {
       await wclient.execute('sendmany', ['default', null]);
-    }, 'Invalid send-to address');
+    }, {
+      name: 'Error',
+      message: 'Invalid send-to address.'
+    });
 
     const sendTo = {};
     sendTo[addressHot] = null;
-    await assert.asyncThrows(async () => {
+    await assert.rejects(async () => {
       await wclient.execute('sendmany', ['default', sendTo]);
-    }, 'Invalid amount.');
+    }, {
+      name: 'Error',
+      message: 'Invalid amount.'
+    });
   });
 
   it('should rpc listreceivedbyaddress', async () => {
@@ -198,9 +213,12 @@ describe('RPC', function() {
   });
 
   it('should fail rpc listtransactions from nonexistent account', async () => {
-    assert.asyncThrows(async () => {
+    assert.rejects(async () => {
       await wclient.execute('listtransactions', ['nonexistent']);
-    }, 'Account not found.');
+    }, {
+      name: 'Error',
+      message: 'Account not found.'
+    });
   });
 
   it('should rpc listunspent', async () => {
@@ -244,9 +262,12 @@ describe('RPC', function() {
     assert.strictEqual(listOldBlock.transactions.length, 2);
 
     const nonexistentBlock = consensus.ZERO_HASH.toString('hex');
-    await assert.asyncThrows(async () => {
+    await assert.rejects(async () => {
       await wclient.execute('listsinceblock', [nonexistentBlock]);
-    }, 'Block not found');
+    }, {
+      name: 'Error',
+      message: 'Block not found.'
+    });
   });
 
   it('should cleanup', async () => {

@@ -4,7 +4,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Network = require('../lib/protocol/network');
 const util = require('../lib/utils/util');
 const NetAddress = require('../lib/net/netaddress');
@@ -102,15 +102,15 @@ describe('Protocol', function() {
   ];
 
   packetTest('addr', new packets.AddrPacket(hosts), (payload) => {
-    assert.typeOf(payload.items, 'array');
+    assert(Array.isArray(payload.items));
     assert.strictEqual(payload.items.length, 2);
 
-    assert.typeOf(payload.items[0].time, 'number');
+    assert(Number.isInteger(payload.items[0].time));
     assert.strictEqual(payload.items[0].services, 1);
     assert.strictEqual(payload.items[0].host, hosts[0].host);
     assert.strictEqual(payload.items[0].port, hosts[0].port);
 
-    assert.typeOf(payload.items[1].time, 'number');
+    assert(Number.isInteger(payload.items[1].time));
     assert.strictEqual(payload.items[1].services, 1);
     assert.strictEqual(payload.items[1].host, hosts[1].host);
     assert.strictEqual(payload.items[1].port, hosts[1].port);

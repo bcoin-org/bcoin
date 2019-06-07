@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Chain = require('../lib/blockchain/chain');
 const ChainEntry = require('../lib/blockchain/chainentry');
 const Network = require('../lib/protocol/network');

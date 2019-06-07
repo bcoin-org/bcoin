@@ -6,7 +6,7 @@
 
 'use strict';
 
-const assert = require('assert');
+const assert = require('bsert');
 const {BufferMap, BufferSet} = require('buffer-map');
 const Network = require('../../lib/protocol/network');
 const MTX = require('../../lib/primitives/mtx');

@@ -5,7 +5,7 @@
 
 const Logger = require('blgr');
 const bio = require('bufio');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const common = require('./util/common');
 const {resolve} = require('path');
 const fs = require('bfile');

@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const reorg = require('./util/reorg');
 const Script = require('../lib/script/script');
 const Opcode = require('../lib/script/opcode');
@@ -313,9 +313,12 @@ describe('Indexer', function() {
         maxTxs: 10
       });
 
-      await assert.asyncThrows(async () => {
+      await assert.rejects(async () => {
         await indexer.getHashesByAddress(vectors[0].addr, {limit: 11});
-      }, 'Limit above max');
+      }, {
+        name: 'Error',
+        message: 'Limit above max of 10.'
+      });
     });
   });
 
@@ -795,8 +798,8 @@ describe('Indexer', function() {
           httpPort: ports.node
         });
 
-        assert.equal(node.txindex, undefined);
-        assert.equal(node.addrindex, undefined);
+        assert.equal(node.txindex, null);
+        assert.equal(node.addrindex, null);
       });
     });
   });
@@ -1184,23 +1187,32 @@ describe('Indexer', function() {
 
     describe('Errors', function() {
       it('will give error if limit is exceeded', async () => {
-        await assert.asyncThrows(async () => {
+        await assert.rejects(async () => {
           await nclient.request(
             'GET', `/tx/address/${vectors[0].addr}`, {limit: 101});
-        }, 'Limit above max');
+        }, {
+          name: 'Error',
+          message: 'Limit above max of 100.'
+        });
       });
 
       it('will give error with invalid after hash', async () => {
-        await assert.asyncThrows(async () => {
+        await assert.rejects(async () => {
           await nclient.request(
             'GET', `/tx/address/${vectors[0].addr}`, {after: 'deadbeef'});
+        }, {
+          name: 'Error',
+          message: 'after must be a hex string.'
         });
       });
 
       it('will give error with invalid reverse', async () => {
-        await assert.asyncThrows(async () => {
+        await assert.rejects(async () => {
           await nclient.request(
             'GET', `/tx/address/${vectors[0].addr}`, {reverse: 'sure'});
+        }, {
+          name: 'Error',
+          message: 'reverse must be a boolean.'
         });
       });
     });

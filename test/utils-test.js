@@ -6,7 +6,7 @@
 const Validator = require('bval');
 const {base58} = require('bstring');
 const {encoding} = require('bufio');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Amount = require('../lib/btc/amount');
 const fixed = require('../lib/utils/fixed');
 

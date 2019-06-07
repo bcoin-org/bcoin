@@ -5,7 +5,7 @@
 
 const {inspect} = require('util');
 const {encoding} = require('bufio');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const random = require('bcrypto/lib/random');
 const util = require('../lib/utils/util');
 const consensus = require('../lib/protocol/consensus');
