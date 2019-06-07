@@ -1055,4 +1055,211 @@ describe('Mempool', function() {
         throw err;
     });
   });
+
+  describe('Replace-by-fee', function () {
+    const workers = new WorkerPool({
+      enabled: true,
+      size: 2
+    });
+
+    const blocks = new BlockStore({
+      memory: true
+    });
+
+    const chain = new Chain({
+      memory: true,
+      workers,
+      blocks
+    });
+
+    const mempool = new Mempool({
+      chain,
+      workers,
+      memory: true,
+      indexAddress: true
+    });
+
+    before(async () => {
+      await blocks.open();
+      await mempool.open();
+      await chain.open();
+      await workers.open();
+    });
+
+    after(async () => {
+      await workers.close();
+      await chain.close();
+      await mempool.close();
+      await blocks.close();
+    });
+
+    // Number of coins available in
+    // chaincoins (100k satoshi per coin).
+    const N = 100;
+    const chaincoins = new MemWallet();
+    const wallet = new MemWallet();
+
+    it('should create coins in chain', async () => {
+      const mtx = new MTX();
+      mtx.addInput(new Input());
+
+      for (let i = 0; i < N; i++) {
+        const addr = chaincoins.createReceive().getAddress();
+        mtx.addOutput(addr, 100000);
+      }
+
+      const cb = mtx.toTX();
+      const block = await getMockBlock(chain, [cb], false);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // Add 100 blocks so we don't get
+      // premature spend of coinbase.
+      for (let i = 0; i < 100; i++) {
+        const block = await getMockBlock(chain);
+        const entry = await chain.add(block, VERIFY_NONE);
+
+        await mempool._addBlock(entry, block.txs);
+      }
+
+      chaincoins.addTX(cb);
+    });
+
+    it('should reset mempool', async() => {
+      await mempool.reset();
+      assert.strictEqual(mempool.map.size, 0);
+    });
+
+    it('should not accept RBF tx', async() => {
+      assert(!mempool.options.replaceByFee);
+
+      const mtx = new MTX();
+      const coin = chaincoins.getCoins()[0];
+      mtx.addCoin(coin);
+      mtx.inputs[0].sequence = 0xfffffffd;
+
+      const addr = wallet.createReceive().getAddress();
+      mtx.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx);
+
+      assert(mtx.verify());
+      const tx = mtx.toTX();
+
+      let e = null;
+      try {
+        await mempool.addTX(tx);
+      } catch (err) {
+        e = err;
+      }
+      assert(e);
+      assert.strictEqual(e.type, 'VerifyError');
+      assert.strictEqual(e.reason, 'replace-by-fee');
+
+      assert(!mempool.hasCoin(tx.hash(), 0));
+      assert.strictEqual(mempool.map.size, 0);
+    });
+
+    it('should accept RBF tx with RBF option enabled', async() => {
+      mempool.options.replaceByFee = true;
+
+      const mtx = new MTX();
+      const coin = chaincoins.getCoins()[0];
+      mtx.addCoin(coin);
+      mtx.inputs[0].sequence = 0xfffffffd;
+
+      const addr = wallet.createReceive().getAddress();
+      mtx.addOutput(addr, coin.value - 1000); // fee = 1000
+
+      chaincoins.sign(mtx);
+
+      assert(mtx.verify());
+      const tx = mtx.toTX();
+
+      await mempool.addTX(tx);
+
+      assert(mempool.hasCoin(tx.hash(), 0));
+      assert.strictEqual(mempool.map.size, 1);
+    });
+
+    it('should reject an RBF tx replacement with a lower fee', async() => {
+      mempool.options.replaceByFee = true;
+
+      const mtx = new MTX();
+      const coin = chaincoins.getCoins()[0];
+      mtx.addCoin(coin);
+
+      const addr = chaincoins.createReceive().getAddress();
+      mtx.addOutput(addr, coin.value - 1); // fee = 1 single satoshi
+
+      chaincoins.sign(mtx);
+
+      assert(mtx.verify());
+      const tx = mtx.toTX();
+
+      let e = null;
+      try {
+        await mempool.addTX(tx);
+      } catch (err) {
+        e = err;
+      }
+      assert(e);
+      assert.strictEqual(e.type, 'VerifyError');
+      assert.strictEqual(e.reason, 'bad-txns-inputs-spent');
+
+      assert(!mempool.hasCoin(tx.hash(), 0));
+      assert.strictEqual(mempool.map.size, 1);
+    });
+
+    it('should replace an RBF tx with a higher fee', async() => {
+      mempool.options.replaceByFee = true;
+
+      const mtx = new MTX();
+      const coin = chaincoins.getCoins()[0];
+      mtx.addCoin(coin);
+
+      const addr = chaincoins.createReceive().getAddress();
+      mtx.addOutput(addr, coin.value - 2000); // fee = 2000
+
+      chaincoins.sign(mtx);
+
+      assert(mtx.verify());
+      const tx = mtx.toTX();
+
+      await mempool.addTX(tx);
+
+      assert(mempool.hasCoin(tx.hash(), 0));
+      assert.strictEqual(mempool.map.size, 1);
+    });
+
+    it('should reject a replacement for non-RBF tx', async() => {
+      mempool.options.replaceByFee = true;
+
+      const mtx = new MTX();
+      const coin = chaincoins.getCoins()[0];
+      mtx.addCoin(coin);
+
+      const addr = chaincoins.createReceive().getAddress();
+      mtx.addOutput(addr, coin.value - 10000); // fee = 10000, won't matter
+
+      chaincoins.sign(mtx);
+
+      assert(mtx.verify());
+      const tx = mtx.toTX();
+
+      let e = null;
+      try {
+        await mempool.addTX(tx);
+      } catch (err) {
+        e = err;
+      }
+      assert(e);
+      assert.strictEqual(e.type, 'VerifyError');
+      assert.strictEqual(e.reason, 'bad-txns-inputs-spent');
+
+      assert(!mempool.hasCoin(tx.hash(), 0));
+      assert.strictEqual(mempool.map.size, 1);
+    });
+  });
 });
