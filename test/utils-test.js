@@ -10,6 +10,10 @@ const assert = require('bsert');
 const Amount = require('../lib/btc/amount');
 const fixed = require('../lib/utils/fixed');
 
+const sha256 = require('bcrypto/lib/sha256');
+const KeyRing = require('../lib/primitives/keyring');
+const message = require('../lib/utils/message');
+
 const base58Tests = [
   ['', ''],
   ['61', '2g'],
@@ -163,5 +167,42 @@ describe('Utils', function() {
     });
     assert.strictEqual(validator.bool('shouldBeTrue'), true);
     assert.strictEqual(validator.bool('shouldBeFalse'), false);
+  });
+
+  describe('message', function() {
+    const key = sha256.digest(Buffer.from('private-key'));
+    const msg = 'Message To Sign';
+
+    const uncompressed =
+      'G87wcBTu5HXBjBUwpsu+2U9q/0oVqPROSSG0kXaQEK4J' +
+      'AoZAUUtVagvd3AHfX7TS2bHEzDnbn7t/uiIcFeZznlI=';
+
+    const compressed =
+      'H87wcBTu5HXBjBUwpsu+2U9q/0oVqPROSSG0kXaQEK4J' +
+      'AoZAUUtVagvd3AHfX7TS2bHEzDnbn7t/uiIcFeZznlI=';
+
+    it('should sign message', () => {
+      assert.strictEqual(
+        message.sign(msg, KeyRing.fromKey(key, false)).toString('base64'),
+        uncompressed
+      );
+
+      assert.strictEqual(
+        message.sign(msg, KeyRing.fromKey(key, true)).toString('base64'),
+        compressed
+      );
+    });
+
+    it('should recover public key', () => {
+      assert.strictEqual(
+        message.recover(msg, Buffer.from(compressed, 'base64')).toString('base64'),
+        KeyRing.fromKey(key, true).getPublicKey().toString('base64')
+      );
+
+      assert.strictEqual(
+        message.recover(msg, Buffer.from(uncompressed, 'base64')).toString('base64'),
+        KeyRing.fromKey(key, false).getPublicKey().toString('base64')
+      );
+    });
   });
 });
