@@ -87,37 +87,30 @@ describe('RPC', function() {
 
     it('should fail on invalid privkey', async () => {
       const privKey = 'invalid priv key';
-      let err;
 
-      try {
+      await assert.rejects(async () => {
         await nclient.execute('signmessagewithprivkey', [
           privKey,
           message
         ]);
-      } catch (e) {
-        err = e;
-      }
-
-      assert.ok(err);
-      assert.strictEqual(err.message, 'Invalid key.');
+      }, {
+        type: 'RPCError',
+        message: 'Invalid key.'
+      });
     });
 
     it('should fail on wrong network privkey', async () => {
       const privKeyWIF = ring.toSecret('main');
 
-      let err;
-
-      try {
+      await assert.rejects(async () => {
         await nclient.execute('signmessagewithprivkey', [
           privKeyWIF,
           message
         ]);
-      } catch (e) {
-        err = e;
-      }
-
-      assert.ok(err);
-      assert.strictEqual(err.message, 'Invalid key.');
+      }, {
+        type: 'RPCError',
+        message: 'Invalid key.'
+      });
     });
   });
 
@@ -148,37 +141,29 @@ describe('RPC', function() {
     });
 
     it('should fail on invalid address', async () => {
-      let err;
-
-      try {
+      await assert.rejects(async () => {
         await nclient.execute('verifymessage', [
           'Invalid address',
           signature,
           message
         ]);
-      } catch (e) {
-        err = e;
-      }
-
-      assert.ok(err);
-      assert.strictEqual(err.message, 'Invalid address.');
+      }, {
+        type: 'RPCError',
+        message: 'Invalid address.'
+      });
     });
 
     it('should fail on invalid signature', async () => {
-      let err;
-
-      try {
+      await assert.rejects(async () => {
         await nclient.execute('verifymessage', [
           address,
           '.',
           message
         ]);
-      } catch (e) {
-        err = e;
-      }
-
-      assert.ok(err);
-      assert.strictEqual(err.message, 'Invalid signature length');
+      }, {
+        type: 'RPCError',
+        message: 'Invalid signature length'
+      });
     });
   });
 });

@@ -314,35 +314,27 @@ describe('Wallet RPC Methods', function() {
     });
 
     it('should fail with invalid address', async () => {
-      let err;
-
-      try {
+      await assert.rejects(async () => {
         await wclient.execute('signmessage', [
           'invalid address format',
           message
         ]);
-      } catch (e) {
-        err = e;
-      }
-
-      assert.ok(err);
-      assert.strictEqual(err.message, 'Invalid address.');
+      }, {
+        type: 'RPCError',
+        message: 'Invalid address.'
+      });
     });
 
     it('should fail with non-wallet address.', async () => {
-      let err;
-
-      try {
+      await assert.rejects(async () => {
         await wclient.execute('signmessage', [
           nonWalletAddress,
           message
         ]);
-      } catch (e) {
-        err = e;
-      }
-
-      assert.ok(err);
-      assert.strictEqual(err.message, 'Address not found.');
+      }, {
+        type: 'RPCError',
+        message: 'Address not found.'
+      });
     });
   });
 
