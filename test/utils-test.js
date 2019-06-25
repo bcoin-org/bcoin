@@ -4,48 +4,12 @@
 'use strict';
 
 const Validator = require('bval');
-const {base58} = require('bstring');
 const {encoding} = require('bufio');
 const assert = require('bsert');
 const Amount = require('../lib/btc/amount');
 const fixed = require('../lib/utils/fixed');
 
-const base58Tests = [
-  ['', ''],
-  ['61', '2g'],
-  ['626262', 'a3gV'],
-  ['636363', 'aPEr'],
-  [
-    '73696d706c792061206c6f6e6720737472696e67',
-    '2cFupjhnEsSn59qHXstmK2ffpLv2'
-  ],
-  [
-    '00eb15231dfceb60925886b67d065299925915aeb172c06647',
-    '1NS17iag9jJgTHD1VXjvLCEnZuQ3rJDE9L'
-  ],
-  ['516b6fcd0f', 'ABnLTmg'],
-  ['bf4f89001e670274dd', '3SEo3LWLoPntC'],
-  ['572e4794', '3EFU7m'],
-  ['ecac89cad93923c02321', 'EJDM8drfXA6uyA'],
-  ['10c8511e', 'Rt5zm'],
-  ['00000000000000000000', '1111111111']
-];
-
 describe('Utils', function() {
-  it('should encode/decode base58', () => {
-    const buf = Buffer.from('000000deadbeef', 'hex');
-    const str = base58.encode(buf);
-
-    assert.strictEqual(str, '1116h8cQN');
-    assert.bufferEqual(base58.decode(str), buf);
-
-    for (const [hex, b58] of base58Tests) {
-      const data = Buffer.from(hex, 'hex');
-      assert.strictEqual(base58.encode(data), b58);
-      assert.bufferEqual(base58.decode(b58), data);
-    }
-  });
-
   it('should convert satoshi to btc', () => {
     assert.strictEqual(Amount.btc(5460), '0.0000546');
     assert.strictEqual(Amount.btc(54678 * 1000000), '546.78');

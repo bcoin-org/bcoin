@@ -25,7 +25,7 @@
   "dependencies": {
     "bcfg": "~0.1.6",
     "bclient": "~0.1.7",
-    "bcrypto": "~3.1.11",
+    "bcrypto": "~4.1.0",
     "bdb": "~1.1.7",
     "bdns": "~0.1.5",
     "bevent": "~0.1.5",
@@ -38,17 +38,14 @@
     "blst": "~0.1.5",
     "bmutex": "~0.1.6",
     "bsert": "~0.0.10",
-    "bsip": "~0.1.9",
     "bsock": "~0.1.9",
     "bsocks": "~0.2.5",
-    "bstring": "~0.3.9",
     "btcp": "~0.1.5",
     "buffer-map": "~0.0.7",
     "bufio": "~1.0.6",
     "bupnp": "~0.2.6",
     "bval": "~0.1.6",
     "bweb": "~0.1.9",
-    "mrmr": "~0.1.8",
     "n64": "~0.2.10"
   },
   "devDependencies": {
