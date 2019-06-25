@@ -3,7 +3,7 @@
 
 'use strict';
 
-const {base58} = require('bstring');
+const base58 = require('bcrypto/lib/encoding/base58');
 const pbkdf2 = require('bcrypto/lib/pbkdf2');
 const sha512 = require('bcrypto/lib/sha512');
 const assert = require('bsert');
