@@ -13,6 +13,7 @@ const Script = require('../lib/script/script');
 const Address = require('../lib/primitives/address');
 const network = Network.get('regtest');
 const mnemonics = require('./data/mnemonic-english.json');
+const {forValue} = require('./util/common');
 // Commonly used test mnemonic
 const phrase = mnemonics[0][1];
 
@@ -28,6 +29,7 @@ const node = new FullNode({
   walletAuth: true,
   memory: true,
   workers: true,
+  workersSize: 2,
   plugins: [require('../lib/wallet/plugin')],
   port: ports.p2p,
   httpPort: ports.node,
@@ -40,15 +42,14 @@ const {wdb} = node.require('walletdb');
 
 const nclient = new NodeClient({
   port: ports.node,
-  apiKey: 'bar'
+  apiKey: 'bar',
+  timeout: 15000
 });
 
 const wclient = new WalletClient({
   port: ports.wallet,
   apiKey: 'bar'
 });
-
-const defaultCoinbaseMaturity = consensus.COINBASE_MATURITY;
 
 describe('Wallet RPC Methods', function() {
   this.timeout(15000);
@@ -64,7 +65,6 @@ describe('Wallet RPC Methods', function() {
   let utxo = null;
 
   before(async () => {
-    consensus.COINBASE_MATURITY = 0;
     await node.open();
 
     // Derive the xpub using the well known
@@ -100,10 +100,12 @@ describe('Wallet RPC Methods', function() {
       const account = await walletMiner.getAccount('default');
       addressMiner = account.receiveAddress;
     }
+
+    await nclient.execute('generatetoaddress', [102, addressMiner]);
+    await forValue(wdb, 'height', 102);
   });
 
   after(async () => {
-    consensus.COINBASE_MATURITY = defaultCoinbaseMaturity;
     await node.close();
   });
 
@@ -134,7 +136,6 @@ describe('Wallet RPC Methods', function() {
   });
 
   it('should rpc sendtoaddress', async () => {
-    await nclient.execute('generatetoaddress', [2, addressMiner]);
     await wclient.execute('selectwallet', ['miner']);
 
     const txid = await wclient.execute('sendtoaddress', [addressHot, 0.1234]);
