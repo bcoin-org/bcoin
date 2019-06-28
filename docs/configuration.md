@@ -106,7 +106,7 @@ database and must be passed in consistently.
 - `bip37`: Enable serving of bip37 merkleblocks (default: false).
 - `listen`: Accept incoming connections (default: true).
 - `max-outbound`: Max number of outbound connections (default: 8).
-- `max-inbound`: Max number of inbound connections (default: 30).
+- `max-inbound`: Max number of inbound connections (default: 8).
 - `seeds`: Custom list of DNS seeds (comma-separated).
 - `host`: Host to listen on (default: 0.0.0.0).
 - `port`: Port to listen on (default: 8333).
