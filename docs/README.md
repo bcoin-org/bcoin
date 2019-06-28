@@ -7,6 +7,7 @@
 - [Wallet system](wallet-system.md)
 - [Design](design.md)
 - [Node and wallet CLI](cli.md)
+- [RPC Compatibility](rpc-compatibility.md)
 
 ## External links
 
