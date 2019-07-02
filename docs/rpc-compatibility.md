@@ -1,7 +1,11 @@
-# RPC Updates to the bcoin
+# Bcoin RPC and compatibility
+
+For detailed rpc api documentation see [API Docs][bcoin-api-docs].
+
+[bcoin-api-docs]: https://bcoin.io/api-docs/https://bcoin.io/api-docs/
 
 ## Ports
-Bitcoin Core does not separate wallet and node:
+Bcoin separates the wallet and node RPC ports.
 
 | Network | Bcoin Node RPC | Bcoin Wallet RPC | Bitcoin Core (Wallet & Node)|
 | ---     | ---            | ---              | ---         |
@@ -9,13 +13,10 @@ Bitcoin Core does not separate wallet and node:
 | Testnet | 18332          | 18334            | 18332       |
 | Regtest | 48332          | 48334            | 18443       |
 
-# List of RPC Calls in Bitcoin Core vs Bcoin
-This is a list of commands existing in core and bcoin.  
-This list currently does not include compatibility information.
-
-Note: zmq is separate from bcoin, see [bzmq](https://github.com/bcoin-org/bzmq/).
 
 ## Node RPC calls
+
+Note: zmq is separate from bcoin, see [bzmq](https://github.com/bcoin-org/bzmq/).
 
 ### Server - control
 These are same for wallet and the node.
