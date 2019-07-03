@@ -1093,4 +1093,190 @@ describe('Mempool', function() {
         throw err;
     });
   });
+
+  describe('Replace-by-fee', function () {
+    const blocks = new BlockStore({
+      memory: true
+    });
+
+    const chain = new Chain({
+      memory: true,
+      blocks
+    });
+
+    const mempool = new Mempool({
+      chain,
+      memory: true
+    });
+
+    before(async () => {
+      await blocks.open();
+      await mempool.open();
+      await chain.open();
+    });
+
+    after(async () => {
+      await chain.close();
+      await mempool.close();
+      await blocks.close();
+    });
+
+    beforeEach(async () => {
+      await mempool.reset();
+      assert.strictEqual(mempool.map.size, 0);
+    });
+
+    // Number of coins available in
+    // chaincoins (100k satoshi per coin).
+    const N = 100;
+    const chaincoins = new MemWallet();
+    const wallet = new MemWallet();
+
+    it('should create coins in chain', async () => {
+      const mtx = new MTX();
+      mtx.addInput(new Input());
+
+      for (let i = 0; i < N; i++) {
+        const addr = chaincoins.createReceive().getAddress();
+        mtx.addOutput(addr, 100000);
+      }
+
+      const cb = mtx.toTX();
+      const block = await getMockBlock(chain, [cb], false);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // Add 100 blocks so we don't get
+      // premature spend of coinbase.
+      for (let i = 0; i < 100; i++) {
+        const block = await getMockBlock(chain);
+        const entry = await chain.add(block, VERIFY_NONE);
+
+        await mempool._addBlock(entry, block.txs);
+      }
+
+      chaincoins.addTX(cb);
+    });
+
+    it('should not accept RBF tx', async() => {
+      mempool.options.replaceByFee = false;
+
+      const mtx = new MTX();
+      const coin = chaincoins.getCoins()[0];
+      mtx.addCoin(coin);
+      mtx.inputs[0].sequence = 0xfffffffd;
+
+      const addr = wallet.createReceive().getAddress();
+      mtx.addOutput(addr, 90000);
+
+      chaincoins.sign(mtx);
+
+      assert(mtx.verify());
+      const tx = mtx.toTX();
+
+      await assert.rejects(async () => {
+        await mempool.addTX(tx);
+      }, {
+        type: 'VerifyError',
+        reason: 'replace-by-fee'
+      });
+
+      assert(!mempool.hasCoin(tx.hash(), 0));
+      assert.strictEqual(mempool.map.size, 0);
+    });
+
+    it('should accept RBF tx with RBF option enabled', async() => {
+      mempool.options.replaceByFee = true;
+
+      const mtx = new MTX();
+      const coin = chaincoins.getCoins()[0];
+      mtx.addCoin(coin);
+      mtx.inputs[0].sequence = 0xfffffffd;
+
+      const addr = wallet.createReceive().getAddress();
+      mtx.addOutput(addr, coin.value - 1000);
+
+      chaincoins.sign(mtx);
+
+      assert(mtx.verify());
+      const tx = mtx.toTX();
+
+      await mempool.addTX(tx);
+
+      assert(mempool.hasCoin(tx.hash(), 0));
+      assert.strictEqual(mempool.map.size, 1);
+    });
+
+    it('should reject double spend without RBF from mempool', async() => {
+      mempool.options.replaceByFee = true;
+
+      const coin = chaincoins.getCoins()[0];
+
+      const mtx1 = new MTX();
+      const mtx2 = new MTX();
+      mtx1.addCoin(coin);
+      mtx2.addCoin(coin);
+
+      const addr1 = wallet.createReceive().getAddress();
+      mtx1.addOutput(addr1, coin.value - 1000);
+
+      const addr2 = wallet.createReceive().getAddress();
+      mtx2.addOutput(addr2, coin.value - 1000);
+
+      chaincoins.sign(mtx1);
+      chaincoins.sign(mtx2);
+
+      assert(mtx1.verify());
+      assert(mtx2.verify());
+      const tx1 = mtx1.toTX();
+      const tx2 = mtx2.toTX();
+
+      assert(!tx1.isRBF());
+
+      await mempool.addTX(tx1);
+
+      await assert.rejects(async () => {
+        await mempool.addTX(tx2);
+      }, {
+        type: 'VerifyError',
+        reason: 'bad-txns-inputs-spent'
+      });
+
+      assert(mempool.hasCoin(tx1.hash(), 0));
+      assert.strictEqual(mempool.map.size, 1);
+    });
+
+    it('should accept double spend with RBF into mempool', async() => {
+      mempool.options.replaceByFee = true;
+
+      const coin = chaincoins.getCoins()[0];
+
+      const mtx1 = new MTX();
+      const mtx2 = new MTX();
+      mtx1.addCoin(coin);
+      mtx2.addCoin(coin);
+
+      mtx1.inputs[0].sequence = 0xfffffffd;
+
+      const addr1 = wallet.createReceive().getAddress();
+      mtx1.addOutput(addr1, coin.value - 1000);
+
+      const addr2 = wallet.createReceive().getAddress();
+      mtx2.addOutput(addr2, coin.value - 1000);
+
+      chaincoins.sign(mtx1);
+      chaincoins.sign(mtx2);
+
+      assert(mtx1.verify());
+      assert(mtx2.verify());
+      const tx1 = mtx1.toTX();
+      const tx2 = mtx2.toTX();
+
+      assert(tx1.isRBF());
+
+      await mempool.addTX(tx1);
+      await mempool.addTX(tx2);
+    });
+  });
 });
