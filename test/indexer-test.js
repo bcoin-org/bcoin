@@ -4,6 +4,7 @@
 'use strict';
 
 const assert = require('bsert');
+const EventEmitter = require('events');
 const reorg = require('./util/reorg');
 const Script = require('../lib/script/script');
 const Opcode = require('../lib/script/opcode');
@@ -319,6 +320,25 @@ describe('Indexer', function() {
         name: 'Error',
         message: 'Limit above max of 10.'
       });
+    });
+
+    it('should track bound chain events and remove on close', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: new EventEmitter()
+      });
+
+      const events = ['connect', 'disconnect', 'reset'];
+
+      await indexer.open();
+
+      for (const event of events)
+        assert.equal(indexer.chain.listeners(event).length, 1);
+
+      await indexer.close();
+
+      for (const event of events)
+        assert.equal(indexer.chain.listeners(event).length, 0);
     });
   });
 
