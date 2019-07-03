@@ -96,6 +96,9 @@ that have many transactions.
   which coins have been spent and are currently available.
 - `GET /` has new fields `.indexes.{addr,tx}` for the status of indexers.
 
+#### RPC
+- Remove `getinfo`.
+
 ### Network changes
 
 - Regtest params have been updated to correspond with other bitcoin

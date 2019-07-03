@@ -5,7 +5,6 @@
 
 const assert = require('bsert');
 const FullNode = require('../lib/node/fullnode');
-const pkg = require('../lib/pkg');
 const {NodeClient} = require('bclient');
 
 const ports = {
@@ -118,49 +117,6 @@ describe('RPC', function() {
         type: 'RPCError',
         message: 'help ( "command" )'
       });
-    });
-  });
-
-  describe('getinfo', function() {
-    it('should return info', async () => {
-      const chain = node.require('chain');
-      const info = await nclient.execute('getinfo', []);
-
-      assert.strictEqual(info.version, pkg.version);
-      assert.strictEqual(info.blocks, chain.height);
-      assert.strictEqual(info.testnet, true);
-
-      // defaults, wallet is no longer in node.
-      assert.strictEqual(info.walletversion, 0);
-      assert.strictEqual(info.balance, 0);
-      assert.strictEqual(info.keypoololdest, 0);
-      assert.strictEqual(info.keypoolsize, 0);
-      assert.strictEqual(info.unlocked_until, 0);
-    });
-
-    it('should return correct time offset', async () => {
-      {
-        const info = await nclient.execute('getinfo', []);
-
-        assert.strictEqual(info.timeoffset, 0);
-      }
-
-      {
-        const now = node.network.now();
-        await nclient.execute('setmocktime', [now + 1000]);
-
-        const info = await nclient.execute('getinfo', []);
-        assert.strictEqual(info.timeoffset, 1000);
-      }
-
-      {
-        // recover
-        const now = node.network.now();
-        await nclient.execute('setmocktime', [now - 1000]);
-
-        const info = await nclient.execute('getinfo', []);
-        assert.strictEqual(info.timeoffset, 0);
-      }
     });
   });
 });
