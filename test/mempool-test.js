@@ -1247,7 +1247,7 @@ describe('Mempool', function() {
       assert.strictEqual(mempool.map.size, 1);
     });
 
-    it('should accept double spend with RBF into mempool', async() => {
+    it('should reject replacement with lower fee rate', async() => {
       mempool.options.replaceByFee = true;
 
       const coin = chaincoins.getCoins()[0];
@@ -1260,10 +1260,10 @@ describe('Mempool', function() {
       mtx1.inputs[0].sequence = 0xfffffffd;
 
       const addr1 = wallet.createReceive().getAddress();
-      mtx1.addOutput(addr1, coin.value - 1000);
+      mtx1.addOutput(addr1, coin.value - 1000); // 1000 satoshi fee
 
       const addr2 = wallet.createReceive().getAddress();
-      mtx2.addOutput(addr2, coin.value - 1000);
+      mtx2.addOutput(addr2, coin.value - 900); // 900 satoshi fee
 
       chaincoins.sign(mtx1);
       chaincoins.sign(mtx2);
@@ -1276,7 +1276,57 @@ describe('Mempool', function() {
       assert(tx1.isRBF());
 
       await mempool.addTX(tx1);
-      await mempool.addTX(tx2);
+
+      await assert.rejects(async () => {
+        await mempool.addTX(tx2);
+      }, {
+        type: 'VerifyError',
+        reason: 'insufficient fee'
+      });
+    });
+
+    it('should reject replacement that doesnt pay all child fees', async() => {
+      mempool.options.replaceByFee = true;
+
+      const addr1 = chaincoins.createReceive().getAddress();
+      const addr2 = wallet.createReceive().getAddress();
+      const originalCoin = chaincoins.getCoins()[0];
+      let coin = originalCoin;
+
+      // Generate chain of 10 transactions, each paying 1000 sat fee
+      for (let i = 0; i < 10; i++) {
+        const mtx = new MTX();
+        mtx.addCoin(coin);
+        mtx.inputs[0].sequence = 0xfffffffd;
+        mtx.addOutput(addr1, coin.value - 1000);
+        chaincoins.sign(mtx);
+        assert(mtx.verify());
+        const tx = mtx.toTX();
+        await mempool.addTX(tx);
+
+        coin = Coin.fromTX(tx, 0, -1);
+      }
+
+      // Pay for all child fees
+      let fee = 10 * 1000;
+
+      // Pay for its own bandwidth (estimating tx2 size as 200 bytes)
+      fee += mempool.options.minRelay * 0.2;
+
+      // Attempt to submit a replacement for the initial parent TX
+      const mtx2 = new MTX();
+      mtx2.addCoin(originalCoin);
+      mtx2.addOutput(addr2, originalCoin.value - fee + 100);
+      chaincoins.sign(mtx2);
+      assert(mtx2.verify());
+      const tx2 = mtx2.toTX();
+
+      await assert.rejects(async () => {
+        await mempool.addTX(tx2);
+      }, {
+        type: 'VerifyError',
+        reason: 'insufficient fee'
+      });
     });
   });
 });
