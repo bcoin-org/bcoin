@@ -455,10 +455,11 @@ describe('HTTP', function() {
   });
 
   // depends on the previous test to generate blocks
-  it('should fetch block header', async () => {
+  it('should fetch block header by height', async () => {
     // fetch corresponding header and block
-    const header = await nclient.get(`/header/${7}`);
-    assert.equal(header.height, 7);
+    const height = 7;
+    const header = await nclient.get(`/header/${height}`);
+    assert.equal(header.height, height);
 
     const properties = [
       'hash', 'version', 'prevBlock',
@@ -469,7 +470,7 @@ describe('HTTP', function() {
     for (const property of properties)
       assert(property in header);
 
-    const block = await nclient.getBlock(7);
+    const block = await nclient.getBlock(height);
 
     assert.equal(block.hash, header.hash);
     assert.equal(block.height, header.height);
@@ -479,6 +480,15 @@ describe('HTTP', function() {
     assert.equal(block.time, header.time);
     assert.equal(block.bits, header.bits);
     assert.equal(block.nonce, header.nonce);
+  });
+
+  it('should fetch block header by hash', async () => {
+    const info = await nclient.getInfo();
+
+    const headerByHash = await nclient.get(`/header/${info.chain.tip}`);
+    const headerByHeight = await nclient.get(`/header/${info.chain.height}`);
+
+    assert.deepEqual(headerByHash, headerByHeight);
   });
 
   it('should fetch null for block header that does not exist', async () => {
