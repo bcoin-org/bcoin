@@ -9,6 +9,8 @@ const SPVNode = require('../lib/node/spvnode');
 const {NodeClient, WalletClient} = require('bclient');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const {forValue} = require('./util/common');
+const hash256 = require('bcrypto/lib/hash256');
+const {revHex} = require('../lib/utils/util');
 
 // main timeout for the tests.
 const TIMEOUT = 5000;
@@ -539,6 +541,86 @@ describe('RPC', function() {
       assert.strictEqual(verify.length, 2);
       assert.ok(verify.includes(list[0]));
       assert.ok(verify.includes(list[1]));
+    });
+
+    it('should fail with tweaked proof (1 tx)', async () => {
+      const block = await nclient.execute('getblock', [blockhashes[2]]);
+      const txids = block.tx;
+
+      const list = [
+        txids[0]
+      ];
+
+      const proof = await nclient.execute('gettxoutproof', [list]);
+      const verify = await nclient.execute('verifytxoutproof', [proof]);
+
+      assert.deepStrictEqual(verify, list);
+
+      // pretend block only has 1 tx.
+      const mblock = MerkleBlock.fromRaw(proof, 'hex');
+
+      mblock.totalTX = 1;
+      mblock.hashes = [mblock.merkleRoot];
+      mblock.flags = Buffer.from([0x01]);
+
+      const tweaked = mblock.toRaw().toString('hex');
+
+      // should fail in fullnode or in pruned mode (if there's block available).
+      for (const client of [nclient, prunednclient]) {
+        const verify = await client.execute('verifytxoutproof', [tweaked]);
+        assert.deepStrictEqual(verify, []);
+      }
+
+      { // spv node or pruned node (passed pruning height) can't verify tx length.
+        const verify = await spvnclient.execute('verifytxoutproof', [tweaked]);
+
+        assert(verify);
+        assert.strictEqual(verify.length, 1);
+      }
+    });
+
+    it('should fail with tweaked proof (internal nodes)', async () => {
+      const block = await nclient.execute('getblock', [blockhashes[2]]);
+      const txids = block.tx;
+
+      const list = [
+        txids[0]
+      ];
+
+      const proof = await nclient.execute('gettxoutproof', [list]);
+      const verify = await nclient.execute('verifytxoutproof', [proof]);
+
+      assert.deepStrictEqual(verify, list);
+
+      // pretend block only has 1 tx.
+      const mblock = MerkleBlock.fromRaw(proof, 'hex');
+
+      // left internal node.
+      const left = hash256.root(mblock.hashes[0], mblock.hashes[1]);
+      const right = mblock.hashes[2];
+      const root = hash256.root(left, right);
+
+      assert.bufferEqual(root, mblock.merkleRoot);
+
+      mblock.totalTX = 2;
+      mblock.hashes = [left, right];
+      mblock.flags = Buffer.from([0x03]); // we are interested in left/first tx.
+
+      const tweaked = mblock.toRaw().toString('hex');
+
+      // should fail in fullnode or in pruned mode (if there's block available).
+      for (const client of [nclient, prunednclient]) {
+        const verify = await client.execute('verifytxoutproof', [tweaked]);
+        assert.deepStrictEqual(verify, []);
+      }
+
+      // spv node does not have blocks.
+      {
+        const verify = await spvnclient.execute('verifytxoutproof', [tweaked]);
+        const expected = [revHex(left)];
+
+        assert.deepStrictEqual(verify, expected);
+      }
     });
   });
 });
