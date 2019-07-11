@@ -50,6 +50,16 @@ const nodeOptions = {
 describe('RPC', function() {
   this.timeout(TIMEOUT);
 
+  const getNodePorts = (ports) => {
+    return {
+      port: ports.p2p,
+      httpPort: ports.node,
+      env: {
+        'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
+      }
+    };
+  };
+
   const getClientOpts = (port) => {
     return {
       apiKey: nodeOptions.apiKey,
@@ -153,6 +163,8 @@ describe('RPC', function() {
 
       assert(response);
       assert(lines.length);
+      assert.strictEqual(lines.length,
+        Object.keys(fullnode.rpc.calls).length + 1);
 
       assert.strictEqual(lines[0], 'Select a command:');
     });
@@ -293,7 +305,6 @@ describe('RPC', function() {
       { // mempool tx
         mempoolTXID = await wclient.execute('sendtoaddress', [testAddr, 1]);
         await forValue(fullnode.mempool.map, 'size', 1);
-        await forValue(fullnode.mempool.map, 'size', 1);
       }
 
       const bh = blockhashes[blockhashes.length - 1];
@@ -305,7 +316,7 @@ describe('RPC', function() {
       await forValue(spvnode.chain, 'height', height);
     });
 
-    it('should fail in spv mode', async () => {
+    it('should fail in spv mode (gettxoutproof)', async () => {
       await assert.rejects(async () => {
         await spvnclient.execute('gettxoutproof', [[mempoolTXID]]);
       }, {
@@ -316,7 +327,7 @@ describe('RPC', function() {
       });
     });
 
-    it('should fail in pruned mode', async () => {
+    it('should fail in pruned mode (gettxoutproof)', async () => {
       await assert.rejects(async () => {
         await prunednclient.execute('gettxoutproof', [[mempoolTXID]]);
       }, {
@@ -327,7 +338,7 @@ describe('RPC', function() {
       });
     });
 
-    it('should fail with wrong params', async () => {
+    it('should fail with wrong params (gettxoutproof)', async () => {
       const hash = '00'.repeat(32);
 
       const error0array = 'Param #0 must be a array.';
@@ -352,6 +363,33 @@ describe('RPC', function() {
 
         await assert.rejects(async () => {
           await nclient.execute('gettxoutproof', test.args);
+        }, {
+          type: 'RPCError',
+          message: test.message,
+          code: code
+        });
+      }
+    });
+
+    it('should fail with wrong params (verifytxoutproof)', async () => {
+      const txid = txids[2][0];
+      const proof = await nclient.execute('gettxoutproof', [[txid]]);
+
+      const error0hex = 'Param #0 must be a hex string.';
+
+      const tests = [
+        {args: [], message: /^verifytxoutproof/, code: -1},
+        {args: [proof, proof], message: /^verifytxoutproof/, code: -1},
+        {args: ['test'], message: error0hex, code: -3},
+        {args: ['00ff'], message: /Out of bound/, code: -22},
+        {args: ['00000022'], message: /Out of bound/, code: -22}
+      ];
+
+      for (const test of tests) {
+        const code = test.code >>> 0;
+
+        await assert.rejects(async () => {
+          await nclient.execute('verifytxoutproof', test.args);
         }, {
           type: 'RPCError',
           message: test.message,
@@ -504,13 +542,3 @@ describe('RPC', function() {
     });
   });
 });
-
-function getNodePorts(ports) {
-  return {
-    port: ports.p2p,
-    httpPort: ports.node,
-    env: {
-      'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
-    }
-  };
-};
