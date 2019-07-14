@@ -13,7 +13,7 @@ const hash256 = require('bcrypto/lib/hash256');
 const {revHex} = require('../lib/utils/util');
 
 // main timeout for the tests.
-const TIMEOUT = 5000;
+const TIMEOUT = 25000;
 
 const ports = {
   full: {
@@ -232,6 +232,90 @@ describe('RPC', function() {
         name: 'Error',
         type: 'RPCError',
         message: 'help ( "command" )'
+      });
+    });
+  });
+
+  describe('getblockchaininfo', function() {
+    const check = (info, options) => {
+      assert.ok(info);
+      assert.strictEqual(info.chain, nodeOptions.network);
+      assert.strictEqual(info.blocks, options.height);
+      assert.strictEqual(info.headers, options.height);
+
+      assert.strictEqual(info.pruneheight, options.prunedheight);
+      assert.ok(typeof info.difficulty === 'number');
+      assert.ok(info.difficulty > 0);
+      assert.ok(typeof info.mediantime === 'number');
+      assert.ok(info.mediantime > 0);
+      assert.strictEqual(info.verificationprogress, 1);
+      // is hex
+      assert.ok(isHex(info.chainwork));
+      assert.strictEqual(info.pruned, options.pruned);
+
+      // check the format.
+      assert.ok(Array.isArray(info.softforks));
+      for (const fork of info.softforks) {
+        assert.ok(typeof fork.id === 'string');
+        assert.ok(typeof fork.version === 'number');
+        assert.ok(typeof fork.reject === 'object');
+
+        const keys = Object.keys(fork.reject);
+        assert.strictEqual(keys.length, 1);
+        assert.ok(typeof fork.reject.status === 'boolean');
+      }
+
+      assert.ok(typeof info.bip9_softforks === 'object');
+
+      const states = new Set([
+        'defined',
+        'started',
+        'locked_in',
+        'active',
+        'failed'
+      ]);
+
+      for (const [name, fork] of Object.entries(info.bip9_softforks)) {
+        assert.ok(typeof name === 'string');
+        assert.ok(typeof fork === 'object');
+        assert.ok(states.has(fork.status));
+        assert.ok(typeof fork.bit === 'number');
+        assert.ok(fork.bit >= 0 && fork.bit <= 28);
+        assert.ok(typeof fork.startTime === 'number');
+        assert.ok(typeof fork.timeout === 'number');
+      }
+    };
+
+    it('should get blockchaininfo (fullnode)', async () => {
+      const info = await nclient.execute('getblockchaininfo');
+      const height = fullnode.chain.height;
+
+      await check(info, {
+        height: height,
+        prunedheight: null,
+        pruned: false
+      });
+    });
+
+    it('should get blockchaininfo (pruned node)', async () => {
+      const info = await prunednclient.execute('getblockchaininfo');
+      const height = prunednode.chain.height;
+
+      check(info, {
+        prunedheight: 0,
+        height: height,
+        pruned: true
+      });
+    });
+
+    it('should get blockchaininfo (spv node)', async () => {
+      const info = await spvnclient.execute('getblockchaininfo');
+      const height = spvnode.chain.height;
+
+      check(info, {
+        height: height,
+        prunedheight: null,
+        pruned: false
       });
     });
   });
@@ -624,3 +708,9 @@ describe('RPC', function() {
     });
   });
 });
+
+function isHex(string) {
+  const hexCheck = /^([0-9a-f]{2})*$/i;
+
+  return hexCheck.test(string);
+}
