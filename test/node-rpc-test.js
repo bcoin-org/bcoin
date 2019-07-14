@@ -13,7 +13,7 @@ const hash256 = require('bcrypto/lib/hash256');
 const {revHex} = require('../lib/utils/util');
 
 // main timeout for the tests.
-const TIMEOUT = 25000;
+const TIMEOUT = 5000;
 
 const ports = {
   full: {
@@ -237,13 +237,13 @@ describe('RPC', function() {
   });
 
   describe('getblockchaininfo', function() {
-    const check = (info, options) => {
+    const check = (info, expected) => {
       assert.ok(info);
       assert.strictEqual(info.chain, nodeOptions.network);
-      assert.strictEqual(info.blocks, options.height);
-      assert.strictEqual(info.headers, options.height);
+      assert.strictEqual(info.blocks, expected.height);
+      assert.strictEqual(info.headers, expected.height);
 
-      assert.strictEqual(info.pruneheight, options.prunedheight);
+      assert.strictEqual(info.pruneheight, expected.prunedheight);
       assert.ok(typeof info.difficulty === 'number');
       assert.ok(info.difficulty > 0);
       assert.ok(typeof info.mediantime === 'number');
@@ -251,7 +251,7 @@ describe('RPC', function() {
       assert.strictEqual(info.verificationprogress, 1);
       // is hex
       assert.ok(isHex(info.chainwork));
-      assert.strictEqual(info.pruned, options.pruned);
+      assert.strictEqual(info.pruned, expected.pruned);
 
       // check the format.
       assert.ok(Array.isArray(info.softforks));
@@ -276,13 +276,13 @@ describe('RPC', function() {
       ]);
 
       for (const [name, fork] of Object.entries(info.bip9_softforks)) {
-        assert.ok(typeof name === 'string');
-        assert.ok(typeof fork === 'object');
+        assert.strictEqual(typeof name, 'string');
+        assert.strictEqual(typeof fork, 'object');
         assert.ok(states.has(fork.status));
-        assert.ok(typeof fork.bit === 'number');
+        assert.strictEqual(typeof fork.bit, 'number');
         assert.ok(fork.bit >= 0 && fork.bit <= 28);
-        assert.ok(typeof fork.startTime === 'number');
-        assert.ok(typeof fork.timeout === 'number');
+        assert.strictEqual(typeof fork.startTime, 'number');
+        assert.strictEqual(typeof fork.timeout, 'number');
       }
     };
 
@@ -316,6 +316,74 @@ describe('RPC', function() {
         height: height,
         prunedheight: null,
         pruned: false
+      });
+    });
+  });
+
+  describe('getnetworkinfo', function () {
+    const check = (info, expected) => {
+      assert.ok(info);
+      assert.strictEqual(typeof info.version, 'string');
+      assert.strictEqual(typeof info.subversion, 'string');
+      assert.strictEqual(typeof info.protocolversion, 'number');
+      assert.strictEqual(typeof info.version, 'string');
+      assert.ok(isHex(info.localservices));
+      assert.strictEqual(info.localservices, expected.localservices);
+      assert.strictEqual(info.localrelay, expected.localrelay);
+      assert.strictEqual(info.timeoffset, 0);
+      assert.strictEqual(info.networkactive, true);
+      assert.strictEqual(info.connections, expected.connections);
+      assert.ok(Array.isArray(info.networks));
+      assert.strictEqual(info.networks.length, 0);
+      assert.strictEqual(typeof info.relayfee, 'number');
+      assert.strictEqual(info.incrementalfee, 0);
+      assert.ok(Array.isArray(info.localaddresses));
+      assert.strictEqual(info.localaddresses.length, expected.localaddrlen);
+
+      for (const addr of info.localaddresses) {
+        assert.strictEqual(typeof addr.address, 'string');
+        assert.strictEqual(typeof addr.port, 'number');
+        assert.strictEqual(typeof addr.score, 'number');
+      }
+
+      assert.strictEqual(info.warnings, '');
+    };
+
+    it('should get networkinfo (fullnode)', async () => {
+      const netinfo = await nclient.execute('getnetworkinfo');
+
+      check(netinfo, {
+        // NETWORK | WITNESS | BLOOM
+        localservices: '0000000d',
+        localrelay: true,
+        connections: 3,
+
+        // this node is listening.
+        localaddrlen: 1
+      });
+    });
+
+    it('should get networkinfo (pruned node)', async () => {
+      const netinfo = await prunednclient.execute('getnetworkinfo');
+
+      check(netinfo, {
+        // NETWORK | WITNESS
+        localservices: '00000009',
+        localrelay: true,
+        connections: 1,
+        localaddrlen: 0
+      });
+    });
+
+    it('should get networkinfo (spv node)', async () => {
+      const netinfo = await spvnclient.execute('getnetworkinfo');
+
+      check(netinfo, {
+        // WITNESS
+        localservices: '00000008',
+        localrelay: false,
+        connections: 1,
+        localaddrlen: 0
       });
     });
   });
