@@ -1,0 +1,17 @@
+nguage: node_js 
+node_js: v12.6.0
+
+os:
+  - linux
+
+install: 
+  - npm install -d
+
+script:
+  - npm run test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  - slack: merkleblock:ZRA3bl4HQkXwpcZeeRam5RO1
