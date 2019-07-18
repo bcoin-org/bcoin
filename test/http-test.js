@@ -454,7 +454,7 @@ describe('HTTP', function() {
     assert.strictEqual(blocks.length, 10);
   });
 
-  // depends on the previous test to generate blocks
+  // Depends on the previous test to generate blocks.
   it('should fetch block header by height', async () => {
     // fetch corresponding header and block
     const height = 7;
@@ -492,13 +492,13 @@ describe('HTTP', function() {
   });
 
   it('should fetch null for block header that does not exist', async () => {
-    // many blocks in the future
+    // Many blocks in the future.
     const header = await nclient.get(`/header/${40000}`);
     assert.equal(header, null);
   });
 
   it('should have valid header chain', async () => {
-    // starting at the genesis block
+    // Starting at the genesis block.
     let prevBlock = '0000000000000000000000000000000000000000000000000000000000000000';
     for (let i = 0; i < 10; i++) {
       const header = await nclient.get(`/header/${i}`);
