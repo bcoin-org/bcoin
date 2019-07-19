@@ -178,10 +178,10 @@ describe('RPC', function() {
       assert(response);
       assert(lines.length);
 
-      // methods that are less likely to be depracated soon.
+      // Methods that are less likely to be depracated soon.
       assert(lines.includes('getblockchaininfo'));
 
-      // server methods
+      // Server methods
       assert(lines.includes('help'));
       assert(lines.includes('stop'));
     });
@@ -193,7 +193,7 @@ describe('RPC', function() {
       assert(response);
       assert(lines.length);
 
-      // methods that are less likely to be depracated soon.
+      // Methods that are less likely to be depracated soon.
       assert(!lines.includes('getwalletinfo'));
     });
 
@@ -238,34 +238,33 @@ describe('RPC', function() {
 
   describe('getblockchaininfo', function() {
     const check = (info, expected) => {
-      assert.ok(info);
+      assert(info);
       assert.strictEqual(info.chain, nodeOptions.network);
       assert.strictEqual(info.blocks, expected.height);
       assert.strictEqual(info.headers, expected.height);
 
       assert.strictEqual(info.pruneheight, expected.prunedheight);
-      assert.ok(typeof info.difficulty === 'number');
-      assert.ok(info.difficulty > 0);
-      assert.ok(typeof info.mediantime === 'number');
-      assert.ok(info.mediantime > 0);
+      assert(typeof info.difficulty === 'number');
+      assert(info.difficulty > 0);
+      assert(typeof info.mediantime === 'number');
+      assert(info.mediantime > 0);
       assert.strictEqual(info.verificationprogress, 1);
-      // is hex
-      assert.ok(isHex(info.chainwork));
+      assert(isHex(info.chainwork));
       assert.strictEqual(info.pruned, expected.pruned);
 
-      // check the format.
-      assert.ok(Array.isArray(info.softforks));
+      // Check the format.
+      assert(Array.isArray(info.softforks));
       for (const fork of info.softforks) {
-        assert.ok(typeof fork.id === 'string');
-        assert.ok(typeof fork.version === 'number');
-        assert.ok(typeof fork.reject === 'object');
+        assert(typeof fork.id === 'string');
+        assert(typeof fork.version === 'number');
+        assert(typeof fork.reject === 'object');
 
         const keys = Object.keys(fork.reject);
         assert.strictEqual(keys.length, 1);
-        assert.ok(typeof fork.reject.status === 'boolean');
+        assert(typeof fork.reject.status === 'boolean');
       }
 
-      assert.ok(typeof info.bip9_softforks === 'object');
+      assert(typeof info.bip9_softforks === 'object');
 
       const states = new Set([
         'defined',
@@ -278,9 +277,9 @@ describe('RPC', function() {
       for (const [name, fork] of Object.entries(info.bip9_softforks)) {
         assert.strictEqual(typeof name, 'string');
         assert.strictEqual(typeof fork, 'object');
-        assert.ok(states.has(fork.status));
+        assert(states.has(fork.status));
         assert.strictEqual(typeof fork.bit, 'number');
-        assert.ok(fork.bit >= 0 && fork.bit <= 28);
+        assert(fork.bit >= 0 && fork.bit <= 28);
         assert.strictEqual(typeof fork.startTime, 'number');
         assert.strictEqual(typeof fork.timeout, 'number');
       }
@@ -290,7 +289,7 @@ describe('RPC', function() {
       const info = await nclient.execute('getblockchaininfo');
       const height = fullnode.chain.height;
 
-      await check(info, {
+      check(info, {
         height: height,
         prunedheight: null,
         pruned: false
@@ -322,22 +321,22 @@ describe('RPC', function() {
 
   describe('getnetworkinfo', function () {
     const check = (info, expected) => {
-      assert.ok(info);
+      assert(info);
       assert.strictEqual(typeof info.version, 'string');
       assert.strictEqual(typeof info.subversion, 'string');
       assert.strictEqual(typeof info.protocolversion, 'number');
       assert.strictEqual(typeof info.version, 'string');
-      assert.ok(isHex(info.localservices));
+      assert(isHex(info.localservices));
       assert.strictEqual(info.localservices, expected.localservices);
       assert.strictEqual(info.localrelay, expected.localrelay);
       assert.strictEqual(info.timeoffset, 0);
       assert.strictEqual(info.networkactive, true);
       assert.strictEqual(info.connections, expected.connections);
-      assert.ok(Array.isArray(info.networks));
+      assert(Array.isArray(info.networks));
       assert.strictEqual(info.networks.length, 0);
       assert.strictEqual(typeof info.relayfee, 'number');
       assert.strictEqual(info.incrementalfee, 0);
-      assert.ok(Array.isArray(info.localaddresses));
+      assert(Array.isArray(info.localaddresses));
       assert.strictEqual(info.localaddresses.length, expected.localaddrlen);
 
       for (const addr of info.localaddresses) {
@@ -358,7 +357,7 @@ describe('RPC', function() {
         localrelay: true,
         connections: 3,
 
-        // this node is listening.
+        // This node is listening.
         localaddrlen: 1
       });
     });
@@ -397,7 +396,7 @@ describe('RPC', function() {
     let mempoolTXID;
 
     before(async () => {
-      // create wallet for testing.
+      // Create wallet for testing.
       await wclient.createWallet(TEST_WALLET);
       await wclient.execute('selectwallet', [TEST_WALLET]);
       const testAddr = await wclient.execute('getnewaddress');
@@ -410,7 +409,7 @@ describe('RPC', function() {
         const txid = await wclient.execute('sendtoaddress', [testAddr, 1]);
         const [bh] = await nclient.execute('generatetoaddress', [1, minerAddr]);
 
-        // this txid will be spent in block 2.
+        // This txid will be spent in block 2.
         txids.push([txid]);
         blockhashes.push(bh);
       }
@@ -575,7 +574,7 @@ describe('RPC', function() {
     });
 
     it('should fail for spent coin w/o blockhash and txindex', async () => {
-      // block 0 has spent txid
+      // Block 0 has spent txid
       const txid = txids[0][0];
 
       await assert.rejects(async () => {
@@ -588,7 +587,7 @@ describe('RPC', function() {
     });
 
     it('should fail getting proof from two blocks', async () => {
-      // different blocks
+      // Transactions from different blocks
       const list = [
         txids[2][0],
         txids[3][0]
@@ -604,7 +603,7 @@ describe('RPC', function() {
     });
 
     it('should fail getting proof from wrong block', async () => {
-      // txid in one block, blockhash of another.
+      // TXID in one block, blockhash of another.
       const txid = txids[2][0];
       const blockhash = blockhashes[3];
 
@@ -691,8 +690,8 @@ describe('RPC', function() {
 
       assert(verify);
       assert.strictEqual(verify.length, 2);
-      assert.ok(verify.includes(list[0]));
-      assert.ok(verify.includes(list[1]));
+      assert(verify.includes(list[0]));
+      assert(verify.includes(list[1]));
     });
 
     it('should fail with tweaked proof (1 tx)', async () => {
@@ -708,7 +707,7 @@ describe('RPC', function() {
 
       assert.deepStrictEqual(verify, list);
 
-      // pretend block only has 1 tx.
+      // We pretend block only has 1 tx.
       const mblock = MerkleBlock.fromRaw(proof, 'hex');
 
       mblock.totalTX = 1;
@@ -717,13 +716,13 @@ describe('RPC', function() {
 
       const tweaked = mblock.toRaw().toString('hex');
 
-      // should fail in fullnode or in pruned mode (if there's block available).
+      // Should fail in fullnode or in pruned mode (if there's block available).
       for (const client of [nclient, prunednclient]) {
         const verify = await client.execute('verifytxoutproof', [tweaked]);
         assert.deepStrictEqual(verify, []);
       }
 
-      { // spv node or pruned node (passed pruning height) can't verify tx length.
+      { // SPV node or pruned node (passed pruning height) can't verify tx length.
         const verify = await spvnclient.execute('verifytxoutproof', [tweaked]);
 
         assert(verify);
@@ -744,7 +743,7 @@ describe('RPC', function() {
 
       assert.deepStrictEqual(verify, list);
 
-      // pretend block only has 1 tx.
+      // We pretend block only has 1 tx.
       const mblock = MerkleBlock.fromRaw(proof, 'hex');
 
       // left internal node.
@@ -756,17 +755,17 @@ describe('RPC', function() {
 
       mblock.totalTX = 2;
       mblock.hashes = [left, right];
-      mblock.flags = Buffer.from([0x03]); // we are interested in left/first tx.
+      mblock.flags = Buffer.from([0x03]); // We are interested in left/first tx.
 
       const tweaked = mblock.toRaw().toString('hex');
 
-      // should fail in fullnode or in pruned mode (if there's block available).
+      // Should fail in fullnode or in pruned mode (if there's block available).
       for (const client of [nclient, prunednclient]) {
         const verify = await client.execute('verifytxoutproof', [tweaked]);
         assert.deepStrictEqual(verify, []);
       }
 
-      // spv node does not have blocks.
+      // SPV node does not have blocks.
       {
         const verify = await spvnclient.execute('verifytxoutproof', [tweaked]);
         const expected = [revHex(left)];
@@ -778,7 +777,5 @@ describe('RPC', function() {
 });
 
 function isHex(string) {
-  const hexCheck = /^([0-9a-f]{2})*$/i;
-
-  return hexCheck.test(string);
+  return /^([0-9a-f]{2})*$/i.test(string);
 }
