@@ -55,6 +55,13 @@ However `npm` _will not_ make these checks with `npm install -g` and it
 will link your installation globally so that `bcoin` is in your
 path _(e.g. $ bcoin)_.
 
+### Installing on Debian/Ubuntu
+
+Install the necessary dependencies in addition to Node.js:
+```
+apt-get install build-essential python
+```
+
 ### Installing via Docker
 
 Check [bcoin-docker](https://github.com/bcoin-org/bcoin-docker)
