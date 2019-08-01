@@ -454,6 +454,60 @@ describe('HTTP', function() {
     assert.strictEqual(blocks.length, 10);
   });
 
+  // Depends on the previous test to generate blocks.
+  it('should fetch block header by height', async () => {
+    // fetch corresponding header and block
+    const height = 7;
+    const header = await nclient.get(`/header/${height}`);
+    assert.equal(header.height, height);
+
+    const properties = [
+      'hash', 'version', 'prevBlock',
+      'merkleRoot', 'time', 'bits',
+      'nonce', 'height', 'chainwork'
+    ];
+
+    for (const property of properties)
+      assert(property in header);
+
+    const block = await nclient.getBlock(height);
+
+    assert.equal(block.hash, header.hash);
+    assert.equal(block.height, header.height);
+    assert.equal(block.version, header.version);
+    assert.equal(block.prevBlock, header.prevBlock);
+    assert.equal(block.merkleRoot, header.merkleRoot);
+    assert.equal(block.time, header.time);
+    assert.equal(block.bits, header.bits);
+    assert.equal(block.nonce, header.nonce);
+  });
+
+  it('should fetch block header by hash', async () => {
+    const info = await nclient.getInfo();
+
+    const headerByHash = await nclient.get(`/header/${info.chain.tip}`);
+    const headerByHeight = await nclient.get(`/header/${info.chain.height}`);
+
+    assert.deepEqual(headerByHash, headerByHeight);
+  });
+
+  it('should fetch null for block header that does not exist', async () => {
+    // Many blocks in the future.
+    const header = await nclient.get(`/header/${40000}`);
+    assert.equal(header, null);
+  });
+
+  it('should have valid header chain', async () => {
+    // Starting at the genesis block.
+    let prevBlock = '0000000000000000000000000000000000000000000000000000000000000000';
+    for (let i = 0; i < 10; i++) {
+      const header = await nclient.get(`/header/${i}`);
+
+      assert.equal(prevBlock, header.prevBlock);
+      prevBlock = header.hash;
+    }
+  });
+
   it('should initiate rescan from socket without a bloom filter', async () => {
     // Rescan from height 5. Without a filter loaded = no response, but no error
     const response = await nclient.call('rescan', 5);
