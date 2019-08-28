@@ -10,6 +10,7 @@ const consensus = require('../lib/protocol/consensus');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
 const Outpoint = require('../lib/primitives/outpoint');
+const Witness = require('../lib/script/witness');
 const MTX = require('../lib/primitives/mtx');
 const FullNode = require('../lib/node/fullnode');
 const ChainEntry = require('../lib/blockchain/chainentry');
@@ -139,7 +140,7 @@ describe('HTTP', function() {
 
     assert(receive);
     assert.strictEqual(receive.name, 'default');
-    assert.strictEqual(receive.type, 'pubkeyhash');
+    assert.strictEqual(receive.type, 'witness');
     assert.strictEqual(receive.branch, 0);
     assert(balance);
     assert.strictEqual(balance.confirmed, 0);
@@ -173,7 +174,7 @@ describe('HTTP', function() {
     value += tx.outputs[0].value;
     value += tx.outputs[1].value;
 
-    assert.strictEqual(value, 48190);
+    assert.strictEqual(value, 49060);
 
     hash = tx.hash;
   });
@@ -193,7 +194,7 @@ describe('HTTP', function() {
 
   it('should get balance', async () => {
     const balance = await wallet.getBalance();
-    assert.strictEqual(balance.unconfirmed, 199570);
+    assert.strictEqual(balance.unconfirmed, 200440);
   });
 
   it('should execute an rpc call', async () => {
@@ -283,12 +284,15 @@ describe('HTTP', function() {
     const json = await nclient.execute('validateaddress', [
       addr.toString(node.network)
     ]);
+    const script = Script.fromAddress(addr);
     assert.deepStrictEqual(json, {
       isvalid: true,
       address: addr.toString(node.network),
-      scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
-      iswitness: false,
-      isscript: false
+      scriptPubKey: script.toRaw().toString('hex'),
+      iswitness: true,
+      isscript: false,
+      witness_program: script.getProgram().data.toString('hex'),
+      witness_version: script.getProgram().version
     });
   });
 
@@ -395,9 +399,9 @@ describe('HTTP', function() {
       const mtx = MTX.fromJSON(tx);
 
       for (const input of tx.inputs) {
-        const script = input.script;
+        const witness = input.witness;
 
-        assert.notStrictEqual(script, '',
+        assert.notStrictEqual(witness, '',
           'Input must be signed.');
       }
 
@@ -436,13 +440,14 @@ describe('HTTP', function() {
     });
 
     for (const input of tx.inputs) {
-      const script = Buffer.from(input.script, 'hex');
+      const witness = Witness.fromRaw(Buffer.from(input.witness, 'hex'));
 
-      // p2pkh
-      // 1 (OP_0 placeholder) + 1 (length) + 33 (pubkey)
-      assert.strictEqual(script.length, 35);
-      assert.strictEqual(script[0], 0x00,
-        'First item in stack must be a placeholder OP_0');
+      // p2wpkh
+      // [(empty placeholder), (33-byte pubkey)]
+      assert.strictEqual(witness.items.length, 2);
+      assert.strictEqual(witness.items[0].length, 0,
+        'First item in stack must be a placeholder');
+      assert.strictEqual(witness.items[1].length, 33);
     }
   });
 
