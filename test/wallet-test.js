@@ -20,6 +20,7 @@ const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
 const Wallet = require('../lib/wallet/wallet');
 const nodejsUtil = require('util');
+const HDPrivateKey = require('../lib/hd/private');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -1750,6 +1751,72 @@ describe('Wallet', function() {
 
     assert(err);
     assert.equal(err.message, 'At least one output required.');
+  });
+
+  it('should create credit if not found during confirmation', async () => {
+    // Create wallet and get one address
+    const wallet = await wdb.create();
+    const addr1 = await wallet.receiveAddress();
+
+    // Outside the wallet, generate a second private key and address.
+    const key2 = HDPrivateKey.generate();
+    const ring2 = KeyRing.fromPrivate(key2.privateKey);
+    const addr2 = ring2.getAddress();
+
+    // Build TX to both addresses, known and unknown
+    const mtx = new MTX();
+    mtx.addOutpoint(new Outpoint(Buffer.alloc(32), 0));
+    mtx.addOutput(addr1, 1020304);
+    mtx.addOutput(addr2, 4030201);
+    const tx = mtx.toTX();
+    const hash = tx.hash();
+
+    // Add unconfirmed TX to txdb (no block provided)
+    await wallet.txdb.add(tx, null);
+
+    // Check
+    const bal1 = await wallet.getBalance();
+    assert.strictEqual(bal1.tx, 1);
+    assert.strictEqual(bal1.coin, 1);
+    assert.strictEqual(bal1.confirmed, 0);
+    assert.strictEqual(bal1.unconfirmed, 1020304);
+
+    // Import private key into wallet
+    assert(!await wallet.hasAddress(addr2));
+    await wallet.importKey('default', ring2);
+    assert(await wallet.hasAddress(addr2));
+
+    // Confirm TX with newly-added output address
+    // Create dummy block
+    const block = {
+      height: 100,
+      hash: Buffer.alloc(32),
+      time: Date.now()
+    };
+
+    // Get TX from txdb
+    const wtx = await wallet.txdb.getTX(hash);
+
+    // Confirm TX with dummy block in txdb
+    const details = await wallet.txdb.confirm(wtx, block);
+    assert.bufferEqual(details.tx.hash(), hash);
+
+    // Check balance
+    const bal2 = await wallet.getBalance();
+    assert.strictEqual(bal2.confirmed, bal2.unconfirmed);
+    assert.strictEqual(bal2.confirmed, 5050505);
+    assert.strictEqual(bal2.coin, 2);
+    assert.strictEqual(bal2.tx, 1);
+
+    // Check for unconfirmed transactions
+    const pending = await wallet.getPending();
+    assert.strictEqual(pending.length, 0);
+
+    // Check history for TX
+    const history = await wallet.getHistory();
+    const wtxs = await wallet.toDetails(history);
+    assert.strictEqual(wtxs.length, 1);
+    assert.bufferEqual(wtxs[0].hash, hash);
   });
 
   it('should cleanup', async () => {
