@@ -8,7 +8,8 @@ bcoin.set('regtest');
 
 // Start up a blockchain, mempool, and miner using in-memory
 // databases (stored in a red-black tree instead of on-disk).
-const chain = new bcoin.Chain({ network: 'regtest', memory: true });
+const blocks = new bcoin.blockstore.LevelBlockStore({ memory: true });
+const chain = new bcoin.Chain({ blocks });
 const mempool = new bcoin.Mempool({ chain: chain });
 const miner = new bcoin.Miner({
   chain: chain,
@@ -20,6 +21,7 @@ const miner = new bcoin.Miner({
 
 (async () => {
   // Open the chain
+  await blocks.open();
   await chain.open();
 
   // Open the miner (initialize the databases, etc).

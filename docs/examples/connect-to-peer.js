@@ -1,12 +1,15 @@
 'use strict';
 
-/*
- * Usage:
- *  Run another Bitcoin node on local regtest network, for example
- *    $ ../../bin/bcoin --network=regtest
- *  Execute this script with the other node's address and port
- *    $ node connect-to-peer.js 127.0.0.1:48444
- */
+if (process.argv.length !== 3) {
+  console.log(`
+    Usage:
+     Run another Bitcoin node on local regtest network, for example
+       $ ../../bin/bcoin --network=regtest
+     Execute this script with the other node's address and port
+       $ node connect-to-peer.js 127.0.0.1:48444
+  `);
+  process.exit(1);
+}
 
 const bcoin = require('../..');
 const network = bcoin.Network.get('regtest');
