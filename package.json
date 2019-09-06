@@ -64,8 +64,9 @@
     "bwallet-cli": "./bin/bwallet-cli"
   },
   "scripts": {
-    "browserify": "browserify -s bcoin lib/bcoin-browser.js | uglifyjs -c > bcoin.js",
-    "clean": "rm -f {browser/,}{bcoin.js,bcoin-worker.js,app.js,worker.js}",
+    "browserify": "bpkg --umd --name=bcoin -b lib/bcoin-browser.js -o bcoin.js",
+    "build": "export NODE_PATH=$(npm root -g) && ./scripts/build.js",
+    "clean": "rm -f bcoin{,.js,-cli,-node,-spvnode} bwallet{,-cli}",
     "docs": "jsdoc -c jsdoc.json",
     "lint": "eslint $(cat .eslintfiles) || exit 0",
     "lint-ci": "eslint $(cat .eslintfiles)",

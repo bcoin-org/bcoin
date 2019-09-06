@@ -7,3 +7,9 @@ npm-debug.log
 coverage/
 yarn.lock
 webpack.*.js
+bcoin-node
+bcoin-spvnode
+bcoin-cli
+bwallet
+bwallet-cli
+bcoin.js
