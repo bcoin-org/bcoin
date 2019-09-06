@@ -1,7 +1,6 @@
 'use strict';
 
 const bcoin = require('../..');
-const client = require('bclient');
 const plugin = bcoin.wallet.plugin;
 const network = bcoin.Network.get('regtest');
 
@@ -12,11 +11,11 @@ const node = new bcoin.FullNode({
 
 node.use(plugin);
 
-const walletClient = new client.WalletClient({
+const walletClient = new bcoin.WalletClient({
   port: network.walletPort
 });
 
-const nodeClient = new client.NodeClient({
+const nodeClient = new bcoin.NodeClient({
   port: network.rpcPort
 });
 

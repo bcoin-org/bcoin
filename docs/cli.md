@@ -1,9 +1,5 @@
 # Node and wallet CLI
 
-Bcoin ships with [bclient](https://github.com/bcoin-org/bclient) as its
-default client to the [API](https://bcoin.io/api-docs) for command
-line access.
-
 ## Configuration
 
 Using environment variables:

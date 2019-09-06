@@ -2,7 +2,7 @@
 
 'use strict';
 
-const {NodeClient, WalletClient} = require('bclient');
+const {NodeClient, WalletClient} = require('../lib/client');
 const assert = require('bsert');
 const consensus = require('../lib/protocol/consensus');
 const FullNode = require('../lib/node/fullnode');
