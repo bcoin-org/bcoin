@@ -35,7 +35,8 @@ const node = new FullNode({
   httpPort: ports.node,
   env: {
     'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
-  }});
+  }
+});
 
 const {NodeClient, WalletClient} = require('bclient');
 
