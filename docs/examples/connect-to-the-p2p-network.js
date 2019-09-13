@@ -10,8 +10,13 @@ const logger = new Logger({
 });
 
 // Create a blockchain and store it in memory.
+const blocks = bcoin.blockstore.create({
+  memory: true
+});
+
 const chain = new bcoin.Chain({
   memory: true,
+  blocks: blocks,
   network: 'main',
   logger: logger
 });
@@ -31,6 +36,7 @@ const pool = new bcoin.Pool({
 
 (async function() {
   await logger.open();
+  await blocks.open();
   await chain.open();
 
   await pool.open();
@@ -65,8 +71,13 @@ const pool = new bcoin.Pool({
 // Start up a testnet sync in-memory
 // while we're at it (because we can).
 
+const tblocks = bcoin.blockstore.create({
+  memory: true
+});
+
 const tchain = new bcoin.Chain({
   memory: true,
+  blocks: tblocks,
   network: 'testnet',
   logger: logger
 });
@@ -86,6 +97,7 @@ const tpool = new bcoin.Pool({
 });
 
 (async function() {
+  await tblocks.open();
   await tchain.open();
 
   await tpool.open();

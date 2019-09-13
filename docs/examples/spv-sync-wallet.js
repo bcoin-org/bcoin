@@ -18,7 +18,8 @@ const walletdb = new bcoin.wallet.WalletDB({ memory: true });
 
 // Full node will provide tx data to SPV node
 const full = {};
-full.chain = new bcoin.Chain();
+full.blocks = bcoin.blockstore.create({ memory: true });
+full.chain = new bcoin.Chain({ blocks: full.blocks });
 full.pool = new bcoin.Pool({
   chain: full.chain,
   port: 44444,
@@ -32,6 +33,7 @@ full.pool = new bcoin.Pool({
   await chain.open();
   await pool.connect();
 
+  await full.blocks.open();
   await full.pool.open();
   await full.chain.open();
   await full.pool.connect();
