@@ -2,8 +2,8 @@
 
 By default, the mainnet bcoin config files will reside in `~/.bcoin/bcoin.conf`
 and `~/.bcoin/wallet.conf`. Any parameter passed to bcoin at startup will have
-precedence over the config file. Even if you are just running `bclient` without
-bcoin installed (to access a remote server, for example) the configuration
+precedence over the config file. Even if you are just running `bcoin-cli` or
+`bwallet-cli` (to access a remote server, for example) the configuration
 files would still reside in `~/.bcoin/`
 
 For example:

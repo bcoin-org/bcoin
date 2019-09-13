@@ -148,9 +148,8 @@ API keys are used with HTTP Basic Auth:
 $ curl http://x:hunter2@localhost:8332/
 ```
 
-[bclient](https://github.com/bcoin-org/bclient) is the prepackaged tool for
-querying both the REST and RPC APIs. If bcoin is installed globally, both
-`bcoin-cli` and `bwallet-cli` should be on your path.
+If bcoin is installed globally, both `bcoin-cli` and `bwallet-cli` should be
+on your path.
 
 ``` bash
 $ bcoin-cli info --api-key hunter2

@@ -21,7 +21,7 @@ const FullNode = require('../lib/node/fullnode');
 const SPVNode = require('../lib/node/spvnode');
 const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
-const {NodeClient, WalletClient} = require('bclient');
+const {NodeClient, WalletClient} = require('../lib/client');
 const {forValue, testdir, rimraf} = require('./util/common');
 
 const ports = {
