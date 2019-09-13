@@ -6,13 +6,17 @@ const fs = require('bfile');
 // Create chain for testnet, stored in memory by default.
 // To store the chain on disk at the `prefix` location,
 // set `memory: false`.
+const blocks = bcoin.blockstore.create({
+  memory: true,
+  prefix: '/tmp/bcoin-testnet-example'
+});
+
 const chain = new bcoin.Chain({
   network: 'testnet',
   indexTX: true,
   indexAddress: true,
-  db: 'leveldb',
-  prefix: '/tmp/bcoin-testnet-example',
-  memory: true
+  memory: true,
+  blocks: blocks
 });
 
 // Create a network pool of peers with a limit of 8 peers.
@@ -26,6 +30,7 @@ const pool = new bcoin.Pool({
   if (!chain.options.memory)
     await fs.mkdirp(chain.options.prefix);
 
+  await blocks.open();
   await chain.open();
 
   // Connect the blockchain to the network
