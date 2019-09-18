@@ -95,6 +95,22 @@ class CLI {
     this.log(block);
   }
 
+  async getFilter() {
+    let hash = this.config.str(0, '');
+
+    if (hash.length !== 64)
+      hash = parseInt(hash, 10);
+
+    const filter = await this.client.getFilter(hash);
+
+    if (!filter) {
+      this.log('Filter not found.');
+      return;
+    }
+
+    this.log(filter);
+  }
+
   async getCoin() {
     const hash = this.config.str(0, '');
     const index = this.config.uint(1);
@@ -188,6 +204,9 @@ class CLI {
       case 'block':
         await this.getBlock();
         break;
+      case 'filter':
+        await this.getFilter();
+        break;
       case 'reset':
         await this.reset();
         break;
@@ -203,6 +222,7 @@ class CLI {
         this.log('  $ tx [hash/address]: View transactions.');
         this.log('  $ coin [hash+index/address]: View coins.');
         this.log('  $ block [hash/height]: View block.');
+        this.log('  $ filter [hash/height]: View filter');
         this.log('  $ reset [height/hash]: Reset chain to desired block.');
         this.log('  $ rpc [command] [args]: Execute RPC command.' +
           ' (`bcoin-cli rpc help` for more)');
