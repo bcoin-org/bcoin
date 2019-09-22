@@ -235,7 +235,7 @@ async function formatWallet(wallet) {
 }
 
 async function _formatWallet(wallet) {
-  const {key, mnemonic} = wallet.master.toJSON(node.network, true);
+  const {key, mnemonic} = wallet.master.getJSON(node.network, true);
   const account = await wallet.getAccount('default');
   const receive = account.receiveAddress();
   const nested = account.nestedAddress();

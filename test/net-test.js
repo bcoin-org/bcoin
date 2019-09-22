@@ -72,7 +72,7 @@ describe('Net', function() {
 
       check(pkt);
 
-      pkt = packets.VersionPacket.fromRaw(pkt.toRaw());
+      pkt = packets.VersionPacket.decode(pkt.encode());
 
       check(pkt);
     });
@@ -86,7 +86,7 @@ describe('Net', function() {
       let pkt = new packets.VerackPacket();
       check(pkt);
 
-      pkt = packets.VerackPacket.fromRaw(pkt.toRaw());
+      pkt = packets.VerackPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -101,13 +101,13 @@ describe('Net', function() {
       let pkt = new packets.PingPacket(Buffer.alloc(8, 0x01));
       check(pkt, true);
 
-      pkt = packets.PingPacket.fromRaw(pkt.toRaw());
+      pkt = packets.PingPacket.decode(pkt.encode());
       check(pkt, true);
 
       pkt = new packets.PingPacket();
       check(pkt, false);
 
-      pkt = packets.PingPacket.fromRaw(pkt.toRaw());
+      pkt = packets.PingPacket.decode(pkt.encode());
       check(pkt, false);
     });
 
@@ -125,13 +125,13 @@ describe('Net', function() {
       let pkt = new packets.PongPacket(Buffer.alloc(8, 0x01));
       check(pkt, true);
 
-      pkt = packets.PongPacket.fromRaw(pkt.toRaw());
+      pkt = packets.PongPacket.decode(pkt.encode());
       check(pkt, true);
 
       pkt = new packets.PongPacket();
       check(pkt, false);
 
-      pkt = packets.PongPacket.fromRaw(pkt.toRaw());
+      pkt = packets.PongPacket.decode(pkt.encode());
       check(pkt, false);
     });
 
@@ -144,7 +144,7 @@ describe('Net', function() {
       let pkt = new packets.GetAddrPacket();
       check(pkt);
 
-      pkt = packets.GetAddrPacket.fromRaw(pkt.toRaw());
+      pkt = packets.GetAddrPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -184,7 +184,7 @@ describe('Net', function() {
       let pkt = new packets.AddrPacket(items);
       check(pkt);
 
-      pkt = packets.AddrPacket.fromRaw(pkt.toRaw());
+      pkt = packets.AddrPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -218,7 +218,7 @@ describe('Net', function() {
       let pkt = new packets.InvPacket(items);
       check(pkt, false);
 
-      pkt = packets.InvPacket.fromRaw(pkt.toRaw());
+      pkt = packets.InvPacket.decode(pkt.encode());
       check(pkt, false);
 
       while (items.length < 254)
@@ -227,7 +227,7 @@ describe('Net', function() {
       pkt = new packets.InvPacket(items);
       check(pkt, true);
 
-      pkt = packets.InvPacket.fromRaw(pkt.toRaw());
+      pkt = packets.InvPacket.decode(pkt.encode());
       check(pkt, true);
     });
 
@@ -253,7 +253,7 @@ describe('Net', function() {
       let pkt = new packets.GetDataPacket(items);
       check(pkt);
 
-      pkt = packets.GetDataPacket.fromRaw(pkt.toRaw());
+      pkt = packets.GetDataPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -279,7 +279,7 @@ describe('Net', function() {
       let pkt = new packets.NotFoundPacket(items);
       check(pkt);
 
-      pkt = packets.NotFoundPacket.fromRaw(pkt.toRaw());
+      pkt = packets.NotFoundPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -309,13 +309,13 @@ describe('Net', function() {
       let pkt = new packets.GetBlocksPacket(locator, stop);
       check(pkt, true);
 
-      pkt = packets.GetBlocksPacket.fromRaw(pkt.toRaw());
+      pkt = packets.GetBlocksPacket.decode(pkt.encode());
       check(pkt, true);
 
       pkt = new packets.GetBlocksPacket();
       check(pkt, false);
 
-      pkt = packets.GetBlocksPacket.fromRaw(pkt.toRaw());
+      pkt = packets.GetBlocksPacket.decode(pkt.encode());
       check(pkt, false);
     });
 
@@ -345,13 +345,13 @@ describe('Net', function() {
       let pkt = new packets.GetHeadersPacket(locator, stop);
       check(pkt, true);
 
-      pkt = packets.GetHeadersPacket.fromRaw(pkt.toRaw());
+      pkt = packets.GetHeadersPacket.decode(pkt.encode());
       check(pkt, true);
 
       pkt = new packets.GetHeadersPacket();
       check(pkt, false);
 
-      pkt = packets.GetHeadersPacket.fromRaw(pkt.toRaw());
+      pkt = packets.GetHeadersPacket.decode(pkt.encode());
       check(pkt, false);
     });
 
@@ -409,7 +409,7 @@ describe('Net', function() {
       let pkt = new packets.HeadersPacket(items);
       check(pkt, false);
 
-      pkt = packets.HeadersPacket.fromRaw(pkt.toRaw());
+      pkt = packets.HeadersPacket.decode(pkt.encode());
       check(pkt, false);
 
       while (items.length < 254) {
@@ -426,7 +426,7 @@ describe('Net', function() {
       pkt = new packets.HeadersPacket(items);
       check(pkt, true);
 
-      pkt = packets.HeadersPacket.fromRaw(pkt.toRaw());
+      pkt = packets.HeadersPacket.decode(pkt.encode());
       check(pkt, true);
     });
 
@@ -439,7 +439,7 @@ describe('Net', function() {
       let pkt = new packets.SendHeadersPacket();
       check(pkt);
 
-      pkt = packets.SendHeadersPacket.fromRaw(pkt.toRaw());
+      pkt = packets.SendHeadersPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -464,13 +464,13 @@ describe('Net', function() {
       let pkt = new packets.BlockPacket(block, false);
       check(pkt, false);
 
-      pkt = packets.BlockPacket.fromRaw(pkt.toRaw());
+      pkt = packets.BlockPacket.decode(pkt.encode());
       check(pkt, false);
 
       pkt = new packets.BlockPacket(witnessBlock, true);
       check(pkt, true);
 
-      pkt = packets.BlockPacket.fromRaw(pkt.toRaw());
+      pkt = packets.BlockPacket.decode(pkt.encode());
       check(pkt, true, true);
     });
 
@@ -497,13 +497,13 @@ describe('Net', function() {
       let pkt = new packets.TXPacket(tx, false);
       check(pkt, false);
 
-      pkt = packets.TXPacket.fromRaw(pkt.toRaw());
+      pkt = packets.TXPacket.decode(pkt.encode());
       check(pkt, false);
 
       pkt = new packets.TXPacket(witnessTx, true);
       check(pkt, true);
 
-      pkt = packets.TXPacket.fromRaw(pkt.toRaw());
+      pkt = packets.TXPacket.decode(pkt.encode());
       check(pkt, true, true);
     });
 
@@ -530,7 +530,7 @@ describe('Net', function() {
 
       check(pkt);
 
-      pkt = packets.RejectPacket.fromRaw(pkt.toRaw());
+      pkt = packets.RejectPacket.decode(pkt.encode());
       check(pkt);
 
       pkt = packets.RejectPacket.fromReason(
@@ -542,7 +542,7 @@ describe('Net', function() {
 
       check(pkt);
 
-      pkt = packets.RejectPacket.fromRaw(pkt.toRaw());
+      pkt = packets.RejectPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -555,7 +555,7 @@ describe('Net', function() {
       let pkt = new packets.MempoolPacket();
       check(pkt);
 
-      pkt = packets.MempoolPacket.fromRaw(pkt.toRaw());
+      pkt = packets.MempoolPacket.decode(pkt.encode());
     });
 
     it('filterload (BIP37)', () => {
@@ -573,7 +573,7 @@ describe('Net', function() {
       let pkt = new packets.FilterLoadPacket(filter);
       check(pkt);
 
-      pkt = packets.FilterLoadPacket.fromRaw(pkt.toRaw());
+      pkt = packets.FilterLoadPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -587,7 +587,7 @@ describe('Net', function() {
       let pkt = new packets.FilterAddPacket(Buffer.alloc(32, 0x02));
       check(pkt);
 
-      pkt = packets.FilterAddPacket.fromRaw(pkt.toRaw());
+      pkt = packets.FilterAddPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -600,7 +600,7 @@ describe('Net', function() {
       let pkt = new packets.FilterClearPacket();
       check(pkt);
 
-      pkt = packets.FilterClearPacket.fromRaw(pkt.toRaw());
+      pkt = packets.FilterClearPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -617,7 +617,7 @@ describe('Net', function() {
       let pkt = new packets.MerkleBlockPacket(block);
       check(pkt);
 
-      pkt = packets.MerkleBlockPacket.fromRaw(pkt.toRaw());
+      pkt = packets.MerkleBlockPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -632,7 +632,7 @@ describe('Net', function() {
       let pkt = new packets.FeeFilterPacket(120000);
       check(pkt);
 
-      pkt = packets.FeeFilterPacket.fromRaw(pkt.toRaw());
+      pkt = packets.FeeFilterPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -648,13 +648,13 @@ describe('Net', function() {
       let pkt = new packets.SendCmpctPacket();
       check(pkt, 0, 1);
 
-      pkt = packets.SendCmpctPacket.fromRaw(pkt.toRaw());
+      pkt = packets.SendCmpctPacket.decode(pkt.encode());
       check(pkt, 0, 1);
 
       pkt = new packets.SendCmpctPacket(1, 2);
       check(pkt, 1, 2);
 
-      pkt = packets.SendCmpctPacket.fromRaw(pkt.toRaw());
+      pkt = packets.SendCmpctPacket.decode(pkt.encode());
       check(pkt, 1, 2);
     });
 
@@ -681,7 +681,7 @@ describe('Net', function() {
       let pkt = new packets.CmpctBlockPacket(compact);
       check(pkt, false);
 
-      pkt = packets.CmpctBlockPacket.fromRaw(pkt.toRaw());
+      pkt = packets.CmpctBlockPacket.decode(pkt.encode());
       check(pkt, false);
 
       const witnessCompact = CompactBlock.fromBlock(witnessBlock);
@@ -689,7 +689,7 @@ describe('Net', function() {
       pkt = new packets.CmpctBlockPacket(witnessCompact, true);
       check(pkt, true);
 
-      pkt = packets.CmpctBlockPacket.fromRaw(pkt.toRaw());
+      pkt = packets.CmpctBlockPacket.decode(pkt.encode());
       check(pkt, true, true);
     });
 
@@ -710,7 +710,7 @@ describe('Net', function() {
       let pkt = new packets.GetBlockTxnPacket(request);
       check(pkt);
 
-      pkt = packets.GetBlockTxnPacket.fromRaw(pkt.toRaw());
+      pkt = packets.GetBlockTxnPacket.decode(pkt.encode());
       check(pkt);
     });
 
@@ -743,7 +743,7 @@ describe('Net', function() {
       let pkt = new packets.BlockTxnPacket(response);
       check(pkt, false);
 
-      pkt = packets.BlockTxnPacket.fromRaw(pkt.toRaw());
+      pkt = packets.BlockTxnPacket.decode(pkt.encode());
       check(pkt, false);
 
       const witnessResponse = new TXResponse({
@@ -754,7 +754,7 @@ describe('Net', function() {
       pkt = new packets.BlockTxnPacket(witnessResponse, true);
       check(pkt, true);
 
-      pkt = packets.BlockTxnPacket.fromRaw(pkt.toRaw());
+      pkt = packets.BlockTxnPacket.decode(pkt.encode());
       check(pkt, true, true);
     });
 
@@ -767,7 +767,7 @@ describe('Net', function() {
       let pkt = new packets.UnknownPacket('cmd', Buffer.alloc(12, 0x01));
       check(pkt);
 
-      pkt = packets.UnknownPacket.fromRaw('cmd', pkt.toRaw());
+      pkt = packets.UnknownPacket.decode(pkt.encode(), 'cmd');
       check(pkt);
     });
   });
@@ -1611,7 +1611,7 @@ describe('Net', function() {
             },
             getRawBlock: (hash) => {
               assert.bufferEqual(hash, block.hash());
-              return block.toRaw();
+              return block.encode();
             }
           }
         });
@@ -1625,7 +1625,7 @@ describe('Net', function() {
         let called = false;
         peer.sendRaw = (cmd, body) => {
           assert.equal(cmd, 'block');
-          assert.bufferEqual(body, block.toRaw());
+          assert.bufferEqual(body, block.encode());
           called = true;
         };
 
@@ -2129,7 +2129,7 @@ describe('Net', function() {
         // Serialize the block as the txs are not included
         // over the network, however the txs are included in
         // the data structure.
-        const merkle = MerkleBlock.fromRaw(block.toMerkle(filter).toRaw());
+        const merkle = MerkleBlock.decode(block.toMerkle(filter).encode());
 
         const blkpkt = new packets.MerkleBlockPacket(merkle);
         const tx1pkt = new packets.TXPacket(block.txs[10]);

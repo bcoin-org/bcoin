@@ -175,7 +175,7 @@ class MemWallet {
     const op = new Outpoint(coin.hash, coin.index);
     const key = op.toKey();
 
-    this.filter.add(op.toRaw());
+    this.filter.add(op.encode());
 
     this.spent.delete(key);
 

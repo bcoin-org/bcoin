@@ -322,7 +322,7 @@ describe('Wallet', function() {
 
     await wallet.sign(tx);
 
-    assert(tx.toRaw().length <= maxSize);
+    assert(tx.encode().length <= maxSize);
     assert(tx.verify());
   });
 
@@ -1464,7 +1464,7 @@ describe('Wallet', function() {
     const details = await wallet.toDetails(txs);
 
     assert(details.some((tx) => {
-      return tx.toJSON(wdb.network).outputs[0].path.name === 'foo';
+      return tx.getJSON(wdb.network).outputs[0].path.name === 'foo';
     }));
   });
 
@@ -1692,7 +1692,7 @@ describe('Wallet', function() {
 
       for (let i = 0; i < 100; i++) {
         const key = await wallet[type.method](account);
-        addresses.add(key.getAddress('string'));
+        addresses.add(key.getAddress().toString(wdb.network));
         assert.strictEqual(key.account, account);
         assert.strictEqual(key.branch, type.branch);
         assert.strictEqual(key.index, i + 1);

@@ -87,7 +87,7 @@ function parseTXTest(data) {
   }
 
   const raw = Buffer.from(hex, 'hex');
-  const tx = TX.fromRaw(raw);
+  const tx = TX.decode(raw);
 
   const coin = view.getOutputFor(tx.inputs[0]);
 
@@ -105,8 +105,8 @@ function parseTXTest(data) {
 function parseSighashTest(data) {
   const [txHex, scriptHex, index, type, hash] = data;
 
-  const tx = TX.fromRaw(txHex, 'hex');
-  const script = Script.fromRaw(scriptHex, 'hex');
+  const tx = TX.decode(Buffer.from(txHex, 'hex'));
+  const script = Script.decode(Buffer.from(scriptHex, 'hex'));
 
   const expected = util.fromRev(hash);
 
@@ -243,13 +243,13 @@ describe('TX', function() {
       assert.strictEqual(tx.getVirtualSize(), 61813);
       assert.strictEqual(tx.getWeight(), 247250);
 
-      const raw1 = tx.toRaw();
+      const raw1 = tx.encode();
       tx.refresh();
 
-      const raw2 = tx.toRaw();
+      const raw2 = tx.encode();
       assert.bufferEqual(raw1, raw2);
 
-      const tx2 = TX.fromRaw(raw2);
+      const tx2 = TX.decode(raw2);
       clearCache(tx2, noCache);
 
       assert.strictEqual(tx.txid(), tx2.txid());
@@ -497,19 +497,19 @@ describe('TX', function() {
       locktime: 0
     });
 
-    let raw = tx.toRaw();
+    let raw = tx.encode();
     assert.strictEqual(encoding.readU64(raw, 47), 0xdeadbeef);
     raw[54] = 0x7f;
 
-    assert.throws(() => TX.fromRaw(raw));
+    assert.throws(() => TX.decode(raw));
 
     tx.outputs[0].value = 0;
     tx.refresh();
 
-    raw = tx.toRaw();
+    raw = tx.encode();
     assert.strictEqual(encoding.readU64(raw, 47), 0x00);
     raw[54] = 0x80;
-    assert.throws(() => TX.fromRaw(raw));
+    assert.throws(() => TX.decode(raw));
   });
 
   it('should fail on 53 bit coin values', () => {
@@ -654,7 +654,7 @@ describe('TX', function() {
     const input = new Script([
       Opcode.fromInt(0),
       Opcode.fromInt(0),
-      Opcode.fromData(redeem.toRaw())
+      Opcode.fromData(redeem.encode())
     ]);
 
     const witness = new Witness();
@@ -713,7 +713,7 @@ describe('TX', function() {
     const output = Script.fromScripthash(redeem.hash160());
 
     const input = new Script([
-      Opcode.fromData(redeem.toRaw())
+      Opcode.fromData(redeem.encode())
     ]);
 
     const witness = new Witness([
@@ -739,7 +739,7 @@ describe('TX', function() {
     const witness = new Witness([
       Buffer.from([0]),
       Buffer.from([0]),
-      redeem.toRaw()
+      redeem.encode()
     ]);
 
     const ctx = sigopContext(input, witness, output);
@@ -760,13 +760,13 @@ describe('TX', function() {
     const output = Script.fromScripthash(redeem.hash160());
 
     const input = new Script([
-      Opcode.fromData(redeem.toRaw())
+      Opcode.fromData(redeem.encode())
     ]);
 
     const witness = new Witness([
       Buffer.from([0]),
       Buffer.from([0]),
-      wscript.toRaw()
+      wscript.encode()
     ]);
 
     const ctx = sigopContext(input, witness, output);
@@ -970,8 +970,8 @@ describe('TX', function() {
     tx.toNormalWriter(bw1);
     txWit.toNormalWriter(bw2);
 
-    const tx1normal = TX.fromRaw(bw1.render());
-    const tx2normal = TX.fromRaw(bw2.render());
+    const tx1normal = TX.decode(bw1.render());
+    const tx2normal = TX.decode(bw2.render());
 
     assert.strictEqual(tx1normal.hasWitness(), false);
     assert.strictEqual(tx2normal.hasWitness(), false);

@@ -268,7 +268,7 @@ describe('Node', function() {
 
     const coin = await chain.getCoin(tx.hash(), 1);
 
-    assert.bufferEqual(coin.toRaw(), output.toRaw());
+    assert.bufferEqual(coin.encode(), output.encode());
   });
 
   it('should get balance', async () => {
@@ -554,7 +554,7 @@ describe('Node', function() {
 
     const block = attempt.toBlock();
 
-    const hex = block.toRaw().toString('hex');
+    const hex = block.toHex();
 
     const json = await node.rpc.call({
       method: 'getblocktemplate',
@@ -570,7 +570,7 @@ describe('Node', function() {
 
   it('should submit a block', async () => {
     const block = await node.miner.mineBlock();
-    const hex = block.toRaw().toString('hex');
+    const hex = block.toHex();
 
     const json = await node.rpc.call({
       method: 'submitblock',
@@ -689,7 +689,7 @@ describe('Node', function() {
     }, {});
 
     assert(!json.error);
-    const tx = TX.fromRaw(json.result, 'hex');
+    const tx = TX.decode(Buffer.from(json.result, 'hex'));
     assert.strictEqual(tx.txid(), tx2.txid());
   });
 
@@ -745,7 +745,7 @@ describe('Node', function() {
       '4d84dd26685fbc609ec3ffffffff0280969800000000001976a914a4ecde9642f8070' +
       '241451c5851431be9b658a7fe88acc4506a94000000001976a914b9825cafc838c5b5' +
       'befb70ecded7871d011af89d88ac00000000';
-    const tx1 = TX.fromRaw(rawTX1, 'hex');
+    const tx1 = TX.decode(Buffer.from(rawTX1, 'hex'));
     const dummyPeer = Peer.fromOptions({
       network: 'regtest',
       agent: 'my-subversion',

@@ -452,7 +452,7 @@ describe('Indexer', function() {
     });
 
     it('should get unspendable genesis tx', async () => {
-      const block = Block.fromRaw(Buffer.from(network.genesisBlock, 'hex'));
+      const block = Block.decode(network.genesisBlock);
       const hash = block.txs[0].hash();
 
       const tx = await txindexer.getTX(hash);

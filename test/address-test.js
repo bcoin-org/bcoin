@@ -57,7 +57,7 @@ describe('Address', function() {
                           + '3e08708fc1f556002f1b6cd83f992d085097f997'
                           + '4ab08a28838f07896fbab08f39495e15fa6fad6e'
                           + 'dbfb1e754e35fa1c7844c41f322a1863d4621353ae','hex');
-    const script = Script.fromRaw(p2sh);
+    const script = Script.decode(p2sh);
     const addr = Address.fromScript(script);
     const expectedAddr = '3QJmV3qfvL9SuYo34YihAf3sRCW3qSinyC';
     assert.strictEqual(addr.toString('main'), expectedAddr);

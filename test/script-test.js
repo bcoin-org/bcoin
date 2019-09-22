@@ -70,14 +70,14 @@ function parseScriptTest(data) {
 describe('Script', function() {
   it('should recognize a P2SH output', () => {
     const hex = 'a91419a7d869032368fd1f1e26e5e73a4ad0e474960e87';
-    const decoded = Script.fromRaw(hex, 'hex');
+    const decoded = Script.decode(Buffer.from(hex, 'hex'));
     assert(decoded.isScripthash());
   });
 
   it('should recognize a Null Data output', () => {
     const hex = '6a28590c080112220a1b353930632e6f7267282a5f'
       + '5e294f7665726c6179404f7261636c65103b1a010c';
-    const decoded = Script.fromRaw(hex, 'hex');
+    const decoded = Script.decode(Buffer.from(hex, 'hex'));
     assert(decoded.isNulldata());
   });
 

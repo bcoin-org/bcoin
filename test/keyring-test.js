@@ -18,31 +18,31 @@ describe('KeyRing', function() {
     assert.strictEqual(
       '04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b'
       + '8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235',
-      uncompressed.getPublicKey('hex'));
+      uncompressed.getPublicKey().toString('hex'));
   });
 
   it('should get uncompressed public key address', () => {
     assert.strictEqual(
       '1HZwkjkeaoZfTSaJxDw6aKkxp45agDiEzN',
-      uncompressed.getKeyAddress('base58', 'main'));
+      uncompressed.getKeyAddress().toBase58('main'));
   });
 
   it('should get uncompressed WIF', () => {
     assert.strictEqual(
       '5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss',
-      uncompressed.toSecret('main'));
+      uncompressed.toSecret('main').toString('hex'));
   });
 
   it('should get compressed public key', () => {
     assert.strictEqual(
       '03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd',
-      compressed.getPublicKey('hex'));
+      compressed.getPublicKey().toString('hex'));
   });
 
   it('should get compressed public key address', () => {
     assert.strictEqual(
       '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV',
-      compressed.getKeyAddress('base58', 'main'));
+      compressed.getKeyAddress().toBase58('main'));
   });
 
   it('should get compressed WIF', () => {

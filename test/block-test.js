@@ -77,7 +77,7 @@ describe('Block', function() {
   it('should decode/encode merkle block', () => {
     const [block] = merkle300025.getBlock();
     block.refresh();
-    assert.bufferEqual(block.toRaw(), merkle300025.getRaw());
+    assert.bufferEqual(block.encode(), merkle300025.getRaw());
   });
 
   it('should verify merkle block', () => {
@@ -87,9 +87,9 @@ describe('Block', function() {
 
   it('should be encoded/decoded and still verify', () => {
     const [block1] = merkle300025.getBlock();
-    const raw = block1.toRaw();
-    const block2 = MerkleBlock.fromRaw(raw);
-    assert.bufferEqual(block2.toRaw(), raw);
+    const raw = block1.encode();
+    const block2 = MerkleBlock.decode(raw);
+    assert.bufferEqual(block2.encode(), raw);
     assert(block2.verify());
   });
 
@@ -137,7 +137,7 @@ describe('Block', function() {
     const block2 = MerkleBlock.fromBlock(block1, filter);
 
     assert(block2.verifyBody());
-    assert.bufferEqual(block2.toRaw(), merkle300025.getRaw());
+    assert.bufferEqual(block2.encode(), merkle300025.getRaw());
   });
 
   it('should verify a historical block', () => {
@@ -238,8 +238,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.bufferEqual(cblock1.toRaw(), compact426884.getRaw());
-    assert.bufferEqual(cblock2.toRaw(), compact426884.getRaw());
+    assert.bufferEqual(cblock1.encode(), compact426884.getRaw());
+    assert.bufferEqual(cblock2.encode(), compact426884.getRaw());
 
     const map = new BufferMap();
 
@@ -254,7 +254,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().encode(), block.encode());
   });
 
   it('should handle half-full compact block', () => {
@@ -264,8 +264,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.bufferEqual(cblock1.toRaw(), compact426884.getRaw());
-    assert.bufferEqual(cblock2.toRaw(), compact426884.getRaw());
+    assert.bufferEqual(cblock1.encode(), compact426884.getRaw());
+    assert.bufferEqual(cblock2.encode(), compact426884.getRaw());
 
     const map = new BufferMap();
 
@@ -277,12 +277,12 @@ describe('Block', function() {
     const full = cblock1.fillMempool(false, { map });
     assert(!full);
 
-    const rawReq = cblock1.toRequest().toRaw();
-    const req = TXRequest.fromRaw(rawReq);
+    const rawReq = cblock1.toRequest().encode();
+    const req = TXRequest.decode(rawReq);
     assert.bufferEqual(req.hash, cblock1.hash());
 
-    const rawRes = TXResponse.fromBlock(block, req).toRaw();
-    const res = TXResponse.fromRaw(rawRes);
+    const rawRes = TXResponse.fromBlock(block, req).encode();
+    const res = TXResponse.decode(rawRes);
 
     const filled = cblock1.fillMissing(res);
     assert(filled);
@@ -290,7 +290,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().encode(), block.encode());
   });
 
   it('should handle compact block', () => {
@@ -300,8 +300,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.bufferEqual(cblock1.toRaw(), compact898352.getRaw());
-    assert.bufferEqual(cblock2.toRaw(), compact898352.getRaw());
+    assert.bufferEqual(cblock1.encode(), compact898352.getRaw());
+    assert.bufferEqual(cblock2.encode(), compact898352.getRaw());
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
@@ -318,7 +318,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().encode(), block.encode());
   });
 
   it('should handle half-full compact block', () => {
@@ -328,8 +328,8 @@ describe('Block', function() {
 
     assert(cblock1.init());
 
-    assert.bufferEqual(cblock1.toRaw(), compact898352.getRaw());
-    assert.bufferEqual(cblock2.toRaw(), compact898352.getRaw());
+    assert.bufferEqual(cblock1.encode(), compact898352.getRaw());
+    assert.bufferEqual(cblock2.encode(), compact898352.getRaw());
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
@@ -343,13 +343,13 @@ describe('Block', function() {
     const full = cblock1.fillMempool(false, { map });
     assert(!full);
 
-    const rawReq = cblock1.toRequest().toRaw();
-    const req = TXRequest.fromRaw(rawReq);
+    const rawReq = cblock1.toRequest().encode();
+    const req = TXRequest.decode(rawReq);
     assert.bufferEqual(req.hash, cblock1.hash());
     assert.deepStrictEqual(req.indexes, [5, 6, 7, 8, 9]);
 
-    const rawRes = TXResponse.fromBlock(block, req).toRaw();
-    const res = TXResponse.fromRaw(rawRes);
+    const rawRes = TXResponse.fromBlock(block, req).encode();
+    const res = TXResponse.decode(rawRes);
 
     const filled = cblock1.fillMissing(res);
     assert(filled);
@@ -357,7 +357,7 @@ describe('Block', function() {
     for (const tx of cblock1.available)
       assert(tx);
 
-    assert.bufferEqual(cblock1.toBlock().toRaw(), block.toRaw());
+    assert.bufferEqual(cblock1.toBlock().encode(), block.encode());
   });
 
   for (const cache of [false, true]) {
@@ -438,7 +438,7 @@ describe('Block', function() {
       assert.equal(block.txs[i]._offset, -1);
 
     // Serialize the block, as done before saving to disk.
-    const raw = block.toRaw();
+    const raw = block.encode();
     assert(raw);
 
     for (let i = 0; i < block.txs.length; i++) {
@@ -478,7 +478,7 @@ describe('Block', function() {
       const hash = json[1];
       const raw = json[2];
 
-      const block = Block.fromRaw(raw, 'hex');
+      const block = Block.fromHex(raw);
       assert.strictEqual(hash, block.rhash());
 
       const view = new CoinView();
@@ -486,12 +486,12 @@ describe('Block', function() {
         const hash = random.randomBytes(32);
 
         const output = new Output();
-        output.script = Script.fromRaw(raw, 'hex');
+        output.script = Script.fromHex(raw);
         view.addOutput(new Outpoint(hash, 0), output);
       }
 
       const filter = block.toFilter(view);
-      assert.strictEqual(filter.toRaw().toString('hex'), json[5]);
+      assert.strictEqual(filter.encode().toString('hex'), json[5]);
 
       const header = filter.header(Buffer.from(json[4], 'hex').reverse());
       assert.strictEqual(header.reverse().toString('hex'), json[6]);

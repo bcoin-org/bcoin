@@ -64,7 +64,7 @@ common.readTX = function readTX(name) {
 };
 
 common.writeBlock = function writeBlock(name, block, view) {
-  common.writeFile(`${name}.raw`, block.toRaw());
+  common.writeFile(`${name}.raw`, block.encode());
 
   if (!view)
     return;
@@ -76,7 +76,7 @@ common.writeBlock = function writeBlock(name, block, view) {
 };
 
 common.writeTX = function writeTX(name, tx, view) {
-  common.writeFile(`${name}.raw`, tx.toRaw());
+  common.writeFile(`${name}.raw`, tx.encode());
 
   if (!view)
     return;
@@ -128,7 +128,7 @@ function parseUndo(data) {
   const items = [];
 
   while (br.left()) {
-    const output = Output.fromReader(br);
+    const output = Output.read(br);
     items.push(output);
   }
 
@@ -140,7 +140,7 @@ function serializeUndo(items) {
 
   for (const item of items) {
     bw.writeI64(item.value);
-    bw.writeVarBytes(item.script.toRaw());
+    bw.writeVarBytes(item.script.encode());
   }
 
   return bw.render();
@@ -215,7 +215,7 @@ class BlockContext {
   }
   getBlock() {
     const Block = this.ctor;
-    const block = Block.fromRaw(this.raw);
+    const block = Block.decode(this.raw);
 
     if (!this.undoRaw) {
       const view = new CoinView();
@@ -241,7 +241,7 @@ class TXContext {
     return this.raw;
   }
   getTX() {
-    const tx = TX.fromRaw(this.raw);
+    const tx = TX.decode(this.raw);
 
     if (!this.undoRaw) {
       const view = new CoinView();

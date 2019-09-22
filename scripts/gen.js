@@ -33,7 +33,7 @@ function createGenesisBlock(options) {
         hash: consensus.ZERO_HASH,
         index: 0xffffffff
       },
-      script: Script()
+      script: new Script()
         .pushInt(486604799)
         .pushPush(Buffer.from([4]))
         .pushData(flags)
@@ -116,19 +116,19 @@ console.log(segnet4);
 console.log('');
 console.log('');
 console.log('main hash: %s', main.rhash());
-console.log('main raw: %s', main.toRaw().toString('hex'));
+console.log('main raw: %s', main.toHex());
 console.log('');
 console.log('testnet hash: %s', testnet.rhash());
-console.log('testnet raw: %s', testnet.toRaw().toString('hex'));
+console.log('testnet raw: %s', testnet.toHex());
 console.log('');
 console.log('regtest hash: %s', regtest.rhash());
-console.log('regtest raw: %s', regtest.toRaw().toString('hex'));
+console.log('regtest raw: %s', regtest.toHex());
 console.log('');
 console.log('segnet3 hash: %s', segnet3.rhash());
-console.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
+console.log('segnet3 raw: %s', segnet3.toHex());
 console.log('');
 console.log('segnet4 hash: %s', segnet4.rhash());
-console.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
+console.log('segnet4 raw: %s', segnet4.toHex());
 console.log('');
 console.log('btcd simnet hash: %s', btcd.rhash());
-console.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));
+console.log('btcd simnet raw: %s', btcd.toHex());

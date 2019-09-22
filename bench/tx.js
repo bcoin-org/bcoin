@@ -18,7 +18,7 @@ const tx10 = common.readTX('tx10');
   const end = bench('parse');
 
   for (let i = 0; i < 10000; i++)
-    TX.fromRaw(raw);
+    TX.decode(raw);
 
   end(10000);
 }
@@ -39,7 +39,7 @@ const tx10 = common.readTX('tx10');
 
   for (let i = 0; i < 10000; i++) {
     tx._raw = null;
-    tx.toRaw();
+    tx.encode();
   }
 
   end(10000);

@@ -405,7 +405,7 @@ describe('Mempool', function() {
     {
       const script = new Script();
       script.pushOp(opcodes.OP_1);
-      script.pushData(key.script.toRaw());
+      script.pushData(key.script.encode());
       script.compile();
 
       t2.inputs[0].script = script;
@@ -982,7 +982,7 @@ describe('Mempool', function() {
           assert(mempool.getTX(val));
 
         for (const opkey of mempoolCoins.values()) {
-          const outpoint = Outpoint.fromRaw(opkey);
+          const outpoint = Outpoint.decode(opkey);
           assert(mempool.hasCoin(outpoint.hash, outpoint.index));
         }
 

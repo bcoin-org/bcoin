@@ -15,10 +15,10 @@ const common = require('./util/common');
 const tx1 = common.readTX('tx1');
 
 function reserialize(coin) {
-  const raw = coin.toRaw();
-  const entry = CoinEntry.fromRaw(raw);
+  const raw = coin.encode();
+  const entry = CoinEntry.decode(raw);
   entry.raw = null;
-  return CoinEntry.fromRaw(entry.toRaw());
+  return CoinEntry.decode(entry.encode());
 }
 
 function deepCoinsEqual(a, b) {
@@ -88,9 +88,9 @@ describe('Coins', function() {
 
     const size = view.getSize(tx);
     const bw = bio.write(size);
-    const raw = view.toWriter(bw, tx).render();
+    const raw = view.write(bw, tx).render();
     const br = bio.read(raw);
-    const res = CoinView.fromReader(br, tx);
+    const res = CoinView.read(br, tx);
 
     const prev = tx.inputs[0].prevout;
     const coins = res.get(prev.hash);
