@@ -19,6 +19,7 @@ const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
 const HD = require('../lib/hd');
 const Wallet = require('../lib/wallet/wallet');
+const Account = require('../lib/wallet/account');
 const nodejsUtil = require('util');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
@@ -1750,6 +1751,267 @@ describe('Wallet', function() {
 
     assert(err);
     assert.equal(err.message, 'At least one output required.');
+  });
+
+  describe('Estimate Size', function() {
+    let wallet;
+    before(async () => {
+      wallet = await wdb.create();
+    });
+
+    for (let ins = 1; ins <= 10; ins++) {
+      it(`P2SH 4-of-6 Multisig ${ins}-in 1-out`, async () => {
+        const ring1 = KeyRing.generate();
+        const ring2 = KeyRing.generate();
+        const ring3 = KeyRing.generate();
+        const ring4 = KeyRing.generate();
+        const ring5 = KeyRing.generate();
+        const ring6 = KeyRing.generate();
+        const script = Script.fromMultisig(4, 6,
+          [
+            ring1.publicKey,
+            ring2.publicKey,
+            ring3.publicKey,
+            ring4.publicKey,
+            ring5.publicKey,
+            ring6.publicKey
+          ]);
+
+        const mtx = new MTX();
+
+        for (let i = 1; i <= ins; i++) {
+          const coin = new Coin({
+            version: 1,
+            height: 1,
+            value: 10000,
+            script: Script.fromScripthash(script.hash160()),
+            coinbase: false,
+            hash: Buffer.alloc(32),
+            index: 0
+          });
+
+          mtx.addCoin(coin);
+        }
+
+        mtx.addOutput({
+          address: new Address(),
+          value: 9000
+        });
+
+        // Dummy account details for size estimator
+        wallet.getAccountByAddress = async (addr) => {
+          return {
+            witness: false,
+            type: Account.types.MULTISIG,
+            m: 4,
+            n: 6
+          };
+        };
+        const getAccount = wallet.getAccountByAddress.bind(wallet);
+        const estSize = await mtx.estimateSize(getAccount);
+
+        ring1.script = script;
+        ring2.script = script;
+        ring3.script = script;
+        ring4.script = script;
+        mtx.sign([ring1, ring2, ring3, ring4]);
+        const tx = mtx.toTX();
+        assert(tx.verify(mtx.view));
+        const actualSize = tx.getVirtualSize();
+
+        assert(estSize >= actualSize);
+      });
+
+      it(`P2WSH 4-of-6 Multisig ${ins}-in 1-out`, async () => {
+        const ring1 = KeyRing.generate();
+        const ring2 = KeyRing.generate();
+        const ring3 = KeyRing.generate();
+        const ring4 = KeyRing.generate();
+        const ring5 = KeyRing.generate();
+        const ring6 = KeyRing.generate();
+        ring1.witness = true;
+        ring2.witness = true;
+        ring3.witness = true;
+        ring4.witness = true;
+        ring5.witness = true;
+        ring6.witness = true;
+        const script = Script.fromMultisig(4, 6,
+          [
+            ring1.publicKey,
+            ring2.publicKey,
+            ring3.publicKey,
+            ring4.publicKey,
+            ring5.publicKey,
+            ring6.publicKey
+          ]);
+
+        const mtx = new MTX();
+
+        for (let i = 1; i <= ins; i++) {
+          const coin = new Coin({
+            version: 1,
+            height: 1,
+            value: 10000,
+            script: Script.fromProgram(0, script.sha256()),
+            coinbase: false,
+            hash: Buffer.alloc(32),
+            index: 0
+          });
+
+          mtx.addCoin(coin);
+        }
+
+        mtx.addOutput({
+          address: new Address(),
+          value: 9000
+        });
+
+        // Dummy account details for size estimator
+        wallet.getAccountByAddress = async (addr) => {
+          return {
+            witness: true,
+            type: Account.types.MULTISIG,
+            m: 4,
+            n: 6
+          };
+        };
+        const getAccount = wallet.getAccountByAddress.bind(wallet);
+        const estSize = await mtx.estimateSize(getAccount);
+
+        ring1.script = script;
+        ring2.script = script;
+        ring3.script = script;
+        ring4.script = script;
+        mtx.sign([ring1, ring2, ring3, ring4]);
+        const tx = mtx.toTX();
+        assert(tx.verify(mtx.view));
+        const actualSize = tx.getVirtualSize();
+
+        assert(estSize >= actualSize);
+      });
+
+      it(`P2WPKH-in-P2SH ${ins}-in 1-out`, async () => {
+        const ring = KeyRing.generate();
+        ring.witness = true;
+        ring.nested = true;
+        const script = ring.getNestedHash();
+
+        const mtx = new MTX();
+
+        for (let i = 1; i <= ins; i++) {
+          const coin = new Coin({
+            version: 1,
+            height: 1,
+            value: 10000,
+            script: Script.fromScripthash(script),
+            coinbase: false,
+            hash: Buffer.alloc(32),
+            index: 0
+          });
+
+          mtx.addCoin(coin);
+        }
+
+        mtx.addOutput({
+          address: new Address(),
+          value: 9000
+        });
+
+        // Dummy account details for size estimator
+        wallet.getAccountByAddress = async (addr) => {
+          return {
+            witness: true,
+            type: Account.types.PUBKEYHASH,
+            m: 1,
+            n: 1
+          };
+        };
+        const getAccount = wallet.getAccountByAddress.bind(wallet);
+        const estSize = await mtx.estimateSize(getAccount);
+
+        mtx.sign(ring);
+        const tx = mtx.toTX();
+        assert(tx.verify(mtx.view));
+        const actualSize = tx.getVirtualSize();
+
+        assert(estSize >= actualSize);
+      });
+
+      it(`4-of-6 P2WSH-in-P2SH ${ins}-in 1-out`, async () => {
+        const ring1 = KeyRing.generate();
+        const ring2 = KeyRing.generate();
+        const ring3 = KeyRing.generate();
+        const ring4 = KeyRing.generate();
+        const ring5 = KeyRing.generate();
+        const ring6 = KeyRing.generate();
+        ring1.witness = true;
+        ring1.nested = true;
+        ring2.witness = true;
+        ring2.nested = true;
+        ring3.witness = true;
+        ring3.nested = true;
+        ring4.witness = true;
+        ring4.nested = true;
+        ring5.witness = true;
+        ring5.nested = true;
+        ring6.witness = true;
+        ring6.nested = true;
+
+        const script = Script.fromMultisig(4, 6,
+          [
+            ring1.publicKey,
+            ring2.publicKey,
+            ring3.publicKey,
+            ring4.publicKey,
+            ring5.publicKey,
+            ring6.publicKey
+          ]);
+        ring1.script = script;
+        ring2.script = script;
+        ring3.script = script;
+        ring4.script = script;
+
+        const mtx = new MTX();
+
+        for (let i = 1; i <= ins; i++) {
+          const coin = new Coin({
+            version: 1,
+            height: 1,
+            value: 10000,
+            script: Script.fromScripthash(ring1.getNestedHash()),
+            coinbase: false,
+            hash: Buffer.alloc(32),
+            index: 0
+          });
+
+          mtx.addCoin(coin);
+        }
+
+        mtx.addOutput({
+          address: new Address(),
+          value: 9000
+        });
+
+        // Dummy account details for size estimator
+        wallet.getAccountByAddress = async (addr) => {
+          return {
+            witness: true,
+            type: Account.types.MULTISIG,
+            m: 4,
+            n: 6
+          };
+        };
+        const getAccount = wallet.getAccountByAddress.bind(wallet);
+        const estSize = await mtx.estimateSize(getAccount);
+
+        mtx.sign([ring1, ring2, ring3, ring4]);
+        const tx = mtx.toTX();
+        assert(tx.verify(mtx.view));
+        const actualSize = tx.getVirtualSize();
+
+        assert(estSize >= actualSize);
+      });
+    }
   });
 
   it('should cleanup', async () => {
