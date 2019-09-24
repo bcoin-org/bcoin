@@ -17,6 +17,7 @@ const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const Opcode = require('../lib/script/opcode');
 const Input = require('../lib/primitives/input');
+const Coin = require('../lib/primitives/coin');
 const CoinView = require('../lib/coins/coinview');
 const KeyRing = require('../lib/primitives/keyring');
 const Address = require('../lib/primitives/address');
@@ -1121,5 +1122,65 @@ describe('TX', function() {
     assert(fmt.includes('hash'));
     assert(fmt.includes('version'));
     assert(fmt.includes('locktime'));
+  });
+
+  describe('sign custom input', () => {
+    const value = 10000;
+
+    const ring1 = KeyRing.generate();
+    const ring2 = KeyRing.generate();
+
+    const redeemScript = new Script();
+
+    redeemScript.pushData(ring1.publicKey);
+    redeemScript.pushSym('OP_CHECKSIGVERIFY');
+    redeemScript.pushData(ring2.publicKey);
+    redeemScript.pushSym('OP_CHECKSIG');
+
+    redeemScript.compile();
+
+    const witnessScript = [Buffer.from([]), Buffer.from([])];
+
+    const coin = Coin.fromJSON({
+      version: 1,
+      height: -1,
+      value,
+      coinbase: false,
+      script: Script.fromRedeemScript(redeemScript).toJSON(),
+      hash: random.randomBytes(32).toString('hex'),
+      index: 0
+    });
+
+    const mtx = new MTX();
+    mtx.addOutput(new Script(), value);
+    mtx.addCoin(coin);
+
+    it('should work with coin', () => {
+      mtx.signCustomInput(0, [ring2, ring1], redeemScript,
+        witnessScript, null, coin);
+
+      assert(mtx.verify());
+    });
+
+    it('should work with previous output', () => {
+      mtx.signCustomInput(0, [ring2, ring1], redeemScript,
+        witnessScript, null, new Output({value}));
+
+      assert(mtx.verify());
+    });
+
+    it('should work with value', () => {
+      mtx.signCustomInput(0, [ring2, ring1], redeemScript,
+        witnessScript, null, value);
+
+      assert(mtx.verify());
+    });
+
+    it('should work with nothing', () => {
+      mtx.signCustomInput(0, [ring2, ring1], redeemScript,
+        witnessScript, null);
+
+      assert(mtx.verify());
+    });
   });
 });
