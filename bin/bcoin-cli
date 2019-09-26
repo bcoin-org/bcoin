@@ -95,6 +95,22 @@ class CLI {
     this.log(block);
   }
 
+  async getBlockHeader() {
+    let hash = this.config.str(0, '');
+
+    if (hash.length !== 64)
+      hash = parseInt(hash, 10);
+
+    const header = await this.client.getBlockHeader(hash);
+
+    if (!header) {
+      this.log('Header not found.');
+      return;
+    }
+
+    this.log(header);
+  }
+
   async getFilter() {
     let hash = this.config.str(0, '');
 
@@ -204,6 +220,9 @@ class CLI {
       case 'block':
         await this.getBlock();
         break;
+      case 'header':
+        await this.getBlockHeader();
+        break;
       case 'filter':
         await this.getFilter();
         break;
@@ -222,6 +241,7 @@ class CLI {
         this.log('  $ tx [hash/address]: View transactions.');
         this.log('  $ coin [hash+index/address]: View coins.');
         this.log('  $ block [hash/height]: View block.');
+        this.log('  $ header [hash/height]: View block header.');
         this.log('  $ filter [hash/height]: View filter');
         this.log('  $ reset [height/hash]: Reset chain to desired block.');
         this.log('  $ rpc [command] [args]: Execute RPC command.' +
