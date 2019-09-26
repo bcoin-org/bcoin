@@ -5,6 +5,7 @@
 
 const {BloomFilter} = require('bfilter');
 const assert = require('bsert');
+const {NodeClient, WalletClient} = require('../lib/client');
 const consensus = require('../lib/protocol/consensus');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
@@ -35,9 +36,8 @@ const node = new FullNode({
   httpPort: ports.node,
   env: {
     'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
-  }});
-
-const {NodeClient, WalletClient} = require('../lib/client');
+  }
+});
 
 const nclient = new NodeClient({
   port: ports.node,
@@ -458,7 +458,7 @@ describe('HTTP', function() {
   it('should fetch block header by height', async () => {
     // fetch corresponding header and block
     const height = 7;
-    const header = await nclient.get(`/header/${height}`);
+    const header = await nclient.getBlockHeader(height);
     assert.equal(header.height, height);
 
     const properties = [
@@ -485,15 +485,15 @@ describe('HTTP', function() {
   it('should fetch block header by hash', async () => {
     const info = await nclient.getInfo();
 
-    const headerByHash = await nclient.get(`/header/${info.chain.tip}`);
-    const headerByHeight = await nclient.get(`/header/${info.chain.height}`);
+    const headerByHash = await nclient.getBlockHeader(info.chain.tip);
+    const headerByHeight = await nclient.getBlockHeader(info.chain.height);
 
     assert.deepEqual(headerByHash, headerByHeight);
   });
 
   it('should fetch null for block header that does not exist', async () => {
     // Many blocks in the future.
-    const header = await nclient.get(`/header/${40000}`);
+    const header = await nclient.getBlockHeader(40000);
     assert.equal(header, null);
   });
 
@@ -501,7 +501,7 @@ describe('HTTP', function() {
     // Starting at the genesis block.
     let prevBlock = '0000000000000000000000000000000000000000000000000000000000000000';
     for (let i = 0; i < 10; i++) {
-      const header = await nclient.get(`/header/${i}`);
+      const header = await nclient.getBlockHeader(i);
 
       assert.equal(prevBlock, header.prevBlock);
       prevBlock = header.hash;
