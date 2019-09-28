@@ -252,6 +252,11 @@ describe('Wallet', function() {
     consensus.COINBASE_MATURITY = 0;
   });
 
+  it('should get dummy chain info (from NullClient)', async () => {
+    assert.strictEqual(false, wdb.prune);
+    assert.strictEqual(false, wdb.spv);
+  });
+
   it('should generate new key and address', async () => {
     const wallet = await wdb.create();
 
