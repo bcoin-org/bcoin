@@ -1164,7 +1164,10 @@ describe('TX', function() {
 
     it('should work with previous output', () => {
       mtx.signCustomInput(0, [ring2, ring1], redeemScript,
-        witnessScript, null, new Output({value}));
+        witnessScript, null, new Output({
+          script: Script.fromRedeemScript(redeemScript),
+          value
+        }));
 
       assert(mtx.verify());
     });
