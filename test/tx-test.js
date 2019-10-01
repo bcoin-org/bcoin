@@ -1139,6 +1139,8 @@ describe('TX', function() {
 
     redeemScript.compile();
 
+    const outputScript = Script.fromProgram(0, redeemScript.sha256());
+
     const witnessScript = [Buffer.from([]), Buffer.from([])];
 
     const coin = new Coin({
@@ -1146,7 +1148,7 @@ describe('TX', function() {
       height: -1,
       value,
       coinbase: false,
-      script: Script.fromRedeemScript(redeemScript),
+      script: outputScript,
       hash: random.randomBytes(32),
       index: 0
     });
@@ -1165,7 +1167,7 @@ describe('TX', function() {
     it('should work with previous output', () => {
       mtx.signCustomInput(0, [ring2, ring1], redeemScript,
         witnessScript, null, new Output({
-          script: Script.fromRedeemScript(redeemScript),
+          script: outputScript,
           value
         }));
 
