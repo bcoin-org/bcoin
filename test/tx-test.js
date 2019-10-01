@@ -1141,13 +1141,13 @@ describe('TX', function() {
 
     const witnessScript = [Buffer.from([]), Buffer.from([])];
 
-    const coin = Coin.fromJSON({
+    const coin = new Coin({
       version: 1,
       height: -1,
       value,
       coinbase: false,
-      script: Script.fromRedeemScript(redeemScript).toJSON(),
-      hash: random.randomBytes(32).toString('hex'),
+      script: Script.fromRedeemScript(redeemScript),
+      hash: random.randomBytes(32),
       index: 0
     });
 
