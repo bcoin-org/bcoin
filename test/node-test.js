@@ -289,28 +289,37 @@ describe('Node', function() {
 
   it('should get tips and remove chains', async () => {
     {
-      const tips = await chain.db.getTips();
+      const tips = await chain.getTipEntries();
 
       let index = -1;
 
       for (let i = 0; i < tips.length; i++) {
-        if (tips[i].equals(chain.tip.hash))
+        if (tips[i].hash.equals(chain.tip.hash))
           index = i;
       }
 
       assert.notStrictEqual(index, -1);
-      assert.strictEqual(tips.length, 2);
+      assert.strictEqual(tips.length, 4);
+
+      let count = 0;
+
+      for (const entry of tips) {
+        if (await chain.db.hasInvalid(entry.hash))
+          count += 1;
+      }
+
+      assert.strictEqual(count, 2);
     }
 
     await chain.db.removeChains();
 
     {
-      const tips = await chain.db.getTips();
+      const tips = await chain.getTipEntries();
 
       let index = -1;
 
       for (let i = 0; i < tips.length; i++) {
-        if (tips[i].equals(chain.tip.hash))
+        if (tips[i].hash.equals(chain.tip.hash))
           index = i;
       }
 
