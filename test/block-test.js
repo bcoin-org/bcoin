@@ -7,6 +7,7 @@ const assert = require('bsert');
 const common = require('./util/common');
 const {BloomFilter} = require('bfilter');
 const {BufferMap} = require('buffer-map');
+const TX = require('../lib/primitives/tx');
 const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
@@ -99,6 +100,21 @@ describe('Block', function() {
     const block2 = MerkleBlock.fromJSON(json);
     assert.deepStrictEqual(block2.toJSON(), json);
     assert(block2.verify());
+  });
+
+  it('should serialize merkle block with transactions', () => {
+    const [full] = block300025.getBlock();
+    const [block] = merkle300025.getBlock();
+
+    const tree = block.getTree();
+
+    for (const tx of full.txs) {
+      if (tree.map.has(tx.hash()))
+        block.txs.push(TX.fromRaw(tx.toRaw()));
+    }
+
+    const block2 = MerkleBlock.fromExtendedRaw(block.toExtendedRaw());
+    assert.deepEqual(block.txs, block2.txs);
   });
 
   it('should parse JSON', () => {
