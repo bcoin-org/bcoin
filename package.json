@@ -26,7 +26,7 @@
     "bcfg": "~0.1.6",
     "bcrypto": "~3.1.11",
     "bcurl": "^0.1.6",
-    "bdb": "~1.1.7",
+    "bdb": "braydonf/bdb#5abd29642b8349a4ee63845ec7efbc52b74817d3",
     "bdns": "~0.1.5",
     "bevent": "~0.1.5",
     "bfile": "~0.2.1",
