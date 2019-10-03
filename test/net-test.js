@@ -4,6 +4,8 @@
 'use strict';
 
 const assert = require('bsert');
+const {randomBytes} = require('bcrypto/lib/random');
+const BN = require('bcrypto/lib/bn.js');
 const test = require('./util/common');
 const {BloomFilter} = require('bfilter');
 const Logger = require('blgr');
@@ -19,6 +21,7 @@ const InvItem = require('../lib/primitives/invitem');
 const Headers = require('../lib/primitives/headers');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const ChainEntry = require('../lib/blockchain/chainentry');
+const chainCommon = require('../lib/blockchain/common');
 const Network = require('../lib/protocol/network');
 const {VerifyError} = require('../lib/protocol/errors');
 const consensus = require('../lib/protocol/consensus');
@@ -1293,16 +1296,190 @@ describe('Net', function() {
         assert.equal(peer.compactWitness, false);
       });
     });
+
+    describe('maybeTimeout', function() {
+      const now = Date.now;
+      afterEach(() => {
+        Date.now = now;
+      });
+
+      function stubDestroy(peer) {
+        const results = {
+          message: '',
+          destroyed: false
+        };
+
+        peer.on('error', (err) => {
+          results.message = err.message;
+        });
+
+        peer.destroy = () => {
+          results.destroyed = true;
+        };
+
+        return results;
+      }
+
+      function stubTime(peer) {
+        peer.lastRecv = 105260018;
+        peer.lastSend = 105260018;
+        peer.time = 105260018;
+      }
+
+      it('stalling IBD with block (time)', () => {
+        Date.now = () => 105295845 + 120001;
+        const peer = Peer.fromOptions({});
+        stubTime(peer);
+
+        peer.syncing = true;
+        peer.options.isFull = () => false;
+        peer.blockTime = 105295845;
+        peer.blockMap.set(Buffer.alloc(32, 0x00), 105300148 + 1);
+
+        const results = stubDestroy(peer);
+        peer.maybeTimeout();
+
+        assert(results.destroyed);
+        assert(results.message.includes('Peer is stalling (block).'));
+      });
+
+      it('not stalling IBD with block (time)', () => {
+        Date.now = () => 105295845 + 119999;
+        const peer = Peer.fromOptions({});
+        stubTime(peer);
+
+        peer.syncing = true;
+        peer.options.isFull = () => false;
+        peer.blockTime = 105295845;
+        peer.blockMap.set(Buffer.alloc(32, 0x00), 105300148 + 1);
+
+        const results = stubDestroy(peer);
+        peer.maybeTimeout();
+
+        assert(!results.destroyed);
+        assert(!results.message);
+      });
+
+      it('stalling with block (time)', () => {
+        Date.now = () => 105295845 + 120001;
+        const peer = Peer.fromOptions({});
+        stubTime(peer);
+
+        peer.syncing = true;
+        peer.options.isFull = () => true;
+        peer.blockTime = 105295845 + 1;
+        peer.blockMap.set(Buffer.alloc(32, 0x00), 105295845);
+
+        const results = stubDestroy(peer);
+        peer.maybeTimeout();
+
+        assert(results.destroyed);
+        assert(results.message.includes('Peer is stalling (block).'));
+      });
+
+      it('not stalling with block (time)', () => {
+        Date.now = () => 105295845 + 119999;
+        const peer = Peer.fromOptions({});
+        stubTime(peer);
+
+        peer.syncing = true;
+        peer.options.isFull = () => true;
+        peer.blockTime = 105295845 + 1;
+        peer.blockMap.set(Buffer.alloc(32, 0x00), 105295845);
+
+        const results = stubDestroy(peer);
+        peer.maybeTimeout();
+
+        assert(!results.destroyed);
+        assert(!results.message);
+      });
+
+      it('stalling with header sync', () => {
+        Date.now = () => 105295845 + 1;
+        const peer = Peer.fromOptions({});
+        stubTime(peer);
+
+        peer.options.isRecent = () => false;
+        peer.headersTimeout = 105295845;
+
+        const results = stubDestroy(peer);
+        peer.maybeTimeout();
+
+        assert(results.destroyed);
+        assert(results.message.includes('Peer is stalling (headers sync).'));
+      });
+
+      it('not stalling with header sync (time)', () => {
+        Date.now = () => 105295845;
+        const peer = Peer.fromOptions({});
+        stubTime(peer);
+
+        peer.options.isRecent = () => false;
+        peer.headersTimeout = 105295845 + 1;
+
+        const results = stubDestroy(peer);
+        peer.maybeTimeout();
+
+        assert(!results.destroyed);
+        assert(!results.message);
+      });
+
+      it('not stalling with header sync (recent)', () => {
+        Date.now = () => 105295845 + 1;
+        const peer = Peer.fromOptions({});
+        stubTime(peer);
+
+        peer.options.isRecent = () => true;
+        peer.headersTimeout = 105295845;
+
+        const results = stubDestroy(peer);
+        peer.maybeTimeout();
+
+        assert(!results.destroyed);
+        assert(!results.message);
+        assert.equal(peer.headersTimeout, -1);
+      });
+    });
   });
 
   describe('Pool', function() {
+    const network = Network.get('regtest');
+
+    describe('setHeadersTimeout', function() {
+      const now = Date.now;
+      afterEach(() => {
+        Date.now = now;
+      });
+
+      it('will set based on most work entry', async () => {
+        const now = 1564516403115;
+        Date.now = () => now;
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        const entry = new ChainEntry();
+        entry.time = 1296688602;
+        pool.chain.mostWork = () => entry;
+
+        const peer = Peer.fromOptions(pool.options);
+
+        pool.setHeadersTimeout(peer);
+
+        assert(typeof peer.headersTimeout === 'number');
+        assert(peer.headersTimeout > now);
+        assert.equal(peer.headersTimeout, 1564517749495);
+      });
+    });
+
     describe('handleVersion', function() {
       it('will update pool time and nonce data', async () => {
         const network = Network.get('regtest');
 
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         const peer = Peer.fromOptions(pool.options);
@@ -1335,7 +1512,7 @@ describe('Net', function() {
 
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         let called = false;
@@ -1374,9 +1551,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {
-              checkpoints: true
-            },
+            options: {},
             on: () => {},
             state: {
               hasWitness: () => true
@@ -1426,7 +1601,7 @@ describe('Net', function() {
       it('will ban with too many inv', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         let handleTXInv = false;
@@ -1456,7 +1631,7 @@ describe('Net', function() {
       it('will handle block inventory', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         const peer = Peer.fromOptions(pool.options);
@@ -1480,7 +1655,7 @@ describe('Net', function() {
       it('will handle tx inventory', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         const peer = Peer.fromOptions(pool.options);
@@ -1502,13 +1677,99 @@ describe('Net', function() {
       });
     });
 
+    describe('handleBlockInv', function() {
+      it('will ignore if not syncing', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+        pool.syncing = false;
+        pool.chain.synced = true;
+
+        const hashes = [
+          Buffer.alloc(32, 0x00)
+        ];
+
+        let called = false;
+        pool.getHeaders = async () => {
+          called = true;
+        };
+
+        await pool.handleBlockInv(peer, hashes);
+        assert(!called);
+      });
+
+      it('will ignore if not synced', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+        pool.syncing = true;
+        pool.chain.synced = false;
+
+        const hashes = [
+          Buffer.alloc(32, 0x00)
+        ];
+
+        let called = false;
+        pool.getHeaders = async () => {
+          called = true;
+        };
+
+        await pool.handleBlockInv(peer, hashes);
+        assert(!called);
+      });
+
+      it('will request headers instead of block', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        const peer = Peer.fromOptions(pool.options);
+
+        const hashes = [
+          Buffer.alloc(32, 0x00)
+        ];
+
+        // Chain stubs.
+        pool.chain.synced = true;
+        pool.chain.isMainHash = () => false;
+        const entry = new ChainEntry();
+        pool.chain.getMostWorkEntry = () => entry;
+
+        // Peer stubs.
+        peer.hasWitness = () => true;
+
+        // Pool stubs.
+        pool.syncing = true;
+        pool.hasBlock = () => false;
+        pool.options.hasWitness = () => true;
+
+        let called = false;
+        pool.getHeaders = async (_peer, tip, stop) => {
+          assert.equal(_peer, peer);
+          assert.bufferEqual(tip, entry.hash);
+          assert.bufferEqual(stop, hashes[0]);
+          called = true;
+        };
+
+        await pool.handleBlockInv(peer, hashes);
+        assert(called);
+      });
+    });
+
     describe('handleGetData', function() {
       const network = Network.get('regtest');
 
       it('will ban with too many items', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         let increaseBan = false;
@@ -1541,7 +1802,7 @@ describe('Net', function() {
 
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         const item = new InvItem(InvItem.types.TX, tx.hash());
@@ -1573,7 +1834,7 @@ describe('Net', function() {
       it('will send tx not found', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         pool.getItem = () => null;
@@ -1604,7 +1865,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {checkpoints: true},
+            options: {},
             on: () => {},
             state: {
               hasWitness: () => true
@@ -1641,7 +1902,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {checkpoints: true},
+            options: {},
             on: () => {},
             state: {
               hasWitness: () => true
@@ -1677,7 +1938,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {checkpoints: true},
+            options: {},
             on: () => {},
             state: {
               hasWitness: () => true
@@ -1708,7 +1969,7 @@ describe('Net', function() {
       it('will destroy if filtered block (bip37=false)', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}},
+          chain: {network, options: {}, on: () => {}},
           bip37: false
         });
 
@@ -1734,7 +1995,7 @@ describe('Net', function() {
 
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}},
+          chain: {network, options: {}, on: () => {}},
           bip37: true
         });
 
@@ -1788,7 +2049,7 @@ describe('Net', function() {
       it('will send filtered block not found', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}},
+          chain: {network, options: {}, on: () => {}},
           bip37: true
         });
 
@@ -1820,7 +2081,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {checkpoints: true},
+            options: {},
             on: () => {},
             getHeight: () => 500001,
             tip: {
@@ -1857,7 +2118,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {checkpoints: true},
+            options: {},
             on: () => {},
             getHeight: () => 500001,
             tip: {
@@ -1908,7 +2169,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {checkpoints: true},
+            options: {},
             on: () => {},
             synced: true,
             findLocator: (locators) => {
@@ -1996,6 +2257,883 @@ describe('Net', function() {
       });
     });
 
+    describe('handleHeaders', function() {
+      it('will do nothing with empty headers', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+        const peer = Peer.fromOptions(pool.options);
+        const pkt = new packets.HeadersPacket([]);
+
+        let called = false;
+        pool.addHeader = () => {
+          called = true;
+        };
+
+        await pool.handleHeaders(peer, pkt);
+        assert(!called);
+      });
+
+      it('will ban peer with too many headers', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+        const peer = Peer.fromOptions(pool.options);
+        const pkt = new packets.HeadersPacket(new Array(2001));
+
+        let called = false;
+        peer.increaseBan = () => {
+          called = true;
+        };
+
+        await pool.handleHeaders(peer, pkt);
+        assert(called);
+      });
+
+      it('will destroy peer with invalid prevBlock within items', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+        const peer = Peer.fromOptions(pool.options);
+
+        const items = [
+          new Headers({
+            version: 1,
+            prevBlock: Buffer.alloc(32, 0x01),
+            merkleRoot: Buffer.alloc(32, 0x02),
+            time: 1558405603,
+            bits: 403014710,
+            nonce: 101
+          }),
+          new Headers({
+            version: 2,
+            prevBlock: Buffer.alloc(32, 0x02),
+            merkleRoot: Buffer.alloc(32, 0x03),
+            time: 1558405604,
+            bits: 403014711,
+            nonce: 102
+          })
+        ];
+
+        const pkt = new packets.HeadersPacket(items);
+
+        let called = false;
+        peer.destroy = () => {
+          called = true;
+        };
+
+        await pool.handleHeaders(peer, pkt);
+        assert(called);
+      });
+
+      it('will add headers to chain', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+        const peer = Peer.fromOptions(pool.options);
+
+        const header1 = new Headers({
+          version: 1,
+          prevBlock: Buffer.alloc(32, 0x00),
+          merkleRoot: Buffer.alloc(32, 0x00),
+          time: 1558405603,
+          bits: 403014710,
+          nonce: 101
+        });
+
+        const header2 = new Headers({
+          version: 2,
+          prevBlock: header1.hash(),
+          merkleRoot: Buffer.alloc(32, 0x00),
+          time: 1558405604,
+          bits: 403014711,
+          nonce: 102
+        });
+
+        const items = [header1, header2];
+        const pkt = new packets.HeadersPacket(items);
+
+        let addCalled = false;
+        let height = 0;
+
+        const entry = new ChainEntry();
+        entry.time = 1296688602;
+        pool.chain.mostWork = () => entry;
+
+        pool.chain.addHeader = async (header, flags) => {
+          if (height === 0)
+            assert.equal(header, header1);
+          if (height === 1)
+            assert.equal(header, header2);
+
+          assert.equal(flags, chainCommon.flags.DEFAULT_FLAGS);
+          addCalled = true;
+          return {height: height++};
+        };
+
+        let resolveCalled = false;
+        pool.resolveHeaders = () => {
+          resolveCalled = true;
+        };
+
+        let moreCalled = false;
+        pool.chain.getHeaders = async () => {
+          moreCalled = true;
+        };
+
+        pool.chain.hasHeader = async (hash) => {
+          if (Buffer.alloc(32, 0x00).equals(hash))
+            return true;
+          return false;
+        };
+
+        await pool.handleHeaders(peer, pkt);
+
+        assert(addCalled);
+        assert(resolveCalled);
+        assert(!moreCalled);
+        assert.bufferEqual(peer.bestHash, header2.hash());
+        assert.equal(peer.bestHeight, 1);
+      });
+
+      it('will not add duplicate headers', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+        const peer = Peer.fromOptions(pool.options);
+
+        const items = [
+          new Headers({
+            version: 1,
+            prevBlock: Buffer.alloc(32, 0x00),
+            merkleRoot: Buffer.alloc(32, 0x00),
+            time: 1558405603,
+            bits: 403014710,
+            nonce: 101
+          })
+        ];
+
+        const pkt = new packets.HeadersPacket(items);
+
+        let addCalled = false;
+        pool.chain.addHeader = async () => {
+          addCalled = true;
+        };
+
+        pool.resolveHeaders = () => {};
+        pool.chain.hasHeader = async () => true;
+
+        await pool.handleHeaders(peer, pkt);
+
+        assert(!addCalled);
+      });
+
+      it('will continue to request headers', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+        const peer = Peer.fromOptions(pool.options);
+
+        const items = [];
+
+        function addHeader() {
+          items.push(new Headers({
+            version: 1,
+            prevBlock: items.length ?
+              items[items.length - 1].hash() :
+              Buffer.alloc(32, 0x00),
+            merkleRoot: Buffer.alloc(32, 0x00),
+            time: 1558405603,
+            bits: 403014710,
+            nonce: 101
+          }));
+        }
+
+        while (items.length < 2000)
+          addHeader();
+
+        const pkt = new packets.HeadersPacket(items);
+
+        pool.chain.hasHeader = async () => false;
+        pool.chain.addHeader = async () => {
+          return {height: 0};
+        };
+        pool.resolveHeaders = () => {};
+
+        let called = false;
+        pool.getHeaders = async (_peer, hash) => {
+          assert.equal(_peer, peer);
+          assert.bufferEqual(hash, items[items.length - 1].hash());
+          called = true;
+        };
+
+        await pool.handleHeaders(peer, pkt);
+        assert(called);
+      });
+    });
+
+    describe('resolveHeaders', function() {
+      function stubPeer(pool, options) {
+        const peer = {
+          hostname: () => options.hostname,
+          outbound: options.outbound,
+          syncing: options.syncing,
+          id: options.id
+        };
+
+        pool.peers.add(peer);
+      }
+
+      it('will only resolve once at a time w/ deferred', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        let called = 0;
+        pool._resolveHeaders = async () => {
+          return new Promise((resolve) => {
+            setImmediate(() => {
+              called += 1;
+              resolve();
+            });
+          });
+        };
+
+        pool.resolveHeaders();
+        assert.equal(pool.resolveDeferred, false);
+
+        pool.resolveHeaders();
+        assert.equal(pool.resolveDeferred, true);
+
+        await pool.resolvePending;
+        assert.equal(called, 1);
+
+        await pool.resolvePending;
+        assert.equal(called, 2);
+
+        assert.equal(pool.resolveDeferred, false);
+      });
+
+      it('will do nothing if headers are not recent', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        pool.chain.isRecent = () => false;
+
+        let called = 0;
+        pool.resolveHeadersForPeer = () => {
+          called += 1;
+        };
+
+        stubPeer(pool, {
+          id: 0,
+          hostname: '127.0.0.1:8333',
+          outbound: true,
+          syncing: true
+        });
+
+        await pool.resolveHeaders();
+        assert.equal(called, 0);
+      });
+
+      it('will wait for more in-flight blocks', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        pool.chain.isRecent = () => true;
+
+        let called = 0;
+        pool.resolveHeadersForPeer = () => {
+          called += 1;
+        };
+
+        stubPeer(pool, {
+          id: 0,
+          hostname: '127.0.0.1:8333',
+          outbound: true,
+          syncing: true
+        });
+
+        for (let i = 0; i < 1024; i++)
+          pool.blockMap.set(randomBytes(32), 0);
+
+        await pool.resolveHeaders();
+        assert.equal(called, 0);
+      });
+
+      it('will resolve headers for each peer', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        pool.chain.isRecent = () => true;
+
+        let called = 0;
+        pool.resolveHeadersForPeer = () => {
+          called += 1;
+        };
+
+        stubPeer(pool, {
+          id: 0,
+          hostname: '127.0.0.1:8333',
+          outbound: true,
+          syncing: true
+        });
+
+        stubPeer(pool, {
+          id: 1,
+          hostname: '127.0.0.2:8333',
+          outbound: true,
+          syncing: true
+        });
+
+        pool.resolveHeaders();
+        await pool.resolvePending;
+
+        assert.equal(called, 2);
+      });
+    });
+
+    describe('resolveHeadersForPeer', function() {
+      function stubBase(pool, syncable) {
+        pool.isSyncable = () => syncable;
+        pool.getNextBlocks = async () => {
+          throw new Error('Called.');
+        };
+      }
+
+      it('will skip if peer is not syncable', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubBase(pool, false);
+
+        const peer = Peer.fromOptions(pool.options);
+        peer.bestHash = Buffer.alloc(32, 0x00);
+
+        pool.resolveHeadersForPeer(peer);
+      });
+
+      it('will wait for all in-flight blocks to finish', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubBase(pool, true);
+
+        const peer = Peer.fromOptions(pool.options);
+        peer.blockMap.set(Buffer.alloc(32, 0x00), Date.now());
+        peer.bestHash = Buffer.alloc(32, 0x00);
+
+        pool.resolveHeadersForPeer(peer);
+      });
+
+      it('will wait/ask for peer best block header', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubBase(pool, true);
+
+        let called = false;
+        pool.sendSync = () => {
+          called = true;
+        };
+
+        const peer = Peer.fromOptions(pool.options);
+
+        pool.resolveHeadersForPeer(peer);
+        assert(called);
+      });
+
+      it('will check that the peer best header is verified', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubBase(pool, true);
+
+        let called = false;
+        pool.chain.getEntryByHash = async (hash) => {
+          assert.bufferEqual(hash, Buffer.alloc(32, 0x01));
+          called = true;
+          return null;
+        };
+
+        const peer = Peer.fromOptions(pool.options);
+        peer.bestHash = Buffer.alloc(32, 0x01);
+
+        await pool.resolveHeadersForPeer(peer);
+        assert(called);
+      });
+
+      it('will not download blocks without chainwork', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubBase(pool, true);
+
+        const entry = new ChainEntry();
+        assert(entry.chainwork.eq(new BN(0)));
+        pool.chain.getEntryByHash = async () => entry;
+        pool.chain.tip = {chainwork: new BN(1)};
+
+        const peer = Peer.fromOptions(pool.options);
+        peer.bestHash = Buffer.alloc(32, 0x00);
+
+        await pool.resolveHeadersForPeer(peer);
+      });
+
+      it('will find next blocks to download', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubBase(pool, true);
+
+        let called = false;
+        pool.getNextBlocks = async (peer, best) => {
+          assert(peer);
+          assert(best);
+          called = true;
+        };
+
+        const entry = new ChainEntry();
+        entry.chainwork = new BN(101);
+        pool.chain.getEntryByHash = async () => entry;
+        pool.chain.tip = {chainwork: new BN(100)};
+
+        const peer = Peer.fromOptions(pool.options);
+        peer.bestHash = Buffer.alloc(32, 0x00);
+
+        await pool.resolveHeadersForPeer(peer);
+        assert(called);
+      });
+    });
+
+    describe('getNextBlocks', function() {
+      function mockHash(height, fork) {
+        const hash = Buffer.alloc(32, 0x00);
+        if (!fork)
+          hash.writeUInt32LE(height);
+        else
+          hash.writeUInt32BE(height);
+        return hash;
+      }
+
+      function parseMockHash(hash, fork) {
+        if (fork)
+          return hash.readUInt32BE();
+        else
+          return hash.readUInt32LE();
+      }
+
+      function mockEntry(height) {
+        assert(height > 0);
+
+        return new ChainEntry({
+          version: 1,
+          hash: mockHash(height),
+          prevBlock: mockHash(height - 1),
+          merkleRoot: Buffer.alloc(32, 0x00),
+          time: 1558629632,
+          bits: 486604799,
+          nonce: 10,
+          height: height
+        });
+      }
+
+      function stubChainDB(pool) {
+        const results = {nextCalls: 0};
+        pool.chain.db = {
+          getNextPath: async (entry, height, limit) => {
+            results.nextCalls += 1;
+            results.nextArgs = {entry, height, limit};
+
+            const entries = [];
+
+            while (entries.length < limit)
+              entries.push(mockEntry(++height));
+
+            return entries;
+          },
+          hasInvalid: async () => false
+        };
+
+        pool.chain.db.hasBlock = () => false;
+
+        return results;
+      }
+
+      function stubChain(pool, fork) {
+        const common = mockEntry(1);
+
+        pool.chain.getHash = async () => common.hash;
+        pool.chain.getEntryByHash = async () => common;
+        pool.chain.commonAncestor = async () => fork ? fork : common;
+        pool.chain.isMainChain = async () => false;
+        pool.chain.locker = {has: () => false};
+      }
+
+      it('will not request blocks', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubChain(pool);
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = new ChainEntry();
+
+        let called = false;
+        pool.getBlock = () => {
+          called = true;
+        };
+
+        await pool.getNextBlocks(peer, best);
+        assert(!called);
+      });
+
+      it('will walk w/ peer limit and in-flight', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        // Every third block already in-flight.
+        for (let i = 0; i < 1024; i++) {
+          if (i % 3 === 0)
+            pool.blockMap.set(mockHash(i), 0);
+        }
+
+        stubChain(pool);
+
+        const results = stubChainDB(pool);
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(1024);
+
+        let called = false;
+        pool.getBlock = (_peer, items) => {
+          assert.equal(_peer, peer);
+          assert.equal(items.length, 128);
+          called = true;
+        };
+
+        await pool.getNextBlocks(peer, best);
+
+        assert(called);
+        assert.equal(results.nextCalls, 2);
+        assert.equal(results.nextArgs.entry.height, best.height);
+        assert.equal(results.nextArgs.height, 129);
+        assert.equal(results.nextArgs.limit, 128);
+      });
+
+      it('will stay within window (plus one)', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        // All within window except the last 64 is in-flight.
+        for (let i = 1; i <= 1025 - 64; i++)
+          pool.blockMap.set(mockHash(i), 0);
+
+        stubChain(pool);
+
+        const results = stubChainDB(pool);
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(2048);
+
+        let called = false;
+        pool.getBlock = (_peer, items) => {
+          assert.equal(_peer, peer);
+          assert.equal(items.length, 64);
+          called = true;
+        };
+
+        const staller = await pool.getNextBlocks(peer, best);
+
+        assert(called);
+        assert.equal(results.nextCalls, (1024 / 128) + 1);
+        assert.equal(staller, -1);
+      });
+
+      it('will identify stalling peer', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        // All within window are in-flight.
+        for (let i = 1; i <= 1025; i++)
+          pool.blockMap.set(mockHash(i), i);
+
+        stubChain(pool);
+
+        const results = stubChainDB(pool);
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(2048);
+
+        let called = false;
+        pool.getBlock = () => {
+          called = true;
+        };
+
+        const staller = await pool.getNextBlocks(peer, best);
+
+        assert(!called);
+        assert.equal(results.nextCalls, (1024 / 128) + 1);
+        assert.equal(staller, 2);
+      });
+
+      it('will stop with invalid blocks', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubChain(pool);
+
+        const results = stubChainDB(pool);
+
+        let called = false;
+        pool.chain.db.hasInvalid = async (hash) => {
+          assert.bufferEqual(hash, mockHash(2));
+          called = true;
+          return true;
+        };
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(1024);
+
+        await pool.getNextBlocks(peer, best);
+
+        assert(called);
+        assert.equal(results.nextCalls, 1);
+      });
+
+      it('will update the common hash', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        const fork = mockEntry(1, true);
+        stubChain(pool, fork);
+        stubChainDB(pool);
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(1024);
+
+        let called = false;
+        pool.getBlock = (_peer, items) => {
+          assert.equal(_peer, peer);
+          assert.equal(items.length, 128);
+          called = true;
+        };
+
+        await pool.getNextBlocks(peer, best);
+
+        assert.bufferEqual(peer.commonHash, fork.hash);
+        assert.equal(peer.commonHeight, fork.height);
+
+        assert(called);
+      });
+
+      it('will not request main chain blocks', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubChain(pool);
+        pool.chain.isMainChain = () => true;
+        stubChainDB(pool);
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(1024);
+
+        let called = false;
+        pool.getBlock = () => {
+          called = true;
+        };
+
+        await pool.getNextBlocks(peer, best);
+
+        assert.equal(peer.commonHeight, 1025);
+        assert.bufferEqual(peer.commonHash, mockHash(1025));
+
+        assert(!called);
+      });
+
+      it('will not request blocks being processed', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubChain(pool);
+        pool.chain.locker.has = () => true;
+        stubChainDB(pool);
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(1024);
+
+        let called = false;
+        pool.getBlock = () => {
+          called = true;
+        };
+
+        await pool.getNextBlocks(peer, best);
+
+        assert(!called);
+      });
+
+      it('will connect previously saved blocks', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        stubChain(pool);
+        stubChainDB(pool);
+        pool.chain.getPrevious = async (entry) => {
+          const height = parseMockHash(entry.hash);
+          return mockEntry(height - 1);
+        };
+
+        pool.chain.db.hasBlock = (hash) => {
+          const height = parseMockHash(hash);
+          if (height % 2 === 0)
+            return true;
+
+          return false;
+        };
+
+        const peer = Peer.fromOptions(pool.options);
+        const best = mockEntry(1024);
+
+        let blockCalled = false;
+        pool.getBlock = () => {
+          blockCalled = true;
+        };
+
+        let callCount = 0;
+        pool.attachBlock = (entry) => {
+          assert.equal(entry.height % 2, 0);
+          callCount += 1;
+        };
+
+        await pool.getNextBlocks(peer, best);
+
+        assert(blockCalled);
+        assert.equal(callCount, 1);
+      });
+    });
+
+    describe('handleBad', function() {
+      it('will be called with "bad block" chain event', async () => {
+        const chain = new AsyncEmitter();
+        chain.network = network;
+        chain.options = {};
+        const pool = new Pool({logger: Logger.global, chain});
+
+        const err = new Error('Test.');
+        const id = 10;
+
+        let called = false;
+        pool.handleBad = (msg, _err, _id) => {
+          assert.equal(msg, 'block');
+          assert.equal(_err, err);
+          assert.equal(_id, id);
+          called = true;
+        };
+
+        chain.emit('bad block', err, id);
+        assert(called);
+      });
+
+      it('will be called with "bad orphan" mempool event', async () => {
+        const mempool = new EventEmitter();
+        const chain = {network, options: {}, on: () => {}};
+        const pool = new Pool({logger: Logger.global, chain, mempool});
+
+        const err = new Error('Test.');
+        const id = 10;
+
+        let called = false;
+        pool.handleBad = (msg, _err, _id) => {
+          assert.equal(msg, 'tx');
+          assert.equal(_err, err);
+          assert.equal(_id, id);
+          called = true;
+        };
+
+        mempool.emit('bad orphan', err, id);
+        assert(called);
+      });
+
+      it('will ignore if peer not found', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        const err = new Error('Test.');
+        const id = 10;
+
+        pool.handleBad('block', err, id);
+      });
+
+      it('will reject peer based on type and error', async () => {
+        const pool = new Pool({
+          logger: Logger.global,
+          chain: {network, options: {}, on: () => {}}
+        });
+
+        const err = new Error('Test.');
+
+        const id = 10;
+        const peer = Peer.fromOptions(pool.options);
+        peer.id = id;
+
+        let called = false;
+        peer.reject = (msg, _err) => {
+          assert.equal(msg, 'block');
+          assert.equal(_err, err);
+          called = true;
+        };
+
+        pool.peers.add(peer);
+        pool.handleBad('block', err, id);
+        assert(called);
+      });
+    });
+
     describe('handleTX', function() {
       const [block] = block300025.getBlock();
 
@@ -2004,7 +3142,7 @@ describe('Net', function() {
       it('will destroy if unrequested', async () => {
         const pool = new Pool({
           logger: Logger.global,
-          chain: {network, options: {checkpoints: true}, on: () => {}}
+          chain: {network, options: {}, on: () => {}}
         });
 
         const peer = Peer.fromOptions(pool.options);
@@ -2033,9 +3171,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {
-              checkpoints: true
-            },
+            options: {},
             on: () => {}
           }
         });
@@ -2064,9 +3200,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {
-              checkpoints: true
-            },
+            options: {},
             on: () => {}
           },
           mempool: {
@@ -2111,10 +3245,7 @@ describe('Net', function() {
           logger: Logger.global,
           chain: {
             network,
-            options: {
-              checkpoints: true,
-              spv: true
-            },
+            options: {spv: true},
             on: () => {}
           },
           spv: true
