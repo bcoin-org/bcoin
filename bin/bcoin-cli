@@ -148,7 +148,8 @@ class CLI {
   }
 
   async getMempool() {
-    const txs = await this.client.getMempool();
+    const details = this.config.bool(0, false);
+    const txs = await this.client.getMempool(details);
 
     this.log(txs);
   }
