@@ -249,10 +249,6 @@ describe('Wallet', function() {
     await workers.close();
   });
 
-  it('should open walletdb', () => {
-    consensus.COINBASE_MATURITY = 0;
-  });
-
   it('should generate new key and address', async () => {
     const wallet = await wdb.create();
 
@@ -1955,10 +1951,5 @@ describe('Wallet', function() {
     }, {
       message: 'TX exceeds maximum unconfirmed ancestors.'
     });
-  });
-
-  it('should cleanup', async () => {
-    consensus.COINBASE_MATURITY = 100;
-    // await wdb.close();
   });
 });
