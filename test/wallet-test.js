@@ -1909,6 +1909,70 @@ describe('Wallet', function() {
     }
   });
 
+  it('should count pending ancestors', async () => {
+    // Create wallet and get one address
+    const wallet = await wdb.create();
+    const addr1 = await wallet.receiveAddress();
+
+    // Dummy address for outputs
+    const recAddr = Address.fromHash(Buffer.alloc(20, 1));
+
+    // Add one single, unconfirmed coin to wallet
+    const mtx = new MTX();
+    mtx.addInput(dummyInput());
+    mtx.addOutput(addr1, 10 * 1e8);
+    const tx0 = mtx.toTX();
+    await wallet.txdb.add(tx0, null);
+
+    let count;
+    count = await wallet.countPendingAncestors(tx0);
+    assert.strictEqual(count, 0);
+
+    // Create one tx
+    const tx1 = await wallet.send({
+      outputs: [{
+        address: recAddr,
+        value: 10000
+      }]
+    });
+    count = await wallet.countPendingAncestors(tx1);
+    assert.strictEqual(count, 1);
+
+    // Create a second tx
+    const tx2 = await wallet.send({
+      outputs: [{
+        address: recAddr,
+        value: 10000
+      }]
+    });
+    count = await wallet.countPendingAncestors(tx2);
+    assert.strictEqual(count, 2);
+
+    // Confirm tx0 with dummy block
+    const block100 = {
+      height: 100,
+      hash: Buffer.alloc(32, 0),
+      time: Date.now()
+    };
+    const wtx0 = await wallet.txdb.getTX(tx0.hash());
+    await wallet.txdb.confirm(wtx0, block100);
+
+    count = await wallet.countPendingAncestors(tx2);
+    assert.strictEqual(count, 1);
+
+    // Confirm tx1 with dummy block
+    const block101 = {
+      height: 101,
+      hash: Buffer.alloc(32, 1),
+      time: Date.now()
+    };
+    const wtx1 = await wallet.txdb.getTX(tx1.hash());
+    await wallet.txdb.confirm(wtx1, block101);
+
+    count = await wallet.countPendingAncestors(tx2);
+    assert.strictEqual(count, 0);
+  });
+
   it('should not exceed MEMPOOL_MAX_ANCESTORS policy', async () => {
     // Create wallet and get one address
     const wallet = await wdb.create();
