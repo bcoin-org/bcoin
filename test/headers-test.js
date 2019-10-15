@@ -38,7 +38,7 @@ describe('Headers', function() {
   });
 
   it('should match block1 headers from raw', () => {
-    const headers = Headers.fromRaw(headers1);
+    const headers = Headers.decode(headers1);
 
     assert.strictEqual(headers.time, 1231469665);
     assert.strictEqual(headers.bits, 486604799);

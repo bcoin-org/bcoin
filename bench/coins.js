@@ -13,7 +13,7 @@ const [tx, view] = common.readTX('tx3').getTX();
 
   for (let i = 0; i < 10000000; i++) {
     const bw = new StaticWriter(view.getSize(tx));
-    view.toWriter(bw, tx).render();
+    view.write(bw, tx).render();
   }
 
   end(10000000);
@@ -21,13 +21,13 @@ const [tx, view] = common.readTX('tx3').getTX();
 
 {
   const bw = new StaticWriter(view.getSize(tx));
-  const raw = view.toWriter(bw, tx).render();
+  const raw = view.write(bw, tx).render();
 
   const end = bench('parse');
 
   for (let i = 0; i < 10000000; i++) {
     const br = new BufferReader(raw);
-    CoinView.fromReader(br, tx);
+    CoinView.read(br, tx);
   }
 
   end(10000000);

@@ -40,7 +40,7 @@ describe('Protocol', function() {
         }
         cb();
       });
-      const raw = framer.packet(cmd, payload.toRaw());
+      const raw = framer.packet(cmd, payload.encode());
       parser.feed(raw);
     });
   }
@@ -119,11 +119,11 @@ describe('Protocol', function() {
   it('should include the raw data of only one transaction', () => {
     const [tx1] = tx8.getTX();
     const [tx2] = tx9.getTX();
-    const raw = Buffer.concat([tx1.toRaw(), tx2.toRaw()]);
+    const raw = Buffer.concat([tx1.encode(), tx2.encode()]);
 
-    const tx = TX.fromRaw(raw);
+    const tx = TX.decode(raw);
     tx.refresh();
 
-    assert.bufferEqual(tx.toRaw(), tx1.toRaw());
+    assert.bufferEqual(tx.encode(), tx1.encode());
   });
 });

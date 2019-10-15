@@ -29,7 +29,7 @@ describe('Coin', function() {
   });
 
   it('should instantiate from raw', () => {
-    const coin = Coin.fromRaw(coin1);
+    const coin = Coin.decode(coin1);
 
     assert.strictEqual(coin.getAddress().toString(),
       '3KUER9kZ693d5FQgvmr5qNDKnSpP9nXv9v');

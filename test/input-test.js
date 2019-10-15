@@ -29,18 +29,18 @@ describe('Input', function() {
   it('should return same raw', () => {
     [input1, input2, input3].forEach((rawinput) => {
       const raw = rawinput.slice();
-      const input = Input.fromRaw(raw);
+      const input = Input.decode(raw);
 
-      assert.bufferEqual(raw, input.toRaw());
+      assert.bufferEqual(raw, input.encode());
     });
   });
 
-  it('should return same raw on fromReader', () => {
+  it('should return same raw on read', () => {
     [input1, input2, input3].forEach((rawinput) => {
       const raw = rawinput.slice();
-      const input = Input.fromReader(bio.read(raw));
+      const input = Input.read(bio.read(raw));
 
-      assert.bufferEqual(raw, input.toRaw());
+      assert.bufferEqual(raw, input.encode());
     });
   });
 
@@ -49,11 +49,11 @@ describe('Input', function() {
     const rawprevout = raw.slice(0, 36);
     const rawscript = raw.slice(37, 145);
 
-    const input = Input.fromRaw(raw);
+    const input = Input.decode(raw);
 
     const type = input.getType();
     const addr = input.getAddress().toBase58('main');
-    const prevout = input.prevout.toRaw();
+    const prevout = input.prevout.encode();
 
     assert.strictEqual(type, 'pubkeyhash');
     assert.strictEqual(addr, '1PM9ZgAV8Z4df1md2zRTF98tPjzTAfk2a6');
@@ -63,7 +63,7 @@ describe('Input', function() {
     assert.strictEqual(input.isRBF(), false);
     assert.strictEqual(input.getSize(), raw.length);
 
-    assert.bufferEqual(input.script.toRaw(), rawscript);
+    assert.bufferEqual(input.script.encode(), rawscript);
     assert.bufferEqual(prevout, rawprevout);
   });
 
@@ -72,11 +72,11 @@ describe('Input', function() {
     const rawprevout = raw.slice(0, 36);
     const rawscript = raw.slice(37, 183);
 
-    const input = Input.fromRaw(raw);
+    const input = Input.decode(raw);
 
     const type = input.getType();
     const addr = input.getAddress();
-    const prevout = input.prevout.toRaw();
+    const prevout = input.prevout.encode();
 
     assert.strictEqual(type, 'multisig');
     assert.strictEqual(addr, null);
@@ -86,7 +86,7 @@ describe('Input', function() {
     assert.strictEqual(input.isRBF(), false);
     assert.strictEqual(input.getSize(), raw.length);
 
-    assert.bufferEqual(input.script.toRaw(), rawscript);
+    assert.bufferEqual(input.script.encode(), rawscript);
     assert.bufferEqual(prevout, rawprevout);
   });
 
@@ -97,13 +97,13 @@ describe('Input', function() {
     const rawscript = raw.slice(37, 257);
     const rawredeem = raw.slice(186, 257);
 
-    const input = Input.fromRaw(raw);
+    const input = Input.decode(raw);
 
     const type = input.getType();
     const subtype = input.getSubtype();
     const addr = input.getAddress().toBase58('main');
-    const prevout = input.prevout.toRaw();
-    const redeem = input.getRedeem().toRaw();
+    const prevout = input.prevout.encode();
+    const redeem = input.getRedeem().encode();
 
     assert.strictEqual(type, 'scripthash');
     assert.strictEqual(subtype, 'multisig');
@@ -114,7 +114,7 @@ describe('Input', function() {
     assert.strictEqual(input.isRBF(), true);
     assert.strictEqual(input.getSize(), raw.length);
 
-    assert.bufferEqual(input.script.toRaw(), rawscript);
+    assert.bufferEqual(input.script.encode(), rawscript);
     assert.bufferEqual(prevout, rawprevout);
     assert.bufferEqual(redeem, rawredeem);
   });
@@ -146,10 +146,10 @@ describe('Input', function() {
     rawscript.copy(raw, 36);
     sequence.copy(raw, raw.length - 4);
 
-    const input = Input.fromRaw(raw);
+    const input = Input.decode(raw);
 
     const type = input.getType();
-    const prevout = input.prevout.toRaw();
+    const prevout = input.prevout.encode();
 
     assert.strictEqual(type, 'coinbase');
     assert.strictEqual(input.isCoinbase(), true);
@@ -158,7 +158,7 @@ describe('Input', function() {
     assert.strictEqual(input.isRBF(), false);
     assert.strictEqual(input.getSize(), raw.length);
 
-    assert.bufferEqual(input.script.toRaw(), rawscript.slice(1));
+    assert.bufferEqual(input.script.encode(), rawscript.slice(1));
     assert.bufferEqual(prevout, rawprevout);
   });
 
@@ -176,10 +176,10 @@ describe('Input', function() {
     rawscript.copy(raw, 36);
     sequence.copy(raw, raw.length - 4);
 
-    const input = Input.fromRaw(raw);
+    const input = Input.decode(raw);
 
     const type = input.getType();
-    const prevout = input.prevout.toRaw();
+    const prevout = input.prevout.encode();
 
     assert.strictEqual(type, 'nonstandard');
     assert.strictEqual(input.isCoinbase(), false);
@@ -188,14 +188,14 @@ describe('Input', function() {
     assert.strictEqual(input.isRBF(), false);
     assert.strictEqual(input.getSize(), raw.length);
 
-    assert.bufferEqual(input.script.toRaw(), rawscript.slice(1));
+    assert.bufferEqual(input.script.encode(), rawscript.slice(1));
     assert.bufferEqual(prevout, rawprevout);
   });
 
   it('should be the same from same raw', () => {
     const raw = input1.slice();
-    const inputObject1 = Input.fromRaw(raw);
-    const inputObject2 = Input.fromRaw(raw);
+    const inputObject1 = Input.decode(raw);
+    const inputObject2 = Input.decode(raw);
     const equals = inputObject1.equals(inputObject2);
 
     assert.strictEqual(equals, true);
@@ -203,7 +203,7 @@ describe('Input', function() {
 
   it('should clone input correctly', () => {
     const raw = input1.slice();
-    const inputObject1 = Input.fromRaw(raw);
+    const inputObject1 = Input.decode(raw);
     const inputObject2 = inputObject1.clone();
     const equals = inputObject1.equals(inputObject2);
 
@@ -226,7 +226,7 @@ describe('Input', function() {
       sequence: 0
     };
 
-    const inputRaw = Input.fromRaw(raw);
+    const inputRaw = Input.decode(raw);
     const inputOptions = Input.fromOptions(options);
 
     assert.strictEqual(inputRaw.equals(inputOptions), true);

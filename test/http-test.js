@@ -271,7 +271,7 @@ describe('HTTP', function() {
   it('should send a block template proposal', async () => {
     const attempt = await node.miner.createBlock();
     const block = attempt.toBlock();
-    const hex = block.toRaw().toString('hex');
+    const hex = block.toHex();
     const json = await nclient.execute('getblocktemplate', [{
       mode: 'proposal',
       data: hex
@@ -286,7 +286,7 @@ describe('HTTP', function() {
     assert.deepStrictEqual(json, {
       isvalid: true,
       address: addr.toString(node.network),
-      scriptPubKey: Script.fromAddress(addr).toRaw().toString('hex'),
+      scriptPubKey: Script.fromAddress(addr).toHex(),
       iswitness: false,
       isscript: false
     });
@@ -532,7 +532,7 @@ describe('HTTP', function() {
     nclient.hook('block rescan', (entry, txs) => {
       // Coinbase transactions were mined to our watch address, matching filter.
       assert.strictEqual(txs.length, 1);
-      const cbtx = MTX.fromRaw(txs[0]);
+      const cbtx = MTX.decode(txs[0]);
       assert.strictEqual(
         cbtx.outputs[0].getAddress().toString('regtest'),
         walletAddr
@@ -540,7 +540,7 @@ describe('HTTP', function() {
 
       // Blocks are returned as raw ChainEntry
       matchingBlocks.push(
-        ChainEntry.fromRaw(entry).rhash().toString('hex')
+        ChainEntry.decode(entry).rhash().toString('hex')
       );
     });
 

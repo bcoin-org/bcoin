@@ -15,11 +15,11 @@ describe('Outpoint', () => {
   beforeEach(() => {
     tx1 = common.readTX('tx1').getRaw();
     raw1 = tx1.slice(5, 5+OUTPOINT_SIZE);
-    out1 = Outpoint.fromRaw(raw1);
+    out1 = Outpoint.decode(raw1);
   });
 
   it('should clone the outpoint correctly', () => {
-    const out1 = Outpoint.fromRaw(raw1);
+    const out1 = Outpoint.decode(raw1);
     const clone = out1.clone();
     const equals = out1.equals(clone);
 
@@ -63,7 +63,7 @@ describe('Outpoint', () => {
     const rawHash = '00000000000000000000000000000000000000000000' +
     '00000000000000000000';
     const rawIndex = 'ffffffff';
-    const nullOut = Outpoint.fromRaw(Buffer.from(rawHash + rawIndex, 'hex'));
+    const nullOut = Outpoint.fromHex(rawHash + rawIndex);
     assert(nullOut.isNull(), true);
   });
 
@@ -73,7 +73,7 @@ describe('Outpoint', () => {
   });
 
   it('should serialize to a key suitable for hash table', () => {
-    const expected = out1.toRaw();
+    const expected = out1.encode();
     const actual = out1.toKey();
     assert.bufferEqual(expected, actual);
   });
@@ -110,7 +110,7 @@ describe('Outpoint', () => {
   });
 
   it('should instantiate an outpoint from a tx', () => {
-    const tx = TX.fromRaw(tx1);
+    const tx = TX.decode(tx1);
     const index = 0;
     const fromTX = Outpoint.fromTX(tx, index);
 

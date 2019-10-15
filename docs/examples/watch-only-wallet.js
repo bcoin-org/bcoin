@@ -58,10 +58,10 @@ const bcoin = require('../..');
 
   // create new receive addresses through the deterministic chain
   const key1 = await wallet.createReceive(0);
-  const addr1 = key1.getAddress('string', 'regtest');
+  const addr1 = key1.getAddress().toString('regtest');
 
   const key2 = await wallet.createReceive(0);
-  const addr2 = key2.getAddress('string', 'regtest');
+  const addr2 = key2.getAddress().toString('regtest');
 
   console.log('Wallet:\n', wallet);
   console.log('Account:\n', acct0);

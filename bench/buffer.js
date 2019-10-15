@@ -14,7 +14,7 @@ const tx5 = common.readTX('tx5');
     tx.refresh();
     const {size} = tx.getWitnessSizes();
     const bw = new StaticWriter(size);
-    tx.toWriter(bw);
+    tx.write(bw);
     bw.render();
   }
   end(10000);
@@ -26,7 +26,7 @@ const tx5 = common.readTX('tx5');
   for (let i = 0; i < 10000; i++) {
     tx.refresh();
     const bw = new BufferWriter();
-    tx.toWriter(bw);
+    tx.write(bw);
     bw.render();
   }
   end(10000);

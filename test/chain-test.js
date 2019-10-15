@@ -336,7 +336,7 @@ describe('Chain', function() {
 
     const coin = await chain.getCoin(tx.hash(), 2);
 
-    assert.bufferEqual(coin.toRaw(), output.toRaw());
+    assert.bufferEqual(coin.encode(), output.encode());
   });
 
   it('should have correct wallet balance', async () => {
@@ -918,7 +918,7 @@ describe('Chain', function() {
 
       for (let j = 2; j < cb.outputs.length; j++) {
         mtx.addTX(cb, j);
-        mtx.inputs[j - 2].script.fromItems([script.toRaw()]);
+        mtx.inputs[j - 2].script.fromItems([script.encode()]);
       }
 
       mtx.addOutput(witWallet.getAddress(), 1);
