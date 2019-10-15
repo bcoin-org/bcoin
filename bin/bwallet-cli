@@ -352,7 +352,7 @@ class CLI {
 
     await this.wallet.abandon(hash);
 
-    this.log('Abandoned!');
+    this.log('Abandoned tx: ' + hash);
   }
 
   async viewTX() {
