@@ -347,6 +347,14 @@ class CLI {
     this.log('Zapped!');
   }
 
+  async abandonTX() {
+    const hash = this.config.str(0);
+
+    await this.wallet.abandon(hash);
+
+    this.log('Abandoned tx: ' + hash);
+  }
+
   async viewTX() {
     const raw = this.config.str([0, 'tx']);
     const tx = await this.wallet.fill(raw);
@@ -556,6 +564,9 @@ class CLI {
       case 'zap':
         await this.zapWallet();
         break;
+      case 'abandon':
+        await this.abandonTX();
+        break;
       case 'tx':
         await this.getDetails();
         break;
@@ -615,6 +626,7 @@ class CLI {
         this.log('  $ mktx [address] [value]: Create transaction.');
         this.log('  $ sign [tx-hex]: Sign transaction.');
         this.log('  $ zap [age?]: Zap pending wallet TXs.');
+        this.log('  $ abandon [hash]: Abandon a transaction.');
         this.log('  $ tx [hash]: View transaction details.');
         this.log('  $ blocks: List wallet blocks.');
         this.log('  $ block [height]: View wallet block.');
