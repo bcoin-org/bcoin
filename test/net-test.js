@@ -507,45 +507,6 @@ describe('Net', function() {
       check(pkt, true, true);
     });
 
-    it('reject', () => {
-      const check = (pkt) => {
-        assert.equal(pkt.cmd, 'reject');
-        assert.equal(pkt.type, packets.types.REJECT);
-
-        assert.equal(pkt.code, 1);
-        assert.equal(pkt.reason, 'test-reason');
-        assert.equal(pkt.message, 'block');
-
-        assert.equal(pkt.getCode(), 'malformed');
-
-        assert.bufferEqual(pkt.hash, Buffer.alloc(32, 0x01));
-      };
-
-      let pkt = new packets.RejectPacket({
-        message: 'block',
-        code: 1,
-        reason: 'test-reason',
-        hash: Buffer.alloc(32, 0x01)
-      });
-
-      check(pkt);
-
-      pkt = packets.RejectPacket.fromRaw(pkt.toRaw());
-      check(pkt);
-
-      pkt = packets.RejectPacket.fromReason(
-        'malformed',
-        'test-reason',
-        'block',
-        Buffer.alloc(32, 0x01)
-      );
-
-      check(pkt);
-
-      pkt = packets.RejectPacket.fromRaw(pkt.toRaw());
-      check(pkt);
-    });
-
     it('mempool (BIP35)', () => {
       const check = (pkt) => {
         assert.equal(pkt.cmd, 'mempool');
@@ -2085,19 +2046,12 @@ describe('Net', function() {
           increaseBan = true;
         };
 
-        let send = false;
-        peer.send = (packet) => {
-          assert.equal(packet.type, packets.types.REJECT);
-          send = true;
-        };
-
         pool.resolveTX = () => true;
 
         const pkt = new packets.TXPacket(block.txs[10]);
 
         await pool.handleTX(peer, pkt);
         assert(increaseBan);
-        assert(send);
       });
     });
 
