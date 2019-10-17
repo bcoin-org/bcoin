@@ -95,7 +95,7 @@ common.testdir = function(name) {
 };
 
 common.rimraf = async function(p) {
-  const allowed = /bcoin\-test\-[a-z]+\-[a-f0-9]{8}(\/[a-z]+)?$/;
+  const allowed = /bcoin\-test\-[a-z]+\-[a-f0-9]{8}((\\|\/)[a-z]+)?$/;
   if (!allowed.test(p))
     throw new Error(`Path not allowed: ${p}.`);
 
