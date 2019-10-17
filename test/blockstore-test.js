@@ -281,12 +281,20 @@ describe('BlockStore', function() {
   });
 
   describe('FileBlockStore (Unit)', function() {
-    const location = '/tmp/.bcoin/blocks';
+    const location = () => {
+      switch (process.platform) {
+        case 'win32':
+          return '\\tmp\\.bcoin\\blocks\\';
+        default:
+          return '/tmp/.bcoin/blocks/';
+      }
+    };
+
     let store = null;
 
     before(() => {
       store = new FileBlockStore({
-        location: location,
+        location: location(),
         maxFileLength: 1024
       });
     });
@@ -301,7 +309,7 @@ describe('BlockStore', function() {
         };
 
         const store = new FileBlockStore({
-          location: '/tmp/.bcoin/blocks',
+          location: location(),
           maxFileLength: 1024,
           logger: logger
         });
@@ -330,7 +338,7 @@ describe('BlockStore', function() {
 
         try {
           new FileBlockStore({
-            location: location,
+            location: location(),
             maxFileLength: 'notanumber'
           });
         } catch (e) {
@@ -358,32 +366,32 @@ describe('BlockStore', function() {
     describe('filepath', function() {
       it('will give correct path (0)', () => {
         const filepath = store.filepath(types.BLOCK, 0);
-        assert.equal(filepath, '/tmp/.bcoin/blocks/blk00000.dat');
+        assert.equal(filepath, `${location()}blk00000.dat`);
       });
 
       it('will give correct path (1)', () => {
         const filepath = store.filepath(types.BLOCK, 7);
-        assert.equal(filepath, '/tmp/.bcoin/blocks/blk00007.dat');
+        assert.equal(filepath, `${location()}blk00007.dat`);
       });
 
       it('will give correct path (2)', () => {
         const filepath = store.filepath(types.BLOCK, 23);
-        assert.equal(filepath, '/tmp/.bcoin/blocks/blk00023.dat');
+        assert.equal(filepath, `${location()}blk00023.dat`);
       });
 
       it('will give correct path (3)', () => {
         const filepath = store.filepath(types.BLOCK, 456);
-        assert.equal(filepath, '/tmp/.bcoin/blocks/blk00456.dat');
+        assert.equal(filepath, `${location()}blk00456.dat`);
       });
 
       it('will give correct path (4)', () => {
         const filepath = store.filepath(types.BLOCK, 8999);
-        assert.equal(filepath, '/tmp/.bcoin/blocks/blk08999.dat');
+        assert.equal(filepath, `${location()}blk08999.dat`);
       });
 
       it('will give correct path (5)', () => {
         const filepath = store.filepath(types.BLOCK, 99999);
-        assert.equal(filepath, '/tmp/.bcoin/blocks/blk99999.dat');
+        assert.equal(filepath, `${location()}blk99999.dat`);
       });
 
       it('will fail over max size', () => {
@@ -400,7 +408,7 @@ describe('BlockStore', function() {
 
       it('will give undo type', () => {
         const filepath = store.filepath(types.UNDO, 99999);
-        assert.equal(filepath, '/tmp/.bcoin/blocks/blu99999.dat');
+        assert.equal(filepath, `${location()}blu99999.dat`);
       });
 
       it('will fail for unknown prefix', () => {
@@ -446,7 +454,7 @@ describe('BlockStore', function() {
             filerecord: {
               used: 0
             },
-            filepath: '/tmp/.bcoin/blocks/blk00020.dat'
+            filepath: `${location()}blk00020.dat`
           };
         };
         store.db.has = () => false;
@@ -476,7 +484,7 @@ describe('BlockStore', function() {
             filerecord: {
               used: 0
             },
-            filepath: '/tmp/.bcoin/blocks/blk00020.dat'
+            filepath: `${location()}blk00020.dat`
           };
         };
         store.db.has = () => false;
@@ -515,7 +523,7 @@ describe('BlockStore', function() {
             filerecord: {
               used: 0
             },
-            filepath: '/tmp/.bcoin/blocks/blk00020.dat'
+            filepath: `${location()}blk00020.dat`
           };
         };
         store.db.has = () => false;
