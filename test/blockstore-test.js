@@ -81,24 +81,30 @@ describe('BlockStore', function() {
     });
 
     it('has unimplemented base methods', async () => {
-      const methods = ['open', 'close', 'write', 'writeUndo',
-                       'writeMerkle', 'read', 'readUndo', 'readMerkle',
-                       'prune', 'pruneUndo', 'pruneMerkle',
-                       'has', 'hasUndo', 'hasMerkle', 'ensure'];
+      const groups = {
+        base: ['open', 'close', 'ensure'],
+        block: ['write', 'read', 'prune', 'has'],
+        undo: ['writeUndo', 'readUndo', 'pruneUndo', 'hasUndo'],
+        filter: ['writeFilter', 'readFilter', 'readFilterHeader',
+                 'pruneFilter', 'hasFilter'],
+        merkle: ['writeMerkle', 'readMerkle', 'pruneMerkle', 'hasMerkle']
+      };
 
       const store = new AbstractBlockStore();
 
-      for (const method of methods) {
-        assert(store[method]);
+      for (const methods of Object.values(groups)) {
+        for (const method of methods) {
+          assert(store[method]);
 
-        let err = null;
-        try {
-          await store[method]();
-        } catch (e) {
-          err = e;
+          let err = null;
+          try {
+            await store[method]();
+          } catch (e) {
+            err = e;
+          }
+          assert(err, `Expected unimplemented method ${method}.`);
+          assert.equal(err.message, 'Abstract method.');
         }
-        assert(err, `Expected unimplemented method ${method}.`);
-        assert.equal(err.message, 'Abstract method.');
       }
     });
   });
