@@ -80,7 +80,7 @@ describe('BlockStore', function() {
       assert.equal(store.logger.info(), 'blockstore');
     });
 
-    it('has unimplemented base methods', async () => {
+    describe('unimplemented base methods', function() {
       const groups = {
         base: ['open', 'close', 'ensure'],
         block: ['write', 'read', 'prune', 'has'],
@@ -94,16 +94,15 @@ describe('BlockStore', function() {
 
       for (const methods of Object.values(groups)) {
         for (const method of methods) {
-          assert(store[method]);
-
-          let err = null;
-          try {
-            await store[method]();
-          } catch (e) {
-            err = e;
-          }
-          assert(err, `Expected unimplemented method ${method}.`);
-          assert.equal(err.message, 'Abstract method.');
+          it(`${method}`, async () => {
+            assert(store[method]);
+            assert.rejects(async () => {
+              await store[method]();
+            }, {
+              name: 'Error',
+              message: 'Abstract method.'
+            });
+          });
         }
       }
     });
