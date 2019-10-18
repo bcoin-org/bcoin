@@ -21,6 +21,7 @@ const HD = require('../lib/hd');
 const Wallet = require('../lib/wallet/wallet');
 const nodejsUtil = require('util');
 const HDPrivateKey = require('../lib/hd/private');
+const policy = require('../lib/protocol/policy');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -246,10 +247,6 @@ describe('Wallet', function() {
   after(async () => {
     await wdb.close();
     await workers.close();
-  });
-
-  it('should open walletdb', () => {
-    consensus.COINBASE_MATURITY = 0;
   });
 
   it('should generate new key and address', async () => {
@@ -1912,8 +1909,111 @@ describe('Wallet', function() {
     }
   });
 
-  it('should cleanup', async () => {
-    consensus.COINBASE_MATURITY = 100;
-    // await wdb.close();
+  it('should count pending ancestors', async () => {
+    // Create wallet and get one address
+    const wallet = await wdb.create();
+    const addr1 = await wallet.receiveAddress();
+
+    // Dummy address for outputs
+    const recAddr = Address.fromHash(Buffer.alloc(20, 1));
+
+    // Add one single, unconfirmed coin to wallet
+    const mtx = new MTX();
+    mtx.addInput(dummyInput());
+    mtx.addOutput(addr1, 10 * 1e8);
+    const tx0 = mtx.toTX();
+    await wallet.txdb.add(tx0, null);
+
+    let ancs = null;
+    ancs = await wallet.getPendingAncestors(tx0);
+    assert.strictEqual(ancs.size, 0);
+
+    // Create one tx
+    const tx1 = await wallet.send({
+      outputs: [{
+        address: recAddr,
+        value: 10000
+      }]
+    });
+    ancs = await wallet.getPendingAncestors(tx1);
+    assert.strictEqual(ancs.size, 1);
+
+    // Create a second tx
+    const tx2 = await wallet.send({
+      outputs: [{
+        address: recAddr,
+        value: 10000
+      }]
+    });
+    ancs = await wallet.getPendingAncestors(tx2);
+    assert.strictEqual(ancs.size, 2);
+
+    // Confirm tx0 with dummy block
+    const block100 = {
+      height: 100,
+      hash: Buffer.alloc(32, 0),
+      time: Date.now()
+    };
+    const wtx0 = await wallet.txdb.getTX(tx0.hash());
+    await wallet.txdb.confirm(wtx0, block100);
+
+    ancs = await wallet.getPendingAncestors(tx2);
+    assert.strictEqual(ancs.size, 1);
+
+    // Confirm tx1 with dummy block
+    const block101 = {
+      height: 101,
+      hash: Buffer.alloc(32, 1),
+      time: Date.now()
+    };
+    const wtx1 = await wallet.txdb.getTX(tx1.hash());
+    await wallet.txdb.confirm(wtx1, block101);
+
+    ancs = await wallet.getPendingAncestors(tx2);
+    assert.strictEqual(ancs.size, 0);
+  });
+
+  it('should not exceed MEMPOOL_MAX_ANCESTORS policy', async () => {
+    // Create wallet and get one address
+    const wallet = await wdb.create();
+    const addr1 = await wallet.receiveAddress();
+
+    // Dummy address for outputs
+    const recAddr = Address.fromHash(Buffer.alloc(20, 1));
+
+    // Add one single, unconfirmed coin to wallet
+    const mtx1 = new MTX();
+    mtx1.addInput(dummyInput());
+    mtx1.addOutput(addr1, 10 * 1e8);
+    const tx1 = mtx1.toTX();
+    await wallet.txdb.add(tx1, null);
+
+    // Spend unconfirmed change outputs up to the limit
+    const limit = policy.MEMPOOL_MAX_ANCESTORS;
+    for (let i = 0; i < limit - 1; i++) {
+      const tx = await wallet.send({
+        outputs: [{
+          address: recAddr,
+          value: 10000
+        }]
+      });
+      assert(await wallet.txdb.hasPending(tx.hash()));
+    }
+
+    // At the limit
+    const pending = await wallet.getPending();
+    assert.strictEqual(pending.length, policy.MEMPOOL_MAX_ANCESTORS);
+
+    // One more unconfirmed change spend would exceed the limit
+    assert.rejects(async () => {
+      await wallet.send({
+        outputs: [{
+          address: recAddr,
+          value: 10000
+        }]
+      });
+    }, {
+      message: 'TX exceeds maximum unconfirmed ancestors.'
+    });
   });
 });
