@@ -31,6 +31,10 @@ const undos = [
   common.readBlock('block928849')
 ];
 
+const merkles = [
+  common.readMerkle('merkle300025-extended')
+];
+
 const {
   AbstractBlockStore,
   FileBlockStore,
@@ -76,24 +80,30 @@ describe('BlockStore', function() {
       assert.equal(store.logger.info(), 'blockstore');
     });
 
-    it('has unimplemented base methods', async () => {
-      const methods = ['open', 'close', 'write', 'writeUndo',
-                       'read', 'readUndo', 'prune', 'pruneUndo',
-                       'has', 'hasUndo', 'ensure'];
+    describe('unimplemented base methods', function() {
+      const groups = {
+        base: ['open', 'close', 'ensure'],
+        block: ['write', 'read', 'prune', 'has'],
+        undo: ['writeUndo', 'readUndo', 'pruneUndo', 'hasUndo'],
+        filter: ['writeFilter', 'readFilter', 'readFilterHeader',
+                 'pruneFilter', 'hasFilter'],
+        merkle: ['writeMerkle', 'readMerkle', 'pruneMerkle', 'hasMerkle']
+      };
 
       const store = new AbstractBlockStore();
 
-      for (const method of methods) {
-        assert(store[method]);
-
-        let err = null;
-        try {
-          await store[method]();
-        } catch (e) {
-          err = e;
+      for (const methods of Object.values(groups)) {
+        for (const method of methods) {
+          it(`${method}`, async () => {
+            assert(store[method]);
+            assert.rejects(async () => {
+              await store[method]();
+            }, {
+              name: 'Error',
+              message: 'Abstract method.'
+            });
+          });
         }
-        assert(err, `Expected unimplemented method ${method}.`);
-        assert.equal(err.message, 'Abstract method.');
       }
     });
   });
@@ -411,6 +421,11 @@ describe('BlockStore', function() {
         assert.equal(filepath, `${location()}blu99999.dat`);
       });
 
+      it('will give merkle type', () => {
+        const filepath = store.filepath(types.MERKLE, 99999);
+        assert.equal(filepath, `${location()}blm99999.dat`);
+      });
+
       it('will fail for unknown prefix', () => {
         let err = null;
         try {
@@ -671,6 +686,17 @@ describe('BlockStore', function() {
       assert.bufferEqual(block1, block2);
     });
 
+    it('will write and read merkle block', async () => {
+      const block1 = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+
+      await store.writeMerkle(hash, block1);
+
+      const block2 = await store.readMerkle(hash);
+
+      assert.bufferEqual(block1, block2);
+    });
+
     it('will read a block w/ offset and length', async () => {
       const block1 = random.randomBytes(128);
       const hash = random.randomBytes(32);
@@ -770,6 +796,33 @@ describe('BlockStore', function() {
       for (let i = 0; i < 16; i++) {
         const expect = blocks[i];
         const block = await store.readUndo(expect.hash);
+        assert.bufferEqual(block, expect.block);
+      }
+    });
+
+    it('will allocate new files with merkle blocks', async () => {
+      const blocks = [];
+
+      for (let i = 0; i < 16; i++) {
+        const block = random.randomBytes(128);
+        const hash = random.randomBytes(32);
+        blocks.push({hash, block});
+        await store.writeMerkle(hash, block);
+        const block2 = await store.readMerkle(hash);
+        assert.bufferEqual(block2, block);
+      }
+
+      const first = await fs.stat(store.filepath(types.MERKLE, 0));
+      const second = await fs.stat(store.filepath(types.MERKLE, 1));
+      const third = await fs.stat(store.filepath(types.MERKLE, 2));
+
+      const magic = (8 * 16);
+      const len = first.size + second.size + third.size - magic;
+      assert.equal(len, 128 * 16);
+
+      for (let i = 0; i < 16; i++) {
+        const expect = blocks[i];
+        const block = await store.readMerkle(expect.hash);
         assert.bufferEqual(block, expect.block);
       }
     });
@@ -1145,6 +1198,37 @@ describe('BlockStore', function() {
         assert.bufferEqual(block, expect.block);
       }
     });
+
+    it('will import merkle blocks from files', async () => {
+      const blocks = [];
+
+      for (let i = 0; i < merkles.length; i++) {
+        const [block] = merkles[i].getBlock();
+        const hash = block.hash();
+        const raw = merkles[i].getRaw();
+
+        blocks.push({hash, block: raw});
+        await store.writeMerkle(hash, raw);
+      }
+
+      await store.close();
+
+      await rimraf(resolve(location, './index'));
+
+      store = new FileBlockStore({
+        location: location,
+        maxFileLength: 1024
+      });
+
+      await store.open();
+
+      for (let i = 0; i < blocks.length; i++) {
+        const expect = blocks[i];
+        const block = await store.readMerkle(expect.hash);
+        assert.equal(block.length, expect.block.length);
+        assert.bufferEqual(block, expect.block);
+      }
+    });
   });
 
   describe('LevelBlockStore', function() {
@@ -1188,6 +1272,17 @@ describe('BlockStore', function() {
       await store.writeUndo(hash, block1);
 
       const block2 = await store.readUndo(hash);
+
+      assert.bufferEqual(block1, block2);
+    });
+
+    it('will write and read merkle block', async () => {
+      const block1 = random.randomBytes(128);
+      const hash = random.randomBytes(32);
+
+      await store.writeMerkle(hash, block1);
+
+      const block2 = await store.readMerkle(hash);
 
       assert.bufferEqual(block1, block2);
     });
