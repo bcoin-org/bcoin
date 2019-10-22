@@ -1177,6 +1177,45 @@ describe('Wallet', function() {
     assert.strictEqual(t2.getFee(), 10000);
   });
 
+  it('should use the change address in the options', async () => {
+    const alice = await wdb.create();
+
+    const receive = Address.fromPubkeyhash(Buffer.alloc(20, 1));
+    const change = Address.fromPubkeyhash(Buffer.alloc(20, 2));
+
+    // Coinbase
+    const t1 = new MTX();
+    t1.addInput(dummyInput());
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+
+    await wdb.addTX(t1.toTX());
+
+    const options = {
+      subtractFee: true,
+      rate: 0,
+      sort: false,
+      round: true,
+      outputs: [{address: receive, value: 21000}],
+      changeAddress: change
+    };
+
+    // Create new transaction
+    const t2 = await alice.createTX(options);
+    await alice.sign(t2);
+
+    assert(t2.verify());
+
+    assert.strictEqual(t2.outputs.length, 2);
+
+    assert.bufferEqual(t2.outputs[0].getHash(), receive.getHash());
+    assert.bufferEqual(t2.outputs[1].getHash(), change.getHash());
+    assert.strictEqual(t2.outputs[0].value, 21000);
+    assert.strictEqual(t2.outputs[1].value, t2.getInputValue() - 21000);
+  });
+
   it('should fill tx with smart coin selection', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();

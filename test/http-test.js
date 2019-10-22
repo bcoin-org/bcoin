@@ -446,6 +446,31 @@ describe('HTTP', function() {
     }
   });
 
+  it('should create a transaction using the change address', async () => {
+    const receive = Address.fromPubkeyhash(Buffer.alloc(20, 1)).toString('regtest');
+    const change = Address.fromPubkeyhash(Buffer.alloc(20, 2)).toString('regtest');
+
+    const tx = await wallet.createTX({
+      sign: false,
+      sort: false,
+      rate: 0,
+      outputs: [{
+        address: receive,
+        value: 50000
+      }],
+      changeAddress: change
+    });
+
+    const total = tx.inputs.reduce((acc, input) => acc + input.coin.value, 0);
+
+    assert.strictEqual(tx.outputs.length, 2);
+
+    assert.strictEqual(tx.outputs[0].address, receive);
+    assert.strictEqual(tx.outputs[1].address, change);
+    assert.strictEqual(tx.outputs[0].value, 50000);
+    assert.strictEqual(tx.outputs[1].value, total - 50000);
+  });
+
   it('should generate 10 blocks from RPC call', async () => {
     blocks = await nclient.execute(
       'generatetoaddress',
