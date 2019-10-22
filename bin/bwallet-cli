@@ -322,7 +322,8 @@ class CLI {
       outputs: [output],
       smart: this.config.bool('smart'),
       rate: this.config.ufixed('rate', 8),
-      subtractFee: this.config.bool('subtract-fee')
+      subtractFee: this.config.bool('subtract-fee'),
+      sign: this.config.bool('sign')
     };
 
     const tx = await this.wallet.createTX(options);
