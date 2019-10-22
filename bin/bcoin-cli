@@ -127,6 +127,15 @@ class CLI {
     this.log(filter);
   }
 
+  async estimateFee() {
+    const blocks = this.config.uint(0, 1);
+
+    await this.client.open();
+    const fee = await this.client.estimateFee(blocks);
+
+    this.log(fee);
+  }
+
   async getCoin() {
     const hash = this.config.str(0, '');
     const index = this.config.uint(1);
@@ -226,6 +235,9 @@ class CLI {
       case 'filter':
         await this.getFilter();
         break;
+      case 'fee':
+        await this.estimateFee();
+        break;
       case 'reset':
         await this.reset();
         break;
@@ -243,6 +255,7 @@ class CLI {
         this.log('  $ block [hash/height]: View block.');
         this.log('  $ header [hash/height]: View block header.');
         this.log('  $ filter [hash/height]: View filter');
+        this.log('  $ fee [target]: Estimate smart fee');
         this.log('  $ reset [height/hash]: Reset chain to desired block.');
         this.log('  $ rpc [command] [args]: Execute RPC command.' +
           ' (`bcoin-cli rpc help` for more)');
