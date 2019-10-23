@@ -259,8 +259,8 @@ class CLI {
         this.log('  $ coin [hash+index/address]: View coins.');
         this.log('  $ block [hash/height]: View block.');
         this.log('  $ header [hash/height]: View block header.');
-        this.log('  $ filter [hash/height]: View filter');
-        this.log('  $ fee [target]: Estimate smart fee');
+        this.log('  $ filter [hash/height]: View filter.');
+        this.log('  $ fee [target]: Estimate smart fee.');
         this.log('  $ reset [height/hash]: Reset chain to desired block.');
         this.log('  $ rpc [command] [args]: Execute RPC command.' +
           ' (`bcoin-cli rpc help` for more)');
