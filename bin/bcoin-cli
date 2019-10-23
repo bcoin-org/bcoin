@@ -4,6 +4,7 @@
 
 const Config = require('bcfg');
 const NodeClient = require('../lib/client/node');
+const Amount = require('../lib/btc/amount');
 
 const ports = {
   main: 8332,
@@ -132,7 +133,12 @@ class CLI {
 
     const fee = await this.client.estimateFee(blocks);
 
-    this.log(fee);
+    if (!fee) {
+      this.log('Fee not found.');
+      return;
+    }
+
+    this.log(Amount.btc(fee.rate));
   }
 
   async getCoin() {
