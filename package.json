@@ -25,7 +25,7 @@
   "dependencies": {
     "bcfg": "~0.1.6",
     "bcrypto": "~3.1.11",
-    "bcurl": "^0.1.6",
+    "bcurl": "https://github.com/tynes/bcurl.git#fix-join",
     "bdb": "~1.1.7",
     "bdns": "~0.1.5",
     "bevent": "~0.1.5",
