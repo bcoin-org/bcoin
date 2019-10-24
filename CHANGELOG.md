@@ -43,6 +43,15 @@ take multiple hours (e.g. 8 hours) depending on hardware and the
 index. Please take the potential downtime in re-indexing into account
 before upgrading.
 
+
+### Client API changes
+
+- Client module `/lib/client` was created from the external dependency `bclient`.
+- `NodeClient` method `estimateFee` now returns JSON instead of a number.
+- Added `fee` command to `bcoin-cli`.
+- Added `getBlockHeader` to `NodeClient` and corresponding `header` command to CLI.
+- Added `getFilter` to `NodeClient` and corresponding `filter` command to CLI.
+
 ### Wallet API changes
 
 #### HTTP

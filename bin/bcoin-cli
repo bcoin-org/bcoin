@@ -131,14 +131,14 @@ class CLI {
   async estimateFee() {
     const blocks = this.config.uint(0, 1);
 
-    const fee = await this.client.estimateFee(blocks);
+    const json = await this.client.estimateFee(blocks);
 
-    if (!fee) {
+    if (!json) {
       this.log('Fee not found.');
       return;
     }
 
-    this.log(Amount.btc(fee.rate));
+    this.log(Amount.btc(json.rate));
   }
 
   async getCoin() {
