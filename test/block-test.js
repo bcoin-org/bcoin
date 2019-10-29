@@ -12,6 +12,7 @@ const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
+const Opcode = require('../lib/script/opcode');
 const nodejsUtil = require('util');
 const bip152 = require('../lib/net/bip152');
 const CompactBlock = bip152.CompactBlock;
@@ -22,6 +23,7 @@ const CoinView = require('../lib/coins/coinview');
 const random = require('bcrypto/lib/random');
 const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
+const Golomb = require('../lib/golomb/golomb');
 
 // Block test vectors
 const block300025 = common.readBlock('block300025');
@@ -513,4 +515,40 @@ describe('Block', function() {
       assert.strictEqual(header.reverse().toString('hex'), json[6]);
     });
   }
+
+  it('should match all valid input & output scripts', function() {
+    const OP_RETURN = Opcode.fromSymbol('return');
+    const testVector = filterTests.slice(2);
+    for (const testCase of testVector) {
+      // Building an array of raw items from the test vector data
+      const items = []; // Corresponds to the L vector in the BIP-158
+      const [, hash, blk, prevScripts, , filter] = testCase;
+      const block = Block.fromRaw(Buffer.from(blk, 'hex'));
+      if (prevScripts.length > 0) {
+        const scripts = prevScripts
+                          .filter(str => str.length > 0)
+                          .map(str => Script.fromRaw(str, 'hex'));
+        // Adding previous output scripts
+        items.push(...scripts);
+      }
+      for (const tx of block.txs) {
+        for (const out of tx.outputs) {
+          const {script} = out;
+          const hasOpReturn = script.toArray()
+                                    .find(element => OP_RETURN.equals(element));
+          // Only adding scripts of length > 0 and which don't contain OP_RETURN
+          if (script.length > 0 && !hasOpReturn)
+            items.push(out.script);
+        }
+      }
+      // Building a filter instance & performing the test with the items
+      const golomb = Golomb.fromRaw(Buffer.from(filter, 'hex'));
+      // The key are the first 16 bytes from the block hash in little endian
+      const key = Buffer.from(hash, 'hex').reverse();
+      for (const script of items) {
+        const matches = golomb.match(key, script.toRaw());
+        assert.equal(matches, true, 'The data must match the provided filter');
+      }
+    }
+  });
 });
