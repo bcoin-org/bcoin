@@ -68,7 +68,7 @@ function randomKey() {
 }
 
 function randomOutpoint() {
-  const hash = random.randomBytes(32).toString('hex');
+  const hash = random.randomBytes(32);
   return new Outpoint(hash, rand(0, 0xffffffff));
 }
 
