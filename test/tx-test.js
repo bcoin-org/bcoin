@@ -227,7 +227,7 @@ describe('TX', function() {
       const coin = view.getOutputFor(tx.inputs[0]);
       const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx, noCache);
-      assert(tx.verifyInput(0, coin, flags));
+      assert(tx.verifyInput(0, [coin], flags));
     });
 
     it(`should parse witness tx properly ${suffix}`, () => {
