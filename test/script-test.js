@@ -304,6 +304,11 @@ describe('Script', function() {
           locktime: 0
         });
 
+        const coin = {
+          script: output,
+          value: value
+        };
+
         // Spending transaction.
         const tx = new TX({
           version: 1,
@@ -330,7 +335,7 @@ describe('Script', function() {
 
         let err;
         try {
-          Script.verify(input, witness, output, tx, 0, value, flags);
+          Script.verify(tx, 0, [coin], flags);
         } catch (e) {
           err = e;
         }

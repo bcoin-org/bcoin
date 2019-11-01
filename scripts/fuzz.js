@@ -391,14 +391,16 @@ function fuzzVerify(flags) {
 
     tx.refresh();
 
+    const coin = {
+      script: output,
+      value: 0
+    };
+
     try {
       Script.verify(
-        input,
-        witness,
-        output,
         tx,
         0,
-        0,
+        [coin],
         flags
       );
     } catch (e) {
@@ -448,14 +450,16 @@ function fuzzLess(flags) {
 
     tx.refresh();
 
+    const coin = {
+      script: ctx.output,
+      value: 0
+    };
+
     try {
       Script.verify(
-        ctx.input,
-        ctx.witness,
-        ctx.output,
         tx,
         0,
-        0,
+        [coin],
         flags
       );
     } catch (e) {
