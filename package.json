@@ -20,7 +20,7 @@
     "wallet"
   ],
   "engines": {
-    "node": ">=8.6.0"
+    "node": ">=10.0.0"
   },
   "dependencies": {
     "bcfg": "~0.1.6",
