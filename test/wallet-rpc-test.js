@@ -33,6 +33,7 @@ const node = new FullNode({
   plugins: [require('../lib/wallet/plugin')],
   port: ports.p2p,
   httpPort: ports.node,
+  indexTx: true,
   env: {
     'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
   }
@@ -285,6 +286,55 @@ describe('Wallet RPC Methods', function() {
     }, {
       name: 'Error',
       message: 'Block not found.'
+    });
+  });
+
+  describe('gettransaction', () => {
+    it('should get a sent TX', async () => {
+      await wclient.execute('selectwallet', ['miner']);
+      const amount = 1.01020304;
+      const txid = await wclient.execute('sendtoaddress', [addressHot, amount]);
+
+      const wtx = await wclient.execute('gettransaction', [txid]);
+      assert.strictEqual(wtx.details.length, 1);
+      assert.strictEqual(wtx.details[0].category, 'send');
+      assert.strictEqual(wtx.details[0].address, addressHot);
+      assert.strictEqual(wtx.details[0].amount, amount * -1);
+      assert.strictEqual(wtx.amount, amount * -1);
+
+      // Check the fee is correct
+      const nodeTX = await nclient.execute('getrawtransaction', [txid, 1]);
+      let inValue = 0;
+      let outValue = 0;
+      for (const input of nodeTX.vin) {
+        const coin = await nclient.execute('getrawtransaction', [input.txid, 1]);
+        inValue += coin.vout[input.vout].value;
+      }
+      for (const output of nodeTX.vout) {
+        outValue += output.value;
+      }
+      // This will be negative, just like the wallet's TX details' fee
+      const fee = (outValue * 1e8) - (inValue * 1e8);
+      assert.strictEqual(fee, wtx.details[0].fee * 1e8);
+
+      // Clear mempool
+      await nclient.execute('generatetoaddress', [1, addressMiner]);
+    });
+
+    it('should get a received TX', async () => {
+      const blocks =
+        await nclient.execute('generatetoaddress', [1, addressMiner]);
+      const block = await nclient.execute('getblock', [blocks[0], 1]);
+      const txid = block.tx[0];
+
+      await wdb.syncChain();
+
+      const wtx = await wclient.execute('gettransaction', [txid, 1]);
+      assert.strictEqual(wtx.details.length, 1);
+      assert.strictEqual(wtx.details[0].category, 'receive');
+      assert.strictEqual(wtx.details[0].address, addressMiner);
+      assert.strictEqual(wtx.details[0].amount, 50);
+      assert.strictEqual(wtx.amount, 50);
     });
   });
 
