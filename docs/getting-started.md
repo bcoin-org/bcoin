@@ -9,7 +9,7 @@ and is aware of all known consensus rules.
 ## Requirements
 
 - Linux, OSX, or Windows (\*) (\*\*)
-- node.js >=v8.14.0
+- node.js >=v10.0.0
 - npm >=v6.4.1
 - python2 (for node-gyp)
 - gcc/g++ (for leveldb and secp256k1)
