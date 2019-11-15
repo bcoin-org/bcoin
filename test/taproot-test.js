@@ -106,4 +106,29 @@ describe('Taproot', function() {
       }
     }
   });
+
+  describe('Get Spend Type', () => {
+    for (const test of getTests()) {
+      for (let i = 0; i < test.tx.inputs.length; i++) {
+        if (test.inputs[i].mode !== 'taproot')
+          continue;
+
+        it(test.inputs[i].comment, () => {
+          const spendtype = test.tx.inputs[i].witness.getSpendType();
+
+          if (test.inputs[i].annex != null)
+            assert(spendtype & (1 << 0));
+
+          if (test.inputs[i].annex == null)
+            assert(~spendtype & (1 << 0));
+
+          if (test.inputs[i].script != null)
+            assert(spendtype & (1 << 1));
+
+          if (test.inputs[i].script == null)
+            assert(~spendtype & (1 << 1));
+        });
+      }
+    }
+  });
 });
