@@ -11,11 +11,13 @@ const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
 const Script = require('../lib/script/script');
 const Address = require('../lib/primitives/address');
-const network = Network.get('regtest');
 const mnemonics = require('./data/mnemonic-english.json');
 const {forValue} = require('./util/common');
+
 // Commonly used test mnemonic
 const phrase = mnemonics[0][1];
+
+const network = Network.get('regtest');
 
 const ports = {
   p2p: 49331,
@@ -41,12 +43,14 @@ const node = new FullNode({
 const {wdb} = node.require('walletdb');
 
 const nclient = new NodeClient({
+  host: '127.0.0.1',
   port: ports.node,
   apiKey: 'bar',
   timeout: 15000
 });
 
 const wclient = new WalletClient({
+  host: '127.0.0.1',
   port: ports.wallet,
   apiKey: 'bar'
 });
@@ -285,6 +289,52 @@ describe('Wallet RPC Methods', function() {
     }, {
       name: 'Error',
       message: 'Block not found.'
+    });
+  });
+
+  describe('signmessage', function() {
+    const nonWalletAddress = '2N2PyYb9yKLhFzYfdWLr6LNsdzC9keVgK6f';
+    const message = 'This is just a test message';
+
+    it('should signmessage with address', async () => {
+      const address = await wclient.execute('getnewaddress');
+
+      const signature = await wclient.execute('signmessage', [
+        address,
+        message
+      ]);
+
+      const verify = await nclient.execute('verifymessage', [
+        address,
+        signature,
+        message
+      ]);
+
+      assert.strictEqual(verify, true);
+    });
+
+    it('should fail with invalid address', async () => {
+      await assert.rejects(async () => {
+        await wclient.execute('signmessage', [
+          'invalid address format',
+          message
+        ]);
+      }, {
+        type: 'RPCError',
+        message: 'Invalid address.'
+      });
+    });
+
+    it('should fail with non-wallet address.', async () => {
+      await assert.rejects(async () => {
+        await wclient.execute('signmessage', [
+          nonWalletAddress,
+          message
+        ]);
+      }, {
+        type: 'RPCError',
+        message: 'Address not found.'
+      });
     });
   });
 
