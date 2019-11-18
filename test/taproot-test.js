@@ -5,9 +5,12 @@
 'use strict';
 
 const assert = require('bsert');
+const BufferReader = require('bufio').BufferReader;
 const TX = require('../lib/primitives/tx');
+const Coin = require('../lib/primitives/coin');
 const {TaggedHash} = require('../lib/utils/taggedhash');
 const Script = require('../lib/script/script');
+const {digests} = Script;
 const common = require('./util/common');
 
 // Test data from https://github.com/pinheadmz/bitcoin/tree/taproottest-0.21.1
@@ -164,6 +167,75 @@ describe('Taproot', function() {
             assert(!actual);
           else
             assert(actual);
+        });
+      }
+    }
+  });
+
+  describe('Compute BIP341/BIP342 Sighash', () => {
+    for (const test of getTests()) {
+      const tx = test.tx;
+
+      // Collect all inputs to this TX
+      const coins = [];
+      for (let i = 0; i < tx.inputs.length; i++) {
+        const key = tx.inputs[i].prevout.toKey();
+        const coin = Coin.fromKey(key);
+
+        const utxo = new BufferReader(
+          Buffer.from(test.prevouts[i], 'hex')
+        );
+
+        coin.value = utxo.readI64();
+        coin.script.fromRaw(utxo.readVarBytes());
+
+        coins.push(coin);
+      }
+
+      // Test the sighash of each input
+      for (let i = 0; i < tx.inputs.length; i++) {
+        if (test.inputs[i].mode !== 'taproot')
+          continue;
+
+        // Skip test cases with "unknown" 33-byte public keys.
+        // These sighashes are randomly bitflipped in the Bitcoin Core
+        // test to ensure they are actually NOT checked.
+        if (test.inputs[i].comment.match(/oldpk/g))
+          continue;
+
+        // The top witness stack item is the signature
+        const sig = tx.inputs[i].witness.items[0];
+
+        // In Taproot, SIGHASH_ALL is default.
+        // A 65-byte signature indicates a custom sighash type.
+        // Some test vectors include signatures of other lengths.
+        // These are mostly invalid, but can be accepted in some
+        // edge cases such as OP_SUCCESSx. Skip them for this test.
+        let type = 0;
+        if (sig.length === 65)
+          type = sig[sig.length - 1];
+        else if (sig.length !== 64)
+          continue;
+
+        it(test.inputs[i].comment, () => {
+          let codeseppos = 0xffffffff;
+          if (test.inputs[i].codeseppos >= 0)
+            codeseppos = test.inputs[i].codeseppos;
+
+          const coin = coins[i];
+          const actual = tx.signatureHash(
+            i,
+            coin.script,
+            coin.value,
+            type,
+            digests.TAPROOT,
+            coins,
+            codeseppos
+          );
+
+          const expected = Buffer.from(test.inputs[i].sighash, 'hex');
+
+          assert.bufferEqual(expected, actual, null, test.inputs[i].comment);
         });
       }
     }
