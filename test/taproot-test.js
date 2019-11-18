@@ -131,4 +131,41 @@ describe('Taproot', function() {
       }
     }
   });
+
+  describe('Get Tapleaf', () => {
+    for (const test of getTests()) {
+      for (let i = 0; i < test.tx.inputs.length; i++) {
+        if (test.inputs[i].mode !== 'taproot')
+          continue;
+
+        it(test.inputs[i].comment, () => {
+          const actual = test.tx.inputs[i].witness.getTapleaf();
+          const expected = test.inputs[i].script;
+
+          if (test.inputs[i].script == null)
+            assert(actual == null);
+          else
+            assert.bufferEqual(Buffer.from(expected, 'hex'), actual);
+        });
+      }
+    }
+  });
+
+  describe('Get Control Block', () => {
+    for (const test of getTests()) {
+      for (let i = 0; i < test.tx.inputs.length; i++) {
+        if (test.inputs[i].mode !== 'taproot')
+          continue;
+
+        it(test.inputs[i].comment, () => {
+          const actual = test.tx.inputs[i].witness.getControlBlock();
+
+          if (test.inputs[i].script == null)
+            assert(!actual);
+          else
+            assert(actual);
+        });
+      }
+    }
+  });
 });
