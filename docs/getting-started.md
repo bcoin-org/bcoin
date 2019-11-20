@@ -107,12 +107,14 @@ availability. For example, here is an example `package.json`:
 ```json
 {
   "dependencies": {
-    "bcoin": "git+ssh://git@github.com:bcoin-org/bcoin.git#semver:~2.0.0"
+    "bcoin": "git+https://github.com/bcoin-org/bcoin.git#semver:~2.0.0"
   }
 }
 ```
 _Note_: While git tags are signed, `npm` will not check the signature
 of the git tag.
+_Note_: See [Git URLs as Dependencies][giturls] `npm` documentaion for
+additional details for using git as a dependency.
 
 If your project shares any dependencies you may want to de-duplicate, you can
 do this by running:
@@ -249,3 +251,4 @@ See [Configuration][configuration].
 [keybase]: https://keybase.io/chjj#show-public
 [node]: https://nodejs.org
 [configuration]: configuration.md
+[giturls]: https://docs.npmjs.com/files/package.json.html#git-urls-as-dependencies
