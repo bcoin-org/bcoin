@@ -45,11 +45,20 @@ $ git tag -v <version> # verify signature
 $ git checkout <version>
 ```
 
+You can also verify signatures using:
+```
+$ git log --show-signature
+```
+
 Build and install globally:
 ```
 $ npm rebuild
 $ npm install -g # link globally
 ```
+
+If you're updating a repository it is necessary to run `npm rebuild` again
+if any dependencies with native addons have been updated.
+
 ### Installing on Debian/Ubuntu
 
 Install the necessary dependencies in addition to Node.js:
