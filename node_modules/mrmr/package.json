@@ -1,0 +1,36 @@
+{
+  "name": "mrmr",
+  "version": "0.1.8",
+  "description": "Murmur3 for javascript",
+  "keywords": [
+    "murmur3"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/mrmr.git",
+  "homepage": "https://github.com/bcoin-org/mrmr",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/mrmr/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/mrmr.js",
+  "scripts": {
+    "install": "node-gyp rebuild || echo 'Build failed.'",
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10",
+    "loady": "~0.0.1",
+    "nan": "^2.13.1"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "gypfile": true,
+  "browser": {
+    "./lib/murmur3": "./lib/murmur3-browser.js"
+  }
+}

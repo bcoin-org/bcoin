@@ -1,0 +1,94 @@
+/*!
+ * bcrypto.js - crypto for bcoin
+ * Copyright (c) 2014-2018, Christopher Jeffrey (MIT License).
+ * https://github.com/bcoin-org/bcrypto
+ */
+
+'use strict';
+
+exports.AEAD = require('./aead');
+exports.aes = require('./aes');
+exports.BLAKE2b = require('./blake2b');
+exports.BLAKE2b160 = require('./blake2b160');
+exports.BLAKE2b256 = require('./blake2b256');
+exports.BLAKE2b384 = require('./blake2b384');
+exports.BLAKE2b512 = require('./blake2b512');
+exports.BLAKE2s = require('./blake2s');
+exports.BLAKE2s128 = require('./blake2s128');
+exports.BLAKE2s160 = require('./blake2s160');
+exports.BLAKE2s224 = require('./blake2s224');
+exports.BLAKE2s256 = require('./blake2s256');
+exports.BN = require('./bn');
+exports.bcrypt = require('./bcrypt');
+exports.ChaCha20 = require('./chacha20');
+exports.cipher = require('./cipher');
+exports.cleanse = require('./cleanse');
+exports.ccmp = require('./ccmp');
+exports.CSHAKE = require('./cshake');
+exports.CSHAKE128 = require('./cshake128');
+exports.CSHAKE256 = require('./cshake256');
+exports.DRBG = require('./drbg');
+exports.dsa = require('./dsa');
+exports.dsaies = require('./dsaies');
+exports.eb2k = require('./eb2k');
+exports.ecies = require('./ecies');
+exports.ed25519 = require('./ed25519');
+exports.ed448 = require('./ed448');
+exports.encoding = require('./encoding');
+exports.GOST94 = require('./gost94');
+exports.Hash160 = require('./hash160');
+exports.Hash256 = require('./hash256');
+exports.hkdf = require('./hkdf');
+exports.Keccak = require('./keccak');
+exports.Keccak224 = require('./keccak224');
+exports.Keccak256 = require('./keccak256');
+exports.Keccak384 = require('./keccak384');
+exports.Keccak512 = require('./keccak512');
+exports.KMAC = require('./kmac');
+exports.KMAC128 = require('./kmac128');
+exports.KMAC256 = require('./kmac256');
+exports.MD2 = require('./md2');
+exports.MD4 = require('./md4');
+exports.MD5 = require('./md5');
+exports.MD5SHA1 = require('./md5sha1');
+exports.merkle = require('./merkle');
+exports.mrkl = require('./mrkl');
+exports.murmur3 = require('./murmur3');
+exports.p192 = require('./p192');
+exports.p224 = require('./p224');
+exports.p256 = require('./p256');
+exports.p384 = require('./p384');
+exports.p521 = require('./p521');
+exports.pbkdf2 = require('./pbkdf2');
+exports.pgp = require('./pgp');
+exports.Poly1305 = require('./poly1305');
+exports.random = require('./random');
+exports.RC4 = require('./rc4');
+exports.RIPEMD160 = require('./ripemd160');
+exports.rsa = require('./rsa');
+exports.rsaies = require('./rsaies');
+exports.safe = require('./safe');
+exports.safeEqual = require('./safe-equal');
+exports.scrypt = require('./scrypt');
+exports.secp256k1 = require('./secp256k1');
+exports.ssh = require('./ssh');
+exports.SHA1 = require('./sha1');
+exports.SHA224 = require('./sha224');
+exports.SHA256 = require('./sha256');
+exports.SHA384 = require('./sha384');
+exports.SHA512 = require('./sha512');
+exports.SHA3 = require('./sha3');
+exports.SHA3_224 = require('./sha3-224');
+exports.SHA3_256 = require('./sha3-256');
+exports.SHA3_384 = require('./sha3-384');
+exports.SHA3_512 = require('./sha3-512');
+exports.SHAKE = require('./shake');
+exports.SHAKE128 = require('./shake128');
+exports.SHAKE256 = require('./shake256');
+exports.siphash = require('./siphash');
+exports.Whirlpool = require('./whirlpool');
+exports.x25519 = require('./x25519');
+exports.x448 = require('./x448');
+
+exports.version = '3.0.0';
+exports.native = exports.SHA256.native;

@@ -1,0 +1,28 @@
+{
+  "name": "loady",
+  "version": "0.0.1",
+  "description": "dynamic loader for node.js",
+  "keywords": [
+    "addon",
+    "bindings",
+    "c",
+    "c++",
+    "gyp",
+    "native",
+    "waf"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/chjj/loady.git",
+  "homepage": "https://github.com/chjj/loady",
+  "bugs": {
+    "url": "https://github.com/chjj/loady/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/loady.js",
+  "scripts": {
+    "lint": "eslint lib/ || exit 0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

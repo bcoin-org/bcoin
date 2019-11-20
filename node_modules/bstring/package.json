@@ -1,0 +1,42 @@
+{
+  "name": "bstring",
+  "version": "0.3.9",
+  "description": "String encodings for javascript",
+  "keywords": [
+    "string",
+    "base58",
+    "bech32",
+    "cashaddr"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bstring.git",
+  "homepage": "https://github.com/bcoin-org/bstring",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bstring/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bstring.js",
+  "scripts": {
+    "install": "node-gyp rebuild || echo 'Build failed.'",
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js",
+    "test-file": "bmocha --reporter spec"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10",
+    "loady": "~0.0.1",
+    "nan": "^2.13.1"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "gypfile": true,
+  "browser": {
+    "./lib/base58": "./lib/base58-browser.js",
+    "./lib/bech32": "./lib/bech32-browser.js",
+    "./lib/cashaddr": "./lib/cashaddr-browser.js"
+  }
+}

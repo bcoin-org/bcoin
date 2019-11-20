@@ -1,0 +1,30 @@
+{
+  "name": "bfile",
+  "version": "0.2.1",
+  "description": "Filesystem wrapper for node.js",
+  "keywords": [
+    "file",
+    "fs"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bfile.git",
+  "homepage": "https://github.com/bcoin-org/bfile",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bfile/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bfile.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha -e BFILE_FORCE_COMPAT=1 && bmocha && bmocha -e BFILE_FORCE_STABLE=1"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/fs": "./lib/fs-browser.js"
+  }
+}

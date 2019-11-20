@@ -1,0 +1,30 @@
+{
+  "name": "btcp",
+  "version": "0.1.5",
+  "description": "TCP wrapper for node.js",
+  "keywords": [
+    "net",
+    "tcp"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/btcp.git",
+  "homepage": "https://github.com/bcoin-org/btcp",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/btcp/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/btcp.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/tcp": "./lib/tcp-browser.js"
+  }
+}

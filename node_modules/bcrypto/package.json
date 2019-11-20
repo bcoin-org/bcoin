@@ -1,0 +1,85 @@
+{
+  "name": "bcrypto",
+  "version": "3.1.11",
+  "description": "Bcoin crypto module",
+  "keywords": [
+    "cipher",
+    "crypto",
+    "digest",
+    "hash",
+    "hashing"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bcrypto.git",
+  "homepage": "https://github.com/bcoin-org/bcrypto",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bcrypto/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bcrypto.js",
+  "scripts": {
+    "install": "node-gyp rebuild || echo 'Build failed.'",
+    "lint": "eslint bench/ lib/ test/ || exit 0",
+    "lint-ci": "eslint bench/ lib/ test/",
+    "test": "bmocha -S --file ./scripts/post.js 'test/*-test.js'",
+    "test-native": "bmocha -B native -S --file ./scripts/post.js 'test/*-test.js'",
+    "test-node": "bmocha -B node -S 'test/*-test.js'",
+    "test-js": "bmocha -B js -S 'test/*-test.js'",
+    "test-browser": "bmocha -B js -H -S 'test/*-test.js'",
+    "test-bigint": "bmocha -B js -e BCRYPTO_FORCE_BIGINT=1 -S 'test/*-test.js'",
+    "test-all": "npm run test-browser && npm run test-native && npm run test-node && npm run test-js && npm run test-bigint"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10",
+    "bufio": "~1.0.6",
+    "loady": "~0.0.1",
+    "nan": "^2.13.2"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "gypfile": true,
+  "browser": {
+    "./lib/internal/custom": "./lib/internal/custom-browser.js",
+    "./lib/aead": "./lib/aead-browser.js",
+    "./lib/aes": "./lib/aes-browser.js",
+    "./lib/blake2b": "./lib/blake2b-browser.js",
+    "./lib/blake2s": "./lib/blake2s-browser.js",
+    "./lib/bn": "./lib/bn-browser.js",
+    "./lib/chacha20": "./lib/chacha20-browser.js",
+    "./lib/cipher": "./lib/cipher-browser.js",
+    "./lib/cleanse": "./lib/cleanse-browser.js",
+    "./lib/dsa": "./lib/dsa-browser.js",
+    "./lib/ed25519": "./lib/ed25519-browser.js",
+    "./lib/ed448": "./lib/ed448-browser.js",
+    "./lib/hash160": "./lib/hash160-browser.js",
+    "./lib/hash256": "./lib/hash256-browser.js",
+    "./lib/keccak": "./lib/keccak-browser.js",
+    "./lib/md4": "./lib/md4-browser.js",
+    "./lib/md5": "./lib/md5-browser.js",
+    "./lib/murmur3": "./lib/murmur3-browser.js",
+    "./lib/p192": "./lib/p192-browser.js",
+    "./lib/p224": "./lib/p224-browser.js",
+    "./lib/p256": "./lib/p256-browser.js",
+    "./lib/p384": "./lib/p384-browser.js",
+    "./lib/p521": "./lib/p521-browser.js",
+    "./lib/pbkdf2": "./lib/pbkdf2-browser.js",
+    "./lib/poly1305": "./lib/poly1305-browser.js",
+    "./lib/random": "./lib/random-browser.js",
+    "./lib/ripemd160": "./lib/ripemd160-browser.js",
+    "./lib/rsa": "./lib/rsa-browser.js",
+    "./lib/scrypt": "./lib/scrypt-browser.js",
+    "./lib/secp256k1": "./lib/secp256k1-browser.js",
+    "./lib/sha1": "./lib/sha1-browser.js",
+    "./lib/sha224": "./lib/sha224-browser.js",
+    "./lib/sha256": "./lib/sha256-browser.js",
+    "./lib/sha384": "./lib/sha384-browser.js",
+    "./lib/sha512": "./lib/sha512-browser.js",
+    "./lib/sha3": "./lib/sha3-browser.js",
+    "./lib/siphash": "./lib/siphash-browser.js",
+    "./lib/whirlpool": "./lib/whirlpool-browser.js"
+  }
+}

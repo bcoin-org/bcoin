@@ -1,0 +1,32 @@
+{
+  "name": "n64",
+  "version": "0.2.10",
+  "description": "Int64 object for javascript",
+  "keywords": [
+    "i64",
+    "int64",
+    "n64",
+    "u64",
+    "uint64"
+  ],
+  "bugs": {
+    "url": "https://github.com/chjj/n64/issues"
+  },
+  "homepage": "https://github.com/chjj/n64",
+  "license": "MIT",
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/n64.js",
+  "repository": "git://github.com/chjj/n64.git",
+  "scripts": {
+    "lint": "eslint bench/ lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0",
+    "loady": "~0.0.1",
+    "nan": "^2.13.1"
+  },
+  "engines": {
+    "node": ">=2.0.0"
+  }
+}

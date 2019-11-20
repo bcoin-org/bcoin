@@ -1,0 +1,100 @@
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:10.15.3-browsers
+
+version: 2.0
+jobs:
+  install:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          # Use package.json in case we don't have package-lock
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      - run: npm install
+      - run: npm install eslint browserify babel-eslint
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      - persist_to_workspace:
+          root: .
+          paths: .
+
+  test_browser:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test browser
+          command: npm run test-browser
+  test_node:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test with node backend
+          command: npm run test-node
+  test_native:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test with native backend
+          command: npm run test-native
+  test_js:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test with javascript backend
+          command: npm run test-js
+  test_js_bigint:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Test with javascript backend and bigint
+          command: npm run test-bigint
+
+  lint:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Lint
+          command: npm run lint-ci
+
+workflows:
+  version: 2
+  test_and_lint:
+    jobs:
+      - install
+      - lint:
+          requires:
+            - install
+      - test_browser:
+          requires:
+            - install
+      - test_js:
+          requires:
+            - install
+      - test_js_bigint:
+          requires:
+            - install
+      - test_native:
+          requires:
+            - install
+      - test_node:
+          requires:
+            - install

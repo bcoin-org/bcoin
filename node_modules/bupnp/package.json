@@ -1,0 +1,34 @@
+{
+  "name": "bupnp",
+  "version": "0.2.6",
+  "description": "UPNP client for node.js",
+  "keywords": [
+    "upnp"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bupnp.git",
+  "homepage": "https://github.com/bcoin-org/bupnp",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bupnp/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bupnp.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "binet": "~0.3.5",
+    "brq": "~0.1.7",
+    "bsert": "~0.0.10"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/upnp": "./lib/upnp-browser.js"
+  }
+}

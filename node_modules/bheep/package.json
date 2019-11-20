@@ -1,0 +1,30 @@
+{
+  "name": "bheep",
+  "version": "0.1.5",
+  "description": "Binary heap for javascript",
+  "keywords": [
+    "binary",
+    "heap"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bheep.git",
+  "homepage": "https://github.com/bcoin-org/bheep",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bheep/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bheep.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

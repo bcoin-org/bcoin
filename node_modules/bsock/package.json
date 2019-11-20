@@ -1,0 +1,36 @@
+{
+  "name": "bsock",
+  "version": "0.1.9",
+  "description": "Websocket bike-shed",
+  "keywords": [
+    "tcp",
+    "http",
+    "socket.io",
+    "websockets"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bsock.git",
+  "homepage": "https://github.com/bcoin-org/bsock",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bsock/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bsock.js",
+  "scripts": {
+    "lint": "eslint lib/ test/socket-test.js || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/backend": "./lib/backend-browser.js",
+    "./lib/server": "./lib/server-browser.js"
+  }
+}

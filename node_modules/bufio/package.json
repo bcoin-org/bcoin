@@ -1,0 +1,30 @@
+{
+  "name": "bufio",
+  "version": "1.0.6",
+  "description": "Buffer and serialization utilities for javascript",
+  "keywords": [
+    "buffer",
+    "serialization"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bufio.git",
+  "homepage": "https://github.com/bcoin-org/bufio",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bufio/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bufio.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/custom": "./lib/custom-browser.js"
+  }
+}

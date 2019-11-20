@@ -1,0 +1,33 @@
+{
+  "name": "binet",
+  "version": "0.3.5",
+  "description": "IP address tools for javascript",
+  "keywords": [
+    "addr",
+    "address",
+    "inet",
+    "ip"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/binet.git",
+  "homepage": "https://github.com/bcoin-org/binet",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/binet/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/binet.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bs32": "~0.1.5",
+    "bsert": "~0.0.10"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "blru",
+  "version": "0.1.6",
+  "description": "LRU cache for node.js",
+  "keywords": [
+    "cache",
+    "lru"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/blru.git",
+  "homepage": "https://github.com/bcoin-org/blru",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/blru/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/blru.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

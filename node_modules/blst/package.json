@@ -1,0 +1,29 @@
+{
+  "name": "blst",
+  "version": "0.1.5",
+  "description": "Double linked list for javascript",
+  "keywords": [
+    "list"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/blst.git",
+  "homepage": "https://github.com/bcoin-org/blst",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/blst/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/blst.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

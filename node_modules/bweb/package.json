@@ -1,0 +1,36 @@
+{
+  "name": "bweb",
+  "version": "0.1.9",
+  "description": "Web bike-shed",
+  "keywords": [
+    "http",
+    "socket.io",
+    "websockets"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bweb.git",
+  "homepage": "https://github.com/bcoin-org/bweb",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bweb/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bweb.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10",
+    "bsock": "~0.1.8"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/server": "./lib/server-browser.js",
+    "./lib/middleware/index": "./lib/middleware/index-browser.js"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "buffer-map",
+  "version": "0.0.7",
+  "description": "Buffer-keyed map for javascript",
+  "keywords": [
+    "buffer",
+    "map"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/chjj/buffer-map.git",
+  "homepage": "https://github.com/chjj/buffer-map",
+  "bugs": {
+    "url": "https://github.com/chjj/buffer-map/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/buffer-map.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/custom": "./lib/custom-browser.js"
+  }
+}

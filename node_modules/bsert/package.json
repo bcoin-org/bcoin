@@ -1,0 +1,23 @@
+{
+  "name": "bsert",
+  "version": "0.0.10",
+  "description": "Minimal assert with type checking",
+  "keywords": [
+    "assert"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/chjj/bsert.git",
+  "homepage": "https://github.com/chjj/bsert",
+  "bugs": {
+    "url": "https://github.com/chjj/bsert/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/assert.js",
+  "scripts": {
+    "lint": "eslint lib/ test/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

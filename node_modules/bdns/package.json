@@ -1,0 +1,37 @@
+{
+  "name": "bdns",
+  "version": "0.1.5",
+  "description": "DNS wrapper for node.js",
+  "keywords": [
+    "dns",
+    "domain",
+    "getaddrinfo",
+    "lookup",
+    "name",
+    "resolution"
+  ],
+  "license": "MIT",
+  "repository": "git://github.com/bcoin-org/bdns.git",
+  "homepage": "https://github.com/bcoin-org/bdns",
+  "bugs": {
+    "url": "https://github.com/bcoin-org/bdns/issues"
+  },
+  "author": "Christopher Jeffrey <chjjeffrey@gmail.com>",
+  "main": "./lib/bdns.js",
+  "scripts": {
+    "lint": "eslint lib/ || exit 0",
+    "test": "bmocha --reporter spec test/*-test.js"
+  },
+  "dependencies": {
+    "bsert": "~0.0.10"
+  },
+  "devDependencies": {
+    "bmocha": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "browser": {
+    "./lib/dns": "./lib/dns-browser.js"
+  }
+}
