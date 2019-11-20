@@ -45,16 +45,11 @@ $ git tag -v <version> # verify signature
 $ git checkout <version>
 ```
 
-Install dependencies:
+Build and install globally:
 ```
-$ npm install
+$ npm rebuild
 $ npm install -g # link globally
 ```
-**Note:** Dependencies are checked for integrity using `package-lock.json`.
-However `npm` _will not_ make these checks with `npm install -g` and it
-will link your installation globally so that `bcoin` is in your
-path _(e.g. $ bcoin)_.
-
 ### Installing on Debian/Ubuntu
 
 Install the necessary dependencies in addition to Node.js:
