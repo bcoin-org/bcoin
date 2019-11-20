@@ -89,6 +89,29 @@ on consumer grade hardware may take up to 15 seconds). Bcoin will throw a
 warning on boot if it detects a build failure. If you run into this issue,
 please post an issue on the repo.
 
+### Use as a dependency
+
+It is recommended to specify bcoin as a git dependency with semantic
+versioning and include a mirror in the git tree for integrity and
+availability. For example, here is an example `package.json`:
+
+```json
+{
+  "dependencies": {
+    "bcoin": "git+ssh://git@github.com:bcoin-org/bcoin.git#semver:~2.0.0"
+  }
+}
+```
+_Note_: While git tags are signed, `npm` will not check the signature
+of the git tag.
+
+If your project shares any dependencies you may want to de-duplicate, you can
+do this by running:
+
+```sh
+npm dedupe
+```
+
 ## Starting up your first bcoin node
 
 If bcoin is installed globally, `$ bcoin` should be in your PATH. If not,
