@@ -138,6 +138,11 @@ class CLI {
       return;
     }
 
+    if (!Number.isInteger(json.rate)) {
+      this.log('Fee is not an integer.');
+      return;
+    }
+
     this.log(Amount.btc(json.rate));
   }
 
