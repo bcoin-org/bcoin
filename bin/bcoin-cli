@@ -4,6 +4,7 @@
 
 const Config = require('bcfg');
 const NodeClient = require('../lib/client/node');
+const Amount = require('../lib/btc/amount');
 
 const ports = {
   main: 8332,
@@ -127,6 +128,24 @@ class CLI {
     this.log(filter);
   }
 
+  async estimateFee() {
+    const blocks = this.config.uint(0, 1);
+
+    const json = await this.client.estimateFee(blocks);
+
+    if (!json) {
+      this.log('Fee not found.');
+      return;
+    }
+
+    if (!Number.isInteger(json.rate)) {
+      this.log('Fee is not an integer.');
+      return;
+    }
+
+    this.log(Amount.btc(json.rate));
+  }
+
   async getCoin() {
     const hash = this.config.str(0, '');
     const index = this.config.uint(1);
@@ -226,6 +245,9 @@ class CLI {
       case 'filter':
         await this.getFilter();
         break;
+      case 'fee':
+        await this.estimateFee();
+        break;
       case 'reset':
         await this.reset();
         break;
@@ -242,7 +264,8 @@ class CLI {
         this.log('  $ coin [hash+index/address]: View coins.');
         this.log('  $ block [hash/height]: View block.');
         this.log('  $ header [hash/height]: View block header.');
-        this.log('  $ filter [hash/height]: View filter');
+        this.log('  $ filter [hash/height]: View filter.');
+        this.log('  $ fee [target]: Estimate smart fee.');
         this.log('  $ reset [height/hash]: Reset chain to desired block.');
         this.log('  $ rpc [command] [args]: Execute RPC command.' +
           ' (`bcoin-cli rpc help` for more)');
