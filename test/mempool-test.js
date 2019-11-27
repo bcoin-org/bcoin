@@ -7,6 +7,7 @@ const assert = require('bsert');
 const random = require('bcrypto/lib/random');
 const common = require('../lib/blockchain/common');
 const Block = require('../lib/primitives/block');
+const ChainEntry = require('../lib/blockchain/chainentry');
 const MempoolEntry = require('../lib/mempool/mempoolentry');
 const Mempool = require('../lib/mempool/mempool');
 const AddrIndexer = require('../lib/mempool/addrindexer');
@@ -782,6 +783,58 @@ describe('Mempool', function() {
 
       chaincoins.addTX(tx);
       wallet.addTX(tx);
+    });
+
+    it('should insert unconfirmed txs from removed block', async () => {
+      await mempool.reset();
+      // Mempool is empty
+      assert.strictEqual(mempool.map.size, 0);
+
+      // Create 1 TX
+      const coin1 = chaincoins.getCoins()[0];
+      const addr = wallet.createReceive().getAddress();
+      const mtx1 = new MTX();
+      mtx1.addCoin(coin1);
+      mtx1.addOutput(addr, 90000);
+      chaincoins.sign(mtx1);
+      const tx1 = mtx1.toTX();
+      chaincoins.addTX(tx1);
+      wallet.addTX(tx1);
+
+      // Create 1 block (no need to actually add it to chain)
+      const block1 = await getMockBlock(chain, [tx1]);
+      const entry1 = await ChainEntry.fromBlock(block1, chain.tip);
+
+      // Unconfirm block into mempool
+      await mempool._removeBlock(entry1, block1.txs);
+
+      // Mempool should contain newly unconfirmed TX
+      assert(mempool.hasEntry(tx1.hash()));
+
+      // Mempool is NOT empty
+      assert.strictEqual(mempool.map.size, 1);
+
+      // Create second TX
+      const coin2 = chaincoins.getCoins()[0];
+      const mtx2 = new MTX();
+      mtx2.addCoin(coin2);
+      mtx2.addOutput(addr, 90000);
+      chaincoins.sign(mtx2);
+      const tx2 = mtx2.toTX();
+      chaincoins.addTX(tx2);
+      wallet.addTX(tx2);
+
+      // Create 1 block (no need to actually add it to chain)
+      const block2 = await getMockBlock(chain, [tx2]);
+      const entry2 = await ChainEntry.fromBlock(block2, chain.tip);
+
+      // Unconfirm block into mempool
+      await mempool._removeBlock(entry2, block2.txs);
+
+      // Mempool should contain both TXs
+      assert(mempool.hasEntry(tx2.hash()));
+      assert(mempool.hasEntry(tx1.hash()));
+      assert.strictEqual(mempool.map.size, 2);
     });
   });
 
