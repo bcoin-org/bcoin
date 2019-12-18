@@ -264,6 +264,14 @@ describe('Taproot', function() {
         if (test.inputs[i].script)
           continue;
 
+        // Skip test case with no signature
+        if (test.inputs[i].comment.match(/cleanstack/g))
+          continue;
+
+        // Skip script spends
+        if (test.inputs[i].script)
+          continue;
+
         it(`${test.inputs[i].comment}`, () => {
           const sighash = Buffer.from(test.inputs[i].sighash, 'hex');
           const sig = test.tx.inputs[i].witness.items[0];
@@ -276,6 +284,30 @@ describe('Taproot', function() {
           const pubkey = program.data;
 
           assert(schnorr.verify(sighash, sig.slice(0, 64), pubkey));
+        });
+      }
+    }
+  });
+
+  describe('Verify Taproot commitment', function() {
+    for (const test of getTests()) {
+      for (let i = 0; i < test.tx.inputs.length; i++) {
+        // Only test Tapscript spends
+        if (!test.inputs[i].script)
+          continue;
+
+        // Skip P2SH-nested witness V1 (not Taproot)
+        if (   test.inputs[i].comment.match(/applic/g)
+            && !test.inputs[i].standard)
+          continue;
+
+        it(`${test.inputs[i].comment}`, () => {
+          // Get pubkey from prevout scriptPubKey (witness program)
+          const utxo = test.prevouts[i];
+          // Skip 8 byte value and 1 byte scriptPubkey length byte (in hex)
+          const script = Script.fromJSON(utxo.slice(18));
+          const witness = test.tx.inputs[i].witness;
+          assert(Script.verifyTaprootCommitment(witness, script));
         });
       }
     }
