@@ -87,6 +87,7 @@ describe('RPC', function() {
 
       assert.deepEqual(chain.height, info.height);
       assert.deepEqual(chain.tip, info.hash);
+      assert.equal(info.bits, '207fffff');
     });
 
     it('should return correct height', async () => {

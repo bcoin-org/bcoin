@@ -105,6 +105,11 @@ that have many transactions.
   which coins have been spent and are currently available.
 - `GET /` has new fields `.indexes.{addr,tx}` for the status of indexers.
 
+#### RPC
+
+- Both `getblock` and `getblockheader` return `bits` in base 16 as a string
+  instead of base 10 and a number.
+
 ### Network changes
 
 - Regtest params have been updated to correspond with other bitcoin
