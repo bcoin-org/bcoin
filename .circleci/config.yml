@@ -1,5 +1,7 @@
 defaults: &defaults
   working_directory: ~/repo
+  environment:
+    PREFIX: /home/circleci/repo/global_node_modules
   docker:
     - image: circleci/node:10.17
 
@@ -14,7 +16,7 @@ jobs:
           keys:
           - v1-dependencies-{{ checksum "package-lock.json" }}
       - run: npm rebuild
-      - run: npm install bslint nyc codecov
+      - run: npm install -g bslint nyc codecov
       - save_cache:
           paths:
             - node_modules
@@ -28,18 +30,20 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - run: echo 'export PATH=$PREFIX/bin:$PATH' >> $BASH_ENV
       - run:
           name: Tests with coverage
           command: npm run test-ci
       - run:
           name: Submit coverage
-          command: ./node_modules/.bin/codecov
+          command: codecov
 
   lint:
     <<: *defaults
     steps:
       - attach_workspace:
           at: .
+      - run: echo 'export PATH=$PREFIX/bin:$PATH' >> $BASH_ENV
       - run:
           name: Lint
           command: npm run lint-ci
