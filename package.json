@@ -42,7 +42,7 @@
     "bsert": "git+https://github.com/chjj/bsert.git#semver:~0.0.10",
     "bsip": "git+https://github.com/bcoin-org/bsip.git#semver:~0.1.9",
     "bsock": "git+https://github.com/bcoin-org/bsock.git#semver:~0.1.9",
-    "bsocks": "git+https://github.com/bcoin-org/bsocks.git#semver:~0.2.5",
+    "bsocks": "git+https://github.com/bcoin-org/bsocks.git#semver:=0.2.5",
     "bstring": "git+https://github.com/bcoin-org/bstring.git#semver:~0.3.9",
     "btcp": "git+https://github.com/bcoin-org/btcp.git#semver:~0.1.5",
     "buffer-map": "git+https://github.com/chjj/buffer-map.git#semver:~0.0.7",
