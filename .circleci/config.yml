@@ -12,15 +12,8 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package-lock.json" }}
       - run: npm rebuild
       - run: npm install -g bslint nyc codecov
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package-lock.json" }}
       - persist_to_workspace:
           root: .
           paths: .

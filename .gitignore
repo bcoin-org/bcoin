@@ -7,4 +7,5 @@ browser/bcoin*
 npm-debug.log
 coverage/
 yarn.lock
+package-lock.json
 webpack.*.js
