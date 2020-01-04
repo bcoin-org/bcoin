@@ -53,7 +53,7 @@
     "loady": "git+https://github.com/chjj/loady.git#semver:~0.0.1",
     "mrmr": "git+https://github.com/bcoin-org/mrmr.git#semver:~0.1.8",
     "n64": "git+https://github.com/chjj/n64.git#semver:~0.2.10",
-    "nan": "git+https://github.com/nodejs/nan.git#semver:=2.14.0"
+    "nan": "git+https://github.com/braydonf/nan.git#semver:=2.14.0"
   },
   "devDependencies": {
     "bmocha": "git+https://github.com/bcoin-org/bmocha.git#semver:=2.1.2"
