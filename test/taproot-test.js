@@ -6,11 +6,12 @@
 
 const assert = require('bsert');
 const BufferReader = require('bufio').BufferReader;
+const CoinView = require('../lib/coins/coinview');
 const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
 const {TaggedHash} = require('../lib/utils/taggedhash');
 const Script = require('../lib/script/script');
-const {digests, types} = Script;
+const {digests, types, flags} = Script;
 const common = require('./util/common');
 const schnorr = require('bcrypto/lib/schnorr');
 
@@ -182,11 +183,9 @@ describe('Taproot', function() {
       for (let i = 0; i < tx.inputs.length; i++) {
         const key = tx.inputs[i].prevout.toKey();
         const coin = Coin.fromKey(key);
-
         const utxo = new BufferReader(
           Buffer.from(test.prevouts[i], 'hex')
         );
-
         coin.value = utxo.readI64();
         coin.script.fromRaw(utxo.readVarBytes());
 
@@ -339,5 +338,78 @@ describe('Taproot', function() {
         });
       }
     }
+  });
+
+  describe('Verify Taproot transactions', function() {
+    // Flags for mempool inclusion
+    const standardFlags = flags.STANDARD_VERIFY_FLAGS;
+
+    // Flags for block inclusion after Taproot activation,
+    // inlcuding all previous deployments.
+    const mandatoryFlags = flags.MANDATORY_VERIFY_FLAGS
+      | flags.VERIFY_P2SH
+      | flags.VERIFY_DERSIG
+      | flags.VERIFY_CHECKLOCKTIMEVERIFY
+      | flags.VERIFY_CHECKSEQUENCEVERIFY
+      | flags.VERIFY_WITNESS
+      | flags.VERIFY_NULLDUMMY
+      | flags.VERIFY_TAPROOT;
+
+    TXS: for (const test of getTests(false)) {
+      const tx = test.tx;
+
+      // Expected block inclusion verification result
+      const mandatory = test.mandatory;
+
+      // Expected mempool inclusion verification result
+      let standard = true;
+
+      // Generate test name and set standardness flag
+      let name = '';
+      for (let i = 0; i < tx.inputs.length; i++) {
+        // Skip script spends for now
+        if (test.inputs[i].script)
+          continue TXS;
+
+        name +=  ' ' + test.inputs[i].comment;
+        if (!test.inputs[i].standard)
+          standard = false;
+      }
+
+      // Add coins for each input
+      const view = new CoinView();
+      for (let i = 0; i < tx.inputs.length; i++) {
+        const key = tx.inputs[i].prevout.toKey();
+        const coin = Coin.fromKey(key);
+        const utxo = new BufferReader(
+          Buffer.from(test.prevouts[i], 'hex')
+        );
+        coin.value = utxo.readI64();
+        coin.script.fromRaw(utxo.readVarBytes());
+
+        view.addCoin(coin);
+      }
+
+      it(`should ${mandatory ? '' : 'not '}pass mandatory:${name}`, () => {
+        // Verify mandatoryness (block)
+        assert.strictEqual(mandatory, tx.verify(view, mandatoryFlags));
+      });
+
+      // Invalid TXs can't be standard, no reason to test.
+      if (!mandatory)
+        continue;
+
+      it(`should ${standard ? '' : 'not '}pass standard:${name}`, () => {
+        // Verify standardness (mempool)
+        const isStandard =
+          tx.verify(view, standardFlags)
+          && tx.hasStandardInputs(view)
+          && tx.hasStandardWitness(view);
+        assert.strictEqual(standard, isStandard);
+
+        if (tx.version >= 1 && tx.version <= 2)
+          assert(tx.checkStandard()[0], tx.checkStandard()[1]);
+      });
+    };
   });
 });
