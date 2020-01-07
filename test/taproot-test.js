@@ -10,7 +10,7 @@ const TX = require('../lib/primitives/tx');
 const Coin = require('../lib/primitives/coin');
 const {TaggedHash} = require('../lib/utils/taggedhash');
 const Script = require('../lib/script/script');
-const {digests} = Script;
+const {digests, types} = Script;
 const common = require('./util/common');
 const schnorr = require('bcrypto/lib/schnorr');
 
@@ -268,7 +268,7 @@ describe('Taproot', function() {
         if (test.inputs[i].comment.match(/cleanstack/g))
           continue;
 
-        // Skip script spends
+        // Skip script spends for now
         if (test.inputs[i].script)
           continue;
 
@@ -297,6 +297,7 @@ describe('Taproot', function() {
           continue;
 
         // Skip P2SH-nested witness V1 (not Taproot)
+        // Skip nested V1
         if (   test.inputs[i].comment.match(/applic/g)
             && !test.inputs[i].standard)
           continue;
@@ -308,6 +309,33 @@ describe('Taproot', function() {
           const script = Script.fromJSON(utxo.slice(18));
           const witness = test.tx.inputs[i].witness;
           assert(Script.verifyTaprootCommitment(witness, script));
+        });
+      }
+    }
+  });
+
+  describe('Identify pay-to-taproot programs', function() {
+    for (const test of getTests()) {
+      for (let i = 0; i < test.tx.inputs.length; i++) {
+        it(`${test.inputs[i].comment}`, () => {
+          // Get pubkey from prevout scriptPubKey (witness program)
+          const utxo = test.prevouts[i];
+          // Skip 8 byte value and 1 byte scriptPubkey length byte (in hex)
+          const script = Script.fromJSON(utxo.slice(18));
+
+          // Skip nested V1
+          if (test.inputs[i].comment.match(/applic/g)) {
+            if (test.inputs[i].standard)
+              assert.strictEqual(script.getType(), types.TAPROOT);
+            else
+              assert.notStrictEqual(script.getType(), types.TAPROOT);
+          } else {
+            if (test.inputs[i].mode === 'taproot')
+              assert.strictEqual(script.getType(), types.TAPROOT);
+
+            if (test.inputs[i].mode !== 'taproot')
+              assert.notStrictEqual(script.getType(), types.TAPROOT);
+          }
         });
       }
     }
