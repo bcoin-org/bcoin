@@ -2016,4 +2016,68 @@ describe('Wallet', function() {
       message: 'TX exceeds maximum unconfirmed ancestors.'
     });
   });
+
+  describe('Corruption', function() {
+    let workers = null;
+    let wdb = null;
+
+    beforeEach(async () => {
+      workers = new WorkerPool({
+        enabled: true,
+        size: 2
+      });
+
+      wdb = new WalletDB({ workers });
+      await workers.open();
+      await wdb.open();
+    });
+
+    afterEach(async () => {
+      await wdb.close();
+      await workers.close();
+    });
+
+    it('should not write tip with error in txs', async () => {
+      const alice = await wdb.create();
+      const addr = await alice.receiveAddress();
+
+      const fund = new MTX();
+      fund.addInput(dummyInput());
+      fund.addOutput(addr, 5460 * 10);
+
+      wdb._addTX = async () => {
+        throw new Error('Some assertion.');
+      };
+
+      await assert.rejects(async () => {
+        await wdb.addBlock(nextBlock(wdb), [fund.toTX()]);
+      }, {
+        message: 'Some assertion.'
+      });
+
+      assert.equal(wdb.height, 0);
+
+      const bal = await alice.getBalance();
+      assert.equal(bal.confirmed, 0);
+      assert.equal(bal.unconfirmed, 0);
+    });
+
+    it('should write tip without error in txs', async () => {
+      const alice = await wdb.create();
+      const addr = await alice.receiveAddress();
+
+      const fund = new MTX();
+      fund.addInput(dummyInput());
+      const amount = 5460 * 10;
+      fund.addOutput(addr, amount);
+
+      await wdb.addBlock(nextBlock(wdb), [fund.toTX()]);
+
+      assert.equal(wdb.height, 1);
+
+      const bal = await alice.getBalance();
+      assert.equal(bal.confirmed, amount);
+      assert.equal(bal.unconfirmed, amount);
+    });
+  });
 });
