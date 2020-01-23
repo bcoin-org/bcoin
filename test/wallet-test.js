@@ -8,6 +8,7 @@ const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 const hash256 = require('bcrypto/lib/hash256');
 const random = require('bcrypto/lib/random');
+const FullNode = require('../lib/node/fullnode');
 const WalletDB = require('../lib/wallet/walletdb');
 const WorkerPool = require('../lib/workers/workerpool');
 const Address = require('../lib/primitives/address');
@@ -22,6 +23,7 @@ const Wallet = require('../lib/wallet/wallet');
 const nodejsUtil = require('util');
 const HDPrivateKey = require('../lib/hd/private');
 const policy = require('../lib/protocol/policy');
+const {forValue} = require('./util/common');
 
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
@@ -2078,6 +2080,63 @@ describe('Wallet', function() {
       const bal = await alice.getBalance();
       assert.equal(bal.confirmed, amount);
       assert.equal(bal.unconfirmed, amount);
+    });
+  });
+
+  describe('Node Integration', function() {
+    const ports = {p2p: 49331, node: 49332, wallet: 49333};
+    let node, chain, miner, wdb = null;
+
+    beforeEach(async () => {
+      node = new FullNode({
+        memory: true,
+        network: 'regtest',
+        workers: true,
+        workersSize: 2,
+        plugins: [require('../lib/wallet/plugin')],
+        port: ports.p2p,
+        httpPort: ports.node,
+        env: {
+          'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
+        }
+      });
+
+      chain = node.chain;
+      miner = node.miner;
+      wdb = node.require('walletdb').wdb;
+      await node.open();
+    });
+
+    afterEach(async () => {
+      await node.close();
+    });
+
+    async function mineBlock(tip) {
+      const job = await miner.createJob(tip);
+      const block = await job.mineAsync();
+      chain.add(block);
+    }
+
+    it('should not stack in-memory block queue (oom)', async () => {
+      let height = 0;
+
+      const addBlock = wdb.addBlock.bind(wdb);
+      wdb.addBlock = async (entry, txs) => {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await addBlock(entry, txs);
+      };
+
+      async function raceForward() {
+        await mineBlock();
+
+        await forValue(node.chain, 'height', height + 1);
+        assert.equal(wdb.height, height);
+
+        height += 1;
+      }
+
+      for (let i = 0; i < 10; i++)
+        await raceForward();
     });
   });
 });
