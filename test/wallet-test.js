@@ -4,6 +4,7 @@
 'use strict';
 
 const assert = require('bsert');
+const {WalletClient} = require('../lib/client');
 const consensus = require('../lib/protocol/consensus');
 const util = require('../lib/utils/util');
 const hash256 = require('bcrypto/lib/hash256');
@@ -2090,6 +2091,7 @@ describe('Wallet', function() {
     beforeEach(async () => {
       node = new FullNode({
         memory: true,
+        apiKey: 'foo',
         network: 'regtest',
         workers: true,
         workersSize: 2,
@@ -2114,7 +2116,7 @@ describe('Wallet', function() {
     async function mineBlock(tip) {
       const job = await miner.createJob(tip);
       const block = await job.mineAsync();
-      chain.add(block);
+      return chain.add(block);
     }
 
     it('should not stack in-memory block queue (oom)', async () => {
@@ -2130,13 +2132,52 @@ describe('Wallet', function() {
         await mineBlock();
 
         await forValue(node.chain, 'height', height + 1);
-        assert.equal(wdb.height, height);
+        assert.equal(wdb.height, height + 1);
 
         height += 1;
       }
 
       for (let i = 0; i < 10; i++)
         await raceForward();
+    });
+
+    it('should emit details with correct confirmation', async () => {
+      const wclient = new WalletClient({port: ports.wallet, apiKey: 'foo'});
+      await wclient.open();
+
+      const info = await wclient.createWallet('test');
+      const wallet = wclient.wallet('test', info.token);
+      await wallet.open();
+
+      const acct = await wallet.getAccount('default');
+      const waddr = acct.receiveAddress;
+
+      miner.addresses.length = 0;
+      miner.addAddress(waddr);
+
+      let txCount = 0;
+      let confirmedCount = 0;
+
+      wallet.on('tx', (details) => {
+        if (details.confirmations === 1)
+          txCount += 1;
+      });
+
+      wallet.on('confirmed', (details) => {
+        if (details.confirmations === 1)
+          confirmedCount += 1;
+      });
+
+      for (let i = 0; i < 101; i++)
+        await mineBlock();
+
+      await wallet.send({outputs: [{address: waddr, value: 1 * 1e8}]});
+      await mineBlock();
+
+      await wclient.close();
+
+      assert.equal(txCount, 102);
+      assert.equal(confirmedCount, 1);
     });
   });
 });
