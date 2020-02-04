@@ -2155,16 +2155,19 @@ describe('Wallet', function() {
       miner.addAddress(waddr);
 
       let txCount = 0;
+      let txConfirmedCount = 0;
       let confirmedCount = 0;
 
       wallet.on('tx', (details) => {
         if (details.confirmations === 1)
+          txConfirmedCount += 1;
+        else if (details.confirmations === 0)
           txCount += 1;
       });
 
       wallet.on('confirmed', (details) => {
-        if (details.confirmations === 1)
-          confirmedCount += 1;
+        assert.equal(details.confirmations, 1);
+        confirmedCount += 1;
       });
 
       for (let i = 0; i < 101; i++)
@@ -2175,7 +2178,8 @@ describe('Wallet', function() {
 
       await wclient.close();
 
-      assert.equal(txCount, 102);
+      assert.equal(txConfirmedCount, 102);
+      assert.equal(txCount, 1);
       assert.equal(confirmedCount, 1);
     });
   });
