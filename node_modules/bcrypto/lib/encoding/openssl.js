@@ -1,6 +1,6 @@
 /*!
  * openssl.js - openssl-specific encoding for javascript
- * Copyright (c) 2018, Christopher Jeffrey (MIT License).
+ * Copyright (c) 2018-2019, Christopher Jeffrey (MIT License).
  * https://github.com/bcoin-org/bcrypto
  *
  * Resources:
