@@ -1,0 +1,330 @@
+#!/usr/bin/env node
+
+/*!
+ * bmocha - alternative mocha implementation
+ * Copyright (c) 2018-2019, Christopher Jeffrey (MIT License).
+ * https://github.com/bcoin-org/bmocha
+ */
+
+'use strict';
+
+const {join} = require('path');
+
+const parts = process.version.split(/[^\d]/);
+const version = (0
+  + (parts[1] & 0xff) * 0x10000
+  + (parts[2] & 0xff) * 0x00100
+  + (parts[3] & 0xff) * 0x00001);
+
+const INSPECT = version >= 0x080000 ? 'inspect' : 'debug';
+const DEBUG = version >= 0x080000 ? 'debug' : 'inspect';
+
+/*
+ * Options
+ * https://github.com/nodejs/node/blob/master/src/node_options.cc
+ * Last update: b2abda9ba0b7b8bfbbf14e990ea86434f3f20de3
+ */
+
+const nodeOptions = new Set([
+  // Debug Options
+  '--debug',
+  '--debug-port',
+  '--debug-brk',
+  '--inspect',
+  '--inspect-port',
+  '--inspect-brk',
+  '--inspect-brk-node',
+
+  // Environment Options
+  '--experimental-json-modules',
+  '--experimental-modules',
+  '--experimental-policy',
+  '--experimental-repl-await',
+  '--experimental-vm-modules',
+  '--experimental-worker',
+  '--experimental-report',
+  '--expose-internals',
+  '--frozen-intrinsics',
+  '--http-parser',
+  '--loader',
+  '--es-module-specifier-resolution',
+  '--no-deprecation',
+  '--no-force-async-hooks-checks',
+  '--no-warnings',
+  '--pending-deprecation',
+  // '--prof-process',
+  '--redirect-warnings',
+  '--throw-deprecation',
+  '--trace-deprecation',
+  '--trace-sync-io',
+  '--trace-warnings',
+  // '--entry-type',
+  // '--input-type',
+  // '-c', '--check',
+  // '-e', '--eval',
+  // '-p', '--print',
+  // '-r', '--require',
+  // '-i', '--interactive',
+  '--napi-modules',
+  '--tls-v1.0',
+  '--tls-v1.1',
+
+  // Per Isolate Options
+  '--track-heap-objects',
+  '--abort-on-uncaught-exception',
+  '--max-old-space-size',
+  '--perf-basic-prof',
+  '--perf-basic-prof-only-functions',
+  '--perf-prof',
+  '--perf-prof-unwinding-info',
+  '--stack-trace-limit',
+  '--diagnostic-report-uncaught-exception',
+  '--diagnostic-report-on-signal',
+  '--diagnostic-report-on-fatalerror',
+  '--diagnostic-report-signal',
+  '--diagnostic-report-filename',
+  '--diagnostic-report-directory',
+  '--diagnostic-report-verbose',
+
+  // Per Process Options
+  '--title',
+  '--trace-event-categories',
+  '--trace-event-file-pattern',
+  '--trace-events-enabled',
+  '--trace-event-categories',
+  '--max-http-header-size',
+  '--v8-pool-size',
+  '--zero-fill-buffers',
+  '--debug-arraybuffer-allocations',
+  '--security-reverts',
+  // '--completion-bash',
+  // '-h', '--help',
+  // '-v', '--version',
+  // '--v8-options',
+  '--icu-data-dir',
+  '--openssl-config',
+  '--tls-cipher-list',
+  '--use-openssl-ca',
+  '--use-bundled-ca',
+  '--enable-fips',
+  '--force-fips'
+]);
+
+const valueOptions = new Set([
+  // Debug Options (some have optional values)
+  // '--debug',
+  '--debug-port',
+  // '--debug-brk',
+  // '--inspect',
+  '--inspect-port',
+  // '--inspect-brk',
+  // '--inspect-brk-node',
+
+  // Environment Options
+  '--experimental-policy',
+  '--http-parser',
+  '--loader',
+  '--es-module-specifier-resolution',
+  '--redirect-warnings',
+  '--entry-type',
+  '--input-type',
+  '-e', '--eval',
+  '-p', '--print',
+  '-r', '--require',
+
+  // Per Isolate Options
+  '--max-old-space-size',
+  '--stack-trace-limit',
+  '--diagnostic-report-signal',
+  '--diagnostic-report-filename',
+  '--diagnostic-report-directory',
+
+  // Per Process Options
+  '--title',
+  '--trace-event-categories',
+  '--trace-event-file-pattern',
+  '--max-http-header-size',
+  '--v8-pool-size',
+  '--icu-data-dir',
+  '--openssl-config',
+  '--tls-cipher-list'
+]);
+
+function hasOption(options, arg, slice) {
+  if (typeof arg !== 'string')
+    return false;
+
+  if (arg.length === 0)
+    return false;
+
+  if (arg[0] !== '-')
+    return false;
+
+  if (arg === '-' || arg === '--')
+    return false;
+
+  if (arg.startsWith('--')) {
+    const index = arg.indexOf('=');
+
+    if (index !== -1) {
+      if (!slice)
+        return false;
+
+      arg = arg.substring(0, index);
+    }
+  }
+
+  return options.has(arg);
+}
+
+function isNodeOption(arg) {
+  return hasOption(nodeOptions, arg, true);
+}
+
+function isValueOption(arg) {
+  return hasOption(valueOptions, arg, false);
+}
+
+/*
+ * Main
+ */
+
+function main() {
+  const file = process.execPath || process.argv[0];
+  const execArgv = (process.execArgv || []).slice();
+  const execArgvLen = execArgv.length;
+  const argv = [join(__dirname, '_bmocha')];
+
+  let node = file;
+  let ended = false;
+
+  for (let i = 2; i < process.argv.length; i++) {
+    let arg = process.argv[i];
+
+    // Allow `--` to terminate arguments.
+    if (ended || arg === '--') {
+      argv.push(arg);
+      ended = true;
+      continue;
+    }
+
+    // Primarily here to maintain
+    // compatibility with mocha.
+    switch (arg) {
+      case DEBUG:
+        if (i === 2)
+          arg = INSPECT;
+        break;
+      case '-d':
+        arg = `--${INSPECT}`;
+        break;
+      case '-gc':
+        arg = '--v8-expose-gc';
+        break;
+      case '--expose-gc':
+      case '--gc-global':
+      case '--es_staging':
+      case '--prof':
+      case '--log-timer-events':
+      case '--use_strict':
+      case '--allow-natives-syntax':
+        arg = `--v8-${arg.substring(2)}`;
+        break;
+      default:
+        if (arg.startsWith('--harmony'))
+          arg = `--v8-${arg.substring(2)}`;
+        else if (arg.startsWith('--trace') && !isNodeOption(arg))
+          arg = `--v8-${arg.substring(2)}`;
+        else if (arg.startsWith(`--${DEBUG}`))
+          arg = `--${INSPECT}` + arg.substring(2 + DEBUG.length);
+        break;
+    }
+
+    if (i === 2 && arg === INSPECT) {
+      execArgv.unshift(INSPECT);
+      argv.push('--no-timeouts');
+      continue;
+    }
+
+    if (arg.startsWith('--node=') && arg.length > 7) {
+      node = arg.substring(7);
+      continue;
+    }
+
+    if (arg === '--node' && i + 1 < process.argv.length) {
+      node = process.argv[++i];
+      continue;
+    }
+
+    if (arg.startsWith(`--${INSPECT}`))
+      argv.push('--no-timeouts');
+
+    if (isNodeOption(arg)) {
+      execArgv.push(arg);
+
+      if (isValueOption(arg) && i + 1 < process.argv.length)
+        execArgv.push(process.argv[++i]);
+
+      continue;
+    }
+
+    if (arg.startsWith('--v8-') && arg !== '--v8-options') {
+      execArgv.push(`--${arg.substring(5)}`);
+      continue;
+    }
+
+    argv.push(arg);
+  }
+
+  // All pointless if we didn't have any
+  // node options. Use the same process
+  // to speed things up.
+  if (node === file && execArgv.length === execArgvLen) {
+    require('./_bmocha');
+    return;
+  }
+
+  const {spawn} = require('child_process');
+  const args = execArgv.concat(argv);
+
+  const ps = spawn(node, args, {
+    stdio: 'inherit'
+  });
+
+  const onSighup = () => ps.kill('SIGHUP');
+  const onSigint = () => ps.kill('SIGINT');
+  const onSigterm = () => ps.kill('SIGTERM');
+
+  process.on('SIGHUP', onSighup);
+  process.on('SIGINT', onSigint);
+  process.on('SIGTERM', onSigterm);
+
+  ps.on('error', (err) => {
+    if (err.code === 'ENOENT') {
+      process.stderr.write(`File not found: ${JSON.stringify(err.path)}.\n`);
+      process.exit(1);
+    }
+
+    process.stderr.write(`Child Process Error: ${err.message}\n`);
+    process.exit(1);
+  });
+
+  ps.on('exit', (code, signal) => {
+    process.removeListener('SIGHUP', onSighup);
+    process.removeListener('SIGINT', onSigint);
+    process.removeListener('SIGTERM', onSigterm);
+
+    process.on('exit', () => {
+      if (signal)
+        process.kill(process.pid, signal);
+      else
+        process.exit(code);
+    });
+  });
+}
+
+/*
+ * Execute
+ */
+
+main();

@@ -32,7 +32,7 @@ Try it in the browser: [https://bcoin.io/browser/](https://bcoin.io/browser/)
 ```
 $ git clone git://github.com/bcoin-org/bcoin.git
 $ cd bcoin
-$ npm install
+$ npm rebuild
 $ ./bin/bcoin
 ```
 

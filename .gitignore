@@ -1,4 +1,5 @@
-node_modules/
+node_modules/**/build
+node_modules/.yarn-integrity
 .nyc_output
 docs/reference/
 docker_data/
@@ -6,4 +7,5 @@ browser/bcoin*
 npm-debug.log
 coverage/
 yarn.lock
+package-lock.json
 webpack.*.js

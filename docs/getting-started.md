@@ -45,15 +45,19 @@ $ git tag -v <version> # verify signature
 $ git checkout <version>
 ```
 
-Install dependencies:
+You can also verify signatures using:
 ```
-$ npm install
+$ git log --show-signature
+```
+
+Build and install globally:
+```
+$ npm rebuild
 $ npm install -g # link globally
 ```
-**Note:** Dependencies are checked for integrity using `package-lock.json`.
-However `npm` _will not_ make these checks with `npm install -g` and it
-will link your installation globally so that `bcoin` is in your
-path _(e.g. $ bcoin)_.
+
+If you're updating a repository it is necessary to run `npm rebuild` again
+if any dependencies with native addons have been updated.
 
 ### Installing on Debian/Ubuntu
 
@@ -93,6 +97,33 @@ __validation will be slow__ (a block verification which should take 1 second
 on consumer grade hardware may take up to 15 seconds). Bcoin will throw a
 warning on boot if it detects a build failure. If you run into this issue,
 please post an issue on the repo.
+
+## Use as a dependency
+
+It is recommended to specify bcoin as a git dependency with semantic
+versioning and include a mirror in the git tree for integrity and
+availability. For example, here is an example `package.json`:
+
+```json
+{
+  "dependencies": {
+    "bcoin": "git+https://github.com/bcoin-org/bcoin.git#semver:~2.0.0"
+  }
+}
+```
+
+Notes:
+- While git tags are signed, `npm` will not check the signature
+of the git tag.
+- See [Git URLs as Dependencies][giturls] `npm` documentation for
+additional details for using git as a dependency.
+
+If your project shares any dependencies you may want to de-duplicate, you can
+do this by running:
+
+```sh
+npm dedupe
+```
 
 ## Starting up your first bcoin node
 
@@ -222,3 +253,4 @@ See [Configuration][configuration].
 [keybase]: https://keybase.io/chjj#show-public
 [node]: https://nodejs.org
 [configuration]: configuration.md
+[giturls]: https://docs.npmjs.com/files/package.json.html#git-urls-as-dependencies
