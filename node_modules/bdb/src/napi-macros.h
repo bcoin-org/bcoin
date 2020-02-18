@@ -17,9 +17,16 @@
     napi_fatal_exception(env, fatal_exception); \
   }
 
+#define NAPI_STATUS_THROWS_VOID(call) \
+  if ((call) != napi_ok) { \
+    napi_throw_error(env, NULL, #call " failed!"); \
+    return; \
+  }
+
 #define NAPI_STATUS_THROWS(call) \
   if ((call) != napi_ok) { \
     napi_throw_error(env, NULL, #call " failed!"); \
+    return NULL; \
   }
 
 #define NAPI_METHOD(name) \
@@ -39,8 +46,8 @@
     void *ptr = &(tmp.name); \
     void *ptr_base = &tmp; \
     int offset = (char *) ptr - (char *) ptr_base; \
-    NAPI_STATUS_THROWS(napi_create_uint32(env, offset, &name##_offsetof)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, "offsetof_" #type "_" #name, name##_offsetof)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_uint32(env, offset, &name##_offsetof)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, "offsetof_" #type "_" #name, name##_offsetof)) \
   }
 
 #define NAPI_EXPORT_OFFSETOF_STRUCT(type, name) \
@@ -50,8 +57,8 @@
     void *ptr = &(tmp.name); \
     void *ptr_base = &tmp; \
     int offset = (char *) ptr - (char *) ptr_base; \
-    NAPI_STATUS_THROWS(napi_create_uint32(env, offset, &name##_offsetof)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, "offsetof_struct_" #type "_" #name, name##_offsetof)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_uint32(env, offset, &name##_offsetof)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, "offsetof_struct_" #type "_" #name, name##_offsetof)) \
   }
 
 
@@ -62,8 +69,8 @@
       char a; \
       name b; \
     }; \
-    NAPI_STATUS_THROWS(napi_create_uint32(env, sizeof(struct tmp) - sizeof(name), &name##_alignmentof)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, "alignmentof_" #name, name##_alignmentof)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_uint32(env, sizeof(struct tmp) - sizeof(name), &name##_alignmentof)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, "alignmentof_" #name, name##_alignmentof)) \
   }
 
 #define NAPI_EXPORT_ALIGNMENTOF_STRUCT(name) \
@@ -73,50 +80,50 @@
       char a; \
       struct name b; \
     }; \
-    NAPI_STATUS_THROWS(napi_create_uint32(env, sizeof(struct tmp) - sizeof(struct name), &name##_alignmentof)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, "alignmentof_" #name, name##_alignmentof)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_uint32(env, sizeof(struct tmp) - sizeof(struct name), &name##_alignmentof)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, "alignmentof_" #name, name##_alignmentof)) \
   }
 
 #define NAPI_EXPORT_SIZEOF(name) \
   { \
     napi_value name##_sizeof; \
-    NAPI_STATUS_THROWS(napi_create_uint32(env, sizeof(name), &name##_sizeof)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, "sizeof_" #name, name##_sizeof)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_uint32(env, sizeof(name), &name##_sizeof)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, "sizeof_" #name, name##_sizeof)) \
   }
 
 #define NAPI_EXPORT_SIZEOF_STRUCT(name) \
   { \
     napi_value name##_sizeof; \
-    NAPI_STATUS_THROWS(napi_create_uint32(env, sizeof(struct name), &name##_sizeof)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, "sizeof_" #name, name##_sizeof)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_uint32(env, sizeof(struct name), &name##_sizeof)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, "sizeof_" #name, name##_sizeof)) \
   }
 
 #define NAPI_EXPORT_UINT32(name) \
   { \
     napi_value name##_uint32; \
-    NAPI_STATUS_THROWS(napi_create_uint32(env, name, &name##_uint32)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, #name, name##_uint32)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_uint32(env, name, &name##_uint32)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, #name, name##_uint32)) \
   }
 
 #define NAPI_EXPORT_INT32(name) \
   { \
     napi_value name##_int32; \
-    NAPI_STATUS_THROWS(napi_create_int32(env, name, &name##_int32)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, #name, name##_int32)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_int32(env, name, &name##_int32)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, #name, name##_int32)) \
   }
 
 #define NAPI_EXPORT_FUNCTION(name) \
   { \
     napi_value name##_fn; \
-    NAPI_STATUS_THROWS(napi_create_function(env, NULL, 0, name, NULL, &name##_fn)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, #name, name##_fn)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_function(env, NULL, 0, name, NULL, &name##_fn)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, #name, name##_fn)) \
   }
 
 #define NAPI_EXPORT_UTF8(name, len) \
   { \
     napi_value name##_utf8; \
-    NAPI_STATUS_THROWS(napi_create_string_utf8(env, name, len, &name##_utf8)) \
-    NAPI_STATUS_THROWS(napi_set_named_property(env, exports, #name, name##_utf8)) \
+    NAPI_STATUS_THROWS_VOID(napi_create_string_utf8(env, name, len, &name##_utf8)) \
+    NAPI_STATUS_THROWS_VOID(napi_set_named_property(env, exports, #name, name##_utf8)) \
   }
 
 #define NAPI_EXPORT_STRING(name) \
