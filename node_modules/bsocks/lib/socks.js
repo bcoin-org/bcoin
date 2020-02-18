@@ -368,7 +368,7 @@ class SOCKS extends EventEmitter {
       packet[off++] = name.length;
 
     off += name.copy(packet, off);
-    packet.writeUInt32BE(port, off);
+    packet.writeUInt16BE(port, off);
 
     this.state = SOCKS.states.PROXY;
     this.socket.write(packet);
