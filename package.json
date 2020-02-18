@@ -30,7 +30,7 @@
     "bdns": "git+https://github.com/bcoin-org/bdns.git#semver:~0.1.5",
     "bevent": "git+https://github.com/bcoin-org/bevent.git#semver:~0.1.5",
     "bfile": "git+https://github.com/bcoin-org/bfile.git#semver:~0.2.1",
-    "bfilter": "git+https://github.com/bcoin-org/bfilter.git#semver:~1.0.5",
+    "bfilter": "git+https://github.com/braydonf/bfilter.git#murmur3",
     "bheep": "git+https://github.com/bcoin-org/bheep.git#semver:~0.1.5",
     "binet": "git+https://github.com/bcoin-org/binet.git#semver:~0.3.5",
     "blgr": "git+https://github.com/bcoin-org/blgr.git#semver:~0.1.7",
