@@ -355,7 +355,7 @@ describe('Taproot', function() {
       | flags.VERIFY_NULLDUMMY
       | flags.VERIFY_TAPROOT;
 
-    TXS: for (const test of getTests(false)) {
+    for (const test of getTests(false)) {
       const tx = test.tx;
 
       // Expected block inclusion verification result
@@ -367,10 +367,6 @@ describe('Taproot', function() {
       // Generate test name and set standardness flag
       let name = '';
       for (let i = 0; i < tx.inputs.length; i++) {
-        // Skip script spends for now
-        if (test.inputs[i].script)
-          continue TXS;
-
         name +=  ' ' + test.inputs[i].comment;
         if (!test.inputs[i].standard)
           standard = false;
