@@ -9,7 +9,7 @@ extern "C" {
 
 /** This module implements a variant of Schnorr signatures compliant with
  * BIP-schnorr
- * (https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki).
+ * (https://github.com/sipa/bips/blob/d194620/bip-schnorr.mediawiki).
  */
 
 /** Opaque data structure that holds a parsed Schnorr signature.
@@ -22,7 +22,7 @@ extern "C" {
  *  `secp256k1_schnorrleg_parse` functions.
  */
 typedef struct {
-    unsigned char data[64];
+  unsigned char data[64];
 } secp256k1_schnorrleg;
 
 /** Serialize a Schnorr signature.
@@ -34,11 +34,12 @@ typedef struct {
  *
  *  See secp256k1_schnorrleg_parse for details about the encoding.
  */
-SECP256K1_API int secp256k1_schnorrleg_serialize(
-    const secp256k1_context* ctx,
-    unsigned char *out64,
-    const secp256k1_schnorrleg* sig
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+SECP256K1_API int
+secp256k1_schnorrleg_serialize(const secp256k1_context *ctx,
+                               unsigned char *out64,
+                               const secp256k1_schnorrleg *sig) SECP256K1_ARG_NONNULL(1)
+                                                                SECP256K1_ARG_NONNULL(2)
+                                                                SECP256K1_ARG_NONNULL(3);
 
 /** Parse a Schnorr signature.
  *
@@ -56,33 +57,30 @@ SECP256K1_API int secp256k1_schnorrleg_serialize(
  * encoded numbers are out of range, signature validation with it is
  * guaranteed to fail for every message and public key.
  */
-SECP256K1_API int secp256k1_schnorrleg_parse(
-    const secp256k1_context* ctx,
-    secp256k1_schnorrleg* sig,
-    const unsigned char *in64
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3);
+SECP256K1_API int
+secp256k1_schnorrleg_parse(const secp256k1_context *ctx,
+                           secp256k1_schnorrleg *sig,
+                           const unsigned char *in64) SECP256K1_ARG_NONNULL(1)
+                                                      SECP256K1_ARG_NONNULL(2)
+                                                      SECP256K1_ARG_NONNULL(3);
 
 /** Create a Schnorr signature.
  *
  * Returns 1 on success, 0 on failure.
  *  Args:    ctx: pointer to a context object, initialized for signing (cannot be NULL)
  *  Out:     sig: pointer to the returned signature (cannot be NULL)
- *       nonce_is_negated: a pointer to an integer indicates if signing algorithm negated the
- *                nonce (can be NULL)
- *  In:    msg32: the 32-byte message hash being signed (cannot be NULL)
+ *  In:      msg: the message hash being signed
+ *       msg_len: message length
  *        seckey: pointer to a 32-byte secret key (cannot be NULL)
- *       noncefp: pointer to a nonce generation function. If NULL, secp256k1_nonce_function_bipschnorr is used
- *         ndata: pointer to arbitrary data used by the nonce generation function (can be NULL)
  */
-SECP256K1_API int secp256k1_schnorrleg_sign(
-    const secp256k1_context* ctx,
-    secp256k1_schnorrleg *sig,
-    int *nonce_is_negated,
-    const unsigned char *msg32,
-    const unsigned char *seckey,
-    secp256k1_nonce_function noncefp,
-    void *ndata
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5);
+SECP256K1_API int
+secp256k1_schnorrleg_sign(const secp256k1_context *ctx,
+                          secp256k1_schnorrleg *sig,
+                          const unsigned char *msg,
+                          size_t msg_len,
+                          const unsigned char *seckey) SECP256K1_ARG_NONNULL(1)
+                                                       SECP256K1_ARG_NONNULL(2)
+                                                       SECP256K1_ARG_NONNULL(5);
 
 /** Verify a Schnorr signature.
  *
@@ -90,15 +88,18 @@ SECP256K1_API int secp256k1_schnorrleg_sign(
  *           0: incorrect or unparseable signature
  *  Args:    ctx: a secp256k1 context object, initialized for verification.
  *  In:      sig: the signature being verified (cannot be NULL)
- *         msg32: the 32-byte message hash being verified (cannot be NULL)
+ *           msg: the message hash being verified
+ *       msg_len: message length
  *        pubkey: pointer to a public key to verify with (cannot be NULL)
  */
-SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_schnorrleg_verify(
-    const secp256k1_context* ctx,
-    const secp256k1_schnorrleg *sig,
-    const unsigned char *msg32,
-    const secp256k1_pubkey *pubkey
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
+SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int
+secp256k1_schnorrleg_verify(const secp256k1_context *ctx,
+                            const secp256k1_schnorrleg *sig,
+                            const unsigned char *msg,
+                            size_t msg_len,
+                            const secp256k1_pubkey *pubkey) SECP256K1_ARG_NONNULL(1)
+                                                            SECP256K1_ARG_NONNULL(2)
+                                                            SECP256K1_ARG_NONNULL(5);
 
 /** Verifies a set of Schnorr signatures.
  *
@@ -107,20 +108,22 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_schnorrleg_verify(
  *  Args:    ctx: a secp256k1 context object, initialized for verification.
  *       scratch: scratch space used for the multiexponentiation
  *  In:      sig: array of signatures, or NULL if there are no signatures
- *         msg32: array of messages, or NULL if there are no signatures
+ *           msg: array of messages, or NULL if there are no signatures
+ *       msg_len: array of message lengths, or NULL if there are no signatures
  *            pk: array of public keys, or NULL if there are no signatures
  *        n_sigs: number of signatures in above arrays. Must be smaller than
  *                2^31 and smaller than half the maximum size_t value. Must be 0
  *                if above arrays are NULL.
  */
-SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_schnorrleg_verify_batch(
-    const secp256k1_context* ctx,
-    secp256k1_scratch_space *scratch,
-    const secp256k1_schnorrleg *const *sig,
-    const unsigned char *const *msg32,
-    const secp256k1_pubkey *const *pk,
-    size_t n_sigs
-) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2);
+SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int
+secp256k1_schnorrleg_verify_batch(const secp256k1_context *ctx,
+                                  secp256k1_scratch_space *scratch,
+                                  const secp256k1_schnorrleg *const *sig,
+                                  const unsigned char *const *msg,
+                                  const size_t *msg_len,
+                                  const secp256k1_pubkey *const *pk,
+                                  size_t n_sigs) SECP256K1_ARG_NONNULL(1)
+                                                 SECP256K1_ARG_NONNULL(2);
 
 #ifdef __cplusplus
 }

@@ -20,9 +20,14 @@
  */
 
 #ifdef TORSION_USE_64BIT
-#ifdef __SIZEOF_INT128__
-typedef unsigned __int128 uint128_t;
+
+#ifdef __SIZEOF_INT128___
+#ifdef __GNUC__
+__extension__ typedef unsigned __int128 uint128_t;
 #else
+typedef unsigned __int128 uint128_t;
+#endif
+#else /* __SIZEOF_INT128___ */
 typedef unsigned uint128_t __attribute__((mode(TI)));
 #endif
 

@@ -67,91 +67,79 @@ static void
 p521_fe_sqrn(p521_fe_t out, const p521_fe_t in, int rounds) {
   int i;
 
-  p521_fe_set(out, in);
+  p521_fe_sqr(out, in);
 
-  for (i = 0; i < rounds; i++)
+  for (i = 1; i < rounds; i++)
     p521_fe_sqr(out, out);
 }
 
-/* https://eprint.iacr.org/2014/852.pdf */
-/* https://github.com/randombit/botan/blob/master/src/lib/pubkey/ec_group/curve_gfp.cpp */
 static void
 p521_fe_invert(p521_fe_t out, const p521_fe_t in) {
-  p521_fe_t r, rl, a7;
+  /* 519x1 1x0 1x1 */
+  p521_fe_t x1, x2, x3, x6, x7, x8, x16, x32, x64, x128, x256;
 
-  p521_fe_sqr(r, in);
-  p521_fe_mul(r, r, in);
+  p521_fe_set(x1, in);
 
-  p521_fe_sqr(r, r);
-  p521_fe_mul(r, r, in);
+  p521_fe_sqr(x2, x1);
+  p521_fe_mul(x2, x2, x1);
 
-  p521_fe_set(rl, r);
+  p521_fe_sqr(x3, x2);
+  p521_fe_mul(x3, x3, x1);
 
-  p521_fe_sqrn(r, r, 3);
-  p521_fe_mul(r, r, rl);
+  p521_fe_sqrn(x6, x3, 3);
+  p521_fe_mul(x6, x6, x3);
 
-  p521_fe_sqr(r, r);
-  p521_fe_mul(r, r, in);
-  p521_fe_set(a7, r);
+  p521_fe_sqr(x7, x6);
+  p521_fe_mul(x7, x7, x1);
 
-  p521_fe_sqr(r, r);
-  p521_fe_mul(r, r, in);
+  p521_fe_sqr(x8, x7);
+  p521_fe_mul(x8, x8, x1);
 
-  p521_fe_set(rl, r);
-  p521_fe_sqrn(r, r, 8);
-  p521_fe_mul(r, r, rl);
+  p521_fe_sqrn(x16, x8, 8);
+  p521_fe_mul(x16, x16, x8);
 
-  p521_fe_set(rl, r);
-  p521_fe_sqrn(r, r, 16);
-  p521_fe_mul(r, r, rl);
+  p521_fe_sqrn(x32, x16, 16);
+  p521_fe_mul(x32, x32, x16);
 
-  p521_fe_set(rl, r);
-  p521_fe_sqrn(r, r, 32);
-  p521_fe_mul(r, r, rl);
+  p521_fe_sqrn(x64, x32, 32);
+  p521_fe_mul(x64, x64, x32);
 
-  p521_fe_set(rl, r);
-  p521_fe_sqrn(r, r, 64);
-  p521_fe_mul(r, r, rl);
+  p521_fe_sqrn(x128, x64, 64);
+  p521_fe_mul(x128, x128, x64);
 
-  p521_fe_set(rl, r);
-  p521_fe_sqrn(r, r, 128);
-  p521_fe_mul(r, r, rl);
+  p521_fe_sqrn(x256, x128, 128);
+  p521_fe_mul(x256, x256, x128);
 
-  p521_fe_set(rl, r);
-  p521_fe_sqrn(r, r, 256);
-  p521_fe_mul(r, r, rl);
+  p521_fe_sqrn(out, x256, 256); /* x512 */
+  p521_fe_mul(out, out, x256);
 
-  p521_fe_sqrn(r, r, 7);
-  p521_fe_mul(r, r, a7);
+  p521_fe_sqrn(out, out, 7); /* x519 */
+  p521_fe_mul(out, out, x7);
 
-  p521_fe_sqrn(r, r, 2);
-  p521_fe_mul(r, r, in);
+  p521_fe_sqr(out, out);
 
-  p521_fe_set(out, r);
+  p521_fe_sqr(out, out);
+  p521_fe_mul(out, out, x1);
 }
-
-/* Mathematical routines for the NIST prime elliptic curves
- *
- * See: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.204.9073&rep=rep1&type=pdf
- *
- *   r <- c
- *   for i = 1 to 519 do
- *     r <- r^2
- *   end for
- */
 
 static int
 p521_fe_sqrt(p521_fe_t out, const p521_fe_t in) {
-  p521_fe_t r, t;
-  int ret;
+  /* See: Mathematical routines for the NIST prime elliptic curves
+   *
+   * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.204.9073&rep=rep1&type=pdf
+   *
+   * Chain:
+   *
+   *   r <- c
+   *   for i = 1 to 519 do
+   *     r <- r^2
+   *   end for
+   */
+  p521_fe_t c, t;
 
-  p521_fe_set(r, in);
-  p521_fe_sqrn(r, r, 519);
-  p521_fe_sqr(t, r);
+  p521_fe_set(c, in);
+  p521_fe_sqrn(out, c, 519);
+  p521_fe_sqr(t, out);
 
-  ret = p521_fe_equal(t, in);
-
-  p521_fe_set(out, r);
-
-  return ret;
+  return p521_fe_equal(t, c);
 }

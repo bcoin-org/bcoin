@@ -46,37 +46,34 @@ mpz_roset(mpz_t r, const mpz_t x) {
 
 static void
 mpz_set_u64(mpz_t r, uint64_t num) {
-  if (GMP_NUMB_BITS >= 64) {
-    mp_limb_t *limbs = mpz_limbs_write(r, 1);
-    limbs[0] = (mp_limb_t)num;
-    mpz_limbs_finish(r, 1);
-    return;
-  }
-
   if (GMP_NUMB_BITS == 32) {
     mp_limb_t *limbs = mpz_limbs_write(r, 2);
+
     limbs[0] = (mp_limb_t)(num >>  0);
     limbs[1] = (mp_limb_t)(num >> 32);
-    mpz_limbs_finish(r, 2);
-    return;
-  }
 
-  assert(0);
+    mpz_limbs_finish(r, 2);
+  } else {
+    mp_limb_t *limbs = mpz_limbs_write(r, 1);
+
+    assert(GMP_NUMB_BITS >= 64);
+
+    limbs[0] = (mp_limb_t)num;
+
+    mpz_limbs_finish(r, 1);
+  }
 }
 
 static uint64_t
 mpz_get_u64(const mpz_t x) {
-  if (GMP_NUMB_BITS >= 64)
-    return mpz_getlimbn(x, 0);
-
   if (GMP_NUMB_BITS == 32) {
     return ((uint64_t)mpz_getlimbn(x, 1) << 32)
          | ((uint64_t)mpz_getlimbn(x, 0) <<  0);
   }
 
-  assert(0);
+  assert(GMP_NUMB_BITS >= 64);
 
-  return 0;
+  return mpz_getlimbn(x, 0);
 }
 
 static void
@@ -89,9 +86,11 @@ mpz_export_pad(unsigned char *out, const mpz_t n, size_t size, int endian) {
   if (endian == 1) {
     memset(out, 0x00, left);
     mpz_export(out + left, NULL, 1, 1, 0, 0, n);
-  } else {
+  } else if (endian == -1) {
     mpz_export(out, NULL, -1, 1, 0, 0, n);
     memset(out + len, 0x00, left);
+  } else {
+    assert(0 && "invalid endianness");
   }
 }
 
@@ -99,20 +98,14 @@ static void
 mpz_cleanse(mpz_t n) {
 #ifdef TORSION_USE_GMP
   /* Using the public API. */
-  const mp_limb_t *orig = mpz_limbs_read(n);
   size_t size = mpz_size(n);
-  mp_limb_t *limbs = mpz_limbs_modify(n, (mp_size_t)size);
+  mp_limb_t *limbs = mpz_limbs_modify(n, size);
 
   /* Zero the limbs. */
   cleanse(limbs, size * sizeof(mp_limb_t));
 
   /* Ensure the integer remains in a valid state. */
   mpz_limbs_finish(n, 0);
-
-  /* Sanity checks. */
-  assert(limbs == orig);
-  assert(mpz_limbs_read(n) == orig);
-  assert(mpz_sgn(n) == 0);
 #else
   /* Using the internal API. */
   mpz_ptr x = n;
@@ -156,9 +149,9 @@ mpz_random_int(mpz_t ret, const mpz_t max, drbg_t *rng) {
 
 static int
 mpz_is_prime_mr(const mpz_t n, unsigned long reps, int force2, drbg_t *rng) {
-  int r = 0;
   mpz_t nm1, nm3, q, x, y;
   unsigned long k, i, j;
+  int ret = 0;
 
   /* if n < 7 */
   if (mpz_cmp_ui(n, 7) < 0) {
@@ -226,22 +219,21 @@ next:
     ;
   }
 
-  r = 1;
+  ret = 1;
 fail:
   mpz_clear(nm1);
   mpz_clear(nm3);
   mpz_clear(q);
   mpz_clear(x);
   mpz_clear(y);
-  return r;
+  return ret;
 }
 
 static int
 mpz_is_prime_lucas(const mpz_t n, unsigned long limit) {
-  int ret = 0;
-  unsigned long p, r;
   mpz_t d, s, nm2, vk, vk1, t1, t2, t3;
-  long i, t;
+  unsigned long i, p, r, t;
+  int ret = 0;
   int j;
 
   mpz_init(d);
@@ -326,7 +318,7 @@ mpz_is_prime_lucas(const mpz_t n, unsigned long limit) {
   /* s >>= r */
   mpz_tdiv_q_2exp(s, s, r);
 
-  for (i = (long)mpz_bitlen(s); i >= 0; i--) {
+  for (i = mpz_bitlen(s) + 1; i-- > 0;) {
     /* if floor(s / 2^i) mod 2 == 1 */
     if (mpz_tstbit(s, i)) {
       /* vk = (vk * vk1 + n - p) mod n */
@@ -368,7 +360,7 @@ mpz_is_prime_lucas(const mpz_t n, unsigned long limit) {
       goto succeed;
   }
 
-  for (t = 0; t < (long)r - 1; t++) {
+  for (t = 1; t < r; t++) {
     /* if vk == 0 */
     if (mpz_sgn(vk) == 0)
       goto succeed;

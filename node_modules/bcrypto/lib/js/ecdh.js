@@ -110,7 +110,7 @@ class ECDH {
     const A = this.curve.decodePoint(key);
     const P = this.edwards.pointFromMont(A);
 
-    if (P.sign() !== sign)
+    if (P.isOdd() !== sign)
       return P.neg().encode();
 
     return P.encode();

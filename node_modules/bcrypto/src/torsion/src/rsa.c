@@ -1311,7 +1311,7 @@ pss_encode(unsigned char *out,
            const unsigned char *salt,
            size_t salt_len) {
   /* [RFC8017] Page 42, Section 9.1.1. */
-  unsigned char *em = out; /* maybe need to truncate outside? */
+  unsigned char *em = out;
   size_t hlen = hash_output_size(type);
   size_t slen = salt_len;
   size_t emlen = (embits + 7) >> 3;
@@ -1965,17 +1965,18 @@ rsa_sign_pss(unsigned char *out,
 
   bits = mpz_bitlen(k.n);
   klen = (bits + 7) / 8;
+  emlen = (bits + 6) / 8;
 
   if (salt_len == RSA_SALT_LENGTH_AUTO) {
-    if (klen < 2 + hlen)
+    if (emlen < 2 + hlen)
       goto fail;
 
-    salt_len = klen - 2 - hlen;
+    salt_len = emlen - 2 - hlen;
   } else if (salt_len == RSA_SALT_LENGTH_HASH) {
     salt_len = hlen;
   }
 
-  if (salt_len < 0)
+  if (salt_len < 0 || (size_t)salt_len > klen)
     goto fail;
 
   if (salt_len > 0) {
@@ -2050,7 +2051,7 @@ rsa_verify_pss(int type,
   else if (salt_len == RSA_SALT_LENGTH_HASH)
     salt_len = hlen;
 
-  if (salt_len < 0)
+  if (salt_len < 0 || (size_t)salt_len > klen)
     goto fail;
 
   em = safe_malloc(klen);

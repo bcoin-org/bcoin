@@ -7,7 +7,7 @@
 'use strict';
 
 const assert = require('../internal/assert');
-const random = require('./random');
+const random = require('../random');
 
 /**
  * A maybe-secure memzero.

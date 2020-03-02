@@ -9,7 +9,7 @@
 
 const binding = require('./binding');
 
-if (binding.Secp256k1) {
+if (binding.Secp256k1 && process.env.BCRYPTO_FORCE_TORSION !== '1') {
   module.exports = require('./libsecp256k1');
 } else {
   const ECDSA = require('./ecdsa');

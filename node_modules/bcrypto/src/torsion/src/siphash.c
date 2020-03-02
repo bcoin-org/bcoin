@@ -20,15 +20,19 @@
 #include <string.h>
 #include <torsion/siphash.h>
 
-#if defined(TORSION_USE_64BIT)
-#if defined(__GNUC__)
-#if defined(__SIZEOF_INT128__)
-typedef unsigned __int128 uint128_t;
+#ifdef TORSION_USE_64BIT
+#ifdef _MSC_VER
+#include <intrin.h>
 #else
+#ifdef __SIZEOF_INT128___
+#ifdef __GNUC__
+__extension__ typedef unsigned __int128 uint128_t;
+#else
+typedef unsigned __int128 uint128_t;
+#endif
+#else /* __SIZEOF_INT128__ */
 typedef unsigned uint128_t __attribute__((mode(TI)));
 #endif
-#elif defined(_MSC_VER)
-#include <intrin.h>
 #endif
 #endif
 
@@ -64,11 +68,13 @@ read64le(const void *src) {
 
 static uint64_t
 reduce64(uint64_t a, uint64_t b) {
-#if defined(__GNUC__) && defined(TORSION_USE_64BIT)
-  return ((uint128_t)a * b) >> 64;
-#elif defined(_MSC_VER) && defined(TORSION_USE_64BIT)
+#ifdef TORSION_USE_64BIT
+#ifdef _MSC_VER
   return __umulh(a, b);
 #else
+  return ((uint128_t)a * b) >> 64;
+#endif
+#else /* TORSION_USE_64BIT */
   /* https://stackoverflow.com/questions/28868367 */
   uint64_t ahi = a >> 32;
   uint64_t alo = a & 0xffffffff;

@@ -15,7 +15,7 @@ const backend = new binding.Secp256k1();
  * Randomize
  */
 
-backend._randomize(binding.entropy());
+backend._randomize(binding.entropy(32));
 
 /**
  * Generate a private key.

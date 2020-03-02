@@ -1498,12 +1498,12 @@ NAN_METHOD(BSecp256k1::Derive) {
 NAN_METHOD(BSecp256k1::SchnorrSign) {
   BSecp256k1 *secp = ObjectWrap::Unwrap<BSecp256k1>(info.Holder());
 
-  v8::Local<v8::Object> msg32_buf = info[0].As<v8::Object>();
-  CHECK_TYPE_BUFFER(msg32_buf, MSG_TYPE_INVALID);
-  CHECK_BUFFER_LENGTH(msg32_buf, 32, MSG_LENGTH_INVALID);
+  v8::Local<v8::Object> msg_buf = info[0].As<v8::Object>();
+  CHECK_TYPE_BUFFER(msg_buf, MSG_TYPE_INVALID);
 
-  const unsigned char *msg32 =
-    (const unsigned char *)node::Buffer::Data(msg32_buf);
+  const unsigned char *msg =
+    (const unsigned char *)node::Buffer::Data(msg_buf);
+  size_t msg_len = node::Buffer::Length(msg_buf);
 
   v8::Local<v8::Object> priv_buf = info[1].As<v8::Object>();
   CHECK_TYPE_BUFFER(priv_buf, EC_PRIVATE_KEY_TYPE_INVALID);
@@ -1514,10 +1514,8 @@ NAN_METHOD(BSecp256k1::SchnorrSign) {
 
   secp256k1_schnorrleg sig;
 
-  if (!secp256k1_schnorrleg_sign(secp->ctx, &sig, NULL,
-                                 msg32, priv, NULL, NULL)) {
+  if (!secp256k1_schnorrleg_sign(secp->ctx, &sig, msg, msg_len, priv))
     return Nan::ThrowError(EC_SIGN_FAIL);
-  }
 
   unsigned char out[64];
 
@@ -1529,12 +1527,12 @@ NAN_METHOD(BSecp256k1::SchnorrSign) {
 NAN_METHOD(BSecp256k1::SchnorrVerify) {
   BSecp256k1 *secp = ObjectWrap::Unwrap<BSecp256k1>(info.Holder());
 
-  v8::Local<v8::Object> msg32_buf = info[0].As<v8::Object>();
-  CHECK_TYPE_BUFFER(msg32_buf, MSG_TYPE_INVALID);
-  CHECK_BUFFER_LENGTH(msg32_buf, 32, MSG_LENGTH_INVALID);
+  v8::Local<v8::Object> msg_buf = info[0].As<v8::Object>();
+  CHECK_TYPE_BUFFER(msg_buf, MSG_TYPE_INVALID);
 
-  const unsigned char *msg32 =
-    (const unsigned char *)node::Buffer::Data(msg32_buf);
+  const unsigned char *msg =
+    (const unsigned char *)node::Buffer::Data(msg_buf);
+  size_t msg_len = node::Buffer::Length(msg_buf);
 
   v8::Local<v8::Object> sig_inp_buf = info[1].As<v8::Object>();
   CHECK_TYPE_BUFFER(sig_inp_buf, EC_SIGNATURE_TYPE_INVALID);
@@ -1561,7 +1559,7 @@ NAN_METHOD(BSecp256k1::SchnorrVerify) {
   if (!secp256k1_ec_pubkey_parse(secp->ctx, &pub, pub_inp, pub_inp_len))
     return Nan::ThrowError(EC_PUBLIC_KEY_PARSE_FAIL);
 
-  int result = secp256k1_schnorrleg_verify(secp->ctx, &sig, msg32, &pub);
+  int result = secp256k1_schnorrleg_verify(secp->ctx, &sig, msg, msg_len, &pub);
 
   info.GetReturnValue().Set(Nan::New<v8::Boolean>(result));
 }
@@ -1582,6 +1580,8 @@ NAN_METHOD(BSecp256k1::SchnorrVerifyBatch) {
   const unsigned char **msgs =
     (const unsigned char **)malloc(len * sizeof(unsigned char *));
 
+  size_t *msg_lens = (size_t *)malloc(len * sizeof(size_t));
+
   secp256k1_schnorrleg **sigs =
     (secp256k1_schnorrleg **)malloc(len * sizeof(secp256k1_schnorrleg *));
 
@@ -1596,14 +1596,15 @@ NAN_METHOD(BSecp256k1::SchnorrVerifyBatch) {
 
 #define FREE_BATCH do {                 \
   if (msgs != NULL) free(msgs);         \
+  if (msg_lens != NULL) free(msg_lens); \
   if (sigs != NULL) free(sigs);         \
   if (pubs != NULL) free(pubs);         \
   if (sig_data != NULL) free(sig_data); \
   if (pub_data != NULL) free(pub_data); \
 } while (0)
 
-  if (msgs == NULL || sigs == NULL || pubs == NULL
-      || sig_data == NULL || pub_data == NULL) {
+  if (msgs == NULL || msg_lens == NULL || sigs == NULL
+      || pubs == NULL || sig_data == NULL || pub_data == NULL) {
     FREE_BATCH;
     return Nan::ThrowError(ALLOCATION_FAILURE);
   }
@@ -1657,11 +1658,6 @@ NAN_METHOD(BSecp256k1::SchnorrVerifyBatch) {
       (const unsigned char *)node::Buffer::Data(pub_buf);
     size_t pub_len = node::Buffer::Length(pub_buf);
 
-    if (msg_len != 32) {
-      FREE_BATCH;
-      return Nan::ThrowRangeError(MSG_LENGTH_INVALID);
-    }
-
     if (sig_len != 64) {
       FREE_BATCH;
       return Nan::ThrowRangeError(EC_SIGNATURE_LENGTH_INVALID);
@@ -1683,6 +1679,7 @@ NAN_METHOD(BSecp256k1::SchnorrVerifyBatch) {
     }
 
     msgs[i] = msg;
+    msg_lens[i] = msg_len;
     sigs[i] = &sig_data[i];
     pubs[i] = &pub_data[i];
   }
@@ -1703,7 +1700,8 @@ NAN_METHOD(BSecp256k1::SchnorrVerifyBatch) {
   }
 
   int result = secp256k1_schnorrleg_verify_batch(secp->ctx, secp->scratch,
-                                                 sigs, msgs, pubs, len);
+                                                 sigs, msgs, msg_lens, pubs,
+                                                 len);
 
   FREE_BATCH;
 

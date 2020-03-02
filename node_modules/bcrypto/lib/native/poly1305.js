@@ -10,4 +10,8 @@ const {Poly1305} = require('./binding');
 
 Poly1305.native = 2;
 
+/*
+ * Expose
+ */
+
 module.exports = Poly1305;

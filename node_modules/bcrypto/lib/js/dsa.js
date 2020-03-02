@@ -1171,7 +1171,7 @@ function truncate(msg, q) {
   // Note that the FIPS186 behavior
   // differs from OpenSSL's behavior.
   // We replicate OpenSSL which takes
-  // the left-most ceil(log2(n)) bits
+  // the left-most ceil(log2(n+1)) bits
   // modulo `q`.
   assert(Buffer.isBuffer(msg));
   assert(q instanceof BN);

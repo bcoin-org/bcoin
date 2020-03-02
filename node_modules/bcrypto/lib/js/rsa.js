@@ -1232,13 +1232,14 @@ function signPSS(hash, msg, key, saltLen) {
 
   const bits = k.bits();
   const klen = (bits + 7) >>> 3;
+  const emlen = (bits + 6) >>> 3;
 
   if (saltLen === SALT_LENGTH_AUTO)
-    saltLen = klen - 2 - hash.size;
+    saltLen = emlen - 2 - hash.size;
   else if (saltLen === SALT_LENGTH_HASH)
     saltLen = hash.size;
 
-  if (saltLen < 0)
+  if (saltLen < 0 || saltLen > klen)
     throw new Error('Invalid PSS salt length.');
 
   const salt = rng.randomBytes(saltLen);
@@ -1247,10 +1248,6 @@ function signPSS(hash, msg, key, saltLen) {
   // Note that `em` may be one byte less
   // than the modulus size in the case
   // of (bits - 1) mod 8 == 0.
-  //
-  // This isn't a problem for us since
-  // our decryption function is fairly
-  // lax about size requirements.
   return k.decrypt(em);
 }
 
@@ -1308,6 +1305,14 @@ function _verifyPSS(hash, msg, sig, key, saltLen) {
   if (sig.length !== klen)
     return false;
 
+  if (saltLen === SALT_LENGTH_AUTO)
+    saltLen = 0; // Handled in pssVerify.
+  else if (saltLen === SALT_LENGTH_HASH)
+    saltLen = hash.size;
+
+  if (saltLen < 0 || saltLen > klen)
+    return false;
+
   let em = k.encrypt(sig);
 
   // Edge case: the encoding crossed a
@@ -1321,14 +1326,6 @@ function _verifyPSS(hash, msg, sig, key, saltLen) {
 
     em = em.slice(1);
   }
-
-  if (saltLen === SALT_LENGTH_AUTO)
-    saltLen = 0; // Handled in pssVerify.
-  else if (saltLen === SALT_LENGTH_HASH)
-    saltLen = hash.size;
-
-  if (saltLen < 0)
-    return false;
 
   return pssVerify(hash, msg, em, bits - 1, saltLen);
 }

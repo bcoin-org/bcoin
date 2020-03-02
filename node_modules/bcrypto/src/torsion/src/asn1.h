@@ -299,6 +299,7 @@ asn1_size_mpz(const mpz_t n) {
 
 static size_t
 asn1_size_version(unsigned char version) {
+  (void)version;
   return 3;
 }
 

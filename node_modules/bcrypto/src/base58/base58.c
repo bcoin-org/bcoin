@@ -46,7 +46,6 @@ bcrypto_base58_encode(char **str, size_t *str_len,
 
   for (; i < data_len; i++) {
     unsigned long carry = data[i];
-    size_t j = 0;
     size_t k;
 
     for (j = 0; j < b58len; j++) {
@@ -121,7 +120,6 @@ bcrypto_base58_decode(uint8_t **data, size_t *data_len,
     uint8_t ch = (uint8_t)str[i];
     int v = (ch & 0x80) ? -1 : TABLE[ch];
     unsigned long carry = v;
-    size_t j = 0;
     size_t k;
 
     if (v == -1) {
