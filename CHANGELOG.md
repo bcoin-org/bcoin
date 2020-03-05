@@ -196,9 +196,9 @@ that have many transactions.
 - Using the bcoin library in a REPL now has auto-completion by pressing tab.
 - Various documentation updates.
 - Mempool fix to add non-standard (non-segwit) to reject cache.
-- A lockfile is now included and all dependencies integrity verified
-  with sha512 hash and not the vulnerable sha1 hash.
-- Updates to dependencies including `bcrypto` to version > 3.
+- Dependencies are committed to the repository and bcoin does
+  not depend on npm.
+- Updates to dependencies including `bcrypto` to version > 5.
 - Various small fixes to run bcoin in a browser.
 
 ## v1.0.0
