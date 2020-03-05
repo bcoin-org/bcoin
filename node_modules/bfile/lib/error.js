@@ -49,12 +49,14 @@ class FSError extends Error {
     if (desc == null || typeof desc !== 'object')
       throw new TypeError('invalid arguments for fs error');
 
-    if (args.length === 2)
-      [message, syscall, path] = [desc.message, ...args];
-    else if (args.length === 3)
+    message = desc.message;
+
+    if (args.length === 3)
       [message, syscall, path] = args;
-    else
-      throw new TypeError('invalid arguments for fs error');
+    else if (args.length === 2)
+      [syscall, path] = args;
+    else if (args.length === 1)
+      [syscall] = args;
 
     let msg = `${desc.code}:`;
 
