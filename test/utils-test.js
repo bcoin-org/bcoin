@@ -4,7 +4,7 @@
 'use strict';
 
 const Validator = require('bval');
-const {base58} = require('bstring');
+const base58 = require('bcrypto/lib/encoding/base58');
 const {encoding} = require('bufio');
 const assert = require('bsert');
 const Amount = require('../lib/btc/amount');

@@ -9,7 +9,7 @@
 
 const {enforce} = require('bsert');
 const {encoding} = require('bufio');
-const murmur3 = require('mrmr');
+const murmur3 = require('bcrypto/lib/murmur3');
 const DUMMY = Buffer.alloc(0);
 
 /**
