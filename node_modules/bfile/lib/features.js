@@ -62,22 +62,39 @@ let HAS_OPTIONAL_FLAGS = version >= 0x0b0100;
 // fs.WriteStream got a `pending` property in 11.2.0.
 let HAS_WRITE_PENDING = version >= 0x0b0200;
 
-// For whenever promises are marked non-experimental.
-let HAS_STABLE_PROMISES = false;
+// Promises are considered stable as of 11.14.0.
+let HAS_STABLE_PROMISES = version >= 0x0b0e00;
 
-// The current highest modern version (11.1.0).
-// This _would_ be based on the value of HAS_WRITE_PENDING
-// instead of HAS_OPTIONAL_FLAGS, but we don't create
-// fallback for HAS_WRITE_PENDING right now.
-let HAS_ALL = HAS_OPTIONAL_FLAGS
+// Whether to actually use stable promises.
+let USE_STABLE_PROMISES = HAS_STABLE_PROMISES
+                       && process.env.BFILE_USE_STABLE === '1';
+
+// fs.writev{,Sync} was added in 12.9.0.
+let HAS_WRITEV = version >= 0x0c0900;
+let HAS_WRITEV_IMPL = typeof fs.writev === 'function';
+
+// Stats objects have nanosecond precision as of 12.10.0.
+let HAS_STAT_NANO = version >= 0x0c0a00;
+
+// fs.rmdir{,Sync} got an options parameter to allow for recursion in 12.10.0.
+let HAS_RECURSIVE_RMDIR = version >= 0x0c0a00;
+
+// fs.opendir{,Sync} are present as of 12.12.0.
+let HAS_OPENDIR = version >= 0x0c0c00;
+let HAS_OPENDIR_IMPL = typeof fs.opendir === 'function';
+
+// The current highest modern version (12.12.0).
+let HAS_ALL = HAS_OPENDIR
            && HAS_COPY_FILE_IMPL
            && HAS_REALPATH_NATIVE_IMPL
            && HAS_PROMISES_IMPL
-           && HAS_DIRENT_IMPL;
+           && HAS_DIRENT_IMPL
+           && HAS_WRITEV_IMPL
+           && HAS_OPENDIR_IMPL;
 
 // Force stable promises with an env variable.
-if (process.env.BFILE_FORCE_STABLE === '1')
-  HAS_STABLE_PROMISES = true;
+if (process.env.BFILE_FORCE_STABLE === '1' && HAS_PROMISES_IMPL)
+  USE_STABLE_PROMISES = true;
 
 // Force compat mode with an env variable.
 if (process.env.BFILE_FORCE_COMPAT === '1') {
@@ -99,6 +116,13 @@ if (process.env.BFILE_FORCE_COMPAT === '1') {
   HAS_OPTIONAL_FLAGS = false;
   HAS_WRITE_PENDING = false;
   HAS_STABLE_PROMISES = false;
+  USE_STABLE_PROMISES = false;
+  HAS_WRITEV = false;
+  HAS_WRITEV_IMPL = false;
+  HAS_STAT_NANO = false;
+  HAS_RECURSIVE_RMDIR = false;
+  HAS_OPENDIR = false;
+  HAS_OPENDIR_IMPL = false;
   HAS_ALL = false;
 }
 
@@ -125,4 +149,11 @@ exports.HAS_RECURSIVE_MKDIR = HAS_RECURSIVE_MKDIR;
 exports.HAS_OPTIONAL_FLAGS = HAS_OPTIONAL_FLAGS;
 exports.HAS_WRITE_PENDING = HAS_WRITE_PENDING;
 exports.HAS_STABLE_PROMISES = HAS_STABLE_PROMISES;
+exports.USE_STABLE_PROMISES = USE_STABLE_PROMISES;
+exports.HAS_WRITEV = HAS_WRITEV;
+exports.HAS_WRITEV_IMPL = HAS_WRITEV_IMPL;
+exports.HAS_STAT_NANO = HAS_STAT_NANO;
+exports.HAS_RECURSIVE_RMDIR = HAS_RECURSIVE_RMDIR;
+exports.HAS_OPENDIR = HAS_OPENDIR;
+exports.HAS_OPENDIR_IMPL = HAS_OPENDIR_IMPL;
 exports.HAS_ALL = HAS_ALL;

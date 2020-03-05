@@ -12,12 +12,6 @@ const fs = require('fs');
 const {promisify} = require('./util');
 
 /*
- * Constants
- */
-
-let promises = null;
-
-/*
  * Expose
  */
 
@@ -66,6 +60,8 @@ exports.mkdtemp = promisify(fs.mkdtemp);
 exports.mkdtempSync = fs.mkdtempSync;
 exports.open = promisify(fs.open);
 exports.openSync = fs.openSync;
+exports.opendir = promisify(fs.opendir);
+exports.opendirSync = fs.opendirSync;
 exports.read = null;
 exports.readSync = fs.readSync;
 exports.readdir = promisify(fs.readdir);
@@ -98,6 +94,8 @@ exports.write = null;
 exports.writeSync = fs.writeSync;
 exports.writeFile = promisify(fs.writeFile);
 exports.writeFileSync = fs.writeFileSync;
+exports.writev = promisify(fs.writev);
+exports.writevSync = fs.writevSync;
 
 exports.exists = function exists(file) {
   return new Promise(function(resolve, reject) {
@@ -203,19 +201,7 @@ Object.defineProperties(exports, {
     configurable: true,
     enumerable: false,
     get() {
-      if (!promises) {
-        const emit = process.emitWarning;
-
-        process.emitWarning = () => {};
-
-        try {
-          promises = fs.promises;
-        } finally {
-          process.emitWarning = emit;
-        }
-      }
-
-      return promises;
+      return fs.promises;
     }
   }
 });
