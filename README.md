@@ -3,14 +3,8 @@
 [![Build Status][circleci-status-img]][circleci-status-url]
 [![Coverage Status][coverage-status-img]][coverage-status-url]
 
-__NOTE__: The latest release of bcoin contains a non-backward compatible change
-to the rest API. Please read the [changelog]'s "migrating" section for more
-details.
-
----
-
-**Bcoin** is an alternative implementation of the bitcoin protocol, written in
-node.js.
+**Bcoin** is an alternative implementation of the Bitcoin protocol, written in
+JavaScript and C/C++ for Node.js.
 
 Bcoin is well tested and aware of all known consensus rules. It is currently
 used in production as the consensus backend and wallet system for
@@ -20,7 +14,7 @@ used in production as the consensus backend and wallet system for
 
 - Full Node
 - SPV Node
-- Wallet Backend (bip44 derivation)
+- Wallet Backend
 - Mining Backend (getblocktemplate support)
 - Layer 2 Backend (lightning)
 - General Purpose Bitcoin Library
@@ -37,7 +31,8 @@ $ ./bin/bcoin
 ```
 
 See the [Getting started][guide] guide for more in-depth installation
-instructions, including verifying releases.
+instructions, including verifying releases. If you're upgrading, see the
+latest changes via the [Changelog][changelog].
 
 ## Documentation
 

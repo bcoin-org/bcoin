@@ -2,46 +2,48 @@
 
 ## Introduction
 
-Bcoin is an _alternative_ implementation of the bitcoin protocol, written in
-node.js. It is a full node which can be used for full blockchain validation
-and is aware of all known consensus rules.
+Bcoin is an alternative implementation of the Bitcoin protocol, written in
+JavaScript and C/C++ for Node.js. It is a full node which can be used for full
+blockchain validation and is aware of all known consensus rules.
 
 ## Requirements
 
-- Linux, OSX, or Windows (\*) (\*\*)
+- Linux, macOS, or Windows (\*)
 - node.js >=v10.0.0
-- npm >=v6.4.1
-- python2 (for node-gyp)
-- gcc/g++ (for leveldb and secp256k1)
-- git (optional, see below)
+- gpk >= v2 or npm >= v6
+- python2 or python3 (for node-gyp)
+- gcc/g++ (for leveldb/bdb and secp256k1/bcrypto)
+- git
 
-(\*): Note that bcoin works best with unix-like OSes, and has not yet been
-thoroughly tested on windows.
-
-(\*\*): The BSDs and Solaris have also not been tested yet, but should work
-in theory.
+(\*): Note that Bcoin works best with unix-like OSes, and has not yet been
+thoroughly tested on Windows. The BSDs and Solaris have also not been tested
+yet, but should work in theory.
 
 ## Build & install
 
-Bcoin is meant to be installed via git for security purposes, as there
-are security issues when installing via npm. All tagged commits for
-release should be signed by @chjj's [PGP key][keybase]
-(`B4B1F62DBAC084E333F3A04A8962AB9DE6666BBD`). Signed copies of node.js
-are available from [nodejs.org][node], or from your respective OS's
-package repositories.
+Bcoin is meant to be installed via Git for security purposes, as there are
+security issues when installing via npm. To support signature verification,
+[`gpk`][gpk] can be used to replace usage of `npm`. All tagged commits for
+a release should be signed by [release maintainers](#maintainers). Signed
+copies and source of Node.js are available from [nodejs.org][nodejs],
+or from your respective OS's package repositories.
+
+You can add the necessary public keys using `gpg`:
+```
+gpg --recv-keys "<fingerprint>"
+```
 
 ### Installing via Git
 
 ``` bash
-$ curl https://keybase.io/chjj/pgp_keys.asc | gpg --import
 $ git clone git://github.com/bcoin-org/bcoin.git
 $ cd bcoin
 ```
 
-For a specific release:
+To verify and checkout a specific release:
 ```
 $ git tag
-$ git tag -v <version> # verify signature
+$ git tag -v <version>
 $ git checkout <version>
 ```
 
@@ -50,14 +52,46 @@ You can also verify signatures using:
 $ git log --show-signature
 ```
 
-Build and install globally:
+Build and install globally with `npm`:
 ```
 $ npm rebuild
-$ npm install -g # link globally
+$ npm install --global
 ```
 
-If you're updating a repository it is necessary to run `npm rebuild` again
-if any dependencies with native addons have been updated.
+Or with [`gpk`][gpk]:
+
+```
+$ gpk rebuild
+$ gpk install --global
+```
+
+Note: If you're updating a repository it is necessary to rebuild
+again if any dependencies with native addons have been updated.
+
+### Installing via GPK
+
+To support signature verification, you can use [`gpk`][gpk] to replace the
+use of `npm`.
+
+To install `bcoin` globally and to your path:
+```
+$ gpk install --global https://github.com/bcoin-org/bcoin
+```
+
+To install `bcoin` as a dependency, you can create a new
+`package.json` with:
+```
+$ gpk init
+```
+
+And then add `bcoin` with:
+```
+$ gpk install https://github.com/bcoin-org/bcoin
+```
+The latest tagged version will be added to `package.json` and bcoin
+will be installed.
+
+See [GPK documentation][gpk] for further details on usage.
 
 ### Installing on Debian/Ubuntu
 
@@ -72,31 +106,12 @@ Check [bcoin-docker](https://github.com/bcoin-org/bcoin-docker)
 
 ### Installing on Windows
 
-Install OpenSSL v1.0.2L 64-Bit:
+When installing [Node.js via the Windows Installer][nodejs-download],
+ensure that the additional build tools are installed during the process,
+it will install Python and other build tools.
 
-https://slproweb.com/download/Win64OpenSSL-1_0_2L.exe
-
-As Administrator, open `cmd.exe` and run:
-
-```console
-C:\Users\bcoin\bcoin>npm install --global --production windows-build-tools
-```
-
-to install `VCBuild.exe` and `Python 2.7.x` both required by `node-gyp`
-for building native modules.
-
-Then continue [Installing via Git](#installing-via-git)
-
-Note that you need a shell that supports bash scripts, like Git Bash to launch
-bcoin.
-
-### Troubleshooting
-
-If the build fails compilation for `bcoin-native` or `secp256k1-node`
-__validation will be slow__ (a block verification which should take 1 second
-on consumer grade hardware may take up to 15 seconds). Bcoin will throw a
-warning on boot if it detects a build failure. If you run into this issue,
-please post an issue on the repo.
+Also install [Git][git-download] that will include the command `git`
+as well as `gpg` via the Git bash shell.
 
 ## Use as a dependency
 
@@ -112,18 +127,8 @@ availability. For example, here is an example `package.json`:
 }
 ```
 
-Notes:
-- While git tags are signed, `npm` will not check the signature
-of the git tag.
-- See [Git URLs as Dependencies][giturls] `npm` documentation for
-additional details for using git as a dependency.
-
-If your project shares any dependencies you may want to de-duplicate, you can
-do this by running:
-
-```sh
-npm dedupe
-```
+While git tags are signed, `npm` will not check the signature
+of the git tag. You can use [`gpk`][gpk] instead.
 
 ## Starting up your first bcoin node
 
@@ -201,11 +206,14 @@ connect to `.onion` addresses found on the P2P network.
 $ bcoin --proxy joe:hunter2@127.0.0.1:9050 --onion
 ```
 
-### Running bcoin as a tor hidden service
+### Running bcoin as a Tor hidden service
 
 Your hidden service must first be configured with `tor`. Once you have the
 `.onion` address, it can be passed into `--public-host` in the form
 of `--public-host foo.onion`.
+
+Note: Use of both `--proxy` and a hidden service at the same time is
+currently not yet supported.
 
 ## Target nodes
 
@@ -250,7 +258,15 @@ worried about potential DoS attacks.
 
 See [Configuration][configuration].
 
+## Maintainers
+
+- Christopher Jeffrey (B4B1 F62D BAC0 84E3 33F3 A04A 8962 AB9D E666 6BBD)
+- Braydon Fuller (5B7D C58D 90FE C1E9 90A3  10BA F24F 232D 108B 3AD4)
+
 [keybase]: https://keybase.io/chjj#show-public
-[node]: https://nodejs.org
 [configuration]: configuration.md
+[nodejs]: https://nodejs.org/
 [giturls]: https://docs.npmjs.com/files/package.json.html#git-urls-as-dependencies
+[gpk]: https://github.com/braydonf/gpk
+[git-download]: https://git-scm.com/downloads
+[nodejs-download]: https://nodejs.org/en/download/
