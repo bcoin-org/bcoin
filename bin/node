@@ -19,23 +19,6 @@ if (process.argv.indexOf('--version') !== -1
   throw new Error('Could not exit.');
 }
 
-const sha256 = require('bcrypto/lib/sha256');
-const secp256k1 = require('bcrypto/lib/secp256k1');
-
-if (sha256.native !== 2) {
-  console.error('Bindings for bcrypto were not built.');
-  console.error('Please build them before continuing.');
-  process.exit(1);
-  return;
-}
-
-if (secp256k1.native !== 2) {
-  console.error('Bindings for libsecp256k1 were not built.');
-  console.error('Please build them before continuing.');
-  process.exit(1);
-  return;
-}
-
 const FullNode = require('../lib/node/fullnode');
 
 const node = new FullNode({
