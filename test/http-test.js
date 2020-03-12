@@ -517,11 +517,10 @@ describe('HTTP', function() {
   it('should initiate rescan from socket WITH a bloom filter', async () => {
     // Create an SPV-standard Bloom filter and add one of our wallet addresses
     const filter = BloomFilter.fromRate(20000, 0.001, BloomFilter.flags.ALL);
-    const walletAddr = addr.toString('regtest');
-    filter.add(walletAddr, 'ascii');
+    filter.add(addr.getHash());
 
     // Send Bloom filter to server
-    await nclient.call('set filter', filter.filter);
+    await nclient.call('set filter', filter.toRaw());
 
     // `rescan` commands the node server to check blocks against a bloom filter.
     // When the server matches a transaction in a block to the filter, it
@@ -535,7 +534,7 @@ describe('HTTP', function() {
       const cbtx = MTX.fromRaw(txs[0]);
       assert.strictEqual(
         cbtx.outputs[0].getAddress().toString('regtest'),
-        walletAddr
+        addr.toString('regtest')
       );
 
       // Blocks are returned as raw ChainEntry
