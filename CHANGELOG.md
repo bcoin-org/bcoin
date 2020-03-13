@@ -1,6 +1,6 @@
 # Bcoin release notes & changelog
 
-## v2.0.0-dev
+## v2.0.0
 
 ### How to upgrade
 
