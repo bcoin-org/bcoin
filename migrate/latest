@@ -37,10 +37,10 @@ const spvchain = resolve(prefix, 'spvchain');
 
 (async () => {
   if (await fs.exists(chain))
-    exec(node, resolve(__dirname, 'chaindb4to6.js'), chain);
+    exec(node, resolve(__dirname, 'chaindb4to7.js'), chain);
 
   if (await fs.exists(spvchain))
-    exec(node, resolve(__dirname, 'chaindb4to6.js'), spvchain);
+    exec(node, resolve(__dirname, 'chaindb4to7.js'), spvchain);
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);
