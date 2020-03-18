@@ -189,6 +189,17 @@ async function getChainEntryByHash(hash) {
   return ChainEntry.fromRaw(raw);
 }
 
+async function isMainChain(tip, hash) {
+  if (hash.equals(tip))
+    return true;
+
+  const next = await db.get(layout.n.encode(hash));
+  if (next)
+    return true;
+
+  return false;
+}
+
 async function updateStatsAndVersion(version) {
   const state = await getChainState();
   assert(state);
@@ -213,10 +224,17 @@ async function updateStatsAndVersion(version) {
 
     // Only fix the statistics for blocks that have already
     // been added to the chain.
-    const heights = bip30heights.filter(height => height < tip.height);
+    const heights = bip30heights.filter(height => height <= tip.height);
 
     for (const height of heights) {
       const hash = network.bip30[height];
+
+      // In the very rare chance that these blocks are
+      // not part of the main chain, skip them as the
+      // adjustment is also not necessary.
+      if (!await isMainChain(state.tip, hash))
+        continue;
+
       const data = await blockStore.read(hash);
       const block = Block.fromRaw(data);
       const coinbase = block.txs[0];
