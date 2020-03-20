@@ -8,14 +8,14 @@
 extern "C" {
 #endif
 
-uint32_t
-bcrypto_murmur3_sum(const uint8_t *data, size_t len, uint32_t seed);
+#define murmur3_sum _bcrypto_murmur3_sum
+#define murmur3_tweak _bcrypto_murmur3_tweak
 
 uint32_t
-bcrypto_murmur3_tweak(const uint8_t *data,
-                      size_t len,
-                      uint32_t n,
-                      uint32_t tweak);
+murmur3_sum(const uint8_t *data, size_t len, uint32_t seed);
+
+uint32_t
+murmur3_tweak(const uint8_t *data, size_t len, uint32_t n, uint32_t tweak);
 
 #if defined(__cplusplus)
 }

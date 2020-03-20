@@ -40,7 +40,7 @@ See the `./lib` directory for available modules and APIs.
 | ecies                        | c (libtorsion¹)   | c (libtorsion¹)   | c (libtorsion¹)   | js      |
 | ed25519                      | c (libtorsion)    | c (libtorsion)    | c (libtorsion)    | js      |
 | ed448                        | c (libtorsion)    | c (libtorsion)    | c (libtorsion)    | js      |
-| gost94                       | js                | js                | js                | js      |
+| gost94                       | c (libtorsion)    | c (libtorsion)    | c (libtorsion)    | js      |
 | hash160                      | c (libtorsion³)   | c (libtorsion³)   | c (libtorsion)    | js      |
 | hash256                      | c (libtorsion³)   | c (libtorsion³)   | c (libtorsion)    | js      |
 | hash-drbg                    | js                | js                | js                | js      |
@@ -71,7 +71,7 @@ See the `./lib` directory for available modules and APIs.
 | shake{128,256}               | c (libtorsion¹)   | c (libtorsion¹)   | c (libtorsion¹)   | js      |
 | siphash                      | c (libtorsion)    | c (libtorsion)    | c (libtorsion)    | js      |
 | ssh                          | js                | js                | js                | js      |
-| whirlpool                    | js                | js                | js                | js      |
+| whirlpool                    | c (libtorsion)    | c (libtorsion)    | c (libtorsion)    | js      |
 | x25519                       | c (libtorsion)    | c (libtorsion)    | c (libtorsion)    | js      |
 | x448                         | c (libtorsion)    | c (libtorsion)    | c (libtorsion)    | js      |
 

@@ -6,7 +6,4 @@
 
 'use strict';
 
-if (process.env.NODE_BACKEND === 'js')
-  module.exports = require('./js/gost94');
-else
-  module.exports = require('./native/gost94');
+module.exports = require('./js/gost94');

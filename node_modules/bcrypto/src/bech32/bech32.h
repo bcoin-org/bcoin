@@ -28,46 +28,54 @@
 extern "C" {
 #endif
 
-int
-bcrypto_bech32_serialize(char *output,
-                         const char *hrp,
-                         const uint8_t *data,
-                         size_t data_len);
+#define bech32_serialize _bcrypto_bech32_serialize
+#define bech32_deserialize _bcrypto_bech32_deserialize
+#define bech32_is _bcrypto_bech32_is
+#define bech32_convert_bits _bcrypto_bech32_convert_bits
+#define bech32_encode _bcrypto_bech32_encode
+#define bech32_decode _bcrypto_bech32_decode
+#define bech32_test _bcrypto_bech32_test
 
 int
-bcrypto_bech32_deserialize(char *hrp,
-                           uint8_t *data,
-                           size_t *data_len,
-                           const char *input);
+bech32_serialize(char *output,
+                 const char *hrp,
+                 const uint8_t *data,
+                 size_t data_len);
 
 int
-bcrypto_bech32_is(const char *str);
+bech32_deserialize(char *hrp,
+                   uint8_t *data,
+                   size_t *data_len,
+                   const char *input);
 
 int
-bcrypto_bech32_convert_bits(uint8_t *out,
-                            size_t *outlen,
-                            int outbits,
-                            const uint8_t *in,
-                            size_t inlen,
-                            int inbits,
-                            int pad);
+bech32_is(const char *str);
 
 int
-bcrypto_bech32_encode(char *output,
-                      const char *hrp,
-                      int ver,
-                      const uint8_t *prog,
-                      size_t prog_len);
+bech32_convert_bits(uint8_t *out,
+                    size_t *outlen,
+                    int outbits,
+                    const uint8_t *in,
+                    size_t inlen,
+                    int inbits,
+                    int pad);
 
 int
-bcrypto_bech32_decode(int *ver,
-                      uint8_t *prog,
-                      size_t *prog_len,
-                      char *hrp,
-                      const char *addr);
+bech32_encode(char *output,
+              const char *hrp,
+              int ver,
+              const uint8_t *prog,
+              size_t prog_len);
 
 int
-bcrypto_bech32_test(const char *addr);
+bech32_decode(int *ver,
+              uint8_t *prog,
+              size_t *prog_len,
+              char *hrp,
+              const char *addr);
+
+int
+bech32_test(const char *addr);
 
 #ifdef __cplusplus
 }

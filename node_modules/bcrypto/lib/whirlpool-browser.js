@@ -6,7 +6,4 @@
 
 'use strict';
 
-if (process.env.NODE_BACKEND === 'js')
-  module.exports = require('./js/whirlpool');
-else
-  module.exports = require('./native/whirlpool');
+module.exports = require('./js/whirlpool');

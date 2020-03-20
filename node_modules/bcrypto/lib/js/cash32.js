@@ -426,7 +426,7 @@ function encodedSize(size) {
 function encode(prefix, type, hash) {
   assert(typeof prefix === 'string');
   // There are 4 bits available for the version (2 ^ 4 = 16)
-  assert((type & 0x0f) === type, 'Invalid cash32 type.');
+  assert((type & 0x0f) === type);
   assert(Buffer.isBuffer(hash));
 
   if (prefix.length === 0 || prefix.length > 83)

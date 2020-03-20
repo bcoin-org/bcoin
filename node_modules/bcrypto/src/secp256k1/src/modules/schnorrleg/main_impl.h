@@ -371,12 +371,22 @@ secp256k1_schnorrleg_verify_batch(const secp256k1_context *ctx,
 
   secp256k1_scalar_negate(&s, &s);
 
+#ifdef BCRYPTO_USE_SECP256K1_LATEST
+  if (!secp256k1_ecmult_multi_var(&ctx->error_callback, &ctx->ecmult_ctx,
+                                  scratch, &rj, &s,
+                                  secp256k1_schnorrleg_verify_batch_ecmult_callback,
+                                  (void *)&ecmult_context,
+                                  2 * n_sigs)) {
+    return 0;
+  }
+#else
   if (!secp256k1_ecmult_multi_var(&ctx->ecmult_ctx, scratch, &rj, &s,
                                   secp256k1_schnorrleg_verify_batch_ecmult_callback,
                                   (void *)&ecmult_context,
                                   2 * n_sigs)) {
     return 0;
   }
+#endif
 
   return secp256k1_gej_is_infinity(&rj);
 }

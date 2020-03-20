@@ -25,17 +25,6 @@
 
 #include "bech32.h"
 
-static uint32_t
-polymod_step(uint32_t pre) {
-  uint8_t b = pre >> 25;
-  return ((pre & 0x1ffffff) << 5)
-    ^ (-((b >> 0) & 1) & 0x3b6a57b2ul)
-    ^ (-((b >> 1) & 1) & 0x26508e6dul)
-    ^ (-((b >> 2) & 1) & 0x1ea119faul)
-    ^ (-((b >> 3) & 1) & 0x3d4233ddul)
-    ^ (-((b >> 4) & 1) & 0x2a1462b3ul);
-}
-
 static const char *CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
 static const int8_t TABLE[128] = {
@@ -49,11 +38,22 @@ static const int8_t TABLE[128] = {
    1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
 };
 
+static uint32_t
+polymod_step(uint32_t pre) {
+  uint8_t b = pre >> 25;
+  return ((pre & 0x1ffffff) << 5)
+    ^ (-((b >> 0) & 1) & 0x3b6a57b2ul)
+    ^ (-((b >> 1) & 1) & 0x26508e6dul)
+    ^ (-((b >> 2) & 1) & 0x1ea119faul)
+    ^ (-((b >> 3) & 1) & 0x3d4233ddul)
+    ^ (-((b >> 4) & 1) & 0x2a1462b3ul);
+}
+
 int
-bcrypto_bech32_serialize(char *output,
-                         const char *hrp,
-                         const uint8_t *data,
-                         size_t data_len) {
+bech32_serialize(char *output,
+                 const char *hrp,
+                 const uint8_t *data,
+                 size_t data_len) {
   uint32_t chk = 1;
   size_t i = 0;
 
@@ -99,10 +99,10 @@ bcrypto_bech32_serialize(char *output,
 }
 
 int
-bcrypto_bech32_deserialize(char *hrp,
-                           uint8_t *data,
-                           size_t *data_len,
-                           const char *input) {
+bech32_deserialize(char *hrp,
+                   uint8_t *data,
+                   size_t *data_len,
+                   const char *input) {
   uint32_t chk = 1;
   size_t i;
   size_t input_len = strlen(input);
@@ -178,25 +178,25 @@ bcrypto_bech32_deserialize(char *hrp,
 }
 
 int
-bcrypto_bech32_is(const char *str) {
+bech32_is(const char *str) {
   char hrp[84];
   uint8_t data[84];
   size_t data_len;
 
-  if (!bcrypto_bech32_deserialize(hrp, data, &data_len, str))
+  if (!bech32_deserialize(hrp, data, &data_len, str))
     return 0;
 
   return 1;
 }
 
 int
-bcrypto_bech32_convert_bits(uint8_t *out,
-                            size_t *outlen,
-                            int outbits,
-                            const uint8_t *in,
-                            size_t inlen,
-                            int inbits,
-                            int pad) {
+bech32_convert_bits(uint8_t *out,
+                    size_t *outlen,
+                    int outbits,
+                    const uint8_t *in,
+                    size_t inlen,
+                    int inbits,
+                    int pad) {
   uint32_t val = 0;
   int bits = 0;
   uint32_t maxv = (((uint32_t)1) << outbits) - 1;
@@ -221,11 +221,11 @@ bcrypto_bech32_convert_bits(uint8_t *out,
 }
 
 int
-bcrypto_bech32_encode(char *output,
-                      const char *hrp,
-                      int witver,
-                      const uint8_t *witprog,
-                      size_t witprog_len) {
+bech32_encode(char *output,
+              const char *hrp,
+              int witver,
+              const uint8_t *witprog,
+              size_t witprog_len) {
   uint8_t data[65];
   size_t datalen = 0;
 
@@ -237,26 +237,26 @@ bcrypto_bech32_encode(char *output,
 
   data[0] = witver;
 
-  if (!bcrypto_bech32_convert_bits(data + 1, &datalen, 5,
-                                   witprog, witprog_len, 8, 1)) {
+  if (!bech32_convert_bits(data + 1, &datalen, 5,
+                           witprog, witprog_len, 8, 1)) {
     return 0;
   }
 
   datalen += 1;
 
-  return bcrypto_bech32_serialize(output, hrp, data, datalen);
+  return bech32_serialize(output, hrp, data, datalen);
 }
 
 int
-bcrypto_bech32_decode(int *witver,
-                      uint8_t *witdata,
-                      size_t *witdata_len,
-                      char *hrp,
-                      const char *addr) {
+bech32_decode(int *witver,
+              uint8_t *witdata,
+              size_t *witdata_len,
+              char *hrp,
+              const char *addr) {
   uint8_t data[84];
   size_t data_len;
 
-  if (!bcrypto_bech32_deserialize(hrp, data, &data_len, addr))
+  if (!bech32_deserialize(hrp, data, &data_len, addr))
     return 0;
 
   if (data_len == 0 || data_len > 65)
@@ -267,8 +267,8 @@ bcrypto_bech32_decode(int *witver,
 
   *witdata_len = 0;
 
-  if (!bcrypto_bech32_convert_bits(witdata, witdata_len, 8,
-                                   data + 1, data_len - 1, 5, 0)) {
+  if (!bech32_convert_bits(witdata, witdata_len, 8,
+                           data + 1, data_len - 1, 5, 0)) {
     return 0;
   }
 
@@ -281,12 +281,12 @@ bcrypto_bech32_decode(int *witver,
 }
 
 int
-bcrypto_bech32_test(const char *addr) {
+bech32_test(const char *addr) {
   char hrp[84];
   uint8_t data[84];
   size_t data_len;
 
-  if (!bcrypto_bech32_deserialize(hrp, data, &data_len, addr))
+  if (!bech32_deserialize(hrp, data, &data_len, addr))
     return 0;
 
   if (data_len == 0 || data_len > 65)

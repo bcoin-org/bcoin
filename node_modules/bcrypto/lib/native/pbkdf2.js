@@ -6,8 +6,8 @@
 
 'use strict';
 
+const assert = require('../internal/assert');
 const binding = require('./binding');
-const backend = binding.pbkdf2;
 
 /**
  * Perform key derivation using PBKDF2.
@@ -29,7 +29,12 @@ function derive(hash, pass, salt, iter, len) {
   if (salt == null)
     salt = Buffer.alloc(0);
 
-  return backend.derive(binding.hash(hash), pass, salt, iter, len);
+  assert(Buffer.isBuffer(pass));
+  assert(Buffer.isBuffer(salt));
+  assert((iter >>> 0) === iter);
+  assert((len >>> 0) === len);
+
+  return binding.pbkdf2_derive(binding.hash(hash), pass, salt, iter, len);
 }
 
 /**
@@ -52,21 +57,12 @@ async function deriveAsync(hash, pass, salt, iter, len) {
   if (salt == null)
     salt = Buffer.alloc(0);
 
-  return new Promise((resolve, reject) => {
-    const cb = (err, key) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(key);
-    };
+  assert(Buffer.isBuffer(pass));
+  assert(Buffer.isBuffer(salt));
+  assert((iter >>> 0) === iter);
+  assert((len >>> 0) === len);
 
-    try {
-      backend.deriveAsync(binding.hash(hash), pass, salt, iter, len, cb);
-    } catch (e) {
-      reject(e);
-    }
-  });
+  return binding.pbkdf2_derive_async(binding.hash(hash), pass, salt, iter, len);
 }
 
 /*

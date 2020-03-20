@@ -6,12 +6,33 @@
 
 'use strict';
 
-const {base58} = require('./binding');
+const assert = require('../internal/assert');
+const binding = require('./binding');
 
-base58.native = 2;
+/*
+ * Base58
+ */
+
+function encode(data) {
+  assert(Buffer.isBuffer(data));
+  return binding.base58_encode(data);
+}
+
+function decode(str) {
+  assert(typeof str === 'string');
+  return binding.base58_decode(str);
+}
+
+function test(str) {
+  assert(typeof str === 'string');
+  return binding.base58_test(str);
+}
 
 /*
  * Expose
  */
 
-module.exports = base58;
+exports.native = 2;
+exports.encode = encode;
+exports.decode = decode;
+exports.test = test;

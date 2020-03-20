@@ -6,7 +6,8 @@
 
 'use strict';
 
-const backend = require('./binding').scrypt;
+const assert = require('../internal/assert');
+const binding = require('./binding');
 
 /**
  * Perform scrypt key derivation.
@@ -29,7 +30,14 @@ function derive(passwd, salt, N, r, p, len) {
   if (salt == null)
     salt = Buffer.alloc(0);
 
-  return backend.derive(passwd, salt, N, r, p, len);
+  assert(Buffer.isBuffer(passwd));
+  assert(Buffer.isBuffer(salt));
+  assert((N >>> 0) === N);
+  assert((r >>> 0) === r);
+  assert((p >>> 0) === p);
+  assert((len >>> 0) === len);
+
+  return binding.scrypt_derive(passwd, salt, N, r, p, len);
 }
 
 /**
@@ -53,21 +61,14 @@ async function deriveAsync(passwd, salt, N, r, p, len) {
   if (salt == null)
     salt = Buffer.alloc(0);
 
-  return new Promise((resolve, reject) => {
-    const cb = (err, key) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(key);
-    };
+  assert(Buffer.isBuffer(passwd));
+  assert(Buffer.isBuffer(salt));
+  assert((N >>> 0) === N);
+  assert((r >>> 0) === r);
+  assert((p >>> 0) === p);
+  assert((len >>> 0) === len);
 
-    try {
-      backend.deriveAsync(passwd, salt, N, r, p, len, cb);
-    } catch (e) {
-      reject(e);
-    }
-  });
+  return binding.scrypt_derive_async(passwd, salt, N, r, p, len);
 }
 
 /*

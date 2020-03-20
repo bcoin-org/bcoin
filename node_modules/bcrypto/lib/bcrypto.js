@@ -94,5 +94,5 @@ exports.Whirlpool = require('./whirlpool');
 exports.x25519 = require('./x25519');
 exports.x448 = require('./x448');
 
-exports.version = '5.0.4';
+exports.version = '5.1.0';
 exports.native = exports.SHA256.native;

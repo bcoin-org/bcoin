@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "base58.h"
+
 static const char *CHARSET =
   "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -18,8 +20,8 @@ static const int TABLE[128] = {
 };
 
 int
-bcrypto_base58_encode(char **str, size_t *str_len,
-                      const uint8_t *data, size_t data_len) {
+base58_encode(char **str, size_t *str_len,
+              const uint8_t *data, size_t data_len) {
   uint64_t b58size = (uint64_t)data_len * 138 / 100 + 1;
   size_t b58len = (size_t)b58size; /* 31 bit max */
   uint8_t *b58;
@@ -90,8 +92,8 @@ bcrypto_base58_encode(char **str, size_t *str_len,
 }
 
 int
-bcrypto_base58_decode(uint8_t **data, size_t *data_len,
-                      const char *str, size_t str_len) {
+base58_decode(uint8_t **data, size_t *data_len,
+              const char *str, size_t str_len) {
   uint64_t b256size = (uint64_t)str_len * 733 / 1000 + 1;
   size_t b256len = (size_t)b256size;
   uint8_t *b256;
@@ -168,7 +170,7 @@ bcrypto_base58_decode(uint8_t **data, size_t *data_len,
 }
 
 int
-bcrypto_base58_test(const char *str, size_t str_len) {
+base58_test(const char *str, size_t str_len) {
   size_t i = 0;
 
   for (; i < str_len; i++) {
