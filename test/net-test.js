@@ -443,6 +443,84 @@ describe('Net', function() {
       check(pkt);
     });
 
+    it('getcfcheckpt (BIP157)', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'getcfcheckpt');
+        assert.equal(pkt.type, packets.types.GETCFCHECKPT);
+      };
+
+      let pkt = new packets.GetCFCheckPtPacket();
+      check(pkt);
+
+      pkt = packets.GetCFCheckPtPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('cfcheckpt (BIP157)', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'cfcheckpt');
+        assert.equal(pkt.type, packets.types.CFCHECKPT);
+      };
+
+      let pkt = new packets.CFCheckPtPacket();
+      check(pkt);
+
+      pkt = packets.CFCheckPtPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('getcfilter (BIP157)', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'getcfilter');
+        assert.equal(pkt.type, packets.types.GETCFILTER);
+      };
+
+      let pkt = new packets.GetCFilterPacket();
+      check(pkt);
+
+      pkt = packets.GetCFilterPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('cfilter (BIP157)', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'cfilter');
+        assert.equal(pkt.type, packets.types.CFILTER);
+      };
+
+      let pkt = new packets.CFilterPacket();
+      check(pkt);
+
+      pkt = packets.CFilterPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('getcfheaders (BIP157)', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'getcfheaders');
+        assert.equal(pkt.type, packets.types.GETCFHEADERS);
+      };
+
+      let pkt = new packets.GetCFHeadersPacket();
+      check(pkt);
+
+      pkt = packets.GetCFHeadersPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('cfheaders (BIP157)', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'cfheaders');
+        assert.equal(pkt.type, packets.types.CFHEADERS);
+      };
+
+      let pkt = new packets.CFHeadersPacket();
+      check(pkt);
+
+      pkt = packets.CFHeadersPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
     it('block', () => {
       const [block] = block300025.getBlock();
       const [witnessBlock] = block482683.getBlock();
