@@ -449,7 +449,8 @@ describe('Net', function() {
         assert.equal(pkt.type, packets.types.GETCFCHECKPT);
       };
 
-      let pkt = new packets.GetCFCheckPtPacket();
+      const hash = Buffer.alloc(32, 0x00);
+      let pkt = new packets.GetCFCheckPtPacket(hash, 0);
       check(pkt);
 
       pkt = packets.GetCFCheckPtPacket.fromRaw(pkt.toRaw());
@@ -462,7 +463,9 @@ describe('Net', function() {
         assert.equal(pkt.type, packets.types.CFCHECKPT);
       };
 
-      let pkt = new packets.CFCheckPtPacket();
+      const hash = Buffer.alloc(32, 0x00);
+      const data = Buffer.alloc(32, 0x00);
+      let pkt = new packets.CFCheckPtPacket(hash, 0, data);
       check(pkt);
 
       pkt = packets.CFCheckPtPacket.fromRaw(pkt.toRaw());
@@ -475,7 +478,8 @@ describe('Net', function() {
         assert.equal(pkt.type, packets.types.GETCFILTER);
       };
 
-      let pkt = new packets.GetCFilterPacket();
+      const hash = Buffer.alloc(32, 0x00);
+      let pkt = new packets.GetCFilterPacket(hash, 0);
       check(pkt);
 
       pkt = packets.GetCFilterPacket.fromRaw(pkt.toRaw());
@@ -488,7 +492,9 @@ describe('Net', function() {
         assert.equal(pkt.type, packets.types.CFILTER);
       };
 
-      let pkt = new packets.CFilterPacket();
+      const hash = Buffer.alloc(32, 0x00);
+      const data = Buffer.alloc(32, 0x00);
+      let pkt = new packets.CFilterPacket(hash, 0, data);
       check(pkt);
 
       pkt = packets.CFilterPacket.fromRaw(pkt.toRaw());
@@ -501,7 +507,8 @@ describe('Net', function() {
         assert.equal(pkt.type, packets.types.GETCFHEADERS);
       };
 
-      let pkt = new packets.GetCFHeadersPacket();
+      const stop = Buffer.alloc(32, 0x00);
+      let pkt = new packets.GetCFHeadersPacket([], stop, 0);
       check(pkt);
 
       pkt = packets.GetCFHeadersPacket.fromRaw(pkt.toRaw());
@@ -514,7 +521,8 @@ describe('Net', function() {
         assert.equal(pkt.type, packets.types.CFHEADERS);
       };
 
-      let pkt = new packets.CFHeadersPacket();
+      const stop = Buffer.alloc(32, 0x00);
+      let pkt = new packets.CFHeadersPacket(stop, 0, []);
       check(pkt);
 
       pkt = packets.CFHeadersPacket.fromRaw(pkt.toRaw());
