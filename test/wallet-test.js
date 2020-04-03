@@ -1826,7 +1826,7 @@ describe('Wallet', function() {
     const wtx = await wallet.txdb.getTX(hash);
 
     // Confirm TX with dummy block in txdb
-    const details = await wallet.txdb.confirm(wtx, block);
+    const details = await wallet.txdb.confirm(wtx, block, 0);
     assert.bufferEqual(details.tx.hash(), hash);
 
     // Check balance
@@ -1837,11 +1837,17 @@ describe('Wallet', function() {
     assert.strictEqual(bal2.tx, 1);
 
     // Check for unconfirmed transactions
-    const pending = await wallet.getPending();
+    const pending = await wallet.listUnconfirmed(null, {
+      limit: 100,
+      reverse: false
+    });
     assert.strictEqual(pending.length, 0);
 
     // Check history for TX
-    const history = await wallet.getHistory();
+    const history = await wallet.listHistory(null, {
+      limit: 100,
+      reverse: false
+    });
     const wtxs = await wallet.toDetails(history);
     assert.strictEqual(wtxs.length, 1);
     assert.bufferEqual(wtxs[0].hash, hash);
@@ -1881,7 +1887,7 @@ describe('Wallet', function() {
     const wtx1 = await wallet.txdb.getTX(tx1.hash());
 
     // Confirm TX with dummy block in txdb
-    await wallet.txdb.confirm(wtx1, block1);
+    await wallet.txdb.confirm(wtx1, block1, 0);
 
     // Build TX to both addresses, known and unknown
     const mtx2 = new MTX();
@@ -1918,7 +1924,7 @@ describe('Wallet', function() {
     const wtx2 = await wallet.txdb.getTX(hash);
 
     // Confirm TX with dummy block in txdb
-    const details = await wallet.txdb.confirm(wtx2, block2);
+    const details = await wallet.txdb.confirm(wtx2, block2, 0);
     assert.bufferEqual(details.tx.hash(), hash);
 
     // Check balance
@@ -1929,7 +1935,10 @@ describe('Wallet', function() {
     assert.strictEqual(bal2.tx, 2);
 
     // Check for unconfirmed transactions
-    const pending = await wallet.getPending();
+    const pending = await wallet.listUnconfirmed(null, {
+      limit: 100,
+      reverse: false
+    });
     assert.strictEqual(pending.length, 0);
 
     // Both old and new credits are "owned"
@@ -1986,7 +1995,7 @@ describe('Wallet', function() {
       time: Date.now()
     };
     const wtx0 = await wallet.txdb.getTX(tx0.hash());
-    await wallet.txdb.confirm(wtx0, block100);
+    await wallet.txdb.confirm(wtx0, block100, 0);
 
     ancs = await wallet.getPendingAncestors(tx2);
     assert.strictEqual(ancs.size, 1);
@@ -1998,7 +2007,7 @@ describe('Wallet', function() {
       time: Date.now()
     };
     const wtx1 = await wallet.txdb.getTX(tx1.hash());
-    await wallet.txdb.confirm(wtx1, block101);
+    await wallet.txdb.confirm(wtx1, block101, 0);
 
     ancs = await wallet.getPendingAncestors(tx2);
     assert.strictEqual(ancs.size, 0);
@@ -2032,7 +2041,10 @@ describe('Wallet', function() {
     }
 
     // At the limit
-    const pending = await wallet.getPending();
+    const pending = await wallet.listUnconfirmed(null, {
+      limit: 100,
+      reverse: false
+    });
     assert.strictEqual(pending.length, policy.MEMPOOL_MAX_ANCESTORS);
 
     // One more unconfirmed change spend would exceed the limit

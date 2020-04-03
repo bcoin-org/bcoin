@@ -5,7 +5,6 @@
 
 const {NodeClient, WalletClient} = require('../lib/client');
 const assert = require('bsert');
-const consensus = require('../lib/protocol/consensus');
 const FullNode = require('../lib/node/fullnode');
 const Network = require('../lib/protocol/network');
 const consensus = require('../lib/protocol/consensus');

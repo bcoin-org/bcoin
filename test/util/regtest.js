@@ -1,6 +1,6 @@
 'use strict';
 
-const {NodeClient, WalletClient} = require('bclient');
+const {NodeClient, WalletClient} = require('../../lib/client');
 
 const assert = require('bsert');
 const {sleep} = require('./common');
