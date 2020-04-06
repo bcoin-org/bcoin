@@ -103,7 +103,7 @@ describe('HD', function() {
   });
 
   it('should inspect Mnemonic', () => {
-    const mne = new HD.Mnemonic();
+    const mne = new HD.Mnemonic({bits: 128});
     const fmt = nodejsUtil.format(mne);
     assert(typeof fmt === 'string');
     assert(fmt.includes('Mnemonic'));
