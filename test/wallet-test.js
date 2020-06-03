@@ -555,6 +555,96 @@ describe('Wallet', function() {
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
   });
 
+  it('should handle double-spend (with block)', async () => {
+    const wallet = await wdb.create();
+    const address = await wallet.receiveAddress();
+
+    const hash = random.randomBytes(32);
+    const input0 = Input.fromOutpoint(new Outpoint(hash, 0));
+    const input1 = Input.fromOutpoint(new Outpoint(hash, 1));
+
+    const txa = new MTX();
+    txa.addInput(input0);
+    txa.addInput(input1);
+    txa.addOutput(address, 50000);
+    await wdb.addTX(txa.toTX());
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+
+    let conflict = false;
+    wallet.on('conflict', () => {
+      conflict = true;
+    });
+
+    const txb = new MTX();
+    txb.addInput(input0);
+    txb.addInput(input1);
+    txb.addOutput(address, 49000);
+
+    await wdb.addBlock(nextBlock(wdb), [txb.toTX()]);
+    assert(conflict);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 49000);
+  });
+
+  it('should recover from interrupt when removing conflict', async () => {
+    const wallet = await wdb.create();
+    const address = await wallet.receiveAddress();
+
+    const hash = random.randomBytes(32);
+    const input0 = Input.fromOutpoint(new Outpoint(hash, 0));
+    const input1 = Input.fromOutpoint(new Outpoint(hash, 1));
+
+    const txa = new MTX();
+    txa.addInput(input0);
+    txa.addInput(input1);
+    txa.addOutput(address, 50000);
+
+    await wdb.addTX(txa.toTX());
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 0);
+
+    let conflict = false;
+    wallet.on('conflict', () => {
+      conflict = true;
+    });
+
+    const txb = new MTX();
+    txb.addInput(input0);
+    txb.addInput(input1);
+    txb.addOutput(address, 49000);
+
+    assert.strictEqual(wdb.height, 1);
+
+    const removeConflict = wallet.txdb.removeConflict;
+
+    wallet.txdb.removeConflict = async () => {
+      throw new Error('Unexpected interrupt.');
+    };
+
+    const entry = nextBlock(wdb);
+
+    await assert.rejects(async () => {
+      await wdb.addBlock(entry, [txb.toTX()]);
+    }, {
+      name: 'Error',
+      message: 'Unexpected interrupt.'
+    });
+
+    wallet.txdb.removeConflict = removeConflict;
+
+    assert.strictEqual(conflict, false);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 0);
+    assert.strictEqual(wdb.height, 1);
+
+    await wdb.addBlock(entry, [txb.toTX()]);
+
+    assert.strictEqual(conflict, true);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 49000);
+    assert.strictEqual(wdb.height, 2);
+  });
+
   it('should handle more missed txs', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
