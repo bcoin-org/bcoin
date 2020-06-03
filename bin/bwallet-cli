@@ -61,6 +61,11 @@ class CLI {
     return console.log(JSON.stringify(json, null, 2));
   }
 
+  async getServerInfo() {
+    const info = await this.client.get('/');
+    this.log(info);
+  }
+
   async getWallets() {
     const wallets = await this.client.getWallets();
     this.log(wallets);
@@ -490,6 +495,9 @@ class CLI {
 
   async handleWallet() {
     switch (this.argv.shift()) {
+      case 'info':
+        await this.getServerInfo();
+        break;
       case 'listen':
         await this.listenWallet();
         break;
