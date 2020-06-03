@@ -1,5 +1,10 @@
 # Bcoin release notes & changelog
 
+## v2.1.0
+
+- Added an endpoint to the wallet HTTP API at `GET /` for an aliveness check.
+  It returns the current `version` and `network` type.
+
 ## v2.0.0
 
 ### How to upgrade
