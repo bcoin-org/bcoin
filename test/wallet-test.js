@@ -512,16 +512,16 @@ describe('Wallet', function() {
     await wdb.addTX(t1.toTX());
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
 
-    let conflict = false;
+    let conflict = 0;
     wallet.on('conflict', () => {
-      conflict = true;
+      conflict += 1;
     });
 
     const t2 = new MTX();
     t2.addInput(input);
     t2.addOutput(new Address(), 5000);
     await wdb.addTX(t2.toTX());
-    assert(conflict);
+    assert.strictEqual(conflict, 1);
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 0);
   });
 
@@ -540,9 +540,9 @@ describe('Wallet', function() {
     await wdb.addTX(txa.toTX());
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
 
-    let conflict = false;
+    let conflict = 0;
     wallet.on('conflict', () => {
-      conflict = true;
+      conflict += 1;
     });
 
     const txb = new MTX();
@@ -551,8 +551,98 @@ describe('Wallet', function() {
     txb.addOutput(address, 49000);
     await wdb.addTX(txb.toTX());
 
-    assert(conflict);
+    assert.strictEqual(conflict, 1);
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
+  });
+
+  it('should handle double-spend (with block)', async () => {
+    const wallet = await wdb.create();
+    const address = await wallet.receiveAddress();
+
+    const hash = random.randomBytes(32);
+    const input0 = Input.fromOutpoint(new Outpoint(hash, 0));
+    const input1 = Input.fromOutpoint(new Outpoint(hash, 1));
+
+    const txa = new MTX();
+    txa.addInput(input0);
+    txa.addInput(input1);
+    txa.addOutput(address, 50000);
+    await wdb.addTX(txa.toTX());
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+
+    let conflict = 0;
+    wallet.on('conflict', () => {
+      conflict += 1;
+    });
+
+    const txb = new MTX();
+    txb.addInput(input0);
+    txb.addInput(input1);
+    txb.addOutput(address, 49000);
+
+    await wdb.addBlock(nextBlock(wdb), [txb.toTX()]);
+    assert.strictEqual(conflict, 1);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 49000);
+  });
+
+  it('should recover from interrupt when removing conflict', async () => {
+    const wallet = await wdb.create();
+    const address = await wallet.receiveAddress();
+
+    const hash = random.randomBytes(32);
+    const input0 = Input.fromOutpoint(new Outpoint(hash, 0));
+    const input1 = Input.fromOutpoint(new Outpoint(hash, 1));
+
+    const txa = new MTX();
+    txa.addInput(input0);
+    txa.addInput(input1);
+    txa.addOutput(address, 50000);
+
+    await wdb.addTX(txa.toTX());
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 0);
+
+    let conflict = 0;
+    wallet.on('conflict', () => {
+      conflict += 1;
+    });
+
+    const txb = new MTX();
+    txb.addInput(input0);
+    txb.addInput(input1);
+    txb.addOutput(address, 49000);
+
+    assert.strictEqual(wdb.height, 1);
+
+    const removeConflict = wallet.txdb.removeConflict;
+
+    wallet.txdb.removeConflict = async () => {
+      throw new Error('Unexpected interrupt.');
+    };
+
+    const entry = nextBlock(wdb);
+
+    await assert.rejects(async () => {
+      await wdb.addBlock(entry, [txb.toTX()]);
+    }, {
+      name: 'Error',
+      message: 'Unexpected interrupt.'
+    });
+
+    wallet.txdb.removeConflict = removeConflict;
+
+    assert.strictEqual(conflict, 0);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 0);
+    assert.strictEqual(wdb.height, 1);
+
+    await wdb.addBlock(entry, [txb.toTX()]);
+
+    assert.strictEqual(conflict, 1);
+    assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
+    assert.strictEqual((await wallet.getBalance()).confirmed, 49000);
+    assert.strictEqual(wdb.height, 2);
   });
 
   it('should handle more missed txs', async () => {
@@ -2181,6 +2271,46 @@ describe('Wallet', function() {
       assert.equal(txConfirmedCount, 102);
       assert.equal(txCount, 1);
       assert.equal(confirmedCount, 1);
+    });
+
+    it('should emit conflict event (multiple inputs)', async () => {
+      const wallet = await wdb.create({id: 'test2'});
+      const address = await wallet.receiveAddress();
+
+      const wclient = new WalletClient({port: ports.wallet});
+      await wclient.open();
+
+      const cwallet = wclient.wallet(wallet.id, wallet.token);
+      await cwallet.open();
+
+      try {
+        const hash = random.randomBytes(32);
+        const input0 = Input.fromOutpoint(new Outpoint(hash, 0));
+        const input1 = Input.fromOutpoint(new Outpoint(hash, 1));
+
+        const txa = new MTX();
+        txa.addInput(input0);
+        txa.addInput(input1);
+        txa.addOutput(address, 50000);
+        await wdb.addTX(txa.toTX());
+        assert.strictEqual((await wallet.getBalance()).unconfirmed, 50000);
+
+        let conflict = 0;
+        cwallet.on('conflict', () => {
+          conflict += 1;
+        });
+
+        const txb = new MTX();
+        txb.addInput(input0);
+        txb.addInput(input1);
+        txb.addOutput(address, 49000);
+        await wdb.addTX(txb.toTX());
+
+        assert.strictEqual(conflict, 1);
+        assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
+      } finally {
+        await wclient.close();
+      }
     });
   });
 });
