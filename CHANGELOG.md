@@ -1,5 +1,9 @@
 # Bcoin release notes & changelog
 
+## v2.1.1
+
+- Fixed a bug with the wallet 'conflict' event.
+
 ## v2.1.0
 
 - Added an endpoint to the wallet HTTP API at `GET /` for an aliveness check.
