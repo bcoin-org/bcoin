@@ -1,5 +1,9 @@
 # Bcoin release notes & changelog
 
+## v2.1.2
+
+- Fixed wallet RPC method `importprunedfunds`.
+
 ## v2.1.1
 
 - Fixed a bug with the wallet 'conflict' event.
