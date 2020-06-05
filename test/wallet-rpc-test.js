@@ -32,6 +32,8 @@ const node = new FullNode({
   memory: true,
   workers: true,
   workersSize: 2,
+  indexTX: true,
+  indexAddress: true,
   plugins: [require('../lib/wallet/plugin')],
   port: ports.p2p,
   httpPort: ports.node,
@@ -525,6 +527,41 @@ describe('Wallet RPC Methods', function() {
         name: 'Error',
         message: 'Invalid address.'
       });
+    });
+  });
+
+  describe('importprunedfunds', function() {
+    it('will remove and import a tx into the wallet', async () => {
+      const response = await wclient.createWallet('import');
+      assert.equal(response.id, 'import');
+      const wallet = wclient.wallet('import');
+      const account = await wallet.getAccount('default');
+      assert.equal(account.watchOnly, false);
+      const address = account.receiveAddress;
+
+      await wclient.execute('selectwallet', ['miner']);
+      const txid = await wclient.execute('sendtoaddress', [address, 0.01843]);
+      await wclient.execute('selectwallet', ['import']);
+
+      const blocks = await nclient.execute('generatetoaddress', [1, addressMiner]);
+      assert.equal(blocks.length, 1);
+
+      const txoutproof = await nclient.execute('gettxoutproof', [[txid], blocks[0]]);
+      assert(txoutproof);
+
+      const txraw = await nclient.execute('getrawtransaction', [txid, 0]);
+      assert(txraw);
+
+      let balance = await wclient.execute('getbalance');
+      assert.equal(balance, 0.01843);
+
+      await wclient.execute('removeprunedfunds', [txid]);
+      balance = await wclient.execute('getbalance');
+      assert.equal(balance, 0);
+
+      await wclient.execute('importprunedfunds', [txraw, txoutproof]);
+      balance = await wclient.execute('getbalance');
+      assert.equal(balance, 0.01843);
     });
   });
 });
