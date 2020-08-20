@@ -6,24 +6,109 @@
 
 'use strict';
 
-const {BLAKE2s} = require('./binding');
+const assert = require('../internal/assert');
+const binding = require('./binding');
 const HMAC = require('../internal/hmac');
 
-/*
+/**
  * BLAKE2s
  */
 
-BLAKE2s.hash = function hash() {
-  return new BLAKE2s();
-};
+class BLAKE2s {
+  constructor() {
+    this._handle = binding.blake2s_create();
+  }
 
-BLAKE2s.hmac = function hmac(size) {
-  return new HMAC(BLAKE2s, 64, [size]);
-};
+  init(size, key) {
+    if (size == null)
+      size = 32;
 
-BLAKE2s.mac = function mac(data, key, size) {
-  return BLAKE2s.hmac(size).init(key).update(data).final();
-};
+    if (key == null)
+      key = binding.NULL;
+
+    assert(this instanceof BLAKE2s);
+    assert((size >>> 0) === size);
+    assert(Buffer.isBuffer(key));
+
+    binding.blake2s_init(this._handle, size, key);
+
+    return this;
+  }
+
+  update(data) {
+    assert(this instanceof BLAKE2s);
+    assert(Buffer.isBuffer(data));
+
+    binding.blake2s_update(this._handle, data);
+
+    return this;
+  }
+
+  final() {
+    assert(this instanceof BLAKE2s);
+    return binding.blake2s_final(this._handle);
+  }
+
+  static hash() {
+    return new BLAKE2s();
+  }
+
+  static hmac(size) {
+    return new HMAC(BLAKE2s, 64, [size]);
+  }
+
+  static digest(data, size, key) {
+    if (size == null)
+      size = 32;
+
+    if (key == null)
+      key = binding.NULL;
+
+    assert(Buffer.isBuffer(data));
+    assert((size >>> 0) === size);
+    assert(Buffer.isBuffer(key));
+
+    return binding.blake2s_digest(data, size, key);
+  }
+
+  static root(left, right, size, key) {
+    if (size == null)
+      size = 32;
+
+    if (key == null)
+      key = binding.NULL;
+
+    assert(Buffer.isBuffer(left));
+    assert(Buffer.isBuffer(right));
+    assert((size >>> 0) === size);
+    assert(Buffer.isBuffer(key));
+
+    return binding.blake2s_root(left, right, size, key);
+  }
+
+  static multi(x, y, z, size, key) {
+    if (z == null)
+      z = binding.NULL;
+
+    if (size == null)
+      size = 32;
+
+    if (key == null)
+      key = binding.NULL;
+
+    assert(Buffer.isBuffer(x));
+    assert(Buffer.isBuffer(y));
+    assert(Buffer.isBuffer(z));
+    assert((size >>> 0) === size);
+    assert(Buffer.isBuffer(key));
+
+    return binding.blake2s_multi(x, y, z, size, key);
+  }
+
+  static mac(data, key, size) {
+    return BLAKE2s.hmac(size).init(key).update(data).final();
+  }
+}
 
 /*
  * Static

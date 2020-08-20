@@ -25,7 +25,7 @@ asn1_read_size(size_t *size,
   assert(sizeof(size_t) * CHAR_BIT >= 32);
 
   if (*len == 0)
-    return 0;
+    goto fail;
 
   ch = **data;
 
@@ -41,34 +41,37 @@ asn1_read_size(size_t *size,
 
     /* Indefinite form. */
     if (strict && bytes == 0)
-      return 0;
+      goto fail;
 
     /* Long form. */
     *size = 0;
 
     for (i = 0; i < bytes; i++) {
       if (*len == 0)
-        return 0;
+        goto fail;
 
       ch = **data;
       *data += 1;
       *len -= 1;
 
       if (*size >= (1ul << 24))
-        return 0;
+        goto fail;
 
       *size <<= 8;
       *size |= ch;
 
       if (strict && *size == 0)
-        return 0;
+        goto fail;
     }
 
     if (strict && *size < 0x80)
-      return 0;
+      goto fail;
   }
 
   return 1;
+fail:
+  *size = 0;
+  return 0;
 }
 
 static int
@@ -96,38 +99,38 @@ asn1_read_int(unsigned char *out, size_t out_len,
   size_t size;
 
   if (*len == 0 || **data != 0x02)
-    return 0;
+    goto fail;
 
   *data += 1;
   *len -= 1;
 
   if (!asn1_read_size(&size, data, len, strict))
-    return 0;
+    goto fail;
 
   /* Out of bounds. */
   if (size > *len)
-    return 0;
+    goto fail;
 
   if (strict) {
     const unsigned char *num = *data;
 
     /* Zero-length integer. */
     if (size == 0)
-      return 0;
+      goto fail;
 
     /* No negatives. */
     if (num[0] & 0x80)
-      return 0;
+      goto fail;
 
     /* Allow zero only if it prefixes a high bit. */
     if (size > 1 && num[0] == 0x00) {
       if ((num[1] & 0x80) == 0x00)
-        return 0;
+        goto fail;
     }
   }
 
   /* Eat leading zeroes. */
-  while (size > 1 && **data == 0x00) {
+  while (size > 0 && **data == 0x00) {
     *data += 1;
     *len -= 1;
     size -= 1;
@@ -135,7 +138,7 @@ asn1_read_int(unsigned char *out, size_t out_len,
 
   /* Invalid size. */
   if (size > out_len)
-    return 0;
+    goto fail;
 
   memset(out, 0x00, out_len - size);
   memcpy(out + out_len - size, *data, size);
@@ -144,6 +147,9 @@ asn1_read_int(unsigned char *out, size_t out_len,
   *len -= size;
 
   return 1;
+fail:
+  memset(out, 0x00, out_len);
+  return 0;
 }
 
 static int
@@ -151,38 +157,38 @@ asn1_read_mpz(mpz_t n, const unsigned char **data, size_t *len, int strict) {
   size_t size;
 
   if (*len == 0 || **data != 0x02)
-    return 0;
+    goto fail;
 
   *data += 1;
   *len -= 1;
 
   if (!asn1_read_size(&size, data, len, 1))
-    return 0;
+    goto fail;
 
   /* Out of bounds. */
   if (size > *len)
-    return 0;
+    goto fail;
 
   if (strict) {
     const unsigned char *num = *data;
 
     /* Zero-length integer. */
     if (size == 0)
-      return 0;
+      goto fail;
 
     /* No negatives. */
     if (num[0] & 0x80)
-      return 0;
+      goto fail;
 
     /* Allow zero only if it prefixes a high bit. */
     if (size > 1 && num[0] == 0x00) {
       if ((num[1] & 0x80) == 0x00)
-        return 0;
+        goto fail;
     }
   }
 
   /* Eat leading zeroes. */
-  while (size > 1 && **data == 0x00) {
+  while (size > 0 && **data == 0x00) {
     *data += 1;
     *len -= 1;
     size -= 1;
@@ -190,7 +196,7 @@ asn1_read_mpz(mpz_t n, const unsigned char **data, size_t *len, int strict) {
 
   /* Invalid size. */
   if (size > 2048)
-    return 0;
+    goto fail;
 
   mpz_import(n, size, 1, 1, 0, 0, *data);
 
@@ -198,6 +204,9 @@ asn1_read_mpz(mpz_t n, const unsigned char **data, size_t *len, int strict) {
   *len -= size;
 
   return 1;
+fail:
+  mpz_set_ui(n, 0);
+  return 0;
 }
 
 static int
@@ -237,7 +246,7 @@ asn1_read_dumb(mpz_t n, const unsigned char **data, size_t *len) {
   size_t size;
 
   if (*len < 2)
-    return 0;
+    goto fail;
 
   size = ((size_t)buf[0] << 8) | (size_t)buf[1];
 
@@ -245,7 +254,7 @@ asn1_read_dumb(mpz_t n, const unsigned char **data, size_t *len) {
   *len -= 2;
 
   if (size > *len)
-    return 0;
+    goto fail;
 
   mpz_import(n, size, 1, 1, 0, 0, *data);
 
@@ -253,6 +262,9 @@ asn1_read_dumb(mpz_t n, const unsigned char **data, size_t *len) {
   *len -= size;
 
   return 1;
+fail:
+  mpz_set_ui(n, 0);
+  return 0;
 }
 
 static size_t
@@ -269,7 +281,7 @@ asn1_size_size(size_t size) {
 static size_t
 asn1_size_int(const unsigned char *num, size_t len) {
   /* 0x02 [size] [0x00?] [int] */
-  while (len > 1 && num[0] == 0x00) {
+  while (len > 0 && num[0] == 0x00) {
     len--;
     num++;
   }
@@ -334,7 +346,7 @@ asn1_write_int(unsigned char *data, size_t pos,
   size_t pad = 0;
 
   /* 0x02 [size] [0x00?] [int] */
-  while (len > 1 && num[0] == 0x00) {
+  while (len > 0 && num[0] == 0x00) {
     len--;
     num++;
   }

@@ -10,7 +10,6 @@
 
 const assert = require('../internal/assert');
 const binding = require('./binding');
-const backend = binding.rsa;
 
 /*
  * Constants
@@ -49,7 +48,7 @@ function privateKeyGenerate(bits, exponent) {
   if (exponent === 1 || (exponent & 1) === 0)
     throw new RangeError('"exponent" must be odd.');
 
-  return backend.privateKeyGenerate(bits, exponent, binding.entropy());
+  return binding.rsa_privkey_generate(bits, exponent, binding.entropy());
 }
 
 /**
@@ -78,22 +77,7 @@ async function privateKeyGenerateAsync(bits, exponent) {
   if (exponent === 1 || (exponent & 1) === 0)
     throw new RangeError('"exponent" must be odd.');
 
-  return new Promise(function(resolve, reject) {
-    const cb = function(err, raw) {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve(raw);
-    };
-
-    try {
-      backend.privateKeyGenerateAsync(bits, exponent, binding.entropy(), cb);
-    } catch (e) {
-      reject(e);
-    }
-  });
+  return binding.rsa_privkey_generate_async(bits, exponent, binding.entropy());
 }
 
 /**
@@ -103,7 +87,8 @@ async function privateKeyGenerateAsync(bits, exponent) {
  */
 
 function privateKeyBits(key) {
-  return backend.privateKeyBits(key);
+  assert(Buffer.isBuffer(key));
+  return binding.rsa_privkey_bits(key);
 }
 
 /**
@@ -113,7 +98,8 @@ function privateKeyBits(key) {
  */
 
 function privateKeyVerify(key) {
-  return backend.privateKeyVerify(key);
+  assert(Buffer.isBuffer(key));
+  return binding.rsa_privkey_verify(key);
 }
 
 /**
@@ -136,7 +122,7 @@ function privateKeyImport(json) {
     json.qi
   ]);
 
-  return backend.privateKeyImport(raw, binding.entropy());
+  return binding.rsa_privkey_import(raw, binding.entropy());
 }
 
 /**
@@ -146,7 +132,9 @@ function privateKeyImport(json) {
  */
 
 function privateKeyExport(key) {
-  const raw = backend.privateKeyExport(key);
+  assert(Buffer.isBuffer(key));
+
+  const raw = binding.rsa_privkey_export(key);
   const items = binding.decode(raw, 8);
 
   return {
@@ -168,7 +156,8 @@ function privateKeyExport(key) {
  */
 
 function publicKeyCreate(key) {
-  return backend.publicKeyCreate(key, binding.entropy());
+  assert(Buffer.isBuffer(key));
+  return binding.rsa_pubkey_create(key);
 }
 
 /**
@@ -178,7 +167,8 @@ function publicKeyCreate(key) {
  */
 
 function publicKeyBits(key) {
-  return backend.publicKeyBits(key);
+  assert(Buffer.isBuffer(key));
+  return binding.rsa_pubkey_bits(key);
 }
 
 /**
@@ -188,7 +178,8 @@ function publicKeyBits(key) {
  */
 
 function publicKeyVerify(key) {
-  return backend.publicKeyVerify(key);
+  assert(Buffer.isBuffer(key));
+  return binding.rsa_pubkey_verify(key);
 }
 
 /**
@@ -205,7 +196,7 @@ function publicKeyImport(json) {
     json.e
   ]);
 
-  return backend.publicKeyImport(raw);
+  return binding.rsa_pubkey_import(raw);
 }
 
 /**
@@ -215,7 +206,9 @@ function publicKeyImport(json) {
  */
 
 function publicKeyExport(key) {
-  const raw = backend.publicKeyExport(key);
+  assert(Buffer.isBuffer(key));
+
+  const raw = binding.rsa_pubkey_export(key);
   const items = binding.decode(raw, 2);
 
   return {
@@ -241,7 +234,11 @@ function sign(hash, msg, key) {
   else
     hash = binding.hashes[hash];
 
-  return backend.sign(hash, msg, key, binding.entropy());
+  assert((hash | 0) === hash);
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(key));
+
+  return binding.rsa_sign(hash, msg, key, binding.entropy());
 }
 
 /**
@@ -262,7 +259,11 @@ function verify(hash, msg, sig, key) {
   else
     hash = binding.hashes[hash];
 
-  return backend.verify(hash, msg, sig, key);
+  assert((hash | 0) === hash);
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(key));
+
+  return binding.rsa_verify(hash, msg, sig, key);
 }
 
 /**
@@ -273,7 +274,10 @@ function verify(hash, msg, sig, key) {
  */
 
 function encrypt(msg, key) {
-  return backend.encrypt(msg, key, binding.entropy());
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(key));
+
+  return binding.rsa_encrypt(msg, key, binding.entropy());
 }
 
 /**
@@ -284,7 +288,10 @@ function encrypt(msg, key) {
  */
 
 function decrypt(msg, key) {
-  return backend.decrypt(msg, key, binding.entropy());
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(key));
+
+  return binding.rsa_decrypt(msg, key, binding.entropy());
 }
 
 /**
@@ -296,12 +303,16 @@ function decrypt(msg, key) {
  * @returns {Buffer} PSS-formatted signature.
  */
 
-function signPSS(hash, msg, key, saltLen) {
-  return backend.signPSS(binding.hash(hash),
-                         msg,
-                         key,
-                         binding.entropy(),
-                         saltLen);
+function signPSS(hash, msg, key, saltLen = -1) {
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(key));
+  assert((saltLen | 0) === saltLen);
+
+  return binding.rsa_sign_pss(binding.hash(hash),
+                              msg,
+                              key,
+                              saltLen,
+                              binding.entropy());
 }
 
 /**
@@ -314,12 +325,17 @@ function signPSS(hash, msg, key, saltLen) {
  * @returns {Boolean}
  */
 
-function verifyPSS(hash, msg, sig, key, saltLen) {
-  return backend.verifyPSS(binding.hash(hash),
-                           msg,
-                           sig,
-                           key,
-                           saltLen);
+function verifyPSS(hash, msg, sig, key, saltLen = -1) {
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(sig));
+  assert(Buffer.isBuffer(key));
+  assert((saltLen | 0) === saltLen);
+
+  return binding.rsa_verify_pss(binding.hash(hash),
+                                msg,
+                                sig,
+                                key,
+                                saltLen);
 }
 
 /**
@@ -332,11 +348,18 @@ function verifyPSS(hash, msg, sig, key, saltLen) {
  */
 
 function encryptOAEP(hash, msg, key, label) {
-  return backend.encryptOAEP(binding.hash(hash),
-                             msg,
-                             key,
-                             binding.entropy(),
-                             label);
+  if (label == null)
+    label = binding.NULL;
+
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(key));
+  assert(Buffer.isBuffer(label));
+
+  return binding.rsa_encrypt_oaep(binding.hash(hash),
+                                  msg,
+                                  key,
+                                  label,
+                                  binding.entropy());
 }
 
 /**
@@ -349,11 +372,18 @@ function encryptOAEP(hash, msg, key, label) {
  */
 
 function decryptOAEP(hash, msg, key, label) {
-  return backend.decryptOAEP(binding.hash(hash),
-                             msg,
-                             key,
-                             binding.entropy(),
-                             label);
+  if (label == null)
+    label = binding.NULL;
+
+  assert(Buffer.isBuffer(msg));
+  assert(Buffer.isBuffer(key));
+  assert(Buffer.isBuffer(label));
+
+  return binding.rsa_decrypt_oaep(binding.hash(hash),
+                                  msg,
+                                  key,
+                                  label,
+                                  binding.entropy());
 }
 
 /**
@@ -365,7 +395,11 @@ function decryptOAEP(hash, msg, key, label) {
  */
 
 function veil(msg, bits, key) {
-  return backend.veil(msg, bits, key, binding.entropy());
+  assert(Buffer.isBuffer(msg));
+  assert((bits >>> 0) === bits);
+  assert(Buffer.isBuffer(key));
+
+  return binding.rsa_veil(msg, bits, key, binding.entropy());
 }
 
 /**
@@ -377,7 +411,11 @@ function veil(msg, bits, key) {
  */
 
 function unveil(msg, bits, key) {
-  return backend.unveil(msg, bits, key);
+  assert(Buffer.isBuffer(msg));
+  assert((bits >>> 0) === bits);
+  assert(Buffer.isBuffer(key));
+
+  return binding.rsa_unveil(msg, bits, key);
 }
 
 /*

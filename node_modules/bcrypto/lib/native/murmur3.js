@@ -7,12 +7,27 @@
 
 'use strict';
 
-const {murmur3} = require('./binding');
-
-murmur3.native = 2;
+const assert = require('../internal/assert');
+const binding = require('./binding');
 
 /*
+ * Murmur3
+ */
+
+function sum(data, seed) {
+  assert(Buffer.isBuffer(data));
+  return binding.murmur3_sum(data, seed >>> 0);
+}
+
+function tweak(data, n, tweak) {
+  assert(Buffer.isBuffer(data));
+  return binding.murmur3_tweak(data, n >>> 0, tweak >>> 0);
+}
+
+/**
  * Expose
  */
 
-module.exports = murmur3;
+exports.native = 2;
+exports.sum = sum;
+exports.tweak = tweak;

@@ -114,7 +114,7 @@ function readInt(data, pos, strict = true) {
   }
 
   // Eat leading zeroes.
-  while (size > 1 && data[pos] === 0x00) {
+  while (size > 0 && data[pos] === 0x00) {
     pos += 1;
     size -= 1;
   }

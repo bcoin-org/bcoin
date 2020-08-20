@@ -28,10 +28,11 @@
 #include <stdint.h>
 #include <string.h>
 #include <torsion/drbg.h>
-#include <torsion/hash.h>
 #include <torsion/dsa.h>
+#include <torsion/hash.h>
 #include <torsion/util.h>
 #include "asn1.h"
+#include "internal.h"
 #include "mpz.h"
 
 /*
@@ -193,7 +194,7 @@ dsa_group_generate(dsa_group_t *group,
   mpz_init(e);
   mpz_init(g);
 
-  drbg_init(&rng, HASH_SHA256, entropy, 32);
+  drbg_init(&rng, HASH_SHA256, entropy, ENTROPY_SIZE);
 
   for (;;) {
     mpz_random_bits(q, N, &rng);
@@ -614,7 +615,7 @@ dsa_priv_create(dsa_priv_t *k,
   mpz_set_ui(k->y, 0);
   mpz_set_ui(k->x, 0);
 
-  drbg_init(&rng, HASH_SHA256, entropy, 32);
+  drbg_init(&rng, HASH_SHA256, entropy, ENTROPY_SIZE);
 
   while (mpz_sgn(k->x) == 0)
     mpz_random_int(k->x, k->q, &rng);
@@ -626,17 +627,17 @@ dsa_priv_create(dsa_priv_t *k,
 
 static int
 dsa_priv_generate(dsa_priv_t *k, size_t bits, const unsigned char *entropy) {
-  unsigned char entropy1[32];
-  unsigned char entropy2[32];
+  unsigned char entropy1[ENTROPY_SIZE];
+  unsigned char entropy2[ENTROPY_SIZE];
   dsa_group_t group;
   drbg_t rng;
   int r = 0;
 
   dsa_group_init(&group);
 
-  drbg_init(&rng, HASH_SHA256, entropy, 32);
-  drbg_generate(&rng, entropy2, 32);
-  drbg_generate(&rng, entropy1, 32);
+  drbg_init(&rng, HASH_SHA256, entropy, ENTROPY_SIZE);
+  drbg_generate(&rng, entropy2, ENTROPY_SIZE);
+  drbg_generate(&rng, entropy1, ENTROPY_SIZE);
 
   if (!dsa_group_generate(&group, bits, entropy1))
     goto fail;
@@ -1335,7 +1336,7 @@ dsa_sign(unsigned char *out, size_t *out_len,
   mpz_export_pad(bytes + qsize, m, qsize, 1);
 
   drbg_init(&drbg, HASH_SHA256, bytes, qsize * 2);
-  drbg_init(&rng, HASH_SHA256, entropy, 32);
+  drbg_init(&rng, HASH_SHA256, entropy, ENTROPY_SIZE);
 
   for (;;) {
     mpz_random_int(b, priv.q, &rng);

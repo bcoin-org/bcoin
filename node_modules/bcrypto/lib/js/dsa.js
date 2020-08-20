@@ -1154,7 +1154,7 @@ function derive(pub, priv) {
   if (!k1.verify())
     throw new Error('Invalid DSA public key.');
 
-  const e = powConst(y, x, p, q);
+  const e = powBlind(y, x, p, q);
 
   return e.encode('be', p.byteLength());
 }
@@ -1192,7 +1192,7 @@ function reduce(msg, q) {
   return truncate(msg, q).imod(q);
 }
 
-function powBlind(g, x, p, q, size) {
+function powBlind(g, x, p, q) {
   // Idea: exponentiate by scalar with a
   // blinding factor, similar to how we
   // blind multiplications in EC. Note
@@ -1217,16 +1217,11 @@ function powBlind(g, x, p, q, size) {
   const G = g.toRed(BN.mont(p));
   const b = BN.random(rng, 1, q);
   const k = x.sub(b).imod(q);
-  const e1 = G.redPow(k, size);
-  const e2 = G.redPow(b, size);
+  const e1 = G.redPow(k);
+  const e2 = G.redPow(b);
   const e = e1.redMul(e2);
 
   return e.fromRed();
-}
-
-function powConst(g, x, p, q) {
-  assert(q instanceof BN);
-  return powBlind(g, x, p, q, q.bitLength());
 }
 
 /*

@@ -25,7 +25,7 @@ rotl32(uint32_t x, int8_t r) {
 }
 
 uint32_t
-bcrypto_murmur3_sum(const uint8_t *data, size_t len, uint32_t seed) {
+murmur3_sum(const uint8_t *data, size_t len, uint32_t seed) {
   uint32_t h1 = seed;
   uint32_t c1 = 0xcc9e2d51;
   uint32_t c2 = 0x1b873593;
@@ -72,10 +72,7 @@ bcrypto_murmur3_sum(const uint8_t *data, size_t len, uint32_t seed) {
 }
 
 uint32_t
-bcrypto_murmur3_tweak(const uint8_t *data,
-                      size_t len,
-                      uint32_t n,
-                      uint32_t tweak) {
+murmur3_tweak(const uint8_t *data, size_t len, uint32_t n, uint32_t tweak) {
   uint32_t seed = (n * 0xfba4c795ul) + tweak;
-  return bcrypto_murmur3_sum(data, len, seed);
+  return murmur3_sum(data, len, seed);
 }

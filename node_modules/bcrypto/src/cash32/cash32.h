@@ -29,74 +29,58 @@
 extern "C" {
 #endif
 
-typedef enum bcrypto_cash32_error_t {
-  BCRYPTO_CASH32_ERR_NULL = 0,
-  BCRYPTO_CASH32_ERR_CHECKSUM,
-  BCRYPTO_CASH32_ERR_LENGTH,
-  BCRYPTO_CASH32_ERR_CASING,
-  BCRYPTO_CASH32_ERR_PADDING,
-  BCRYPTO_CASH32_ERR_NONZERO_PADDING,
-  BCRYPTO_CASH32_ERR_CHARACTER,
-  BCRYPTO_CASH32_ERR_PREFIX,
-  BCRYPTO_CASH32_ERR_TYPE,
-  BCRYPTO_CASH32_ERR_SIZE,
-  BCRYPTO_CASH32_ERR_SEPARATOR
-} bcrypto_cash32_error;
+#define cash32_serialize _bcrypto_cash32_serialize
+#define cash32_deserialize _bcrypto_cash32_deserialize
+#define cash32_is _bcrypto_cash32_is
+#define cash32_convert_bits _bcrypto_cash32_convert_bits
+#define cash32_encode _bcrypto_cash32_encode
+#define cash32_decode _bcrypto_cash32_decode
+#define cash32_test _bcrypto_cash32_test
 
 int
-bcrypto_cash32_serialize(bcrypto_cash32_error *err,
-                         char *output,
-                         const char *prefix,
-                         const uint8_t *data,
-                         size_t data_len);
+cash32_serialize(char *output,
+                 const char *prefix,
+                 const uint8_t *data,
+                 size_t data_len);
 
 int
-bcrypto_cash32_deserialize(bcrypto_cash32_error *err,
-                           char *prefix,
-                           uint8_t *data,
-                           size_t *data_len,
-                           const char *default_prefix,
-                           const char *input);
+cash32_deserialize(char *prefix,
+                   uint8_t *data,
+                   size_t *data_len,
+                   const char *default_prefix,
+                   const char *input);
 
 int
-bcrypto_cash32_is(bcrypto_cash32_error *err,
-                  const char *default_prefix,
-                  const char *addr);
+cash32_is(const char *default_prefix,
+          const char *addr);
 
 int
-bcrypto_cash32_convert_bits(bcrypto_cash32_error *err,
-                            uint8_t *out,
-                            size_t *outlen,
-                            int outbits,
-                            const uint8_t *in,
-                            size_t inlen,
-                            int inbits,
-                            int pad);
+cash32_convert_bits(uint8_t *out,
+                    size_t *outlen,
+                    int outbits,
+                    const uint8_t *in,
+                    size_t inlen,
+                    int inbits,
+                    int pad);
 
 int
-bcrypto_cash32_encode(bcrypto_cash32_error *err,
-                      char *output,
-                      const char *prefix,
-                      int type,
-                      const uint8_t *hash,
-                      size_t hash_len);
+cash32_encode(char *output,
+              const char *prefix,
+              int type,
+              const uint8_t *hash,
+              size_t hash_len);
 
 int
-bcrypto_cash32_decode(bcrypto_cash32_error *err,
-                      int *type,
-                      uint8_t *hash,
-                      size_t *hash_len,
-                      char *prefix,
-                      const char *default_prefix,
-                      const char *addr);
+cash32_decode(int *type,
+              uint8_t *hash,
+              size_t *hash_len,
+              char *prefix,
+              const char *default_prefix,
+              const char *addr);
 
 int
-bcrypto_cash32_test(bcrypto_cash32_error *err,
-                    const char *default_prefix,
-                    const char *addr);
-
-const char *
-bcrypto_cash32_strerror(bcrypto_cash32_error err);
+cash32_test(const char *default_prefix,
+            const char *addr);
 
 #ifdef __cplusplus
 }

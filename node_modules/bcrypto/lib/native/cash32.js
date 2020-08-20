@@ -6,24 +6,74 @@
 
 'use strict';
 
-const {cash32} = require('./binding');
+const assert = require('../internal/assert');
+const binding = require('./binding');
 
 /*
  * Cash32
  */
 
-cash32.decode = function decode(str, defaultPrefix = 'bitcoincash') {
-  return cash32._decode(str, defaultPrefix);
-};
+function serialize(prefix, data) {
+  assert(typeof prefix === 'string');
+  assert(Buffer.isBuffer(data));
 
-cash32.test = function test(str, defaultPrefix = 'bitcoincash') {
-  return cash32._test(str, defaultPrefix);
-};
+  return binding.cash32_serialize(prefix, data);
+}
 
-cash32.native = 2;
+function deserialize(str, defaultPrefix) {
+  assert(typeof str === 'string');
+  assert(typeof defaultPrefix === 'string');
+
+  return binding.cash32_deserialize(str, defaultPrefix);
+}
+
+function is(str, defaultPrefix) {
+  assert(typeof str === 'string');
+  assert(typeof defaultPrefix === 'string');
+
+  return binding.cash32_is(str, defaultPrefix);
+}
+
+function convertBits(data, frombits, tobits, pad) {
+  assert(Buffer.isBuffer(data));
+  assert((frombits >>> 0) === frombits);
+  assert((tobits >>> 0) === tobits);
+  assert(typeof pad === 'boolean');
+
+  return binding.cash32_convert_bits(data, frombits, tobits, pad);
+}
+
+function encode(prefix, type, hash) {
+  assert(typeof prefix === 'string');
+  assert((type >>> 0) === type);
+  assert(Buffer.isBuffer(hash));
+
+  return binding.cash32_encode(prefix, type, hash);
+}
+
+function decode(str, defaultPrefix = 'bitcoincash') {
+  assert(typeof str === 'string');
+  assert(typeof defaultPrefix === 'string');
+
+  return binding.cash32_decode(str, defaultPrefix);
+}
+
+function test(str, defaultPrefix = 'bitcoincash') {
+  assert(typeof str === 'string');
+  assert(typeof defaultPrefix === 'string');
+
+  return binding.cash32_test(str, defaultPrefix);
+}
 
 /*
  * Expose
  */
 
-module.exports = cash32;
+exports.native = 2;
+exports.serialize = serialize;
+exports.deserialize = deserialize;
+exports.is = is;
+exports.convertBits = convertBits;
+exports.encode = encode;
+exports.decode = decode;
+exports.test = test;

@@ -24,13 +24,13 @@
   },
   "dependencies": {
     "bcfg": "git+https://github.com/bcoin-org/bcfg.git#semver:~0.1.6",
-    "bcrypto": "git+https://github.com/bcoin-org/bcrypto.git#semver:~5.0.4",
+    "bcrypto": "git+https://github.com/bcoin-org/bcrypto.git#semver:~5.1.0",
     "bcurl": "git+https://github.com/bcoin-org/bcurl.git#semver:^0.1.6",
     "bdb": "git+https://github.com/bcoin-org/bdb.git#semver:~1.2.1",
     "bdns": "git+https://github.com/bcoin-org/bdns.git#semver:~0.1.5",
     "bevent": "git+https://github.com/bcoin-org/bevent.git#semver:~0.1.5",
     "bfile": "git+https://github.com/bcoin-org/bfile.git#semver:~0.2.1",
-    "bfilter": "git+https://github.com/bcoin-org/bfilter.git#semver:~2.0.0",
+    "bfilter": "git+https://github.com/bcoin-org/bfilter.git#semver:~2.1.0",
     "bheep": "git+https://github.com/bcoin-org/bheep.git#semver:~0.1.5",
     "binet": "git+https://github.com/bcoin-org/binet.git#semver:~0.3.5",
     "blgr": "git+https://github.com/bcoin-org/blgr.git#semver:~0.1.7",
@@ -49,8 +49,7 @@
     "bval": "git+https://github.com/bcoin-org/bval.git#semver:~0.1.6",
     "bweb": "git+https://github.com/bcoin-org/bweb.git#semver:=0.1.9",
     "loady": "git+https://github.com/chjj/loady.git#semver:~0.0.1",
-    "n64": "git+https://github.com/chjj/n64.git#semver:~0.2.10",
-    "nan": "git+https://github.com/braydonf/nan.git#semver:=2.14.0"
+    "n64": "git+https://github.com/chjj/n64.git#semver:~0.2.10"
   },
   "bundleDependencies": [
     "bcfg",
@@ -79,8 +78,7 @@
     "bval",
     "bweb",
     "loady",
-    "n64",
-    "nan"
+    "n64"
   ],
   "devDependencies": {
     "bmocha": "git+https://github.com/bcoin-org/bmocha.git#semver:=2.1.2"

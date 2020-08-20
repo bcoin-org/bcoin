@@ -114,6 +114,12 @@ extern "C" {
 #define blake2b512_init torsion_blake2b512_init
 #define blake2b512_update torsion_blake2b512_update
 #define blake2b512_final torsion_blake2b512_final
+#define gost94_init torsion_gost94_init
+#define gost94_update torsion_gost94_update
+#define gost94_final torsion_gost94_final
+#define whirlpool_init torsion_whirlpool_init
+#define whirlpool_update torsion_whirlpool_update
+#define whirlpool_final torsion_whirlpool_final
 #define hash_init torsion_hash_init
 #define hash_update torsion_hash_update
 #define hash_final torsion_hash_final
@@ -253,6 +259,19 @@ typedef struct _blake2b_s {
   size_t outlen;
 } blake2b_t;
 
+typedef struct _gost94_s {
+  uint8_t state[32];
+  uint8_t sigma[32];
+  uint8_t block[32];
+  uint64_t size;
+} gost94_t;
+
+typedef struct _whirlpool_s {
+  uint64_t state[8];
+  uint8_t block[64];
+  uint64_t size;
+} whirlpool_t;
+
 typedef struct _hash_s {
   int type;
   union {
@@ -266,6 +285,8 @@ typedef struct _hash_s {
     keccak_t keccak;
     blake2s_t blake2s;
     blake2b_t blake2b;
+    gost94_t gost94;
+    whirlpool_t whirlpool;
   } ctx;
 } hash_t;
 
@@ -475,6 +496,32 @@ blake2b_update(blake2b_t *ctx, const void *data, size_t len);
 
 void
 blake2b_final(blake2b_t *ctx, unsigned char *out);
+
+/*
+ * GOST94
+ */
+
+void
+gost94_init(gost94_t *ctx);
+
+void
+gost94_update(gost94_t *ctx, const void *data, size_t len);
+
+void
+gost94_final(gost94_t *ctx, unsigned char *out);
+
+/*
+ * Whirlpool
+ */
+
+void
+whirlpool_init(whirlpool_t *ctx);
+
+void
+whirlpool_update(whirlpool_t *ctx, const void *data, size_t len);
+
+void
+whirlpool_final(whirlpool_t *ctx, unsigned char *out);
 
 /*
  * Hash
