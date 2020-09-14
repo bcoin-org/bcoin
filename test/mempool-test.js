@@ -1055,4 +1055,121 @@ describe('Mempool', function() {
         throw err;
     });
   });
+
+  describe('Mempool eviction', function () {
+    // Computed in advance with MempoolEntry.memUsage()
+    const txMemUsage = 2288;
+    // Should allow 9 transactions in mempool.
+    // The 10th transaction will push the mempool size over 100% of the limit.
+    // Mempool will then remove two transactions to get under 90% limit.
+    const maxSize = txMemUsage * 10 - 1;
+    // 1 hour
+    const expiryTime = 60 * 60;
+
+    const workers = new WorkerPool({
+      enabled: true,
+      size: 2
+    });
+
+    const blocks = new BlockStore({
+      memory: true
+    });
+
+    const chain = new Chain({
+      memory: true,
+      workers,
+      blocks
+    });
+
+    const mempool = new Mempool({
+      chain,
+      workers,
+      memory: true,
+      maxSize,
+      expiryTime
+    });
+
+    before(async () => {
+      await blocks.open();
+      await mempool.open();
+      await chain.open();
+      await workers.open();
+    });
+
+    after(async () => {
+      await workers.close();
+      await chain.close();
+      await mempool.close();
+      await blocks.close();
+    });
+
+    // Number of coins available in
+    // chaincoins (100k satoshi per coin).
+    const N = 100;
+    const chaincoins = new MemWallet();
+    const wallet = new MemWallet();
+
+    it('should create txs in chain', async () => {
+      const mtx = new MTX();
+      mtx.addInput(new Input());
+
+      for (let i = 0; i < N; i++) {
+        const addr = chaincoins.createReceive().getAddress();
+        mtx.addOutput(addr, 100000);
+      }
+
+      const cb = mtx.toTX();
+      const block = await getMockBlock(chain, [cb], false);
+      const entry = await chain.add(block, VERIFY_NONE);
+
+      await mempool._addBlock(entry, block.txs);
+
+      // Add 100 blocks so we don't get premature
+      // spend of coinbase.
+      for (let i = 0; i < 100; i++) {
+        const block = await getMockBlock(chain);
+        const entry = await chain.add(block, VERIFY_NONE);
+
+        await mempool._addBlock(entry, block.txs);
+      }
+
+      chaincoins.addTX(cb);
+    });
+
+    it('should limit mempool size', async () => {
+      let expectedSize = 0;
+
+      for (let i = 0; i < N; i++) {
+        // Spend a different coin each time to avoid exceeding max ancestors.
+        const coin = chaincoins.getCoins()[i];
+        const addr = wallet.createReceive().getAddress();
+
+        const mtx = new MTX();
+        mtx.addCoin(coin);
+        // Increment fee with each TX so oldest TX gets evicted first.
+        // Otherwise the new TX might be the one that gets evicted,
+        // resulting in a "mempool full" error instead.
+        mtx.addOutput(addr, 90000 - (10 * i));
+        chaincoins.sign(mtx);
+        const tx = mtx.toTX();
+
+        expectedSize += txMemUsage;
+
+        if (expectedSize < maxSize) {
+          await mempool.addTX(tx);
+        } else {
+          assert(i >= 9);
+          let evicted = false;
+          mempool.once('remove entry', () => {
+            evicted = true;
+            // We've exceeded the max size by 1 TX
+            // Mempool will remove 2 TXs to get below 90% limit.
+            expectedSize -= txMemUsage * 2;
+          });
+          await mempool.addTX(tx);
+          assert(evicted);
+        }
+      }
+    });
+  });
 });
