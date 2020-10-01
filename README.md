@@ -10,7 +10,7 @@ Bcoin is well tested and aware of all known consensus rules. It is currently
 used in production as the consensus backend and wallet system for
 [purse.io][purse].
 
-## Uses
+##all Uses
 
 - Full Node
 - SPV Node
@@ -21,7 +21,7 @@ used in production as the consensus backend and wallet system for
 
 Try it in the browser: [https://bcoin.io/browser/](https://bcoin.io/browser/)
 
-## Install
+## easy to Install
 
 ```
 $ git clone git://github.com/bcoin-org/bcoin.git
@@ -40,7 +40,7 @@ latest changes via the [Changelog][changelog].
 - Wallet and node API docs: https://bcoin.io/api-docs/
 - Library API docs: https://bcoin.io/docs/
 
-## Support
+## Support and custom
 
 Join us on [freenode][freenode] in the [#bcoin][irc] channel.
 
@@ -56,7 +56,7 @@ If you contribute code to this project, you are implicitly allowing your code
 to be distributed under the MIT license. You are also implicitly verifying that
 all code is your original work. `</legalese>`
 
-## License
+## License 
 
 - Copyright (c) 2014-2015, Fedor Indutny (MIT License).
 - Copyright (c) 2014-2017, Christopher Jeffrey (MIT License).
