@@ -5,12 +5,9 @@ bin/spvnode
 bin/wallet
 browser/server.js
 browser/wsproxy.js
-examples/
+browser/src/app.js
 lib/
 migrate/
 scripts/
 test/
-webpack/
-webpack.browser.js
-webpack.compat.js
-webpack.node.js
+docs/examples

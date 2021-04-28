@@ -1,0 +1,2003 @@
+#!/usr/bin/env node
+
+/*!
+ * bmocha - alternative mocha implementation
+ * Copyright (c) 2018-2019, Christopher Jeffrey (MIT License).
+ * https://github.com/bcoin-org/bmocha
+ */
+
+'use strict';
+
+const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const glob = require('../vendor/glob.js');
+const bmocha = require('../lib/bmocha.js');
+const imports = require('../lib/imports.js');
+
+const {
+  basename,
+  dirname,
+  extname,
+  join,
+  normalize,
+  relative,
+  resolve
+} = path;
+
+const {
+  Array,
+  Boolean,
+  Error,
+  Object,
+  process,
+  RegExp
+} = global;
+
+const {
+  errorify,
+  inspect,
+  Mocha,
+  style
+} = bmocha;
+
+const cwd = process.cwd();
+const {argv, env, stdout, stderr, exit} = process;
+const on = process.on.bind(process);
+const off = process.removeListener.bind(process);
+
+/*
+ * Constants
+ */
+
+const VERSION = '2.1.2';
+
+const HELP = `
+  Usage: bmocha [options] [files]
+         bmocha debug [options] [files]
+         bmocha init <path> [options] [files]
+
+  Commands:
+
+    debug                    start bmocha with the node.js debugger enabled
+    init <path>              initialize a client-side bmocha setup at <path>
+
+  Options:
+
+    --allow-multiple         allow multiple promise resolutions (default: false)
+    --allow-uncaught         enable uncaught errors to propagate
+                             (default: false)
+    -A, --async-only         require all tests to use a callback or promise
+                             (default: false)
+    -B, --backend <value>    set the NODE_BACKEND environment variable
+    -b, --bail               bail after first test failure (default: false)
+    --check-leaks            check for global variable leaks (default: false)
+    --chrome <path>          chrome binary to use for headless mode
+    -c, --colors             force enabling of colors
+    -C, --no-colors          force disabling of colors
+    --compilers <ext>:<mod>  use the given module(s) to compile files
+    --config <path>          path to config file (default: nearest rc file)
+    --csp-source <src>       add content-security-policy source
+                             (default: 'self')
+    --delay                  delay initial execution of root suite
+                             (default: false)
+    --diff                   show diff on failure (default: true)
+    -e, --env <name=val>     set environment variable (can be specified multiple
+                             times)
+    --exclude <file>         a file to ignore
+    --exit                   force shutdown of the event loop after test run
+                             (default: false)
+    --extension <ext>        file extension(s) to load and/or watch
+                             (default: js)
+    -f, --fgrep <string>     only run tests containing <string>
+    --file <file>            include a file to be ran during the suite
+    --forbid-only            fail if exclusive test(s) encountered
+                             (default: false)
+    --forbid-pending         fail if pending test(s) encountered
+                             (default: false)
+    --full-trace             display full stack traces (default: false)
+    -g, --grep <pattern>     only run tests matching <pattern>
+    -G, --growl              enable growl notifications (default: false)
+    --globals <names>        allow the given comma-delimited global <names>
+    -H, --headless           run tests in headless chrome (default: false)
+    -h, --help               output usage information
+    -i, --invert             inverts --grep and --fgrep matches (default: false)
+    --inline-diffs           display actual/expected differences inline (noop)
+                             (default: false)
+    --interfaces             display available interfaces
+    -l, --listen             serve client-side test files (requires browserify)
+                             (default: false)
+    -m, --cmd <cmd>          set browser command (default: $BROWSER)
+    --node <path>            path to node.js binary (default: process.execPath)
+    -o, --open               open browser after serving (default: false)
+    -O, --reporter-options   reporter-specific options
+    --opts <path>            path to "mocha.opts" (default: ./test/mocha.opts)
+    --package <path>         path to package.json for config
+                             (default: ./package.json)
+    -p, --port <port>        port to listen on (default: 8080)
+    -R, --reporter <name>    specify the reporter to use (default: spec)
+    -r, --require <name>     require the given module
+    --recursive              include sub directories (default: false)
+    --reporters              display available reporters
+    --retries <times>        set numbers of time to retry a failed test case
+                             (default: 0)
+    -s, --slow <ms>          "slow" test threshold in milliseconds (default: 75)
+    -S, --sort               sort test files (default: false)
+    --ssl                    use ssl to listen (default: false)
+    --ssl-cert <path>        path to ssl cert file
+    --ssl-ignore             ignore certificate errors (headless mode only)
+                             (default: false)
+    --ssl-key <path>         path to ssl key file
+    --swallow                swallow errors post-completion to mimic mocha
+                             (default: true)
+    -t, --timeout <ms>       set test-case timeout in milliseconds
+                             (default: 2000)
+    --timeouts               enables timeouts (default: true)
+    -u, --ui <name>          specify user-interface (bdd) (default: bdd)
+    -V, --version            output the version number
+    -w, --watch              watch files in the current working directory
+                             (default: false)
+    --why                    display why node continues to run after the suite
+                             has ended (similar to why-is-node-running)
+    -z, --console            use console in browser (default: false)
+
+  Environment Variables:
+
+    BMOCHA_OPTIONS           space-separated list of command-line options
+`;
+
+const INTERFACES = `
+    bdd
+`;
+
+const REPORTERS = `
+    doc - html documentation
+    dot - dot matrix
+    json - single json object
+    json-stream - newline delimited json events
+    landing - unicode landing strip
+    list - spec-style listing
+    markdown - markdown documentation (github flavour)
+    min - minimal reporter (great with --watch)
+    nyan - nyan cat!
+    progress - progress bar
+    spec - hierarchical spec list
+    tap - test-anything-protocol
+    xunit - xunit reporter
+`;
+
+const DEFAULT_BOPTS = resolve(cwd, 'test', 'bmocha.opts');
+const DEFAULT_OPTS = resolve(cwd, 'test', 'mocha.opts');
+const DEFAULT_PKG = resolve(cwd, 'package.json');
+const BIN_PATH = resolve(__dirname, '..', 'bin');
+const LIB_PATH = resolve(__dirname, '..', 'lib');
+const IN_MOCHA = basename(cwd) === 'bmocha';
+
+/*
+ * Helpers
+ */
+
+function string(str) {
+  assert(typeof str === 'string');
+  return JSON.stringify(str);
+}
+
+function wrapImport(file) {
+  assert(typeof file === 'string');
+
+  return async () => {
+    const path = resolve(cwd, file);
+
+    if (imports.supported) {
+      await imports(imports.pathToFileURL(path));
+      return;
+    }
+
+    delete require.cache[path];
+
+    require(path);
+  };
+}
+
+function readdir(path) {
+  assert(typeof path === 'string');
+  return fs.readdirSync(path).map((name) => {
+    return join(path, name);
+  });
+}
+
+function exists(file) {
+  assert(typeof file === 'string');
+  try {
+    fs.statSync(file);
+    return true;
+  } catch (e) {
+    if (e.code === 'ENOENT')
+      return false;
+    throw e;
+  }
+}
+
+function findFile(files) {
+  assert(Array.isArray(files));
+
+  for (const file of files) {
+    if (exists(file))
+      return file;
+  }
+
+  return null;
+}
+
+function findExt(name, extensions) {
+  assert(typeof name === 'string');
+  assert(Array.isArray(extensions));
+
+  if (exists(name))
+    return name;
+
+  // Historically, mocha only looked
+  // for `.js` files. We can do better
+  // by checking for all of the user's
+  // file extensions.
+  for (const ext of extensions) {
+    const file = `${name}${ext}`;
+
+    if (exists(file))
+      return file;
+  }
+
+  return null;
+}
+
+function mergeExts(extensions, files) {
+  assert(Array.isArray(extensions));
+  assert(Array.isArray(files));
+
+  const out = new Set(extensions);
+
+  for (const file of files) {
+    const ext = extname(file);
+
+    if (ext.length > 0)
+      out.add(ext);
+  }
+
+  return [...out];
+}
+
+function mkdirp(path, mode) {
+  if (mode == null)
+    mode = 0o777;
+
+  assert(typeof path === 'string');
+  assert((mode >>> 0) === mode);
+
+  const paths = [];
+
+  let dir = normalize(path);
+
+  for (;;) {
+    paths.push(dir);
+
+    const next = dirname(dir);
+
+    if (next === dir)
+      break;
+
+    dir = next;
+  }
+
+  paths.reverse();
+
+  for (const path of paths) {
+    if (!exists(path))
+      fs.mkdirSync(path, mode);
+  }
+}
+
+function exception(err, code) {
+  if (err && err.stack)
+    err = err.stack;
+
+  code >>>= 0;
+
+  stderr.write(err + '\n');
+  exit(code || 1);
+}
+
+/*
+ * Test File Traversal
+ */
+
+function globify(files) {
+  assert(Array.isArray(files));
+
+  const out = [];
+
+  const options = {
+    cwd,
+    silent: true
+  };
+
+  for (const file of files) {
+    if (glob.hasMagic(file, options)) {
+      const result = glob.sync(file, options);
+
+      if (result.length === 0)
+        throw new Error(`Could not resolve pattern: ${string(file)}.`);
+
+      out.push(...result);
+
+      continue;
+    }
+
+    if (!exists(file))
+      throw new Error(`File not found: ${string(file)}.`);
+
+    out.push(file);
+  }
+
+  return out;
+}
+
+function flatten(files, extensions, recurse = false) {
+  assert(Array.isArray(files));
+  assert(Array.isArray(extensions));
+  assert(typeof recurse === 'boolean');
+
+  for (const file of files)
+    assert(typeof file === 'string');
+
+  for (const ext of extensions) {
+    assert(typeof ext === 'string');
+    assert(ext.length > 0 && ext[0] === '.');
+  }
+
+  return walk(files, extensions, recurse, 0, []);
+}
+
+function walk(files, extensions, recurse, depth, out) {
+  for (const file of files) {
+    const stat = fs.statSync(file);
+
+    if (stat.isDirectory()) {
+      // Avoid symlink loops (diverges from mocha).
+      if (fs.lstatSync(file).isSymbolicLink())
+        continue;
+
+      // Without the recurse option,
+      // mocha delves one level deep.
+      if (recurse || depth === 0)
+        walk(readdir(file), extensions, recurse, depth + 1, out);
+
+      continue;
+    }
+
+    // If a file was given to us explicity,
+    // do not filter. The result of a glob is
+    // considered explicit (mimic mocha behavior).
+    if (depth === 0) {
+      if (!stat.isFile()) {
+        // Mocha throws with a nasty error
+        // in this case. We can do better.
+        throw new Error(`Not a regular file: ${string(file)}.`);
+      }
+      out.push(file);
+      continue;
+    }
+
+    // Files only.
+    if (!stat.isFile())
+      continue;
+
+    // No dotfiles.
+    if (basename(file)[0] === '.')
+      continue;
+
+    // Only our specific extensions.
+    if (extensions.length > 0) {
+      const ext = extname(file);
+
+      if (!extensions.includes(ext))
+        continue;
+    }
+
+    out.push(file);
+  }
+
+  return out;
+}
+
+function exclude(files, excludes) {
+  assert(Array.isArray(files));
+  assert(Array.isArray(excludes));
+
+  return files.filter((name) => {
+    return excludes.every((pattern) => {
+      return !glob.minimatch(name, pattern);
+    });
+  });
+}
+
+function resolvify(files) {
+  assert(Array.isArray(files));
+  return files.map(file => resolve(cwd, file));
+}
+
+/*
+ * Watching Helpers
+ */
+
+function getFiles(root, extensions, out = []) {
+  assert(typeof root === 'string');
+  assert(Array.isArray(extensions));
+  assert(Array.isArray(out));
+
+  root = resolve(cwd, root);
+
+  for (const name of fs.readdirSync(root)) {
+    if (name === '.git' || name === 'node_modules')
+      continue;
+
+    const file = join(root, name);
+    const stat = fs.lstatSync(file);
+
+    if (stat.isDirectory()) {
+      getFiles(file, extensions, out);
+      continue;
+    }
+
+    // Files only.
+    if (!stat.isFile())
+      continue;
+
+    // Only our specific extensions.
+    if (extensions.length > 0) {
+      const ext = extname(name);
+
+      if (!extensions.includes(ext))
+        continue;
+    }
+
+    // Ignore everything in
+    // our own bin and lib.
+    if (IN_MOCHA) {
+      if (file.startsWith(BIN_PATH)
+          || file.startsWith(LIB_PATH)) {
+        continue;
+      }
+    }
+
+    out.push(file);
+  }
+
+  return out;
+}
+
+function watchFiles(files, callback) {
+  assert(Array.isArray(files));
+  assert(typeof callback === 'function');
+
+  const options = { interval: 100 };
+
+  const cb = async (current, previous) => {
+    const prev = previous.mtime.getTime();
+    const cur = current.mtime.getTime();
+
+    if (prev >= cur)
+      return;
+
+    try {
+      await callback();
+    } catch (e) {
+      exception(e);
+    }
+  };
+
+  for (const file of files)
+    fs.watchFile(file, options, cb);
+}
+
+/*
+ * Process Helpers
+ */
+
+function spawn(file, args, shell = false) {
+  const cp = require('child_process');
+
+  const ps = cp.spawn(file, args, {
+    cwd,
+    env,
+    detached: true,
+    stdio: 'ignore',
+    shell
+  });
+
+  ps.on('error', () => {});
+
+  ps.unref();
+
+  return ps;
+}
+
+function navigate(url, cmd) {
+  assert(typeof url === 'string');
+  assert(cmd == null || typeof cmd === 'string');
+
+  // Any OS:
+  if (cmd) {
+    if (cmd.includes('%s')) {
+      cmd = cmd.replace(/%s/g, url);
+      return spawn(cmd, [], true);
+    }
+
+    return spawn(cmd, [url], true);
+  }
+
+  // Windows:
+  // https://stackoverflow.com/questions/3739327
+  if (process.platform === 'win32')
+    return spawn('explorer', [url]);
+
+  // OSX:
+  // https://superuser.com/questions/85151
+  if (process.platform === 'darwin')
+    return spawn('open', [url]);
+
+  // Unix:
+  const name = env.BROWSER;
+
+  if (!name)
+    return spawn('xdg-open', [url]);
+
+  if (/(?:chrome|chromium)/i.test(name))
+    return spawn(name, [`--app=${url}`]);
+
+  return spawn(name, [url]);
+}
+
+function findChrome() {
+  // See: https://github.com/karma-runner/karma-chrome-launcher
+  if (process.platform === 'darwin') {
+    return findFile([
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    ]);
+  }
+
+  if (process.platform === 'win32') {
+    // https://stackoverflow.com/questions/40674914
+    const names = [
+      '\\Chromium\\Application\\chromium.exe',
+      '\\Chromium\\chromium.exe',
+      '\\Google\\Chrome\\Application\\chrome.exe', // Windows 10
+      '\\Google\\Application\\chrome.exe', // Windows 7
+      '\\Google\\Chrome\\chrome.exe' // Windows XP/Vista
+    ];
+
+    const files = [];
+
+    for (const name of names) {
+      for (const dir of [env.LOCALAPPDATA,
+                         env.PROGRAMFILES,
+                         env['PROGRAMFILES(X86)']]) {
+        if (!dir || dir.length === 0)
+          continue;
+
+        files.push(join(dir, name));
+      }
+    }
+
+    return findFile(files);
+  }
+
+  if (!env.PATH)
+    return null;
+
+  const files = [];
+
+  for (const name of ['chromium',
+                      'google-chrome',
+                      'google-chrome-stable']) {
+    for (const dir of env.PATH.split(':')) {
+      if (dir.length === 0)
+        continue;
+
+      files.push(join(dir, name));
+    }
+  }
+
+  return findFile(files);
+}
+
+function bindExit(handler) {
+  assert(typeof handler === 'function');
+
+  const onSighup = () => exit(1 | 0x80);
+  const onSigint = () => exit(2 | 0x80);
+  const onSigterm = () => exit(15 | 0x80);
+  const onError = err => exception(err);
+
+  process.once('exit', handler);
+
+  if (process.listenerCount('SIGHUP') === 0)
+    process.once('SIGHUP', onSighup);
+
+  if (process.listenerCount('SIGINT') === 0)
+    process.once('SIGINT', onSigint);
+
+  if (process.listenerCount('SIGTERM') === 0)
+    process.once('SIGTERM', onSigterm);
+
+  if (process.listenerCount('uncaughtException') === 0)
+    process.once('uncaughtException', onError);
+
+  if (process.listenerCount('unhandledRejection') === 0)
+    process.once('unhandledRejection', onError);
+
+  process.on('newListener', (name) => {
+    switch (name) {
+      case 'SIGHUP':
+        process.removeListener(name, onSighup);
+        break;
+      case 'SIGINT':
+        process.removeListener(name, onSigint);
+        break;
+      case 'SIGTERM':
+        process.removeListener(name, onSigterm);
+        break;
+      case 'uncaughtException':
+        process.removeListener(name, onError);
+        break;
+      case 'unhandledRejection':
+        process.removeListener(name, onError);
+        break;
+    }
+  });
+}
+
+function runHeadless(url, chrome, extra = []) {
+  assert(typeof url === 'string');
+  assert(chrome == null || typeof chrome === 'string');
+  assert(Array.isArray(extra));
+
+  const cp = require('child_process');
+
+  const file = chrome || findChrome();
+
+  if (!file)
+    throw new Error('Could not find chrome binary.');
+
+  const args = [
+    '--headless',
+    '--disable-gpu',
+    '--remote-debugging-port=0',
+    ...extra,
+    url
+  ];
+
+  let output = '';
+
+  const onData = (data) => {
+    if (output.length > (1 << 20))
+      output = '';
+    output += data;
+  };
+
+  const onError = (err) => {
+    if (err.code === 'ENOENT')
+      exception(`Chrome not found: ${string(err.path)}.`);
+    else
+      exception(err);
+  };
+
+  const onExit = (code, signal) => {
+    code >>>= 0;
+
+    stderr.write('Chrome exited unexpectedly ');
+    stderr.write(`(code=${code}, signal=${signal}).\n`);
+
+    if (output.length > 0) {
+      stderr.write('\n');
+      stderr.write(output);
+      stderr.write('\n');
+    }
+
+    if (code === 0)
+      code = 1;
+
+    exit(code);
+  };
+
+  const ps = cp.spawn(file, args, {
+    cwd,
+    env,
+    detached: false,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    shell: false
+  });
+
+  ps.stdout.unref();
+  ps.stdout.setEncoding('utf8');
+  ps.stdout.on('error', () => {});
+  ps.stdout.on('data', onData);
+
+  ps.stderr.unref();
+  ps.stderr.setEncoding('utf8');
+  ps.stderr.on('error', () => {});
+  ps.stderr.on('data', onData);
+
+  ps.unref();
+  ps.on('error', onError);
+  ps.on('exit', onExit);
+
+  bindExit(() => {
+    ps.removeListener('exit', onExit);
+    ps.kill('SIGTERM');
+  });
+
+  return [[file, ...args], ps];
+}
+
+/*
+ * Config Parsing
+ */
+
+function findConfig(root) {
+  assert(typeof root === 'string');
+
+  let dir = normalize(root);
+
+  for (;;) {
+    for (const name of ['.bmocharc.js',
+                        '.bmocharc.mjs',
+                        '.bmocharc.json',
+                        '.mocharc.js',
+                        '.mocharc.mjs',
+                        '.mocharc.yaml',
+                        '.mocharc.yml',
+                        '.mocharc.jsonc',
+                        '.mocharc.json']) {
+      const file = join(dir, name);
+
+      if (exists(file))
+        return file;
+    }
+
+    const next = dirname(dir);
+
+    if (next === dir)
+      break;
+
+    dir = next;
+  }
+
+  return null;
+}
+
+function parseConfig(json) {
+  assert(json && typeof json === 'object');
+
+  const args = [];
+
+  for (const key of Object.keys(json)) {
+    const value = json[key];
+
+    switch (typeof value) {
+      case 'boolean': {
+        args.push(value ? `--${key}` : `--no-${key}`);
+        break;
+      }
+
+      case 'number':
+      case 'string': {
+        args.push(`--${key}`);
+        args.push(String(value));
+        break;
+      }
+
+      case 'object': {
+        if (Array.isArray(value)) {
+          const arg = [];
+
+          args.push(`--${key}`);
+
+          for (const item of value)
+            arg.push(String(item));
+
+          args.push(arg.join(','));
+        } else if (value instanceof RegExp) {
+          args.push(value.source);
+        } else if (value != null) {
+          const arg = [];
+
+          args.push(`--${key}`);
+
+          for (const k of Object.keys(value))
+            arg.push(`${k}=${value[k]}`);
+
+          args.push(arg.join(','));
+        }
+
+        break;
+      }
+    }
+  }
+
+  return args;
+}
+
+async function readJS(file) {
+  assert(typeof file === 'string');
+
+  const path = resolve(cwd, file);
+
+  if (imports.supported) {
+    const ns = await imports(imports.pathToFileURL(path));
+    return ns['default'] || ns;
+  }
+
+  return require(path);
+}
+
+function readJSON(file) {
+  assert(typeof file === 'string');
+  const text = fs.readFileSync(file, 'utf8');
+  return JSON.parse(text);
+}
+
+/*
+ * Argument Parsing
+ */
+
+function normalizeArgs(argv) {
+  assert(Array.isArray(argv));
+
+  const args = [];
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+
+    assert(typeof arg === 'string');
+
+    if (arg.startsWith('--')) {
+      // e.g. --opt
+      const index = arg.indexOf('=');
+      if (index !== -1) {
+        // e.g. --opt=val
+        args.push(arg.substring(0, index));
+        args.push(arg.substring(index + 1));
+      } else {
+        args.push(arg);
+      }
+    } else if (arg.startsWith('-')) {
+      if (arg.length > 2) {
+        // e.g. -abc
+        for (let j = 1; j < arg.length; j++)
+          args.push(`-${arg.charAt(j)}`);
+      } else {
+        // e.g. -a
+        args.push(arg);
+      }
+    } else {
+      // e.g. foo
+      args.push(arg);
+    }
+  }
+
+  return args;
+}
+
+async function getArgs(argv) {
+  assert(Array.isArray(argv));
+
+  const args = [];
+  const out = [];
+
+  // Parse BMOCHA_OPTIONS environment variable.
+  if (env.BMOCHA_OPTIONS) {
+    const text = env.BMOCHA_OPTIONS;
+    const parts = text.replace(/\\\s/g, '%20')
+                      .split(/\s+/);
+    const items = [];
+
+    for (const arg of parts) {
+      if (arg.length === 0)
+        continue;
+
+      if (arg === '--')
+        throw new Error(`Invalid argument: ${arg}.`);
+
+      items.push(arg.replace(/%20/g, ' '));
+    }
+
+    args.push(...normalizeArgs(items));
+  }
+
+  // Normalize process arg vector.
+  args.push(...normalizeArgs(argv));
+
+  // Quickly parse through args
+  // to find config files.
+  let config = null;
+  let opts = null;
+  let pkg = null;
+
+  for (let i = 0; i < args.length; i++) {
+    switch (args[i]) {
+      case '-h':
+      case '--help':
+      case '--interfaces':
+      case '--reporters':
+      case '-V':
+      case '--version':
+        return [0, args];
+      case '--':
+        i = args.length;
+        break;
+      case '--config': {
+        if (i + 1 < args.length)
+          config = args[++i];
+        break;
+      }
+      case '--no-config': {
+        config = false;
+        break;
+      }
+      case '--opts': {
+        if (i + 1 < args.length)
+          opts = args[++i];
+        break;
+      }
+      case '--no-opts': {
+        opts = false;
+        break;
+      }
+      case '--package': {
+        if (i + 1 < args.length)
+          pkg = args[++i];
+        break;
+      }
+      case '--no-package': {
+        pkg = false;
+        break;
+      }
+    }
+  }
+
+  // Parse main config (rc) file.
+  if (config === null)
+    config = findConfig(cwd);
+
+  if (typeof config === 'string') {
+    const ext = extname(config);
+
+    let json = null;
+
+    switch (ext) {
+      case '.js':
+      case '.mjs':
+        json = await readJS(config);
+        break;
+      case '.json':
+        json = readJSON(config);
+        break;
+      default:
+        stderr.write('Warning: ');
+        stderr.write(`cannot read ${ext} config: `);
+        stderr.write(`${string(config)}.\n`);
+        break;
+    }
+
+    if (json && typeof json === 'object') {
+      out.push(...parseConfig(json));
+
+      if (pkg === null && typeof json.package !== undefined)
+        pkg = json.package;
+
+      if (opts === null && typeof json.opts !== undefined)
+        opts = json.opts;
+    }
+  }
+
+  // Parse package.json "mocha" field.
+  if (pkg === null && exists(DEFAULT_PKG))
+    pkg = DEFAULT_PKG;
+
+  if (typeof pkg === 'string') {
+    const data = readJSON(pkg);
+
+    if (!data || typeof data !== 'object')
+      throw new Error(`Invalid package.json: ${string(pkg)}.`);
+
+    const json = data.bmocha || data.mocha;
+
+    if (json && typeof json === 'object') {
+      out.push(...parseConfig(json));
+
+      if (opts === null && typeof json.opts !== undefined)
+        opts = json.opts;
+    }
+  }
+
+  // Parse legacy test/mocha.opts file.
+  if (opts === null) {
+    if (exists(DEFAULT_BOPTS))
+      opts = DEFAULT_BOPTS;
+    else if (exists(DEFAULT_OPTS))
+      opts = DEFAULT_OPTS;
+  }
+
+  if (typeof opts === 'string') {
+    const text = fs.readFileSync(opts, 'utf8');
+    const parts = text.replace(/^#.*$/gm, '')
+                      .replace(/\\\s/g, '%20')
+                      .split(/\s+/);
+    const items = [];
+
+    for (const arg of parts) {
+      if (arg.length === 0)
+        continue;
+
+      if (arg === '--')
+        throw new Error(`Invalid argument: ${arg}.`);
+
+      items.push(arg.replace(/%20/g, ' '));
+    }
+
+    out.push(...normalizeArgs(items));
+  }
+
+  // Args go on last (higher precedence).
+  return [out.length, out.concat(args)];
+}
+
+async function parseArgs() {
+  const options = {
+    __proto__: null,
+    allowMultiple: false,
+    allowUncaught: false,
+    asyncOnly: false,
+    backend: null,
+    bail: false,
+    cert: null,
+    checkLeaks: false,
+    chrome: null,
+    cmd: '',
+    colors: Boolean(stdout.isTTY),
+    console: false,
+    delay: false,
+    diff: true,
+    env: Object.create(null),
+    excludes: [],
+    exit: false,
+    extensions: [],
+    fgrep: '',
+    forbidOnly: false,
+    forbidPending: false,
+    fileArgs: [],
+    files: [],
+    fullTrace: false,
+    global: true,
+    globals: [],
+    grep: null,
+    growl: false,
+    headless: false,
+    implyHeadless: false,
+    implyListen: false,
+    implyOpen: false,
+    implySSL: false,
+    init: null,
+    invert: false,
+    key: null,
+    listen: false,
+    open: false,
+    port: -1,
+    recurse: false,
+    reporter: 'spec',
+    reporterOptions: Object.create(null),
+    requires: [],
+    retries: 0,
+    slow: 75,
+    sources: [],
+    ssl: false,
+    sslIgnore: false,
+    sort: false,
+    stream: stdout,
+    swallow: true,
+    timeout: 2000,
+    timeouts: true,
+    watch: false,
+    why: false,
+    windows: process.platform === 'win32'
+  };
+
+  let {
+    excludes,
+    extensions,
+    fileArgs,
+    files,
+    reporterOptions,
+    requires
+  } = options;
+
+  let i = 0;
+  let value = true;
+  let imply = false;
+
+  const [start, args] = await getArgs(argv.slice(2));
+
+  const ensure = () => {
+    if (!value)
+      throw new Error(`Invalid argument: ${args[i]}.`);
+  };
+
+  const next = () => {
+    ensure();
+
+    if (i + 1 >= args.length || args[i + 1].length === 0)
+      throw new Error(`Invalid option for ${args[i]}.`);
+
+    return args[++i];
+  };
+
+  for (; i < args.length; i++) {
+    let arg = args[i];
+
+    value = true;
+    imply = false;
+
+    if (arg.startsWith('--no-')) {
+      arg = `--${arg.substring(5)}`;
+      value = false;
+    } else {
+      imply = i >= start;
+    }
+
+    switch (arg) {
+      case '--allow-multiple': {
+        options.allowMultiple = value;
+        break;
+      }
+
+      case '-A':
+      case '--async-only': {
+        options.asyncOnly = value;
+        break;
+      }
+
+      case '--allow-uncaught': {
+        options.allowUncaught = value;
+        break;
+      }
+
+      case '-B':
+      case '--backend': {
+        options.backend = value ? next() : null;
+        break;
+      }
+
+      case '-b':
+      case '--bail': {
+        options.bail = value;
+        break;
+      }
+
+      case '--check-leaks': {
+        options.checkLeaks = value;
+        break;
+      }
+
+      case '--chrome': {
+        options.chrome = value ? next() : null;
+        break;
+      }
+
+      case '-c':
+      case '--color':
+      case '--colors': {
+        options.colors = value;
+        break;
+      }
+
+      case '-C': {
+        options.colors = false;
+        break;
+      }
+
+      case '--compilers': {
+        for (const pair of next().split(',')) {
+          const index = pair.indexOf(':');
+
+          if (index === -1)
+            throw new Error(`Invalid compiler: ${pair}.`);
+
+          let [ext, mod] = [
+            pair.substring(0, index),
+            pair.substring(index + 1)
+          ];
+
+          if (ext.length === 0 || ext === '.')
+            throw new Error(`Invalid compiler extension: ${ext}.`);
+
+          if (mod.length === 0)
+            throw new Error(`Invalid compiler name: ${mod}.`);
+
+          if (ext[0] !== '.')
+            ext = '.' + ext;
+
+          requires.push(mod);
+          extensions.push(ext);
+        }
+
+        break;
+      }
+
+      case '--config': {
+        if (value)
+          next();
+        break;
+      }
+
+      case '--csp-source': {
+        if (!value) {
+          options.sources.length = 0;
+          break;
+        }
+
+        for (const src of next().split(',')) {
+          if (src.length === 0)
+            throw new Error('Invalid CSP source.');
+
+          options.sources.push(src);
+        }
+
+        break;
+      }
+
+      case '--delay': {
+        options.delay = value;
+        break;
+      }
+
+      case '--diff': {
+        options.diff = value;
+        break;
+      }
+
+      case '-e':
+      case '--env': {
+        if (!value) {
+          options.env = Object.create(null);
+          break;
+        }
+
+        const pair = next();
+
+        if (pair.length === 0)
+          throw new Error('Invalid environment variable.');
+
+        const index = pair.indexOf('=');
+
+        if (index === -1) {
+          options.env[pair] = '1';
+          break;
+        }
+
+        const key = pair.substring(0, index);
+        const val = pair.substring(index + 1);
+
+        if (val.length > 0)
+          options.env[key] = val;
+        else
+          options.env[key] = null;
+
+        break;
+      }
+
+      case '--exclude': {
+        if (value)
+          excludes.push(next());
+        else
+          excludes.length = 0;
+
+        break;
+      }
+
+      case '--exit': {
+        options.exit = value;
+        break;
+      }
+
+      case '--extension':
+      case '--watch-extensions': {
+        if (!value) {
+          extensions.length = 0;
+          break;
+        }
+
+        for (let ext of next().split(',')) {
+          if (ext.length === 0 || ext === '.')
+            throw new Error(`Invalid file extension: ${ext}.`);
+
+          if (ext[0] !== '.')
+            ext = '.' + ext;
+
+          extensions.push(ext);
+        }
+
+        break;
+      }
+
+      case '-f':
+      case '--fgrep': {
+        options.fgrep = value ? next() : '';
+        break;
+      }
+
+      case '--file': {
+        if (value)
+          fileArgs.push(next());
+        else
+          fileArgs.length = 0;
+
+        break;
+      }
+
+      case '--forbid-only': {
+        options.forbidOnly = value;
+        break;
+      }
+
+      case '--forbid-pending': {
+        options.forbidPending = value;
+        break;
+      }
+
+      case '--full-trace': {
+        options.fullTrace = value;
+        break;
+      }
+
+      case '-g':
+      case '--grep': {
+        options.grep = value ? new RegExp(next()) : null;
+        break;
+      }
+
+      case '-G':
+      case '--growl': {
+        options.growl = value;
+        break;
+      }
+
+      case '--global':
+      case '--globals': {
+        if (!value) {
+          options.globals.length = 0;
+          break;
+        }
+
+        const globals = next().split(',');
+
+        if (globals.includes(''))
+          throw new Error(`Invalid globals: ${args[i]}.`);
+
+        options.globals = globals;
+
+        break;
+      }
+
+      case '-H':
+      case '--headless': {
+        options.headless = value;
+        options.implyListen = imply;
+        break;
+      }
+
+      case '-h':
+      case '--help': {
+        ensure();
+        stdout.write(HELP + '\n');
+        exit(0);
+        break;
+      }
+
+      case '-i':
+      case '--invert': {
+        options.invert = value;
+        break;
+      }
+
+      case '--inline-diffs': {
+        break;
+      }
+
+      case '--interfaces': {
+        ensure();
+        stdout.write(INTERFACES + '\n');
+        exit(0);
+        break;
+      }
+
+      case '-l':
+      case '--listen': {
+        options.listen = value;
+        break;
+      }
+
+      case '-m':
+      case '--cmd': {
+        options.cmd = value ? next() : '';
+        options.implyOpen = imply;
+        break;
+      }
+
+      case '--node': {
+        if (value)
+          next();
+        break;
+      }
+
+      case '-o':
+      case '--open': {
+        options.open = value;
+        options.implyListen = imply;
+        break;
+      }
+
+      case '-O':
+      case '--reporter-option':
+      case '--reporter-options': {
+        if (!value) {
+          reporterOptions = Object.create(null);
+          break;
+        }
+
+        for (const opt of next().split(',')) {
+          const parts = opt.split('=');
+
+          if (parts.length > 2 || parts[0].length === 0)
+            throw new Error(`Invalid reporter option: ${opt}.`);
+
+          if (parts.length === 2)
+            reporterOptions[parts[0]] = parts[1];
+          else
+            reporterOptions[parts[0]] = true;
+        }
+
+        break;
+      }
+
+      case '--opts': {
+        if (value)
+          next();
+        break;
+      }
+
+      case '--package': {
+        if (value)
+          next();
+        break;
+      }
+
+      case '-p':
+      case '--port': {
+        if (!value) {
+          options.port = -1;
+          options.implyListen = imply;
+          break;
+        }
+
+        const port = next() >>> 0;
+
+        if (port > 0xffff)
+          throw new Error(`Invalid port: ${port}.`);
+
+        options.port = port;
+        options.implyListen = imply;
+
+        break;
+      }
+
+      case '-R':
+      case '--reporter': {
+        options.reporter = value ? next() : 'spec';
+        break;
+      }
+
+      case '-r':
+      case '--require': {
+        if (value)
+          requires.push(next());
+        else
+          requires.length = 0;
+
+        break;
+      }
+
+      case '--recursive': {
+        options.recurse = value;
+        break;
+      }
+
+      case '--reporters': {
+        ensure();
+        stdout.write(REPORTERS + '\n');
+        exit(0);
+        break;
+      }
+
+      case '--retries': {
+        options.retries = value ? next() >>> 0 : 0;
+        break;
+      }
+
+      case '-s':
+      case '--slow': {
+        options.slow = value ? next() >>> 0 : 75;
+        break;
+      }
+
+      case '-S':
+      case '--sort': {
+        options.sort = value;
+        break;
+      }
+
+      case '--ssl': {
+        options.ssl = value;
+        options.implyListen = imply;
+        break;
+      }
+
+      case '--cert':
+      case '--ssl-cert': {
+        options.cert = value ? fs.readFileSync(next()) : null;
+        options.implySSL = imply;
+        break;
+      }
+
+      case '--ssl-ignore': {
+        options.sslIgnore = value;
+        options.implySSL = imply;
+        break;
+      }
+
+      case '--key':
+      case '--ssl-key': {
+        options.key = value ? fs.readFileSync(next()) : null;
+        options.implySSL = imply;
+        break;
+      }
+
+      case '--swallow': {
+        options.swallow = value;
+        break;
+      }
+
+      case '-t':
+      case '--timeout': {
+        options.timeout = value ? next() >>> 0 : 0;
+        break;
+      }
+
+      case '--timeouts': {
+        options.timeouts = value;
+        break;
+      }
+
+      case '-u':
+      case '--ui': {
+        const ui = value ? next() : 'bdd';
+
+        if (ui !== 'bdd')
+          throw new Error(`Invalid interface: ${ui}.`);
+
+        break;
+      }
+
+      case '-V':
+      case '--version': {
+        ensure();
+        stdout.write(VERSION + '\n');
+        exit(0);
+        break;
+      }
+
+      case '-w':
+      case '--watch': {
+        options.watch = value;
+        break;
+      }
+
+      case '--why': {
+        options.why = value;
+        break;
+      }
+
+      case '-z':
+      case '--console': {
+        options.console = value;
+        options.implyListen = imply;
+        break;
+      }
+
+      case '--': {
+        i = args.length;
+        break;
+      }
+
+      default: {
+        if (arg.length === 0 || arg[0] === '-')
+          throw new Error(`Invalid argument: ${args[i]}.`);
+
+        if (i === 0 && arg === 'init') {
+          options.init = resolve(cwd, next());
+          break;
+        }
+
+        files.push(arg);
+
+        break;
+      }
+    }
+  }
+
+  // Only _arguments_ can imply other "modes".
+  if (options.implyHeadless) {
+    options.listen = true;
+    options.headless = true;
+  }
+
+  if (options.implyListen)
+    options.listen = true;
+
+  if (options.implyOpen) {
+    options.listen = true;
+    options.open = true;
+  }
+
+  if (options.implySSL) {
+    options.listen = true;
+    options.ssl = true;
+  }
+
+  // `--listen` implies `--port=8080` if no "ui" options are chosen.
+  // `--listen` implies `--port=$RANDOM` if "ui" options are chosen.
+  if (options.listen && options.port === -1)
+    options.port = (options.open || options.headless) ? 0 : 8080;
+
+  // Sanity checks.
+  if (options.fgrep && options.grep)
+    throw new Error('Cannot use --fgrep with --grep.');
+
+  if (options.invert && !options.fgrep && !options.grep)
+    throw new Error('--invert requires --fgrep or --grep.');
+
+  if (options.init) {
+    if (options.delay)
+      throw new Error('Cannot use --delay with init.');
+
+    if (options.listen)
+      throw new Error('Cannot use --listen with init.');
+
+    if (options.watch)
+      throw new Error('Cannot use --watch with init.');
+
+    if (options.why)
+      throw new Error('Cannot use --why with init.');
+  }
+
+  if (options.listen) {
+    if (options.watch)
+      throw new Error('Cannot use --watch with --listen.');
+
+    if (options.why)
+      throw new Error('Cannot use --why with --listen.');
+
+    if (options.ssl) {
+      if (!options.key)
+        throw new Error('--ssl specified with no provided key.');
+
+      if (!options.cert)
+        throw new Error('--ssl specified with no provided cert.');
+    }
+  }
+
+  // Set extensions to .js by default.
+  if (extensions.length === 0)
+    extensions.push('.js');
+
+  // Make sure we have no duplicates.
+  extensions = [...new Set(extensions)];
+
+  // Find default file/dir if it exists.
+  if (!options.init && files.length === 0) {
+    const file = findExt('test', extensions);
+
+    if (file)
+      files.push(file);
+  }
+
+  // Process all files.
+  files = globify(files);
+  files = flatten(files, extensions, options.recurse);
+  files = exclude(files, excludes);
+  files = resolvify(files);
+
+  if (options.sort)
+    files.sort();
+
+  if (!options.init && files.length === 0)
+    throw new Error('No test files found.');
+
+  // Note that file args aren't processed
+  // in any extra way other than resolving
+  // them against the current working dir.
+  fileArgs = resolvify(fileArgs);
+
+  // Quick and dirty check for file args.
+  for (const file of fileArgs) {
+    if (!exists(file))
+      throw new Error(`File not found: ${string(file)}.`);
+  }
+
+  // Final step: file args run first.
+  files = fileArgs.concat(files);
+
+  // Extra extensions could be gotten as
+  // side-effect of globbing. Add them to
+  // the extensions array. Note that mocha
+  // doesn't do this. Now that we're done
+  // with file processing, these are
+  // essentially just for watching files.
+  if (options.watch) {
+    extensions = mergeExts(extensions, files);
+
+    if (!extensions.includes('.json'))
+      extensions.push('.json');
+
+    if (!extensions.includes('.node'))
+      extensions.push('.node');
+  }
+
+  // Update options.
+  options.extensions = extensions;
+  options.fileArgs = fileArgs;
+  options.files = files;
+
+  // Optional file stream for reporter.
+  if (typeof reporterOptions.output === 'string') {
+    const {output} = reporterOptions;
+    const path = output.replace(/^~\//, `${os.homedir()}/`);
+    const file = resolve(cwd, path);
+
+    mkdirp(dirname(file), 0o755);
+
+    const stream = fs.createWriteStream(file);
+
+    stream.on('error', (err) => {
+      if (err.code === 'ERR_STREAM_WRITE_AFTER_END')
+        return;
+
+      if (err.message === 'write after end')
+        return;
+
+      exception(err);
+    });
+
+    options.stream = stream;
+    options.colors = false;
+  }
+
+  return options;
+}
+
+/*
+ * Error Handling
+ */
+
+function catcher(reject, allowMultiple) {
+  const onError = (error) => {
+    const err = errorify(error);
+
+    err.uncaught = true;
+    err.exception = true;
+
+    reject(err);
+  };
+
+  const onRejection = (reason, promise) => {
+    const err = errorify(reason);
+
+    err.uncaught = true;
+    err.rejection = true;
+
+    reject(err);
+  };
+
+  const onMultiple = (type, promise, value) => {
+    const kind = inspect.type(value);
+    const err = new Error(`Multiple ${type}s detected for ${kind}.`);
+
+    err.uncaught = true;
+    err.multiple = true;
+    err.display = true;
+    err.value = value;
+
+    reject(err);
+  };
+
+  on('uncaughtException', onError);
+  on('unhandledRejection', onRejection);
+
+  if (!allowMultiple)
+    on('multipleResolves', onMultiple);
+
+  return () => {
+    off('uncaughtException', onError);
+    off('unhandledRejection', onRejection);
+
+    if (!allowMultiple)
+      off('multipleResolves', onMultiple);
+  };
+}
+
+/*
+ * Main
+ */
+
+(async () => {
+  let options;
+
+  try {
+    options = await parseArgs();
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      const file = relative(cwd, resolve(cwd, e.path));
+      stderr.write(`File not found: ${string(file)}.\n`);
+      return 1;
+    }
+    stderr.write(e.message + '\n');
+    return 1;
+  }
+
+  if (options.init) {
+    const browserify = require('../lib/server/browserify');
+    const root = options.init;
+    const opt = browserify.convert(options);
+    const code = await browserify.compile('bmocha.js', opt);
+    const html = await browserify.template('bmocha.html', style);
+
+    mkdirp(root, 0o755);
+
+    fs.writeFileSync(join(root, 'bmocha.js'), code);
+    fs.writeFileSync(join(root, 'index.html'), html);
+    fs.writeFileSync(join(root, 'tests.js'), '');
+
+    return 0;
+  }
+
+  if (options.listen) {
+    const Server = require('../lib/server');
+    const server = new Server(options);
+    const addr = await server.listen(options.port, 'localhost');
+    const protocol = options.ssl ? 'https' : 'http';
+    const url = `${protocol}://localhost:${addr.port}/`;
+    const chromeOptions = [];
+
+    server.on('error', (err) => {
+      stderr.write('\n');
+      stderr.write('Server Error:\n');
+      stderr.write(err.stack + '\n');
+    });
+
+    if (options.sslIgnore)
+      chromeOptions.push('--ignore-certificate-errors');
+
+    if (options.headless) {
+      runHeadless(url, options.chrome, chromeOptions);
+      return -1;
+    }
+
+    stdout.write(`Server listening at: ${url}\n`);
+
+    if (options.open)
+      navigate(url, options.cmd);
+
+    return -1;
+  }
+
+  env.BMOCHA = '1';
+  env.NODE_TEST = '1';
+
+  if (options.backend)
+    env.NODE_BACKEND = options.backend;
+
+  for (const key of Object.keys(options.env)) {
+    const value = options.env[key];
+
+    if (value != null)
+      env[key] = value;
+    else
+      delete env[key];
+  }
+
+  const mocha = new Mocha(options);
+
+  if (options.growl)
+    mocha.notify = require('../lib/notify.js');
+
+  if (!options.allowUncaught)
+    mocha.catcher = catcher;
+
+  if (options.watch)
+    mocha.exit = (code) => {};
+  else
+    mocha.exit = exit;
+
+  if (options.requires.length > 0) {
+    const globalRequire = require('../lib/require.js');
+
+    for (const file of options.requires) {
+      try {
+        await globalRequire.imports(file);
+      } catch (e) {
+        if (e.code === 'MODULE_NOT_FOUND')
+          exception(e.message);
+        else
+          exception(e);
+        return -1;
+      }
+    }
+
+    // Add any new extensions to be watched.
+    if (options.watch && require.extensions) {
+      for (const ext of Object.keys(require.extensions)) {
+        if (!options.extensions.includes(ext))
+          options.extensions.push(ext);
+      }
+    }
+  }
+
+  const funcs = options.files.map(wrapImport);
+  const code = await mocha.run(funcs);
+
+  if (options.watch) {
+    const files = getFiles(cwd, options.extensions);
+
+    stdout.write('\x1b[?25l');
+
+    bindExit(() => {
+      stdout.write('\x1b[?25h');
+    });
+
+    watchFiles(files, async () => {
+      await mocha.abort();
+
+      for (const file of files)
+        delete require.cache[file];
+
+      stdout.write('\n');
+
+      await mocha.run(funcs);
+    });
+
+    return -1;
+  }
+
+  if (options.exit)
+    exit(code);
+
+  return code;
+})().then((code) => {
+  if (code !== -1) {
+    process.exitCode = code;
+    on('exit', () => exit(code));
+  }
+}).catch((err) => {
+  exception(err);
+});

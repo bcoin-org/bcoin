@@ -4,7 +4,7 @@
 'use strict';
 
 const bio = require('bufio');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Output = require('../lib/primitives/output');
 const Input = require('../lib/primitives/input');
 const Outpoint = require('../lib/primitives/outpoint');
@@ -31,7 +31,7 @@ function deepCoinsEqual(a, b) {
 describe('Coins', function() {
   it('should instantiate coinview from tx', () => {
     const [tx] = tx1.getTX();
-    const hash = tx.hash('hex');
+    const hash = tx.hash();
     const view = new CoinView();
     const prevout = new Outpoint(hash, 0);
     const input = Input.fromOutpoint(prevout);
@@ -48,7 +48,7 @@ describe('Coins', function() {
     assert.strictEqual(entry.height, 1);
     assert.strictEqual(entry.coinbase, false);
     assert.strictEqual(entry.raw, null);
-    assert.instanceOf(entry.output, Output);
+    assert(entry.output instanceof Output);
     assert.strictEqual(entry.spent, false);
 
     const output = view.getOutputFor(input);
@@ -59,7 +59,7 @@ describe('Coins', function() {
 
   it('should spend an output', () => {
     const [tx] = tx1.getTX();
-    const hash = tx.hash('hex');
+    const hash = tx.hash();
     const view = new CoinView();
 
     view.addTX(tx, 1);

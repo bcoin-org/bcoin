@@ -3,14 +3,8 @@
 [![Build Status][circleci-status-img]][circleci-status-url]
 [![Coverage Status][coverage-status-img]][coverage-status-url]
 
-__NOTE__: The latest release of bcoin contains a non-backward compatible change
-to the rest API. Please read the [changelog]'s "migrating" section for more
-details.
-
----
-
-**Bcoin** is an alternative implementation of the bitcoin protocol, written in
-node.js.
+**Bcoin** is an alternative implementation of the Bitcoin protocol, written in
+JavaScript and C/C++ for Node.js.
 
 Bcoin is well tested and aware of all known consensus rules. It is currently
 used in production as the consensus backend and wallet system for
@@ -20,29 +14,31 @@ used in production as the consensus backend and wallet system for
 
 - Full Node
 - SPV Node
-- Wallet Backend (bip44 derivation)
+- Wallet Backend
 - Mining Backend (getblocktemplate support)
 - Layer 2 Backend (lightning)
 - General Purpose Bitcoin Library
 
-Try it in the browser: http://bcoin.io/browser.html
+Try it in the browser: [https://bcoin.io/browser/](https://bcoin.io/browser/)
 
 ## Install
 
 ```
 $ git clone git://github.com/bcoin-org/bcoin.git
 $ cd bcoin
-$ npm install
+$ npm rebuild
 $ ./bin/bcoin
 ```
 
-See the [Beginner's Guide][guide] for more in-depth installation instructions.
+See the [Getting started][guide] guide for more in-depth installation
+instructions, including verifying releases. If you're upgrading, see the
+latest changes via the [Changelog][changelog].
 
 ## Documentation
 
-- API Docs: http://bcoin.io/docs/
-- REST Docs: http://bcoin.io/api-docs/index.html
-- Docs: [docs/](docs/README.md)
+- General docs: [docs/](docs/README.md)
+- Wallet and node API docs: https://bcoin.io/api-docs/
+- Library API docs: https://bcoin.io/docs/
 
 ## Support
 
@@ -68,10 +64,10 @@ all code is your original work. `</legalese>`
 See LICENSE for more info.
 
 [purse]: https://purse.io
-[guide]: https://github.com/bcoin-org/bcoin/blob/master/docs/Beginner's-Guide.md
+[guide]: docs/getting-started.md
 [freenode]: https://freenode.net/
 [irc]: irc://irc.freenode.net/bcoin
-[changelog]: https://github.com/bcoin-org/bcoin/blob/master/CHANGELOG.md
+[changelog]: CHANGELOG.md
 
 [coverage-status-img]: https://codecov.io/gh/bcoin-org/bcoin/badge.svg?branch=master
 [coverage-status-url]: https://codecov.io/gh/bcoin-org/bcoin?branch=master

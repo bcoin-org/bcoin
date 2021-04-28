@@ -26,8 +26,11 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Address = require('../lib/primitives/address');
+
+// see https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+// for test vectors, they include both the valid and invalid addresses
 
 const validAddresses = [
   [
@@ -81,16 +84,27 @@ const validAddresses = [
 ];
 
 const invalidAddresses = [
+  // invalid hrp
   'tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty',
+  // invalid checksum
   'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5',
+  // invalid witness version
   'BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2',
+  // invalid program length
   'bc1rw5uspcuh',
+  // invalid program length
   'bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d'
   + '6qejxtdg4y5r3zarvary0c5xw7kw5rljs90',
+  // invalid program length for witness version 0
   'BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P',
+  // mixed case
   'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7',
+  // zero padding of more than 4 bits
   'tb1pw508d6qejxtdg4y5r3zarqfsj6c3',
-  'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv'
+  // non zero padding in 8 to 5 conversion
+  'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv',
+  // empty data section
+  'bc1gmk9yu'
 ];
 
 function createProgram(version, program) {

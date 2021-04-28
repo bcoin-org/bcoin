@@ -3,9 +3,9 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const consensus = require('../lib/protocol/consensus');
-const BN = require('bn.js');
+const BN = require('bcrypto/lib/bn.js');
 
 describe('Consensus', function() {
   it('should calculate reward properly', () => {

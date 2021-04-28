@@ -3,19 +3,21 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const consensus = require('../lib/protocol/consensus');
 const Coin = require('../lib/primitives/coin');
 const Script = require('../lib/script/script');
 const Chain = require('../lib/blockchain/chain');
 const WorkerPool = require('../lib/workers/workerpool');
 const Miner = require('../lib/mining/miner');
-const MTX = require('../lib/primitives/mtx');
+const {Selector, MTX} = require('../lib/primitives/mtx');
 const MemWallet = require('./util/memwallet');
 const Network = require('../lib/protocol/network');
 const Output = require('../lib/primitives/output');
 const common = require('../lib/blockchain/common');
+const nodejsUtil = require('util');
 const Opcode = require('../lib/script/opcode');
+const BlockStore = require('../lib/blockstore/level');
 const opcodes = Script.opcodes;
 
 const ZERO_KEY = Buffer.alloc(33, 0x00);
@@ -26,11 +28,18 @@ ONE_HASH[0] = 0x01;
 const network = Network.get('regtest');
 
 const workers = new WorkerPool({
-  enabled: true
+  enabled: true,
+  size: 2
+});
+
+const blocks = new BlockStore({
+  memory: true,
+  network
 });
 
 const chain = new Chain({
   memory: true,
+  blocks,
   network,
   workers
 });
@@ -111,16 +120,23 @@ chain.on('disconnect', (entry, block) => {
 });
 
 describe('Chain', function() {
-  this.timeout(60000);
+  this.timeout(process.browser ? 1200000 : 60000);
 
-  it('should open chain and miner', async () => {
+  before(async () => {
+    await blocks.open();
     await chain.open();
     await miner.open();
-  });
+    await workers.open();
 
-  it('should add addrs to miner', async () => {
     miner.addresses.length = 0;
     miner.addAddress(wallet.getReceive());
+  });
+
+  after(async () => {
+    await workers.close();
+    await miner.close();
+    await chain.close();
+    await blocks.close();
   });
 
   it('should mine 200 blocks', async () => {
@@ -154,13 +170,13 @@ describe('Chain', function() {
       const blk1 = await job1.mineAsync();
       const blk2 = await job2.mineAsync();
 
-      const hash1 = blk1.hash('hex');
-      const hash2 = blk2.hash('hex');
+      const hash1 = blk1.hash();
+      const hash2 = blk2.hash();
 
       assert(await chain.add(blk1));
       assert(await chain.add(blk2));
 
-      assert.strictEqual(chain.tip.hash, hash1);
+      assert.bufferEqual(chain.tip.hash, hash1);
 
       tip1 = await chain.getEntry(hash1);
       tip2 = await chain.getEntry(hash2);
@@ -200,7 +216,7 @@ describe('Chain', function() {
     assert(await chain.add(block));
 
     assert(forked);
-    assert.strictEqual(chain.tip.hash, block.hash('hex'));
+    assert.bufferEqual(chain.tip.hash, block.hash());
     assert(chain.tip.chainwork.gt(tip1.chainwork));
   });
 
@@ -224,11 +240,11 @@ describe('Chain', function() {
 
     assert(await chain.add(block));
 
-    const hash = block.hash('hex');
+    const hash = block.hash();
     const entry = await chain.getEntry(hash);
 
     assert(entry);
-    assert.strictEqual(chain.tip.hash, entry.hash);
+    assert.bufferEqual(chain.tip.hash, entry.hash);
 
     const result = await chain.isMainChain(entry);
     assert(result);
@@ -318,7 +334,7 @@ describe('Chain', function() {
     const tx = block.txs[1];
     const output = Coin.fromTX(tx, 2, chain.height);
 
-    const coin = await chain.getCoin(tx.hash('hex'), 2);
+    const coin = await chain.getCoin(tx.hash(), 2);
 
     assert.bufferEqual(coin.toRaw(), output.toRaw());
   });
@@ -334,7 +350,14 @@ describe('Chain', function() {
     {
       const tips = await chain.db.getTips();
 
-      assert.notStrictEqual(tips.indexOf(chain.tip.hash), -1);
+      let index = -1;
+
+      for (let i = 0; i < tips.length; i++) {
+        if (tips[i].equals(chain.tip.hash))
+          index = i;
+      }
+
+      assert.notStrictEqual(index, -1);
       assert.strictEqual(tips.length, 2);
     }
 
@@ -343,7 +366,14 @@ describe('Chain', function() {
     {
       const tips = await chain.db.getTips();
 
-      assert.notStrictEqual(tips.indexOf(chain.tip.hash), -1);
+      let index = -1;
+
+      for (let i = 0; i < tips.length; i++) {
+        if (tips[i].equals(chain.tip.hash))
+          index = i;
+      }
+
+      assert.notStrictEqual(index, -1);
       assert.strictEqual(tips.length, 1);
     }
   });
@@ -578,7 +608,7 @@ describe('Chain', function() {
     output.script.compile();
 
     block.refresh(true);
-    block.merkleRoot = block.createMerkleRoot('hex');
+    block.merkleRoot = block.createMerkleRoot();
 
     assert.strictEqual(await addBlock(block, flags),
       'bad-witness-merkle-match');
@@ -595,7 +625,7 @@ describe('Chain', function() {
     tx.outputs.pop();
 
     block.refresh(true);
-    block.merkleRoot = block.createMerkleRoot('hex');
+    block.merkleRoot = block.createMerkleRoot();
 
     assert.strictEqual(await addBlock(block, flags), 'unexpected-witness');
   });
@@ -634,6 +664,9 @@ describe('Chain', function() {
 
     assert(await chain.add(block));
   });
+
+  if (process.browser)
+    return;
 
   it('should mine fail to connect too much weight', async () => {
     const start = chain.height - 2000;
@@ -785,6 +818,38 @@ describe('Chain', function() {
       'bad-txns-txouttotal-toolarge');
   });
 
+  it('should fail to connect total fee toolarge', async () => {
+    const job = await cpu.createJob();
+    const outputs = [{ address: wallet.getAddress(), value: 0 }];
+
+    Selector.MAX_FEE = 50 * consensus.COIN;
+    const maxFee = Selector.MAX_FEE;
+    const maxMoney = consensus.MAX_MONEY;
+
+    try {
+      const tx1 = await wallet.send({
+        outputs: outputs,
+        hardFee: Selector.MAX_FEE
+      });
+      job.pushTX(tx1.toTX());
+
+      const tx2 = await wallet.send({
+        outputs: outputs,
+        hardFee: Selector.MAX_FEE
+      });
+      job.pushTX(tx2.toTX());
+
+      consensus.MAX_MONEY = tx1.getFee() + tx2.getFee() - 1;
+
+      job.refresh();
+      assert.strictEqual(await mineBlock(job),
+        'bad-txns-accumulated-fee-outofrange');
+    } finally {
+      Selector.MAX_FEE = maxFee;
+      consensus.MAX_MONEY = maxMoney;
+    }
+  });
+
   it('should mine 111 multisig blocks', async () => {
     const flags = common.flags.DEFAULT_FLAGS & ~common.flags.VERIFY_POW;
 
@@ -817,7 +882,7 @@ describe('Chain', function() {
       }
 
       block.refresh(true);
-      block.merkleRoot = block.createMerkleRoot('hex');
+      block.merkleRoot = block.createMerkleRoot();
 
       assert(await chain.add(block, flags));
     }
@@ -866,8 +931,52 @@ describe('Chain', function() {
     assert.strictEqual(await mineBlock(job), 'bad-blk-sigops');
   });
 
-  it('should cleanup', async () => {
-    await miner.close();
-    await chain.close();
+  it('should inspect ChainEntry', async () => {
+    const fmt = nodejsUtil.format(tip1);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('hash'));
+    assert(fmt.includes('version'));
+    assert(fmt.includes('chainwork'));
+  });
+
+  describe('Checkpoints', function() {
+    before(async () => {
+      const entry = await chain.getEntry(chain.tip.height - 5);
+      assert(Buffer.isBuffer(entry.hash));
+      assert(Number.isInteger(entry.height));
+
+      network.checkpointMap[entry.height] = entry.hash;
+      network.lastCheckpoint = entry.height;
+    });
+
+    after(async () => {
+      network.checkpointMap = {};
+      network.lastCheckpoint = 0;
+    });
+
+    it('will reject blocks before last checkpoint', async () => {
+      const entry = await chain.getEntry(chain.tip.height - 10);
+      const block = await cpu.mineBlock(entry);
+
+      let err = null;
+
+      try {
+        await chain.add(block);
+      } catch (e) {
+        err = e;
+      }
+
+      assert(err);
+      assert.equal(err.type, 'VerifyError');
+      assert.equal(err.reason, 'bad-fork-prior-to-checkpoint');
+      assert.equal(err.score, 100);
+    });
+
+    it('will accept blocks after last checkpoint', async () => {
+      const entry = await chain.getEntry(chain.tip.height - 4);
+      const block = await cpu.mineBlock(entry);
+
+      assert(await chain.add(block));
+    });
   });
 });

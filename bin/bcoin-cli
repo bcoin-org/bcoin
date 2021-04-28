@@ -1,0 +1,289 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const Config = require('bcfg');
+const NodeClient = require('../lib/client/node');
+const Amount = require('../lib/btc/amount');
+
+const ports = {
+  main: 8332,
+  testnet: 18332,
+  regtest: 48332,
+  simnet: 18556
+};
+
+class CLI {
+  constructor() {
+    this.config = new Config('bcoin', {
+      suffix: 'network',
+      fallback: 'main',
+      alias: {
+        'n': 'network',
+        'u': 'url',
+        'uri': 'url',
+        'k': 'api-key',
+        's': 'ssl',
+        'h': 'httphost',
+        'p': 'httpport'
+      }
+    });
+
+    this.config.load({
+      argv: true,
+      env: true
+    });
+
+    this.config.open('bcoin.conf');
+
+    this.argv = this.config.argv;
+    this.network = this.config.str('network', 'main');
+
+    this.client = new NodeClient({
+      url: this.config.str('url'),
+      apiKey: this.config.str('api-key'),
+      ssl: this.config.bool('ssl'),
+      host: this.config.str('http-host'),
+      port: this.config.uint('http-port')
+        || ports[this.network]
+        || ports.main
+    });
+  }
+
+  log(json) {
+    if (typeof json === 'string')
+      return console.log.apply(console, arguments);
+    return console.log(JSON.stringify(json, null, 2));
+  }
+
+  async getInfo() {
+    const info = await this.client.getInfo();
+    this.log(info);
+  }
+
+  async getTX() {
+    const hash = this.config.str(0, '');
+
+    if (hash.length !== 64) {
+      const txs = await this.client.getTXByAddress(hash);
+      this.log(txs);
+      return;
+    }
+
+    const tx = await this.client.getTX(hash);
+
+    if (!tx) {
+      this.log('TX not found.');
+      return;
+    }
+
+    this.log(tx);
+  }
+
+  async getBlock() {
+    let hash = this.config.str(0, '');
+
+    if (hash.length !== 64)
+      hash = parseInt(hash, 10);
+
+    const block = await this.client.getBlock(hash);
+
+    if (!block) {
+      this.log('Block not found.');
+      return;
+    }
+
+    this.log(block);
+  }
+
+  async getBlockHeader() {
+    let hash = this.config.str(0, '');
+
+    if (hash.length !== 64)
+      hash = parseInt(hash, 10);
+
+    const header = await this.client.getBlockHeader(hash);
+
+    if (!header) {
+      this.log('Header not found.');
+      return;
+    }
+
+    this.log(header);
+  }
+
+  async getFilter() {
+    let hash = this.config.str(0, '');
+
+    if (hash.length !== 64)
+      hash = parseInt(hash, 10);
+
+    const filter = await this.client.getFilter(hash);
+
+    if (!filter) {
+      this.log('Filter not found.');
+      return;
+    }
+
+    this.log(filter);
+  }
+
+  async estimateFee() {
+    const blocks = this.config.uint(0, 1);
+
+    const json = await this.client.estimateFee(blocks);
+
+    if (!json) {
+      this.log('Fee not found.');
+      return;
+    }
+
+    if (!Number.isInteger(json.rate)) {
+      this.log('Fee is not an integer.');
+      return;
+    }
+
+    this.log(Amount.btc(json.rate));
+  }
+
+  async getCoin() {
+    const hash = this.config.str(0, '');
+    const index = this.config.uint(1);
+
+    if (hash.length !== 64) {
+      const coins = await this.client.getCoinsByAddress(hash);
+      this.log(coins);
+      return;
+    }
+
+    const coin = await this.client.getCoin(hash, index);
+
+    if (!coin) {
+      this.log('Coin not found.');
+      return;
+    }
+
+    this.log(coin);
+  }
+
+  async getMempool() {
+    const txs = await this.client.getMempool();
+
+    this.log(txs);
+  }
+
+  async broadcast() {
+    const raw = this.config.str([0, 'tx']);
+    const tx = await this.client.broadcast(raw);
+
+    this.log('Broadcasted:');
+    this.log(tx);
+  }
+
+  async reset() {
+    let hash = this.config.str(0);
+
+    if (hash.length !== 64)
+      hash = parseInt(hash, 10);
+
+    await this.client.reset(hash);
+
+    this.log('Chain has been reset.');
+  }
+
+  async rpc() {
+    const method = this.argv.shift();
+    const params = [];
+
+    for (const arg of this.argv) {
+      let param;
+      try {
+        param = JSON.parse(arg);
+      } catch (e) {
+        param = arg;
+      }
+      params.push(param);
+    }
+
+    let result;
+    try {
+      result = await this.client.execute(method, params);
+    } catch (e) {
+      if (e.type === 'RPCError') {
+        this.log(e.message);
+        return;
+      }
+      throw e;
+    }
+
+    this.log(result);
+  }
+
+  async open() {
+    switch (this.argv.shift()) {
+      case 'info':
+        await this.getInfo();
+        break;
+      case 'broadcast':
+        await this.broadcast();
+        break;
+      case 'mempool':
+        await this.getMempool();
+        break;
+      case 'tx':
+        await this.getTX();
+        break;
+      case 'coin':
+        await this.getCoin();
+        break;
+      case 'block':
+        await this.getBlock();
+        break;
+      case 'header':
+        await this.getBlockHeader();
+        break;
+      case 'filter':
+        await this.getFilter();
+        break;
+      case 'fee':
+        await this.estimateFee();
+        break;
+      case 'reset':
+        await this.reset();
+        break;
+      case 'rpc':
+        await this.rpc();
+        break;
+      default:
+        this.log('Unrecognized command.');
+        this.log('Commands:');
+        this.log('  $ info: Get server info.');
+        this.log('  $ broadcast [tx-hex]: Broadcast transaction.');
+        this.log('  $ mempool: Get mempool snapshot.');
+        this.log('  $ tx [hash/address]: View transactions.');
+        this.log('  $ coin [hash+index/address]: View coins.');
+        this.log('  $ block [hash/height]: View block.');
+        this.log('  $ header [hash/height]: View block header.');
+        this.log('  $ filter [hash/height]: View filter.');
+        this.log('  $ fee [target]: Estimate smart fee.');
+        this.log('  $ reset [height/hash]: Reset chain to desired block.');
+        this.log('  $ rpc [command] [args]: Execute RPC command.' +
+          ' (`bcoin-cli rpc help` for more)');
+        break;
+    }
+  }
+
+  async destroy() {
+    if (this.client && this.client.opened)
+      await this.client.close();
+  }
+}
+
+(async () => {
+  const cli = new CLI();
+  await cli.open();
+  await cli.destroy();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

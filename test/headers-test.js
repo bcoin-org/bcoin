@@ -4,7 +4,7 @@
 'use strict';
 
 const Headers = require('../lib/primitives/headers');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const common = require('./util/common');
 
 const block1 = common.readBlock('block1');
@@ -26,9 +26,9 @@ describe('Headers', function() {
     assert.strictEqual(headers.nonce, 2573394689);
     assert.strictEqual(headers.version, 1);
 
-    assert.strictEqual(headers.prevBlock,
+    assert.strictEqual(headers.prevBlock.toString('hex'),
       '6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000');
-    assert.strictEqual(headers.merkleRoot,
+    assert.strictEqual(headers.merkleRoot.toString('hex'),
       '982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1cdb606e857233e0e');
     assert.strictEqual(headers.rhash(),
       '00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048');
@@ -45,9 +45,9 @@ describe('Headers', function() {
     assert.strictEqual(headers.nonce, 2573394689);
     assert.strictEqual(headers.version, 1);
 
-    assert.strictEqual(headers.prevBlock,
+    assert.strictEqual(headers.prevBlock.toString('hex'),
       '6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000');
-    assert.strictEqual(headers.merkleRoot,
+    assert.strictEqual(headers.merkleRoot.toString('hex'),
       '982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1cdb606e857233e0e');
     assert.strictEqual(headers.rhash(),
       '00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048');

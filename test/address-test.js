@@ -5,7 +5,8 @@
 
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
-const assert = require('./util/assert');
+const assert = require('bsert');
+const nodejsUtil = require('util');
 
 describe('Address', function() {
   it('should match mainnet p2pkh address', () => {
@@ -181,5 +182,13 @@ describe('Address', function() {
     const addr = 'tb1qrp33g0q5c5txsp9arysrx4k6'
                + 'zdkfs4nce4xj0gdcccefvpysxf3pjxtptv';
     assert.throws(() => Address.fromString(addr, 'main'));
+  });
+
+  it('should inspect', () => {
+    const obj = new Address();
+    const fmt = nodejsUtil.format(obj);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('Address'));
+    assert(fmt.includes('str='));
   });
 });

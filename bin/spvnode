@@ -9,7 +9,7 @@ const SPVNode = require('../lib/node/spvnode');
 const Outpoint = require('../lib/primitives/outpoint');
 
 const node = new SPVNode({
-  config: true,
+  file: true,
   argv: true,
   env: true,
   logFile: true,
@@ -24,13 +24,17 @@ const node = new SPVNode({
 });
 
 // Temporary hack
-if (!node.has('walletdb')) {
+if (!node.config.bool('no-wallet') && !node.has('walletdb')) {
   const plugin = require('../lib/wallet/plugin');
   node.use(plugin);
 }
 
 process.on('unhandledRejection', (err, promise) => {
   throw err;
+});
+
+process.on('SIGINT', async () => {
+  await node.close();
 });
 
 (async () => {

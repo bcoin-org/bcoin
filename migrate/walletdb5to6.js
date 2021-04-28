@@ -89,7 +89,7 @@ async function indexPaths() {
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const wid = item.key.readUInt32BE(1, true);
-    const hash = item.key.toString('hex', 5);
+    const hash = item.key.slice(5);
     const index = item.value.readUInt32LE(0, true);
     console.log('r[%d][%d][%s] -> NUL', wid, index, hash);
     batch.put(r(wid, index, hash), Buffer.from([0]));
@@ -104,7 +104,7 @@ async function patchPathMaps() {
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    const hash = item.key.toString('hex', 1);
+    const hash = item.key.slice(1);
     const wids = parseWallets(item.value);
     console.log('p[%s] -> u32(%d)', hash, wids.length);
     batch.put(item.key, serializeWallets(wids));
@@ -200,7 +200,7 @@ function r(wid, index, hash) {
   key[0] = 0x72;
   key.writeUInt32BE(wid, 1, true);
   key.writeUInt32BE(index, 5, true);
-  key.write(hash, 9, 'hex');
+  hash.copy(key, 9);
   return key;
 }
 

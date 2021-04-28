@@ -18,4 +18,4 @@ parts:
     source: .
     plugin: nodejs
     build-packages: [python, gcc]
-    node-engine: 8.0.0
+    node-engine: 10.0.0

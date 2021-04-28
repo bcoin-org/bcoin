@@ -3,17 +3,25 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const common = require('./util/common');
 const {BloomFilter} = require('bfilter');
+const {BufferMap} = require('buffer-map');
+const TX = require('../lib/primitives/tx');
 const Block = require('../lib/primitives/block');
 const MerkleBlock = require('../lib/primitives/merkleblock');
 const consensus = require('../lib/protocol/consensus');
 const Script = require('../lib/script/script');
+const nodejsUtil = require('util');
 const bip152 = require('../lib/net/bip152');
 const CompactBlock = bip152.CompactBlock;
 const TXRequest = bip152.TXRequest;
 const TXResponse = bip152.TXResponse;
+const filterTests = require('../test/data/filter-valid.json');
+const CoinView = require('../lib/coins/coinview');
+const random = require('bcrypto/lib/random');
+const Output = require('../lib/primitives/output');
+const Outpoint = require('../lib/primitives/outpoint');
 
 // Block test vectors
 const block300025 = common.readBlock('block300025');
@@ -26,6 +34,9 @@ const block426884 = common.readBlock('block426884');
 const compact426884 = common.readCompact('compact426884');
 const block898352 = common.readBlock('block898352');
 const compact898352 = common.readCompact('compact898352');
+
+// Small SegWit block test vector
+const block482683 = common.readBlock('block482683');
 
 // Sigops counting test vectors
 // Format: [name, sigops, weight]
@@ -52,7 +63,7 @@ describe('Block', function() {
     const tree = block.getTree();
 
     assert.strictEqual(tree.matches.length, 2);
-    assert.strictEqual(block.hash('hex'),
+    assert.strictEqual(block.hash().toString('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.strictEqual(block.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
@@ -91,26 +102,52 @@ describe('Block', function() {
     assert(block2.verify());
   });
 
+  it('should serialize merkle block with transactions', () => {
+    const [full] = block300025.getBlock();
+    const [block] = merkle300025.getBlock();
+
+    const tree = block.getTree();
+
+    for (const tx of full.txs) {
+      if (tree.map.has(tx.hash()))
+        block.txs.push(TX.fromRaw(tx.toRaw()));
+    }
+
+    const block2 = MerkleBlock.fromExtendedRaw(block.toExtendedRaw());
+    assert.deepEqual(block.txs, block2.txs);
+  });
+
   it('should parse JSON', () => {
     const [block1] = block300025.getBlock();
     const block2 = Block.fromJSON(block1.toJSON());
-    assert.strictEqual(block2.hash('hex'),
+    assert.strictEqual(block2.hash().toString('hex'),
       '8cc72c02a958de5a8b35a23bb7e3bced8bf840cc0a4e1c820000000000000000');
     assert.strictEqual(block2.rhash(),
       '0000000000000000821c4e0acc40f88bedbce3b73ba2358b5ade58a9022cc78c');
-    assert.strictEqual(block2.merkleRoot, block2.createMerkleRoot('hex'));
+    assert.bufferEqual(block2.merkleRoot, block2.createMerkleRoot());
+  });
+
+  it('should inspect a block with a witness commitment', () => {
+    const [block] = block482683.getBlock();
+    const fmt = nodejsUtil.format(block);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('Block'));
+    assert(fmt.includes('commitmentHash'));
   });
 
   it('should create a merkle block', () => {
     const filter = BloomFilter.fromRate(1000, 0.01, BloomFilter.flags.NONE);
 
-    const item1 = '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b';
-    const item2 = '047b00000078da0dca3b0ec2300c00d0ab4466ed10'
-      + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
-      + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e';
+    const item1 = Buffer.from(
+      '8e7445bbb8abd4b3174d80fa4c409fea6b94d96b',
+      'hex');
 
-    filter.add(item1, 'hex');
-    filter.add(item2, 'hex');
+    const item2 = Buffer.from('047b00000078da0dca3b0ec2300c00d0ab4466ed10'
+      + 'e763272c6c9ca052972c69e3884a9022084215e2eef'
+      + '0e6f781656b5d5a87231cd4349e534b6dea55ad4ff55e', 'hex');
+
+    filter.add(item1);
+    filter.add(item2);
 
     const [block1] = block300025.getBlock();
     const block2 = MerkleBlock.fromBlock(block1, filter);
@@ -157,7 +194,7 @@ describe('Block', function() {
   it('should fail with a bad merkle root', () => {
     const [block] = block300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = consensus.NULL_HASH;
+    block.merkleRoot = consensus.ZERO_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
@@ -171,7 +208,7 @@ describe('Block', function() {
   it('should fail on merkle block with a bad merkle root', () => {
     const [block] = merkle300025.getBlock();
     const merkleRoot = block.merkleRoot;
-    block.merkleRoot = consensus.NULL_HASH;
+    block.merkleRoot = consensus.ZERO_HASH;
     block.refresh();
     assert(!block.verifyPOW());
     const [, reason] = block.checkBody();
@@ -220,11 +257,11 @@ describe('Block', function() {
     assert.bufferEqual(cblock1.toRaw(), compact426884.getRaw());
     assert.bufferEqual(cblock2.toRaw(), compact426884.getRaw());
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < block.txs.length; i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -246,11 +283,11 @@ describe('Block', function() {
     assert.bufferEqual(cblock1.toRaw(), compact426884.getRaw());
     assert.bufferEqual(cblock2.toRaw(), compact426884.getRaw());
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < ((block.txs.length + 1) >>> 1); i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -258,7 +295,7 @@ describe('Block', function() {
 
     const rawReq = cblock1.toRequest().toRaw();
     const req = TXRequest.fromRaw(rawReq);
-    assert.strictEqual(req.hash, cblock1.hash('hex'));
+    assert.bufferEqual(req.hash, cblock1.hash());
 
     const rawRes = TXResponse.fromBlock(block, req).toRaw();
     const res = TXResponse.fromRaw(rawRes);
@@ -284,11 +321,11 @@ describe('Block', function() {
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < block.txs.length; i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -312,11 +349,11 @@ describe('Block', function() {
 
     assert.strictEqual(cblock1.sid(block.txs[1].hash()), 125673511480291);
 
-    const map = new Map();
+    const map = new BufferMap();
 
     for (let i = 1; i < ((block.txs.length + 1) >>> 1); i++) {
       const tx = block.txs[i];
-      map.set(tx.hash('hex'), { tx });
+      map.set(tx.hash(), { tx });
     }
 
     const full = cblock1.fillMempool(false, { map });
@@ -324,7 +361,7 @@ describe('Block', function() {
 
     const rawReq = cblock1.toRequest().toRaw();
     const req = TXRequest.fromRaw(rawReq);
-    assert.strictEqual(req.hash, cblock1.hash('hex'));
+    assert.bufferEqual(req.hash, cblock1.hash());
     assert.deepStrictEqual(req.indexes, [5, 6, 7, 8, 9]);
 
     const rawRes = TXResponse.fromBlock(block, req).toRaw();
@@ -358,5 +395,122 @@ describe('Block', function() {
         assert.strictEqual(block.getWeight(), weight);
       });
     }
+  }
+
+  it('should deserialize with offset positions for txs (witness)', () => {
+    const [block] = block482683.getBlock();
+
+    const expected = [
+      {offset: 81, size: 217},
+      {offset: 298, size: 815},
+      {offset: 1113, size: 192},
+      {offset: 1305, size: 259},
+      {offset: 1564, size: 223},
+      {offset: 1787, size: 1223},
+      {offset: 3010, size: 486},
+      {offset: 3496, size: 665},
+      {offset: 4161, size: 3176},
+      {offset: 7337, size: 225},
+      {offset: 7562, size: 1223},
+      {offset: 8785, size: 503}
+    ];
+
+    assert.equal(expected.length, block.txs.length);
+    assert.equal(block.getSize(), expected.reduce((a, b) => a + b.size, 81));
+
+    for (let i = 0; i < block.txs.length; i++) {
+      const {offset, size} = block.txs[i].getPosition();
+
+      assert.strictEqual(offset, expected[i].offset);
+      assert.strictEqual(size, expected[i].size);
+    }
+  });
+
+  it('should serialize with offset positions for txs (witness)', () => {
+    const [block] = block482683.getBlock();
+
+    const expected = [
+      {offset: 81, size: 217},
+      {offset: 298, size: 815},
+      {offset: 1113, size: 192},
+      {offset: 1305, size: 259},
+      {offset: 1564, size: 223},
+      {offset: 1787, size: 1223},
+      {offset: 3010, size: 486},
+      {offset: 3496, size: 665},
+      {offset: 4161, size: 3176},
+      {offset: 7337, size: 225},
+      {offset: 7562, size: 1223},
+      {offset: 8785, size: 503}
+    ];
+
+    assert.equal(expected.length, block.txs.length);
+    assert.equal(block.getSize(), expected.reduce((a, b) => a + b.size, 81));
+
+    // Reset the offset for all transactions, and clear
+    // any cached values for the block.
+    block.refresh(true);
+    for (let i = 0; i < block.txs.length; i++)
+      assert.equal(block.txs[i]._offset, -1);
+
+    // Serialize the block, as done before saving to disk.
+    const raw = block.toRaw();
+    assert(raw);
+
+    for (let i = 0; i < block.txs.length; i++) {
+      const {offset, size} = block.txs[i].getPosition();
+
+      assert.strictEqual(offset, expected[i].offset);
+      assert.strictEqual(size, expected[i].size);
+    }
+  });
+
+  it('should deserialize with offset positions for txs', () => {
+    const [block] = block300025.getBlock();
+
+    assert.equal(block.txs.length, 461);
+
+    let expect = 83;
+    let total = 83;
+
+    for (let i = 0; i < block.txs.length; i++) {
+      const {offset, size} = block.txs[i].getPosition();
+
+      assert.strictEqual(offset, expect);
+      expect += size;
+      total += size;
+    }
+
+    assert.equal(total, 284231);
+  });
+
+  for (const json of filterTests) {
+    if (json.length === 1)
+      continue;
+
+    const height = json[0];
+
+    it(`should match basic block filter for block ${height}`, async () => {
+      const hash = json[1];
+      const raw = json[2];
+
+      const block = Block.fromRaw(raw, 'hex');
+      assert.strictEqual(hash, block.rhash());
+
+      const view = new CoinView();
+      for (const raw of json[3]) {
+        const hash = random.randomBytes(32);
+
+        const output = new Output();
+        output.script = Script.fromRaw(raw, 'hex');
+        view.addOutput(new Outpoint(hash, 0), output);
+      }
+
+      const filter = block.toFilter(view);
+      assert.strictEqual(filter.toRaw().toString('hex'), json[5]);
+
+      const header = filter.header(Buffer.from(json[4], 'hex').reverse());
+      assert.strictEqual(header.reverse().toString('hex'), json[6]);
+    });
   }
 });

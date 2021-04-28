@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Network = require('../lib/protocol/network');
 const TXMeta = require('../lib/primitives/txmeta');
 

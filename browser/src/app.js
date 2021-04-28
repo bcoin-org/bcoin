@@ -1,9 +1,11 @@
+/* eslint-env browser */
 'use strict';
 
 const Logger = require('blgr');
 const FullNode = require('../../lib/node/fullnode');
 const Amount = require('../../lib/btc/amount');
 const plugin = require('../../lib/wallet/plugin');
+const util = require('../../lib/utils/util');
 const ProxySocket = require('./proxysocket');
 
 const body = document.getElementsByTagName('body')[0];
@@ -59,7 +61,6 @@ const node = new FullNode({
   prune: true,
   network: 'main',
   memory: false,
-  coinCache: 30,
   logConsole: true,
   workers: true,
   workerFile: '/worker.js',
@@ -94,8 +95,7 @@ function show(obj) {
     floating.style.display = 'block';
     return;
   }
-  const json = obj && obj.toJSON ? obj.toJSON() : null;
-  floating.innerHTML = escape(JSON.stringify(json, null, 2));
+  floating.innerHTML = escape(JSON.stringify(obj, null, 2));
   floating.style.display = 'block';
 }
 
@@ -268,8 +268,9 @@ async function _formatWallet(wallet) {
   wdiv.innerHTML = html;
 
   for (const tx of det) {
+    const hash = util.revHex(tx.hash);
     const el = create(
-      `<a style="display:block;" href="#${tx.hash}">${tx.hash}</a>`);
+      `<a style="display:block;" href="#${hash}">${hash}</a>`);
     wdiv.appendChild(el);
     setMouseup(el, tx.toJSON());
   }

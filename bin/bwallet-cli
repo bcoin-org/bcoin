@@ -1,0 +1,722 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const Config = require('bcfg');
+const WalletClient = require('../lib/client/wallet');
+
+const ports = {
+  main: 8334,
+  testnet: 18334,
+  regtest: 48334,
+  simnet: 18558
+};
+
+class CLI {
+  constructor() {
+    this.config = new Config('bcoin', {
+      suffix: 'network',
+      fallback: 'main',
+      alias: {
+        'n': 'network',
+        'u': 'url',
+        'uri': 'url',
+        'k': 'api-key',
+        's': 'ssl',
+        'h': 'httphost',
+        'p': 'httpport'
+      }
+    });
+
+    this.config.load({
+      argv: true,
+      env: true
+    });
+
+    this.config.open('wallet.conf');
+
+    this.argv = this.config.argv;
+    this.network = this.config.str('network', 'main');
+
+    const id = this.config.str('id', 'primary');
+    const token = this.config.str('token', '');
+
+    this.client = new WalletClient({
+      url: this.config.str('url'),
+      apiKey: this.config.str('api-key'),
+      ssl: this.config.bool('ssl'),
+      host: this.config.str('http-host'),
+      port: this.config.uint('http-port')
+        || ports[this.network]
+        || ports.main,
+      token
+    });
+
+    this.wallet = this.client.wallet(id, token);
+  }
+
+  log(json) {
+    if (typeof json === 'string')
+      return console.log.apply(console, arguments);
+    return console.log(JSON.stringify(json, null, 2));
+  }
+
+  async getServerInfo() {
+    const info = await this.client.get('/');
+    this.log(info);
+  }
+
+  async getWallets() {
+    const wallets = await this.client.getWallets();
+    this.log(wallets);
+  }
+
+  async createWallet() {
+    const id = this.config.str([0, 'id']);
+
+    const options = {
+      type: this.config.str('type'),
+      master: this.config.str('master'),
+      mnemonic: this.config.str('mnemonic'),
+      m: this.config.uint('m'),
+      n: this.config.uint('n'),
+      witness: this.config.bool('witness'),
+      passphrase: this.config.str('passphrase'),
+      watchOnly: !this.config.has('account-key')
+        ? this.config.bool('watch-only')
+        : true,
+      accountKey: this.config.str('account-key')
+    };
+
+    const wallet = await this.client.createWallet(id, options);
+
+    this.log(wallet);
+  }
+
+  async getMaster() {
+    const master = await this.wallet.getMaster();
+
+    this.log(master);
+  }
+
+  async getKey() {
+    const address = this.config.str(0);
+    const key = await this.wallet.getKey(address);
+
+    this.log(key);
+  }
+
+  async getWIF() {
+    const address = this.config.str(0);
+    const passphrase = this.config.str('passphrase');
+    const key = await this.wallet.getWIF(address, passphrase);
+
+    if (!key) {
+      this.log('Key not found.');
+      return;
+    }
+
+    this.log(key.privateKey);
+  }
+
+  async addSharedKey() {
+    const key = this.config.str(0);
+    const account = this.config.str('account');
+
+    await this.wallet.addSharedKey(account, key);
+
+    this.log('Added key.');
+  }
+
+  async removeSharedKey() {
+    const key = this.config.str(0);
+    const account = this.config.str('account');
+
+    await this.wallet.removeSharedKey(account, key);
+
+    this.log('Removed key.');
+  }
+
+  async getSharedKeys() {
+    const acct = this.config.str([0, 'account']);
+    const account = await this.wallet.getAccount(acct);
+
+    if (!account) {
+      this.log('Account not found.');
+      return;
+    }
+
+    this.log(account.keys);
+  }
+
+  async getAccount() {
+    const acct = this.config.str([0, 'account']);
+    const account = await this.wallet.getAccount(acct);
+
+    this.log(account);
+  }
+
+  async createAccount() {
+    const name = this.config.str([0, 'name']);
+
+    const options = {
+      passphrase: this.config.str('passphrase'),
+      type: this.config.str('type'),
+      m: this.config.uint('m'),
+      n: this.config.uint('n'),
+      witness: this.config.bool('witness'),
+      accountKey: this.config.str('account-key')
+    };
+
+    const account = await this.wallet.createAccount(name, options);
+
+    this.log(account);
+  }
+
+  async createAddress() {
+    const account = this.config.str([0, 'account']);
+    const addr = await this.wallet.createAddress(account);
+
+    this.log(addr);
+  }
+
+  async createChange() {
+    const account = this.config.str([0, 'account']);
+    const addr = await this.wallet.createChange(account);
+
+    this.log(addr);
+  }
+
+  async createNested() {
+    const account = this.config.str([0, 'account']);
+    const addr = await this.wallet.createNested(account);
+
+    this.log(addr);
+  }
+
+  async getAccounts() {
+    const accounts = await this.wallet.getAccounts();
+    this.log(accounts);
+  }
+
+  async getWallet() {
+    const info = await this.wallet.getInfo();
+    this.log(info);
+  }
+
+  async getWalletHistory() {
+    const account = this.config.str('account');
+    const txs = await this.wallet.getHistory(account);
+
+    this.log(txs);
+  }
+
+  async getWalletPending() {
+    const account = this.config.str('account');
+    const txs = await this.wallet.getPending(account);
+
+    this.log(txs);
+  }
+
+  async getWalletCoins() {
+    const account = this.config.str('account');
+    const coins = await this.wallet.getCoins(account);
+
+    this.log(coins);
+  }
+
+  async listenWallet() {
+    await this.client.open();
+    await this.wallet.open();
+
+    this.wallet.on('tx', (details) => {
+      this.log('TX:');
+      this.log(details);
+    });
+
+    this.wallet.on('confirmed', (details) => {
+      this.log('TX confirmed:');
+      this.log(details);
+    });
+
+    this.wallet.on('unconfirmed', (details) => {
+      this.log('TX unconfirmed:');
+      this.log(details);
+    });
+
+    this.wallet.on('conflict', (details) => {
+      this.log('TX conflict:');
+      this.log(details);
+    });
+
+    this.wallet.on('address', (receive) => {
+      this.log('New addresses allocated:');
+      this.log(receive);
+    });
+
+    this.wallet.on('balance', (balance) => {
+      this.log('Balance:');
+      this.log(balance);
+    });
+
+    return new Promise((resolve, reject) => {
+      this.client.once('disconnect', resolve);
+    });
+  }
+
+  async getBalance() {
+    const account = this.config.str('account');
+    const balance = await this.wallet.getBalance(account);
+
+    this.log(balance);
+  }
+
+  async getMempool() {
+    const txs = await this.wallet.getMempool();
+
+    this.log(txs);
+  }
+
+  async sendTX() {
+    const outputs = [];
+
+    if (this.config.has('script')) {
+      outputs.push({
+        script: this.config.str('script'),
+        value: this.config.ufixed([0, 'value'], 8)
+      });
+    } else {
+      outputs.push({
+        address: this.config.str([0, 'address']),
+        value: this.config.ufixed([1, 'value'], 8)
+      });
+    }
+
+    const options = {
+      account: this.config.str('account'),
+      passphrase: this.config.str('passphrase'),
+      outputs: outputs,
+      smart: this.config.bool('smart'),
+      rate: this.config.ufixed('rate', 8),
+      subtractFee: this.config.bool('subtract-fee')
+    };
+
+    const tx = await this.wallet.send(options);
+
+    this.log(tx);
+  }
+
+  async createTX() {
+    let output;
+
+    if (this.config.has('script')) {
+      output = {
+        script: this.config.str('script'),
+        value: this.config.ufixed([0, 'value'], 8)
+      };
+    } else {
+      output = {
+        address: this.config.str([0, 'address']),
+        value: this.config.ufixed([1, 'value'], 8)
+      };
+    }
+
+    const options = {
+      account: this.config.str('account'),
+      passphrase: this.config.str('passphrase'),
+      outputs: [output],
+      smart: this.config.bool('smart'),
+      rate: this.config.ufixed('rate', 8),
+      subtractFee: this.config.bool('subtract-fee'),
+      sign: this.config.bool('sign')
+    };
+
+    const tx = await this.wallet.createTX(options);
+
+    this.log(tx);
+  }
+
+  async signTX() {
+    const passphrase = this.config.str('passphrase');
+    const tx = this.config.str([0, 'tx']);
+    const signedTX = await this.wallet.sign({tx, passphrase});
+
+    this.log(signedTX);
+  }
+
+  async zapWallet() {
+    const age = this.config.uint([0, 'age'], 72 * 60 * 60);
+    const account = this.config.str('account');
+
+    await this.wallet.zap(account, age);
+
+    this.log('Zapped!');
+  }
+
+  async abandonTX() {
+    const hash = this.config.str(0);
+
+    await this.wallet.abandon(hash);
+
+    this.log('Abandoned tx: ' + hash);
+  }
+
+  async viewTX() {
+    const raw = this.config.str([0, 'tx']);
+    const tx = await this.wallet.fill(raw);
+
+    this.log(tx);
+  }
+
+  async getDetails() {
+    const hash = this.config.str(0);
+    const details = await this.wallet.getTX(hash);
+
+    this.log(details);
+  }
+
+  async getWalletBlocks() {
+    const blocks = await this.wallet.getBlocks();
+    this.log(blocks);
+  }
+
+  async getWalletBlock() {
+    const height = this.config.uint(0);
+    const block = await this.wallet.getBlock(height);
+
+    this.log(block);
+  }
+
+  async retoken() {
+    const passphrase = this.config.str('passphrase');
+    const result = await this.wallet.retoken(passphrase);
+
+    this.log(result);
+  }
+
+  async rescan() {
+    const height = this.config.uint(0);
+
+    await this.client.rescan(height);
+
+    this.log('Rescanning...');
+  }
+
+  async resend() {
+    await this.client.resend();
+
+    this.log('Resending...');
+  }
+
+  async resendWallet() {
+    await this.wallet.resend();
+
+    this.log('Resending...');
+  }
+
+  async backup() {
+    const path = this.config.str(0);
+
+    await this.client.backup(path);
+
+    this.log('Backup complete.');
+  }
+
+  async importKey() {
+    const key = this.config.str(0);
+    const account = this.config.str('account');
+    const passphrase = this.config.str('passphrase');
+
+    if (!key)
+      throw new Error('No key for import.');
+
+    if (key.length === 66 || key.length === 130) {
+      await this.wallet.importPublic(account, key);
+      this.log('Imported public key.');
+      return;
+    }
+
+    await this.wallet.importPrivate(account, key, passphrase);
+
+    this.log('Imported private key.');
+  }
+
+  async importAddress() {
+    const address = this.config.str(0);
+    const account = this.config.str('account');
+
+    await this.wallet.importAddress(account, address);
+
+    this.log('Imported address.');
+  }
+
+  async lock() {
+    await this.wallet.lock();
+
+    this.log('Locked.');
+  }
+
+  async unlock() {
+    const passphrase = this.config.str(0);
+    const timeout = this.config.uint(1);
+
+    await this.wallet.unlock(passphrase, timeout);
+
+    this.log('Unlocked.');
+  }
+
+  async rpc() {
+    const method = this.argv.shift();
+    const params = [];
+
+    for (const arg of this.argv) {
+      let param;
+      try {
+        param = JSON.parse(arg);
+      } catch (e) {
+        param = arg;
+      }
+      params.push(param);
+    }
+
+    let result;
+    try {
+      result = await this.client.execute(method, params);
+    } catch (e) {
+      if (e.type === 'RPCError') {
+        this.log(e.message);
+        return;
+      }
+      throw e;
+    }
+
+    this.log(result);
+  }
+
+  async handleWallet() {
+    switch (this.argv.shift()) {
+      case 'info':
+        await this.getServerInfo();
+        break;
+      case 'listen':
+        await this.listenWallet();
+        break;
+      case 'get':
+        await this.getWallet();
+        break;
+      case 'master':
+        await this.getMaster();
+        break;
+      case 'shared':
+        if (this.argv[0] === 'add') {
+          this.argv.shift();
+          await this.addSharedKey();
+          break;
+        }
+        if (this.argv[0] === 'remove') {
+          this.argv.shift();
+          await this.removeSharedKey();
+          break;
+        }
+        if (this.argv[0] === 'list')
+          this.argv.shift();
+        await this.getSharedKeys();
+        break;
+      case 'balance':
+        await this.getBalance();
+        break;
+      case 'history':
+        await this.getWalletHistory();
+        break;
+      case 'pending':
+        await this.getWalletPending();
+        break;
+      case 'coins':
+        await this.getWalletCoins();
+        break;
+      case 'account':
+        if (this.argv[0] === 'list') {
+          this.argv.shift();
+          await this.getAccounts();
+          break;
+        }
+        if (this.argv[0] === 'create') {
+          this.argv.shift();
+          await this.createAccount();
+          break;
+        }
+        if (this.argv[0] === 'get')
+          this.argv.shift();
+        await this.getAccount();
+        break;
+      case 'address':
+        await this.createAddress();
+        break;
+      case 'change':
+        await this.createChange();
+        break;
+      case 'nested':
+        await this.createNested();
+        break;
+      case 'retoken':
+        await this.retoken();
+        break;
+      case 'sign':
+        await this.signTX();
+        break;
+      case 'mktx':
+        await this.createTX();
+        break;
+      case 'send':
+        await this.sendTX();
+        break;
+      case 'zap':
+        await this.zapWallet();
+        break;
+      case 'abandon':
+        await this.abandonTX();
+        break;
+      case 'tx':
+        await this.getDetails();
+        break;
+      case 'blocks':
+        await this.getWalletBlocks();
+        break;
+      case 'block':
+        await this.getWalletBlock();
+        break;
+      case 'view':
+        await this.viewTX();
+        break;
+      case 'import':
+        await this.importKey();
+        break;
+      case 'watch':
+        await this.importAddress();
+        break;
+      case 'key':
+        await this.getKey();
+        break;
+      case 'dump':
+        await this.getWIF();
+        break;
+      case 'lock':
+        await this.lock();
+        break;
+      case 'unlock':
+        await this.unlock();
+        break;
+      case 'resend':
+        await this.resendWallet();
+        break;
+      case 'rescan':
+        await this.rescan();
+        break;
+      default:
+        this.log('Unrecognized command.');
+        this.log('Commands:');
+        this.log('  $ listen: Listen for events.');
+        this.log('  $ get: View wallet.');
+        this.log('  $ master: View wallet master key.');
+        this.log('  $ shared add [xpubkey]: Add key to wallet.');
+        this.log('  $ shared remove [xpubkey]: Remove key from wallet.');
+        this.log('  $ balance: Get wallet balance.');
+        this.log('  $ history: View TX history.');
+        this.log('  $ pending: View pending TXs.');
+        this.log('  $ coins: View wallet coins.');
+        this.log('  $ account list: List account names.');
+        this.log('  $ account create [account-name]: Create account.');
+        this.log('  $ account get [account-name]: Get account details.');
+        this.log('  $ address: Derive new address.');
+        this.log('  $ change: Derive new change address.');
+        this.log('  $ nested: Derive new nested address.');
+        this.log('  $ retoken: Create new api key.');
+        this.log('  $ send [address] [value]: Send transaction.');
+        this.log('  $ mktx [address] [value]: Create transaction.');
+        this.log('  $ sign [tx-hex]: Sign transaction.');
+        this.log('  $ zap [age?]: Zap pending wallet TXs.');
+        this.log('  $ abandon [hash]: Abandon a transaction.');
+        this.log('  $ tx [hash]: View transaction details.');
+        this.log('  $ blocks: List wallet blocks.');
+        this.log('  $ block [height]: View wallet block.');
+        this.log('  $ view [tx-hex]: Parse and view transaction.');
+        this.log('  $ import [wif|hex]: Import private or public key.');
+        this.log('  $ watch [address]: Import an address.');
+        this.log('  $ key [address]: Get wallet key by address.');
+        this.log('  $ dump [address]: Get wallet key WIF by address.');
+        this.log('  $ lock: Lock wallet.');
+        this.log('  $ unlock [passphrase] [timeout?]: Unlock wallet.');
+        this.log('  $ resend: Resend pending transactions.');
+        this.log('  $ rescan [height]: Rescan for transactions.');
+        this.log('  $ admin [command]: Admin commands');
+        this.log('  $ rpc [command] [args]: Execute RPC command.'
+          + ' (`bwallet-cli rpc help` for more)');
+        this.log('Other Options:');
+        this.log('  --passphrase [passphrase]: For signing/account-creation.');
+        this.log('  --account [account-name]: Account name.');
+        break;
+    }
+  }
+
+  async open() {
+    switch (this.argv[0]) {
+      case 'wallets':
+      case 'create':
+      case 'mkwallet':
+      case 'resend':
+      case 'backup':
+      case 'rpc':
+        this.argv.unshift('admin');
+        break;
+    }
+
+    if (this.argv[0] === 'admin') {
+      this.argv.shift();
+      switch (this.argv.shift()) {
+        case 'wallets':
+          await this.getWallets();
+          break;
+        case 'create':
+        case 'mkwallet':
+          await this.createWallet();
+          break;
+        case 'resend':
+          await this.resend();
+          break;
+        case 'backup':
+          await this.backup();
+          break;
+        case 'rpc':
+          await this.rpc();
+          break;
+        default:
+          this.log('Unrecognized command.');
+          this.log('Commands:');
+          this.log('  $ wallets: List all wallets.');
+          this.log('  $ create [id]: Create wallet.');
+          this.log('  $ resend: Resend pending transactions.');
+          this.log('  $ backup [path]: Backup the wallet db.');
+          this.log('  $ rpc [command] [args]: Execute RPC command.'
+            + ' (`bwallet-cli rpc help` for more)');
+          break;
+      }
+      return;
+    }
+
+    return this.handleWallet();
+  }
+
+  async destroy() {
+    if (this.client.opened)
+      await this.client.close();
+  }
+}
+
+(async () => {
+  const cli = new CLI();
+  await cli.open();
+  await cli.destroy();
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});

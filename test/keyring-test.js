@@ -3,8 +3,9 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const KeyRing = require('../lib/primitives/keyring');
+const Script = require('../lib/script/script');
 
 const uncompressed = KeyRing.fromSecret(
   '5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss', 'main');
@@ -48,5 +49,18 @@ describe('KeyRing', function() {
     assert.strictEqual(
       'L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1',
       compressed.toSecret('main'));
+  });
+
+  it('should get keys from multisig', () => {
+    const script = Script.fromMultisig(1, 2, [
+      compressed.getPublicKey(),
+      uncompressed.getPublicKey()]);
+
+    assert.strictEqual(
+      compressed.getPublicKey(),
+      KeyRing.fromMultisigScript(script, 1).getPublicKey());
+    assert.strictEqual(
+      uncompressed.getPublicKey(),
+      KeyRing.fromMultisigScript(script, 2).getPublicKey());
   });
 });

@@ -3,7 +3,7 @@
 
 'use strict';
 
-const assert = require('./util/assert');
+const assert = require('bsert');
 const Script = require('../lib/script/script');
 const Witness = require('../lib/script/witness');
 const Stack = require('../lib/script/stack');
@@ -12,7 +12,8 @@ const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
 const {fromFloat} = require('../lib/utils/fixed');
 
-const scripts = require('./data/script-tests.json');
+// test files: https://github.com/bitcoin/bitcoin/tree/master/src/test/data
+const scripts = require('./data/core-data/script-tests.json');
 
 function isSuccess(stack) {
   if (stack.length === 0)
@@ -103,7 +104,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [3], [5]]);
+      assert.deepEqual(stack.items, [[1], [3], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -128,7 +129,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [4], [5]]);
+      assert.deepEqual(stack.items, [[1], [4], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -151,7 +152,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [3], [5]]);
+      assert.deepEqual(stack.items, [[1], [3], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -174,7 +175,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [5]]);
+      assert.deepEqual(stack.items, [[1], [5]].map(a => Buffer.from(a)));
     }
 
     {
@@ -197,7 +198,7 @@ describe('Script', function() {
       input.execute(stack);
       output.execute(stack);
 
-      assert.deepEqual(stack.items, [[1], [3], [5]]);
+      assert.deepEqual(stack.items, [[1], [3], [5]].map(a => Buffer.from(a)));
     }
   });
 
@@ -286,7 +287,7 @@ describe('Script', function() {
           version: 1,
           inputs: [{
             prevout: {
-              hash: consensus.NULL_HASH,
+              hash: consensus.ZERO_HASH,
               index: 0xffffffff
             },
             script: [
@@ -308,7 +309,7 @@ describe('Script', function() {
           version: 1,
           inputs: [{
             prevout: {
-              hash: prev.hash('hex'),
+              hash: prev.hash(),
               index: 0
             },
             script: input,
@@ -335,7 +336,7 @@ describe('Script', function() {
         }
 
         if (expected !== 'OK') {
-          assert.typeOf(err, 'error');
+          assert(err instanceof Error);
           assert.strictEqual(err.code, expected);
           return;
         }

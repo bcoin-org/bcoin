@@ -3,14 +3,15 @@
 
 'use strict';
 
-const {base58} = require('bstring');
+const base58 = require('bcrypto/lib/encoding/base58');
 const pbkdf2 = require('bcrypto/lib/pbkdf2');
 const sha512 = require('bcrypto/lib/sha512');
-const assert = require('./util/assert');
+const assert = require('bsert');
 const HD = require('../lib/hd');
 const vectors = require('./data/hd.json');
 const vector1 = vectors.vector1;
 const vector2 = vectors.vector2;
+const nodejsUtil = require('util');
 
 let master = null;
 let child = null;
@@ -99,6 +100,14 @@ describe('HD', function() {
     base58Equal(
       HD.fromJSON(json, 'main').toBase58('main'),
       key.toBase58('main'));
+  });
+
+  it('should inspect Mnemonic', () => {
+    const mne = new HD.Mnemonic();
+    const fmt = nodejsUtil.format(mne);
+    assert(typeof fmt === 'string');
+    assert(fmt.includes('Mnemonic'));
+    assert.strictEqual(fmt.split(' ').length, 13);
   });
 
   for (const vector of [vector1, vector2]) {

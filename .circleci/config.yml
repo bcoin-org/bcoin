@@ -1,54 +1,42 @@
+defaults: &defaults
+  working_directory: ~/repo
+  environment:
+    PREFIX: /home/circleci/repo/global_node_modules
+  docker:
+    - image: circleci/node:10.17
+
 version: 2.0
 jobs:
   install:
-    docker:
-      - image: circleci/node:10.2
+    <<: *defaults
     working_directory: ~/repo
     steps:
       - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-      - run: npm install
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
+      - run: npm rebuild
+      - run: npm install -g bslint nyc codecov
+      - persist_to_workspace:
+          root: .
+          paths: .
+
   test:
-    docker:
-      - image: circleci/node:10.2
-    working_directory: ~/repo
+    <<: *defaults
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+      - attach_workspace:
+          at: .
+      - run: echo 'export PATH=$PREFIX/bin:$PATH' >> $BASH_ENV
       - run:
           name: Tests with coverage
           command: npm run test-ci
       - run:
-          name: Install codecov
-          command: npm i codecov
-      - run:
           name: Submit coverage
-          command: ./node_modules/.bin/codecov
+          command: codecov
 
   lint:
-    docker:
-      - image: circleci/node:10.2
-
-    working_directory: ~/repo
+    <<: *defaults
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+      - attach_workspace:
+          at: .
+      - run: echo 'export PATH=$PREFIX/bin:$PATH' >> $BASH_ENV
       - run:
           name: Lint
           command: npm run lint-ci
@@ -64,5 +52,3 @@ workflows:
       - test:
           requires:
             - install
-
-

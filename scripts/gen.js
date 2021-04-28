@@ -30,7 +30,7 @@ function createGenesisBlock(options) {
     version: 1,
     inputs: [{
       prevout: {
-        hash: consensus.NULL_HASH,
+        hash: consensus.ZERO_HASH,
         index: 0xffffffff
       },
       script: Script()
@@ -49,8 +49,8 @@ function createGenesisBlock(options) {
 
   const block = new Block({
     version: options.version,
-    prevBlock: consensus.NULL_HASH,
-    merkleRoot: tx.hash('hex'),
+    prevBlock: consensus.ZERO_HASH,
+    merkleRoot: tx.hash(),
     time: options.time,
     bits: options.bits,
     nonce: options.nonce,
@@ -83,20 +83,6 @@ const regtest = createGenesisBlock({
   nonce: 2
 });
 
-const segnet3 = createGenesisBlock({
-  version: 1,
-  time: 1452831101,
-  bits: 486604799,
-  nonce: 0
-});
-
-const segnet4 = createGenesisBlock({
-  version: 1,
-  time: 1452831101,
-  bits: 503447551,
-  nonce: 0
-});
-
 const btcd = createGenesisBlock({
   version: 1,
   time: 1401292357,
@@ -110,10 +96,6 @@ console.log(testnet);
 console.log('');
 console.log(regtest);
 console.log('');
-console.log(segnet3);
-console.log('');
-console.log(segnet4);
-console.log('');
 console.log('');
 console.log('main hash: %s', main.rhash());
 console.log('main raw: %s', main.toRaw().toString('hex'));
@@ -123,12 +105,6 @@ console.log('testnet raw: %s', testnet.toRaw().toString('hex'));
 console.log('');
 console.log('regtest hash: %s', regtest.rhash());
 console.log('regtest raw: %s', regtest.toRaw().toString('hex'));
-console.log('');
-console.log('segnet3 hash: %s', segnet3.rhash());
-console.log('segnet3 raw: %s', segnet3.toRaw().toString('hex'));
-console.log('');
-console.log('segnet4 hash: %s', segnet4.rhash());
-console.log('segnet4 raw: %s', segnet4.toRaw().toString('hex'));
 console.log('');
 console.log('btcd simnet hash: %s', btcd.rhash());
 console.log('btcd simnet raw: %s', btcd.toRaw().toString('hex'));

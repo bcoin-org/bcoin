@@ -6,7 +6,7 @@ process.title = 'bcoin';
 
 if (process.argv.indexOf('--help') !== -1
     || process.argv.indexOf('-h') !== -1) {
-  console.error('See the bcoin wiki at: https://github.com/bcoin-org/bcoin/wiki.');
+  console.error('See the bcoin docs at: https://github.com/bcoin-org/bcoin/tree/master/docs.');
   process.exit(1);
   throw new Error('Could not exit.');
 }
@@ -22,7 +22,7 @@ if (process.argv.indexOf('--version') !== -1
 const FullNode = require('../lib/node/fullnode');
 
 const node = new FullNode({
-  config: true,
+  file: true,
   argv: true,
   env: true,
   logFile: true,
@@ -42,6 +42,10 @@ if (!node.config.bool('no-wallet') && !node.has('walletdb')) {
 
 process.on('unhandledRejection', (err, promise) => {
   throw err;
+});
+
+process.on('SIGINT', async () => {
+  await node.close();
 });
 
 (async () => {
