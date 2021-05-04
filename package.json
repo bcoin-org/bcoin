@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "bcfg": "git+https://github.com/bcoin-org/bcfg.git#semver:~0.1.6",
-    "bcrypto": "git+https://github.com/bcoin-org/bcrypto.git#semver:~5.0.4",
+    "bcrypto": "git+https://github.com/bcoin-org/bcrypto.git#semver:~5.3.0",
     "bcurl": "git+https://github.com/bcoin-org/bcurl.git#semver:^0.1.6",
     "bdb": "git+https://github.com/bcoin-org/bdb.git#semver:~1.2.1",
     "bdns": "git+https://github.com/bcoin-org/bdns.git#semver:~0.1.5",
