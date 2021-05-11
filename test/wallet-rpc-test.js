@@ -221,10 +221,34 @@ describe('Wallet RPC Methods', function() {
     assert.deepStrictEqual(listTooManyConf, []);
   });
 
+  it('should rpc getreceivedbyaddress', async () => {
+    const addressOther = await wclient.execute('getnewaddress', []);
+
+    const result1 = await wclient.execute(
+      'getreceivedbyaddress',
+      [addressOther]
+    );
+
+    // Same as before
+    assert.strictEqual(result1, 0);
+
+    // Send a coinbase TX which also has an OP_RETURN (witness commitment)
+    await nclient.execute('generatetoaddress', [1, addressOther]);
+    await wdb.syncChain();
+
+    const result2 = await wclient.execute(
+      'getreceivedbyaddress',
+      [addressOther]
+    );
+
+    // Same as before
+    assert.strictEqual(result2, 50);
+  });
+
   it('should rpc listtransactions with no args', async () => {
     const txs = await wclient.execute('listtransactions', []);
-    assert.strictEqual(txs.length, 2);
-    assert.strictEqual(txs[0].amount + txs[1].amount, 1.1234);
+    assert.strictEqual(txs.length, 3);
+    assert.strictEqual(txs[0].amount + txs[1].amount + txs[2].amount, 51.1234);
     assert.strictEqual(txs[0].account, 'default');
   });
 
@@ -247,7 +271,7 @@ describe('Wallet RPC Methods', function() {
 
   it('should rpc listunspent', async () => {
     utxo = await wclient.execute('listunspent', []);
-    assert.strictEqual(utxo.length, 2);
+    assert.strictEqual(utxo.length, 3);
   });
 
   it('should rpc lockunspent and listlockunspent', async () => {
@@ -273,7 +297,7 @@ describe('Wallet RPC Methods', function() {
 
   it('should rpc listsinceblock', async () => {
     const listNoBlock = await wclient.execute('listsinceblock', []);
-    assert.strictEqual(listNoBlock.transactions.length, 2);
+    assert.strictEqual(listNoBlock.transactions.length, 1);
 
     const txs = listNoBlock.transactions;
 
@@ -283,7 +307,7 @@ describe('Wallet RPC Methods', function() {
     // get lowest block hash.
     const bhash = txs[0].blockhash;
     const listOldBlock = await wclient.execute('listsinceblock', [bhash]);
-    assert.strictEqual(listOldBlock.transactions.length, 2);
+    assert.strictEqual(listOldBlock.transactions.length, 1);
 
     const nonexistentBlock = consensus.ZERO_HASH.toString('hex');
     await assert.rejects(async () => {
