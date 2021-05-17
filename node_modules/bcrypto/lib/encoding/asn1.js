@@ -926,7 +926,7 @@ class Integer extends Node {
   fromNumber(num) {
     assert(Number.isSafeInteger(num));
 
-    const buf = Buffer.allocUnsafe(8);
+    const buf = Buffer.alloc(8);
 
     let neg = false;
 
@@ -1051,7 +1051,8 @@ class BitString extends Node {
     if (shift === 8 || data.length === 0)
       return data;
 
-    const out = Buffer.allocUnsafe(data.length);
+    const out = Buffer.alloc(data.length);
+
     out[0] = data[0] >>> shift;
 
     for (let i = 1; i < data.length; i++) {

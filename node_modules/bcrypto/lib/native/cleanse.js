@@ -6,8 +6,21 @@
 
 'use strict';
 
-const backend = require('./binding').util;
-const cleanse = backend.cleanse;
+const assert = require('../internal/assert');
+const binding = require('./binding');
+
+/*
+ * Cleanse
+ */
+
+function cleanse(data) {
+  assert(Buffer.isBuffer(data));
+  binding.cleanse(data);
+}
+
+/*
+ * Static
+ */
 
 cleanse.native = 2;
 

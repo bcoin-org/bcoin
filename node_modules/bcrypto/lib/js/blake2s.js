@@ -60,7 +60,7 @@ class BLAKE2s {
     this.state = new Uint32Array(8);
     this.V = new Uint32Array(16);
     this.M = new Uint32Array(16);
-    this.block = Buffer.allocUnsafe(64);
+    this.block = Buffer.alloc(64);
     this.size = 32;
     this.count = 0;
     this.pos = FINALIZED;
@@ -147,7 +147,7 @@ class BLAKE2s {
     this._compress(this.block, 0, true);
     this.pos = FINALIZED;
 
-    const out = Buffer.allocUnsafe(this.size);
+    const out = Buffer.alloc(this.size);
 
     for (let i = 0; i < this.size; i++)
       out[i] = this.state[i >>> 2] >>> (8 * (i & 3));

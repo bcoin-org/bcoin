@@ -58,15 +58,15 @@ const typeToCurve = {
   [keyTypes.P521]: 'nistp521'
 };
 
-const cipherToName = {
-  '3des-cbc': 'DES-EDE3-CBC',
-  'aes128-cbc': 'AES-128-CBC',
-  'aes192-cbc': 'AES-192-CBC',
-  'aes256-cbc': 'AES-256-CBC',
-  'rijndael-cbc@lysator.liu.se': 'AES-256-CBC',
-  'aes128-ctr': 'AES-128-CTR',
-  'aes192-ctr': 'AES-192-CTR',
-  'aes256-ctr': 'AES-256-CTR'
+const cipherInfo = {
+  '3des-cbc': ['DES-EDE3-CBC', 24, 8],
+  'aes128-cbc': ['AES-128-CBC', 16, 16],
+  'aes192-cbc': ['AES-192-CBC', 24, 16],
+  'aes256-cbc': ['AES-256-CBC', 32, 16],
+  'rijndael-cbc@lysator.liu.se': ['AES-256-CBC', 32, 16],
+  'aes128-ctr': ['AES-128-CTR', 16, 16],
+  'aes192-ctr': ['AES-192-CTR', 24, 16],
+  'aes256-ctr': ['AES-256-CTR', 32, 16]
 };
 
 const AUTH_MAGIC = 'openssh-key-v1';
@@ -1098,11 +1098,10 @@ function derive(sname, passwd, salt, rounds) {
   assert(Buffer.isBuffer(salt));
   assert((rounds >>> 0) === rounds);
 
-  if (!cipherToName.hasOwnProperty(sname))
+  if (!cipherInfo.hasOwnProperty(sname))
     throw new Error(`Unknown cipher: ${sname}.`);
 
-  const name = cipherToName[sname];
-  const {keySize, ivSize} = cipher.get(name);
+  const [name, keySize, ivSize] = cipherInfo[sname];
 
   const size = keySize + ivSize;
   const secret = bcrypt.pbkdf(passwd, salt, rounds, size);

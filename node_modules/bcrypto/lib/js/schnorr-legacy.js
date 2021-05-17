@@ -65,7 +65,7 @@ class Schnorr {
     if (key.length !== 1 + fieldSize * 2)
       throw new Error('Invalid point.');
 
-    const out = Buffer.allocUnsafe(1 + fieldSize);
+    const out = Buffer.alloc(1 + fieldSize);
 
     out[0] = 0x02 | (key[key.length - 1] & 1);
     key.copy(out, 1, 1, 1 + fieldSize);

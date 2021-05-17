@@ -41,7 +41,7 @@ class MD4 {
   constructor() {
     this.state = new Uint32Array(4);
     this.msg = new Uint32Array(16);
-    this.block = Buffer.allocUnsafe(64);
+    this.block = Buffer.alloc(64);
     this.size = FINALIZED;
   }
 
@@ -61,7 +61,7 @@ class MD4 {
   }
 
   final() {
-    return this._final(Buffer.allocUnsafe(16));
+    return this._final(Buffer.alloc(16));
   }
 
   _update(data, len) {

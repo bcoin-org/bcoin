@@ -14,6 +14,12 @@ const assert = require('../internal/assert');
 const ChaCha20 = require('./chacha20');
 const Poly1305 = require('./poly1305');
 
+/*
+ * Constants
+ */
+
+const zero16 = Buffer.alloc(16, 0x00);
+
 /**
  * AEAD
  */
@@ -43,7 +49,7 @@ class AEAD {
     assert(Buffer.isBuffer(key));
     assert(Buffer.isBuffer(iv));
 
-    this.key.fill(0x00);
+    this.key.fill(0);
     this.chacha.init(key, iv, 0);
     this.chacha.encrypt(this.key);
     this.poly.init(this.key);
@@ -161,7 +167,7 @@ class AEAD {
     if (this.mode === -1)
       throw new Error('Context is not initialized.');
 
-    const len = Buffer.allocUnsafe(16);
+    const len = Buffer.alloc(16);
 
     writeU64(len, this.aadLen, 0);
     writeU64(len, this.cipherLen, 8);
@@ -226,14 +232,8 @@ class AEAD {
   _pad16(size) {
     const pos = size & 15;
 
-    if (pos === 0)
-      return;
-
-    const pad = Buffer.allocUnsafe(16 - pos);
-
-    pad.fill(0x00);
-
-    this.poly.update(pad);
+    if (pos > 0)
+      this.poly.update(zero16.slice(0, 16 - pos));
   }
 
   /**
