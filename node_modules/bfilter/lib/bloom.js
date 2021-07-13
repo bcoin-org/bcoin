@@ -192,7 +192,7 @@ class BloomFilter extends bio.Struct {
    * @param {Number|String} update
    * @example
    * BloomFilter.fromRate(800000, 0.0001, 'none');
-   * @returns {Boolean}
+   * @returns {BloomFilter}
    */
 
   static fromRate(items, rate, update) {

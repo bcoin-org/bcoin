@@ -13,8 +13,10 @@
 function enforce(value, name, type) {
   if (!value) {
     const err = new TypeError(`'${name}' must be a(n) ${type}.`);
+
     if (Error.captureStackTrace)
       Error.captureStackTrace(err, enforce);
+
     throw err;
   }
 }

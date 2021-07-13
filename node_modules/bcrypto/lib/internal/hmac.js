@@ -67,7 +67,7 @@ class HMAC {
     }
 
     // Pad key
-    const pad = Buffer.allocUnsafe(this.size);
+    const pad = Buffer.alloc(this.size);
 
     for (let i = 0; i < key.length; i++)
       pad[i] = key[i] ^ 0x36;

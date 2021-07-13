@@ -82,13 +82,17 @@ class Struct {
     const bw = size === -1
       ? new BufferWriter()
       : new StaticWriter(size);
+
     this.write(bw, extra);
+
     return bw.render();
   }
 
   decode(data, extra) {
     const br = new BufferReader(data);
+
     this.read(br, extra);
+
     return this;
   }
 

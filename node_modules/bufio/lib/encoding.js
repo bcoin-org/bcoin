@@ -57,45 +57,49 @@ function readU(data, off, len) {
 function readU64(data, off) {
   const hi = readU32(data, off + 4);
   const lo = readU32(data, off);
+
   check((hi & 0xffe00000) === 0, off, 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
 function readU56(data, off) {
   const hi = readU24(data, off + 4);
   const lo = readU32(data, off);
+
   check((hi & 0xffe00000) === 0, off, 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
 function readU48(data, off) {
   return (data[off++]
-    + data[off++] * 0x100
-    + data[off++] * 0x10000
-    + data[off++] * 0x1000000
-    + data[off++] * 0x100000000
-    + data[off] * 0x10000000000);
+        + data[off++] * 0x100
+        + data[off++] * 0x10000
+        + data[off++] * 0x1000000
+        + data[off++] * 0x100000000
+        + data[off] * 0x10000000000);
 }
 
 function readU40(data, off) {
   return (data[off++]
-    + data[off++] * 0x100
-    + data[off++] * 0x10000
-    + data[off++] * 0x1000000
-    + data[off] * 0x100000000);
+        + data[off++] * 0x100
+        + data[off++] * 0x10000
+        + data[off++] * 0x1000000
+        + data[off] * 0x100000000);
 }
 
 function readU32(data, off) {
   return (data[off++]
-    + data[off++] * 0x100
-    + data[off++] * 0x10000
-    + data[off] * 0x1000000);
+        + data[off++] * 0x100
+        + data[off++] * 0x10000
+        + data[off] * 0x1000000);
 }
 
 function readU24(data, off) {
   return (data[off++]
-    + data[off++] * 0x100
-    + data[off] * 0x10000);
+        + data[off++] * 0x100
+        + data[off] * 0x10000);
 }
 
 function readU16(data, off) {
@@ -136,45 +140,49 @@ function readUBE(data, off, len) {
 function readU64BE(data, off) {
   const hi = readU32BE(data, off);
   const lo = readU32BE(data, off + 4);
+
   check((hi & 0xffe00000) === 0, off, 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
 function readU56BE(data, off) {
   const hi = readU24BE(data, off);
   const lo = readU32BE(data, off + 3);
+
   check((hi & 0xffe00000) === 0, off, 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
 function readU48BE(data, off) {
   return (data[off++] * 0x10000000000
-    + data[off++] * 0x100000000
-    + data[off++] * 0x1000000
-    + data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x100000000
+        + data[off++] * 0x1000000
+        + data[off++] * 0x10000
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readU40BE(data, off) {
   return (data[off++] * 0x100000000
-    + data[off++] * 0x1000000
-    + data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x1000000
+        + data[off++] * 0x10000
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readU32BE(data, off) {
   return (data[off++] * 0x1000000
-    + data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x10000
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readU24BE(data, off) {
   return (data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readU16BE(data, off) {
@@ -211,14 +219,18 @@ function readI(data, off, len) {
 function readI64(data, off) {
   const hi = readI32(data, off + 4);
   const lo = readU32(data, off);
+
   check(isSafe(hi, lo), 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
 function readI56(data, off) {
   const hi = readI24(data, off + 4);
   const lo = readU32(data, off);
+
   check(isSafe(hi, lo), 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
@@ -226,31 +238,32 @@ function readI48(data, off) {
   const val = data[off + 4] + data[off + 5] * 0x100;
 
   return (data[off++]
-    + data[off++] * 0x100
-    + data[off++] * 0x10000
-    + data[off] * 0x1000000
-    + (val | (val & 0x8000) * 0x1fffe) * 0x100000000);
+        + data[off++] * 0x100
+        + data[off++] * 0x10000
+        + data[off] * 0x1000000
+        + (val | (val & 0x8000) * 0x1fffe) * 0x100000000);
 }
 
 function readI40(data, off) {
   return (data[off++]
-    + data[off++] * 0x100
-    + data[off++] * 0x10000
-    + data[off++] * 0x1000000
-    + (data[off] | (data[off] & 0x80) * 0x1fffffe) * 0x100000000);
+        + data[off++] * 0x100
+        + data[off++] * 0x10000
+        + data[off++] * 0x1000000
+        + (data[off] | (data[off] & 0x80) * 0x1fffffe) * 0x100000000);
 }
 
 function readI32(data, off) {
   return (data[off++]
-    + data[off++] * 0x100
-    + data[off++] * 0x10000
-    + (data[off] << 24));
+        + data[off++] * 0x100
+        + data[off++] * 0x10000
+        + (data[off] << 24));
 }
 
 function readI24(data, off) {
   const val = (data[off++]
-    + data[off++] * 0x100
-    + data[off] * 0x10000);
+             + data[off++] * 0x100
+             + data[off] * 0x10000);
+
   return val | (val & 0x800000) * 0x1fe;
 }
 
@@ -294,14 +307,18 @@ function readIBE(data, off, len) {
 function readI64BE(data, off) {
   const hi = readI32BE(data, off);
   const lo = readU32BE(data, off + 4);
+
   check(isSafe(hi, lo), 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
 function readI56BE(data, off) {
   const hi = readI24BE(data, off);
   const lo = readU32BE(data, off + 3);
+
   check(isSafe(hi, lo), 'Number exceeds 2^53-1');
+
   return hi * 0x100000000 + lo;
 }
 
@@ -309,33 +326,33 @@ function readI48BE(data, off) {
   const val = data[off++] * 0x100 + data[off++];
 
   return ((val | (val & 0x8000) * 0x1fffe) * 0x100000000
-    + data[off++] * 0x1000000
-    + data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x1000000
+        + data[off++] * 0x10000
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readI40BE(data, off) {
   const val = data[off++];
 
   return ((val | (val & 0x80) * 0x1fffffe) * 0x100000000
-    + data[off++] * 0x1000000
-    + data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x1000000
+        + data[off++] * 0x10000
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readI32BE(data, off) {
   return ((data[off++] << 24)
-    + data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x10000
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readI24BE(data, off) {
   const val = (data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+             + data[off++] * 0x100
+             + data[off]);
 
   return val | (val & 0x800000) * 0x1fe;
 }
@@ -476,6 +493,7 @@ function writeU32(dst, num, off) {
   dst[off++] = num;
   num >>>= 8;
   dst[off++] = num;
+
   return off;
 }
 
@@ -487,19 +505,24 @@ function writeU24(dst, num, off) {
   dst[off++] = num;
   num >>>= 8;
   dst[off++] = num;
+
   return off;
 }
 
 function writeU16(dst, num, off) {
   enforce(Number.isSafeInteger(num), 'num', 'integer');
+
   dst[off++] = num;
   dst[off++] = num >>> 8;
+
   return off;
 }
 
 function writeU8(dst, num, off) {
   enforce(Number.isSafeInteger(num), 'num', 'integer');
+
   dst[off] = num;
+
   return off + 1;
 }
 
@@ -577,6 +600,7 @@ function writeU40BE(dst, num, off) {
 
 function writeU32BE(dst, num, off) {
   enforce(Number.isSafeInteger(num), 'num', 'integer');
+
   dst[off + 3] = num;
   num >>>= 8;
   dst[off + 2] = num;
@@ -584,23 +608,28 @@ function writeU32BE(dst, num, off) {
   dst[off + 1] = num;
   num >>>= 8;
   dst[off] = num;
+
   return off + 4;
 }
 
 function writeU24BE(dst, num, off) {
   enforce(Number.isSafeInteger(num), 'num', 'integer');
+
   dst[off + 2] = num;
   num >>>= 8;
   dst[off + 1] = num;
   num >>>= 8;
   dst[off] = num;
+
   return off + 3;
 }
 
 function writeU16BE(dst, num, off) {
   enforce(Number.isSafeInteger(num), 'num', 'integer');
+
   dst[off++] = num >>> 8;
   dst[off++] = num;
+
   return off;
 }
 
@@ -720,7 +749,9 @@ function writeI16BE(dst, num, off) {
 
 function _writeDoubleForwards(dst, num, off) {
   enforce(isNumber(num), 'num', 'number');
+
   F64_ARRAY[0] = num;
+
   dst[off++] = F648_ARRAY[0];
   dst[off++] = F648_ARRAY[1];
   dst[off++] = F648_ARRAY[2];
@@ -729,12 +760,15 @@ function _writeDoubleForwards(dst, num, off) {
   dst[off++] = F648_ARRAY[5];
   dst[off++] = F648_ARRAY[6];
   dst[off++] = F648_ARRAY[7];
+
   return off;
 }
 
 function _writeDoubleBackwards(dst, num, off) {
   enforce(isNumber(num), 'num', 'number');
+
   F64_ARRAY[0] = num;
+
   dst[off++] = F648_ARRAY[7];
   dst[off++] = F648_ARRAY[6];
   dst[off++] = F648_ARRAY[5];
@@ -743,26 +777,33 @@ function _writeDoubleBackwards(dst, num, off) {
   dst[off++] = F648_ARRAY[2];
   dst[off++] = F648_ARRAY[1];
   dst[off++] = F648_ARRAY[0];
+
   return off;
 }
 
 function _writeFloatForwards(dst, num, off) {
   enforce(isNumber(num), 'num', 'number');
+
   F32_ARRAY[0] = num;
+
   dst[off++] = F328_ARRAY[0];
   dst[off++] = F328_ARRAY[1];
   dst[off++] = F328_ARRAY[2];
   dst[off++] = F328_ARRAY[3];
+
   return off;
 }
 
 function _writeFloatBackwards(dst, num, off) {
   enforce(isNumber(num), 'num', 'number');
+
   F32_ARRAY[0] = num;
+
   dst[off++] = F328_ARRAY[3];
   dst[off++] = F328_ARRAY[2];
   dst[off++] = F328_ARRAY[1];
   dst[off++] = F328_ARRAY[0];
+
   return off;
 }
 
@@ -827,6 +868,7 @@ function writeVarint(dst, num, off) {
   }
 
   dst[off++] = 0xff;
+
   return writeU64(dst, num, off);
 }
 
@@ -853,6 +895,7 @@ function readVarint2(data, off) {
     checkRead(off < data.length, off);
 
     const ch = data[off++];
+
     size += 1;
 
     // Number.MAX_SAFE_INTEGER >>> 7
@@ -880,8 +923,10 @@ function writeVarint2(dst, num, off) {
 
   for (;;) {
     tmp[len] = (num & 0x7f) | (len ? 0x80 : 0x00);
+
     if (num <= 0x7f)
       break;
+
     // num = (num >>> 7) - 1;
     num = ((num - (num % 0x80)) / 0x80) - 1;
     len += 1;
@@ -903,8 +948,10 @@ function sizeVarint2(num) {
 
   for (;;) {
     size += 1;
+
     if (num <= 0x7f)
       break;
+
     // num = (num >>> 7) - 1;
     num = ((num - (num % 0x80)) / 0x80) - 1;
   }
@@ -935,8 +982,10 @@ function readBytes(data, off, size) {
   if (off + size > data.length)
     throw new EncodingError(off, 'Out of bounds read');
 
-  const buf = Buffer.allocUnsafe(size);
+  const buf = Buffer.allocUnsafeSlow(size);
+
   data.copy(buf, 0, off, off + size);
+
   return buf;
 }
 
@@ -989,8 +1038,10 @@ function writeString(data, str, off, enc) {
 function realloc(data, size) {
   enforce(Buffer.isBuffer(data), 'data', 'buffer');
 
-  const buf = Buffer.allocUnsafe(size);
+  const buf = Buffer.allocUnsafeSlow(size);
+
   data.copy(buf, 0);
+
   return buf;
 }
 
@@ -1004,7 +1055,7 @@ function concat(a, b) {
   enforce(Buffer.isBuffer(b), 'b', 'buffer');
 
   const size = a.length + b.length;
-  const buf = Buffer.allocUnsafe(size);
+  const buf = Buffer.allocUnsafeSlow(size);
 
   a.copy(buf, 0);
   b.copy(buf, a.length);

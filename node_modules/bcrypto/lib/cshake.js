@@ -129,7 +129,7 @@ class CSHAKE extends Keccak {
     if (n === 0)
       n = 1;
 
-    const buf = Buffer.allocUnsafe(n + 1);
+    const buf = Buffer.alloc(n + 1);
 
     for (let i = 1; i <= n; i++)
       buf[i] = x >>> (8 * (n - i));
@@ -156,7 +156,7 @@ class CSHAKE extends Keccak {
     if (n === 0)
       n = 1;
 
-    const buf = Buffer.allocUnsafe(n + 1);
+    const buf = Buffer.alloc(n + 1);
 
     for (let i = 1; i <= n; i++)
       buf[i - 1] = x >>> (8 * (n - i));

@@ -37,7 +37,9 @@ const types = {
       assertType(typeof v === 'string');
       assertType(v.length === 1);
       assertLen(o + 1 <= k.length);
+
       k[o] = v.charCodeAt(0);
+
       return 1;
     }
   },
@@ -55,7 +57,9 @@ const types = {
     write(k, v, o) {
       assertType((v & 0xff) === v);
       assertLen(o + 1 <= k.length);
+
       k[o] = v;
+
       return 1;
     }
   },
@@ -73,7 +77,9 @@ const types = {
     write(k, v, o) {
       assertType((v & 0xffff) === v);
       assertLen(o + 2 <= k.length);
+
       writeU16BE(k, v, o);
+
       return 2;
     }
   },
@@ -91,7 +97,9 @@ const types = {
     write(k, v, o) {
       assertType((v >>> 0) === v);
       assertLen(o + 4 <= k.length);
+
       writeU32BE(k, v, o);
+
       return 4;
     }
   },
@@ -197,6 +205,7 @@ const types = {
       assertLen(o + 1 <= k.length);
       assertLen(k[o] >= 1 && k[o] <= 64);
       assertLen(o + 1 + k[o] <= k.length);
+
       return k.slice(o + 1, o + 1 + k[o]);
     },
     write(k, v, o) {
@@ -254,6 +263,7 @@ const types = {
       assertLen(o + 1 <= k.length);
       assertLen(k[o] >= 1 && k[o] <= 64);
       assertLen(o + 1 + k[o] <= k.length);
+
       return k.toString('hex', o + 1, o + 1 + k[o]);
     },
     write(k, v, o) {
@@ -301,6 +311,7 @@ class BaseKey {
       return cache;
 
     const key = new BaseKey(ops);
+
     keyCache[hash] = key;
 
     return key;
@@ -339,6 +350,7 @@ class BaseKey {
     for (let i = this.index; i < args.length; i++) {
       const op = this.ops[i];
       const arg = args[i];
+
       if (op.dynamic)
         size += op.size(arg);
     }
@@ -362,6 +374,7 @@ class BaseKey {
     for (let i = 0; i < this.ops.length; i++) {
       const op = this.ops[i];
       const arg = args[i];
+
       offset += op.write(key, arg, offset);
     }
 
@@ -383,7 +396,9 @@ class BaseKey {
 
     for (const op of this.ops) {
       const arg = op.read(key, offset);
+
       offset += op.size(arg);
+
       args.push(arg);
     }
 
@@ -393,22 +408,28 @@ class BaseKey {
   min(id, args) {
     for (let i = args.length; i < this.ops.length; i++) {
       const op = this.ops[i];
+
       args.push(op.min);
     }
+
     return this.encode(id, args);
   }
 
   max(id, args) {
     for (let i = args.length; i < this.ops.length; i++) {
       const op = this.ops[i];
+
       args.push(op.max);
     }
+
     return this.encode(id, args);
   }
 
   root(id) {
     const key = Buffer.allocUnsafe(1);
+
     key[0] = id;
+
     return key;
   }
 }
@@ -478,6 +499,7 @@ function sizeString(v, enc) {
 function readString(k, o, enc) {
   assertLen(o + 1 <= k.length);
   assertLen(o + 1 + k[o] <= k.length);
+
   return k.toString(enc, o + 1, o + 1 + k[o]);
 }
 
@@ -505,6 +527,7 @@ function sizeBuffer(v) {
 function readBuffer(k, o) {
   assertLen(o + 1 <= k.length);
   assertLen(o + 1 + k[o] <= k.length);
+
   return k.slice(o + 1, o + 1 + k[o]);
 }
 
@@ -512,30 +535,39 @@ function writeBuffer(k, v, o, enc) {
   assertType(Buffer.isBuffer(v));
   assertLen(v.length <= 255);
   assertLen(o + 1 <= k.length);
+
   k[o] = v.length;
+
   assertLen(v.copy(k, o + 1) === v.length);
+
   return 1 + v.length;
 }
 
 function sizeHex(data) {
   if (Buffer.isBuffer(data))
     return data.length;
+
   assertType(typeof data === 'string');
+
   return data.length >>> 1;
 }
 
 function writeHex(data, str, off) {
   if (Buffer.isBuffer(str))
     return str.copy(data, off);
+
   assertType(typeof str === 'string');
+
   return data.write(str, off, 'hex');
 }
 
 function assertLen(ok) {
   if (!ok) {
     const err = new RangeError('Invalid length for database key.');
+
     if (Error.captureStackTrace)
       Error.captureStackTrace(err, assertLen);
+
     throw err;
   }
 }
@@ -543,17 +575,19 @@ function assertLen(ok) {
 function assertType(ok) {
   if (!ok) {
     const err = new TypeError('Invalid type for database key.');
+
     if (Error.captureStackTrace)
       Error.captureStackTrace(err, assertType);
+
     throw err;
   }
 }
 
 function readU32BE(data, off) {
   return (data[off++] * 0x1000000
-    + data[off++] * 0x10000
-    + data[off++] * 0x100
-    + data[off]);
+        + data[off++] * 0x10000
+        + data[off++] * 0x100
+        + data[off]);
 }
 
 function readU16BE(data, off) {

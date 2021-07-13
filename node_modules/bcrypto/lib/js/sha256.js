@@ -55,7 +55,7 @@ class SHA256 {
   constructor() {
     this.state = new Uint32Array(8);
     this.msg = new Uint32Array(64);
-    this.block = Buffer.allocUnsafe(64);
+    this.block = Buffer.alloc(64);
     this.size = FINALIZED;
   }
 
@@ -79,7 +79,7 @@ class SHA256 {
   }
 
   final() {
-    return this._final(Buffer.allocUnsafe(32));
+    return this._final(Buffer.alloc(32));
   }
 
   _update(data, len) {

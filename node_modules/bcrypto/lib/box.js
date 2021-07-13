@@ -67,6 +67,6 @@ function open(msg, priv) {
  * Expose
  */
 
-exports.native = 0;
+exports.native = box.native;
 exports.seal = seal;
 exports.open = open;

@@ -62,7 +62,7 @@ class StaticWriter {
 
     enforce((options >>> 0) === options, 'size', 'integer');
 
-    this.data = Buffer.allocUnsafe(options);
+    this.data = Buffer.allocUnsafeSlow(options);
     this.offset = 0;
 
     return this;
@@ -79,10 +79,12 @@ class StaticWriter {
 
     if (size <= POOL_SIZE) {
       if (!POOL)
-        POOL = Buffer.allocUnsafe(POOL_SIZE);
+        POOL = Buffer.allocUnsafeSlow(POOL_SIZE);
 
       const bw = new StaticWriter();
+
       bw.data = POOL.slice(0, size);
+
       return bw;
     }
 
@@ -558,8 +560,10 @@ class StaticWriter {
 
   writeBytes(value) {
     enforce(Buffer.isBuffer(value), 'value', 'buffer');
+
     this.check(value.length);
     this.offset += value.copy(this.data, this.offset);
+
     return this;
   }
 
@@ -570,8 +574,10 @@ class StaticWriter {
 
   writeVarBytes(value) {
     enforce(Buffer.isBuffer(value), 'value', 'buffer');
+
     this.writeVarint(value.length);
     this.writeBytes(value);
+
     return this;
   }
 
@@ -611,6 +617,7 @@ class StaticWriter {
       return this;
 
     const size = Buffer.byteLength(value, enc);
+
     this.check(size);
 
     this.offset += this.data.write(value, this.offset, enc);
@@ -630,9 +637,12 @@ class StaticWriter {
       this.writeBytes(value);
       return this;
     }
+
     enforce(value.length === 64, 'value', '32-byte hash');
+
     this.check(32);
     this.offset += this.data.write(value, this.offset, 'hex');
+
     return this;
   }
 
@@ -681,13 +691,15 @@ class StaticWriter {
    */
 
   writeChecksum(hash) {
-    enforce(typeof hash === 'function', 'hash', 'function');
+    if (!hash || typeof hash.digest !== 'function')
+      enforce(typeof hash === 'function', 'hash', 'function');
 
     this.check(4);
 
     const data = this.data.slice(0, this.offset);
+    const raw = hash.digest ? hash.digest(data) : hash(data);
 
-    hash(data).copy(this.data, this.offset, 0, 4);
+    raw.copy(this.data, this.offset, 0, 4);
 
     this.offset += 4;
 

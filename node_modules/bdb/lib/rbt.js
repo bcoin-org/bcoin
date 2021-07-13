@@ -132,6 +132,7 @@ class RBT {
     while (x !== this.root && x.parent.color === RED) {
       if (x.parent === x.parent.parent.left) {
         const y = x.parent.parent.right;
+
         if (!y.isNull() && y.color === RED) {
           x.parent.color = BLACK;
           y.color = BLACK;
@@ -142,12 +143,15 @@ class RBT {
             x = x.parent;
             this.rotl(x);
           }
+
           x.parent.color = BLACK;
           x.parent.parent.color = RED;
+
           this.rotr(x.parent.parent);
         }
       } else {
         const y = x.parent.parent.left;
+
         if (!y.isNull() && y.color === RED) {
           x.parent.color = BLACK;
           y.color = BLACK;
@@ -158,8 +162,10 @@ class RBT {
             x = x.parent;
             this.rotr(x);
           }
+
           x.parent.color = BLACK;
           x.parent.parent.color = RED;
+
           this.rotl(x.parent.parent);
         }
       }
@@ -207,6 +213,7 @@ class RBT {
       y = this.successor(z);
 
     const x = y.left.isNull() ? y.right : y.left;
+
     x.parent = y.parent;
 
     if (y.parent.isNull()) {
@@ -255,10 +262,13 @@ class RBT {
             this.rotr(w);
             w = x.parent.right;
           }
+
           w.color = x.parent.color;
           x.parent.color = BLACK;
           w.right.color = BLACK;
+
           this.rotl(x.parent);
+
           x = this.root;
         }
       } else {
@@ -281,10 +291,13 @@ class RBT {
             this.rotl(w);
             w = x.parent.left;
           }
+
           w.color = x.parent.color;
           x.parent.color = BLACK;
           w.left.color = BLACK;
+
           this.rotr(x.parent);
+
           x = this.root;
         }
       }
@@ -403,6 +416,7 @@ class RBT {
     }
 
     let y = x.parent;
+
     while (!y.isNull() && x === y.right) {
       x = y;
       y = y.parent;
@@ -429,6 +443,7 @@ class RBT {
     }
 
     let y = x.parent;
+
     while (!y.isNull() && x === y.left) {
       x = y;
       y = y.parent;
@@ -776,10 +791,12 @@ class RBTNode {
 
   clone() {
     const node = new RBTNode(this.key, this.value);
+
     node.color = this.color;
     node.parent = this.parent;
     node.left = this.left;
     node.right = this.right;
+
     return node;
   }
 

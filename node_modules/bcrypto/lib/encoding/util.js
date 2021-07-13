@@ -160,11 +160,9 @@ function padLeft(data, size) {
   if (data.length > size)
     throw new RangeError(`Buffer expected to be ${size} bytes in size.`);
 
-  const out = Buffer.allocUnsafe(size);
-  const left = size - data.length;
+  const out = Buffer.alloc(size, 0x00);
 
-  out.fill(0x00, 0, left);
-  data.copy(out, left);
+  data.copy(out, size - data.length);
 
   return out;
 }
@@ -179,10 +177,9 @@ function padRight(data, size) {
   if (data.length > size)
     throw new RangeError(`Buffer expected to be ${size} bytes in size.`);
 
-  const out = Buffer.allocUnsafe(size);
+  const out = Buffer.alloc(size, 0x00);
 
   data.copy(out, 0);
-  out.fill(0x00, data.length, size);
 
   return out;
 }

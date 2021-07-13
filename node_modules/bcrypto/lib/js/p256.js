@@ -13,4 +13,4 @@ const SHA256 = require('../sha256');
  * Expose
  */
 
-module.exports = new ECDSA('P256', SHA256);
+module.exports = new ECDSA('P256', SHA256, SHA256);
