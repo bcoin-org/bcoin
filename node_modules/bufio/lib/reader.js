@@ -139,7 +139,8 @@ class BufferReader {
     if (this.zeroCopy || zeroCopy)
       return data.slice(start, end);
 
-    const ret = Buffer.allocUnsafe(size);
+    const ret = Buffer.allocUnsafeSlow(size);
+
     data.copy(ret, 0, start, end);
 
     return ret;
@@ -163,8 +164,11 @@ class BufferReader {
 
   readU8() {
     this.check(1);
+
     const ret = this.data[this.offset];
+
     this.offset += 1;
+
     return ret;
   }
 
@@ -175,8 +179,11 @@ class BufferReader {
 
   readU16() {
     this.check(2);
+
     const ret = encoding.readU16(this.data, this.offset);
+
     this.offset += 2;
+
     return ret;
   }
 
@@ -187,8 +194,11 @@ class BufferReader {
 
   readU16BE() {
     this.check(2);
+
     const ret = encoding.readU16BE(this.data, this.offset);
+
     this.offset += 2;
+
     return ret;
   }
 
@@ -199,8 +209,11 @@ class BufferReader {
 
   readU24() {
     this.check(3);
+
     const ret = encoding.readU24(this.data, this.offset);
+
     this.offset += 3;
+
     return ret;
   }
 
@@ -211,8 +224,11 @@ class BufferReader {
 
   readU24BE() {
     this.check(3);
+
     const ret = encoding.readU24BE(this.data, this.offset);
+
     this.offset += 3;
+
     return ret;
   }
 
@@ -223,8 +239,11 @@ class BufferReader {
 
   readU32() {
     this.check(4);
+
     const ret = encoding.readU32(this.data, this.offset);
+
     this.offset += 4;
+
     return ret;
   }
 
@@ -235,8 +254,11 @@ class BufferReader {
 
   readU32BE() {
     this.check(4);
+
     const ret = encoding.readU32BE(this.data, this.offset);
+
     this.offset += 4;
+
     return ret;
   }
 
@@ -247,8 +269,11 @@ class BufferReader {
 
   readU40() {
     this.check(5);
+
     const ret = encoding.readU40(this.data, this.offset);
+
     this.offset += 5;
+
     return ret;
   }
 
@@ -259,8 +284,11 @@ class BufferReader {
 
   readU40BE() {
     this.check(5);
+
     const ret = encoding.readU40BE(this.data, this.offset);
+
     this.offset += 5;
+
     return ret;
   }
 
@@ -271,8 +299,11 @@ class BufferReader {
 
   readU48() {
     this.check(6);
+
     const ret = encoding.readU48(this.data, this.offset);
+
     this.offset += 6;
+
     return ret;
   }
 
@@ -283,8 +314,11 @@ class BufferReader {
 
   readU48BE() {
     this.check(6);
+
     const ret = encoding.readU48BE(this.data, this.offset);
+
     this.offset += 6;
+
     return ret;
   }
 
@@ -295,8 +329,11 @@ class BufferReader {
 
   readU56() {
     this.check(7);
+
     const ret = encoding.readU56(this.data, this.offset);
+
     this.offset += 7;
+
     return ret;
   }
 
@@ -307,8 +344,11 @@ class BufferReader {
 
   readU56BE() {
     this.check(7);
+
     const ret = encoding.readU56BE(this.data, this.offset);
+
     this.offset += 7;
+
     return ret;
   }
 
@@ -320,8 +360,11 @@ class BufferReader {
 
   readU64() {
     this.check(8);
+
     const ret = encoding.readU64(this.data, this.offset);
+
     this.offset += 8;
+
     return ret;
   }
 
@@ -333,8 +376,11 @@ class BufferReader {
 
   readU64BE() {
     this.check(8);
+
     const ret = encoding.readU64BE(this.data, this.offset);
+
     this.offset += 8;
+
     return ret;
   }
 
@@ -345,8 +391,11 @@ class BufferReader {
 
   readI8() {
     this.check(1);
+
     const ret = encoding.readI8(this.data, this.offset);
+
     this.offset += 1;
+
     return ret;
   }
 
@@ -357,8 +406,11 @@ class BufferReader {
 
   readI16() {
     this.check(2);
+
     const ret = encoding.readI16(this.data, this.offset);
+
     this.offset += 2;
+
     return ret;
   }
 
@@ -369,8 +421,11 @@ class BufferReader {
 
   readI16BE() {
     this.check(2);
+
     const ret = encoding.readI16BE(this.data, this.offset);
+
     this.offset += 2;
+
     return ret;
   }
 
@@ -381,8 +436,11 @@ class BufferReader {
 
   readI24() {
     this.check(3);
+
     const ret = encoding.readI24(this.data, this.offset);
+
     this.offset += 3;
+
     return ret;
   }
 
@@ -393,8 +451,11 @@ class BufferReader {
 
   readI24BE() {
     this.check(3);
+
     const ret = encoding.readI24BE(this.data, this.offset);
+
     this.offset += 3;
+
     return ret;
   }
 
@@ -405,8 +466,11 @@ class BufferReader {
 
   readI32() {
     this.check(4);
+
     const ret = encoding.readI32(this.data, this.offset);
+
     this.offset += 4;
+
     return ret;
   }
 
@@ -417,8 +481,11 @@ class BufferReader {
 
   readI32BE() {
     this.check(4);
+
     const ret = encoding.readI32BE(this.data, this.offset);
+
     this.offset += 4;
+
     return ret;
   }
 
@@ -429,8 +496,11 @@ class BufferReader {
 
   readI40() {
     this.check(5);
+
     const ret = encoding.readI40(this.data, this.offset);
+
     this.offset += 5;
+
     return ret;
   }
 
@@ -441,8 +511,11 @@ class BufferReader {
 
   readI40BE() {
     this.check(5);
+
     const ret = encoding.readI40BE(this.data, this.offset);
+
     this.offset += 5;
+
     return ret;
   }
 
@@ -453,8 +526,11 @@ class BufferReader {
 
   readI48() {
     this.check(6);
+
     const ret = encoding.readI48(this.data, this.offset);
+
     this.offset += 6;
+
     return ret;
   }
 
@@ -465,8 +541,11 @@ class BufferReader {
 
   readI48BE() {
     this.check(6);
+
     const ret = encoding.readI48BE(this.data, this.offset);
+
     this.offset += 6;
+
     return ret;
   }
 
@@ -477,8 +556,11 @@ class BufferReader {
 
   readI56() {
     this.check(7);
+
     const ret = encoding.readI56(this.data, this.offset);
+
     this.offset += 7;
+
     return ret;
   }
 
@@ -489,8 +571,11 @@ class BufferReader {
 
   readI56BE() {
     this.check(7);
+
     const ret = encoding.readI56BE(this.data, this.offset);
+
     this.offset += 7;
+
     return ret;
   }
 
@@ -502,8 +587,11 @@ class BufferReader {
 
   readI64() {
     this.check(8);
+
     const ret = encoding.readI64(this.data, this.offset);
+
     this.offset += 8;
+
     return ret;
   }
 
@@ -515,8 +603,11 @@ class BufferReader {
 
   readI64BE() {
     this.check(8);
+
     const ret = encoding.readI64BE(this.data, this.offset);
+
     this.offset += 8;
+
     return ret;
   }
 
@@ -527,8 +618,11 @@ class BufferReader {
 
   readFloat() {
     this.check(4);
+
     const ret = encoding.readFloat(this.data, this.offset);
+
     this.offset += 4;
+
     return ret;
   }
 
@@ -539,8 +633,11 @@ class BufferReader {
 
   readFloatBE() {
     this.check(4);
+
     const ret = encoding.readFloatBE(this.data, this.offset);
+
     this.offset += 4;
+
     return ret;
   }
 
@@ -551,8 +648,11 @@ class BufferReader {
 
   readDouble() {
     this.check(8);
+
     const ret = encoding.readDouble(this.data, this.offset);
+
     this.offset += 8;
+
     return ret;
   }
 
@@ -563,8 +663,11 @@ class BufferReader {
 
   readDoubleBE() {
     this.check(8);
+
     const ret = encoding.readDoubleBE(this.data, this.offset);
+
     this.offset += 8;
+
     return ret;
   }
 
@@ -575,7 +678,9 @@ class BufferReader {
 
   readVarint() {
     const {size, value} = encoding.readVarint(this.data, this.offset);
+
     this.offset += size;
+
     return value;
   }
 
@@ -586,7 +691,9 @@ class BufferReader {
 
   readVarint2() {
     const {size, value} = encoding.readVarint2(this.data, this.offset);
+
     this.offset += size;
+
     return value;
   }
 
@@ -606,10 +713,11 @@ class BufferReader {
     this.check(size);
 
     let ret;
+
     if (this.zeroCopy || zeroCopy) {
       ret = this.data.slice(this.offset, this.offset + size);
     } else {
-      ret = Buffer.allocUnsafe(size);
+      ret = Buffer.allocUnsafeSlow(size);
       this.data.copy(ret, 0, this.offset, this.offset + size);
     }
 
@@ -642,8 +750,8 @@ class BufferReader {
     this.check(size);
 
     const data = this.data.slice(0, this.offset + size);
-
     const br = new this.constructor(data);
+
     br.offset = this.offset;
 
     this.offset += size;
@@ -744,7 +852,8 @@ class BufferReader {
    */
 
   createChecksum(hash) {
-    enforce(typeof hash === 'function', 'hash', 'function');
+    if (!hash || typeof hash.digest !== 'function')
+      enforce(typeof hash === 'function', 'hash', 'function');
 
     let start = 0;
 
@@ -752,8 +861,9 @@ class BufferReader {
       start = this.stack[this.stack.length - 1];
 
     const data = this.data.slice(start, this.offset);
+    const raw = hash.digest ? hash.digest(data) : hash(data);
 
-    return encoding.readU32(hash(data), 0);
+    return encoding.readU32(raw, 0);
   }
 
   /**

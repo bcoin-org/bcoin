@@ -15,4 +15,4 @@ const pre = require('./precomputed/secp256k1.json');
  * Expose
  */
 
-module.exports = new ECDSA('SECP256K1', SHA256, pre);
+module.exports = new ECDSA('SECP256K1', SHA256, SHA256, pre);

@@ -190,6 +190,7 @@ class DB {
         reject(new Error('Database is closed.'));
         return;
       }
+
       this.binding.backup(path, wrap(resolve, reject));
     });
   }
@@ -245,19 +246,23 @@ class DB {
         reject(new Error('Database is closed.'));
         return;
       }
+
       if (!Buffer.isBuffer(key)) {
         reject(new Error('Key must be a buffer.'));
         return;
       }
+
       this.binding.get(key, (err, result) => {
         if (err) {
           if (isNotFound(err)) {
             resolve(null);
             return;
           }
+
           reject(err);
           return;
         }
+
         resolve(result);
       });
     });
@@ -279,10 +284,12 @@ class DB {
         reject(new Error('Database is closed.'));
         return;
       }
+
       if (!Buffer.isBuffer(key) || !Buffer.isBuffer(value)) {
         reject(new Error('Key and value must be buffers.'));
         return;
       }
+
       this.binding.put(key, value, wrap(resolve, reject));
     });
   }
@@ -299,10 +306,12 @@ class DB {
         reject(new Error('Database is closed.'));
         return;
       }
+
       if (!Buffer.isBuffer(key)) {
         reject(new Error('Key must be a buffer.'));
         return;
       }
+
       this.binding.del(key, wrap(resolve, reject));
     });
   }
@@ -511,6 +520,7 @@ class DB {
     for (const item of items) {
       const key = item.key.toString('hex');
       const value = item.value.toString('hex');
+
       records[key] = value;
     }
 
@@ -532,12 +542,17 @@ class DB {
     const data = await this.get(key);
 
     if (!data) {
-      const value = Buffer.allocUnsafe(name.length + 4);
+      const value = Buffer.alloc(name.length + 4);
+
       value.write(name, 0, 'ascii');
       value.writeUInt32LE(version, name.length);
+
       const batch = this.batch();
+
       batch.put(key, value);
+
       await batch.write();
+
       return;
     }
 
@@ -564,6 +579,7 @@ class DB {
       throw new Error('Database is closed.');
 
     const options = new DBOptions(this.options);
+
     options.createIfMissing = true;
     options.errorIfExists = true;
 
@@ -602,9 +618,10 @@ class DB {
       total += value.length + 80;
 
       if (total >= hwm) {
-        total = 0;
         await batch.write();
+
         batch = db.batch();
+        total = 0;
       }
     });
 
@@ -731,9 +748,10 @@ class Bucket {
    */
 
   constructor(db, prefix) {
-    this.db = db;
     assert(prefix == null || Buffer.isBuffer(prefix),
       'Prefix must be a buffer.');
+
+    this.db = db;
     this.prefix = prefix || null;
   }
 
@@ -1131,8 +1149,10 @@ class Iterator {
 
   seek(key) {
     assert(Buffer.isBuffer(key), 'Key must be a buffer.');
+
     this.start();
     this.binding.seek(key);
+
     return this;
   }
 
@@ -1151,6 +1171,7 @@ class Iterator {
           return;
         }
       }
+
       this.cleanup();
       this.binding.end(wrap(resolve, reject));
     });
@@ -1170,6 +1191,7 @@ class Iterator {
     await this.each((key, value) => {
       if (parse) {
         const item = parse(key, value);
+
         if (item != null)
           items.push(item);
       } else {
@@ -1500,11 +1522,10 @@ function increment(key) {
   let i = out.length - 1;
 
   for (; i >= 0; i--) {
-    if (out[i] !== 0xff) {
-      out[i] += 1;
+    out[i] += 1;
+
+    if (out[i] !== 0x00)
       break;
-    }
-    out[i] = 0;
   }
 
   if (i === -1)

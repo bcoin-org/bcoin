@@ -69,8 +69,8 @@ function derive(passwd, salt, N, r, p, len) {
   if (N > 0xffffffff)
     throw new Error('EINVAL');
 
-  const XY = Buffer.allocUnsafe(256 * r);
-  const V = Buffer.allocUnsafe(128 * r * N);
+  const XY = Buffer.alloc(256 * r);
+  const V = Buffer.alloc(128 * r * N);
   const B = pbkdf2.derive(SHA256, passwd, salt, 1, p * 128 * r);
 
   for (let i = 0; i < p; i++)
@@ -118,8 +118,8 @@ async function deriveAsync(passwd, salt, N, r, p, len) {
   if (N > 0xffffffff)
     throw new Error('EINVAL');
 
-  const XY = Buffer.allocUnsafe(256 * r);
-  const V = Buffer.allocUnsafe(128 * r * N);
+  const XY = Buffer.alloc(256 * r);
+  const V = Buffer.alloc(128 * r * N);
   const B = await pbkdf2.deriveAsync(SHA256, passwd, salt, 1, p * 128 * r);
 
   for (let i = 0; i < p; i++)

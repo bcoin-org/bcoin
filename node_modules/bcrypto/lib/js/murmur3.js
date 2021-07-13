@@ -24,7 +24,7 @@ function sum(data, seed) {
   assert(Buffer.isBuffer(data));
   assert(typeof seed === 'number');
 
-  const tail = data.length - (data.length % 4);
+  const tail = data.length - (data.length & 3);
   const c1 = 0xcc9e2d51;
   const c2 = 0x1b873593;
 

@@ -20,7 +20,7 @@ const {CBCCipher, CBCDecipher} = require('./ciphers/modes');
 function encipher(data, key, iv) {
   const ctx = new CBCCipher(new AES(256));
   ctx.init(key, iv);
-  return concat(ctx.update(data), ctx.final());
+  return Buffer.concat([ctx.update(data), ctx.final()]);
 }
 
 /**
@@ -34,18 +34,7 @@ function encipher(data, key, iv) {
 function decipher(data, key, iv) {
   const ctx = new CBCDecipher(new AES(256));
   ctx.init(key, iv);
-  return concat(ctx.update(data), ctx.final());
-}
-
-/*
- * Helpers
- */
-
-function concat(a, b) {
-  const data = Buffer.allocUnsafe(a.length + b.length);
-  a.copy(data, 0);
-  b.copy(data, a.length);
-  return data;
+  return Buffer.concat([ctx.update(data), ctx.final()]);
 }
 
 /*

@@ -6,8 +6,7 @@
 
 'use strict';
 
-const binding = require('./binding');
-const {Hash, HMAC, hashes} = binding;
+const {Hash, HMAC, hashes} = require('./hash');
 
 /*
  * MD2

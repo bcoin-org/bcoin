@@ -13,4 +13,4 @@ const SHA384 = require('../sha384');
  * Expose
  */
 
-module.exports = new ECDSA('P384', SHA384);
+module.exports = new ECDSA('P384', SHA384, SHA384);

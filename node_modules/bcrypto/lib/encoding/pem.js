@@ -420,7 +420,7 @@ function crc24(data) {
 
   crc &= 0xffffff;
 
-  const buf = Buffer.allocUnsafe(3);
+  const buf = Buffer.alloc(3);
 
   buf[2] = crc;
   crc >>>= 8;

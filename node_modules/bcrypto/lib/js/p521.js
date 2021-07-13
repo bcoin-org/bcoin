@@ -8,9 +8,10 @@
 
 const ECDSA = require('./ecdsa');
 const SHA512 = require('../sha512');
+const SHAKE256 = require('../shake256');
 
 /*
  * Expose
  */
 
-module.exports = new ECDSA('P521', SHA512);
+module.exports = new ECDSA('P521', SHA512, SHAKE256);

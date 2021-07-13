@@ -33,7 +33,7 @@ class Hash256 {
   }
 
   final() {
-    const out = Buffer.allocUnsafe(32);
+    const out = Buffer.alloc(32);
 
     this.ctx._final(out);
     this.ctx.init();

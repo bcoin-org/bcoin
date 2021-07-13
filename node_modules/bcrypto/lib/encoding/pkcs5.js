@@ -24,7 +24,8 @@ const pkcs5 = {
     assert(size > 0 && size < 256);
 
     const left = size - (pt.length % size);
-    const out = Buffer.allocUnsafe(pt.length + left);
+    const out = Buffer.alloc(pt.length + left);
+
     pt.copy(out, 0);
 
     for (let i = pt.length; i < out.length; i++)
@@ -39,19 +40,34 @@ const pkcs5 = {
     assert(size > 0 && size < 256);
 
     if (pt.length < size || (pt.length % size) !== 0)
-      throw new Error('Invalid padding.');
+      throw new Error('Invalid block.');
 
-    const left = pt[pt.length - 1];
+    let left = pt[pt.length - 1];
+    let res = 1;
 
-    if (left === 0 || left > size)
-      throw new Error('Invalid padding.');
+    // left != 0
+    res &= ((left - 1) >>> 31) ^ 1;
 
-    for (let i = pt.length - left; i < pt.length; i++) {
-      if (pt[i] !== left)
-        throw new Error('Invalid padding.');
+    // left <= size
+    res &= (left - size - 1) >>> 31;
+
+    // left = 0 if left == 0 or left > size
+    left &= -res;
+
+    // Verify padding in constant time.
+    const end = size - left;
+
+    for (let i = 0; i < size; i++) {
+      const ch = pt[i];
+
+      // i < end or ch == left
+      res &= ((i - end) >>> 31) | (((ch ^ left) - 1) >>> 31);
     }
 
-    return pt.slice(0, -left);
+    if (!res)
+      throw new Error('Invalid padding.');
+
+    return pt.slice(0, end);
   }
 };
 

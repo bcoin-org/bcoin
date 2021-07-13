@@ -34,7 +34,7 @@ class MD5SHA1 {
   }
 
   final() {
-    const md = Buffer.allocUnsafe(36);
+    const md = Buffer.alloc(36);
 
     this.md5.final().copy(md, 0);
     this.sha1.final().copy(md, 16);

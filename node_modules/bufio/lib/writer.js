@@ -78,7 +78,7 @@ class BufferWriter {
    */
 
   render() {
-    const data = Buffer.allocUnsafe(this.offset);
+    const data = Buffer.allocUnsafeSlow(this.offset);
 
     let off = 0;
 
@@ -744,8 +744,11 @@ class BufferWriter {
       this.writeBytes(value);
       return this;
     }
+
     enforce(value.length === 64, 'value', '32-byte hash');
+
     this.writeString(value, 'hex');
+
     return this;
   }
 
@@ -796,9 +799,14 @@ class BufferWriter {
    */
 
   writeChecksum(hash) {
+    if (hash && typeof hash.digest === 'function')
+      hash = hash.digest.bind(hash);
+
     enforce(typeof hash === 'function', 'hash', 'function');
+
     this.offset += 4;
     this.ops.push(new FunctionOp(CHECKSUM, hash));
+
     return this;
   }
 

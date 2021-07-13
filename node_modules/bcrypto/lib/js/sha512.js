@@ -81,7 +81,7 @@ class SHA512 {
   constructor() {
     this.state = new Uint32Array(16);
     this.msg = new Uint32Array(160);
-    this.block = Buffer.allocUnsafe(128);
+    this.block = Buffer.alloc(128);
     this.size = FINALIZED;
   }
 
@@ -113,7 +113,7 @@ class SHA512 {
   }
 
   final() {
-    return this._final(Buffer.allocUnsafe(64));
+    return this._final(Buffer.alloc(64));
   }
 
   _update(data, len) {
