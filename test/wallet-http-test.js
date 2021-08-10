@@ -85,6 +85,30 @@ for (const witnessOpt of witnessOptions) {
       addr = Address.fromString(str, node.network);
     });
 
+    it('should enable seed phrase recovery', async () => {
+      const options = {
+        passphrase: 'PASSPHRASE',
+        mnemonic: 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
+      };
+  
+      const testwallet = await wclient.createWallet('testwallet', options);
+      assert.strictEqual(testwallet.master.encrypted, false);
+  
+      const master1 = await wclient.getMaster('testwallet');
+      assert.strictEqual(master1.encrypted, false);
+      assert.strictEqual(master1.mnemonic.phrase, 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong');
+  
+      await wclient.lock('testwallet');
+      const master2 = await wclient.getMaster('testwallet');
+      assert.strictEqual(master2.encrypted, true);
+      assert.strictEqual(master2.key, undefined);
+  
+      await wclient.unlock('testwallet', 'PASSPHRASE', 100);
+      const master3 = await wclient.getMaster('testwallet');
+      assert.strictEqual(master3.encrypted, false);
+      assert.strictEqual(master3.mnemonic.phrase, 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong');
+    });
+
     it('should fill with funds', async () => {
       const mtx = new MTX();
       mtx.addOutpoint(new Outpoint(consensus.ZERO_HASH, 0));
