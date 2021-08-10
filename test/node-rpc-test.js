@@ -7,6 +7,7 @@ const assert = require('bsert');
 const FullNode = require('../lib/node/fullnode');
 const NodeClient = require('../lib/client/node');
 const KeyRing = require('../lib/primitives/keyring');
+const util = require('../lib/utils/util');
 
 const ports = {
   p2p: 49331,
@@ -26,7 +27,8 @@ const node = new FullNode({
   httpPort: ports.node,
   env: {
     'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
-  }
+  },
+  listen: true
 });
 
 const nclient = new NodeClient({
@@ -68,11 +70,75 @@ describe('RPC', function() {
     assert.deepEqual(info.localservicenames, ['NETWORK', 'WITNESS']);
   });
 
+  it('should rpc getblockhash', async () => {
+    const info = await nclient.execute('getblockhash', [node.chain.tip.height]);
+    assert.strictEqual(util.revHex(node.chain.tip.hash), info);
+  });
+
+  describe('Blockchain', function () {
+    it('should rpc getchaintips', async () => {
+      const info = await nclient.execute('getchaintips', []);
+      assert.strictEqual(info.length, 1);
+      assert.strictEqual(util.revHex(node.chain.tip.hash), info[0].hash);
+    });
+
+    it('should rpc getchaintips when a block is mined', async () => {
+      const entry = await node.chain.getEntry(node.chain.tip.height - 1);
+      const block = await node.miner.mineBlock(entry);
+      await node.chain.add(block);
+
+      const info = await nclient.execute('getchaintips', []);
+      assert.strictEqual(info.length, 1);
+      assert.strictEqual(util.revHex(node.chain.tip.hash), info[0].hash);
+    });
+  });
+
+  describe('Networking', function () {
+    const peer = new FullNode({
+      network: 'regtest',
+      memory: true,
+      port: ports.p2p + 100,
+      httpPort: ports.node + 100,
+      only: [`127.0.0.1:${ports.p2p}`]
+    });
+
+    after(async() => {
+      if (peer.opened)
+        await peer.close();
+    });
+
+    it('should rpc getpeerinfo without peers', async () => {
+      const info = await nclient.execute('getpeerinfo', []);
+      assert.deepEqual(info, []);
+    });
+
+    it('should rpc getconnectioncount without peers', async () => {
+      const connectionsCnt = await nclient.execute('getconnectioncount', []);
+      assert.strictEqual(connectionsCnt, 0);
+    });
+
+    it('should conenct to a peer', async () => {
+      await node.connect();
+      await peer.open();
+      await peer.connect();
+    });
+
+    it('should rpc getpeerinfo with peers', async () => {
+      const info = await nclient.execute('getpeerinfo', []);
+      assert.strictEqual(info.length, 1);
+      assert.strictEqual(info[0].inbound, true);
+      assert.strictEqual(info[0].addrlocal, `127.0.0.1:${ports.p2p}`);
+    });
+
+    it('should rpc getconnectioncount with peers', async () => {
+      const connectionsCnt = await nclient.execute('getconnectioncount', []);
+      assert.strictEqual(connectionsCnt, 1);
+    });
+  });
+
   describe('getblock', function () {
     it('should rpc getblock', async () => {
-      const {chain} = await nclient.getInfo();
-      const info = await nclient.execute('getblock', [chain.tip]);
-
+      const info = await nclient.execute('getblock', [util.revHex(node.chain.tip.hash)]);
       const properties = [
         'hash', 'confirmations', 'strippedsize',
         'size', 'weight', 'height', 'version',
@@ -85,9 +151,10 @@ describe('RPC', function() {
       for (const property of properties)
         assert(property in info);
 
-      assert.deepEqual(chain.height, info.height);
-      assert.deepEqual(chain.tip, info.hash);
-      assert.equal(info.bits, '207fffff');
+      assert.strictEqual(node.chain.tip.bits, parseInt(info.bits, 16));
+      assert.strictEqual(util.revHex(node.chain.tip.merkleRoot), info.merkleroot);
+      assert.strictEqual(util.revHex(node.chain.tip.hash), info.hash);
+      assert.equal(node.chain.tip.version, info.version);
     });
 
     it('should return correct height', async () => {
@@ -99,43 +166,41 @@ describe('RPC', function() {
       // Mine two blocks.
       await nclient.execute('generatetoaddress', [2, address]);
 
-      const {chain} = await nclient.getInfo();
-      const info = await nclient.execute('getblock', [chain.tip]);
+      const info = await nclient.execute('getblock', [util.revHex(node.chain.tip.hash)]);
 
       // Assert the heights match.
-      assert.deepEqual(chain.height, info.height);
+      assert.strictEqual(node.chain.tip.height, info.height);
     });
 
     it('should return confirmations (main chain)', async () => {
-      const {chain} = await nclient.getInfo();
-
       const {genesis} = node.network;
       const hash = genesis.hash.reverse().toString('hex');
 
       const info = await nclient.execute('getblock', [hash]);
 
-      assert.deepEqual(chain.height, info.confirmations - 1);
+      assert.strictEqual(node.chain.tip.height, info.confirmations - 1);
     });
 
     it('should return confirmations (orphan)', async () => {
-      // Get the current chain state
-      const {chain} = await nclient.getInfo();
-
       // Get the chain entry associated with
       // the genesis block.
       const {genesis} = node.network;
       let entry = await node.chain.getEntry(genesis.hash.reverse());
 
+     // Get current chain tip and chain height
+      const chainHeight = node.chain.tip.height + 1;
+      const chainTip = util.revHex(node.chain.tip.hash);
+
       // Reorg from the genesis block.
-      for (let i = 0; i < chain.height + 1; i++) {
+      for (let i = 0; i < chainHeight; i++) {
         const block = await node.miner.mineBlock(entry);
         await node.chain.add(block);
         entry = await node.chain.getEntry(block.hash());
       }
 
       // Call getblock using the previous tip
-      const info = await nclient.execute('getblock', [chain.tip]);
-      assert.deepEqual(info.confirmations, -1);
+      const info = await nclient.execute('getblock', [chainTip]);
+      assert.strictEqual(info.confirmations, -1);
     });
   });
 
