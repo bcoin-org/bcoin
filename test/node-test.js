@@ -626,7 +626,7 @@ describe('Node', function() {
 
   it('should add lesser transaction to mempool', async () => {
     const mtx = await wallet.createTX({
-      rate: 1000,
+      rate: 10000,
       outputs: [{
         value: 50000,
         address: await wallet.receiveAddress()
@@ -676,8 +676,8 @@ describe('Node', function() {
     assert.strictEqual(result.transactions.length, 2);
     assert.strictEqual(fees, tx1.getFee() + tx2.getFee());
     assert.strictEqual(weight, tx1.getWeight() + tx2.getWeight());
-    assert.strictEqual(result.transactions[0].hash, tx1.txid());
-    assert.strictEqual(result.transactions[1].hash, tx2.txid());
+    assert.strictEqual(result.transactions[0].txid, tx1.txid());
+    assert.strictEqual(result.transactions[1].txid, tx2.txid());
     assert.strictEqual(result.coinbasevalue, 125e7 + fees);
   });
 
@@ -731,8 +731,8 @@ describe('Node', function() {
     assert.strictEqual(result.transactions.length, 2);
     assert.strictEqual(fees, tx1.getFee() + tx2.getFee());
     assert.strictEqual(weight, tx1.getWeight() + tx2.getWeight());
-    assert.strictEqual(result.transactions[0].hash, tx2.txid());
-    assert.strictEqual(result.transactions[1].hash, tx1.txid());
+    assert.strictEqual(result.transactions[0].txid, tx2.txid());
+    assert.strictEqual(result.transactions[1].txid, tx1.txid());
     assert.strictEqual(result.coinbasevalue, 125e7 + fees);
   });
 

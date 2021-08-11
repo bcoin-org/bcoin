@@ -296,7 +296,8 @@ describe('Wallet', function() {
     const wallet = await wdb.create({
       type: 'multisig',
       m: 1,
-      n: 2
+      n: 2,
+      witness: false
     });
 
     const xpriv = HD.PrivateKey.generate();
@@ -842,14 +843,14 @@ describe('Wallet', function() {
     assert.strictEqual(t2.getInputValue(v2), 16380);
 
     // Should now have a change output:
-    assert.strictEqual(t2.getOutputValue(), 11130);
+    assert.strictEqual(t2.getOutputValue(), 13620);
 
-    assert.strictEqual(t2.getFee(v2), 5250);
+    assert.strictEqual(t2.getFee(v2), 2760);
 
-    assert.strictEqual(t2.getWeight(), 2084);
-    assert.strictEqual(t2.getBaseSize(), 521);
+    assert.strictEqual(t2.getWeight(), 1106);
+    assert.strictEqual(t2.getBaseSize(), 195);
     assert.strictEqual(t2.getSize(), 521);
-    assert.strictEqual(t2.getVirtualSize(), 521);
+    assert.strictEqual(t2.getVirtualSize(), 277);
 
     let balance = null;
     bob.once('balance', (b) => {

@@ -5,11 +5,8 @@
 
 const {BloomFilter} = require('bfilter');
 const assert = require('bsert');
-const {NodeClient, WalletClient} = require('../lib/client');
-const consensus = require('../lib/protocol/consensus');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
-const Outpoint = require('../lib/primitives/outpoint');
 const MTX = require('../lib/primitives/mtx');
 const FullNode = require('../lib/node/fullnode');
 const ChainEntry = require('../lib/blockchain/chainentry');
@@ -20,24 +17,20 @@ if (process.browser)
 
 const ports = {
   p2p: 49331,
-  node: 49332,
-  wallet: 49333
+  node: 49332
 };
 
 const node = new FullNode({
   network: 'regtest',
   apiKey: 'foo',
-  walletAuth: true,
   memory: true,
   workers: true,
   workersSize: 2,
-  plugins: [require('../lib/wallet/plugin')],
   port: ports.p2p,
-  httpPort: ports.node,
-  env: {
-    'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
-  }
+  httpPort: ports.node
 });
+
+const {NodeClient} = require('../lib/client');
 
 const nclient = new NodeClient({
   port: ports.node,
@@ -45,21 +38,23 @@ const nclient = new NodeClient({
   timeout: 15000
 });
 
-const wclient = new WalletClient({
-  port: ports.wallet,
-  apiKey: 'foo'
-});
-
-let wallet = null;
-
-const {wdb} = node.require('walletdb');
-
-let addr = null;
-let hash = null;
+// regtest genesis coinbase address
+const addr =
+  Address.fromString('mpXwg4jMtRhuSpVq4xS3HFHmCmWp9NyGKt', 'regtest');
 let blocks = null;
 
-describe('HTTP', function() {
+describe('Node HTTP', function() {
   this.timeout(15000);
+
+  before(async () => {
+    await node.open();
+    await nclient.open();
+  });
+
+  after(async () => {
+    await nclient.close();
+    await node.close();
+  });
 
   // m/44'/1'/0'/0/{0,1}
   const pubkeys = [
@@ -68,20 +63,6 @@ describe('HTTP', function() {
     Buffer.from('03589ae7c835ce76e23cf8feb32f1a'
       + 'df4a7f2ba0ed2ad70801802b0bcd70e99c1c', 'hex')
   ];
-
-  it('should open node', async () => {
-    consensus.COINBASE_MATURITY = 0;
-    await node.open();
-    await nclient.open();
-    await wclient.open();
-  });
-
-  it('should create wallet', async () => {
-    const info = await wclient.createWallet('test');
-    assert.strictEqual(info.id, 'test');
-    wallet = wclient.wallet('test', info.token);
-    await wallet.open();
-  });
 
   it('should get info', async () => {
     const info = await nclient.getInfo();
@@ -100,102 +81,6 @@ describe('HTTP', function() {
     assert.equal(info.indexes.tx.height, 0);
   });
 
-  it('should get wallet info', async () => {
-    const info = await wallet.getInfo();
-    assert.strictEqual(info.id, 'test');
-    const acct = await wallet.getAccount('default');
-    const str = acct.receiveAddress;
-    assert(typeof str === 'string');
-    addr = Address.fromString(str, node.network);
-  });
-
-  it('should fill with funds', async () => {
-    const mtx = new MTX();
-    mtx.addOutpoint(new Outpoint(consensus.ZERO_HASH, 0));
-    mtx.addOutput(addr, 50460);
-    mtx.addOutput(addr, 50460);
-    mtx.addOutput(addr, 50460);
-    mtx.addOutput(addr, 50460);
-
-    const tx = mtx.toTX();
-
-    let balance = null;
-    wallet.once('balance', (b) => {
-      balance = b;
-    });
-
-    let receive = null;
-    wallet.once('address', (r) => {
-      receive = r[0];
-    });
-
-    let details = null;
-    wallet.once('tx', (d) => {
-      details = d;
-    });
-
-    await wdb.addTX(tx);
-    await new Promise(r => setTimeout(r, 300));
-
-    assert(receive);
-    assert.strictEqual(receive.name, 'default');
-    assert.strictEqual(receive.type, 'pubkeyhash');
-    assert.strictEqual(receive.branch, 0);
-    assert(balance);
-    assert.strictEqual(balance.confirmed, 0);
-    assert.strictEqual(balance.unconfirmed, 201840);
-    assert(details);
-    assert.strictEqual(details.hash, tx.txid());
-  });
-
-  it('should get balance', async () => {
-    const balance = await wallet.getBalance();
-    assert.strictEqual(balance.confirmed, 0);
-    assert.strictEqual(balance.unconfirmed, 201840);
-  });
-
-  it('should send a tx', async () => {
-    const options = {
-      rate: 10000,
-      outputs: [{
-        value: 10000,
-        address: addr.toString(node.network)
-      }]
-    };
-
-    const tx = await wallet.send(options);
-
-    assert(tx);
-    assert.strictEqual(tx.inputs.length, 1);
-    assert.strictEqual(tx.outputs.length, 2);
-
-    let value = 0;
-    value += tx.outputs[0].value;
-    value += tx.outputs[1].value;
-
-    assert.strictEqual(value, 48190);
-
-    hash = tx.hash;
-  });
-
-  it('should get a tx', async () => {
-    const tx = await wallet.getTX(hash);
-    assert(tx);
-    assert.strictEqual(tx.hash, hash);
-  });
-
-  it('should generate new api key', async () => {
-    const old = wallet.token.toString('hex');
-    const result = await wallet.retoken(null);
-    assert.strictEqual(result.token.length, 64);
-    assert.notStrictEqual(result.token, old);
-  });
-
-  it('should get balance', async () => {
-    const balance = await wallet.getBalance();
-    assert.strictEqual(balance.unconfirmed, 199570);
-  });
-
   it('should execute an rpc call', async () => {
     const info = await nclient.execute('getblockchaininfo', []);
     assert.strictEqual(info.blocks, 0);
@@ -204,30 +89,6 @@ describe('HTTP', function() {
   it('should execute an rpc call with bool parameter', async () => {
     const info = await nclient.execute('getrawmempool', [true]);
     assert.deepStrictEqual(info, {});
-  });
-
-  it('should create account', async () => {
-    const info = await wallet.createAccount('foo1');
-    assert(info);
-    assert(info.initialized);
-    assert.strictEqual(info.name, 'foo1');
-    assert.strictEqual(info.accountIndex, 1);
-    assert.strictEqual(info.m, 1);
-    assert.strictEqual(info.n, 1);
-  });
-
-  it('should create account', async () => {
-    const info = await wallet.createAccount('foo2', {
-      type: 'multisig',
-      m: 1,
-      n: 2
-    });
-    assert(info);
-    assert(!info.initialized);
-    assert.strictEqual(info.name, 'foo2');
-    assert.strictEqual(info.accountIndex, 2);
-    assert.strictEqual(info.m, 1);
-    assert.strictEqual(info.n, 2);
   });
 
   it('should get a block template', async () => {
@@ -279,7 +140,7 @@ describe('HTTP', function() {
     assert.strictEqual(json, null);
   });
 
-  it('should validate an address', async () => {
+  it('should validate a legacy address', async () => {
     const json = await nclient.execute('validateaddress', [
       addr.toString(node.network)
     ]);
@@ -378,72 +239,6 @@ describe('HTTP', function() {
       witness_version: 0,
       witness_program: program.toString('hex')
     });
-  });
-
-  for (const template of [true, false]) {
-    const suffix = template ? 'with template' : 'without template';
-    it(`should create and sign transaction ${suffix}`, async () => {
-      const change = await wallet.createChange('default');
-      const tx = await wallet.createTX({
-        template: template, // should not matter, sign = true
-        sign: true,
-        outputs: [{
-          address: change.address,
-          value: 50000
-        }]
-      });
-      const mtx = MTX.fromJSON(tx);
-
-      for (const input of tx.inputs) {
-        const script = input.script;
-
-        assert.notStrictEqual(script, '',
-          'Input must be signed.');
-      }
-
-      assert.strictEqual(mtx.verify(), true,
-        'Transaction must be signed.');
-    });
-  }
-
-  it('should create transaction without template', async () => {
-    const change = await wallet.createChange('default');
-    const tx = await wallet.createTX({
-      sign: false,
-      outputs: [{
-        address: change.address,
-        value: 50000
-      }]
-    });
-
-    for (const input of tx.inputs) {
-      const script = input.script;
-
-      assert.strictEqual(script.length, 0,
-        'Input must not be templated.');
-    }
-  });
-
-  it('should create transaction with template', async () => {
-    const change = await wallet.createChange('default');
-    const tx = await wallet.createTX({
-      sign: false,
-      template: true,
-      outputs: [{
-        address: change.address,
-        value: 20000
-      }]
-    });
-
-    for (const input of tx.inputs) {
-      const script = Buffer.from(input.script, 'hex');
-
-      // p2pkh
-      // 1 (OP_0 placeholder) + 1 (length) + 33 (pubkey)
-      assert.strictEqual(script.length, 35);
-      assert.strictEqual(script[0], 0x00,
-        'First item in stack must be a placeholder OP_0');
-    }
   });
 
   it('should generate 10 blocks from RPC call', async () => {
@@ -546,13 +341,5 @@ describe('HTTP', function() {
     // Rescan from height 5 -- should return blocks 5 through 10, inclusive.
     await nclient.call('rescan', 5);
     assert.deepStrictEqual(matchingBlocks, blocks.slice(4));
-  });
-
-  it('should cleanup', async () => {
-    consensus.COINBASE_MATURITY = 100;
-    await wallet.close();
-    await wclient.close();
-    await nclient.close();
-    await node.close();
   });
 });
