@@ -49,6 +49,7 @@ let txFee = 0;
 
 const coinValue = 50000;
 const witnessOptions = [true, false];
+const wallets = ['primary'];
 
 for (const witnessOpt of witnessOptions) {
   describe(`Wallet HTTP - witness: ${witnessOpt}`, function() {
@@ -71,6 +72,7 @@ for (const witnessOpt of witnessOptions) {
 
     it('should create wallet', async () => {
       const info = await wclient.createWallet(name, {witness: witnessOpt});
+      wallets.push(name);
       assert.strictEqual(info.id, name);
       wallet = wclient.wallet(name, info.token);
       await wallet.open();
@@ -78,7 +80,6 @@ for (const witnessOpt of witnessOptions) {
 
     it('should list wallets', async () => {
       const info = await wclient.getWallets();
-      const wallets = ['primary', 'test'];
       assert.equal(JSON.stringify(info), JSON.stringify(wallets));
     });
 
