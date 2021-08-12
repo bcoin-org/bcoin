@@ -76,6 +76,12 @@ for (const witnessOpt of witnessOptions) {
       await wallet.open();
     });
 
+    it('should list wallets', async () => {
+      const info = await wclient.getWallets();
+      const wallets = ['primary', 'test'];
+      assert.equal(JSON.stringify(info), JSON.stringify(wallets));
+    });
+
     it('should get wallet info', async () => {
       const info = await wallet.getInfo();
       assert.strictEqual(info.id, name);
