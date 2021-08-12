@@ -91,25 +91,23 @@ for (const witnessOpt of witnessOptions) {
       assert(typeof str === 'string');
       addr = Address.fromString(str, node.network);
     });
-    
+
     it('should change passphrase', async () => {
       await wallet.setPassphrase('initial');
       await wclient.lock('test');
-      
+
       // Incorrect Passphrase should not work
       try {
         await wallet.unlock('badpass');
         throw new Error('Unlocked with INCORRECT passphrase!');
-      }
-      catch(e) {
+      } catch(e) {
         assert.strictEqual(e.message, 'Could not decrypt.', e.message);
       }
 
       // Correct Passphrase should work
       try {
         await wallet.unlock('initial');
-      }
-      catch(e) {
+      } catch(e) {
         throw new Error('Could not unlock with correct passphrase.');
       }
 
@@ -120,8 +118,7 @@ for (const witnessOpt of witnessOptions) {
       try {
         await wallet.unlock('initial');
         throw new Error('Unlocked with OLD passphrase!');
-      }
-      catch(e) {
+      } catch(e) {
         assert.strictEqual(e.message, 'Could not decrypt.', e.message);
       }
 
@@ -129,8 +126,7 @@ for (const witnessOpt of witnessOptions) {
       try {
         // wallet needs to stay unlocked for later tests
         await wallet.unlock('newpass', 15000);
-      }
-      catch(e) {
+      } catch(e) {
         throw new Error('Could not unlock with new passphrase.');
       }
     });
