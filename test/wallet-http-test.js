@@ -90,21 +90,21 @@ for (const witnessOpt of witnessOptions) {
         passphrase: 'PASSPHRASE',
         mnemonic: 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
       };
-  
-      const testwallet = await wclient.createWallet('testwallet', options);
+
+      const testwallet = await wclient.createWallet(`test_seed-${witnessOpt}`, options);
       assert.strictEqual(testwallet.master.encrypted, false);
-  
-      const master1 = await wclient.getMaster('testwallet');
+
+      const master1 = await wclient.getMaster(`test_seed-${witnessOpt}`);
       assert.strictEqual(master1.encrypted, false);
       assert.strictEqual(master1.mnemonic.phrase, 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong');
-  
-      await wclient.lock('testwallet');
-      const master2 = await wclient.getMaster('testwallet');
+
+      await wclient.lock(`test_seed-${witnessOpt}`);
+      const master2 = await wclient.getMaster(`test_seed-${witnessOpt}`);
       assert.strictEqual(master2.encrypted, true);
       assert.strictEqual(master2.key, undefined);
-  
-      await wclient.unlock('testwallet', 'PASSPHRASE', 100);
-      const master3 = await wclient.getMaster('testwallet');
+
+      await wclient.unlock(`test_seed-${witnessOpt}`, 'PASSPHRASE', 100);
+      const master3 = await wclient.getMaster(`test_seed-${witnessOpt}`);
       assert.strictEqual(master3.encrypted, false);
       assert.strictEqual(master3.mnemonic.phrase, 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong');
     });
