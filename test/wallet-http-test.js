@@ -80,7 +80,7 @@ for (const witnessOpt of witnessOptions) {
 
     it('should list wallets', async () => {
       const info = await wclient.getWallets();
-      assert.equal(JSON.stringify(info), JSON.stringify(wallets));
+      assert.deepEqual(info, wallets);
     });
 
     it('should get wallet info', async () => {
@@ -94,41 +94,30 @@ for (const witnessOpt of witnessOptions) {
 
     it('should change passphrase', async () => {
       await wallet.setPassphrase('initial');
-      await wclient.lock('test');
 
       // Incorrect Passphrase should not work
-      try {
+      await assert.rejects(async () => {
         await wallet.unlock('badpass');
-        throw new Error('Unlocked with INCORRECT passphrase!');
-      } catch(e) {
-        assert.strictEqual(e.message, 'Could not decrypt.', e.message);
-      }
+      }, {
+        name: 'Error',
+        message: 'Could not decrypt.'
+      });
 
       // Correct Passphrase should work
-      try {
-        await wallet.unlock('initial');
-      } catch(e) {
-        throw new Error('Could not unlock with correct passphrase.');
-      }
+      await wallet.unlock('initial');
 
       await wallet.setPassphrase('newpass', 'initial');
-      await wclient.lock('test');
 
       // Old Passphrase should not work
-      try {
+      await assert.rejects(async () => {
         await wallet.unlock('initial');
-        throw new Error('Unlocked with OLD passphrase!');
-      } catch(e) {
-        assert.strictEqual(e.message, 'Could not decrypt.', e.message);
-      }
+      }, {
+        name: 'Error',
+        message: 'Could not decrypt.'
+      });
 
       // New Passphrase should work
-      try {
-        // wallet needs to stay unlocked for later tests
-        await wallet.unlock('newpass', 15000);
-      } catch(e) {
-        throw new Error('Could not unlock with new passphrase.');
-      }
+      await wallet.unlock('newpass', 15000);
     });
 
     it('should enable seed phrase recovery', async () => {
