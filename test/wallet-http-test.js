@@ -96,17 +96,17 @@ for (const witnessOpt of witnessOptions) {
 
       const master1 = await wclient.getMaster(`test_seed-${witnessOpt}`);
       assert.strictEqual(master1.encrypted, false);
-      assert.strictEqual(master1.mnemonic.phrase, 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong');
+      assert.strictEqual(master1.mnemonic.phrase, options.mnemonic);
 
       await wclient.lock(`test_seed-${witnessOpt}`);
       const master2 = await wclient.getMaster(`test_seed-${witnessOpt}`);
       assert.strictEqual(master2.encrypted, true);
-      assert.strictEqual(master2.key, undefined);
+      assert.strictEqual(master2.mnemonic, undefined);
 
       await wclient.unlock(`test_seed-${witnessOpt}`, 'PASSPHRASE', 100);
       const master3 = await wclient.getMaster(`test_seed-${witnessOpt}`);
       assert.strictEqual(master3.encrypted, false);
-      assert.strictEqual(master3.mnemonic.phrase, 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong');
+      assert.strictEqual(master3.mnemonic.phrase, options.mnemonic);
     });
 
     it('should fill with funds', async () => {
