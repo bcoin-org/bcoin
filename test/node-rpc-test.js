@@ -82,14 +82,32 @@ describe('RPC', function() {
       assert.strictEqual(util.revHex(node.chain.tip.hash), info[0].hash);
     });
 
-    it('should rpc getchaintips when a block is mined', async () => {
-      const entry = await node.chain.getEntry(node.chain.tip.height - 1);
-      const block = await node.miner.mineBlock(entry);
-      await node.chain.add(block);
-
+    it('should rpc getchaintips for chain fork', async () => {
+      // Get chain entry associated with genesis block (height == 0)
+      let entry1 = await node.chain.getEntry(0);
+     // extnding chain1 from genesis.
+      for (let i = 0; i <= 3; i++) {
+        const block = await node.miner.mineBlock(entry1);
+        entry1 = await node.chain.add(block);
+      }
+      // current state:
+      //        genesis block -- block01 -- block02 -- block03
+      // Creting a chain fork, by mining block again on genesis as parent.
+      let entry2 = await node.chain.getEntry(0);
+      for (let i = 0; i <= 2; i++) {
+        const block = await node.miner.mineBlock(entry2);
+        entry2 = await node.chain.add(block);
+      }
+      // current state:
+      //                        block01 -- block02 -- block03 (chain1, with height 3)
+      //                      /
+      //         genesis block
+      //                      \
+      //                        block01 -- block02 (chain2, with height 2)
       const info = await nclient.execute('getchaintips', []);
-      assert.strictEqual(info.length, 1);
-      assert.strictEqual(util.revHex(node.chain.tip.hash), info[0].hash);
+      assert.notEqual(entry1.hash, entry2.hash);
+      assert.strictEqual(info.length, 2);
+      assert.strictEqual(node.chain.tip.hash, entry1.hash);
     });
   });
 
@@ -117,7 +135,7 @@ describe('RPC', function() {
       assert.strictEqual(connectionsCnt, 0);
     });
 
-    it('should conenct to a peer', async () => {
+    it('should connect to a peer', async () => {
       await node.connect();
       await peer.open();
       await peer.connect();
