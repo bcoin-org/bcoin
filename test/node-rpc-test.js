@@ -8,6 +8,7 @@ const FullNode = require('../lib/node/fullnode');
 const NodeClient = require('../lib/client/node');
 const KeyRing = require('../lib/primitives/keyring');
 const util = require('../lib/utils/util');
+const { set } = require('../lib/protocol/network');
 
 const ports = {
   p2p: 49331,
@@ -83,31 +84,55 @@ describe('RPC', function() {
     });
 
     it('should rpc getchaintips for chain fork', async () => {
-      // Get chain entry associated with genesis block (height == 0)
-      let entry1 = await node.chain.getEntry(0);
-     // extnding chain1 from genesis.
-      for (let i = 0; i <= 3; i++) {
-        const block = await node.miner.mineBlock(entry1);
-        entry1 = await node.chain.add(block);
+      // function to generate blocks
+      const generateblocks = async (height, entry) => {
+        for (let i = 0; i <= height; i ++) {
+          const block = await node.miner.mineBlock(entry);
+          entry = await node.chain.add(block);
+        }
+        return entry;
       }
-      // current state:
-      //        genesis block -- block01 -- block02 -- block03
+      // extnding chain1 from genesis.
+      let entry1 = await generateblocks(3, await node.chain.getEntry(0));
+
+      /**  current state:
+       *        genesis block -- block01 -- block02 -- block03 
+       */
+
       // Creting a chain fork, by mining block again on genesis as parent.
-      let entry2 = await node.chain.getEntry(0);
-      for (let i = 0; i <= 2; i++) {
-        const block = await node.miner.mineBlock(entry2);
-        entry2 = await node.chain.add(block);
-      }
-      // current state:
-      //                        block01 -- block02 -- block03 (chain1, with height 3)
-      //                      /
-      //         genesis block
-      //                      \
-      //                        block01 -- block02 (chain2, with height 2)
+      let entry2 = await generateblocks(2, await node.chain.getEntry(0));
+
+      /** current state:
+       *                        block01 -- block02 -- block03 (chain1, with height 3)
+       *                      /
+       *         genesis block
+       *                      \
+       *                        block01 -- block02 (chain2, with height 2) 
+       */ 
+      
       const info = await nclient.execute('getchaintips', []);
       assert.notEqual(entry1.hash, entry2.hash);
-      assert.strictEqual(info.length, 2);
-      assert.strictEqual(node.chain.tip.hash, entry1.hash);
+
+      const expected = [
+        {
+          height: 3,
+          hash: util.revHex(entry2.hash),
+          branchlen: 3,
+          status: 'valid-headers'
+        },
+        {
+          height: 4,
+          hash: util.revHex(entry1.hash),
+          branchlen: 0,
+          status: 'active'
+        }
+      ];
+
+      try {
+        assert.deepStrictEqual(info, expected);
+      } catch (e) {
+        assert.deepStrictEqual(info, expected.reverse());
+      }
     });
   });
 
