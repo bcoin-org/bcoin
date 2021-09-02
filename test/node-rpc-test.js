@@ -8,7 +8,6 @@ const FullNode = require('../lib/node/fullnode');
 const NodeClient = require('../lib/client/node');
 const KeyRing = require('../lib/primitives/keyring');
 const util = require('../lib/utils/util');
-const { set } = require('../lib/protocol/network');
 
 const ports = {
   p2p: 49331,
@@ -91,25 +90,26 @@ describe('RPC', function() {
           entry = await node.chain.add(block);
         }
         return entry;
-      }
-      // extnding chain1 from genesis.
-      let entry1 = await generateblocks(3, await node.chain.getEntry(0));
+      };
 
-      /**  current state:
-       *        genesis block -- block01 -- block02 -- block03 
+      // extnding chain1 from genesis.
+      const entry1 = await generateblocks(3, await node.chain.getEntry(0));
+
+      /** current state:
+       *         genesis block -- block01 -- block02 -- block03
        */
 
-      // Creting a chain fork, by mining block again on genesis as parent.
-      let entry2 = await generateblocks(2, await node.chain.getEntry(0));
+      // Creating a chain fork, by mining block again on genesis as parent.
+      const entry2 = await generateblocks(2, await node.chain.getEntry(0));
 
       /** current state:
        *                        block01 -- block02 -- block03 (chain1, with height 3)
        *                      /
        *         genesis block
        *                      \
-       *                        block01 -- block02 (chain2, with height 2) 
-       */ 
-      
+       *                        block01 -- block02 (chain2, with height 2)
+       */
+
       const info = await nclient.execute('getchaintips', []);
       assert.notEqual(entry1.hash, entry2.hash);
 
