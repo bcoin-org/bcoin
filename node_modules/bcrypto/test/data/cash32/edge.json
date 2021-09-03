@@ -1,0 +1,106 @@
+[
+  {
+    "bytes": 20,
+    "type": 0,
+    "addr": "p:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eyn98f5rpm",
+    "prefix": "p",
+    "hash": "f5bf48b397dae70be82b3cca4793f8eb2b6cdac9",
+    "note": "Short prefix"
+  },
+  {
+    "bytes": 20,
+    "type": 0,
+    "addr": "prefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefi:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eyn97gv7x2",
+    "prefix": "prefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefi",
+    "hash": "f5bf48b397dae70be82b3cca4793f8eb2b6cdac9",
+    "note": "Long prefix, 83 US-ASCII characters"
+  },
+  {
+    "bytes": 20,
+    "type": 0,
+    "addr": "prefix:qqqqqz9njldwwzlg9v7v53unlr4jkmx6eycaeuzs77",
+    "prefix": "prefix",
+    "hash": "000008b397dae70be82b3cca4793f8eb2b6cdac9",
+    "note": "Leading zero hash, padding test"
+  },
+  {
+    "bytes": 20,
+    "type": 0,
+    "addr": "prefix:qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq9s6yrdsd",
+    "prefix": "prefix",
+    "hash": "0000000000000000000000000000000000000000",
+    "note": "20 byte null buffer"
+  },
+  {
+    "bytes": 24,
+    "type": 0,
+    "addr": "prefix:qyqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk09qapxx",
+    "prefix": "prefix",
+    "hash": "000000000000000000000000000000000000000000000000",
+    "note": "24 byte null buffer"
+  },
+  {
+    "bytes": 28,
+    "type": 0,
+    "addr": "prefix:qgqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpnv72uxj",
+    "prefix": "prefix",
+    "hash": "00000000000000000000000000000000000000000000000000000000",
+    "note": "28 byte null buffer"
+  },
+  {
+    "bytes": 32,
+    "type": 0,
+    "addr": "prefix:qvqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqulvcmvyp",
+    "prefix": "prefix",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "note": "32 byte null buffer"
+  },
+  {
+    "bytes": 40,
+    "type": 0,
+    "addr": "prefix:qsqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj6rjpvcv",
+    "prefix": "prefix",
+    "hash": "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "note": "40 byte null buffer"
+  },
+  {
+    "bytes": 56,
+    "type": 0,
+    "addr": "prefix:qcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqm2n3ryvj",
+    "prefix": "prefix",
+    "hash": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "note": "56 byte null buffer"
+  },
+  {
+    "bytes": 64,
+    "type": 0,
+    "addr": "prefix:quqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqae3zaarz",
+    "prefix": "prefix",
+    "hash": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "note": "64 byte null buffer"
+  },
+  {
+    "bytes": 64,
+    "type": 0,
+    "addr": "ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp:quqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq04mndmq3",
+    "prefix": "ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+    "hash": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "note": "64 byte max buffer and 83 byte max prefix"
+  },
+  {
+    "bytes": 64,
+    "type": 0,
+    "addr": "PREFIX:QLRR4DZRE3HD7QKPP035FXK278TLCLLJAZGEYTN4DRNX36JYG9VPWQGVPXNMAPEA6UKDH898UD0MRE86Y5QEJKCV3DUT2LLMH4E4W4RUDQ5RY0KN",
+    "prefix": "prefix",
+    "hash": "C63AB443CC6EDF02C10BE3449ACAF1D7FC7FF2E891922E7568E668EA44415817010C09A7BE873DD72CDB9CA7E35FB1E4FA2501995B0C8B78B57FFBBD7357547C",
+    "note": "Uppercase addr"
+  },
+  {
+    "bytes": 64,
+    "type": 0,
+    "addr": "prefix:qlrr4dzre3hd7qkpp035fxk278tlclljazgeytn4drnx36jyg9vpwqgvpxnmapea6ukdh898ud0mre86y5qejkcv3dut2llmh4e4w4rudq5ry0kn",
+    "prefix": "PREFIX",
+    "hash": "C63AB443CC6EDF02C10BE3449ACAF1D7FC7FF2E891922E7568E668EA44415817010C09A7BE873DD72CDB9CA7E35FB1E4FA2501995B0C8B78B57FFBBD7357547C",
+    "note": "Uppercase prefix supplied"
+  }
+]

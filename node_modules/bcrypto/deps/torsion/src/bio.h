@@ -14,8 +14,8 @@
  * the read/write.
  */
 
-#ifndef _TORSION_BIO_H
-#define _TORSION_BIO_H
+#ifndef TORSION_BIO_H
+#define TORSION_BIO_H
 
 #include <limits.h>
 #include <stddef.h>
@@ -28,96 +28,84 @@
  */
 
 static TORSION_INLINE uint16_t
-read16le(const void *src) {
+read16le(const uint8_t *src) {
   if (!TORSION_BIGENDIAN) {
     uint16_t w;
     memcpy(&w, src, sizeof(w));
     return w;
   } else {
-    const uint8_t *p = (const uint8_t *)src;
-
-    return ((uint16_t)p[1] << 8)
-         | ((uint16_t)p[0] << 0);
+    return ((uint16_t)src[1] << 8)
+         | ((uint16_t)src[0] << 0);
   }
 }
 
 static TORSION_INLINE void
-write16le(void *dst, uint16_t w) {
+write16le(uint8_t *dst, uint16_t w) {
   if (!TORSION_BIGENDIAN) {
     memcpy(dst, &w, sizeof(w));
   } else {
-    uint8_t *p = (uint8_t *)dst;
-
-    p[1] = w >> 8;
-    p[0] = w >> 0;
+    dst[1] = w >> 8;
+    dst[0] = w >> 0;
   }
 }
 
 static TORSION_INLINE uint32_t
-read32le(const void *src) {
+read32le(const uint8_t *src) {
   if (!TORSION_BIGENDIAN) {
     uint32_t w;
     memcpy(&w, src, sizeof(w));
     return w;
   } else {
-    const uint8_t *p = (const uint8_t *)src;
-
-    return ((uint32_t)p[3] << 24)
-         | ((uint32_t)p[2] << 16)
-         | ((uint32_t)p[1] <<  8)
-         | ((uint32_t)p[0] <<  0);
+    return ((uint32_t)src[3] << 24)
+         | ((uint32_t)src[2] << 16)
+         | ((uint32_t)src[1] <<  8)
+         | ((uint32_t)src[0] <<  0);
   }
 }
 
 static TORSION_INLINE void
-write32le(void *dst, uint32_t w) {
+write32le(uint8_t *dst, uint32_t w) {
   if (!TORSION_BIGENDIAN) {
     memcpy(dst, &w, sizeof(w));
   } else {
-    uint8_t *p = (uint8_t *)dst;
-
-    p[3] = w >> 24;
-    p[2] = w >> 16;
-    p[1] = w >>  8;
-    p[0] = w >>  0;
+    dst[3] = w >> 24;
+    dst[2] = w >> 16;
+    dst[1] = w >>  8;
+    dst[0] = w >>  0;
   }
 }
 
 static TORSION_INLINE uint64_t
-read64le(const void *src) {
+read64le(const uint8_t *src) {
   if (!TORSION_BIGENDIAN) {
     uint64_t w;
     memcpy(&w, src, sizeof(w));
     return w;
   } else {
-    const uint8_t *p = (const uint8_t *)src;
-
-    return ((uint64_t)p[7] << 56)
-         | ((uint64_t)p[6] << 48)
-         | ((uint64_t)p[5] << 40)
-         | ((uint64_t)p[4] << 32)
-         | ((uint64_t)p[3] << 24)
-         | ((uint64_t)p[2] << 16)
-         | ((uint64_t)p[1] <<  8)
-         | ((uint64_t)p[0] <<  0);
+    return ((uint64_t)src[7] << 56)
+         | ((uint64_t)src[6] << 48)
+         | ((uint64_t)src[5] << 40)
+         | ((uint64_t)src[4] << 32)
+         | ((uint64_t)src[3] << 24)
+         | ((uint64_t)src[2] << 16)
+         | ((uint64_t)src[1] <<  8)
+         | ((uint64_t)src[0] <<  0);
   }
 }
 
 static TORSION_INLINE void
-write64le(void *dst, uint64_t w) {
+write64le(uint8_t *dst, uint64_t w) {
   if (!TORSION_BIGENDIAN) {
     memcpy(dst, &w, sizeof(w));
   } else {
-    uint8_t *p = (uint8_t *)dst;
-
-    p[7] = w >> 56;
-    p[6] = w >> 48;
-    p[5] = w >> 40;
-    p[4] = w >> 32;
-    p[3] = w >> 24;
-    p[2] = w >> 16;
-    p[1] = w >>  8;
-    p[0] = w >>  0;
+    dst[7] = w >> 56;
+    dst[6] = w >> 48;
+    dst[5] = w >> 40;
+    dst[4] = w >> 32;
+    dst[3] = w >> 24;
+    dst[2] = w >> 16;
+    dst[1] = w >>  8;
+    dst[0] = w >>  0;
   }
 }
 
@@ -126,96 +114,84 @@ write64le(void *dst, uint64_t w) {
  */
 
 static TORSION_INLINE uint16_t
-read16be(const void *src) {
+read16be(const uint8_t *src) {
   if (TORSION_BIGENDIAN) {
     uint16_t w;
     memcpy(&w, src, sizeof(w));
     return w;
   } else {
-    const uint8_t *p = (const uint8_t *)src;
-
-    return ((uint16_t)p[0] << 8)
-         | ((uint16_t)p[1] << 0);
+    return ((uint16_t)src[0] << 8)
+         | ((uint16_t)src[1] << 0);
   }
 }
 
 static TORSION_INLINE void
-write16be(void *dst, uint16_t w) {
+write16be(uint8_t *dst, uint16_t w) {
   if (TORSION_BIGENDIAN) {
     memcpy(dst, &w, sizeof(w));
   } else {
-    uint8_t *p = (uint8_t *)dst;
-
-    p[0] = w >> 8;
-    p[1] = w >> 0;
+    dst[0] = w >> 8;
+    dst[1] = w >> 0;
   }
 }
 
 static TORSION_INLINE uint32_t
-read32be(const void *src) {
+read32be(const uint8_t *src) {
   if (TORSION_BIGENDIAN) {
     uint32_t w;
     memcpy(&w, src, sizeof(w));
     return w;
   } else {
-    const uint8_t *p = (const uint8_t *)src;
-
-    return ((uint32_t)p[0] << 24)
-         | ((uint32_t)p[1] << 16)
-         | ((uint32_t)p[2] <<  8)
-         | ((uint32_t)p[3] <<  0);
+    return ((uint32_t)src[0] << 24)
+         | ((uint32_t)src[1] << 16)
+         | ((uint32_t)src[2] <<  8)
+         | ((uint32_t)src[3] <<  0);
   }
 }
 
 static TORSION_INLINE void
-write32be(void *dst, uint32_t w) {
+write32be(uint8_t *dst, uint32_t w) {
   if (TORSION_BIGENDIAN) {
     memcpy(dst, &w, sizeof(w));
   } else {
-    uint8_t *p = (uint8_t *)dst;
-
-    p[0] = w >> 24;
-    p[1] = w >> 16;
-    p[2] = w >>  8;
-    p[3] = w >>  0;
+    dst[0] = w >> 24;
+    dst[1] = w >> 16;
+    dst[2] = w >>  8;
+    dst[3] = w >>  0;
   }
 }
 
 static TORSION_INLINE uint64_t
-read64be(const void *src) {
+read64be(const uint8_t *src) {
   if (TORSION_BIGENDIAN) {
     uint64_t w;
     memcpy(&w, src, sizeof(w));
     return w;
   } else {
-    const uint8_t *p = (const uint8_t *)src;
-
-    return ((uint64_t)p[0] << 56)
-         | ((uint64_t)p[1] << 48)
-         | ((uint64_t)p[2] << 40)
-         | ((uint64_t)p[3] << 32)
-         | ((uint64_t)p[4] << 24)
-         | ((uint64_t)p[5] << 16)
-         | ((uint64_t)p[6] <<  8)
-         | ((uint64_t)p[7] <<  0);
+    return ((uint64_t)src[0] << 56)
+         | ((uint64_t)src[1] << 48)
+         | ((uint64_t)src[2] << 40)
+         | ((uint64_t)src[3] << 32)
+         | ((uint64_t)src[4] << 24)
+         | ((uint64_t)src[5] << 16)
+         | ((uint64_t)src[6] <<  8)
+         | ((uint64_t)src[7] <<  0);
   }
 }
 
 static TORSION_INLINE void
-write64be(void *dst, uint64_t w) {
+write64be(uint8_t *dst, uint64_t w) {
   if (TORSION_BIGENDIAN) {
     memcpy(dst, &w, sizeof(w));
   } else {
-    uint8_t *p = (uint8_t *)dst;
-
-    p[0] = w >> 56;
-    p[1] = w >> 48;
-    p[2] = w >> 40;
-    p[3] = w >> 32;
-    p[4] = w >> 24;
-    p[5] = w >> 16;
-    p[6] = w >>  8;
-    p[7] = w >>  0;
+    dst[0] = w >> 56;
+    dst[1] = w >> 48;
+    dst[2] = w >> 40;
+    dst[3] = w >> 32;
+    dst[4] = w >> 24;
+    dst[5] = w >> 16;
+    dst[6] = w >>  8;
+    dst[7] = w >>  0;
   }
 }
 
@@ -260,4 +236,54 @@ torsion_bswap64(uint64_t x) {
 }
 #endif
 
-#endif /* _TORSION_BIO_H */
+/*
+ * Incrementation
+ */
+
+static TORSION_INLINE void
+increment_le(uint8_t *x, size_t n) {
+  unsigned int c = 1;
+  size_t i;
+
+  for (i = 0; i < n; i++) {
+    c += (unsigned int)x[i];
+    x[i] = c;
+    c >>= 8;
+  }
+}
+
+static TORSION_INLINE void
+increment_le_var(uint8_t *x, size_t n) {
+  uint8_t c = 1;
+  size_t i;
+
+  for (i = 0; i < n && c != 0; i++) {
+    x[i] += c;
+    c = (x[i] < c);
+  }
+}
+
+static TORSION_INLINE void
+increment_be(uint8_t *x, size_t n) {
+  unsigned int c = 1;
+  size_t i;
+
+  for (i = n - 1; i != (size_t)-1; i--) {
+    c += (unsigned int)x[i];
+    x[i] = c;
+    c >>= 8;
+  }
+}
+
+static TORSION_INLINE void
+increment_be_var(uint8_t *x, size_t n) {
+  uint8_t c = 1;
+  size_t i;
+
+  for (i = n - 1; i != (size_t)-1 && c != 0; i--) {
+    x[i] += c;
+    c = (x[i] < c);
+  }
+}
+
+#endif /* TORSION_BIO_H */

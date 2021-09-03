@@ -73,64 +73,9 @@ base16_encode_size0(size_t len) {
   return len * 2;
 }
 
-static void
-base16_encode0(char *dst, size_t *dstlen,
-               const uint8_t *src, size_t srclen,
-               int endian) {
-  size_t i = endian < 0 ? srclen - 1 : 0;
-  size_t j = 0;
-
-  while (srclen--) {
-    dst[j++] = base16_charset[src[i] >> 4];
-    dst[j++] = base16_charset[src[i] & 15];
-
-    i += endian;
-  }
-
-  dst[j] = '\0';
-
-  if (dstlen != NULL)
-    *dstlen = j;
-}
-
 static size_t
 base16_decode_size0(size_t len) {
   return len / 2;
-}
-
-static int
-base16_decode0(uint8_t *dst, size_t *dstlen,
-               const char *src, size_t srclen,
-               int endian) {
-  size_t i = endian < 0 ? srclen - 2 : 0;
-  size_t j = 0;
-  uint8_t z = 0;
-
-  if (srclen & 1)
-    return 0;
-
-  srclen /= 2;
-  endian *= 2;
-
-  while (srclen--) {
-    uint8_t hi = base16_table[(uint8_t)src[i + 0]];
-    uint8_t lo = base16_table[(uint8_t)src[i + 1]];
-
-    z |= hi | lo;
-
-    dst[j++] = (hi << 4) | lo;
-
-    i += endian;
-  }
-
-  /* Check for errors at the end. */
-  if (z & 0x80)
-    return 0;
-
-  if (dstlen != NULL)
-    *dstlen = j;
-
-  return 1;
 }
 
 static int
@@ -158,7 +103,20 @@ base16_encode_size(size_t len) {
 void
 base16_encode(char *dst, size_t *dstlen,
               const uint8_t *src, size_t srclen) {
-  base16_encode0(dst, dstlen, src, srclen, 1);
+  size_t i = 0;
+  size_t j = 0;
+
+  while (srclen--) {
+    uint8_t ch = src[i++];
+
+    dst[j++] = base16_charset[ch >> 4];
+    dst[j++] = base16_charset[ch & 15];
+  }
+
+  dst[j] = '\0';
+
+  if (dstlen != NULL)
+    *dstlen = j;
 }
 
 size_t
@@ -169,7 +127,32 @@ base16_decode_size(size_t len) {
 int
 base16_decode(uint8_t *dst, size_t *dstlen,
               const char *src, size_t srclen) {
-  return base16_decode0(dst, dstlen, src, srclen, 1);
+  size_t i = 0;
+  size_t j = 0;
+  uint8_t z = 0;
+
+  if (srclen & 1)
+    return 0;
+
+  srclen >>= 1;
+
+  while (srclen--) {
+    uint8_t hi = base16_table[(uint8_t)src[i++]];
+    uint8_t lo = base16_table[(uint8_t)src[i++]];
+
+    z |= hi | lo;
+
+    dst[j++] = (hi << 4) | lo;
+  }
+
+  /* Check for errors at the end. */
+  if (z & 0x80)
+    return 0;
+
+  if (dstlen != NULL)
+    *dstlen = j;
+
+  return 1;
 }
 
 int
@@ -189,7 +172,20 @@ base16le_encode_size(size_t len) {
 void
 base16le_encode(char *dst, size_t *dstlen,
                 const uint8_t *src, size_t srclen) {
-  base16_encode0(dst, dstlen, src, srclen, -1);
+  size_t i = srclen;
+  size_t j = 0;
+
+  while (srclen--) {
+    uint8_t ch = src[--i];
+
+    dst[j++] = base16_charset[ch >> 4];
+    dst[j++] = base16_charset[ch & 15];
+  }
+
+  dst[j] = '\0';
+
+  if (dstlen != NULL)
+    *dstlen = j;
 }
 
 size_t
@@ -200,7 +196,32 @@ base16le_decode_size(size_t len) {
 int
 base16le_decode(uint8_t *dst, size_t *dstlen,
                 const char *src, size_t srclen) {
-  return base16_decode0(dst, dstlen, src, srclen, -1);
+  size_t i = srclen;
+  size_t j = 0;
+  uint8_t z = 0;
+
+  if (srclen & 1)
+    return 0;
+
+  srclen >>= 1;
+
+  while (srclen--) {
+    uint8_t lo = base16_table[(uint8_t)src[--i]];
+    uint8_t hi = base16_table[(uint8_t)src[--i]];
+
+    z |= hi | lo;
+
+    dst[j++] = (hi << 4) | lo;
+  }
+
+  /* Check for errors at the end. */
+  if (z & 0x80)
+    return 0;
+
+  if (dstlen != NULL)
+    *dstlen = j;
+
+  return 1;
 }
 
 int
@@ -654,7 +675,7 @@ base58_encode(char *dst, size_t *dstlen,
   }
 
   size = (uint64_t)(srclen - zeroes) * 138 / 100 + 1;
-  b58 = malloc(size);
+  b58 = (uint8_t *)malloc(size);
 
   if (b58 == NULL)
     return 0;
@@ -721,7 +742,7 @@ base58_decode(uint8_t *dst, size_t *dstlen,
   }
 
   size = (uint64_t)srclen * 733 / 1000 + 1;
-  b256 = malloc(size);
+  b256 = (uint8_t *)malloc(size);
 
   if (b256 == NULL)
     return 0;
@@ -1222,7 +1243,8 @@ int
 bech32_serialize(char *str,
                  const char *hrp,
                  const uint8_t *data,
-                 size_t data_len) {
+                 size_t data_len,
+                 uint32_t checksum) {
   uint32_t chk = 1;
   size_t i, hlen;
   size_t j = 0;
@@ -1274,7 +1296,7 @@ bech32_serialize(char *str,
   for (i = 0; i < 6; i++)
     chk = bech32_polymod(chk);
 
-  chk ^= 1;
+  chk ^= checksum;
 
   for (i = 0; i < 6; i++)
     str[j++] = bech32_charset[(chk >> ((5 - i) * 5)) & 0x1f];
@@ -1288,7 +1310,8 @@ int
 bech32_deserialize(char *hrp,
                    uint8_t *data,
                    size_t *data_len,
-                   const char *str) {
+                   const char *str,
+                   uint32_t checksum) {
   uint32_t chk = 1;
   size_t hlen = 0;
   size_t i, slen;
@@ -1355,7 +1378,7 @@ bech32_deserialize(char *hrp,
       data[j++] = val;
   }
 
-  if (chk != 1)
+  if (chk != checksum)
     return 0;
 
   *data_len = j;
@@ -1364,12 +1387,12 @@ bech32_deserialize(char *hrp,
 }
 
 int
-bech32_is(const char *str) {
+bech32_is(const char *str, uint32_t checksum) {
   char hrp[BECH32_MAX_HRP_SIZE + 1];
   uint8_t data[BECH32_MAX_DESERIALIZE_SIZE];
   size_t data_len;
 
-  return bech32_deserialize(hrp, data, &data_len, str);
+  return bech32_deserialize(hrp, data, &data_len, str, checksum);
 }
 
 int
@@ -1417,7 +1440,8 @@ bech32_encode(char *addr,
               const char *hrp,
               unsigned int version,
               const uint8_t *hash,
-              size_t hash_len) {
+              size_t hash_len,
+              uint32_t checksum) {
   uint8_t data[BECH32_MAX_DATA_SIZE];
   size_t data_len;
 
@@ -1438,7 +1462,7 @@ bech32_encode(char *addr,
 
   data_len += 1;
 
-  return bech32_serialize(addr, hrp, data, data_len);
+  return bech32_serialize(addr, hrp, data, data_len, checksum);
 }
 
 int
@@ -1446,11 +1470,12 @@ bech32_decode(char *hrp,
               unsigned int *version,
               uint8_t *hash,
               size_t *hash_len,
-              const char *addr) {
+              const char *addr,
+              uint32_t checksum) {
   uint8_t data[BECH32_MAX_DESERIALIZE_SIZE];
   size_t data_len;
 
-  if (!bech32_deserialize(hrp, data, &data_len, addr))
+  if (!bech32_deserialize(hrp, data, &data_len, addr, checksum))
     return 0;
 
   if (data_len == 0 || data_len > BECH32_MAX_DATA_SIZE)
@@ -1475,13 +1500,13 @@ bech32_decode(char *hrp,
 }
 
 int
-bech32_test(const char *addr) {
+bech32_test(const char *addr, uint32_t checksum) {
   char hrp[BECH32_MAX_HRP_SIZE + 1];
   unsigned int version;
   uint8_t hash[BECH32_MAX_DECODE_SIZE];
   size_t hash_len;
 
-  return bech32_decode(hrp, &version, hash, &hash_len, addr);
+  return bech32_decode(hrp, &version, hash, &hash_len, addr, checksum);
 }
 
 /*

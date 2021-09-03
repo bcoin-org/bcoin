@@ -43,7 +43,7 @@ secretbox_seal(unsigned char *sealed,
   poly1305_update(&poly, ct, msg_len);
   poly1305_final(&poly, tag);
 
-  torsion_cleanse(&salsa, sizeof(salsa));
+  torsion_memzero(&salsa, sizeof(salsa));
 }
 
 int
@@ -78,7 +78,7 @@ secretbox_open(unsigned char *msg,
 
   salsa20_crypt(&salsa, msg, ct, ct_len);
 
-  torsion_cleanse(&salsa, sizeof(salsa));
+  torsion_memzero(&salsa, sizeof(salsa));
 
   return ret;
 }

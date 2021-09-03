@@ -26,7 +26,7 @@
  */
 
 void
-torsion_cleanse(void *ptr, size_t len) {
+torsion_memzero(void *ptr, size_t len) {
 #if defined(_WIN32) && defined(SecureZeroMemory)
   if (len > 0)
     SecureZeroMemory(ptr, len);
@@ -47,15 +47,38 @@ torsion_cleanse(void *ptr, size_t len) {
  */
 
 int
-torsion_memequal(const void *s1, const void *s2, size_t n) {
-  const unsigned char *x = s1;
-  const unsigned char *y = s2;
+torsion_memequal(const void *x, const void *y, size_t n) {
+  const unsigned char *xp = (const unsigned char *)x;
+  const unsigned char *yp = (const unsigned char *)y;
   uint32_t z = 0;
 
   while (n--)
-    z |= (uint32_t)x[n] ^ (uint32_t)y[n];
+    z |= *xp++ ^ *yp++;
 
   return (z - 1) >> 31;
+}
+
+/*
+ * Memxor
+ */
+
+void
+torsion_memxor(void *z, const void *x, size_t n) {
+  const unsigned char *xp = (const unsigned char *)x;
+  unsigned char *zp = (unsigned char *)z;
+
+  while (n--)
+    *zp++ ^= *xp++;
+}
+
+void
+torsion_memxor3(void *z, const void *x, const void *y, size_t n) {
+  const unsigned char *xp = (const unsigned char *)x;
+  const unsigned char *yp = (const unsigned char *)y;
+  unsigned char *zp = (unsigned char *)z;
+
+  while (n--)
+    *zp++ = *xp++ ^ *yp++;
 }
 
 /*
@@ -74,7 +97,7 @@ murmur3_sum(const unsigned char *data, size_t len, uint32_t seed) {
   uint32_t k1 = 0;
   size_t left = len;
 
-#define ROTL32(x, y) ((x) << (y)) | ((x) >> (32 - (y)))
+#define ROTL32(w, b) ((w) << (b)) | ((w) >> (32 - (b)))
 
   while (left >= 4) {
     k1 = read32le(data);

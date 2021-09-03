@@ -1,0 +1,142 @@
+[
+  {
+    "prefix": "",
+    "type": 0,
+    "hash": "d1263579c204e17e054fb85963df503311c164da",
+    "reason": "Invalid cash32 prefix.",
+    "note": "Prefix is necessary"
+  },
+  {
+    "prefix": "pReFiX",
+    "type": 1,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 prefix.",
+    "note": "Mixed case prefix should be rejected"
+  },
+  {
+    "prefix": "pr3f1x",
+    "type": 1,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 prefix.",
+    "note": "Prefix with numbers. Not described in spec, and w/o clear rationale."
+  },
+  {
+    "prefix": "prefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefixprefix",
+    "type": 1,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 prefix.",
+    "note": "84 characters US-ASCII, too long. Not described in spec."
+  },
+  {
+    "prefix": "p",
+    "type": 16,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 type.",
+    "note": "0 to 15 are valid types"
+  },
+  {
+    "prefix": "p",
+    "type": 0.5,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 type.",
+    "note": "Floating point numbers not valid types"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 9007199254740991,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 type.",
+    "note": "Large numbers, such as the max safe integer"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": "Infinity",
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 type.",
+    "note": "Infinity not valid"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": -1,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 type.",
+    "note": "Negative not valid"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": -9007199254740991,
+    "hash": "d007bc6531c7103cbd93d1ea3b7290fcbb3079e4",
+    "reason": "Invalid cash32 type.",
+    "note": "Large negative number not valid"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 1,
+    "hash": "a7532b376347c8be65333ad1b4caabf382519583c2",
+    "reason": "Non standard length.",
+    "note": "1 byte too long"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 1,
+    "hash": "d44cbb62682d23dad04ffb1ad51c4bf6a79b8055dad20c83c3",
+    "reason": "Non standard length.",
+    "note": "1 byte too long"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 0,
+    "hash": "d3b4aabebdcea7a47e0d8ec66d0ea5078f074a8449d6aa",
+    "reason": "Non standard length.",
+    "note": "1 byte too short"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 0,
+    "hash": "c8fc015a16bf5cb38ab2cb19cccca2a3daabf986792cf4d89d606c842b625a38ff8d454945068165b5274e1e97d27846bd89fc4d9640c609edbe29666bfe01bf9a",
+    "reason": "Non standard length.",
+    "note": "1 byte too long"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 0,
+    "hash": "011d0e6fc0a7aa0d47d53c850d9b017b57800e3aada0bdebe026ba436c35e125cde5d43567dd81caf53afb310bc805adf204c745d29b0ccdd86eda68057153",
+    "reason": "Non standard length.",
+    "note": "1 byte too short"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 0,
+    "hash": "a4ed1f282588c0c8e148add8b4e3ad63b0a63cfb5b22edc2d86be497a7014878a9de339e01ee6e1a3634a44d74fd14bcc12d1b2dfafc5accfa6e3b16",
+    "reason": "Non standard length.",
+    "note": "4 bytes too short and long"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 0,
+    "hash": "b9378cfb8c6d80a25db170c7b5535c83209b560ff0e7eabd98d8e1ceb1e6e2acbe81096fb1977b38d315dacee63bbe63ac248b42324282c1dd735e8a70",
+    "reason": "Non standard length.",
+    "note": "3 bytes too short, 5 bytes too long"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 0,
+    "hash": "",
+    "reason": "Non standard length.",
+    "note": "Empty hash"
+  },
+  {
+    "prefix": "bitcoincash",
+    "type": 0,
+    "hash": "1e5f3e416a3b117ce162e58c6c63f76b063451ad6753731ff71c6c5e84362b322742bcc3f057480f5b9b90af86aaef9247aae641476018a4e8e1c18e4cafd2815edfd7df2fe9f614ac608e97e172388c682a287b8fa8b0bfd04834d9a6f91a5df2e294316d66f34dba290aada19f9983854405ed15d9b678c56445acc7d07e4c",
+    "reason": "Non standard length.",
+    "note": "128 bytes is too large by 64 bytes"
+  },
+  {
+    "prefix": "ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+    "type": 1,
+    "hash": "475aa93e10266f9ac6398bdcd9ca3f7d02ea3f4342101f8753f47620d56958176055fe7b986d0c8d13696106fd062e6577ca723831e7b2e8886f1c3a3fdf5d690e",
+    "reason": "Non standard length.",
+    "note": "hash too large by 1 byte w/ max prefix"
+  }
+]

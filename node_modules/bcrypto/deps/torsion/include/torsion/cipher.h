@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_CIPHER_H
-#define _TORSION_CIPHER_H
+#ifndef TORSION_CIPHER_H
+#define TORSION_CIPHER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,11 +28,6 @@ extern "C" {
 #define arc2_encrypt torsion_arc2_encrypt
 #define arc2_decrypt torsion_arc2_decrypt
 #define blowfish_init torsion_blowfish_init
-#define blowfish_stream2word torsion_blowfish_stream2word
-#define blowfish_expand0state torsion_blowfish_expand0state
-#define blowfish_expandstate torsion_blowfish_expandstate
-#define blowfish_enc torsion_blowfish_enc
-#define blowfish_dec torsion_blowfish_dec
 #define blowfish_encrypt torsion_blowfish_encrypt
 #define blowfish_decrypt torsion_blowfish_decrypt
 #define camellia_init torsion_camellia_init
@@ -115,6 +110,7 @@ extern "C" {
 #define cipher_stream_crypt torsion_cipher_stream_crypt
 #define cipher_stream_update_size torsion_cipher_stream_update_size
 #define cipher_stream_final torsion_cipher_stream_final
+#define cipher_stream_final_size torsion_cipher_stream_final_size
 #define cipher_static_encrypt torsion_cipher_static_encrypt
 #define cipher_static_decrypt torsion_cipher_static_decrypt
 
@@ -122,54 +118,15 @@ extern "C" {
  * Definitions
  */
 
-#define CIPHER_AES128 0
-#define CIPHER_AES192 1
-#define CIPHER_AES256 2
-#define CIPHER_ARC2 3
-#define CIPHER_ARC2_GUTMANN 4
-#define CIPHER_ARC2_40 5
-#define CIPHER_ARC2_64 6
-#define CIPHER_ARC2_128 7
-#define CIPHER_ARC2_128_GUTMANN 8
-#define CIPHER_BLOWFISH 9
-#define CIPHER_CAMELLIA128 10
-#define CIPHER_CAMELLIA192 11
-#define CIPHER_CAMELLIA256 12
-#define CIPHER_CAST5 13
-#define CIPHER_DES 14
-#define CIPHER_DES_EDE 15
-#define CIPHER_DES_EDE3 16
-#define CIPHER_IDEA 17
-#define CIPHER_SERPENT128 18
-#define CIPHER_SERPENT192 19
-#define CIPHER_SERPENT256 20
-#define CIPHER_TWOFISH128 21
-#define CIPHER_TWOFISH192 22
-#define CIPHER_TWOFISH256 23
-#define CIPHER_MAX 23
-
-#define CIPHER_MODE_RAW 0
-#define CIPHER_MODE_ECB 1
-#define CIPHER_MODE_CBC 2
-#define CIPHER_MODE_CTS 3
-#define CIPHER_MODE_XTS 4
-#define CIPHER_MODE_CTR 5
-#define CIPHER_MODE_CFB 6
-#define CIPHER_MODE_OFB 7
-#define CIPHER_MODE_GCM 8
-#define CIPHER_MODE_CCM 9
-#define CIPHER_MODE_EAX 10
-#define CIPHER_MODE_MAX 10
-
 #define CIPHER_MAX_BLOCK_SIZE 16
 #define CIPHER_MAX_TAG_SIZE 16
 
-#define _CIPHER_BLOCKS(n) \
+#define CIPHER_BLOCKS(n) \
   (((n) + CIPHER_MAX_BLOCK_SIZE - 1) / CIPHER_MAX_BLOCK_SIZE)
 
 /* One extra block due to ctx->last. */
 #define CIPHER_MAX_UPDATE_SIZE(n) \
-  ((_CIPHER_BLOCKS(n) + 1) * CIPHER_MAX_BLOCK_SIZE)
+  ((CIPHER_BLOCKS(n) + 1) * CIPHER_MAX_BLOCK_SIZE)
 
 /* 2 * n - 1 bytes due to XTS mode. */
 #define CIPHER_MAX_FINAL_SIZE (2 * CIPHER_MAX_BLOCK_SIZE - 1)
@@ -178,7 +135,56 @@ extern "C" {
 #define CIPHER_MAX_DECRYPT_SIZE(n) CIPHER_MAX_UPDATE_SIZE(n)
 
 /*
- * Structs
+ * Ciphers
+ */
+
+typedef enum cipher_id {
+  CIPHER_AES128,
+  CIPHER_AES192,
+  CIPHER_AES256,
+  CIPHER_ARC2,
+  CIPHER_ARC2_GUTMANN,
+  CIPHER_ARC2_40,
+  CIPHER_ARC2_64,
+  CIPHER_ARC2_128,
+  CIPHER_ARC2_128_GUTMANN,
+  CIPHER_BLOWFISH,
+  CIPHER_CAMELLIA128,
+  CIPHER_CAMELLIA192,
+  CIPHER_CAMELLIA256,
+  CIPHER_CAST5,
+  CIPHER_DES,
+  CIPHER_DES_EDE,
+  CIPHER_DES_EDE3,
+  CIPHER_IDEA,
+  CIPHER_SERPENT128,
+  CIPHER_SERPENT192,
+  CIPHER_SERPENT256,
+  CIPHER_TWOFISH128,
+  CIPHER_TWOFISH192,
+  CIPHER_TWOFISH256
+} cipher_id_t;
+
+/*
+ * Modes
+ */
+
+typedef enum mode_id {
+  CIPHER_MODE_RAW,
+  CIPHER_MODE_ECB,
+  CIPHER_MODE_CBC,
+  CIPHER_MODE_CTS,
+  CIPHER_MODE_XTS,
+  CIPHER_MODE_CTR,
+  CIPHER_MODE_CFB,
+  CIPHER_MODE_OFB,
+  CIPHER_MODE_GCM,
+  CIPHER_MODE_CCM,
+  CIPHER_MODE_EAX
+} mode_id_t;
+
+/*
+ * Types
  */
 
 typedef struct aes_s {
@@ -236,7 +242,7 @@ typedef struct twofish_s {
 } twofish_t;
 
 typedef struct cipher_s {
-  int type;
+  cipher_id_t type;
   size_t size;
   union {
     aes_t aes;
@@ -253,83 +259,68 @@ typedef struct cipher_s {
   } ctx;
 } cipher_t;
 
-typedef struct cbc_s {
-  unsigned char prev[CIPHER_MAX_BLOCK_SIZE];
-} cbc_t;
-
-typedef struct xts_s {
+typedef struct block_mode_s {
   unsigned char tweak[CIPHER_MAX_BLOCK_SIZE];
   unsigned char prev[CIPHER_MAX_BLOCK_SIZE];
-} xts_t;
+} block_mode_t;
 
-typedef struct ctr_s {
-  uint8_t ctr[CIPHER_MAX_BLOCK_SIZE];
+/* Avoid violating ISO C section 7.1.3. */
+#define stream_mode_t xstream_mode_t
+
+typedef struct stream_mode_s {
   unsigned char state[CIPHER_MAX_BLOCK_SIZE];
+  unsigned char iv[CIPHER_MAX_BLOCK_SIZE];
   size_t pos;
-} ctr_t;
+} stream_mode_t;
 
-typedef struct cfb_s {
-  unsigned char state[CIPHER_MAX_BLOCK_SIZE];
-  unsigned char prev[CIPHER_MAX_BLOCK_SIZE];
-  size_t pos;
-} cfb_t;
+typedef block_mode_t cbc_t;
+typedef block_mode_t xts_t;
+typedef stream_mode_t ctr_t;
+typedef stream_mode_t cfb_t;
+typedef stream_mode_t ofb_t;
 
-typedef struct ofb_s {
-  unsigned char state[CIPHER_MAX_BLOCK_SIZE];
-  size_t pos;
-} ofb_t;
-
-struct __ghash_fe_s {
+struct ghash_fe_s {
   uint64_t lo;
   uint64_t hi;
 };
 
-struct __ghash_s {
-  struct __ghash_fe_s state;
-  struct __ghash_fe_s table[16];
+struct ghash_s {
+  struct ghash_fe_s state;
+  struct ghash_fe_s table[16];
   unsigned char block[16];
   uint64_t adlen;
   uint64_t ctlen;
-  size_t size;
+  size_t pos;
 };
 
 typedef struct gcm_s {
-  struct __ghash_s hash;
-  uint8_t ctr[16];
-  unsigned char state[16];
+  ctr_t ctr;
+  struct ghash_s hash;
   unsigned char mask[16];
-  size_t pos;
 } gcm_t;
 
-struct __cmac_s {
+struct cmac_s {
   unsigned char mac[CIPHER_MAX_BLOCK_SIZE];
   size_t pos;
 };
 
 typedef struct ccm_s {
-  struct __cmac_s hash;
-  unsigned char state[16];
-  uint8_t ctr[16];
-  size_t pos;
+  ctr_t ctr;
+  struct cmac_s hash;
 } ccm_t;
 
 typedef struct eax_s {
-  struct __cmac_s hash1;
-  struct __cmac_s hash2;
-  unsigned char state[CIPHER_MAX_BLOCK_SIZE];
+  ctr_t ctr;
+  struct cmac_s hash1;
+  struct cmac_s hash2;
   unsigned char mask[CIPHER_MAX_BLOCK_SIZE];
-  uint8_t ctr[CIPHER_MAX_BLOCK_SIZE];
-  size_t pos;
 } eax_t;
 
-struct __cipher_mode_s {
-  int type;
+struct cipher_mode_s {
+  mode_id_t type;
   union {
-    cbc_t cbc;
-    xts_t xts;
-    ctr_t ctr;
-    cfb_t cfb;
-    ofb_t ofb;
+    block_mode_t block;
+    stream_mode_t stream;
     gcm_t gcm;
     ccm_t ccm;
     eax_t eax;
@@ -349,7 +340,7 @@ typedef struct cipher_stream_s {
   unsigned char last[CIPHER_MAX_BLOCK_SIZE];
   unsigned char tag[CIPHER_MAX_TAG_SIZE];
   cipher_t cipher;
-  struct __cipher_mode_s mode;
+  struct cipher_mode_s mode;
 } cipher_stream_t;
 
 /*
@@ -395,25 +386,6 @@ TORSION_EXTERN void
 blowfish_init(blowfish_t *ctx,
               const unsigned char *key, size_t key_len,
               const unsigned char *salt, size_t salt_len);
-
-TORSION_EXTERN uint32_t
-blowfish_stream2word(const unsigned char *data, size_t len, size_t *off);
-
-TORSION_EXTERN void
-blowfish_expand0state(blowfish_t *ctx,
-                      const unsigned char *key,
-                      size_t key_len);
-
-TORSION_EXTERN void
-blowfish_expandstate(blowfish_t *ctx,
-                     const unsigned char *key, size_t key_len,
-                     const unsigned char *data, size_t data_len);
-
-TORSION_EXTERN void
-blowfish_enc(const blowfish_t *ctx, uint32_t *data, size_t len);
-
-TORSION_EXTERN void
-blowfish_dec(const blowfish_t *ctx, uint32_t *data, size_t len);
 
 TORSION_EXTERN void
 blowfish_encrypt(const blowfish_t *ctx,
@@ -580,13 +552,16 @@ pkcs7_unpad(unsigned char *dst,
  */
 
 TORSION_EXTERN size_t
-cipher_key_size(int type);
+cipher_key_size(cipher_id_t type);
 
 TORSION_EXTERN size_t
-cipher_block_size(int type);
+cipher_block_size(cipher_id_t type);
 
 TORSION_EXTERN int
-cipher_init(cipher_t *ctx, int type, const unsigned char *key, size_t key_len);
+cipher_init(cipher_t *ctx,
+            cipher_id_t type,
+            const unsigned char *key,
+            size_t key_len);
 
 TORSION_EXTERN void
 cipher_encrypt(const cipher_t *ctx,
@@ -796,7 +771,7 @@ eax_digest(eax_t *mode, const cipher_t *cipher, unsigned char *mac);
 
 TORSION_EXTERN int
 cipher_stream_init(cipher_stream_t *ctx,
-                   int type, int mode, int encrypt,
+                   cipher_id_t type, mode_id_t mode, int encrypt,
                    const unsigned char *key, size_t key_len,
                    const unsigned char *iv, size_t iv_len);
 
@@ -842,6 +817,9 @@ cipher_stream_final(cipher_stream_t *ctx,
                     unsigned char *output,
                     size_t *output_len);
 
+TORSION_EXTERN size_t
+cipher_stream_final_size(const cipher_stream_t *ctx);
+
 /*
  * Static Encryption/Decryption
  */
@@ -849,8 +827,8 @@ cipher_stream_final(cipher_stream_t *ctx,
 TORSION_EXTERN int
 cipher_static_encrypt(unsigned char *ct,
                       size_t *ct_len,
-                      int type,
-                      int mode,
+                      cipher_id_t type,
+                      mode_id_t mode,
                       const unsigned char *key,
                       size_t key_len,
                       const unsigned char *iv,
@@ -861,8 +839,8 @@ cipher_static_encrypt(unsigned char *ct,
 TORSION_EXTERN int
 cipher_static_decrypt(unsigned char *pt,
                       size_t *pt_len,
-                      int type,
-                      int mode,
+                      cipher_id_t type,
+                      mode_id_t mode,
                       const unsigned char *key,
                       size_t key_len,
                       const unsigned char *iv,
@@ -874,4 +852,4 @@ cipher_static_decrypt(unsigned char *pt,
 }
 #endif
 
-#endif /* _TORSION_CIPHER_H */
+#endif /* TORSION_CIPHER_H */

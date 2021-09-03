@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_DRBG_H
-#define _TORSION_DRBG_H
+#ifndef TORSION_DRBG_H
+#define TORSION_DRBG_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,24 +23,24 @@ extern "C" {
 #define hmac_drbg_init torsion_hmac_drbg_init
 #define hmac_drbg_reseed torsion_hmac_drbg_reseed
 #define hmac_drbg_generate torsion_hmac_drbg_generate
-#define hmac_drbg_rng __torsion_hmac_drbg_rng
+#define hmac_drbg_rng torsion__hmac_drbg_rng
 
 #define hash_drbg_init torsion_hash_drbg_init
 #define hash_drbg_reseed torsion_hash_drbg_reseed
 #define hash_drbg_generate torsion_hash_drbg_generate
-#define hash_drbg_rng __torsion_hash_drbg_rng
+#define hash_drbg_rng torsion__hash_drbg_rng
 
 #define ctr_drbg_init torsion_ctr_drbg_init
 #define ctr_drbg_reseed torsion_ctr_drbg_reseed
 #define ctr_drbg_generate torsion_ctr_drbg_generate
-#define ctr_drbg_rng __torsion_ctr_drbg_rng
+#define ctr_drbg_rng torsion__ctr_drbg_rng
 
 /*
- * Structs
+ * Types
  */
 
 typedef struct hmac_drbg_s {
-  int type;
+  hash_id_t type;
   size_t size;
   hmac_t kmac;
   unsigned char K[HASH_MAX_OUTPUT_SIZE];
@@ -48,7 +48,7 @@ typedef struct hmac_drbg_s {
 } hmac_drbg_t;
 
 typedef struct hash_drbg_s {
-  int type;
+  hash_id_t type;
   hash_t hash;
   size_t size;
   size_t length;
@@ -87,7 +87,7 @@ typedef hmac_drbg_t drbg_t;
 
 TORSION_EXTERN void
 hmac_drbg_init(hmac_drbg_t *drbg,
-               int type,
+               hash_id_t type,
                const unsigned char *seed,
                size_t seed_len);
 
@@ -107,7 +107,7 @@ hmac_drbg_rng(void *out, size_t size, void *arg);
 
 TORSION_EXTERN void
 hash_drbg_init(hash_drbg_t *drbg,
-               int type,
+               hash_id_t type,
                const unsigned char *seed,
                size_t seed_len);
 
@@ -160,4 +160,4 @@ ctr_drbg_rng(void *out, size_t size, void *arg);
 }
 #endif
 
-#endif /* _TORSION_DRBG_H */
+#endif /* TORSION_DRBG_H */

@@ -1,0 +1,36 @@
+{
+  "p2pkh": [
+    {
+      "legacy": "1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu",
+      "address": "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+      "hash": "76a04053bda0a88bda5177b86a15c3b29f559873"
+    },
+    {
+      "legacy": "1KXrWXciRDZUpQwQmuM1DbwsKDLYAYsVLR",
+      "address": "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy",
+      "hash": "cb481232299cd5743151ac4b2d63ae198e7bb0a9"
+    },
+    {
+      "legacy": "16w1D5WRVKJuZUsSRzdLp9w3YGcgoxDXb",
+      "address": "bitcoincash:qqq3728yw0y47sqn6l2na30mcw6zm78dzqre909m2r",
+      "hash": "011f28e473c95f4013d7d53ec5fbc3b42df8ed10"
+    }
+  ],
+  "p2sh": [
+    {
+      "legacy": "3CWFddi6m4ndiGyKqzYvsFYagqDLPVMTzC",
+      "address": "bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq",
+      "hash": "76a04053bda0a88bda5177b86a15c3b29f559873"
+    },
+    {
+      "legacy": "3LDsS579y7sruadqu11beEJoTjdFiFCdX4",
+      "address": "bitcoincash:pr95sy3j9xwd2ap32xkykttr4cvcu7as4yc93ky28e",
+      "hash": "cb481232299cd5743151ac4b2d63ae198e7bb0a9"
+    },
+    {
+      "legacy": "31nwvkZwyPdgzjBJZXfDmSWsC4ZLKpYyUw",
+      "address": "bitcoincash:pqq3728yw0y47sqn6l2na30mcw6zm78dzq5ucqzc37",
+      "hash": "011f28e473c95f4013d7d53ec5fbc3b42df8ed10"
+    }
+  ]
+}

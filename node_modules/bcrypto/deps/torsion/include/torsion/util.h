@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_UTIL_H
-#define _TORSION_UTIL_H
+#ifndef TORSION_UTIL_H
+#define TORSION_UTIL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,14 +27,24 @@ extern "C" {
  */
 
 TORSION_EXTERN void
-torsion_cleanse(void *ptr, size_t len);
+torsion_memzero(void *ptr, size_t len);
 
 /*
  * Memequal
  */
 
 TORSION_EXTERN int
-torsion_memequal(const void *s1, const void *s2, size_t n);
+torsion_memequal(const void *x, const void *y, size_t n);
+
+/*
+ * Memxor
+ */
+
+TORSION_EXTERN void
+torsion_memxor(void *z, const void *x, size_t n);
+
+TORSION_EXTERN void
+torsion_memxor3(void *z, const void *x, const void *y, size_t n);
 
 /*
  * Murmur3
@@ -51,4 +61,4 @@ murmur3_tweak(const unsigned char *data,
 }
 #endif
 
-#endif /* _TORSION_UTIL_H */
+#endif /* TORSION_UTIL_H */

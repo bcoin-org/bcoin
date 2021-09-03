@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_DSA_H
-#define _TORSION_DSA_H
+#ifndef TORSION_DSA_H
+#define TORSION_DSA_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,7 +45,7 @@ extern "C" {
 #define dsa_derive torsion_dsa_derive
 
 /*
- * Defs
+ * Definitions
  */
 
 #define DSA_DEFAULT_BITS 2048
@@ -204,4 +204,4 @@ dsa_derive(unsigned char *out, size_t *out_len,
 }
 #endif
 
-#endif /* _TORSION_DSA_H */
+#endif /* TORSION_DSA_H */

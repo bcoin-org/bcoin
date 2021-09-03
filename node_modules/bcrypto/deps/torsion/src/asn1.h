@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_ASN1_H
-#define _TORSION_ASN1_H
+#ifndef TORSION_ASN1_H
+#define TORSION_ASN1_H
 
 #include <stddef.h>
 #include "mpi.h"
@@ -14,22 +14,22 @@
  * Alias
  */
 
-#define asn1_read_size __torsion_asn1_read_size
-#define asn1_read_seq __torsion_asn1_read_seq
-#define asn1_read_int __torsion_asn1_read_int
-#define asn1_read_mpz __torsion_asn1_read_mpz
-#define asn1_read_version __torsion_asn1_read_version
-#define asn1_read_dumb __torsion_asn1_read_dumb
-#define asn1_size_size __torsion_asn1_size_size
-#define asn1_size_int __torsion_asn1_size_int
-#define asn1_size_mpz __torsion_asn1_size_mpz
-#define asn1_size_version __torsion_asn1_size_version
-#define asn1_write_size __torsion_asn1_write_size
-#define asn1_write_seq __torsion_asn1_write_seq
-#define asn1_write_int __torsion_asn1_write_int
-#define asn1_write_mpz __torsion_asn1_write_mpz
-#define asn1_write_version __torsion_asn1_write_version
-#define asn1_write_dumb __torsion_asn1_write_dumb
+#define asn1_read_size torsion__asn1_read_size
+#define asn1_read_seq torsion__asn1_read_seq
+#define asn1_read_int torsion__asn1_read_int
+#define asn1_read_mpz torsion__asn1_read_mpz
+#define asn1_read_version torsion__asn1_read_version
+#define asn1_read_dumb torsion__asn1_read_dumb
+#define asn1_size_size torsion__asn1_size_size
+#define asn1_size_int torsion__asn1_size_int
+#define asn1_size_mpz torsion__asn1_size_mpz
+#define asn1_size_version torsion__asn1_size_version
+#define asn1_write_size torsion__asn1_write_size
+#define asn1_write_seq torsion__asn1_write_seq
+#define asn1_write_int torsion__asn1_write_int
+#define asn1_write_mpz torsion__asn1_write_mpz
+#define asn1_write_version torsion__asn1_write_version
+#define asn1_write_dumb torsion__asn1_write_dumb
 
 /*
  * ASN1
@@ -88,4 +88,4 @@ asn1_write_version(unsigned char *data, size_t pos, unsigned int version);
 size_t
 asn1_write_dumb(unsigned char *data, size_t pos, const mpz_t n);
 
-#endif /* _TORSION_ASN1_H */
+#endif /* TORSION_ASN1_H */

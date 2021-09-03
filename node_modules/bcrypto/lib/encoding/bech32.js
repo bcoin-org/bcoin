@@ -6,7 +6,10 @@
 
 'use strict';
 
+let BECH32;
 if (process.env.NODE_BACKEND === 'js')
-  module.exports = require('../js/bech32');
+  BECH32 = require('../js/bech32');
 else
-  module.exports = require('../native/bech32');
+  BECH32 = require('../native/bech32');
+
+module.exports = new BECH32(1);

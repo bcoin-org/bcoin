@@ -312,7 +312,7 @@ function sign(msg, key, aux = binding.entropy(32)) {
   assert(Buffer.isBuffer(key));
   assert(Buffer.isBuffer(aux));
 
-  return binding.secp256k1_schnorr_sign(handle(), msg, key, aux);
+  return binding.secp256k1_bip340_sign(handle(), msg, key, aux);
 }
 
 /**
@@ -328,7 +328,7 @@ function verify(msg, sig, key) {
   assert(Buffer.isBuffer(sig));
   assert(Buffer.isBuffer(key));
 
-  return binding.secp256k1_schnorr_verify(handle(), msg, sig, key);
+  return binding.secp256k1_bip340_verify(handle(), msg, sig, key);
 }
 
 /**
@@ -348,7 +348,7 @@ function verifyBatch(batch) {
     assert(Buffer.isBuffer(item[2]));
   }
 
-  return binding.secp256k1_schnorr_verify_batch(handle(), batch);
+  return binding.secp256k1_bip340_verify_batch(handle(), batch);
 }
 
 /**
