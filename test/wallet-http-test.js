@@ -49,6 +49,7 @@ let txFee = 0;
 
 const coinValue = 50000;
 const witnessOptions = [true, false];
+const wallets = ['primary'];
 
 for (const witnessOpt of witnessOptions) {
   describe(`Wallet HTTP - witness: ${witnessOpt}`, function() {
@@ -71,9 +72,15 @@ for (const witnessOpt of witnessOptions) {
 
     it('should create wallet', async () => {
       const info = await wclient.createWallet(name, {witness: witnessOpt});
+      wallets.push(name);
       assert.strictEqual(info.id, name);
       wallet = wclient.wallet(name, info.token);
       await wallet.open();
+    });
+
+    it('should list wallets', async () => {
+      const info = await wclient.getWallets();
+      assert.deepEqual(info, wallets);
     });
 
     it('should get wallet info', async () => {
@@ -85,12 +92,49 @@ for (const witnessOpt of witnessOptions) {
       addr = Address.fromString(str, node.network);
     });
 
+    it('should change passphrase', async () => {
+      await wallet.setPassphrase('initial');
+
+      // Incorrect Passphrase should not work
+      await assert.rejects(async () => {
+        await wallet.unlock('badpass');
+      }, {
+        name: 'Error',
+        message: 'Could not decrypt.'
+      });
+
+      // Correct Passphrase should work
+      const masterO1 = await wclient.getMaster(name);
+      assert.equal(masterO1.encrypted, true);
+      await wallet.unlock('initial');
+      const masterO2 = await wclient.getMaster(name);
+      assert.equal(masterO2.encrypted, false);
+
+      await wallet.setPassphrase('newpass', 'initial');
+
+      // Old Passphrase should not work
+      await assert.rejects(async () => {
+        await wallet.unlock('initial');
+      }, {
+        name: 'Error',
+        message: 'Could not decrypt.'
+      });
+
+      // New Passphrase should work
+      const masterN1 = await wclient.getMaster(name);
+      assert.equal(masterN1.encrypted, true);
+      await wallet.unlock('newpass', 15000);
+      const masterN2 = await wclient.getMaster(name);
+      assert.equal(masterN2.encrypted, false);
+    });
+
     it('should enable seed phrase recovery', async () => {
       const options = {
         passphrase: 'PASSPHRASE',
         mnemonic: 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
       };
       const walletName = `test_seed-${witnessOpt}`;
+      wallets.push(walletName);
 
       const testwallet = await wclient.createWallet(walletName, options);
       assert.strictEqual(testwallet.master.encrypted, false);
