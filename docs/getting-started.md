@@ -262,6 +262,7 @@ See [Configuration][configuration].
 
 - Christopher Jeffrey (B4B1 F62D BAC0 84E3 33F3 A04A 8962 AB9D E666 6BBD)
 - Braydon Fuller (5B7D C58D 90FE C1E9 90A3  10BA F24F 232D 108B 3AD4)
+- Matthew Zipkin (E617 73CD 6E01 040E 2F1B D78C E7E2 984B 6289 C93A)
 
 [keybase]: https://keybase.io/chjj#show-public
 [configuration]: configuration.md
