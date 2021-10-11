@@ -165,16 +165,17 @@ dsa_group_export_dumb(unsigned char *out,
 }
 
 static int
-dsa_group_generate(dsa_group_t *group, int bits, const unsigned char *entropy) {
+dsa_group_generate(dsa_group_t *group, mp_bits_t bits,
+                   const unsigned char *entropy) {
   /* [FIPS186] Page 31, Appendix A.1.
    *           Page 41, Appendix A.2.
    * [DSA] "Parameter generation".
    */
-  int L = bits;
-  int N = bits < 2048 ? 160 : 256;
+  mp_bits_t L = bits;
+  mp_bits_t N = bits < 2048 ? 160 : 256;
   mpz_t q, p, t, h, pm1, e, g;
+  mp_bits_t i, b;
   drbg_t rng;
-  int i, b;
 
   if (!(L == 1024 && N == 160)
       && !(L == 2048 && N == 224)
@@ -252,17 +253,17 @@ done:
   mpz_cleanse(e);
   mpz_cleanse(g);
 
-  torsion_cleanse(&rng, sizeof(rng));
+  torsion_memzero(&rng, sizeof(rng));
 
   return 1;
 }
 
 static int
 dsa_group_is_sane(const dsa_group_t *group) {
-  int pbits = mpz_bitlen(group->p);
-  int qbits = mpz_bitlen(group->q);
-  mpz_t pm1;
+  mp_bits_t pbits = mpz_bitlen(group->p);
+  mp_bits_t qbits = mpz_bitlen(group->q);
   int ret = 0;
+  mpz_t pm1;
 
   mpz_init(pm1);
 
@@ -412,8 +413,8 @@ dsa_pub_export_dumb(unsigned char *out, size_t *out_len, const dsa_pub_t *k) {
 static int
 dsa_pub_is_sane(const dsa_pub_t *k) {
   dsa_group_t group;
-  mpz_t pm1;
   int ret = 0;
+  mpz_t pm1;
 
   dsa_group_roset_pub(&group, k);
 
@@ -620,16 +621,16 @@ dsa_priv_create(dsa_priv_t *k,
 
   mpz_powm_sec(k->y, k->g, k->x, k->p);
 
-  torsion_cleanse(&rng, sizeof(rng));
+  torsion_memzero(&rng, sizeof(rng));
 }
 
 static int
-dsa_priv_generate(dsa_priv_t *k, int bits, const unsigned char *entropy) {
+dsa_priv_generate(dsa_priv_t *k, mp_bits_t bits, const unsigned char *entropy) {
   unsigned char entropy1[ENTROPY_SIZE];
   unsigned char entropy2[ENTROPY_SIZE];
   dsa_group_t group;
-  drbg_t rng;
   int ret = 0;
+  drbg_t rng;
 
   dsa_group_init(&group);
 
@@ -644,9 +645,9 @@ dsa_priv_generate(dsa_priv_t *k, int bits, const unsigned char *entropy) {
   ret = 1;
 fail:
   dsa_group_clear(&group);
-  torsion_cleanse(&rng, sizeof(rng));
-  torsion_cleanse(entropy1, sizeof(entropy1));
-  torsion_cleanse(entropy2, sizeof(entropy2));
+  torsion_memzero(&rng, sizeof(rng));
+  torsion_memzero(entropy1, sizeof(entropy1));
+  torsion_memzero(entropy2, sizeof(entropy2));
   return ret;
 }
 
@@ -764,9 +765,9 @@ dsa_sig_export_rs(unsigned char *out, size_t *out_len,
 int
 dsa_params_create(unsigned char *out, size_t *out_len,
                   const unsigned char *key, size_t key_len) {
+  dsa_group_t group;
   dsa_priv_t priv;
   dsa_pub_t pub;
-  dsa_group_t group;
   int ret = 0;
 
   dsa_priv_init(&priv);
@@ -815,7 +816,7 @@ fail:
 
 unsigned int
 dsa_params_bits(const unsigned char *params, size_t params_len) {
-  unsigned int bits = 0;
+  mp_bits_t bits = 0;
   dsa_group_t group;
 
   dsa_group_init(&group);
@@ -834,7 +835,7 @@ fail:
 
 unsigned int
 dsa_params_qbits(const unsigned char *params, size_t params_len) {
-  unsigned int bits = 0;
+  mp_bits_t bits = 0;
   dsa_group_t group;
 
   dsa_group_init(&group);
@@ -963,7 +964,7 @@ fail:
 
 unsigned int
 dsa_privkey_bits(const unsigned char *key, size_t key_len) {
-  unsigned int bits = 0;
+  mp_bits_t bits = 0;
   dsa_priv_t k;
 
   dsa_priv_init(&k);
@@ -982,7 +983,7 @@ fail:
 
 unsigned int
 dsa_privkey_qbits(const unsigned char *key, size_t key_len) {
-  unsigned int bits = 0;
+  mp_bits_t bits = 0;
   dsa_priv_t k;
 
   dsa_priv_init(&k);
@@ -1026,8 +1027,13 @@ dsa_privkey_import(unsigned char *out, size_t *out_len,
   if (!dsa_priv_import_dumb(&k, key, key_len))
     goto fail;
 
-  if (!dsa_priv_recover(&k))
-    goto fail;
+  if (mpz_sgn(k.y) == 0) {
+    if (!dsa_priv_recover(&k))
+      goto fail;
+  } else {
+    if (!dsa_priv_is_sane(&k))
+      goto fail;
+  }
 
   dsa_priv_export(out, out_len, &k);
   ret = 1;
@@ -1082,7 +1088,7 @@ fail:
 
 unsigned int
 dsa_pubkey_bits(const unsigned char *key, size_t key_len) {
-  unsigned int bits = 0;
+  mp_bits_t bits = 0;
   dsa_pub_t k;
 
   dsa_pub_init(&k);
@@ -1101,7 +1107,7 @@ fail:
 
 unsigned int
 dsa_pubkey_qbits(const unsigned char *key, size_t key_len) {
-  unsigned int bits = 0;
+  mp_bits_t bits = 0;
   dsa_pub_t k;
 
   dsa_pub_init(&k);
@@ -1325,8 +1331,8 @@ dsa_sign(unsigned char *out, size_t *out_len,
   mpz_t m, b, bx, bm, k, r, s;
   drbg_t drbg, rng;
   dsa_priv_t priv;
-  dsa_sig_t S;
   size_t qsize;
+  dsa_sig_t S;
   int ret = 0;
 
   mpz_init(m);
@@ -1414,9 +1420,9 @@ fail:
   mpz_cleanse(r);
   mpz_cleanse(s);
   dsa_priv_clear(&priv);
-  torsion_cleanse(&drbg, sizeof(drbg));
-  torsion_cleanse(&rng, sizeof(rng));
-  torsion_cleanse(bytes, sizeof(bytes));
+  torsion_memzero(&drbg, sizeof(drbg));
+  torsion_memzero(&rng, sizeof(rng));
+  torsion_memzero(bytes, sizeof(bytes));
   return ret;
 }
 
@@ -1445,9 +1451,9 @@ dsa_verify(const unsigned char *msg, size_t msg_len,
    *   r == r' mod q
    */
   mpz_t r, s, m, si, u1, u2, e1, e2, re;
+  size_t qsize;
   dsa_pub_t k;
   dsa_sig_t S;
-  size_t qsize;
   int ret = 0;
 
   mpz_init(m);
@@ -1519,8 +1525,8 @@ dsa_derive(unsigned char *out, size_t *out_len,
            const unsigned char *priv, size_t priv_len) {
   dsa_pub_t k1;
   dsa_priv_t k2;
-  mpz_t e;
   int ret = 0;
+  mpz_t e;
 
   dsa_pub_init(&k1);
   dsa_priv_init(&k2);

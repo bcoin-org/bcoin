@@ -526,7 +526,7 @@ function schnorrSign(msg, key) {
   assert(Buffer.isBuffer(msg));
   assert(Buffer.isBuffer(key));
 
-  return binding.secp256k1_schnorr_legacy_sign(handle(), msg, key);
+  return binding.secp256k1_bipschnorr_sign(handle(), msg, key);
 }
 
 /**
@@ -542,7 +542,7 @@ function schnorrVerify(msg, sig, key) {
   assert(Buffer.isBuffer(sig));
   assert(Buffer.isBuffer(key));
 
-  return binding.secp256k1_schnorr_legacy_verify(handle(), msg, sig, key);
+  return binding.secp256k1_bipschnorr_verify(handle(), msg, sig, key);
 }
 
 /**
@@ -562,7 +562,7 @@ function schnorrVerifyBatch(batch) {
     assert(Buffer.isBuffer(item[2]));
   }
 
-  return binding.secp256k1_schnorr_legacy_verify_batch(handle(), batch);
+  return binding.secp256k1_bipschnorr_verify_batch(handle(), batch);
 }
 
 /*

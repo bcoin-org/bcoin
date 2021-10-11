@@ -351,7 +351,7 @@ class ECDSA {
     assert(Buffer.isBuffer(msg));
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_legacy_sign(this._handle, msg, key);
+    return binding.bipschnorr_sign(this._handle, msg, key);
   }
 
   schnorrVerify(msg, sig, key) {
@@ -360,7 +360,7 @@ class ECDSA {
     assert(Buffer.isBuffer(sig));
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_legacy_verify(this._handle, msg, sig, key);
+    return binding.bipschnorr_verify(this._handle, msg, sig, key);
   }
 
   schnorrVerifyBatch(batch) {
@@ -375,7 +375,7 @@ class ECDSA {
       assert(Buffer.isBuffer(item[2]));
     }
 
-    return binding.schnorr_legacy_verify_batch(this._handle, batch);
+    return binding.bipschnorr_verify_batch(this._handle, batch);
   }
 }
 

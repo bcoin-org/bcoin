@@ -26,6 +26,7 @@
 #include <torsion/hash.h>
 #include <torsion/kdf.h>
 #include <torsion/util.h>
+#include "bf.h"
 #include "bio.h"
 
 /*
@@ -280,8 +281,8 @@ bcrypt_hash192(unsigned char *out,
   for (j = 0; j < BCRYPT_BLOCKS192; j++)
     write32be(out + j * 4, cdata[j]);
 
-  torsion_cleanse(cdata, sizeof(cdata));
-  torsion_cleanse(&state, sizeof(state));
+  torsion_memzero(cdata, sizeof(cdata));
+  torsion_memzero(&state, sizeof(state));
 }
 
 void
@@ -319,8 +320,8 @@ bcrypt_hash256(unsigned char *out,
   for (j = 0; j < BCRYPT_BLOCKS256; j++)
     write32le(out + j * 4, cdata[j]);
 
-  torsion_cleanse(cdata, sizeof(cdata));
-  torsion_cleanse(&state, sizeof(state));
+  torsion_memzero(cdata, sizeof(cdata));
+  torsion_memzero(&state, sizeof(state));
 }
 
 int
@@ -398,12 +399,12 @@ bcrypt_pbkdf(unsigned char *key,
     keylen -= i;
   }
 
-  torsion_cleanse(out, sizeof(out));
-  torsion_cleanse(tmpout, sizeof(tmpout));
-  torsion_cleanse(sha2pass, sizeof(sha2pass));
-  torsion_cleanse(sha2salt, sizeof(sha2salt));
-  torsion_cleanse(&shash, sizeof(shash));
-  torsion_cleanse(&hash, sizeof(hash));
+  torsion_memzero(out, sizeof(out));
+  torsion_memzero(tmpout, sizeof(tmpout));
+  torsion_memzero(sha2pass, sizeof(sha2pass));
+  torsion_memzero(sha2salt, sizeof(sha2salt));
+  torsion_memzero(&shash, sizeof(shash));
+  torsion_memzero(&hash, sizeof(hash));
 
   return 1;
 }
@@ -450,8 +451,8 @@ bcrypt_derive(unsigned char *out,
 
   memcpy(out, tmp, BCRYPT_HASH192);
 
-  torsion_cleanse(tmp, sizeof(tmp));
-  torsion_cleanse(key, sizeof(key));
+  torsion_memzero(tmp, sizeof(tmp));
+  torsion_memzero(key, sizeof(key));
 
   return 1;
 }
@@ -521,7 +522,7 @@ bcrypt_verify(const unsigned char *pass, size_t pass_len, const char *record) {
 int
 eb2k_derive(unsigned char *key,
             unsigned char *iv,
-            int type,
+            hash_id_t type,
             const unsigned char *passwd,
             size_t passwd_len,
             const unsigned char *salt,
@@ -587,8 +588,8 @@ eb2k_derive(unsigned char *key,
     }
   }
 
-  torsion_cleanse(prev, sizeof(prev));
-  torsion_cleanse(&hash, sizeof(hash));
+  torsion_memzero(prev, sizeof(prev));
+  torsion_memzero(&hash, sizeof(hash));
 
   return 1;
 }
@@ -602,7 +603,7 @@ eb2k_derive(unsigned char *key,
  */
 
 int
-hkdf_extract(unsigned char *out, int type,
+hkdf_extract(unsigned char *out, hash_id_t type,
              const unsigned char *ikm, size_t ikm_len,
              const unsigned char *salt, size_t salt_len) {
   hmac_t hmac;
@@ -619,7 +620,7 @@ hkdf_extract(unsigned char *out, int type,
 
 int
 hkdf_expand(unsigned char *out,
-            int type,
+            hash_id_t type,
             const unsigned char *prk,
             const unsigned char *info,
             size_t info_len,
@@ -670,9 +671,9 @@ hkdf_expand(unsigned char *out,
     len -= hash_size;
   }
 
-  torsion_cleanse(prev, sizeof(prev));
-  torsion_cleanse(&pmac, sizeof(pmac));
-  torsion_cleanse(&hmac, sizeof(hmac));
+  torsion_memzero(prev, sizeof(prev));
+  torsion_memzero(&pmac, sizeof(pmac));
+  torsion_memzero(&hmac, sizeof(hmac));
 
   return 1;
 }
@@ -691,7 +692,7 @@ hkdf_expand(unsigned char *out,
 
 int
 pbkdf2_derive(unsigned char *out,
-              int type,
+              hash_id_t type,
               const unsigned char *pass,
               size_t pass_len,
               const unsigned char *salt,
@@ -757,11 +758,11 @@ pbkdf2_derive(unsigned char *out,
     len -= hash_size;
   }
 
-  torsion_cleanse(block, sizeof(block));
-  torsion_cleanse(mac, sizeof(mac));
-  torsion_cleanse(&pmac, sizeof(pmac));
-  torsion_cleanse(&smac, sizeof(smac));
-  torsion_cleanse(&hmac, sizeof(hmac));
+  torsion_memzero(block, sizeof(block));
+  torsion_memzero(mac, sizeof(mac));
+  torsion_memzero(&pmac, sizeof(pmac));
+  torsion_memzero(&smac, sizeof(smac));
+  torsion_memzero(&hmac, sizeof(hmac));
 
   return 1;
 }
@@ -775,7 +776,7 @@ pbkdf2_derive(unsigned char *out,
 
 int
 pgpdf_derive_simple(unsigned char *out,
-                    int type,
+                    hash_id_t type,
                     const unsigned char *pass,
                     size_t pass_len,
                     size_t len) {
@@ -784,7 +785,7 @@ pgpdf_derive_simple(unsigned char *out,
 
 int
 pgpdf_derive_salted(unsigned char *out,
-                    int type,
+                    hash_id_t type,
                     const unsigned char *pass,
                     size_t pass_len,
                     const unsigned char *salt,
@@ -821,15 +822,15 @@ pgpdf_derive_salted(unsigned char *out,
     i += 1;
   }
 
-  torsion_cleanse(buf, sizeof(buf));
-  torsion_cleanse(&hash, sizeof(hash));
+  torsion_memzero(buf, sizeof(buf));
+  torsion_memzero(&hash, sizeof(hash));
 
   return 1;
 }
 
 int
 pgpdf_derive_iterated(unsigned char *out,
-                      int type,
+                      hash_id_t type,
                       const unsigned char *pass,
                       size_t pass_len,
                       const unsigned char *salt,
@@ -898,8 +899,8 @@ pgpdf_derive_iterated(unsigned char *out,
     i += 1;
   }
 
-  torsion_cleanse(buf, sizeof(buf));
-  torsion_cleanse(&hash, sizeof(hash));
+  torsion_memzero(buf, sizeof(buf));
+  torsion_memzero(&hash, sizeof(hash));
 
   return 1;
 }
@@ -931,8 +932,7 @@ scrypt_derive(unsigned char *out,
               uint32_t r,
               uint32_t p,
               size_t len) {
-  uint64_t len64 = len;
-  int t = HASH_SHA256;
+  hash_id_t t = HASH_SHA256;
   uint8_t *B = NULL;
   uint8_t *V = NULL;
   uint8_t *XY = NULL;
@@ -944,7 +944,7 @@ scrypt_derive(unsigned char *out,
   if (N == 0 || R == 0 || P == 0)
     return 0;
 
-  if (len64 > ((UINT64_C(1) << 32) - 1) * 32)
+  if (len + 31 < len || (len + 31) / 32 > UINT32_MAX)
     return 0;
 
   if ((uint64_t)R * (uint64_t)P >= (UINT64_C(1) << 30))
@@ -965,9 +965,9 @@ scrypt_derive(unsigned char *out,
   if (len == 0)
     return 1;
 
-  B = malloc(128 * R * P);
-  XY = malloc(256 * R);
-  V = malloc(128 * R * N);
+  B = (uint8_t *)malloc(128 * R * P);
+  XY = (uint8_t *)malloc(256 * R);
+  V = (uint8_t *)malloc(128 * R * N);
 
   if (B == NULL || XY == NULL || V == NULL)
     goto fail;
@@ -984,17 +984,17 @@ scrypt_derive(unsigned char *out,
   ret = 1;
 fail:
   if (B != NULL) {
-    torsion_cleanse(B, 128 * R * P);
+    torsion_memzero(B, 128 * R * P);
     free(B);
   }
 
   if (XY != NULL) {
-    torsion_cleanse(XY, 256 * R);
+    torsion_memzero(XY, 256 * R);
     free(XY);
   }
 
   if (V != NULL) {
-    torsion_cleanse(V, 128 * R * N);
+    torsion_memzero(V, 128 * R * N);
     free(V);
   }
 

@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_STREAM_H
-#define _TORSION_STREAM_H
+#ifndef TORSION_STREAM_H
+#define TORSION_STREAM_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,15 +23,13 @@ extern "C" {
 #define arc4_crypt torsion_arc4_crypt
 #define chacha20_init torsion_chacha20_init
 #define chacha20_crypt torsion_chacha20_crypt
-#define chacha20_pad torsion_chacha20_pad
 #define chacha20_derive torsion_chacha20_derive
 #define salsa20_init torsion_salsa20_init
 #define salsa20_crypt torsion_salsa20_crypt
-#define salsa20_pad torsion_salsa20_pad
 #define salsa20_derive torsion_salsa20_derive
 
 /*
- * Structs
+ * Types
  */
 
 typedef struct arc4_s {
@@ -79,8 +77,8 @@ chacha20_init(chacha20_t *ctx,
 
 TORSION_EXTERN void
 chacha20_crypt(chacha20_t *ctx,
-               unsigned char *out,
-               const unsigned char *data,
+               unsigned char *dst,
+               const unsigned char *src,
                size_t len);
 
 TORSION_EXTERN void
@@ -103,8 +101,8 @@ salsa20_init(salsa20_t *ctx,
 
 TORSION_EXTERN void
 salsa20_crypt(salsa20_t *ctx,
-              unsigned char *out,
-              const unsigned char *data,
+              unsigned char *dst,
+              const unsigned char *src,
               size_t len);
 
 TORSION_EXTERN void
@@ -117,4 +115,4 @@ salsa20_derive(unsigned char *out,
 }
 #endif
 
-#endif /* _TORSION_STREAM_H */
+#endif /* TORSION_STREAM_H */

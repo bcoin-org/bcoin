@@ -1,6 +1,6 @@
 /*!
- * bech32.js - bech32 for bcrypto
- * Copyright (c) 2019, Christopher Jeffrey (MIT License).
+ * bech32m.js - bech32m for bcrypto
+ * Copyright (c) 2021, the bcoin developers (MIT License).
  * https://github.com/bcoin-org/bcrypto
  */
 
@@ -12,4 +12,4 @@ if (process.env.NODE_BACKEND === 'js')
 else
   BECH32 = require('../native/bech32');
 
-module.exports = new BECH32(1);
+module.exports = new BECH32(0x2bc830a3);

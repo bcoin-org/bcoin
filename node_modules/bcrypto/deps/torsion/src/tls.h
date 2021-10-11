@@ -4,12 +4,12 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_TLS_H
-#define _TORSION_TLS_H
+#ifndef TORSION_TLS_H
+#define TORSION_TLS_H
 
 /* TLS Compiler Support
  *
- * GCC:
+ * GCC / G++:
  *
  * - Supports TLS via __thread[1].
  * - TLS first implemented in GCC 3.3[1].
@@ -33,18 +33,20 @@
  * - Support for OpenBSD added in Clang 5.0[16].
  * - Support for iOS Simulator added in Clang 7.0[17].
  * - Support for RISC-V added in Clang 9.0[18].
- * - No support for x86-64 Cygwin as of Clang 10.0[19].
- * - No support for ARM Cygwin as of Clang 10.0[20].
- * - No support for Haiku as of Clang 10.0[21].
+ * - No support for x86-64 Cygwin as of Clang 12.0[19].
+ * - No support for ARM Cygwin as of Clang 12.0[20].
+ * - No support for Haiku as of Clang 12.0[21].
  *
- * Intel C:
+ * Intel C/C++:
  *
  * - Supports TLS via __thread[22], __declspec(thread)[23].
  * - Intel mentions __thread in documentation from 2004[22].
- *   This would suggest support from version 8.x onward.
- * - Furthermore, this post[24] suggests __thread existed
- *   at least as far back as 2006 (version 9.0 or 10.0).
+ *   This user guide lists __INTEL_COMPILER as 810, implying
+ *   support on Linux from 8.1.0 onward. The Intel C++ 8.1
+ *   release notes confirm this[24].
  * - Apple and Mach-O support implemented in 15.0[25].
+ * - The exact version for Windows support is unknown
+ *   (though, wikipedia cites the 10.0 documentation).
  *
  * MSVC:
  *
@@ -53,18 +55,20 @@
  *   from 2009 suggests it existed in VS .NET 2002 (7.0).
  * - Another project dating from 1996-2003 suggests
  *   TLS was supported in Visual Studio 6.0 (1998)[28].
+ * - Wikipedia cites the VS .NET 2003 documentation as
+ *   a source for __declspec(thread).
  * - Usage of TLS appears on the MSDN Library CD for
  *   Visual Studio 6.0 (1998). The author of the code
  *   samples claims to have written them in 1995. This
  *   means TLS would have been supported in MSVC 4.0.
  *
- * Sun Pro C / Sun Studio / Solaris Studio:
+ * Sun Pro C/C++ / Sun Studio / Solaris Studio:
  *
  * - Supports TLS via __thread[29].
  * - First mentioned in documentation for Sun Studio 12[30].
  *   This would suggest support from 5.9 onward.
  *
- * IBM XL C:
+ * IBM XL C/C++:
  *
  * - Supports TLS via __thread[31].
  * - Support added for Linux in XL C 8.0[32].
@@ -86,19 +90,19 @@
  * - Supports TLS via __thread, __declspec(thread)[37][38].
  * - Mentioned on the gnulib mailing list[39].
  *
- * HP ANSI C:
+ * HP ANSI C / HP aC++:
  *
  * - Supports TLS via __thread[40].
  * - The release notes suggest this has been the
  *   case since at least version A.05.55.02.
  *
- * Watcom C:
+ * Watcom C/C++:
  *
  * - TLS supported via __declspec(thread)[41].
  * - TLS supported since at least version 11.0c[41].
  *   Notable as this predates Open Watcom.
  *
- * Wind River Compiler (Diab C):
+ * Wind River Compiler (Diab C/C++):
  *
  * - TLS supported via __thread[42][43].
  * - TLS supported since at least 2007 (5.6)[43].
@@ -109,7 +113,7 @@
  * - TLS first implemented in NWCC 0.7.5 (2008).
  *   See develop/oldnews/NEWS-0.7.5.
  *
- * Metrowerks C:
+ * Metrowerks C/C++:
  *
  * - TLS supported via __declspec(thread)[45].
  *   Documentation explicitly states this is
@@ -147,6 +151,10 @@
  *   or do not define it directly (in particular, Intel C
  *   versions less than 18.0.0[52]).
  *
+ * C++11:
+ *
+ * - C++11 specifies support for thread_local[53].
+ *
  * [1] https://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/Thread-Local.html
  * [2] https://github.com/gcc-mirror/gcc/commit/8893239dc4ed32bd3bb4e00d6e43b859554ab82a
  * [3] https://clang.llvm.org/docs/AttributeReference.html#thread
@@ -165,19 +173,22 @@
  * [16] https://github.com/llvm/llvm-project/blob/llvmorg-5.0.0/clang/lib/Basic/Targets.cpp#L555
  * [17] https://github.com/llvm/llvm-project/blob/llvmorg-7.0.0/clang/lib/Basic/Targets/OSTargets.h#L103
  * [18] https://github.com/llvm/llvm-project/blob/llvmorg-9.0.0/clang/lib/Basic/Targets/RISCV.h#L24
- * [19] https://github.com/llvm/llvm-project/blob/llvmorg-10.0.0/clang/lib/Basic/Targets/X86.h#L819
- * [20] https://github.com/llvm/llvm-project/blob/llvmorg-10.0.0/clang/lib/Basic/Targets/ARM.cpp#L1208
- * [21] https://github.com/llvm/llvm-project/blob/llvmorg-10.0.0/clang/lib/Basic/Targets/OSTargets.h#L310
+ * [19] https://github.com/llvm/llvm-project/blob/llvmorg-12.0.0/clang/lib/Basic/Targets/X86.h#L833
+ * [20] https://github.com/llvm/llvm-project/blob/llvmorg-12.0.0/clang/lib/Basic/Targets/ARM.cpp#L1248
+ * [21] https://github.com/llvm/llvm-project/blob/llvmorg-12.0.0/clang/lib/Basic/Targets/OSTargets.h#L291
  * [22] https://software.intel.com/sites/default/files/ae/4f/6320
- * [23] https://community.intel.com/t5/Intel-C-Compiler/Thread-local-storage-support-on-Windows/td-p/949321
- * [24] https://community.intel.com/t5/Intel-C-Compiler/thread-local-storage-linking-problems/td-p/932631
+        http://download.intel.com/support/performancetools/c/linux/sb/clin81_relnotes.pdf#4
+ * [23] http://software.intel.com/sites/default/files/m/2/4/8/5/d/16949-347599.pdf#155
+ * [24] https://www.tu-chemnitz.de/mathematik/mrz/neues/8.1/C++ReleaseNotes.htm
  * [25] https://community.intel.com/t5/Intel-C-Compiler/Mach-O-thread-local-storage/td-p/948267
  * [26] https://docs.microsoft.com/en-us/cpp/c-language/thread-local-storage
+        https://docs.microsoft.com/en-us/previous-versions/6yh4a9k1%28v%3dvs.140%29
  * [27] https://github.com/snaewe/loki-lib/commit/7d8e59abc8f48785d564ddabab5ba3f01cd24444
  * [28] http://www.simkin.co.uk/Docs/cpp/api/skGeneral_8h-source.html
  * [29] https://docs.oracle.com/cd/E18659_01/html/821-1383/bkaeg.html
  * [30] https://docs.oracle.com/cd/E19205-01/819-5267/bkaeg/index.html
  * [31] https://www.ibm.com/support/knowledgecenter/en/SSXVZZ_13.1.3/com.ibm.xlcpp1313.lelinux.doc/language_ref/thread.html
+        http://www-01.ibm.com/support/docview.wss?uid=swg27007322&aid=1#6
  * [32] https://www.ibm.com/support/pages/node/318521#6
  * [33] http://docs.embarcadero.com/products/rad_studio/delphiAndcpp2009/HelpUpdate2/EN/html/devwin32/threadsusingthreadlocalvariables_xml.html
  * [34] http://docwiki.embarcadero.com/RADStudio/Sydney/en/Declspec(thread)
@@ -199,6 +210,7 @@
  * [50] https://github.com/IanHarvey/pcc/commit/109a8ee
  * [51] https://en.cppreference.com/w/c/keyword/_Thread_local
  * [52] https://software.intel.com/en-us/forums/intel-c-compiler/topic/721059
+ * [53] https://en.cppreference.com/w/cpp/language/storage_duration
  */
 
 /* Apple Quirks
@@ -323,7 +335,10 @@
 #  if __HP_cc >= 55502 /* A.05.55.02 (2004) */
 #    define TORSION_TLS_GNUC
 #  endif
-#  define TORSION_TLS_GNUC
+#elif defined(__HP_aCC)
+#  if __HP_aCC >= 55502 /* A.05.55.02 (2004) */
+#    define TORSION_TLS_GNUC
+#  endif
 #elif defined(__WATCOMC__)
 #  if __WATCOMC__ >= 1200 /* Open Watcom 1.0 (2003) */
 #    define TORSION_TLS_MSVC
@@ -346,28 +361,36 @@
 #  if __SUNPRO_C >= 0x590 /* 5.9 (2007) */
 #    define TORSION_TLS_GNUC
 #  endif
-#elif defined(__INTEL_COMPILER)
-#  if defined(__APPLE__) && defined(__MACH__)
-#    if defined(TORSION__APPLE_OS) && __INTEL_COMPILER >= 1500 /* 15.0.0 (2014) */
-#      define TORSION_TLS_GNUC
-#    endif
-#  elif __INTEL_COMPILER >= 800 /* 8.0.0 (2003) */
-#    define TORSION_TLS_BOTH
-#  endif
-#elif defined(__ICC)
-#  if !defined(__APPLE__) && __ICC >= 800 /* 8.0.0 (2003) */
+#elif defined(__SUNPRO_CC)
+#  if __SUNPRO_CC >= 0x590 /* 5.9 (2007) */
 #    define TORSION_TLS_GNUC
 #  endif
-#elif defined(__ICL)
-#  if __ICL >= 800 /* 8.0.0 (2003) */
-#    define TORSION_TLS_MSVC
+#elif defined(__INTEL_COMPILER)
+#  if defined(__GNUC__) && defined(__GNUC_MINOR__)
+#    if ((__GNUC__ << 16) + __GNUC_MINOR__ >= 0x30003) /* 3.3 */
+#      define TORSION__GNUC_3_3
+#    endif
+#  endif
+#  if defined(TORSION__APPLE_OS) && __INTEL_COMPILER >= 1500 /* 15.0.0 (2014) */
+#    ifdef TORSION__GNUC_3_3
+#      define TORSION_TLS_GNUC
+#    endif
+#  elif defined(__linux__) && __INTEL_COMPILER >= 810 /* 8.1.0 (2004) */
+#    ifdef TORSION__GNUC_3_3
+#      define TORSION_TLS_GNUC
+#    endif
+#  elif defined(_WIN32) && __INTEL_COMPILER >= 1000 /* 10.0.0 (2007) */
+#    ifdef _MSC_VER
+#      define TORSION_TLS_MSVC
+#    endif
 #  endif
 #elif defined(__clang__)
 #  if defined(__apple_build_version__)
 #    if defined(TORSION__APPLE_OS) && __apple_build_version__ >= 8000038 /* 800.0.38 (2016) */
 #      define TORSION_TLS_GNUC
 #    endif
-#  elif TORSION__HAS_EXTENSION(c_thread_local) /* 3.4 (late 2013) */
+#  elif TORSION__HAS_EXTENSION(c_thread_local) \
+     || TORSION__HAS_EXTENSION(cxx_thread_local) /* 3.4 (late 2013) */
 #    if defined(__ANDROID__)
 #      if defined(__clang_major__) && __clang_major__ >= 5 /* 5.0 (2017) */
 #        define TORSION_TLS_GNUC
@@ -418,6 +441,8 @@
 #  ifndef __STDC_NO_THREADS__
 #    define TORSION_TLS_STDC
 #  endif
+#elif defined(__cplusplus) && (__cplusplus + 0L) >= 201103L
+#  define TORSION_TLS_CPP
 #endif
 
 #ifdef TORSION_TLS_BOTH
@@ -438,6 +463,9 @@
 #elif defined(TORSION_TLS_STDC)
 #  define TORSION_HAVE_TLS
 #  define TORSION_TLS _Thread_local
+#elif defined(TORSION_TLS_CPP)
+#  define TORSION_HAVE_TLS
+#  define TORSION_TLS thread_local
 #else
 #  define TORSION_TLS
 #endif
@@ -472,4 +500,4 @@
 
 #endif /* !TORSION_HAVE_CONFIG */
 
-#endif /* _TORSION_TLS_H */
+#endif /* TORSION_TLS_H */

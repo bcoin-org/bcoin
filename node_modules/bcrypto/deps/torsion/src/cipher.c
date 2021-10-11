@@ -33,13 +33,12 @@
 #include <string.h>
 #include <torsion/cipher.h>
 #include <torsion/util.h>
+#include "bf.h"
 #include "bio.h"
 
 /*
  * Constants
  */
-
-static const unsigned char zero64[64] = {0};
 
 /* Shifted by four. */
 static const uint32_t poly_table[9] = {
@@ -660,176 +659,174 @@ aes_init(aes_t *ctx, unsigned int bits, const unsigned char *key) {
 void
 aes_init_encrypt(aes_t *ctx, unsigned int bits, const unsigned char *key) {
   uint32_t *K = ctx->enckey;
-  uint32_t tmp;
-  int p = 0;
+  uint32_t word;
   int i = 0;
-
-  CHECK(bits == 128 || bits == 192 || bits == 256);
 
   /* Defensive memset. */
   memset(ctx, 0, sizeof(*ctx));
 
-  K[0] = read32be(key + 0);
-  K[1] = read32be(key + 4);
-  K[2] = read32be(key + 8);
-  K[3] = read32be(key + 12);
+  switch (bits) {
+    case 128: {
+      ctx->rounds = 10;
 
-  if (bits == 128) {
-    ctx->rounds = 10;
+      K[0] = read32be(key +  0);
+      K[1] = read32be(key +  4);
+      K[2] = read32be(key +  8);
+      K[3] = read32be(key + 12);
 
-    for (;;) {
-      tmp = K[p + 3];
+      for (;;) {
+        word = K[3];
 
-      K[p + 4] = K[p]
-        ^ (TE2[(tmp >> 16) & 0xff] & 0xff000000)
-        ^ (TE3[(tmp >>  8) & 0xff] & 0x00ff0000)
-        ^ (TE0[(tmp >>  0) & 0xff] & 0x0000ff00)
-        ^ (TE1[(tmp >> 24) & 0xff] & 0x000000ff)
-        ^ RCON[i];
+        K[4] = K[0]
+          ^ (TE2[(word >> 16) & 0xff] & 0xff000000)
+          ^ (TE3[(word >>  8) & 0xff] & 0x00ff0000)
+          ^ (TE0[(word >>  0) & 0xff] & 0x0000ff00)
+          ^ (TE1[(word >> 24) & 0xff] & 0x000000ff)
+          ^ RCON[i];
 
-      K[p + 5] = K[p + 1] ^ K[p + 4];
-      K[p + 6] = K[p + 2] ^ K[p + 5];
-      K[p + 7] = K[p + 3] ^ K[p + 6];
+        K[5] = K[1] ^ K[4];
+        K[6] = K[2] ^ K[5];
+        K[7] = K[3] ^ K[6];
 
-      i += 1;
+        if (++i == 10)
+          break;
 
-      if (i == 10)
-        break;
+        K += 4;
+      }
 
-      p += 4;
+      break;
     }
 
-    return;
-  }
+    case 192: {
+      ctx->rounds = 12;
 
-  K[p + 4] = read32be(key + 16);
-  K[p + 5] = read32be(key + 20);
+      K[0] = read32be(key +  0);
+      K[1] = read32be(key +  4);
+      K[2] = read32be(key +  8);
+      K[3] = read32be(key + 12);
+      K[4] = read32be(key + 16);
+      K[5] = read32be(key + 20);
 
-  if (bits == 192) {
-    ctx->rounds = 12;
+      for (;;) {
+        word = K[5];
 
-    for (;;) {
-      tmp = K[p + 5];
+        K[6] = K[0]
+          ^ (TE2[(word >> 16) & 0xff] & 0xff000000)
+          ^ (TE3[(word >>  8) & 0xff] & 0x00ff0000)
+          ^ (TE0[(word >>  0) & 0xff] & 0x0000ff00)
+          ^ (TE1[(word >> 24) & 0xff] & 0x000000ff)
+          ^ RCON[i];
 
-      K[p + 6] = K[p]
-        ^ (TE2[(tmp >> 16) & 0xff] & 0xff000000)
-        ^ (TE3[(tmp >>  8) & 0xff] & 0x00ff0000)
-        ^ (TE0[(tmp >>  0) & 0xff] & 0x0000ff00)
-        ^ (TE1[(tmp >> 24) & 0xff] & 0x000000ff)
-        ^ RCON[i];
+        K[7] = K[1] ^ K[6];
+        K[8] = K[2] ^ K[7];
+        K[9] = K[3] ^ K[8];
 
-      K[p + 7] = K[p + 1] ^ K[p + 6];
-      K[p + 8] = K[p + 2] ^ K[p + 7];
-      K[p + 9] = K[p + 3] ^ K[p + 8];
+        if (++i == 8)
+          break;
 
-      i += 1;
+        K[10] = K[4] ^ K[ 9];
+        K[11] = K[5] ^ K[10];
 
-      if (i == 8)
-        break;
+        K += 6;
+      }
 
-      K[p + 10] = K[p + 4] ^ K[p +  9];
-      K[p + 11] = K[p + 5] ^ K[p + 10];
-      p += 6;
+      break;
     }
 
-    return;
-  }
+    case 256: {
+      ctx->rounds = 14;
 
-  K[p + 6] = read32be(key + 24);
-  K[p + 7] = read32be(key + 28);
+      K[0] = read32be(key +  0);
+      K[1] = read32be(key +  4);
+      K[2] = read32be(key +  8);
+      K[3] = read32be(key + 12);
+      K[4] = read32be(key + 16);
+      K[5] = read32be(key + 20);
+      K[6] = read32be(key + 24);
+      K[7] = read32be(key + 28);
 
-  if (bits == 256) {
-    ctx->rounds = 14;
+      for (;;) {
+        word = K[7];
 
-    for (;;) {
-      tmp = K[p + 7];
+        K[8] = K[0]
+          ^ (TE2[(word >> 16) & 0xff] & 0xff000000)
+          ^ (TE3[(word >>  8) & 0xff] & 0x00ff0000)
+          ^ (TE0[(word >>  0) & 0xff] & 0x0000ff00)
+          ^ (TE1[(word >> 24) & 0xff] & 0x000000ff)
+          ^ RCON[i];
 
-      K[p + 8] = K[p]
-        ^ (TE2[(tmp >> 16) & 0xff] & 0xff000000)
-        ^ (TE3[(tmp >>  8) & 0xff] & 0x00ff0000)
-        ^ (TE0[(tmp >>  0) & 0xff] & 0x0000ff00)
-        ^ (TE1[(tmp >> 24) & 0xff] & 0x000000ff)
-        ^ RCON[i];
+        K[ 9] = K[1] ^ K[ 8];
+        K[10] = K[2] ^ K[ 9];
+        K[11] = K[3] ^ K[10];
 
-      K[p +  9] = K[p + 1] ^ K[p +  8];
-      K[p + 10] = K[p + 2] ^ K[p +  9];
-      K[p + 11] = K[p + 3] ^ K[p + 10];
+        if (++i == 7)
+          break;
 
-      i += 1;
+        word = K[11];
 
-      if (i == 7)
-        break;
+        K[12] = K[4]
+          ^ (TE2[(word >> 24) & 0xff] & 0xff000000)
+          ^ (TE3[(word >> 16) & 0xff] & 0x00ff0000)
+          ^ (TE0[(word >>  8) & 0xff] & 0x0000ff00)
+          ^ (TE1[(word >>  0) & 0xff] & 0x000000ff);
 
-      tmp = K[p + 11];
+        K[13] = K[5] ^ K[12];
+        K[14] = K[6] ^ K[13];
+        K[15] = K[7] ^ K[14];
 
-      K[p + 12] = K[p + 4]
-        ^ (TE2[(tmp >> 24) & 0xff] & 0xff000000)
-        ^ (TE3[(tmp >> 16) & 0xff] & 0x00ff0000)
-        ^ (TE0[(tmp >>  8) & 0xff] & 0x0000ff00)
-        ^ (TE1[(tmp >>  0) & 0xff] & 0x000000ff);
+        K += 8;
+      }
 
-      K[p + 13] = K[p +  5] ^ K[p + 12];
-      K[p + 14] = K[p +  6] ^ K[p + 13];
-      K[p + 15] = K[p +  7] ^ K[p + 14];
-
-      p += 8;
+      break;
     }
 
-    return;
+    default: {
+      torsion_abort(); /* LCOV_EXCL_LINE */
+      break;
+    }
   }
-
-  torsion_abort(); /* LCOV_EXCL_LINE */
 }
 
 void
 aes_init_decrypt(aes_t *ctx) {
   uint32_t *K = ctx->deckey;
-  uint32_t tmp;
-  int p = 0;
-  int i, j;
+  uint32_t x, y;
+  int i, j, k;
 
   memcpy(K, ctx->enckey, sizeof(ctx->enckey));
 
   for (i = 0, j = 4 * ctx->rounds; i < j; i += 4, j -= 4) {
-    tmp = K[i + 0];
-    K[i + 0] = K[j + 0];
-    K[j + 0] = tmp;
+    for (k = 0; k < 4; k++) {
+      x = K[i + k];
+      y = K[j + k];
 
-    tmp = K[i + 1];
-    K[i + 1] = K[j + 1];
-    K[j + 1] = tmp;
-
-    tmp = K[i + 2];
-    K[i + 2] = K[j + 2];
-    K[j + 2] = tmp;
-
-    tmp = K[i + 3];
-    K[i + 3] = K[j + 3];
-    K[j + 3] = tmp;
+      K[i + k] = y;
+      K[j + k] = x;
+    }
   }
 
   for (i = 1; i < ctx->rounds; i++) {
-    p += 4;
+    K += 4;
 
-    K[p + 0] = TD0[TE1[(K[p + 0] >> 24) & 0xff] & 0xff]
-             ^ TD1[TE1[(K[p + 0] >> 16) & 0xff] & 0xff]
-             ^ TD2[TE1[(K[p + 0] >>  8) & 0xff] & 0xff]
-             ^ TD3[TE1[(K[p + 0] >>  0) & 0xff] & 0xff];
+    K[0] = TD0[TE1[(K[0] >> 24) & 0xff] & 0xff]
+         ^ TD1[TE1[(K[0] >> 16) & 0xff] & 0xff]
+         ^ TD2[TE1[(K[0] >>  8) & 0xff] & 0xff]
+         ^ TD3[TE1[(K[0] >>  0) & 0xff] & 0xff];
 
-    K[p + 1] = TD0[TE1[(K[p + 1] >> 24) & 0xff] & 0xff]
-             ^ TD1[TE1[(K[p + 1] >> 16) & 0xff] & 0xff]
-             ^ TD2[TE1[(K[p + 1] >>  8) & 0xff] & 0xff]
-             ^ TD3[TE1[(K[p + 1] >>  0) & 0xff] & 0xff];
+    K[1] = TD0[TE1[(K[1] >> 24) & 0xff] & 0xff]
+         ^ TD1[TE1[(K[1] >> 16) & 0xff] & 0xff]
+         ^ TD2[TE1[(K[1] >>  8) & 0xff] & 0xff]
+         ^ TD3[TE1[(K[1] >>  0) & 0xff] & 0xff];
 
-    K[p + 2] = TD0[TE1[(K[p + 2] >> 24) & 0xff] & 0xff]
-             ^ TD1[TE1[(K[p + 2] >> 16) & 0xff] & 0xff]
-             ^ TD2[TE1[(K[p + 2] >>  8) & 0xff] & 0xff]
-             ^ TD3[TE1[(K[p + 2] >>  0) & 0xff] & 0xff];
+    K[2] = TD0[TE1[(K[2] >> 24) & 0xff] & 0xff]
+         ^ TD1[TE1[(K[2] >> 16) & 0xff] & 0xff]
+         ^ TD2[TE1[(K[2] >>  8) & 0xff] & 0xff]
+         ^ TD3[TE1[(K[2] >>  0) & 0xff] & 0xff];
 
-    K[p + 3] = TD0[TE1[(K[p + 3] >> 24) & 0xff] & 0xff]
-             ^ TD1[TE1[(K[p + 3] >> 16) & 0xff] & 0xff]
-             ^ TD2[TE1[(K[p + 3] >>  8) & 0xff] & 0xff]
-             ^ TD3[TE1[(K[p + 3] >>  0) & 0xff] & 0xff];
+    K[3] = TD0[TE1[(K[3] >> 24) & 0xff] & 0xff]
+         ^ TD1[TE1[(K[3] >> 16) & 0xff] & 0xff]
+         ^ TD2[TE1[(K[3] >>  8) & 0xff] & 0xff]
+         ^ TD3[TE1[(K[3] >>  0) & 0xff] & 0xff];
   }
 }
 
@@ -842,87 +839,85 @@ aes_encrypt(const aes_t *ctx, unsigned char *dst, const unsigned char *src) {
   uint32_t s3 = read32be(src + 12) ^ K[3];
   uint32_t t0, t1, t2, t3;
   int r = ctx->rounds >> 1;
-  int p = 0;
 
   for (;;) {
     t0 = TE0[(s0 >> 24) & 0xff]
        ^ TE1[(s1 >> 16) & 0xff]
        ^ TE2[(s2 >>  8) & 0xff]
        ^ TE3[(s3 >>  0) & 0xff]
-       ^ K[p + 4];
+       ^ K[4];
 
     t1 = TE0[(s1 >> 24) & 0xff]
        ^ TE1[(s2 >> 16) & 0xff]
        ^ TE2[(s3 >>  8) & 0xff]
        ^ TE3[(s0 >>  0) & 0xff]
-       ^ K[p + 5];
+       ^ K[5];
 
     t2 = TE0[(s2 >> 24) & 0xff]
        ^ TE1[(s3 >> 16) & 0xff]
        ^ TE2[(s0 >>  8) & 0xff]
        ^ TE3[(s1 >>  0) & 0xff]
-       ^ K[p + 6];
+       ^ K[6];
 
     t3 = TE0[(s3 >> 24) & 0xff]
        ^ TE1[(s0 >> 16) & 0xff]
        ^ TE2[(s1 >>  8) & 0xff]
        ^ TE3[(s2 >>  0) & 0xff]
-       ^ K[p + 7];
+       ^ K[7];
 
-    p += 8;
-    r -= 1;
+    K += 8;
 
-    if (r == 0)
+    if (--r == 0)
       break;
 
     s0 = TE0[(t0 >> 24) & 0xff]
        ^ TE1[(t1 >> 16) & 0xff]
        ^ TE2[(t2 >>  8) & 0xff]
        ^ TE3[(t3 >>  0) & 0xff]
-       ^ K[p + 0];
+       ^ K[0];
 
     s1 = TE0[(t1 >> 24) & 0xff]
        ^ TE1[(t2 >> 16) & 0xff]
        ^ TE2[(t3 >>  8) & 0xff]
        ^ TE3[(t0 >>  0) & 0xff]
-       ^ K[p + 1];
+       ^ K[1];
 
     s2 = TE0[(t2 >> 24) & 0xff]
        ^ TE1[(t3 >> 16) & 0xff]
        ^ TE2[(t0 >>  8) & 0xff]
        ^ TE3[(t1 >>  0) & 0xff]
-       ^ K[p + 2];
+       ^ K[2];
 
     s3 = TE0[(t3 >> 24) & 0xff]
        ^ TE1[(t0 >> 16) & 0xff]
        ^ TE2[(t1 >>  8) & 0xff]
        ^ TE3[(t2 >>  0) & 0xff]
-       ^ K[p + 3];
+       ^ K[3];
   }
 
   s0 = (TE2[(t0 >> 24) & 0xff] & 0xff000000)
      ^ (TE3[(t1 >> 16) & 0xff] & 0x00ff0000)
      ^ (TE0[(t2 >>  8) & 0xff] & 0x0000ff00)
      ^ (TE1[(t3 >>  0) & 0xff] & 0x000000ff)
-     ^ K[p + 0];
+     ^ K[0];
 
   s1 = (TE2[(t1 >> 24) & 0xff] & 0xff000000)
      ^ (TE3[(t2 >> 16) & 0xff] & 0x00ff0000)
      ^ (TE0[(t3 >>  8) & 0xff] & 0x0000ff00)
      ^ (TE1[(t0 >>  0) & 0xff] & 0x000000ff)
-     ^ K[p + 1];
+     ^ K[1];
 
   s2 = (TE2[(t2 >> 24) & 0xff] & 0xff000000)
      ^ (TE3[(t3 >> 16) & 0xff] & 0x00ff0000)
      ^ (TE0[(t0 >>  8) & 0xff] & 0x0000ff00)
      ^ (TE1[(t1 >>  0) & 0xff] & 0x000000ff)
-     ^ K[p + 2];
+     ^ K[2];
 
   s3 = (TE2[(t3 >> 24) & 0xff] & 0xff000000)
      ^ (TE3[(t0 >> 16) & 0xff] & 0x00ff0000)
      ^ (TE0[(t1 >>  8) & 0xff] & 0x0000ff00)
      ^ (TE1[(t2 >>  0) & 0xff] & 0x000000ff)
-     ^ K[p + 3];
+     ^ K[3];
 
   write32be(dst +  0, s0);
   write32be(dst +  4, s1);
@@ -939,87 +934,85 @@ aes_decrypt(const aes_t *ctx, unsigned char *dst, const unsigned char *src) {
   uint32_t s3 = read32be(src + 12) ^ K[3];
   uint32_t t0, t1, t2, t3;
   int r = ctx->rounds >> 1;
-  int p = 0;
 
   for (;;) {
     t0 = TD0[(s0 >> 24) & 0xff]
        ^ TD1[(s3 >> 16) & 0xff]
        ^ TD2[(s2 >>  8) & 0xff]
        ^ TD3[(s1 >>  0) & 0xff]
-       ^ K[p + 4];
+       ^ K[4];
 
     t1 = TD0[(s1 >> 24) & 0xff]
        ^ TD1[(s0 >> 16) & 0xff]
        ^ TD2[(s3 >>  8) & 0xff]
        ^ TD3[(s2 >>  0) & 0xff]
-       ^ K[p + 5];
+       ^ K[5];
 
     t2 = TD0[(s2 >> 24) & 0xff]
        ^ TD1[(s1 >> 16) & 0xff]
        ^ TD2[(s0 >>  8) & 0xff]
        ^ TD3[(s3 >>  0) & 0xff]
-       ^ K[p + 6];
+       ^ K[6];
 
     t3 = TD0[(s3 >> 24) & 0xff]
        ^ TD1[(s2 >> 16) & 0xff]
        ^ TD2[(s1 >>  8) & 0xff]
        ^ TD3[(s0 >>  0) & 0xff]
-       ^ K[p + 7];
+       ^ K[7];
 
-    p += 8;
-    r -= 1;
+    K += 8;
 
-    if (r == 0)
+    if (--r == 0)
       break;
 
     s0 = TD0[(t0 >> 24) & 0xff]
        ^ TD1[(t3 >> 16) & 0xff]
        ^ TD2[(t2 >>  8) & 0xff]
        ^ TD3[(t1 >>  0) & 0xff]
-       ^ K[p + 0];
+       ^ K[0];
 
     s1 = TD0[(t1 >> 24) & 0xff]
        ^ TD1[(t0 >> 16) & 0xff]
        ^ TD2[(t3 >>  8) & 0xff]
        ^ TD3[(t2 >>  0) & 0xff]
-       ^ K[p + 1];
+       ^ K[1];
 
     s2 = TD0[(t2 >> 24) & 0xff]
        ^ TD1[(t1 >> 16) & 0xff]
        ^ TD2[(t0 >>  8) & 0xff]
        ^ TD3[(t3 >>  0) & 0xff]
-       ^ K[p + 2];
+       ^ K[2];
 
     s3 = TD0[(t3 >> 24) & 0xff]
        ^ TD1[(t2 >> 16) & 0xff]
        ^ TD2[(t1 >>  8) & 0xff]
        ^ TD3[(t0 >>  0) & 0xff]
-       ^ K[p + 3];
+       ^ K[3];
   }
 
   s0 = (TD4[(t0 >> 24) & 0xff] << 24)
      ^ (TD4[(t3 >> 16) & 0xff] << 16)
      ^ (TD4[(t2 >>  8) & 0xff] <<  8)
      ^ (TD4[(t1 >>  0) & 0xff] <<  0)
-     ^ K[p + 0];
+     ^ K[0];
 
   s1 = (TD4[(t1 >> 24) & 0xff] << 24)
      ^ (TD4[(t0 >> 16) & 0xff] << 16)
      ^ (TD4[(t3 >>  8) & 0xff] <<  8)
      ^ (TD4[(t2 >>  0) & 0xff] <<  0)
-     ^ K[p + 1];
+     ^ K[1];
 
   s2 = (TD4[(t2 >> 24) & 0xff] << 24)
      ^ (TD4[(t1 >> 16) & 0xff] << 16)
      ^ (TD4[(t0 >>  8) & 0xff] <<  8)
      ^ (TD4[(t3 >>  0) & 0xff] <<  0)
-     ^ K[p + 2];
+     ^ K[2];
 
   s3 = (TD4[(t3 >> 24) & 0xff] << 24)
      ^ (TD4[(t2 >> 16) & 0xff] << 16)
      ^ (TD4[(t1 >>  8) & 0xff] <<  8)
      ^ (TD4[(t0 >>  0) & 0xff] <<  0)
-     ^ K[p + 3];
+     ^ K[3];
 
   write32be(dst +  0, s0);
   write32be(dst +  4, s1);
@@ -1859,13 +1852,13 @@ blowfish_decrypt(const blowfish_t *ctx,
  *   https://github.com/aead/camellia/blob/master/camellia.go
  */
 
-#define SIGMA camellia_SIGMA
+#define sigma camellia_SIGMA
 #define S1 camellia_S1
 #define S2 camellia_S2
 #define S3 camellia_S3
 #define S4 camellia_S4
 
-static const uint32_t SIGMA[12] = {
+static const uint32_t sigma[12] = {
   0xa09e667f, 0x3bcc908b, 0xb67ae858, 0x4caa73b2,
   0xc6ef372f, 0xe94f82be, 0x54ff53a5, 0xf1d36f1c,
   0x10e527fa, 0xde682d1d, 0xb05688c2, 0xb3e6c1fd
@@ -2188,16 +2181,16 @@ camellia128_init(camellia_t *ctx, const unsigned char *key) {
   k[2] = s2;
   k[3] = s3;
 
-  F(s0, s1, s2, s3, SIGMA[0], SIGMA[1]);
-  F(s2, s3, s0, s1, SIGMA[2], SIGMA[3]);
+  F(s0, s1, s2, s3, sigma[0], sigma[1]);
+  F(s2, s3, s0, s1, sigma[2], sigma[3]);
 
   s0 ^= k[0];
   s1 ^= k[1];
   s2 ^= k[2];
   s3 ^= k[3];
 
-  F(s0, s1, s2, s3, SIGMA[4], SIGMA[5]);
-  F(s2, s3, s0, s1, SIGMA[6], SIGMA[7]);
+  F(s0, s1, s2, s3, sigma[4], sigma[5]);
+  F(s2, s3, s0, s1, sigma[6], sigma[7]);
 
   k[4] = s0;
   k[5] = s1;
@@ -2447,16 +2440,16 @@ camellia256_init(camellia_t *ctx, const unsigned char *key, size_t key_len) {
   s2 = k[10] ^ k[2];
   s3 = k[11] ^ k[3];
 
-  F(s0, s1, s2, s3, SIGMA[0], SIGMA[1]);
-  F(s2, s3, s0, s1, SIGMA[2], SIGMA[3]);
+  F(s0, s1, s2, s3, sigma[0], sigma[1]);
+  F(s2, s3, s0, s1, sigma[2], sigma[3]);
 
   s0 ^= k[0];
   s1 ^= k[1];
   s2 ^= k[2];
   s3 ^= k[3];
 
-  F(s0, s1, s2, s3, SIGMA[4], SIGMA[5]);
-  F(s2, s3, s0, s1, SIGMA[6], SIGMA[7]);
+  F(s0, s1, s2, s3, sigma[4], sigma[5]);
+  F(s2, s3, s0, s1, sigma[6], sigma[7]);
 
   k[12] = s0;
   k[13] = s1;
@@ -2468,8 +2461,8 @@ camellia256_init(camellia_t *ctx, const unsigned char *key, size_t key_len) {
   s2 ^= k[10];
   s3 ^= k[11];
 
-  F(s0, s1, s2, s3, SIGMA[8], SIGMA[9]);
-  F(s2, s3, s0, s1, SIGMA[10], SIGMA[11]);
+  F(s0, s1, s2, s3, sigma[8], sigma[9]);
+  F(s2, s3, s0, s1, sigma[10], sigma[11]);
 
   k[4] = s0;
   k[5] = s1;
@@ -2789,7 +2782,7 @@ camellia_decrypt(const camellia_t *ctx,
     camellia256_decrypt(ctx, dst, src);
 }
 
-#undef SIGMA
+#undef sigma
 #undef S1
 #undef S2
 #undef S3
@@ -3348,58 +3341,58 @@ static const struct {
 } schedule[4] = {
   {
     {
-      {4, 0, 0xd, 0xf, 0xc, 0xe, 0x8},
-      {5, 2, 16 + 0, 16 + 2, 16 + 1, 16 + 3, 0xa},
-      {6, 3, 16 + 7, 16 + 6, 16 + 5, 16 + 4, 9},
-      {7, 1, 16 + 0xa, 16 + 9, 16 + 0xb, 16 + 8, 0xb}
+      { 0x04, 0x00, 0x0d, 0x0f, 0x0c, 0x0e, 0x08 },
+      { 0x05, 0x02, 0x10, 0x12, 0x11, 0x13, 0x0a },
+      { 0x06, 0x03, 0x17, 0x16, 0x15, 0x14, 0x09 },
+      { 0x07, 0x01, 0x1a, 0x19, 0x1b, 0x18, 0x0b }
     },
     {
-      {16 + 8, 16 + 9, 16 + 7, 16 + 6, 16 + 2},
-      {16 + 0xa, 16 + 0xb, 16 + 5, 16 + 4, 16 + 6},
-      {16 + 0xc, 16 + 0xd, 16 + 3, 16 + 2, 16 + 9},
-      {16 + 0xe, 16 + 0xf, 16 + 1, 16 + 0, 16 + 0xc}
+      { 0x18, 0x19, 0x17, 0x16, 0x12 },
+      { 0x1a, 0x1b, 0x15, 0x14, 0x16 },
+      { 0x1c, 0x1d, 0x13, 0x12, 0x19 },
+      { 0x1e, 0x1f, 0x11, 0x10, 0x1c }
     }
   },
   {
     {
-      {0, 6, 16 + 5, 16 + 7, 16 + 4, 16 + 6, 16 + 0},
-      {1, 4, 0, 2, 1, 3, 16 + 2},
-      {2, 5, 7, 6, 5, 4, 16 + 1},
-      {3, 7, 0xa, 9, 0xb, 8, 16 + 3}
+      { 0x00, 0x06, 0x15, 0x17, 0x14, 0x16, 0x10 },
+      { 0x01, 0x04, 0x00, 0x02, 0x01, 0x03, 0x12 },
+      { 0x02, 0x05, 0x07, 0x06, 0x05, 0x04, 0x11 },
+      { 0x03, 0x07, 0x0a, 0x09, 0x0b, 0x08, 0x13 }
     },
     {
-      {3, 2, 0xc, 0xd, 8},
-      {1, 0, 0xe, 0xf, 0xd},
-      {7, 6, 8, 9, 3},
-      {5, 4, 0xa, 0xb, 7}
+      { 0x03, 0x02, 0x0c, 0x0d, 0x08 },
+      { 0x01, 0x00, 0x0e, 0x0f, 0x0d },
+      { 0x07, 0x06, 0x08, 0x09, 0x03 },
+      { 0x05, 0x04, 0x0a, 0x0b, 0x07 }
     }
   },
   {
     {
-      {4, 0, 0xd, 0xf, 0xc, 0xe, 8},
-      {5, 2, 16 + 0, 16 + 2, 16 + 1, 16 + 3, 0xa},
-      {6, 3, 16 + 7, 16 + 6, 16 + 5, 16 + 4, 9},
-      {7, 1, 16 + 0xa, 16 + 9, 16 + 0xb, 16 + 8, 0xb}
+      { 0x04, 0x00, 0x0d, 0x0f, 0x0c, 0x0e, 0x08 },
+      { 0x05, 0x02, 0x10, 0x12, 0x11, 0x13, 0x0a },
+      { 0x06, 0x03, 0x17, 0x16, 0x15, 0x14, 0x09 },
+      { 0x07, 0x01, 0x1a, 0x19, 0x1b, 0x18, 0x0b }
     },
     {
-      {16 + 3, 16 + 2, 16 + 0xc, 16 + 0xd, 16 + 9},
-      {16 + 1, 16 + 0, 16 + 0xe, 16 + 0xf, 16 + 0xc},
-      {16 + 7, 16 + 6, 16 + 8, 16 + 9, 16 + 2},
-      {16 + 5, 16 + 4, 16 + 0xa, 16 + 0xb, 16 + 6}
+      { 0x13, 0x12, 0x1c, 0x1d, 0x19 },
+      { 0x11, 0x10, 0x1e, 0x1f, 0x1c },
+      { 0x17, 0x16, 0x18, 0x19, 0x12 },
+      { 0x15, 0x14, 0x1a, 0x1b, 0x16 }
     }
   },
   {
     {
-      {0, 6, 16 + 5, 16 + 7, 16 + 4, 16 + 6, 16 + 0},
-      {1, 4, 0, 2, 1, 3, 16 + 2},
-      {2, 5, 7, 6, 5, 4, 16 + 1},
-      {3, 7, 0xa, 9, 0xb, 8, 16 + 3}
+      { 0x00, 0x06, 0x15, 0x17, 0x14, 0x16, 0x10 },
+      { 0x01, 0x04, 0x00, 0x02, 0x01, 0x03, 0x12 },
+      { 0x02, 0x05, 0x07, 0x06, 0x05, 0x04, 0x11 },
+      { 0x03, 0x07, 0x0a, 0x09, 0x0b, 0x08, 0x13 }
     },
     {
-      {8, 9, 7, 6, 3},
-      {0xa, 0xb, 5, 4, 7},
-      {0xc, 0xd, 3, 2, 8},
-      {0xe, 0xf, 1, 0, 0xd}
+      { 0x08, 0x09, 0x07, 0x06, 0x03 },
+      { 0x0a, 0x0b, 0x05, 0x04, 0x07 },
+      { 0x0c, 0x0d, 0x03, 0x02, 0x08 },
+      { 0x0e, 0x0f, 0x01, 0x00, 0x0d }
     }
   }
 };
@@ -3408,8 +3401,9 @@ static const uint8_t X[4] = {6, 7, 4, 5};
 
 static TORSION_INLINE uint32_t
 f1(uint32_t d, uint32_t m, uint32_t r) {
+  uint32_t c = -(uint32_t)(r != 0);
   uint32_t t = m + d;
-  uint32_t I = (t << r) | (t >> (32 - r));;
+  uint32_t I = (t << r) | (t >> ((32 - r) & c));
 
   return (((S[0][(I >> 24) & 0xff]
           ^ S[1][(I >> 16) & 0xff])
@@ -3419,8 +3413,9 @@ f1(uint32_t d, uint32_t m, uint32_t r) {
 
 static TORSION_INLINE uint32_t
 f2(uint32_t d, uint32_t m, uint32_t r) {
+  uint32_t c = -(uint32_t)(r != 0);
   uint32_t t = m ^ d;
-  uint32_t I = (t << r) | (t >> (32 - r));
+  uint32_t I = (t << r) | (t >> ((32 - r) & c));
 
   return (((S[0][(I >> 24) & 0xff]
           - S[1][(I >> 16) & 0xff])
@@ -3430,8 +3425,9 @@ f2(uint32_t d, uint32_t m, uint32_t r) {
 
 static TORSION_INLINE uint32_t
 f3(uint32_t d, uint32_t m, uint32_t r) {
+  uint32_t c = -(uint32_t)(r != 0);
   uint32_t t = m - d;
-  uint32_t I = (t << r) | (t >> (32 - r));
+  uint32_t I = (t << r) | (t >> ((32 - r) & c));
 
   return (((S[0][(I >> 24) & 0xff]
           + S[1][(I >> 16) & 0xff])
@@ -3490,8 +3486,8 @@ cast5_init(cast5_t *ctx, const unsigned char *key) {
   }
 }
 
-#define R(ctx, l, r, f, i) do {                  \
-  uint32_t t = l;                                \
+#define R(f, i) do {                             \
+  t = l;                                         \
   l = r;                                         \
   r = t ^ f(r, ctx->masking[i], ctx->rotate[i]); \
 } while (0)
@@ -3502,26 +3498,24 @@ cast5_encrypt(const cast5_t *ctx,
               const unsigned char *src) {
   uint32_t l = read32be(src + 0);
   uint32_t r = read32be(src + 4);
+  uint32_t t;
 
-  R(ctx, l, r, f1, 0);
-  R(ctx, l, r, f2, 1);
-  R(ctx, l, r, f3, 2);
-  R(ctx, l, r, f1, 3);
-
-  R(ctx, l, r, f2, 4);
-  R(ctx, l, r, f3, 5);
-  R(ctx, l, r, f1, 6);
-  R(ctx, l, r, f2, 7);
-
-  R(ctx, l, r, f3, 8);
-  R(ctx, l, r, f1, 9);
-  R(ctx, l, r, f2, 10);
-  R(ctx, l, r, f3, 11);
-
-  R(ctx, l, r, f1, 12);
-  R(ctx, l, r, f2, 13);
-  R(ctx, l, r, f3, 14);
-  R(ctx, l, r, f1, 15);
+  R(f1,  0);
+  R(f2,  1);
+  R(f3,  2);
+  R(f1,  3);
+  R(f2,  4);
+  R(f3,  5);
+  R(f1,  6);
+  R(f2,  7);
+  R(f3,  8);
+  R(f1,  9);
+  R(f2, 10);
+  R(f3, 11);
+  R(f1, 12);
+  R(f2, 13);
+  R(f3, 14);
+  R(f1, 15);
 
   write32be(dst + 0, r);
   write32be(dst + 4, l);
@@ -3533,26 +3527,24 @@ cast5_decrypt(const cast5_t *ctx,
               const unsigned char *src) {
   uint32_t l = read32be(src + 0);
   uint32_t r = read32be(src + 4);
+  uint32_t t;
 
-  R(ctx, l, r, f1, 15);
-  R(ctx, l, r, f3, 14);
-  R(ctx, l, r, f2, 13);
-  R(ctx, l, r, f1, 12);
-
-  R(ctx, l, r, f3, 11);
-  R(ctx, l, r, f2, 10);
-  R(ctx, l, r, f1, 9);
-  R(ctx, l, r, f3, 8);
-
-  R(ctx, l, r, f2, 7);
-  R(ctx, l, r, f1, 6);
-  R(ctx, l, r, f3, 5);
-  R(ctx, l, r, f2, 4);
-
-  R(ctx, l, r, f1, 3);
-  R(ctx, l, r, f3, 2);
-  R(ctx, l, r, f2, 1);
-  R(ctx, l, r, f1, 0);
+  R(f1, 15);
+  R(f3, 14);
+  R(f2, 13);
+  R(f1, 12);
+  R(f3, 11);
+  R(f2, 10);
+  R(f1,  9);
+  R(f3,  8);
+  R(f2,  7);
+  R(f1,  6);
+  R(f3,  5);
+  R(f2,  4);
+  R(f1,  3);
+  R(f3,  2);
+  R(f2,  1);
+  R(f1,  0);
 
   write32be(dst + 0, r);
   write32be(dst + 4, l);
@@ -3576,12 +3568,10 @@ cast5_decrypt(const cast5_t *ctx,
  */
 
 static const uint8_t des_pc2_table[48] = {
-  /* inL => outL */
   0x0e, 0x0b, 0x11, 0x04, 0x1b, 0x17, 0x19, 0x00,
   0x0d, 0x16, 0x07, 0x12, 0x05, 0x09, 0x10, 0x18,
   0x02, 0x14, 0x0c, 0x15, 0x01, 0x08, 0x0f, 0x1a,
 
-  /* inR => outR */
   0x0f, 0x04, 0x19, 0x13, 0x09, 0x01, 0x1a, 0x10,
   0x05, 0x0b, 0x17, 0x08, 0x0c, 0x07, 0x11, 0x00,
   0x16, 0x03, 0x0a, 0x0e, 0x06, 0x14, 0x1b, 0x18
@@ -3804,14 +3794,14 @@ des_pc2(uint32_t *xl, uint32_t *xr) {
   uint32_t r = *xr;
   uint32_t u = 0;
   uint32_t v = 0;
-  int i = 0;
+  int i;
 
-  for (; i < 24; i++) {
+  for (i = 0; i < 24; i++) {
     u <<= 1;
     u |= (l >> des_pc2_table[i]) & 1;
   }
 
-  for (; i < 48; i++) {
+  for (i = 24; i < 48; i++) {
     v <<= 1;
     v |= (r >> des_pc2_table[i]) & 1;
   }
@@ -3878,9 +3868,9 @@ des_permute(uint32_t s) {
 
 static void
 des_encipher(const des_t *ctx, uint32_t *xl, uint32_t *xr) {
+  uint32_t kl, kr, b1, b2, s, f, t;
   uint32_t l = *xl;
   uint32_t r = *xr;
-  uint32_t kl, kr, b1, b2, s, f, t;
   int i;
 
   /* Initial Permutation */
@@ -3914,9 +3904,9 @@ des_encipher(const des_t *ctx, uint32_t *xl, uint32_t *xr) {
 
 static void
 des_decipher(const des_t *ctx, uint32_t *xl, uint32_t *xr) {
+  uint32_t kl, kr, b1, b2, s, f, t;
   uint32_t l = *xr;
   uint32_t r = *xl;
-  uint32_t kl, kr, b1, b2, s, f, t;
   int i;
 
   /* Initial Permutation */
@@ -3952,6 +3942,7 @@ void
 des_init(des_t *ctx, const unsigned char *key) {
   uint32_t kl = read32be(key + 0);
   uint32_t kr = read32be(key + 4);
+  uint32_t k0, k1;
   int i, shift;
 
   /* Defensive memset. */
@@ -3965,11 +3956,13 @@ des_init(des_t *ctx, const unsigned char *key) {
     kl = des_r28shl(kl, shift);
     kr = des_r28shl(kr, shift);
 
-    ctx->keys[i + 0] = kl;
-    ctx->keys[i + 1] = kr;
+    k0 = kl;
+    k1 = kr;
 
-    des_pc2(&ctx->keys[i + 0],
-            &ctx->keys[i + 1]);
+    des_pc2(&k0, &k1);
+
+    ctx->keys[i + 0] = k0;
+    ctx->keys[i + 1] = k1;
   }
 }
 
@@ -4060,59 +4053,128 @@ des_ede3_decrypt(const des_ede3_t *ctx,
  *   https://github.com/dgryski/go-idea/blob/master/idea.go
  */
 
-#define inv16 idea_invm16
-#define mul16 idea_mul16
+#undef HAVE_STRENGTH_REDUCTION
+
+#if defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)
+#  if defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ >= 8
+#    define HAVE_STRENGTH_REDUCTION
+#  endif
+#endif
+
+/* Constant-time IDEA.
+ *
+ * The code below assumes the compiler is strength
+ * reducing our modulo by 65537. This is achieved
+ * with something like:
+ *
+ *   x - (mulhi(x, c) >> 16)
+ *
+ * Where `mulhi` does a wide multiplication and
+ * returns the high word, with following values
+ * of `c`:
+ *
+ *   0xffff0001 (32 bit)
+ *   0xffff0000ffff0001 (64 bit)
+ *
+ * Note: GCC & ICC strength-reduce the division
+ * at every optimization level (except for -Os),
+ * whereas clang requires -O1 or higher. Unsure
+ * what MSVC does here.
+ *
+ * The inverse mod 65537 can then be computed in
+ * constant-time by abusing a well-known property
+ * of Fermat's little theorem:
+ *
+ *   x^65535 mod 65537 = x^-1 mod 65537
+ *
+ * An exponent of 65535 (0xffff) makes things
+ * nice and simple. Normally left-to-right
+ * exponentiation (z = x^y mod n) follows an
+ * algorithm of:
+ *
+ *   z = 1
+ *   for i = ceil(log2(y+1)) - 1 downto 0
+ *     z = z * z mod n
+ *     if floor(y / 2^i) mod 2 == 1
+ *       z = z * x mod n
+ *
+ * This can be simplified in three ways:
+ *
+ *   1. The branch is not necessary as all bits
+ *      in the exponent are set.
+ *
+ *   2. A 64-bit integer is wide enough to
+ *      handle two multiplications of 17 bit
+ *      integers, requiring only one modulo
+ *      operation per iteration. i.e.
+ *
+ *        z = z * z * x mod n
+ *
+ *   3. The first round simply assigns `z`
+ *      to `x`, allowing us to initialize `z`
+ *      as `x` and skip the first iteration.
+ *
+ * The result is the very simple loop you see
+ * below. Note that zero is handled properly as:
+ *
+ *   65536^-1 mod 65537 = 65536
+ */
+
+#if defined(HAVE_STRENGTH_REDUCTION)
 
 static uint16_t
-inv16(uint16_t x) {
-  uint16_t y, q, t0, t1;
+idea_mul(uint16_t x, uint16_t y) {
+  uint64_t u = x;
+  uint64_t v = y;
 
-  if (x <= 1)
-    return x;
+  u |= 0x10000 & -((u - 1) >> 63);
+  v |= 0x10000 & -((v - 1) >> 63);
 
-  t1 = UINT32_C(0x10001) / (uint32_t)x;
-  y = UINT32_C(0x10001) % (uint32_t)x;
+  return (u * v) % 0x10001;
+}
 
-  if (y == 1)
-    return 1 - t1;
+static uint16_t
+idea_inv(uint16_t x) {
+  uint64_t z = x;
+  int i;
 
-  t0 = 1;
+  for (i = 0; i < 15; i++)
+    z = (z * z * x) % 0x10001;
 
-  while (y != 1) {
-    q = x / y;
-    x = x % y;
-    t0 += q * t1;
+  return z;
+}
 
-    if (x == 1)
-      return t0;
+#else /* !HAVE_STRENGTH_REDUCTION */
 
-    q = y / x;
-    y = y % x;
-    t1 += q * t0;
+static uint16_t
+idea_mul(uint16_t x, uint16_t y) {
+  uint32_t u = x;
+  uint32_t v = y;
+  uint32_t w = u * v;
+  uint32_t hi = w >> 16;
+  uint32_t lo = w & 0xffff;
+  uint32_t z = lo - hi + (lo < hi);
+
+  z |= (1 - u) & -((v - 1) >> 31);
+  z |= (1 - v) & -((u - 1) >> 31);
+
+  return z;
+}
+
+static uint16_t
+idea_inv(uint16_t x) {
+  uint16_t z = x;
+  int i;
+
+  for (i = 0; i < 15; i++) {
+    z = idea_mul(z, z);
+    z = idea_mul(z, x);
   }
 
-  return 1 - t1;
+  return z;
 }
 
-static uint16_t
-mul16(uint16_t x, uint16_t y) {
-  uint32_t t32;
-
-  if (y == 0)
-    return 1 - x;
-
-  if (x == 0)
-    return 1 - y;
-
-  t32 = (uint32_t)x * (uint32_t)y;
-  x = t32;
-  y = t32 >> 16;
-
-  if (x < y)
-    return x - y + 1;
-
-  return x - y;
-}
+#endif /* !HAVE_STRENGTH_REDUCTION */
 
 void
 idea_init(idea_t *ctx, const unsigned char *key) {
@@ -4123,9 +4185,8 @@ idea_init(idea_t *ctx, const unsigned char *key) {
 void
 idea_init_encrypt(idea_t *ctx, const unsigned char *key) {
   uint16_t *K = ctx->enckey;
-  int p = 0;
-  int j = 0;
   int i = 0;
+  int j = 0;
 
   /* Defensive memset. */
   memset(ctx, 0, sizeof(*ctx));
@@ -4136,10 +4197,10 @@ idea_init_encrypt(idea_t *ctx, const unsigned char *key) {
   for (; j < 52; j++) {
     i += 1;
 
-    K[p + (i + 7)] = (K[p + ((i + 0) & 7)] << 9)
-                   | (K[p + ((i + 1) & 7)] >> 7);
+    K[i + 7] = (K[(i + 0) & 7] << 9)
+             | (K[(i + 1) & 7] >> 7);
 
-    p += i & 8;
+    K += i & 8;
     i &= 7;
   }
 }
@@ -4147,50 +4208,48 @@ idea_init_encrypt(idea_t *ctx, const unsigned char *key) {
 void
 idea_init_decrypt(idea_t *ctx) {
   uint16_t *K = ctx->enckey;
-  uint16_t *D = ctx->deckey;
+  uint16_t *D = ctx->deckey + 52;
   uint16_t t1, t2, t3;
-  int di = 52 - 1;
-  int ki = 0;
   int i;
 
-  t1 = inv16(K[ki++]);
-  t2 = -K[ki++];
-  t3 = -K[ki++];
+  t1 = idea_inv(*K++);
+  t2 = -*K++;
+  t3 = -*K++;
 
-  D[di--] = inv16(K[ki++]);
-  D[di--] = t3;
-  D[di--] = t2;
-  D[di--] = t1;
+  *--D = idea_inv(*K++);
+  *--D = t3;
+  *--D = t2;
+  *--D = t1;
 
   for (i = 0; i < 8 - 1; i++) {
-    t1 = K[ki++];
+    t1 = *K++;
 
-    D[di--] = K[ki++];
-    D[di--] = t1;
+    *--D = *K++;
+    *--D = t1;
 
-    t1 = inv16(K[ki++]);
-    t2 = -K[ki++];
-    t3 = -K[ki++];
+    t1 = idea_inv(*K++);
+    t2 = -*K++;
+    t3 = -*K++;
 
-    D[di--] = inv16(K[ki++]);
-    D[di--] = t2;
-    D[di--] = t3;
-    D[di--] = t1;
+    *--D = idea_inv(*K++);
+    *--D = t2;
+    *--D = t3;
+    *--D = t1;
   }
 
-  t1 = K[ki++];
+  t1 = *K++;
 
-  D[di--] = K[ki++];
-  D[di--] = t1;
+  *--D = *K++;
+  *--D = t1;
 
-  t1 = inv16(K[ki++]);
-  t2 = -K[ki++];
-  t3 = -K[ki++];
+  t1 = idea_inv(*K++);
+  t2 = -*K++;
+  t3 = -*K++;
 
-  D[di--] = inv16(K[ki++]);
-  D[di--] = t3;
-  D[di--] = t2;
-  D[di--] = t1;
+  *--D = idea_inv(*K++);
+  *--D = t3;
+  *--D = t2;
+  *--D = t1;
 }
 
 static void
@@ -4201,23 +4260,22 @@ idea_crypt(unsigned char *dst, const unsigned char *src, const uint16_t *K) {
   uint16_t x4 = read16be(src + 6);
   uint16_t s2 = 0;
   uint16_t s3 = 0;
-  int p = 0;
   int i;
 
   for (i = 8 - 1; i >= 0; i--) {
-    x1 = mul16(x1, K[p++]);
-    x2 += K[p++];
-    x3 += K[p++];
-    x4 = mul16(x4, K[p++]);
+    x1 = idea_mul(x1, *K++);
+    x2 += *K++;
+    x3 += *K++;
+    x4 = idea_mul(x4, *K++);
 
     s3 = x3;
     x3 ^= x1;
-    x3 = mul16(x3, K[p++]);
+    x3 = idea_mul(x3, *K++);
     s2 = x2;
 
     x2 ^= x4;
     x2 += x3;
-    x2 = mul16(x2, K[p++]);
+    x2 = idea_mul(x2, *K++);
     x3 += x2;
 
     x1 ^= x2;
@@ -4226,10 +4284,10 @@ idea_crypt(unsigned char *dst, const unsigned char *src, const uint16_t *K) {
     x3 ^= s2;
   }
 
-  x1 = mul16(x1, K[p++]);
-  x3 += K[p++];
-  x2 += K[p++];
-  x4 = mul16(x4, K[p++]);
+  x1 = idea_mul(x1, *K++);
+  x3 += *K++;
+  x2 += *K++;
+  x4 = idea_mul(x4, *K++);
 
   write16be(dst + 0, x1);
   write16be(dst + 2, x3);
@@ -4246,9 +4304,6 @@ void
 idea_decrypt(const idea_t *ctx, unsigned char *dst, const unsigned char *src) {
   idea_crypt(dst, src, ctx->deckey);
 }
-
-#undef inv16
-#undef mul16
 
 /*
  * Serpent
@@ -4277,6 +4332,7 @@ idea_decrypt(const idea_t *ctx, unsigned char *dst, const unsigned char *src) {
 #define sb6inv serpent_sb6inv
 #define sb7 serpent_sb7
 #define sb7inv serpent_sb7inv
+#define xor4 serpent_xor4
 
 static TORSION_INLINE void
 linear(uint32_t *v0, uint32_t *v1, uint32_t *v2, uint32_t *v3) {
@@ -4613,6 +4669,15 @@ sb7inv(uint32_t *r0, uint32_t *r1, uint32_t *r2, uint32_t *r3) {
   *r2 = (t0 ^ *r1) ^ (*r0 ^ (v0 & *r3));
 }
 
+static TORSION_INLINE void
+xor4(uint32_t *r0, uint32_t *r1, uint32_t *r2, uint32_t *r3,
+     const uint32_t *sk, int i0, int i1, int i2, int i3) {
+  *r0 ^= sk[i0];
+  *r1 ^= sk[i1];
+  *r2 ^= sk[i2];
+  *r3 ^= sk[i3];
+}
+
 void
 serpent_init(serpent_t *ctx, unsigned int bits, const unsigned char *key) {
   static const uint32_t phi = 0x9e3779b9;
@@ -4644,7 +4709,7 @@ serpent_init(serpent_t *ctx, unsigned int bits, const unsigned char *key) {
   }
 
   for (i = 8; i < 132; i++) {
-    x = s[i - 8] ^ s[i - 5] ^ s[i - 3] ^ s[i - 1] ^ phi ^ (uint32_t)(i);
+    x = s[i - 8] ^ s[i - 5] ^ s[i - 3] ^ s[i - 1] ^ phi ^ (uint32_t)i;
     s[i] = (x << 11) | (x >> 21);
   }
 
@@ -4697,109 +4762,107 @@ serpent_encrypt(const serpent_t *ctx,
   uint32_t r2 = read32le(src +  8);
   uint32_t r3 = read32le(src + 12);
 
-  r0 ^= sk[0], r1 ^= sk[1], r2 ^= sk[2], r3 ^= sk[3];
+  xor4(&r0, &r1, &r2, &r3, sk, 0, 1, 2, 3);
+
   sb0(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[4], r1 ^= sk[5], r2 ^= sk[6], r3 ^= sk[7];
+  xor4(&r0, &r1, &r2, &r3, sk, 4, 5, 6, 7);
   sb1(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[8], r1 ^= sk[9], r2 ^= sk[10], r3 ^= sk[11];
+  xor4(&r0, &r1, &r2, &r3, sk, 8, 9, 10, 11);
   sb2(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[12], r1 ^= sk[13], r2 ^= sk[14], r3 ^= sk[15];
+  xor4(&r0, &r1, &r2, &r3, sk, 12, 13, 14, 15);
   sb3(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[16], r1 ^= sk[17], r2 ^= sk[18], r3 ^= sk[19];
+  xor4(&r0, &r1, &r2, &r3, sk, 16, 17, 18, 19);
   sb4(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[20], r1 ^= sk[21], r2 ^= sk[22], r3 ^= sk[23];
+  xor4(&r0, &r1, &r2, &r3, sk, 20, 21, 22, 23);
   sb5(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[24], r1 ^= sk[25], r2 ^= sk[26], r3 ^= sk[27];
+  xor4(&r0, &r1, &r2, &r3, sk, 24, 25, 26, 27);
   sb6(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[28], r1 ^= sk[29], r2 ^= sk[30], r3 ^= sk[31];
+  xor4(&r0, &r1, &r2, &r3, sk, 28, 29, 30, 31);
   sb7(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
 
-  r0 ^= sk[32], r1 ^= sk[33], r2 ^= sk[34], r3 ^= sk[35];
+  xor4(&r0, &r1, &r2, &r3, sk, 32, 33, 34, 35);
   sb0(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[36], r1 ^= sk[37], r2 ^= sk[38], r3 ^= sk[39];
+  xor4(&r0, &r1, &r2, &r3, sk, 36, 37, 38, 39);
   sb1(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[40], r1 ^= sk[41], r2 ^= sk[42], r3 ^= sk[43];
+  xor4(&r0, &r1, &r2, &r3, sk, 40, 41, 42, 43);
   sb2(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[44], r1 ^= sk[45], r2 ^= sk[46], r3 ^= sk[47];
+  xor4(&r0, &r1, &r2, &r3, sk, 44, 45, 46, 47);
   sb3(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[48], r1 ^= sk[49], r2 ^= sk[50], r3 ^= sk[51];
+  xor4(&r0, &r1, &r2, &r3, sk, 48, 49, 50, 51);
   sb4(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[52], r1 ^= sk[53], r2 ^= sk[54], r3 ^= sk[55];
+  xor4(&r0, &r1, &r2, &r3, sk, 52, 53, 54, 55);
   sb5(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[56], r1 ^= sk[57], r2 ^= sk[58], r3 ^= sk[59];
+  xor4(&r0, &r1, &r2, &r3, sk, 56, 57, 58, 59);
   sb6(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[60], r1 ^= sk[61], r2 ^= sk[62], r3 ^= sk[63];
+  xor4(&r0, &r1, &r2, &r3, sk, 60, 61, 62, 63);
   sb7(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
 
-  r0 ^= sk[64], r1 ^= sk[65], r2 ^= sk[66], r3 ^= sk[67];
+  xor4(&r0, &r1, &r2, &r3, sk, 64, 65, 66, 67);
   sb0(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[68], r1 ^= sk[69], r2 ^= sk[70], r3 ^= sk[71];
+  xor4(&r0, &r1, &r2, &r3, sk, 68, 69, 70, 71);
   sb1(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[72], r1 ^= sk[73], r2 ^= sk[74], r3 ^= sk[75];
+  xor4(&r0, &r1, &r2, &r3, sk, 72, 73, 74, 75);
   sb2(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[76], r1 ^= sk[77], r2 ^= sk[78], r3 ^= sk[79];
+  xor4(&r0, &r1, &r2, &r3, sk, 76, 77, 78, 79);
   sb3(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[80], r1 ^= sk[81], r2 ^= sk[82], r3 ^= sk[83];
+  xor4(&r0, &r1, &r2, &r3, sk, 80, 81, 82, 83);
   sb4(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[84], r1 ^= sk[85], r2 ^= sk[86], r3 ^= sk[87];
+  xor4(&r0, &r1, &r2, &r3, sk, 84, 85, 86, 87);
   sb5(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[88], r1 ^= sk[89], r2 ^= sk[90], r3 ^= sk[91];
+  xor4(&r0, &r1, &r2, &r3, sk, 88, 89, 90, 91);
   sb6(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[92], r1 ^= sk[93], r2 ^= sk[94], r3 ^= sk[95];
+  xor4(&r0, &r1, &r2, &r3, sk, 92, 93, 94, 95);
   sb7(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
 
-  r0 ^= sk[96], r1 ^= sk[97], r2 ^= sk[98], r3 ^= sk[99];
+  xor4(&r0, &r1, &r2, &r3, sk, 96, 97, 98, 99);
   sb0(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[100], r1 ^= sk[101], r2 ^= sk[102], r3 ^= sk[103];
+  xor4(&r0, &r1, &r2, &r3, sk, 100, 101, 102, 103);
   sb1(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[104], r1 ^= sk[105], r2 ^= sk[106], r3 ^= sk[107];
+  xor4(&r0, &r1, &r2, &r3, sk, 104, 105, 106, 107);
   sb2(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[108], r1 ^= sk[109], r2 ^= sk[110], r3 ^= sk[111];
+  xor4(&r0, &r1, &r2, &r3, sk, 108, 109, 110, 111);
   sb3(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[112], r1 ^= sk[113], r2 ^= sk[114], r3 ^= sk[115];
+  xor4(&r0, &r1, &r2, &r3, sk, 112, 113, 114, 115);
   sb4(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[116], r1 ^= sk[117], r2 ^= sk[118], r3 ^= sk[119];
+  xor4(&r0, &r1, &r2, &r3, sk, 116, 117, 118, 119);
   sb5(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[120], r1 ^= sk[121], r2 ^= sk[122], r3 ^= sk[123];
+  xor4(&r0, &r1, &r2, &r3, sk, 120, 121, 122, 123);
   sb6(&r0, &r1, &r2, &r3);
   linear(&r0, &r1, &r2, &r3);
-  r0 ^= sk[124], r1 ^= sk[125], r2 ^= sk[126], r3 ^= sk[127];
+  xor4(&r0, &r1, &r2, &r3, sk, 124, 125, 126, 127);
   sb7(&r0, &r1, &r2, &r3);
 
-  r0 ^= sk[128];
-  r1 ^= sk[129];
-  r2 ^= sk[130];
-  r3 ^= sk[131];
+  xor4(&r0, &r1, &r2, &r3, sk, 128, 129, 130, 131);
 
   write32le(dst +  0, r0);
   write32le(dst +  4, r1);
@@ -4817,113 +4880,107 @@ serpent_decrypt(const serpent_t *ctx,
   uint32_t r2 = read32le(src +  8);
   uint32_t r3 = read32le(src + 12);
 
-  r0 ^= sk[128];
-  r1 ^= sk[129];
-  r2 ^= sk[130];
-  r3 ^= sk[131];
+  xor4(&r0, &r1, &r2, &r3, sk, 128, 129, 130, 131);
 
   sb7inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[124], r1 ^= sk[125], r2 ^= sk[126], r3 ^= sk[127];
+  xor4(&r0, &r1, &r2, &r3, sk, 124, 125, 126, 127);
   linearinv(&r0, &r1, &r2, &r3);
   sb6inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[120], r1 ^= sk[121], r2 ^= sk[122], r3 ^= sk[123];
+  xor4(&r0, &r1, &r2, &r3, sk, 120, 121, 122, 123);
   linearinv(&r0, &r1, &r2, &r3);
   sb5inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[116], r1 ^= sk[117], r2 ^= sk[118], r3 ^= sk[119];
+  xor4(&r0, &r1, &r2, &r3, sk, 116, 117, 118, 119);
   linearinv(&r0, &r1, &r2, &r3);
   sb4inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[112], r1 ^= sk[113], r2 ^= sk[114], r3 ^= sk[115];
+  xor4(&r0, &r1, &r2, &r3, sk, 112, 113, 114, 115);
   linearinv(&r0, &r1, &r2, &r3);
   sb3inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[108], r1 ^= sk[109], r2 ^= sk[110], r3 ^= sk[111];
+  xor4(&r0, &r1, &r2, &r3, sk, 108, 109, 110, 111);
   linearinv(&r0, &r1, &r2, &r3);
   sb2inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[104], r1 ^= sk[105], r2 ^= sk[106], r3 ^= sk[107];
+  xor4(&r0, &r1, &r2, &r3, sk, 104, 105, 106, 107);
   linearinv(&r0, &r1, &r2, &r3);
   sb1inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[100], r1 ^= sk[101], r2 ^= sk[102], r3 ^= sk[103];
+  xor4(&r0, &r1, &r2, &r3, sk, 100, 101, 102, 103);
   linearinv(&r0, &r1, &r2, &r3);
   sb0inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[96], r1 ^= sk[97], r2 ^= sk[98], r3 ^= sk[99];
+  xor4(&r0, &r1, &r2, &r3, sk, 96, 97, 98, 99);
   linearinv(&r0, &r1, &r2, &r3);
 
   sb7inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[92], r1 ^= sk[93], r2 ^= sk[94], r3 ^= sk[95];
+  xor4(&r0, &r1, &r2, &r3, sk, 92, 93, 94, 95);
   linearinv(&r0, &r1, &r2, &r3);
   sb6inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[88], r1 ^= sk[89], r2 ^= sk[90], r3 ^= sk[91];
+  xor4(&r0, &r1, &r2, &r3, sk, 88, 89, 90, 91);
   linearinv(&r0, &r1, &r2, &r3);
   sb5inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[84], r1 ^= sk[85], r2 ^= sk[86], r3 ^= sk[87];
+  xor4(&r0, &r1, &r2, &r3, sk, 84, 85, 86, 87);
   linearinv(&r0, &r1, &r2, &r3);
   sb4inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[80], r1 ^= sk[81], r2 ^= sk[82], r3 ^= sk[83];
+  xor4(&r0, &r1, &r2, &r3, sk, 80, 81, 82, 83);
   linearinv(&r0, &r1, &r2, &r3);
   sb3inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[76], r1 ^= sk[77], r2 ^= sk[78], r3 ^= sk[79];
+  xor4(&r0, &r1, &r2, &r3, sk, 76, 77, 78, 79);
   linearinv(&r0, &r1, &r2, &r3);
   sb2inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[72], r1 ^= sk[73], r2 ^= sk[74], r3 ^= sk[75];
+  xor4(&r0, &r1, &r2, &r3, sk, 72, 73, 74, 75);
   linearinv(&r0, &r1, &r2, &r3);
   sb1inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[68], r1 ^= sk[69], r2 ^= sk[70], r3 ^= sk[71];
+  xor4(&r0, &r1, &r2, &r3, sk, 68, 69, 70, 71);
   linearinv(&r0, &r1, &r2, &r3);
   sb0inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[64], r1 ^= sk[65], r2 ^= sk[66], r3 ^= sk[67];
+  xor4(&r0, &r1, &r2, &r3, sk, 64, 65, 66, 67);
   linearinv(&r0, &r1, &r2, &r3);
 
   sb7inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[60], r1 ^= sk[61], r2 ^= sk[62], r3 ^= sk[63];
+  xor4(&r0, &r1, &r2, &r3, sk, 60, 61, 62, 63);
   linearinv(&r0, &r1, &r2, &r3);
   sb6inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[56], r1 ^= sk[57], r2 ^= sk[58], r3 ^= sk[59];
+  xor4(&r0, &r1, &r2, &r3, sk, 56, 57, 58, 59);
   linearinv(&r0, &r1, &r2, &r3);
   sb5inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[52], r1 ^= sk[53], r2 ^= sk[54], r3 ^= sk[55];
+  xor4(&r0, &r1, &r2, &r3, sk, 52, 53, 54, 55);
   linearinv(&r0, &r1, &r2, &r3);
   sb4inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[48], r1 ^= sk[49], r2 ^= sk[50], r3 ^= sk[51];
+  xor4(&r0, &r1, &r2, &r3, sk, 48, 49, 50, 51);
   linearinv(&r0, &r1, &r2, &r3);
   sb3inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[44], r1 ^= sk[45], r2 ^= sk[46], r3 ^= sk[47];
+  xor4(&r0, &r1, &r2, &r3, sk, 44, 45, 46, 47);
   linearinv(&r0, &r1, &r2, &r3);
   sb2inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[40], r1 ^= sk[41], r2 ^= sk[42], r3 ^= sk[43];
+  xor4(&r0, &r1, &r2, &r3, sk, 40, 41, 42, 43);
   linearinv(&r0, &r1, &r2, &r3);
   sb1inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[36], r1 ^= sk[37], r2 ^= sk[38], r3 ^= sk[39];
+  xor4(&r0, &r1, &r2, &r3, sk, 36, 37, 38, 39);
   linearinv(&r0, &r1, &r2, &r3);
   sb0inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[32], r1 ^= sk[33], r2 ^= sk[34], r3 ^= sk[35];
+  xor4(&r0, &r1, &r2, &r3, sk, 32, 33, 34, 35);
   linearinv(&r0, &r1, &r2, &r3);
 
   sb7inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[28], r1 ^= sk[29], r2 ^= sk[30], r3 ^= sk[31];
+  xor4(&r0, &r1, &r2, &r3, sk, 28, 29, 30, 31);
   linearinv(&r0, &r1, &r2, &r3);
   sb6inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[24], r1 ^= sk[25], r2 ^= sk[26], r3 ^= sk[27];
+  xor4(&r0, &r1, &r2, &r3, sk, 24, 25, 26, 27);
   linearinv(&r0, &r1, &r2, &r3);
   sb5inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[20], r1 ^= sk[21], r2 ^= sk[22], r3 ^= sk[23];
+  xor4(&r0, &r1, &r2, &r3, sk, 20, 21, 22, 23);
   linearinv(&r0, &r1, &r2, &r3);
   sb4inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[16], r1 ^= sk[17], r2 ^= sk[18], r3 ^= sk[19];
+  xor4(&r0, &r1, &r2, &r3, sk, 16, 17, 18, 19);
   linearinv(&r0, &r1, &r2, &r3);
   sb3inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[12], r1 ^= sk[13], r2 ^= sk[14], r3 ^= sk[15];
+  xor4(&r0, &r1, &r2, &r3, sk, 12, 13, 14, 15);
   linearinv(&r0, &r1, &r2, &r3);
   sb2inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[8], r1 ^= sk[9], r2 ^= sk[10], r3 ^= sk[11];
+  xor4(&r0, &r1, &r2, &r3, sk, 8, 9, 10, 11);
   linearinv(&r0, &r1, &r2, &r3);
   sb1inv(&r0, &r1, &r2, &r3);
-  r0 ^= sk[4], r1 ^= sk[5], r2 ^= sk[6], r3 ^= sk[7];
+  xor4(&r0, &r1, &r2, &r3, sk, 4, 5, 6, 7);
   linearinv(&r0, &r1, &r2, &r3);
   sb0inv(&r0, &r1, &r2, &r3);
 
-  r0 ^= sk[0];
-  r1 ^= sk[1];
-  r2 ^= sk[2];
-  r3 ^= sk[3];
+  xor4(&r0, &r1, &r2, &r3, sk, 0, 1, 2, 3);
 
   write32le(dst +  0, r0);
   write32le(dst +  4, r1);
@@ -4949,6 +5006,7 @@ serpent_decrypt(const serpent_t *ctx,
 #undef sb6inv
 #undef sb7
 #undef sb7inv
+#undef xor4
 
 /*
  * Twofish
@@ -5434,7 +5492,7 @@ pkcs7_unpad(unsigned char *dst,
  */
 
 size_t
-cipher_key_size(int type) {
+cipher_key_size(cipher_id_t type) {
   switch (type) {
     case CIPHER_AES128:
       return 16;
@@ -5490,7 +5548,7 @@ cipher_key_size(int type) {
 }
 
 size_t
-cipher_block_size(int type) {
+cipher_block_size(cipher_id_t type) {
   switch (type) {
     case CIPHER_AES128:
       return 16;
@@ -5546,7 +5604,10 @@ cipher_block_size(int type) {
 }
 
 int
-cipher_init(cipher_t *ctx, int type, const unsigned char *key, size_t key_len) {
+cipher_init(cipher_t *ctx,
+            cipher_id_t type,
+            const unsigned char *key,
+            size_t key_len) {
   ctx->type = type;
   ctx->size = cipher_block_size(type);
 
@@ -5997,37 +6058,39 @@ cbc_decrypt(cbc_t *mode, const cipher_t *cipher,
             unsigned char *dst, const unsigned char *src, size_t len) {
   size_t i;
 
-  CHECK((len & (cipher->size - 1)) == 0);
-
   if (dst == src) {
-    unsigned char prev[CIPHER_MAX_BLOCK_SIZE];
+    unsigned char tmp[CIPHER_MAX_BLOCK_SIZE];
+
+    CHECK((len & (cipher->size - 1)) == 0);
 
     while (len > 0) {
-      memcpy(prev, mode->prev, cipher->size);
-      memcpy(mode->prev, src, cipher->size);
-
-      cipher_decrypt(cipher, dst, src);
+      cipher_decrypt(cipher, tmp, src);
 
       for (i = 0; i < cipher->size; i++)
-        dst[i] ^= prev[i];
+        tmp[i] ^= mode->prev[i];
+
+      memcpy(mode->prev, src, cipher->size);
+      memcpy(dst, tmp, cipher->size);
 
       dst += cipher->size;
       src += cipher->size;
       len -= cipher->size;
     }
-  } else {
-    while (len > 0) {
-      cipher_decrypt(cipher, dst, src);
 
-      for (i = 0; i < cipher->size; i++)
-        dst[i] ^= mode->prev[i];
+    torsion_memzero(tmp, cipher->size);
+  } else if (len > 0) {
+    ecb_decrypt(cipher, dst, src, len);
 
-      memcpy(mode->prev, src, cipher->size);
+    for (i = 0; i < cipher->size; i++)
+      dst[i] ^= mode->prev[i];
 
-      dst += cipher->size;
-      src += cipher->size;
-      len -= cipher->size;
-    }
+    dst += cipher->size;
+    len -= cipher->size;
+
+    for (i = 0; i < len; i++)
+      dst[i] ^= src[i];
+
+    memcpy(mode->prev, src + len, cipher->size);
   }
 }
 
@@ -6080,7 +6143,7 @@ cbc_unsteal(cbc_t *mode,
   for (i = 0; i < cipher->size; i++)
     last[i] ^= tmp[i];
 
-  torsion_cleanse(tmp, cipher->size);
+  torsion_memzero(tmp, cipher->size);
 }
 
 /*
@@ -6103,29 +6166,26 @@ xts_setup(xts_t *mode, const cipher_t *cipher,
 
   cipher_encrypt(&c, mode->tweak, mode->tweak);
 
-  torsion_cleanse(&c, sizeof(c));
+  torsion_memzero(&c, sizeof(c));
 
   return 1;
 }
 
 static void
 xts_shift(uint8_t *dst, const uint8_t *src, size_t size) {
+  /* Little-endian doubling. */
   uint32_t poly = poly_table[size >> 4];
-  uint8_t cy = 0;
-  uint8_t c;
+  uint8_t c = src[size - 1] >> 7;
   size_t i;
 
-  for (i = 0; i < size; i++) {
-    c = src[i] >> 7;
+  for (i = size - 1; i >= 1; i--)
+    dst[i] = (src[i] << 1) | (src[i - 1] >> 7);
 
-    dst[i] = (src[i] << 1) | cy;
+  dst[0] = src[0] << 1;
 
-    cy = c;
-  }
-
-  dst[2] ^= (uint8_t)(poly >> 16) & -cy;
-  dst[1] ^= (uint8_t)(poly >>  8) & -cy;
-  dst[0] ^= (uint8_t)(poly >>  0) & -cy;
+  dst[2] ^= (uint8_t)(poly >> 16) & -c;
+  dst[1] ^= (uint8_t)(poly >>  8) & -c;
+  dst[0] ^= (uint8_t)(poly >>  0) & -c;
 }
 
 void
@@ -6261,38 +6321,90 @@ xts_unsteal(xts_t *mode,
 }
 
 /*
+ * Stream (Abstract)
+ */
+
+/* Avoid violating ISO C section 7.1.3. */
+#define stream_f xstream_f
+#define stream_update xstream_update
+
+typedef void stream_f(stream_mode_t *mode, const cipher_t *cipher);
+typedef void xor_f(stream_mode_t *mode, size_t pos, unsigned char *dst,
+                   const unsigned char *src, size_t len);
+
+static TORSION_INLINE void
+stream_update(stream_mode_t *mode,
+              const cipher_t *cipher,
+              stream_f *stream,
+              xor_f *permute,
+              unsigned char *dst,
+              const unsigned char *src,
+              size_t len) {
+  size_t size = cipher->size;
+  size_t pos = mode->pos;
+  size_t want = size - pos;
+
+  if (len >= want) {
+    if (pos > 0) {
+      permute(mode, pos, dst, src, want);
+
+      dst += want;
+      src += want;
+      len -= want;
+      pos = 0;
+    }
+
+    while (len >= size) {
+      stream(mode, cipher);
+
+      permute(mode, 0, dst, src, size);
+
+      dst += size;
+      src += size;
+      len -= size;
+    }
+  }
+
+  if (len > 0) {
+    if (pos == 0)
+      stream(mode, cipher);
+
+    permute(mode, pos, dst, src, len);
+
+    pos += len;
+  }
+
+  mode->pos = pos;
+}
+
+/*
  * CTR
  */
 
 void
 ctr_init(ctr_t *mode, const cipher_t *cipher, const unsigned char *iv) {
-  memcpy(mode->ctr, iv, cipher->size);
+  memcpy(mode->iv, iv, cipher->size);
   /* Defensive memset. */
   memset(mode->state, 0, cipher->size);
   mode->pos = 0;
 }
 
+static void
+ctr_stream(ctr_t *mode, const cipher_t *cipher) {
+  cipher_encrypt(cipher, mode->state, mode->iv);
+  increment_be_var(mode->iv, cipher->size);
+}
+
+static void
+ctr_xor(ctr_t *mode, size_t pos, unsigned char *dst,
+        const unsigned char *src, size_t len) {
+  torsion_memxor3(dst, src, mode->state + pos, len);
+}
+
 void
 ctr_crypt(ctr_t *mode, const cipher_t *cipher,
           unsigned char *dst, const unsigned char *src, size_t len) {
-  size_t mask = cipher->size - 1;
-  size_t i;
-  int j;
-
-  for (i = 0; i < len; i++) {
-    if ((mode->pos & mask) == 0) {
-      cipher_encrypt(cipher, mode->state, mode->ctr);
-
-      for (j = cipher->size - 1; j >= 0; j--) {
-        if (++mode->ctr[j] != 0x00)
-          break;
-      }
-
-      mode->pos = 0;
-    }
-
-    dst[i] = src[i] ^ mode->state[mode->pos++];
-  }
+  stream_update(mode, cipher, ctr_stream, ctr_xor, dst, src, len);
 }
 
 /*
@@ -6301,50 +6413,41 @@ ctr_crypt(ctr_t *mode, const cipher_t *cipher,
 
 void
 cfb_init(cfb_t *mode, const cipher_t *cipher, const unsigned char *iv) {
-  memcpy(mode->prev, iv, cipher->size);
+  memcpy(mode->iv, iv, cipher->size);
   /* Defensive memset. */
   memset(mode->state, 0, cipher->size);
   mode->pos = 0;
 }
 
+static void
+cfb_stream(cfb_t *mode, const cipher_t *cipher) {
+  cipher_encrypt(cipher, mode->state, mode->iv);
+}
+
+static void
+cfb_xor_enc(cfb_t *mode, size_t pos, unsigned char *dst,
+            const unsigned char *src, size_t len) {
+  torsion_memxor3(dst, src, mode->state + pos, len);
+  memcpy(mode->iv + pos, dst, len);
+}
+
+static void
+cfb_xor_dec(cfb_t *mode, size_t pos, unsigned char *dst,
+            const unsigned char *src, size_t len) {
+  memcpy(mode->iv + pos, src, len);
+  torsion_memxor3(dst, src, mode->state + pos, len);
+}
+
 void
 cfb_encrypt(cfb_t *mode, const cipher_t *cipher,
             unsigned char *dst, const unsigned char *src, size_t len) {
-  size_t mask = cipher->size - 1;
-  size_t i;
-
-  for (i = 0; i < len; i++) {
-    if ((mode->pos & mask) == 0) {
-      cipher_encrypt(cipher, mode->state, mode->prev);
-      mode->pos = 0;
-    }
-
-    dst[i] = src[i] ^ mode->state[mode->pos];
-
-    mode->prev[mode->pos] = dst[i];
-
-    mode->pos += 1;
-  }
+  stream_update(mode, cipher, cfb_stream, cfb_xor_enc, dst, src, len);
 }
 
 void
 cfb_decrypt(cfb_t *mode, const cipher_t *cipher,
             unsigned char *dst, const unsigned char *src, size_t len) {
-  size_t mask = cipher->size - 1;
-  size_t i;
-
-  for (i = 0; i < len; i++) {
-    if ((mode->pos & mask) == 0) {
-      cipher_encrypt(cipher, mode->state, mode->prev);
-      mode->pos = 0;
-    }
-
-    mode->prev[mode->pos] = src[i];
-
-    dst[i] = src[i] ^ mode->state[mode->pos];
-
-    mode->pos += 1;
-  }
+  stream_update(mode, cipher, cfb_stream, cfb_xor_dec, dst, src, len);
 }
 
 /*
@@ -6357,20 +6460,15 @@ ofb_init(ofb_t *mode, const cipher_t *cipher, const unsigned char *iv) {
   mode->pos = 0;
 }
 
+static void
+ofb_stream(ofb_t *mode, const cipher_t *cipher) {
+  cipher_encrypt(cipher, mode->state, mode->state);
+}
+
 void
 ofb_crypt(ofb_t *mode, const cipher_t *cipher,
           unsigned char *dst, const unsigned char *src, size_t len) {
-  size_t mask = cipher->size - 1;
-  size_t i;
-
-  for (i = 0; i < len; i++) {
-    if ((mode->pos & mask) == 0) {
-      cipher_encrypt(cipher, mode->state, mode->state);
-      mode->pos = 0;
-    }
-
-    dst[i] = src[i] ^ mode->state[mode->pos++];
-  }
+  stream_update(mode, cipher, ofb_stream, ctr_xor, dst, src, len);
 }
 
 /*
@@ -6384,8 +6482,8 @@ ofb_crypt(ofb_t *mode, const cipher_t *cipher,
  *   https://github.com/DaGenix/rust-crypto/blob/master/src/ghash.rs
  */
 
-typedef struct __ghash_s ghash_t;
-typedef struct __ghash_fe_s gfe_t;
+typedef struct ghash_s ghash_t;
+typedef struct ghash_fe_s gfe_t;
 
 static const uint16_t ghash_reduction[16] = {
   0x0000, 0x1c20, 0x3840, 0x2460,
@@ -6418,9 +6516,10 @@ gfe_dbl(gfe_t *z, const gfe_t *x) {
 }
 
 static void
-gfe_mul(gfe_t *r, const gfe_t *x, const gfe_t *table) {
+gfe_mul(gfe_t *z, const gfe_t *x, const gfe_t *table) {
   uint64_t word, msw;
-  gfe_t z = {0, 0};
+  uint64_t lo = 0;
+  uint64_t hi = 0;
   const gfe_t *t;
   int i, j;
 
@@ -6431,24 +6530,24 @@ gfe_mul(gfe_t *r, const gfe_t *x, const gfe_t *table) {
       word = x->lo;
 
     for (j = 0; j < 64; j += 4) {
-      msw = z.hi & 0x0f;
+      msw = hi & 0x0f;
 
-      z.hi >>= 4;
-      z.hi |= z.lo << 60;
-      z.lo >>= 4;
-      z.lo ^= (uint64_t)ghash_reduction[msw] << 48;
+      hi >>= 4;
+      hi |= lo << 60;
+      lo >>= 4;
+      lo ^= (uint64_t)ghash_reduction[msw] << 48;
 
       t = &table[word & 0x0f];
 
-      z.lo ^= t->lo;
-      z.hi ^= t->hi;
+      lo ^= t->lo;
+      hi ^= t->hi;
 
       word >>= 4;
     }
   }
 
-  r->lo = z.lo;
-  r->hi = z.hi;
+  z->lo = lo;
+  z->hi = hi;
 }
 
 static void
@@ -6461,53 +6560,51 @@ ghash_transform(ghash_t *ctx, const unsigned char *block) {
 
 static void
 ghash_absorb(ghash_t *ctx, const unsigned char *data, size_t len) {
-  size_t pos = ctx->size & 15;
-  size_t off = 0;
+  const unsigned char *raw = data;
+  size_t pos = ctx->pos;
+  size_t want = 16 - pos;
 
-  if (len == 0)
-    return;
+  if (len >= want) {
+    if (pos > 0) {
+      memcpy(ctx->block + pos, raw, want);
 
-  ctx->size += len;
+      raw += want;
+      len -= want;
+      pos = 0;
 
-  if (pos > 0) {
-    size_t want = 16 - pos;
+      ghash_transform(ctx, ctx->block);
+    }
 
-    if (want > len)
-      want = len;
-
-    memcpy(ctx->block + pos, data, want);
-
-    pos += want;
-    len -= want;
-    off += want;
-
-    if (pos < 16)
-      return;
-
-    ghash_transform(ctx, ctx->block);
+    while (len >= 16) {
+      ghash_transform(ctx, raw);
+      raw += 16;
+      len -= 16;
+    }
   }
 
-  while (len >= 16) {
-    ghash_transform(ctx, data + off);
-    off += 16;
-    len -= 16;
+  if (len > 0) {
+    memcpy(ctx->block + pos, raw, len);
+    pos += len;
   }
 
-  if (len > 0)
-    memcpy(ctx->block, data + off, len);
+  ctx->pos = pos;
 }
 
 static void
 ghash_pad(ghash_t *ctx) {
-  size_t pos = ctx->size & 15;
+  if (ctx->pos > 0) {
+    while (ctx->pos < 16)
+      ctx->block[ctx->pos++] = 0;
 
-  if (pos > 0)
-    ghash_absorb(ctx, zero64, 16 - pos);
+    ghash_transform(ctx, ctx->block);
+
+    ctx->pos = 0;
+  }
 }
 
 static void
 ghash_init(ghash_t *ctx, const unsigned char *key) {
-  gfe_t x = {0, 0};
+  gfe_t x;
   int i;
 
   /* Zero for struct assignment. */
@@ -6531,7 +6628,7 @@ ghash_init(ghash_t *ctx, const unsigned char *key) {
 
   ctx->adlen = 0;
   ctx->ctlen = 0;
-  ctx->size = 0;
+  ctx->pos = 0;
 }
 
 static void
@@ -6542,9 +6639,6 @@ ghash_aad(ghash_t *ctx, const unsigned char *data, size_t len) {
 
 static void
 ghash_update(ghash_t *ctx, const unsigned char *data, size_t len) {
-  if (len == 0)
-    return;
-
   if (ctx->ctlen == 0)
     ghash_pad(ctx);
 
@@ -6571,38 +6665,26 @@ ghash_final(ghash_t *ctx, unsigned char *out) {
  */
 
 static void
+gcm_stream(ctr_t *ctr, const cipher_t *cipher) {
+  cipher_encrypt(cipher, ctr->state, ctr->iv);
+  increment_be(ctr->iv + 12, 4);
+}
+
+static void
 gcm_crypt(gcm_t *mode,
           const cipher_t *cipher,
           unsigned char *dst,
           const unsigned char *src,
           size_t len) {
-  unsigned int cy;
-  size_t i;
-  int j;
-
-  for (i = 0; i < len; i++) {
-    if ((mode->pos & 15) == 0) {
-      cipher_encrypt(cipher, mode->state, mode->ctr);
-
-      cy = 1;
-
-      for (j = 16 - 1; j >= 12; j--) {
-        cy += (unsigned int)mode->ctr[j];
-        mode->ctr[j] = cy;
-        cy >>= 8;
-      }
-
-      mode->pos = 0;
-    }
-
-    dst[i] = src[i] ^ mode->state[mode->pos++];
-  }
+  stream_update(&mode->ctr, cipher, gcm_stream, ctr_xor, dst, src, len);
 }
 
 int
 gcm_init(gcm_t *mode, const cipher_t *cipher,
          const unsigned char *iv, size_t iv_len) {
   static const unsigned char initial[4] = {0, 0, 0, 1};
+  static const unsigned char zero16[16] = {0};
+  ctr_t *ctr = &mode->ctr;
   unsigned char key[16];
 
   if (cipher->size != 16) {
@@ -6611,24 +6693,24 @@ gcm_init(gcm_t *mode, const cipher_t *cipher,
   }
 
   /* Defensive memset. */
-  memset(mode->state, 0, 16);
-  memset(mode->ctr, 0, 16);
+  memset(ctr->state, 0, 16);
+  memset(ctr->iv, 0, 16);
 
-  mode->pos = 0;
+  ctr->pos = 0;
 
-  gcm_crypt(mode, cipher, key, zero64, 16);
+  gcm_crypt(mode, cipher, key, zero16, 16);
 
   if (iv_len == 12) {
-    memcpy(mode->ctr, iv, 12);
-    memcpy(mode->ctr + 12, initial, 4);
+    memcpy(ctr->iv, iv, 12);
+    memcpy(ctr->iv + 12, initial, 4);
   } else {
     ghash_init(&mode->hash, key);
     ghash_update(&mode->hash, iv, iv_len);
-    ghash_final(&mode->hash, mode->ctr);
+    ghash_final(&mode->hash, ctr->iv);
   }
 
   ghash_init(&mode->hash, key);
-  gcm_crypt(mode, cipher, mode->mask, zero64, 16);
+  gcm_crypt(mode, cipher, mode->mask, zero16, 16);
 
   return 1;
 }
@@ -6666,7 +6748,7 @@ gcm_digest(gcm_t *mode, unsigned char *mac) {
  * CBC-MAC
  */
 
-typedef struct __cmac_s cbcmac_t;
+typedef struct cmac_s cbcmac_t;
 
 static void
 cbcmac_init(cbcmac_t *ctx, const cipher_t *cipher) {
@@ -6677,16 +6759,37 @@ cbcmac_init(cbcmac_t *ctx, const cipher_t *cipher) {
 static void
 cbcmac_update(cbcmac_t *ctx, const cipher_t *cipher,
               const unsigned char *data, size_t len) {
-  size_t i;
+  const unsigned char *raw = data;
+  size_t pos = ctx->pos;
+  size_t want = cipher->size - pos;
 
-  for (i = 0; i < len; i++) {
-    ctx->mac[ctx->pos++] ^= data[i];
+  if (len >= want) {
+    if (pos > 0) {
+      torsion_memxor(ctx->mac + pos, raw, want);
 
-    if (ctx->pos == cipher->size) {
       cipher_encrypt(cipher, ctx->mac, ctx->mac);
-      ctx->pos = 0;
+
+      raw += want;
+      len -= want;
+      pos = 0;
+    }
+
+    while (len >= cipher->size) {
+      torsion_memxor(ctx->mac, raw, cipher->size);
+
+      cipher_encrypt(cipher, ctx->mac, ctx->mac);
+
+      raw += cipher->size;
+      len -= cipher->size;
     }
   }
+
+  if (len > 0) {
+    torsion_memxor(ctx->mac + pos, raw, len);
+    pos += len;
+  }
+
+  ctx->pos = pos;
 }
 
 static void
@@ -6711,6 +6814,8 @@ cbcmac_final(cbcmac_t *ctx, const cipher_t *cipher, unsigned char *mac) {
 int
 ccm_init(ccm_t *mode, const cipher_t *cipher,
          const unsigned char *iv, size_t iv_len) {
+  ctr_t *ctr = &mode->ctr;
+
   /* CCM is specified to have a block size of 16. */
   if (cipher->size != 16)
     goto fail;
@@ -6726,14 +6831,14 @@ ccm_init(ccm_t *mode, const cipher_t *cipher,
   cbcmac_init(&mode->hash, cipher);
 
   /* Defensive memsets. */
-  memset(mode->ctr, 0, 16);
-  memset(mode->state + iv_len, 0, 16 - iv_len);
+  memset(ctr->iv, 0, 16);
+  memset(ctr->state, 0, 16);
 
   /* Store the IV here for now. Note that
      ccm_setup _must_ be called after this. */
-  memcpy(mode->state, iv, iv_len);
+  memcpy(ctr->state, iv, iv_len);
 
-  mode->pos = iv_len;
+  ctr->pos = iv_len;
 
   return 1;
 fail:
@@ -6741,29 +6846,30 @@ fail:
   return 0;
 }
 
-static unsigned int
-ccm_log256(size_t lm) {
-  unsigned int L = 0;
+static size_t
+ccm_log256(size_t x) {
+  size_t z = 0;
 
-  while (lm > 0) {
-    L += 1;
-    lm >>= 1;
+  while (x > 0) {
+    x >>= 1;
+    z += 1;
   }
 
-  L = (L + 7) / 8;
+  z = (z + 7) / 8;
 
-  if (L < 2)
-    L = 2;
+  if (z < 2)
+    z = 2;
 
-  return L;
+  return z;
 }
 
 int
 ccm_setup(ccm_t *mode, const cipher_t *cipher,
           size_t msg_len, size_t tag_len,
           const unsigned char *aad, size_t aad_len) {
-  const unsigned char *iv = mode->state;
-  size_t iv_len = mode->pos;
+  ctr_t *ctr = &mode->ctr;
+  const unsigned char *iv = ctr->state;
+  size_t iv_len = ctr->pos;
   unsigned char block[16];
   size_t Adata = (aad_len > 0);
   size_t lm = msg_len;
@@ -6810,13 +6916,16 @@ ccm_setup(ccm_t *mode, const cipher_t *cipher,
     unsigned char buf[10];
 
     if (aad_len < 0xff00) {
+      /* 0 < l(a) < (2^16 - 2^8) */
       write16be(buf, aad_len);
       cbcmac_update(&mode->hash, cipher, buf, 2);
-    } else if (aad_len < 0xffffffff) {
+    } else if (aad_len - 1 < 0xffffffff) {
+      /* (2^16 - 2^8) <= l(a) < 2^32 */
       write16be(buf + 0, 0xfffe);
       write32be(buf + 2, aad_len);
       cbcmac_update(&mode->hash, cipher, buf, 6);
     } else {
+      /* 2^32 <= l(a) < 2^64 */
       write16be(buf + 0, 0xffff);
       write64be(buf + 2, aad_len);
       cbcmac_update(&mode->hash, cipher, buf, 10);
@@ -6832,9 +6941,9 @@ ccm_setup(ccm_t *mode, const cipher_t *cipher,
   for (i = 14; i >= 1 + N; i--)
     block[i] = 0;
 
-  memcpy(mode->ctr, block, 16);
+  memcpy(ctr->iv, block, 16);
 
-  mode->pos = 0;
+  ctr->pos = 0;
 
   return 1;
 }
@@ -6842,23 +6951,7 @@ ccm_setup(ccm_t *mode, const cipher_t *cipher,
 static void
 ccm_crypt(ccm_t *mode, const cipher_t *cipher,
           unsigned char *dst, const unsigned char *src, size_t len) {
-  size_t i;
-  int j;
-
-  for (i = 0; i < len; i++) {
-    if ((mode->pos & 15) == 0) {
-      cipher_encrypt(cipher, mode->state, mode->ctr);
-
-      for (j = 16 - 1; j >= 1; j--) {
-        if (++mode->ctr[j] != 0x00)
-          break;
-      }
-
-      mode->pos = 0;
-    }
-
-    dst[i] = src[i] ^ mode->state[mode->pos++];
-  }
+  ctr_crypt(&mode->ctr, cipher, dst, src, len);
 }
 
 void
@@ -6877,15 +6970,16 @@ ccm_decrypt(ccm_t *mode, const cipher_t *cipher,
 
 void
 ccm_digest(ccm_t *mode, const cipher_t *cipher, unsigned char *mac) {
-  int i = 16 - ((mode->ctr[0] & 7) + 1);
+  ctr_t *ctr = &mode->ctr;
+  int i = 16 - ((ctr->iv[0] & 7) + 1);
 
   cbcmac_final(&mode->hash, cipher, mac);
 
   /* Recreate S_0. */
   while (i < 16)
-    mode->ctr[i++] = 0;
+    ctr->iv[i++] = 0;
 
-  mode->pos = 0;
+  ctr->pos = 0;
 
   ccm_crypt(mode, cipher, mac, mac, 16);
 }
@@ -6895,7 +6989,7 @@ ccm_digest(ccm_t *mode, const cipher_t *cipher, unsigned char *mac) {
  * https://tools.ietf.org/html/rfc4493
  */
 
-typedef struct __cmac_s cmac_t;
+typedef struct cmac_s cmac_t;
 
 static void
 cmac_init(cmac_t *ctx, const cipher_t *cipher, int flag) {
@@ -6904,52 +6998,71 @@ cmac_init(cmac_t *ctx, const cipher_t *cipher, int flag) {
   ctx->pos = 0;
 
   if (flag != -1) {
-    ctx->mac[cipher->size - 1] ^= (unsigned char)flag;
+    ctx->mac[cipher->size - 1] ^= (flag & 0xff);
     ctx->pos = cipher->size;
   }
 }
 
 static void
 cmac_shift(uint8_t *dst, const uint8_t *src, size_t size) {
+  /* Big-endian doubling. */
   uint32_t poly = poly_table[size >> 4];
-  size_t i = size;
-  uint8_t cy = 0;
-  uint8_t c;
+  uint8_t c = src[0] >> 7;
+  size_t i;
 
-  while (i--) {
-    c = src[i] >> 7;
+  for (i = 0; i < size - 1; i++)
+    dst[i] = (src[i] << 1) | (src[i + 1] >> 7);
 
-    dst[i] = (src[i] << 1) | cy;
+  dst[size - 1] = src[size - 1] << 1;
 
-    cy = c;
-  }
-
-  dst[size - 3] ^= (uint8_t)(poly >> 16) & -cy;
-  dst[size - 2] ^= (uint8_t)(poly >>  8) & -cy;
-  dst[size - 1] ^= (uint8_t)(poly >>  0) & -cy;
+  dst[size - 3] ^= (uint8_t)(poly >> 16) & -c;
+  dst[size - 2] ^= (uint8_t)(poly >>  8) & -c;
+  dst[size - 1] ^= (uint8_t)(poly >>  0) & -c;
 }
 
 static void
 cmac_update(cmac_t *ctx, const cipher_t *cipher,
             const unsigned char *data, size_t len) {
-  size_t i;
+  const unsigned char *raw = data;
+  size_t pos = ctx->pos;
+  size_t want = cipher->size - pos;
 
-  for (i = 0; i < len; i++) {
-    if (ctx->pos == cipher->size) {
+  if (len > want) {
+    if (pos > 0) {
+      torsion_memxor(ctx->mac + pos, raw, want);
+
       cipher_encrypt(cipher, ctx->mac, ctx->mac);
-      ctx->pos = 0;
+
+      raw += want;
+      len -= want;
+      pos = 0;
     }
 
-    ctx->mac[ctx->pos++] ^= data[i];
+    while (len > cipher->size) {
+      torsion_memxor(ctx->mac, raw, cipher->size);
+
+      cipher_encrypt(cipher, ctx->mac, ctx->mac);
+
+      raw += cipher->size;
+      len -= cipher->size;
+    }
   }
+
+  if (len > 0) {
+    torsion_memxor(ctx->mac + pos, raw, len);
+    pos += len;
+  }
+
+  ctx->pos = pos;
 }
 
 static void
 cmac_final(cmac_t *ctx, const cipher_t *cipher, unsigned char *mac) {
+  static const unsigned char zero[CIPHER_MAX_BLOCK_SIZE] = {0};
   unsigned char k[CIPHER_MAX_BLOCK_SIZE];
   size_t i;
 
-  cipher_encrypt(cipher, k, zero64);
+  cipher_encrypt(cipher, k, zero);
 
   cmac_shift(k, k, cipher->size);
 
@@ -6971,21 +7084,23 @@ cmac_final(cmac_t *ctx, const cipher_t *cipher, unsigned char *mac) {
 int
 eax_init(eax_t *mode, const cipher_t *cipher,
          const unsigned char *iv, size_t iv_len) {
+  ctr_t *ctr = &mode->ctr;
+
   if (iv_len == 0) {
     memset(mode, 0, sizeof(*mode));
     return 0;
   }
 
-  mode->pos = 0;
+  ctr->pos = 0;
 
   cmac_init(&mode->hash1, cipher, 0);
   cmac_update(&mode->hash1, cipher, iv, iv_len);
   cmac_final(&mode->hash1, cipher, mode->mask);
 
-  memcpy(mode->ctr, mode->mask, cipher->size);
+  memcpy(ctr->iv, mode->mask, cipher->size);
 
   /* Defensive memset. */
-  memset(mode->state, 0, cipher->size);
+  memset(ctr->state, 0, cipher->size);
 
   cmac_init(&mode->hash1, cipher, 1);
   cmac_init(&mode->hash2, cipher, 2);
@@ -7000,33 +7115,18 @@ eax_aad(eax_t *mode, const cipher_t *cipher,
 }
 
 static void
+eax_stream(ctr_t *ctr, const cipher_t *cipher) {
+  cipher_encrypt(cipher, ctr->state, ctr->iv);
+  increment_be(ctr->iv, cipher->size);
+}
+
+static void
 eax_crypt(eax_t *mode,
           const cipher_t *cipher,
           unsigned char *dst,
           const unsigned char *src,
           size_t len) {
-  size_t mask = cipher->size - 1;
-  unsigned int cy;
-  size_t i;
-  int j;
-
-  for (i = 0; i < len; i++) {
-    if ((mode->pos & mask) == 0) {
-      cipher_encrypt(cipher, mode->state, mode->ctr);
-
-      cy = 1;
-
-      for (j = cipher->size - 1; j >= 0; j--) {
-        cy += (unsigned int)mode->ctr[j];
-        mode->ctr[j] = cy;
-        cy >>= 8;
-      }
-
-      mode->pos = 0;
-    }
-
-    dst[i] = src[i] ^ mode->state[mode->pos++];
-  }
+  stream_update(&mode->ctr, cipher, eax_stream, ctr_xor, dst, src, len);
 }
 
 void
@@ -7060,11 +7160,11 @@ eax_digest(eax_t *mode, const cipher_t *cipher, unsigned char *mac) {
  * Cipher Mode
  */
 
-typedef struct __cipher_mode_s cipher_mode_t;
+typedef struct cipher_mode_s cipher_mode_t;
 
 static int
 cipher_mode_init(cipher_mode_t *ctx, const cipher_t *cipher,
-                 int type, const unsigned char *iv, size_t iv_len) {
+                 mode_id_t type, const unsigned char *iv, size_t iv_len) {
   ctx->type = type;
 
   switch (ctx->type) {
@@ -7081,7 +7181,7 @@ cipher_mode_init(cipher_mode_t *ctx, const cipher_t *cipher,
       if (iv_len != cipher->size)
         goto fail;
 
-      cbc_init(&ctx->mode.cbc, cipher, iv);
+      cbc_init(&ctx->mode.block, cipher, iv);
 
       return 1;
     }
@@ -7090,7 +7190,7 @@ cipher_mode_init(cipher_mode_t *ctx, const cipher_t *cipher,
       if (iv_len != cipher->size)
         goto fail;
 
-      xts_init(&ctx->mode.xts, cipher, iv);
+      xts_init(&ctx->mode.block, cipher, iv);
 
       return 1;
     }
@@ -7099,7 +7199,7 @@ cipher_mode_init(cipher_mode_t *ctx, const cipher_t *cipher,
       if (iv_len != cipher->size)
         goto fail;
 
-      ctr_init(&ctx->mode.ctr, cipher, iv);
+      ctr_init(&ctx->mode.stream, cipher, iv);
 
       return 1;
     }
@@ -7108,7 +7208,7 @@ cipher_mode_init(cipher_mode_t *ctx, const cipher_t *cipher,
       if (iv_len != cipher->size)
         goto fail;
 
-      cfb_init(&ctx->mode.cfb, cipher, iv);
+      cfb_init(&ctx->mode.stream, cipher, iv);
 
       return 1;
     }
@@ -7117,7 +7217,7 @@ cipher_mode_init(cipher_mode_t *ctx, const cipher_t *cipher,
       if (iv_len != cipher->size)
         goto fail;
 
-      ofb_init(&ctx->mode.ofb, cipher, iv);
+      ofb_init(&ctx->mode.stream, cipher, iv);
 
       return 1;
     }
@@ -7148,7 +7248,7 @@ cipher_mode_xts_setup(cipher_mode_t *ctx,
   if (ctx->type != CIPHER_MODE_XTS)
     return 0;
 
-  return xts_setup(&ctx->mode.xts, cipher, key, key_len);
+  return xts_setup(&ctx->mode.block, cipher, key, key_len);
 }
 
 static int
@@ -7194,19 +7294,19 @@ cipher_mode_encrypt(cipher_mode_t *ctx,
       break;
     case CIPHER_MODE_CBC:
     case CIPHER_MODE_CTS:
-      cbc_encrypt(&ctx->mode.cbc, cipher, dst, src, len);
+      cbc_encrypt(&ctx->mode.block, cipher, dst, src, len);
       break;
     case CIPHER_MODE_XTS:
-      xts_encrypt(&ctx->mode.xts, cipher, dst, src, len);
+      xts_encrypt(&ctx->mode.block, cipher, dst, src, len);
       break;
     case CIPHER_MODE_CTR:
-      ctr_crypt(&ctx->mode.ctr, cipher, dst, src, len);
+      ctr_crypt(&ctx->mode.stream, cipher, dst, src, len);
       break;
     case CIPHER_MODE_CFB:
-      cfb_encrypt(&ctx->mode.cfb, cipher, dst, src, len);
+      cfb_encrypt(&ctx->mode.stream, cipher, dst, src, len);
       break;
     case CIPHER_MODE_OFB:
-      ofb_crypt(&ctx->mode.ofb, cipher, dst, src, len);
+      ofb_crypt(&ctx->mode.stream, cipher, dst, src, len);
       break;
     case CIPHER_MODE_GCM:
       gcm_encrypt(&ctx->mode.gcm, cipher, dst, src, len);
@@ -7236,19 +7336,19 @@ cipher_mode_decrypt(cipher_mode_t *ctx,
       break;
     case CIPHER_MODE_CBC:
     case CIPHER_MODE_CTS:
-      cbc_decrypt(&ctx->mode.cbc, cipher, dst, src, len);
+      cbc_decrypt(&ctx->mode.block, cipher, dst, src, len);
       break;
     case CIPHER_MODE_XTS:
-      xts_decrypt(&ctx->mode.xts, cipher, dst, src, len);
+      xts_decrypt(&ctx->mode.block, cipher, dst, src, len);
       break;
     case CIPHER_MODE_CTR:
-      ctr_crypt(&ctx->mode.ctr, cipher, dst, src, len);
+      ctr_crypt(&ctx->mode.stream, cipher, dst, src, len);
       break;
     case CIPHER_MODE_CFB:
-      cfb_decrypt(&ctx->mode.cfb, cipher, dst, src, len);
+      cfb_decrypt(&ctx->mode.stream, cipher, dst, src, len);
       break;
     case CIPHER_MODE_OFB:
-      ofb_crypt(&ctx->mode.ofb, cipher, dst, src, len);
+      ofb_crypt(&ctx->mode.stream, cipher, dst, src, len);
       break;
     case CIPHER_MODE_GCM:
       gcm_decrypt(&ctx->mode.gcm, cipher, dst, src, len);
@@ -7273,10 +7373,10 @@ cipher_mode_steal(cipher_mode_t *ctx,
                   size_t len) {
   switch (ctx->type) {
     case CIPHER_MODE_CTS:
-      cbc_steal(&ctx->mode.cbc, cipher, last, block, len);
+      cbc_steal(&ctx->mode.block, cipher, last, block, len);
       break;
     case CIPHER_MODE_XTS:
-      xts_steal(&ctx->mode.xts, cipher, last, block, len);
+      xts_steal(&ctx->mode.block, cipher, last, block, len);
       break;
     default:
       torsion_abort(); /* LCOV_EXCL_LINE */
@@ -7292,10 +7392,10 @@ cipher_mode_unsteal(cipher_mode_t *ctx,
                     size_t len) {
   switch (ctx->type) {
     case CIPHER_MODE_CTS:
-      cbc_unsteal(&ctx->mode.cbc, cipher, last, block, len);
+      cbc_unsteal(&ctx->mode.block, cipher, last, block, len);
       break;
     case CIPHER_MODE_XTS:
-      xts_unsteal(&ctx->mode.xts, cipher, last, block, len);
+      xts_unsteal(&ctx->mode.block, cipher, last, block, len);
       break;
     default:
       torsion_abort(); /* LCOV_EXCL_LINE */
@@ -7347,7 +7447,7 @@ cipher_mode_verify(cipher_mode_t *ctx,
 
 int
 cipher_stream_init(cipher_stream_t *ctx,
-                   int type, int mode, int encrypt,
+                   cipher_id_t type, mode_id_t mode, int encrypt,
                    const unsigned char *key, size_t key_len,
                    const unsigned char *iv, size_t iv_len) {
   int is_pad = mode == CIPHER_MODE_ECB || mode == CIPHER_MODE_CBC;
@@ -7550,7 +7650,7 @@ cipher_stream_update(cipher_stream_t *ctx,
   }
 
   if (input_len >= ctx->block_size) {
-    size_t aligned = input_len - (input_len & (ctx->block_size - 1));
+    size_t aligned = input_len & -ctx->block_size;
 
     cipher_stream_encipher(ctx, output, input, aligned);
 
@@ -7598,7 +7698,7 @@ cipher_stream_update_size(const cipher_stream_t *ctx, size_t input_len) {
   }
 
   if (input_len >= ctx->block_size)
-    output_len += input_len - (input_len & (ctx->block_size - 1));
+    output_len += input_len & -ctx->block_size;
 
   ASSERT(output_len >= ctx->block_size);
 
@@ -7725,9 +7825,40 @@ cipher_stream_final(cipher_stream_t *ctx,
 
       break;
     }
+
+    default: {
+      break;
+    }
   }
 
   return 1;
+}
+
+size_t
+cipher_stream_final_size(const cipher_stream_t *ctx) {
+  switch (ctx->mode.type) {
+    case CIPHER_MODE_ECB:
+    case CIPHER_MODE_CBC: {
+      if (!ctx->padding)
+        return 0;
+
+      return ctx->block_size;
+    }
+
+    case CIPHER_MODE_CTS:
+    case CIPHER_MODE_XTS: {
+      if (!ctx->padding)
+        return 0;
+
+      return ctx->block_size + ctx->block_pos;
+    }
+
+    default: {
+      break;
+    }
+  }
+
+  return 0;
 }
 
 /*
@@ -7737,8 +7868,8 @@ cipher_stream_final(cipher_stream_t *ctx,
 static int
 cipher_static_crypt(unsigned char *output,
                     size_t *output_len,
-                    int type,
-                    int mode,
+                    cipher_id_t type,
+                    mode_id_t mode,
                     int encrypt,
                     const unsigned char *key,
                     size_t key_len,
@@ -7766,15 +7897,15 @@ cipher_static_crypt(unsigned char *output,
   *output_len = len1 + len2;
   r = 1;
 fail:
-  torsion_cleanse(&ctx, sizeof(ctx));
+  torsion_memzero(&ctx, sizeof(ctx));
   return r;
 }
 
 int
 cipher_static_encrypt(unsigned char *ct,
                       size_t *ct_len,
-                      int type,
-                      int mode,
+                      cipher_id_t type,
+                      mode_id_t mode,
                       const unsigned char *key,
                       size_t key_len,
                       const unsigned char *iv,
@@ -7791,8 +7922,8 @@ cipher_static_encrypt(unsigned char *ct,
 int
 cipher_static_decrypt(unsigned char *pt,
                       size_t *pt_len,
-                      int type,
-                      int mode,
+                      cipher_id_t type,
+                      mode_id_t mode,
                       const unsigned char *key,
                       size_t key_len,
                       const unsigned char *iv,

@@ -166,6 +166,7 @@ class Config {
     _filter(name, this.args, child.args);
     _filter(name, this.query, child.query);
     _filter(name, this.hash, child.hash);
+    _filter(name, this.options, child.options);
 
     return child;
   }

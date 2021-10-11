@@ -72,10 +72,10 @@ sha512_update_tsc(sha512_t *hash) {
  */
 
 typedef struct rng_s {
-  uint64_t key[4];
+  uint32_t key[8];
   uint64_t zero;
   uint64_t nonce;
-  uint32_t pool[16];
+  uint32_t pool[128];
   size_t pos;
   int rdrand;
 } rng_t;
@@ -133,33 +133,49 @@ rng_init(rng_t *rng) {
   /* Cache the rdrand check. */
   rng->rdrand = torsion_has_rdrand();
 
-  torsion_cleanse(seed, sizeof(seed));
-  torsion_cleanse(&hash, sizeof(hash));
+  torsion_memzero(seed, sizeof(seed));
+  torsion_memzero(&hash, sizeof(hash));
 
   return 1;
 }
 
 static void
-rng_generate(rng_t *rng, void *dst, size_t size) {
-  unsigned char *key = (unsigned char *)rng->key;
-  unsigned char *nonce = (unsigned char *)&rng->nonce;
+rng_crypt(const rng_t *rng, void *data, size_t size) {
   chacha20_t ctx;
 
+  chacha20_init(&ctx, (const unsigned char *)rng->key, 32,
+                      (const unsigned char *)&rng->nonce, 8,
+                      rng->zero);
+
+  chacha20_crypt(&ctx, (unsigned char *)data,
+                       (const unsigned char *)data,
+                       size);
+
+  torsion_memzero(&ctx, sizeof(ctx));
+}
+
+static void
+rng_read(const rng_t *rng, void *dst, size_t size) {
   if (size > 0)
     memset(dst, 0, size);
 
+  rng_crypt(rng, dst, size);
+}
+
+static void
+rng_generate(rng_t *rng, void *dst, size_t size) {
   /* Read the keystream. */
-  chacha20_init(&ctx, key, 32, nonce, 8, rng->zero);
-  chacha20_crypt(&ctx, dst, dst, size);
+  rng_read(rng, dst, size);
 
   /* Mix in some user entropy. */
-  rng->key[0] ^= size;
+  rng->key[0] ^= (uint32_t)size;
+  rng->key[1] ^= (uint32_t)((uint64_t)size >> 32);
 
   /* Mix in some hardware entropy. We sacrifice
      only 32 bits here, lest RDRAND is backdoored.
      See: https://pastebin.com/A07q3nL3 */
   if (rng->rdrand)
-    rng->key[3] ^= (uint32_t)torsion_rdrand();
+    rng->key[7] ^= (uint32_t)torsion_rdrand();
 
   /* Re-key immediately. */
   rng->nonce++;
@@ -171,21 +187,38 @@ rng_generate(rng_t *rng, void *dst, size_t size) {
      there's probably not really a difference in
      terms of security, as the outputs in both
      scenarios are dependent on the key. */
-  chacha20_init(&ctx, key, 32, nonce, 8, rng->zero);
-  chacha20_crypt(&ctx, key, key, 32);
-
-  /* Cleanse the chacha state. */
-  torsion_cleanse(&ctx, sizeof(ctx));
+  rng_crypt(rng, rng->key, 32);
 }
 
 static uint32_t
 rng_random(rng_t *rng) {
-  if ((rng->pos & 15) == 0) {
-    rng_generate(rng, rng->pool, 64);
-    rng->pos = 0;
+  uint32_t x;
+  size_t i;
+
+  if (rng->pos == 0) {
+    /* Read the keystream. */
+    rng_read(rng, rng->pool, 512);
+
+    /* Mix in some hardware entropy. */
+    if (rng->rdrand)
+      rng->key[7] ^= (uint32_t)torsion_rdrand();
+
+    /* Re-key every 512 bytes. */
+    for (i = 0; i < 8; i++)
+      rng->key[i] ^= rng->pool[120 + i];
+
+    for (i = 0; i < 8; i++)
+      rng->pool[120 + i] = 0;
+
+    rng->nonce++;
+    rng->pos = 120;
   }
 
-  return rng->pool[rng->pos++];
+  x = rng->pool[--rng->pos];
+
+  rng->pool[rng->pos] = 0;
+
+  return x;
 }
 
 static uint32_t
@@ -264,7 +297,14 @@ rng_global_init(void) {
 
 int
 torsion_getentropy(void *dst, size_t size) {
-  return torsion_sysrand(dst, size);
+  if (!torsion_sysrand(dst, size)) {
+    if (size > 0)
+      memset(dst, 0, size);
+
+    return 0;
+  }
+
+  return 1;
 }
 
 int
@@ -272,7 +312,11 @@ torsion_getrandom(void *dst, size_t size) {
   rng_global_lock();
 
   if (!rng_global_init()) {
+    if (size > 0)
+      memset(dst, 0, size);
+
     rng_global_unlock();
+
     return 0;
   }
 
@@ -287,6 +331,7 @@ torsion_random(uint32_t *num) {
   rng_global_lock();
 
   if (!rng_global_init()) {
+    *num = 0;
     rng_global_unlock();
     return 0;
   }
@@ -303,6 +348,7 @@ torsion_uniform(uint32_t *num, uint32_t max) {
   rng_global_lock();
 
   if (!rng_global_init()) {
+    *num = 0;
     rng_global_unlock();
     return 0;
   }
@@ -321,11 +367,11 @@ torsion_uniform(uint32_t *num, uint32_t max) {
 int
 torsion_threadsafety(void) {
 #if defined(TORSION_HAVE_TLS)
-  return TORSION_THREAD_SAFETY_TLS;
+  return TORSION_THREADSAFETY_TLS;
 #elif defined(TORSION_HAVE_PTHREAD)
-  return TORSION_THREAD_SAFETY_MUTEX;
+  return TORSION_THREADSAFETY_MUTEX;
 #else
-  return TORSION_THREAD_SAFETY_NONE;
+  return TORSION_THREADSAFETY_NONE;
 #endif
 }
 

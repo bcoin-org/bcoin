@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_INTERNAL_H
-#define _TORSION_INTERNAL_H
+#ifndef TORSION_INTERNAL_H
+#define TORSION_INTERNAL_H
 
 /*
  * Clang Compat
@@ -34,13 +34,20 @@
 
 #undef LIKELY
 #undef UNLIKELY
+#undef UNPREDICTABLE
 
 #if TORSION_GNUC_PREREQ(3, 0) || TORSION_HAS_BUILTIN(__builtin_expect)
-#  define LIKELY(x) __builtin_expect(!!(x), 1)
-#  define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#  define LIKELY(x) __builtin_expect(x, 1)
+#  define UNLIKELY(x) __builtin_expect(x, 0)
 #else
 #  define LIKELY(x) (x)
 #  define UNLIKELY(x) (x)
+#endif
+
+#if TORSION_HAS_BUILTIN(__builtin_unpredictable)
+#  define UNPREDICTABLE __builtin_unpredictable
+#else
+#  define UNPREDICTABLE(x) (x)
 #endif
 
 /*
@@ -48,17 +55,22 @@
  */
 
 #undef CHECK_ALWAYS
+#undef CHECK_NEVER
 #undef CHECK
 
 #define CHECK_ALWAYS(expr) do { \
   if (UNLIKELY(!(expr)))        \
-    __torsion_abort();          \
+    torsion__abort();           \
+} while (0)
+
+#define CHECK_NEVER(expr) do { \
+  (void)(expr);                \
 } while (0)
 
 #if !defined(TORSION_COVERAGE)
-#  define CHECK(expr) CHECK_ALWAYS(expr)
+#  define CHECK CHECK_ALWAYS
 #else
-#  define CHECK(expr) do { (void)(expr); } while (0)
+#  define CHECK CHECK_NEVER
 #endif
 
 /*
@@ -66,17 +78,22 @@
  */
 
 #undef ASSERT_ALWAYS
+#undef ASSERT_NEVER
 #undef ASSERT
 
-#define ASSERT_ALWAYS(expr) do {                      \
-  if (UNLIKELY(!(expr)))                              \
-    __torsion_assert_fail(__FILE__, __LINE__, #expr); \
+#define ASSERT_ALWAYS(expr) do {                     \
+  if (UNLIKELY(!(expr)))                             \
+    torsion__assert_fail(__FILE__, __LINE__, #expr); \
+} while (0)
+
+#define ASSERT_NEVER(expr) do { \
+  (void)(expr);                 \
 } while (0)
 
 #if defined(TORSION_DEBUG) && !defined(TORSION_COVERAGE)
-#  define ASSERT(expr) ASSERT_ALWAYS(expr)
+#  define ASSERT ASSERT_ALWAYS
 #else
-#  define ASSERT(expr) do { (void)(expr); } while (0)
+#  define ASSERT ASSERT_NEVER
 #endif
 
 /*
@@ -88,13 +105,17 @@
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #  undef _Static_assert
 #  define STATIC_ASSERT(expr) _Static_assert(expr, "")
+#elif defined(__cplusplus) && (__cplusplus + 0L) >= 201703L
+#  define STATIC_ASSERT(expr) static_assert(expr)
+#elif defined(__cplusplus) && (__cplusplus + 0L) >= 201103L
+#  define STATIC_ASSERT(expr) static_assert(expr, "")
 #elif TORSION_GNUC_PREREQ(2, 7)
-#  define __TORSION_STATIC_ASSERT(x, y) \
-     typedef char __torsion_assert_ ## y[(x) ? 1 : -1] __attribute__((unused))
-#  define _TORSION_STATIC_ASSERT(x, y) __TORSION_STATIC_ASSERT(x, y)
-#  define STATIC_ASSERT(expr) _TORSION_STATIC_ASSERT(expr, __LINE__)
+#  define STATIC_ASSERT_2(x, y) \
+     typedef char torsion__assert_ ## y[(x) ? 1 : -1] __attribute__((unused))
+#  define STATIC_ASSERT_1(x, y) STATIC_ASSERT_2(x, y)
+#  define STATIC_ASSERT(expr) STATIC_ASSERT_1(expr, __LINE__)
 #else
-#  define STATIC_ASSERT(expr) struct __torsion_assert_empty
+#  define STATIC_ASSERT(expr) struct torsion__assert_empty
 #endif
 
 /*
@@ -103,10 +124,15 @@
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #  define TORSION_INLINE inline
+#elif defined(__cplusplus) && (__cplusplus + 0L) >= 199711L
+#  define TORSION_INLINE inline
 #elif TORSION_GNUC_PREREQ(2, 7)
 #  define TORSION_INLINE __inline__
 #elif defined(_MSC_VER) && _MSC_VER >= 900
 #  define TORSION_INLINE __inline
+#elif (defined(__SUNPRO_C) && __SUNPRO_C >= 0x560) \
+   || (defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x560)
+#  define TORSION_INLINE inline
 #else
 #  define TORSION_INLINE
 #endif
@@ -117,23 +143,34 @@
 #  define TORSION_RESTRICT __restrict__
 #elif defined(_MSC_VER) && _MSC_VER >= 1400
 #  define TORSION_RESTRICT __restrict
+#elif defined(__SUNPRO_C) && __SUNPRO_C >= 0x530
+#  define TORSION_RESTRICT _Restrict
 #else
 #  define TORSION_RESTRICT
 #endif
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #  define TORSION_NORETURN _Noreturn
+#elif defined(__cplusplus) && (__cplusplus + 0L) >= 201103L
+#  undef noreturn
+#  define TORSION_NORETURN [[noreturn]]
 #elif TORSION_GNUC_PREREQ(2, 7)
 #  undef noreturn
 #  define TORSION_NORETURN __attribute__((noreturn))
 #elif defined(_MSC_VER) && _MSC_VER >= 1200
 #  undef noreturn
 #  define TORSION_NORETURN __declspec(noreturn)
+#elif (defined(__SUNPRO_C) && __SUNPRO_C >= 0x590) \
+   || (defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x590)
+#  undef noreturn
+#  define TORSION_NORETURN __attribute__((noreturn))
 #else
 #  define TORSION_NORETURN
 #endif
 
-#if TORSION_GNUC_PREREQ(2, 7)
+#if defined(__cplusplus) && (__cplusplus + 0L) >= 201703L
+#  define TORSION_UNUSED [[maybe_unused]]
+#elif TORSION_GNUC_PREREQ(2, 7)
 #  define TORSION_UNUSED __attribute__((unused))
 #else
 #  define TORSION_UNUSED
@@ -150,10 +187,10 @@
  */
 
 /* Any decent compiler should be able to optimize this out. */
-static const unsigned long __torsion_endian_check TORSION_UNUSED = 1;
+static const unsigned long torsion__endian_check TORSION_UNUSED = 1;
 
 #define TORSION_BIGENDIAN \
-  (*((const unsigned char *)&__torsion_endian_check) == 0)
+  (*((const unsigned char *)&torsion__endian_check) == 0)
 
 /*
  * Configuration
@@ -291,23 +328,23 @@ prefix ## _barrier(type x) {          \
  * Helpers
  */
 
-#define torsion_abort __torsion_abort
+#define torsion_abort torsion__abort
 
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 /* Avoid a GCC bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95189 */
-#  define torsion_memcmp __torsion_memcmp
+#  define torsion_memcmp torsion__memcmp
 #else
 /* Note: caller must include <string.h>. */
 #  define torsion_memcmp memcmp
 #endif
 
 TORSION_NORETURN void
-__torsion_assert_fail(const char *file, int line, const char *expr);
+torsion__assert_fail(const char *file, int line, const char *expr);
 
 TORSION_NORETURN void
-__torsion_abort(void);
+torsion__abort(void);
 
 int
-__torsion_memcmp(const void *s1, const void *s2, size_t n);
+torsion__memcmp(const void *s1, const void *s2, size_t n);
 
-#endif /* _TORSION_INTERNAL_H */
+#endif /* TORSION_INTERNAL_H */
