@@ -3,6 +3,7 @@
 
 'use strict';
 
+const Network = require('../lib/protocol/network');
 const Address = require('../lib/primitives/address');
 const Script = require('../lib/script/script');
 const assert = require('bsert');
@@ -190,5 +191,61 @@ describe('Address', function() {
     assert(typeof fmt === 'string');
     assert(fmt.includes('Address'));
     assert(fmt.includes('str='));
+  });
+
+  it('should pass all BIP350 test vectors for valid bech32 and bech32m', () => {
+    // https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki
+    //   #test-vectors-for-v0-v16-native-segregated-witness-addresses
+    const vectors = [
+      ['BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4', '0014751e76e8199196d454941c45d1b3a323f1433bd6'],
+      ['tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7', '00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262'],
+      ['bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y', '5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6'],
+      ['BC1SW50QGDZ25J', '6002751e'],
+      ['bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs', '5210751e76e8199196d454941c45d1b3a323'],
+      ['tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy', '0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433'],
+      ['tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c', '5120000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433'],
+      ['bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0', '512079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798']
+    ];
+
+    for (const [addr, script] of vectors) {
+      const parsed = Address.fromString(addr);
+      const buffer = Buffer.from(script, 'hex');
+
+      assert(parsed.isProgram());
+
+      assert.strictEqual(parsed.getType(), 'witness');
+
+      const byte = buffer[0];
+      const version = byte ? byte - 0x50 : 0;
+      assert.strictEqual(version, parsed.version);
+
+      assert.bufferEqual(buffer.slice(2), parsed.hash);
+    }
+  });
+
+  it('should identify taproot addresses', () => {
+    // Generated with Bitcoin Core v22.0.0 in regtest
+    const addresses = [
+      'bcrt1pnmrmugapastum8ztvgwcn8hvq2avmcwh2j4ssru7rtyygkpqq98q4wyd6s',
+      'bcrt1plhe602p84nkfdwyllskhaga3yysclz4daly2nyxhjrhvgsjy3v7s7vepr3',
+      'bcrt1pavtamvgrt3hjjrz2zfx5dknx7urxj73d2apc98smmj53ddnvptrqcunafu',
+      'bcrt1p6mnhu48geradgjtss5dhcnjqn7wu8xnnpd89ncs9fhdp8lkkkmasd2u7xy',
+      'bcrt1px2pjntffzxj5wfx589qvr0zetdtxc8wup82ew3xk6u5ykfzgcjyqchpcvf',
+      'bcrt1pu7tmahuyvfkk8v2mdlk77d3l9f9gs6rlkhm9r8xxfweh94qmhq9sl5hm07',
+      'bcrt1p83djth2ga2kjt8jpel0yd6sz3jtzz75zt372ns634z28c0f6ax3s64vzpn',
+      'bcrt1pm7x6crfd3su55x5rwnj9ud57x7hs7z5a0jqlja08wn6v7gp0hczst3jdkh'
+    ];
+
+    for (const addr of addresses) {
+      const parsed = Address.fromString(addr);
+
+      assert.strictEqual(parsed.version, 1);
+
+      const network = Network.get('regtest');
+      assert.strictEqual(
+        parsed.getPrefix(network),
+        network.addressPrefix.taproot
+      );
+    }
   });
 });
