@@ -86,7 +86,7 @@ const invalidAddresses = [
 
 function createProgram(version, program) {
   const data = Buffer.allocUnsafe(2 + program.length);
-  data[0] = version ? version + 0x80 : 0;
+  data[0] = version ? version + 0x50 : 0;
   data[1] = program.length;
   program.copy(data, 2);
   return data;
