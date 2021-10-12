@@ -64,7 +64,7 @@ class CLI {
   async getTX() {
     const hash = this.config.str(0, '');
 
-    if (hash.length !== 64) {
+    if (!/^[0-9a-f]{64}$/i.test(hash)) {
       const txs = await this.client.getTXByAddress(hash);
       this.log(txs);
       return;
