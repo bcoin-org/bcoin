@@ -223,7 +223,7 @@ describe('Address', function() {
     }
   });
 
-  it('should identify taproot addresses', () => {
+  it('should identify witness (not version 0) address', () => {
     // Generated with Bitcoin Core v22.0.0 in regtest
     const addresses = [
       'bcrt1pnmrmugapastum8ztvgwcn8hvq2avmcwh2j4ssru7rtyygkpqq98q4wyd6s',
@@ -244,7 +244,7 @@ describe('Address', function() {
       const network = Network.get('regtest');
       assert.strictEqual(
         parsed.getPrefix(network),
-        network.addressPrefix.taproot
+        parsed.version
       );
     }
   });
