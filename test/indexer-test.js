@@ -58,6 +58,12 @@ const vectors = [
     addr: '2Muy8nSQaMsMFAZwPyiXSEMTVFJv9iYuhwT',
     amount: 0.11,
     label: 'p2sh'
+  },
+  // Same data part as version 0 p2wsh address but different witness version (1)
+  {
+    addr: 'bcrt1p2nj8e2nhmsa4hl9qw3xas7l5n2547h5uhlj47nc3pqfxaeq5rtjs0l3rl5',
+    amount: 0.22,
+    label: 'p2tr'
   }
 ];
 
@@ -1033,7 +1039,7 @@ describe('Indexer', function() {
         }
       }
 
-      await forValue(node.mempool.map, 'size', 20);
+      await forValue(node.mempool.map, 'size', 25);
     });
 
     after(async () => {

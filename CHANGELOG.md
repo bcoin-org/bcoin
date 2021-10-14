@@ -2,6 +2,18 @@
 
 ## unreleased
 
+- Support for bech32m has been added. bcoin can now validate and send BTC to
+addresses for witness programs with versions > 0. The address indexer has
+also been updated to retrieve the new addresses. A bug was fixed where the
+indexer may return data for a witness version 0 address even if a version 1
+address was queried, if the two addresses had the same data (hash). After
+upgrading bcoin, a full rescan may be necessary to re-index these collisions
+correctly. To accomplish this:
+  - Stop bcoin (`bcoin-cli rpc stop` or `ctrl-C`)
+  - Delete the existing addr indexer data (`rm -rf ~/.bcoin/index/addr`)
+  - Restart bcoin
+  - The address indexer will automatically begin re-indexing the chain. It may take up to 24 hours.
+
 - The logging module `blgr` has been updated. Log files will now be rolled over
 at around 20 MB and timestamped. Only the last 10 log files will be kept on disk
 and older log files will be purged. These values can be configured by passing
