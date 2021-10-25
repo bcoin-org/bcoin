@@ -16,7 +16,7 @@ hundreds of thousands of wallets/accounts/addresses.
 
 **It's important to backup the wallet database.** There are several deviations
 from [BIP44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
-that break the determinsitic algorithm, and therefore it's recommended to
+that break the deterministic algorithm, and therefore it's recommended to
 backup the wallet database any time an account is created, as there are several
 possible configurations of an account.
 
