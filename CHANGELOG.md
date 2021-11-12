@@ -1,6 +1,8 @@
 # Bcoin release notes & changelog
 
-## unreleased
+**Important: Any time you upgrade bcoin, you must execute `npm rebuild` before restarting.**
+
+## v2.2.0
 
 - Support for bech32m has been added. bcoin can now validate and send BTC to
 addresses for witness programs with versions > 0. The address indexer has
