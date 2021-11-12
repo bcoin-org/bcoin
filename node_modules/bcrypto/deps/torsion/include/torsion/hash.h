@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_HASH_H
-#define _TORSION_HASH_H
+#ifndef TORSION_HASH_H
+#define TORSION_HASH_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -135,48 +135,54 @@ extern "C" {
 #define hmac_final torsion_hmac_final
 
 /*
- * Defs
+ * Definitions
  */
 
 #define HASH_MAX_OUTPUT_SIZE 64
 #define HASH_MAX_BLOCK_SIZE 168
 
-#define HASH_BLAKE2B_160 0
-#define HASH_BLAKE2B_256 1
-#define HASH_BLAKE2B_384 2
-#define HASH_BLAKE2B_512 3
-#define HASH_BLAKE2S_128 4
-#define HASH_BLAKE2S_160 5
-#define HASH_BLAKE2S_224 6
-#define HASH_BLAKE2S_256 7
-#define HASH_GOST94 8
-#define HASH_HASH160 9
-#define HASH_HASH256 10
-#define HASH_KECCAK224 11
-#define HASH_KECCAK256 12
-#define HASH_KECCAK384 13
-#define HASH_KECCAK512 14
-#define HASH_MD2 15
-#define HASH_MD4 16
-#define HASH_MD5 17
-#define HASH_MD5SHA1 18
-#define HASH_RIPEMD160 19
-#define HASH_SHA1 20
-#define HASH_SHA224 21
-#define HASH_SHA256 22
-#define HASH_SHA384 23
-#define HASH_SHA512 24
-#define HASH_SHA3_224 25
-#define HASH_SHA3_256 26
-#define HASH_SHA3_384 27
-#define HASH_SHA3_512 28
-#define HASH_SHAKE128 29
-#define HASH_SHAKE256 30
-#define HASH_WHIRLPOOL 31
-#define HASH_MAX 31
+/*
+ * Hashes
+ */
+
+typedef enum hash_id {
+  HASH_NONE,
+  HASH_BLAKE2B_160,
+  HASH_BLAKE2B_256,
+  HASH_BLAKE2B_384,
+  HASH_BLAKE2B_512,
+  HASH_BLAKE2S_128,
+  HASH_BLAKE2S_160,
+  HASH_BLAKE2S_224,
+  HASH_BLAKE2S_256,
+  HASH_GOST94,
+  HASH_HASH160,
+  HASH_HASH256,
+  HASH_KECCAK224,
+  HASH_KECCAK256,
+  HASH_KECCAK384,
+  HASH_KECCAK512,
+  HASH_MD2,
+  HASH_MD4,
+  HASH_MD5,
+  HASH_MD5SHA1,
+  HASH_RIPEMD160,
+  HASH_SHA1,
+  HASH_SHA224,
+  HASH_SHA256,
+  HASH_SHA384,
+  HASH_SHA512,
+  HASH_SHA3_224,
+  HASH_SHA3_256,
+  HASH_SHA3_384,
+  HASH_SHA3_512,
+  HASH_SHAKE128,
+  HASH_SHAKE256,
+  HASH_WHIRLPOOL
+} hash_id_t;
 
 /*
- * Structs
+ * Types
  */
 
 typedef struct blake2b_s {
@@ -199,7 +205,7 @@ typedef struct gost94_s {
   uint8_t state[32];
   uint8_t sigma[32];
   unsigned char block[32];
-  uint64_t size;
+  uint64_t size[4];
 } gost94_t;
 
 typedef struct keccak_s {
@@ -249,13 +255,13 @@ typedef struct sha256_s {
 typedef struct sha512_s {
   uint64_t state[8];
   unsigned char block[128];
-  uint64_t size;
+  uint64_t size[2];
 } sha512_t;
 
 typedef struct whirlpool_s {
   uint64_t state[8];
   unsigned char block[64];
-  uint64_t size;
+  uint64_t size[4];
 } whirlpool_t;
 
 typedef md5_t md4_t;
@@ -266,7 +272,7 @@ typedef sha256_t hash256_t;
 typedef keccak_t sha3_t;
 
 typedef struct hash_s {
-  int type;
+  hash_id_t type;
   union {
     blake2b_t blake2b;
     blake2s_t blake2s;
@@ -284,7 +290,7 @@ typedef struct hash_s {
 } hash_t;
 
 typedef struct hmac_s {
-  int type;
+  hash_id_t type;
   hash_t inner;
   hash_t outer;
 } hmac_t;
@@ -309,7 +315,7 @@ blake2b_final(blake2b_t *ctx, unsigned char *out);
  * BLAKE2b-{160,256,384,512}
  */
 
-#define __TORSION_DEFINE_BLAKE2(name, bits)                           \
+#define TORSION__DEFINE_BLAKE2(name, bits)                           \
 TORSION_EXTERN void                                                   \
 torsion_##name##bits##_init(name##_t *ctx,                            \
                             const unsigned char *key, size_t keylen); \
@@ -321,10 +327,10 @@ torsion_##name##bits##_update(name##_t *ctx,                          \
 TORSION_EXTERN void                                                   \
 torsion_##name##bits##_final(name##_t *ctx, unsigned char *out);
 
-__TORSION_DEFINE_BLAKE2(blake2b, 160)
-__TORSION_DEFINE_BLAKE2(blake2b, 256)
-__TORSION_DEFINE_BLAKE2(blake2b, 384)
-__TORSION_DEFINE_BLAKE2(blake2b, 512)
+TORSION__DEFINE_BLAKE2(blake2b, 160)
+TORSION__DEFINE_BLAKE2(blake2b, 256)
+TORSION__DEFINE_BLAKE2(blake2b, 384)
+TORSION__DEFINE_BLAKE2(blake2b, 512)
 
 /*
  * BLAKE2s
@@ -346,10 +352,10 @@ blake2s_final(blake2s_t *ctx, unsigned char *out);
  * BLAKE2s-{128,160,224,256}
  */
 
-__TORSION_DEFINE_BLAKE2(blake2s, 128)
-__TORSION_DEFINE_BLAKE2(blake2s, 160)
-__TORSION_DEFINE_BLAKE2(blake2s, 224)
-__TORSION_DEFINE_BLAKE2(blake2s, 256)
+TORSION__DEFINE_BLAKE2(blake2s, 128)
+TORSION__DEFINE_BLAKE2(blake2s, 160)
+TORSION__DEFINE_BLAKE2(blake2s, 224)
+TORSION__DEFINE_BLAKE2(blake2s, 256)
 
 /*
  * GOST94
@@ -407,7 +413,7 @@ keccak_final(keccak_t *ctx, unsigned char *out, unsigned int pad, size_t len);
  * Keccak{224,256,384,512}
  */
 
-#define __TORSION_DEFINE_KECCAK(name)                               \
+#define TORSION__DEFINE_KECCAK(name)                               \
 TORSION_EXTERN void                                                 \
 torsion_##name##_init(sha3_t *ctx);                                 \
                                                                     \
@@ -417,10 +423,10 @@ torsion_##name##_update(sha3_t *ctx, const void *data, size_t len); \
 TORSION_EXTERN void                                                 \
 torsion_##name##_final(sha3_t *ctx, unsigned char *out);
 
-__TORSION_DEFINE_KECCAK(keccak224)
-__TORSION_DEFINE_KECCAK(keccak256)
-__TORSION_DEFINE_KECCAK(keccak384)
-__TORSION_DEFINE_KECCAK(keccak512)
+TORSION__DEFINE_KECCAK(keccak224)
+TORSION__DEFINE_KECCAK(keccak256)
+TORSION__DEFINE_KECCAK(keccak384)
+TORSION__DEFINE_KECCAK(keccak512)
 
 /*
  * MD2
@@ -556,16 +562,16 @@ sha512_final(sha512_t *ctx, unsigned char *out);
  * SHA3-{224,256,384,512}
  */
 
-__TORSION_DEFINE_KECCAK(sha3_224)
-__TORSION_DEFINE_KECCAK(sha3_256)
-__TORSION_DEFINE_KECCAK(sha3_384)
-__TORSION_DEFINE_KECCAK(sha3_512)
+TORSION__DEFINE_KECCAK(sha3_224)
+TORSION__DEFINE_KECCAK(sha3_256)
+TORSION__DEFINE_KECCAK(sha3_384)
+TORSION__DEFINE_KECCAK(sha3_512)
 
 /*
  * SHAKE{128,256}
  */
 
-#define __TORSION_DEFINE_SHAKE(name)                                 \
+#define TORSION__DEFINE_SHAKE(name)                                 \
 TORSION_EXTERN void                                                  \
 torsion_##name##_init(sha3_t *ctx);                                  \
                                                                      \
@@ -575,8 +581,8 @@ torsion_##name##_update(sha3_t *ctx, const void *data, size_t len);  \
 TORSION_EXTERN void                                                  \
 torsion_##name##_final(sha3_t *ctx, unsigned char *out, size_t len);
 
-__TORSION_DEFINE_SHAKE(shake224)
-__TORSION_DEFINE_SHAKE(shake256)
+TORSION__DEFINE_SHAKE(shake128)
+TORSION__DEFINE_SHAKE(shake256)
 
 /*
  * Whirlpool
@@ -596,7 +602,7 @@ whirlpool_final(whirlpool_t *ctx, unsigned char *out);
  */
 
 TORSION_EXTERN void
-hash_init(hash_t *hash, int type);
+hash_init(hash_t *hash, hash_id_t type);
 
 TORSION_EXTERN void
 hash_update(hash_t *hash, const void *data, size_t len);
@@ -605,20 +611,20 @@ TORSION_EXTERN void
 hash_final(hash_t *hash, unsigned char *out, size_t len);
 
 TORSION_EXTERN int
-hash_has_backend(int type);
+hash_has_backend(hash_id_t type);
 
 TORSION_EXTERN size_t
-hash_output_size(int type);
+hash_output_size(hash_id_t type);
 
 TORSION_EXTERN size_t
-hash_block_size(int type);
+hash_block_size(hash_id_t type);
 
 /*
  * HMAC
  */
 
 TORSION_EXTERN void
-hmac_init(hmac_t *hmac, int type, const unsigned char *key, size_t len);
+hmac_init(hmac_t *hmac, hash_id_t type, const unsigned char *key, size_t len);
 
 TORSION_EXTERN void
 hmac_update(hmac_t *hmac, const void *data, size_t len);
@@ -630,4 +636,4 @@ hmac_final(hmac_t *hmac, unsigned char *out);
 }
 #endif
 
-#endif /* _TORSION_HASH_H */
+#endif /* TORSION_HASH_H */

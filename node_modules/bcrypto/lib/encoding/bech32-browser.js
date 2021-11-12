@@ -6,4 +6,5 @@
 
 'use strict';
 
-module.exports = require('../js/bech32');
+const BECH32 = require('../js/bech32');
+module.exports = new BECH32(1);

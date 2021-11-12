@@ -786,22 +786,6 @@ describe('Mempool', function() {
   });
 
   describe('AddrIndexer', function () {
-    it('will not get key for witness program v1', function() {
-      const addrindex = new AddrIndexer();
-
-      // Create a witness program version 1 with
-      // 40 byte data push.
-      const script = new Script();
-      script.push(Opcode.fromSmall(1));
-      script.push(Opcode.fromData(Buffer.alloc(40)));
-      script.compile();
-      const addr = Address.fromScript(script);
-
-      const key = addrindex.getKey(addr);
-
-      assert.strictEqual(key, null);
-    });
-
     it('will get key for witness program v0', function() {
       const addrindex = new AddrIndexer();
 
@@ -815,7 +799,61 @@ describe('Mempool', function() {
 
       const key = addrindex.getKey(addr);
 
-      assert.bufferEqual(key, Buffer.from('0a' + '00'.repeat(32), 'hex'));
+      assert.bufferEqual(key, Buffer.from('00' + '00'.repeat(32), 'hex'));
+    });
+
+    it('will get key for witness program v1', function() {
+      const addrindex = new AddrIndexer();
+
+      // Create a witness program version 1 with
+      // 32 byte data push.
+      const script = new Script();
+      script.push(Opcode.fromSmall(1));
+      script.push(Opcode.fromData(Buffer.alloc(32)));
+      script.compile();
+      const addr = Address.fromScript(script);
+
+      const key = addrindex.getKey(addr);
+
+      assert.bufferEqual(key, Buffer.from('01' + '00'.repeat(32), 'hex'));
+    });
+
+    it('will get key for witness program v15', function() {
+      const addrindex = new AddrIndexer();
+
+      // Create a witness program version 15 with
+      // 32 byte data push.
+      const script = new Script();
+      script.push(Opcode.fromSmall(15));
+      script.push(Opcode.fromData(Buffer.alloc(32)));
+      script.compile();
+      const addr = Address.fromScript(script);
+
+      const key = addrindex.getKey(addr);
+
+      assert.bufferEqual(key, Buffer.from('0f' + '00'.repeat(32), 'hex'));
+    });
+
+    it('will get key for P2PKH', function() {
+      const addrindex = new AddrIndexer();
+
+      const script = Script.fromPubkeyhash(Buffer.alloc(20));
+      const addr = Address.fromScript(script);
+
+      const key = addrindex.getKey(addr);
+
+      assert.bufferEqual(key, Buffer.from('80' + '00'.repeat(20), 'hex'));
+    });
+
+    it('will get key for P2SH', function() {
+      const addrindex = new AddrIndexer();
+
+      const script = Script.fromScripthash(Buffer.alloc(20));
+      const addr = Address.fromScript(script);
+
+      const key = addrindex.getKey(addr);
+
+      assert.bufferEqual(key, Buffer.from('85' + '00'.repeat(20), 'hex'));
     });
   });
 

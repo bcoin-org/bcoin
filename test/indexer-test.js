@@ -10,6 +10,9 @@ const Script = require('../lib/script/script');
 const Opcode = require('../lib/script/opcode');
 const Address = require('../lib/primitives/address');
 const Block = require('../lib/primitives/block');
+const TX = require('../lib/primitives/tx');
+const Output = require('../lib/primitives/output');
+const Input = require('../lib/primitives/input');
 const Chain = require('../lib/blockchain/chain');
 const WorkerPool = require('../lib/workers/workerpool');
 const Miner = require('../lib/mining/miner');
@@ -55,6 +58,12 @@ const vectors = [
     addr: '2Muy8nSQaMsMFAZwPyiXSEMTVFJv9iYuhwT',
     amount: 0.11,
     label: 'p2sh'
+  },
+  // Same data part as version 0 p2wsh address but different witness version (1)
+  {
+    addr: 'bcrt1p2nj8e2nhmsa4hl9qw3xas7l5n2547h5uhlj47nc3pqfxaeq5rtjs0l3rl5',
+    amount: 0.22,
+    label: 'p2tr'
   }
 ];
 
@@ -239,7 +248,7 @@ describe('Indexer', function() {
       assert.equal(called, false);
     });
 
-    it('should not index transaction w/ invalid address', async () => {
+    it('should not index tx w/ invalid address (witness v0)', async () => {
       const indexer = new AddrIndexer({
         blocks: {},
         chain: {}
@@ -250,18 +259,21 @@ describe('Indexer', function() {
       indexer.put = (key, value) => ops.push([key, value]);
       indexer.del = (key, value) => ops.push([key, value]);
 
-      // Create a witness program version 1 with
-      // 40 byte data push.
+      // Create a witness program version 0 with
+      // 10 byte data push (BIP141 limits v0 to either 20 or 32).
       const script = new Script();
-      script.push(Opcode.fromSmall(1));
-      script.push(Opcode.fromData(Buffer.alloc(40)));
+      script.push(Opcode.fromSmall(0));
+      script.push(Opcode.fromData(Buffer.alloc(10)));
       script.compile();
-      const addr = Address.fromScript(script);
 
-      const tx = {
-        getAddresses: () => [addr],
-        hash: () => Buffer.alloc(32)
-      };
+      const tx = new TX({
+        inputs: [
+          new Input()
+        ],
+        outputs: [
+          new Output({script})
+        ]
+      });;
 
       const entry = {height: 323549};
       const block = {txs: [tx]};
@@ -273,7 +285,44 @@ describe('Indexer', function() {
       assert.equal(ops.length, 0);
     });
 
-    it('should index transaction w/ valid address', async () => {
+    it('should not index tx w/ invalid address (witness v1)', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: {}
+      });
+
+      const ops = [];
+
+      indexer.put = (key, value) => ops.push([key, value]);
+      indexer.del = (key, value) => ops.push([key, value]);
+
+      // Create a witness program version 1 with
+      // 50 byte data push (40 is the BIP141 maximum).
+      const script = new Script();
+      script.push(Opcode.fromSmall(1));
+      script.push(Opcode.fromData(Buffer.alloc(50)));
+      script.compile();
+
+      const tx = new TX({
+        inputs: [
+          new Input()
+        ],
+        outputs: [
+          new Output({script})
+        ]
+      });;
+
+      const entry = {height: 323549};
+      const block = {txs: [tx]};
+      const view = {};
+
+      indexer.indexBlock(entry, block, view);
+      indexer.unindexBlock(entry, block, view);
+
+      assert.equal(ops.length, 0);
+    });
+
+    it('should index tx w/ valid address (witness v0)', async () => {
       const indexer = new AddrIndexer({
         blocks: {},
         chain: {}
@@ -289,6 +338,74 @@ describe('Indexer', function() {
       const script = new Script();
       script.push(Opcode.fromSmall(0));
       script.push(Opcode.fromData(Buffer.alloc(20)));
+      script.compile();
+      const addr = Address.fromScript(script);
+
+      const tx = {
+        getAddresses: () => [addr],
+        hash: () => Buffer.alloc(32)
+      };
+
+      const entry = {height: 323549};
+      const block = {txs: [tx]};
+      const view = {};
+
+      indexer.indexBlock(entry, block, view);
+      indexer.unindexBlock(entry, block, view);
+
+      assert.equal(ops.length, 6);
+    });
+
+    it('should index tx w/ valid address (witness v1)', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: {}
+      });
+
+      const ops = [];
+
+      indexer.put = (key, value) => ops.push([key, value]);
+      indexer.del = (key, value) => ops.push([key, value]);
+
+      // Create a witness program version 1 with
+      // 20 byte data push.
+      const script = new Script();
+      script.push(Opcode.fromSmall(1));
+      script.push(Opcode.fromData(Buffer.alloc(20)));
+      script.compile();
+      const addr = Address.fromScript(script);
+
+      const tx = {
+        getAddresses: () => [addr],
+        hash: () => Buffer.alloc(32)
+      };
+
+      const entry = {height: 323549};
+      const block = {txs: [tx]};
+      const view = {};
+
+      indexer.indexBlock(entry, block, view);
+      indexer.unindexBlock(entry, block, view);
+
+      assert.equal(ops.length, 6);
+    });
+
+    it('should index tx w/ valid address (witness v1, taproot)', async () => {
+      const indexer = new AddrIndexer({
+        blocks: {},
+        chain: {}
+      });
+
+      const ops = [];
+
+      indexer.put = (key, value) => ops.push([key, value]);
+      indexer.del = (key, value) => ops.push([key, value]);
+
+      // Create a witness program version 1 with
+      // 32 byte data push.
+      const script = new Script();
+      script.push(Opcode.fromSmall(1));
+      script.push(Opcode.fromData(Buffer.alloc(32)));
       script.compile();
       const addr = Address.fromScript(script);
 
@@ -922,7 +1039,7 @@ describe('Indexer', function() {
         }
       }
 
-      await forValue(node.mempool.map, 'size', 20);
+      await forValue(node.mempool.map, 'size', 25);
     });
 
     after(async () => {

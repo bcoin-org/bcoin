@@ -6,6 +6,7 @@
 
 'use strict';
 
+const Path = require('path');
 const assert = require('bsert');
 const format = require('./format');
 const fs = require('./fs');
@@ -26,14 +27,19 @@ class Logger {
   constructor(options) {
     this.level = Logger.levels.NONE;
     this.colors = Logger.HAS_TTY;
+    this.maxFileSize = Logger.MAX_FILE_SIZE;
+    this.maxFiles = Logger.MAX_ARCHIVAL_FILES;
     this.console = true;
-    this.shrink = true;
     this.closed = true;
     this.closing = false;
     this.filename = null;
     this.stream = null;
     this.contexts = Object.create(null);
     this.fmt = format;
+    this.rotating = false;
+
+    this._fileSize = 0;
+    this._buffer = [];
 
     if (options)
       this.set(options);
@@ -68,14 +74,19 @@ class Logger {
       this.console = options.console;
     }
 
-    if (options.shrink != null) {
-      assert(typeof options.shrink === 'boolean');
-      this.shrink = options.shrink;
-    }
-
     if (options.filename != null) {
       assert(typeof options.filename === 'string', 'Bad file.');
       this.filename = options.filename;
+    }
+
+    if (options.maxFileSize != null) {
+      assert((options.maxFileSize >>> 0) === options.maxFileSize);
+      this.maxFileSize = options.maxFileSize;
+    }
+
+    if (options.maxFiles != null) {
+      assert((options.maxFiles >>> 0) === options.maxFiles);
+      this.maxFiles = options.maxFiles;
     }
   }
 
@@ -101,8 +112,7 @@ class Logger {
       return;
     }
 
-    if (this.shrink)
-      await this.truncate();
+    this._fileSize = await this.getSize();
 
     this.stream = await openStream(this.filename);
     this.stream.once('error', this.handleError.bind(this));
@@ -137,48 +147,101 @@ class Logger {
       this.stream = null;
     }
 
+    this._fileSize = 0;
+
     this.closed = true;
   }
 
   /**
-   * Truncate the log file to the last 20mb.
+   * Rotate out the current log file.
    * @method
    * @private
-   * @returns {Promise}
+   * @returns {Promise} - Returns String
    */
 
-  async truncate() {
+  async rotate() {
+    if (this.rotating)
+      return null;
+
     if (!this.filename)
-      return;
+      return null;
 
     if (fs.unsupported)
-      return;
+      return null;
 
-    assert(!this.stream);
+    this.rotating = true;
 
-    let stat;
-    try {
-      stat = await fs.stat(this.filename);
-    } catch (e) {
-      if (e.code === 'ENOENT')
-        return;
-      throw e;
+    await this.close();
+
+    // Current log file is closed. Rename it.
+    const ext = Path.extname(this.filename);
+    const base = Path.basename(this.filename, ext);
+    const dir = Path.dirname(this.filename);
+
+    const rename = Path.join(dir, base + '_' + dateString() + ext);
+
+    await fs.rename(this.filename, rename);
+
+    await this.open();
+
+    while (this._buffer.length > 0) {
+      const msg = this._buffer.shift();
+      this.stream.write(msg);
+      this._fileSize += msg.length;
     }
 
-    const maxSize = Logger.MAX_FILE_SIZE;
+    this.rotating = false;
+    this.prune(dir, base, ext);
 
-    if (stat.size <= maxSize + (maxSize / 10))
+    return rename;
+  }
+
+  /**
+   * Remove old log files
+   * @method
+   * @private
+   * @param {String} dir
+   * @param {String} base
+   * @param {String} ext
+   * @returns {Promise} - Returns Number
+   */
+
+  async prune(dir, base, ext) {
+    // Find all the archival files in the target directory
+    const files = await fs.readdir(dir);
+    const re = new RegExp(`${base}_.*${ext}`);
+    const oldFiles = files.filter(filename => re.test(filename));
+
+    if (oldFiles.length <= this.maxFiles)
       return;
 
-    this.debug('Truncating log file to %dmb.', mb(maxSize));
+    // Archival files are named with year-month-day-hour-min-sec
+    // so they should already be in order from oldest to newest.
+    // But just in case readdir() isn't reliable for this...
+    oldFiles.sort();
 
-    const fd = await fs.open(this.filename, 'r+');
-    const data = Buffer.allocUnsafe(maxSize);
+    const prune = oldFiles.slice(0, -1 * this.maxFiles);
 
-    await fs.read(fd, data, 0, maxSize, stat.size - maxSize);
-    await fs.ftruncate(fd, maxSize);
-    await fs.write(fd, data, 0, maxSize, 0);
-    await fs.close(fd);
+    for (const file of prune)
+      await fs.unlink(Path.join(dir, file));
+  }
+
+  /**
+   * Get the size of the current log file in bytes.
+   * @method
+   * @private
+   * @returns {Promise} - Returns Number
+   */
+
+  async getSize() {
+    try {
+      const stat = await fs.stat(this.filename);
+      return stat.size;
+    } catch (e) {
+      if (e.code === 'ENOENT')
+        return 0;
+      throw e;
+    }
   }
 
   /**
@@ -372,7 +435,7 @@ class Logger {
    */
 
   log(level, module, args) {
-    if (this.closed)
+    if (this.closed && !this.rotating)
       return;
 
     if (this.level < level)
@@ -472,10 +535,10 @@ class Logger {
 
     assert(name, 'Invalid log level.');
 
-    if (!this.stream)
+    if (!this.stream && !this.rotating)
       return;
 
-    if (this.closing)
+    if (this.closing && !this.rotating)
       return;
 
     const date = new Date().toISOString().slice(0, -5) + 'Z';
@@ -488,7 +551,14 @@ class Logger {
     msg += format(args, false);
     msg += '\n';
 
-    this.stream.write(msg);
+    if (this.rotating) {
+      this._buffer.push(msg);
+    } else {
+      this.stream.write(msg);
+      this._fileSize += msg.length;
+      if (this._fileSize >= this.maxFileSize)
+        this.rotate();
+    }
   }
 
   /**
@@ -501,7 +571,7 @@ class Logger {
    */
 
   logError(level, module, err) {
-    if (this.closed)
+    if (this.closed && !this.rotating)
       return;
 
     if (fs.unsupported && this.console) {
@@ -793,6 +863,14 @@ Logger.HAS_TTY = Boolean(process.stdout && process.stdout.isTTY);
 Logger.MAX_FILE_SIZE = 20 << 20;
 
 /**
+ * Maximum number of archival log files to keep on disk.
+ * @const {Number}
+ * @default
+ */
+
+Logger.MAX_ARCHIVAL_FILES = 10;
+
+/**
  * Available log levels.
  * @enum {Number}
  */
@@ -922,6 +1000,16 @@ function closeStream(stream) {
 
     stream.close();
   });
+}
+
+function dateString() {
+  // '2019-10-28T19:02:45.122Z'
+  let now = new Date().toJSON();
+
+  // '2019-10-28_19-01-15-122'
+  now = now.replace(/:/g,'-').replace('T','_').replace('.','-').slice(0,-1);
+
+  return now;
 }
 
 /*

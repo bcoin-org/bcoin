@@ -13,59 +13,60 @@ const binding = require('./binding');
  * Bech32
  */
 
-function serialize(hrp, data) {
-  assert(typeof hrp === 'string');
-  assert(Buffer.isBuffer(data));
+class BECH32 {
+  constructor(checksum) {
+    assert((checksum >>> 0) === checksum);
+    this.checksum = checksum;
+    this.native = 2;
+  }
 
-  return binding.bech32_serialize(hrp, data);
-}
+  serialize(hrp, data) {
+    assert(typeof hrp === 'string');
+    assert(Buffer.isBuffer(data));
 
-function deserialize(str) {
-  assert(typeof str === 'string');
-  return binding.bech32_deserialize(str);
-}
+    return binding.bech32_serialize(hrp, data, this.checksum);
+  }
 
-function is(str) {
-  assert(typeof str === 'string');
-  return binding.bech32_is(str);
-}
+  deserialize(str) {
+    assert(typeof str === 'string');
+    return binding.bech32_deserialize(str, this.checksum);
+  }
 
-function convertBits(data, srcbits, dstbits, pad) {
-  assert(Buffer.isBuffer(data));
-  assert((srcbits >>> 0) === srcbits);
-  assert((dstbits >>> 0) === dstbits);
-  assert(typeof pad === 'boolean');
+  is(str) {
+    assert(typeof str === 'string');
+    return binding.bech32_is(str, this.checksum);
+  }
 
-  return binding.bech32_convert_bits(data, srcbits, dstbits, pad);
-}
+  convertBits(data, srcbits, dstbits, pad) {
+    assert(Buffer.isBuffer(data));
+    assert((srcbits >>> 0) === srcbits);
+    assert((dstbits >>> 0) === dstbits);
+    assert(typeof pad === 'boolean');
 
-function encode(hrp, version, hash) {
-  assert(typeof hrp === 'string');
-  assert((version >>> 0) === version);
-  assert(Buffer.isBuffer(hash));
+    return binding.bech32_convert_bits(data, srcbits, dstbits, pad);
+  }
 
-  return binding.bech32_encode(hrp, version, hash);
-}
+  encode(hrp, version, hash) {
+    assert(typeof hrp === 'string');
+    assert((version >>> 0) === version);
+    assert(Buffer.isBuffer(hash));
 
-function decode(addr) {
-  assert(typeof addr === 'string');
-  return binding.bech32_decode(addr);
-}
+    return binding.bech32_encode(hrp, version, hash, this.checksum);
+  }
 
-function test(addr) {
-  assert(typeof addr === 'string');
-  return binding.bech32_test(addr);
+  decode(addr) {
+    assert(typeof addr === 'string');
+    return binding.bech32_decode(addr, this.checksum);
+  }
+
+  test(addr) {
+    assert(typeof addr === 'string');
+    return binding.bech32_test(addr, this.checksum);
+  }
 }
 
 /*
  * Expose
  */
 
-exports.native = 2;
-exports.serialize = serialize;
-exports.deserialize = deserialize;
-exports.is = is;
-exports.convertBits = convertBits;
-exports.encode = encode;
-exports.decode = decode;
-exports.test = test;
+module.exports = BECH32;

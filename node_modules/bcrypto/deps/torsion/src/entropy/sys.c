@@ -39,6 +39,9 @@
  *   https://man.openbsd.org/random.4
  *
  * NetBSD:
+ *   https://www.netbsd.org/~riastradh/tmp/20200510/getrandom.html
+ *   https://github.com/NetBSD/src/blob/6ec11dd/sys/sys/random.h
+ *   https://www.netbsd.org/changes/changes-10.0.html
  *   https://netbsd.gw.com/cgi-bin/man-cgi?sysctl+3+NetBSD-8.0
  *   https://github.com/NetBSD/src/commit/0a9d2ad
  *   https://github.com/NetBSD/src/commit/3f78162
@@ -52,11 +55,14 @@
  *   https://docs.oracle.com/cd/E88353_01/html/E37841/getrandom-2.html
  *   https://docs.oracle.com/cd/E36784_01/html/E36884/random-7d.html
  *
- * IBM i (PASE):
- *   https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_71/rzalf/rzalf.pdf
- *
  * AIX:
  *   https://www.ibm.com/support/knowledgecenter/ssw_aix_71/filesreference/random.html
+ *   https://www.ibm.com/docs/en/aix/7.1?topic=files-random-urandom-devices
+ *   https://www.ibm.com/docs/en/aix/7.2?topic=files-random-urandom-devices
+ *
+ * IBM i (with PASE):
+ *   https://www.ibm.com/docs/pt/i/7.1?topic=pi-whats-new-i-71
+ *   https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_71/rzalf/rzalf.pdf
  *
  * Haiku:
  *   No official documentation for /dev/random.
@@ -85,10 +91,12 @@
  *
  * Emscripten (wasm, asm.js):
  *   https://emscripten.org/docs/api_reference/emscripten.h.html
+ *   https://github.com/emscripten-core/emscripten/pull/6220
  *   https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
  *   https://nodejs.org/api/crypto.html#crypto_crypto_randomfillsync_buffer_offset_size
  *   https://github.com/emscripten-core/emscripten/blob/7c3ced6/src/library_uuid.js#L31
  *   https://github.com/emscripten-core/emscripten/blob/32e1d73/system/include/uuid/uuid.h
+ *   https://github.com/emscripten-core/emscripten/commit/385a660
  */
 
 /**
@@ -158,9 +166,11 @@
  *            kern.arandom removed in OpenBSD 6.1 (2017).
  *
  * NetBSD:
- *   Source: sysctl(2) w/ kern.arandom
- *   Fallback: /dev/urandom
- *   Support: kern.arandom added in NetBSD 2.0 (2004).
+ *   Source: getrandom(2)
+ *   Fallback 1: sysctl(2) w/ kern.arandom
+ *   Fallback 2: /dev/urandom
+ *   Support: getrandom(2) added in NetBSD 10.0 (2021).
+ *            kern.arandom added in NetBSD 2.0 (2004).
  *            kern.arandom modernized in NetBSD 4.0 (2007).
  *
  * DragonFly BSD:
@@ -173,12 +183,12 @@
  *   Fallback: /dev/random
  *   Support: getrandom(2) added in Solaris 11.3 (2015) (SunOS 5.11.3).
  *
- * IBM i (PASE):
- *   Source: /dev/urandom
- *   Fallback: none
- *
  * AIX:
  *   Source: /dev/random
+ *   Fallback: none
+ *
+ * IBM i (with PASE):
+ *   Source: /dev/urandom
  *   Fallback: none
  *
  * Haiku:
@@ -212,11 +222,13 @@
  *
  * Emscripten (wasm, asm.js):
  *   Browser:
- *     Source: window.crypto.getRandomValues
- *     Fallback: none
+ *     Source: window.crypto.getRandomValues w/ EM_JS
+ *     Fallback: uuid_generate(3)
  *   Node.js
- *     Source: crypto.randomFillSync
- *     Fallback: none
+ *     Source: crypto.randomFillSync w/ EM_JS
+ *     Fallback: uuid_generate(3)
+ *   Support: EM_JS added in Emscripten 1.37.36 (2018).
+ *            uuid_generate(3) added in Emscripten 1.8.6 (2014).
  *
  * [1] https://docs.rs/getrandom/0.1.14/getrandom/
  */
@@ -256,6 +268,9 @@
 #    define HAVE_BCRYPTGENRANDOM
 #  else
 #    define RtlGenRandom SystemFunction036
+#    ifdef __cplusplus
+extern "C"
+#    endif
 BOOLEAN NTAPI
 RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
 #    pragma comment(lib, "advapi32.lib")
@@ -273,6 +288,9 @@ RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
 #  include <cloudabi_syscalls.h> /* cloudabi_sys_random_get */
 #elif defined(__EMSCRIPTEN__)
 #  include <emscripten.h> /* EM_JS */
+#  ifndef EM_JS /* 1.37.36 (2018) */
+#    include <uuid/uuid.h> /* uuid_generate (1.8.6 (2014)) */
+#  endif
 #elif defined(__wasi__)
 #  include <wasi/api.h> /* __wasi_random_get */
 #elif defined(__unix) || defined(__unix__)     \
@@ -300,7 +318,7 @@ RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
 #    endif
 #    define DEV_RANDOM_NAME "/dev/random"
 #  elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-#    include <sys/param.h>
+#    include <sys/param.h> /* <osreldate.h> prior to 3.0.1 (1998) */
 #    if defined(__FreeBSD_version) && __FreeBSD_version >= 1200000 /* 12.0 (2018) */
 #      include <sys/random.h> /* getrandom, getentropy */
 #      define HAVE_GETRANDOM
@@ -316,7 +334,7 @@ RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
 #  elif defined(__OpenBSD__)
 #    include <sys/param.h>
 #    if defined(OpenBSD) && OpenBSD >= 201411 /* 5.6 (2014) */
-#      define HAVE_GETENTROPY /* resides in unistd.h */
+#      define HAVE_GETENTROPY /* resides in <unistd.h> */
 #    endif
 #    if defined(OpenBSD) && OpenBSD >= 200511 /* 3.8 (2005) */
 #      include <sys/sysctl.h> /* sysctl */
@@ -327,6 +345,10 @@ RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
 #    define DEV_RANDOM_NAME "/dev/urandom"
 #  elif defined(__NetBSD__)
 #    include <sys/param.h>
+#    if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 1000000000 /* 10.0 (2021) */
+#      include <sys/random.h> /* getrandom */
+#      define HAVE_GETRANDOM
+#    endif
 #    if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 400000000 /* 4.0 (2007) */
 #      include <sys/sysctl.h> /* sysctl */
 #      if defined(CTL_KERN) && defined(KERN_ARND)
@@ -342,12 +364,13 @@ RtlGenRandom(PVOID RandomBuffer, ULONG RandomBufferLength);
 #    endif
 #    define DEV_RANDOM_NAME "/dev/random"
 #  elif defined(__sun) && defined(__SVR4) /* 11.3 (2015) */
-#    if defined(__SUNPRO_C) && __SUNPRO_C >= 0x5140 /* 5.14 (2016) */
+#    if (defined(__SUNPRO_C) && __SUNPRO_C >= 0x5140) \
+     || (defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x5140) /* 5.14 (2016) */
 #      include <sys/random.h> /* getrandom */
 #      define HAVE_GETRANDOM
 #    endif
 #    define DEV_RANDOM_NAME "/dev/random"
-#  elif defined(__PASE__)
+#  elif defined(__PASE__) /* IBM i disguised as AIX */
 #    define DEV_RANDOM_NAME "/dev/urandom"
 #  elif defined(_AIX)
 #    define DEV_RANDOM_NAME "/dev/random"
@@ -416,6 +439,7 @@ torsion_open(const char *name, int flags) {
  */
 
 #ifdef __EMSCRIPTEN__
+#if defined(EM_JS)
 EM_JS(unsigned short, js_random_get, (unsigned char *dst, unsigned long len), {
   if (ENVIRONMENT_IS_NODE) {
     var crypto = module.require('crypto');
@@ -462,6 +486,30 @@ EM_JS(unsigned short, js_random_get, (unsigned char *dst, unsigned long len), {
 
   return 1;
 })
+#else /* !EM_JS */
+static uint16_t
+js_random_get(uint8_t *dst, size_t len) {
+  unsigned char uuid[16];
+  size_t max = 14;
+
+  while (len > 0) {
+    if (max > len)
+      max = len;
+
+    uuid_generate(uuid);
+
+    uuid[6] = uuid[14];
+    uuid[8] = uuid[15];
+
+    memcpy(dst, uuid, max);
+
+    dst += max;
+    len -= max;
+  }
+
+  return 0;
+}
+#endif /* !EM_JS */
 #endif /* __EMSCRIPTEN__ */
 
 /*
@@ -477,7 +525,7 @@ torsion_callrand(void *dst, size_t size) {
   return RtlGenRandom((PVOID)dst, (ULONG)size) == TRUE;
 #elif defined(HAVE_RANDABYTES) /* __vxworks */
   unsigned char *data = (unsigned char *)dst;
-  size_t max = (size_t)INT_MAX;
+  size_t max = INT_MAX;
   int ret;
 
   for (;;) {
@@ -687,8 +735,8 @@ static int
 torsion_uuidrand(void *dst, size_t size) {
   /* Called if we cannot open /dev/urandom (idea from libuv). */
   static int name[3] = {1, 40, 6}; /* kern.random.uuid */
+  unsigned char *data = (unsigned char *)dst;
   struct torsion__sysctl_args args;
-  unsigned char *data = dst;
   size_t max = 14;
   char uuid[16];
   size_t nread;

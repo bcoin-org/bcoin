@@ -42,21 +42,21 @@ class Schnorr {
 
   privateKeyGenerate() {
     assert(this instanceof Schnorr);
-    return binding.schnorr_privkey_generate(this._handle, binding.entropy());
+    return binding.bip340_privkey_generate(this._handle, binding.entropy());
   }
 
   privateKeyVerify(key) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_privkey_verify(this._handle, key);
+    return binding.bip340_privkey_verify(this._handle, key);
   }
 
   privateKeyExport(key) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(key));
 
-    const [d, x, y] = binding.schnorr_privkey_export(this._handle, key);
+    const [d, x, y] = binding.bip340_privkey_export(this._handle, key);
 
     return { d, x, y };
   }
@@ -66,7 +66,7 @@ class Schnorr {
     assert(json && typeof json === 'object');
     assert(Buffer.isBuffer(json.d));
 
-    return binding.schnorr_privkey_import(this._handle, json.d);
+    return binding.bip340_privkey_import(this._handle, json.d);
   }
 
   privateKeyTweakAdd(key, tweak) {
@@ -74,7 +74,7 @@ class Schnorr {
     assert(Buffer.isBuffer(key));
     assert(Buffer.isBuffer(tweak));
 
-    return binding.schnorr_privkey_tweak_add(this._handle, key, tweak);
+    return binding.bip340_privkey_tweak_add(this._handle, key, tweak);
   }
 
   privateKeyTweakMul(key, tweak) {
@@ -82,28 +82,28 @@ class Schnorr {
     assert(Buffer.isBuffer(key));
     assert(Buffer.isBuffer(tweak));
 
-    return binding.schnorr_privkey_tweak_mul(this._handle, key, tweak);
+    return binding.bip340_privkey_tweak_mul(this._handle, key, tweak);
   }
 
   privateKeyInvert(key) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_privkey_invert(this._handle, key);
+    return binding.bip340_privkey_invert(this._handle, key);
   }
 
   publicKeyCreate(key) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_pubkey_create(this._handle, key);
+    return binding.bip340_pubkey_create(this._handle, key);
   }
 
   publicKeyFromUniform(bytes) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(bytes));
 
-    return binding.schnorr_pubkey_from_uniform(this._handle, bytes);
+    return binding.bip340_pubkey_from_uniform(this._handle, bytes);
   }
 
   publicKeyToUniform(key, hint = binding.hint()) {
@@ -111,35 +111,35 @@ class Schnorr {
     assert(Buffer.isBuffer(key));
     assert((hint >>> 0) === hint);
 
-    return binding.schnorr_pubkey_to_uniform(this._handle, key, hint);
+    return binding.bip340_pubkey_to_uniform(this._handle, key, hint);
   }
 
   publicKeyFromHash(bytes) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(bytes));
 
-    return binding.schnorr_pubkey_from_hash(this._handle, bytes);
+    return binding.bip340_pubkey_from_hash(this._handle, bytes);
   }
 
   publicKeyToHash(key) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_pubkey_to_hash(this._handle, key, binding.entropy());
+    return binding.bip340_pubkey_to_hash(this._handle, key, binding.entropy());
   }
 
   publicKeyVerify(key) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_pubkey_verify(this._handle, key);
+    return binding.bip340_pubkey_verify(this._handle, key);
   }
 
   publicKeyExport(key) {
     assert(this instanceof Schnorr);
     assert(Buffer.isBuffer(key));
 
-    const [x, y] = binding.schnorr_pubkey_export(this._handle, key);
+    const [x, y] = binding.bip340_pubkey_export(this._handle, key);
 
     return { x, y };
   }
@@ -159,7 +159,7 @@ class Schnorr {
     assert(Buffer.isBuffer(x));
     assert(Buffer.isBuffer(y));
 
-    return binding.schnorr_pubkey_import(this._handle, x, y);
+    return binding.bip340_pubkey_import(this._handle, x, y);
   }
 
   publicKeyTweakAdd(key, tweak) {
@@ -167,7 +167,7 @@ class Schnorr {
     assert(Buffer.isBuffer(key));
     assert(Buffer.isBuffer(tweak));
 
-    return binding.schnorr_pubkey_tweak_add(this._handle, key, tweak);
+    return binding.bip340_pubkey_tweak_add(this._handle, key, tweak);
   }
 
   publicKeyTweakMul(key, tweak) {
@@ -175,7 +175,7 @@ class Schnorr {
     assert(Buffer.isBuffer(key));
     assert(Buffer.isBuffer(tweak));
 
-    return binding.schnorr_pubkey_tweak_mul(this._handle, key, tweak);
+    return binding.bip340_pubkey_tweak_mul(this._handle, key, tweak);
   }
 
   publicKeyTweakSum(key, tweak) {
@@ -183,7 +183,7 @@ class Schnorr {
     assert(Buffer.isBuffer(key));
     assert(Buffer.isBuffer(tweak));
 
-    return binding.schnorr_pubkey_tweak_sum(this._handle, key, tweak);
+    return binding.bip340_pubkey_tweak_sum(this._handle, key, tweak);
   }
 
   publicKeyTweakCheck(key, tweak, expect, negated) {
@@ -193,7 +193,7 @@ class Schnorr {
     assert(Buffer.isBuffer(expect));
     assert(typeof negated === 'boolean');
 
-    return binding.schnorr_pubkey_tweak_check(this._handle, key,
+    return binding.bip340_pubkey_tweak_check(this._handle, key,
                                               tweak, expect, negated);
   }
 
@@ -204,7 +204,7 @@ class Schnorr {
     for (const key of keys)
       assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_pubkey_combine(this._handle, keys);
+    return binding.bip340_pubkey_combine(this._handle, keys);
   }
 
   sign(msg, key, aux = binding.entropy(32)) {
@@ -216,7 +216,7 @@ class Schnorr {
     assert(Buffer.isBuffer(key));
     assert(Buffer.isBuffer(aux));
 
-    return binding.schnorr_sign(this._handle, msg, key, aux);
+    return binding.bip340_sign(this._handle, msg, key, aux);
   }
 
   verify(msg, sig, key) {
@@ -225,7 +225,7 @@ class Schnorr {
     assert(Buffer.isBuffer(sig));
     assert(Buffer.isBuffer(key));
 
-    return binding.schnorr_verify(this._handle, msg, sig, key);
+    return binding.bip340_verify(this._handle, msg, sig, key);
   }
 
   verifyBatch(batch) {
@@ -240,7 +240,7 @@ class Schnorr {
       assert(Buffer.isBuffer(item[2]));
     }
 
-    return binding.schnorr_verify_batch(this._handle, batch);
+    return binding.bip340_verify_batch(this._handle, batch);
   }
 
   derive(pub, priv) {
@@ -248,7 +248,7 @@ class Schnorr {
     assert(Buffer.isBuffer(pub));
     assert(Buffer.isBuffer(priv));
 
-    return binding.schnorr_derive(this._handle, pub, priv);
+    return binding.bip340_derive(this._handle, pub, priv);
   }
 }
 

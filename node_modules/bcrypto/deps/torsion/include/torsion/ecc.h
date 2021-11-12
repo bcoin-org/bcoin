@@ -4,8 +4,8 @@
  * https://github.com/bcoin-org/libtorsion
  */
 
-#ifndef _TORSION_ECC_H
-#define _TORSION_ECC_H
+#ifndef TORSION_ECC_H
+#define TORSION_ECC_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,40 +81,40 @@ extern "C" {
 #define ecdsa_recover torsion_ecdsa_recover
 #define ecdsa_derive torsion_ecdsa_derive
 
-#define schnorr_legacy_support torsion_schnorr_legacy_support
-#define schnorr_legacy_sig_size torsion_schnorr_legacy_sig_size
-#define schnorr_legacy_sign torsion_schnorr_legacy_sign
-#define schnorr_legacy_verify torsion_schnorr_legacy_verify
-#define schnorr_legacy_verify_batch torsion_schnorr_legacy_verify_batch
+#define bipschnorr_support torsion_bipschnorr_support
+#define bipschnorr_sig_size torsion_bipschnorr_sig_size
+#define bipschnorr_sign torsion_bipschnorr_sign
+#define bipschnorr_verify torsion_bipschnorr_verify
+#define bipschnorr_verify_batch torsion_bipschnorr_verify_batch
 
-#define schnorr_privkey_size torsion_schnorr_privkey_size
-#define schnorr_pubkey_size torsion_schnorr_pubkey_size
-#define schnorr_sig_size torsion_schnorr_sig_size
-#define schnorr_privkey_generate torsion_schnorr_privkey_generate
-#define schnorr_privkey_verify torsion_schnorr_privkey_verify
-#define schnorr_privkey_export torsion_schnorr_privkey_export
-#define schnorr_privkey_import torsion_schnorr_privkey_import
-#define schnorr_privkey_tweak_add torsion_schnorr_privkey_tweak_add
-#define schnorr_privkey_tweak_mul torsion_schnorr_privkey_tweak_mul
-#define schnorr_privkey_invert torsion_schnorr_privkey_invert
-#define schnorr_pubkey_create torsion_schnorr_pubkey_create
-#define schnorr_pubkey_from_uniform torsion_schnorr_pubkey_from_uniform
-#define schnorr_pubkey_to_uniform torsion_schnorr_pubkey_to_uniform
-#define schnorr_pubkey_from_hash torsion_schnorr_pubkey_from_hash
-#define schnorr_pubkey_to_hash torsion_schnorr_pubkey_to_hash
-#define schnorr_pubkey_verify torsion_schnorr_pubkey_verify
-#define schnorr_pubkey_export torsion_schnorr_pubkey_export
-#define schnorr_pubkey_import torsion_schnorr_pubkey_import
-#define schnorr_pubkey_tweak_add torsion_schnorr_pubkey_tweak_add
-#define schnorr_pubkey_tweak_add_check torsion_schnorr_pubkey_tweak_add_check
-#define schnorr_pubkey_tweak_mul torsion_schnorr_pubkey_tweak_mul
-#define schnorr_pubkey_tweak_mul_check torsion_schnorr_pubkey_tweak_mul_check
-#define schnorr_pubkey_add torsion_schnorr_pubkey_add
-#define schnorr_pubkey_combine torsion_schnorr_pubkey_combine
-#define schnorr_sign torsion_schnorr_sign
-#define schnorr_verify torsion_schnorr_verify
-#define schnorr_verify_batch torsion_schnorr_verify_batch
-#define schnorr_derive torsion_schnorr_derive
+#define bip340_privkey_size torsion_bip340_privkey_size
+#define bip340_pubkey_size torsion_bip340_pubkey_size
+#define bip340_sig_size torsion_bip340_sig_size
+#define bip340_privkey_generate torsion_bip340_privkey_generate
+#define bip340_privkey_verify torsion_bip340_privkey_verify
+#define bip340_privkey_export torsion_bip340_privkey_export
+#define bip340_privkey_import torsion_bip340_privkey_import
+#define bip340_privkey_tweak_add torsion_bip340_privkey_tweak_add
+#define bip340_privkey_tweak_mul torsion_bip340_privkey_tweak_mul
+#define bip340_privkey_invert torsion_bip340_privkey_invert
+#define bip340_pubkey_create torsion_bip340_pubkey_create
+#define bip340_pubkey_from_uniform torsion_bip340_pubkey_from_uniform
+#define bip340_pubkey_to_uniform torsion_bip340_pubkey_to_uniform
+#define bip340_pubkey_from_hash torsion_bip340_pubkey_from_hash
+#define bip340_pubkey_to_hash torsion_bip340_pubkey_to_hash
+#define bip340_pubkey_verify torsion_bip340_pubkey_verify
+#define bip340_pubkey_export torsion_bip340_pubkey_export
+#define bip340_pubkey_import torsion_bip340_pubkey_import
+#define bip340_pubkey_tweak_add torsion_bip340_pubkey_tweak_add
+#define bip340_pubkey_tweak_add_check torsion_bip340_pubkey_tweak_add_check
+#define bip340_pubkey_tweak_mul torsion_bip340_pubkey_tweak_mul
+#define bip340_pubkey_tweak_mul_check torsion_bip340_pubkey_tweak_mul_check
+#define bip340_pubkey_add torsion_bip340_pubkey_add
+#define bip340_pubkey_combine torsion_bip340_pubkey_combine
+#define bip340_sign torsion_bip340_sign
+#define bip340_verify torsion_bip340_verify
+#define bip340_verify_batch torsion_bip340_verify_batch
+#define bip340_derive torsion_bip340_derive
 
 #define ecdh_privkey_size torsion_ecdh_privkey_size
 #define ecdh_pubkey_size torsion_ecdh_pubkey_size
@@ -207,11 +207,11 @@ extern "C" {
 #define ristretto_pubkey_negate torsion_ristretto_pubkey_negate
 #define ristretto_derive torsion_ristretto_derive
 
-#define test_ecc_internal __torsion_test_ecc_internal
+#define test_ecc_internal torsion__test_ecc_internal
 
 
 /*
- * Defs
+ * Definitions
  */
 
 #define WEI_MAX_FIELD_SIZE 66
@@ -228,14 +228,14 @@ extern "C" {
 #define ECDSA_MAX_SIG_SIZE (WEI_MAX_SCALAR_SIZE * 2) /* 132 */
 #define ECDSA_MAX_DER_SIZE (9 + ECDSA_MAX_SIG_SIZE) /* 141 */
 
-#define SCHNORR_LEGACY_MAX_PRIV_SIZE ECDSA_MAX_PRIV_SIZE
-#define SCHNORR_LEGACY_MAX_PUB_SIZE ECDSA_MAX_PUB_SIZE
-#define SCHNORR_LEGACY_MAX_SIG_SIZE \
+#define BIPSCHNORR_MAX_PRIV_SIZE ECDSA_MAX_PRIV_SIZE
+#define BIPSCHNORR_MAX_PUB_SIZE ECDSA_MAX_PUB_SIZE
+#define BIPSCHNORR_MAX_SIG_SIZE \
   (WEI_MAX_FIELD_SIZE + WEI_MAX_SCALAR_SIZE) /* 132 */
 
-#define SCHNORR_MAX_PRIV_SIZE WEI_MAX_SCALAR_SIZE /* 66 */
-#define SCHNORR_MAX_PUB_SIZE WEI_MAX_FIELD_SIZE /* 66 */
-#define SCHNORR_MAX_SIG_SIZE \
+#define BIP340_MAX_PRIV_SIZE WEI_MAX_SCALAR_SIZE /* 66 */
+#define BIP340_MAX_PUB_SIZE WEI_MAX_FIELD_SIZE /* 66 */
+#define BIP340_MAX_SIG_SIZE \
   (WEI_MAX_FIELD_SIZE + WEI_MAX_SCALAR_SIZE) /* 132 */
 
 #define ECDH_MAX_PRIV_SIZE MONT_MAX_SCALAR_SIZE /* 56 */
@@ -253,22 +253,25 @@ extern "C" {
  * Curves
  */
 
-#define WEI_CURVE_P192 0
-#define WEI_CURVE_P224 1
-#define WEI_CURVE_P256 2
-#define WEI_CURVE_P384 3
-#define WEI_CURVE_P521 4
-#define WEI_CURVE_SECP256K1 5
-#define WEI_CURVE_MAX 5
+typedef enum wei_curve_id {
+  WEI_CURVE_P192,
+  WEI_CURVE_P224,
+  WEI_CURVE_P256,
+  WEI_CURVE_P384,
+  WEI_CURVE_P521,
+  WEI_CURVE_SECP256K1
+} wei_curve_id_t;
 
-#define MONT_CURVE_X25519 0
-#define MONT_CURVE_X448 1
-#define MONT_CURVE_MAX 1
+typedef enum mont_curve_id {
+  MONT_CURVE_X25519,
+  MONT_CURVE_X448
+} mont_curve_id_t;
 
-#define EDWARDS_CURVE_ED25519 0
-#define EDWARDS_CURVE_ED448 1
-#define EDWARDS_CURVE_ED1174 2
-#define EDWARDS_CURVE_MAX 2
+typedef enum edwards_curve_id {
+  EDWARDS_CURVE_ED25519,
+  EDWARDS_CURVE_ED448,
+  EDWARDS_CURVE_ED1174
+} edwards_curve_id_t;
 
 /*
  * Types
@@ -287,7 +290,7 @@ typedef void ecdsa_redefine_f(void *, size_t);
  */
 
 TORSION_EXTERN wei_curve_t *
-wei_curve_create(int type);
+wei_curve_create(wei_curve_id_t type);
 
 TORSION_EXTERN void
 wei_curve_destroy(wei_curve_t *ec);
@@ -318,7 +321,7 @@ wei_scratch_destroy(const wei_curve_t *ec, wei_scratch_t *scratch);
  */
 
 TORSION_EXTERN mont_curve_t *
-mont_curve_create(int type);
+mont_curve_create(mont_curve_id_t type);
 
 TORSION_EXTERN void
 mont_curve_destroy(mont_curve_t *ec);
@@ -340,7 +343,7 @@ mont_curve_field_bits(const mont_curve_t *ec);
  */
 
 TORSION_EXTERN edwards_curve_t *
-edwards_curve_create(int type);
+edwards_curve_create(edwards_curve_id_t type);
 
 TORSION_EXTERN void
 edwards_curve_destroy(edwards_curve_t *ec);
@@ -603,233 +606,233 @@ ecdsa_derive(const wei_curve_t *ec,
              int compact);
 
 /*
- * Schnorr Legacy
+ * BIP-Schnorr
  */
 
 TORSION_EXTERN int
-schnorr_legacy_support(const wei_curve_t *ec);
+bipschnorr_support(const wei_curve_t *ec);
 
-#define schnorr_legacy_privkey_size ecdsa_privkey_size
-#define schnorr_legacy_pubkey_size ecdsa_pubkey_size
+#define bipschnorr_privkey_size ecdsa_privkey_size
+#define bipschnorr_pubkey_size ecdsa_pubkey_size
 
 TORSION_EXTERN size_t
-schnorr_legacy_sig_size(const wei_curve_t *ec);
+bipschnorr_sig_size(const wei_curve_t *ec);
 
-#define schnorr_legacy_privkey_generate ecdsa_privkey_generate
-#define schnorr_legacy_privkey_verify ecdsa_privkey_verify
-#define schnorr_legacy_privkey_export ecdsa_privkey_export
-#define schnorr_legacy_privkey_import ecdsa_privkey_import
-#define schnorr_legacy_privkey_tweak_add ecdsa_privkey_tweak_add
-#define schnorr_legacy_privkey_tweak_mul ecdsa_privkey_tweak_mul
-#define schnorr_legacy_privkey_negate ecdsa_privkey_negate
-#define schnorr_legacy_privkey_invert ecdsa_privkey_invert
-#define schnorr_legacy_pubkey_create ecdsa_pubkey_create
-#define schnorr_legacy_pubkey_convert ecdsa_pubkey_convert
-#define schnorr_legacy_pubkey_from_uniform ecdsa_pubkey_from_uniform
-#define schnorr_legacy_pubkey_to_uniform ecdsa_pubkey_to_uniform
-#define schnorr_legacy_pubkey_from_hash ecdsa_pubkey_from_hash
-#define schnorr_legacy_pubkey_to_hash ecdsa_pubkey_to_hash
-#define schnorr_legacy_pubkey_verify ecdsa_pubkey_verify
-#define schnorr_legacy_pubkey_export ecdsa_pubkey_export
-#define schnorr_legacy_pubkey_import ecdsa_pubkey_import
-#define schnorr_legacy_pubkey_tweak_add ecdsa_pubkey_tweak_add
-#define schnorr_legacy_pubkey_tweak_mul ecdsa_pubkey_tweak_mul
-#define schnorr_legacy_pubkey_add ecdsa_pubkey_add
-#define schnorr_legacy_pubkey_combine ecdsa_pubkey_combine
-#define schnorr_legacy_pubkey_negate ecdsa_pubkey_negate
-
-TORSION_EXTERN int
-schnorr_legacy_sign(const wei_curve_t *ec,
-                    unsigned char *sig,
-                    const unsigned char *msg,
-                    size_t msg_len,
-                    const unsigned char *priv);
+#define bipschnorr_privkey_generate ecdsa_privkey_generate
+#define bipschnorr_privkey_verify ecdsa_privkey_verify
+#define bipschnorr_privkey_export ecdsa_privkey_export
+#define bipschnorr_privkey_import ecdsa_privkey_import
+#define bipschnorr_privkey_tweak_add ecdsa_privkey_tweak_add
+#define bipschnorr_privkey_tweak_mul ecdsa_privkey_tweak_mul
+#define bipschnorr_privkey_negate ecdsa_privkey_negate
+#define bipschnorr_privkey_invert ecdsa_privkey_invert
+#define bipschnorr_pubkey_create ecdsa_pubkey_create
+#define bipschnorr_pubkey_convert ecdsa_pubkey_convert
+#define bipschnorr_pubkey_from_uniform ecdsa_pubkey_from_uniform
+#define bipschnorr_pubkey_to_uniform ecdsa_pubkey_to_uniform
+#define bipschnorr_pubkey_from_hash ecdsa_pubkey_from_hash
+#define bipschnorr_pubkey_to_hash ecdsa_pubkey_to_hash
+#define bipschnorr_pubkey_verify ecdsa_pubkey_verify
+#define bipschnorr_pubkey_export ecdsa_pubkey_export
+#define bipschnorr_pubkey_import ecdsa_pubkey_import
+#define bipschnorr_pubkey_tweak_add ecdsa_pubkey_tweak_add
+#define bipschnorr_pubkey_tweak_mul ecdsa_pubkey_tweak_mul
+#define bipschnorr_pubkey_add ecdsa_pubkey_add
+#define bipschnorr_pubkey_combine ecdsa_pubkey_combine
+#define bipschnorr_pubkey_negate ecdsa_pubkey_negate
 
 TORSION_EXTERN int
-schnorr_legacy_verify(const wei_curve_t *ec,
-                      const unsigned char *msg,
-                      size_t msg_len,
-                      const unsigned char *sig,
-                      const unsigned char *pub,
-                      size_t pub_len);
+bipschnorr_sign(const wei_curve_t *ec,
+                unsigned char *sig,
+                const unsigned char *msg,
+                size_t msg_len,
+                const unsigned char *priv);
 
 TORSION_EXTERN int
-schnorr_legacy_verify_batch(const wei_curve_t *ec,
-                            const unsigned char *const *msgs,
-                            const size_t *msg_lens,
-                            const unsigned char *const *sigs,
-                            const unsigned char *const *pubs,
-                            const size_t *pub_lens,
-                            size_t len,
-                            wei_scratch_t *scratch);
+bipschnorr_verify(const wei_curve_t *ec,
+                  const unsigned char *msg,
+                  size_t msg_len,
+                  const unsigned char *sig,
+                  const unsigned char *pub,
+                  size_t pub_len);
 
-#define schnorr_legacy_derive ecdsa_derive
+TORSION_EXTERN int
+bipschnorr_verify_batch(const wei_curve_t *ec,
+                        const unsigned char *const *msgs,
+                        const size_t *msg_lens,
+                        const unsigned char *const *sigs,
+                        const unsigned char *const *pubs,
+                        const size_t *pub_lens,
+                        size_t len,
+                        wei_scratch_t *scratch);
+
+#define bipschnorr_derive ecdsa_derive
 
 /*
- * Schnorr
+ * BIP340
  */
 
 TORSION_EXTERN size_t
-schnorr_privkey_size(const wei_curve_t *ec);
+bip340_privkey_size(const wei_curve_t *ec);
 
 TORSION_EXTERN size_t
-schnorr_pubkey_size(const wei_curve_t *ec);
+bip340_pubkey_size(const wei_curve_t *ec);
 
 TORSION_EXTERN size_t
-schnorr_sig_size(const wei_curve_t *ec);
+bip340_sig_size(const wei_curve_t *ec);
 
 TORSION_EXTERN void
-schnorr_privkey_generate(const wei_curve_t *ec,
-                         unsigned char *out,
-                         const unsigned char *entropy);
+bip340_privkey_generate(const wei_curve_t *ec,
+                        unsigned char *out,
+                        const unsigned char *entropy);
 
 TORSION_EXTERN int
-schnorr_privkey_verify(const wei_curve_t *ec, const unsigned char *priv);
+bip340_privkey_verify(const wei_curve_t *ec, const unsigned char *priv);
 
 TORSION_EXTERN int
-schnorr_privkey_export(const wei_curve_t *ec,
-                       unsigned char *d_raw,
-                       unsigned char *x_raw,
-                       unsigned char *y_raw,
-                       const unsigned char *priv);
-
-TORSION_EXTERN int
-schnorr_privkey_import(const wei_curve_t *ec,
-                       unsigned char *out,
-                       const unsigned char *bytes,
-                       size_t len);
-
-TORSION_EXTERN int
-schnorr_privkey_tweak_add(const wei_curve_t *ec,
-                          unsigned char *out,
-                          const unsigned char *priv,
-                          const unsigned char *tweak);
-
-TORSION_EXTERN int
-schnorr_privkey_tweak_mul(const wei_curve_t *ec,
-                          unsigned char *out,
-                          const unsigned char *priv,
-                          const unsigned char *tweak);
-
-TORSION_EXTERN int
-schnorr_privkey_invert(const wei_curve_t *ec,
-                       unsigned char *out,
-                       const unsigned char *priv);
-
-TORSION_EXTERN int
-schnorr_pubkey_create(const wei_curve_t *ec,
-                      unsigned char *pub,
-                      const unsigned char *priv);
-
-TORSION_EXTERN void
-schnorr_pubkey_from_uniform(const wei_curve_t *ec,
-                            unsigned char *out,
-                            const unsigned char *bytes);
-
-TORSION_EXTERN int
-schnorr_pubkey_to_uniform(const wei_curve_t *ec,
-                          unsigned char *out,
-                          const unsigned char *pub,
-                          unsigned int hint);
-
-TORSION_EXTERN int
-schnorr_pubkey_from_hash(const wei_curve_t *ec,
-                         unsigned char *out,
-                         const unsigned char *bytes);
-
-TORSION_EXTERN int
-schnorr_pubkey_to_hash(const wei_curve_t *ec,
-                       unsigned char *out,
-                       const unsigned char *pub,
-                       unsigned int subgroup,
-                       const unsigned char *entropy);
-
-TORSION_EXTERN int
-schnorr_pubkey_verify(const wei_curve_t *ec, const unsigned char *pub);
-
-TORSION_EXTERN int
-schnorr_pubkey_export(const wei_curve_t *ec,
+bip340_privkey_export(const wei_curve_t *ec,
+                      unsigned char *d_raw,
                       unsigned char *x_raw,
                       unsigned char *y_raw,
-                      const unsigned char *pub);
+                      const unsigned char *priv);
 
 TORSION_EXTERN int
-schnorr_pubkey_import(const wei_curve_t *ec,
+bip340_privkey_import(const wei_curve_t *ec,
                       unsigned char *out,
-                      const unsigned char *x_raw,
-                      size_t x_len,
-                      const unsigned char *y_raw,
-                      size_t y_len);
+                      const unsigned char *bytes,
+                      size_t len);
 
 TORSION_EXTERN int
-schnorr_pubkey_tweak_add(const wei_curve_t *ec,
+bip340_privkey_tweak_add(const wei_curve_t *ec,
                          unsigned char *out,
-                         int *negated,
-                         const unsigned char *pub,
+                         const unsigned char *priv,
                          const unsigned char *tweak);
 
 TORSION_EXTERN int
-schnorr_pubkey_tweak_add_check(const wei_curve_t *ec,
-                               const unsigned char *pub,
-                               const unsigned char *tweak,
-                               const unsigned char *expect,
-                               int negated);
-
-TORSION_EXTERN int
-schnorr_pubkey_tweak_mul(const wei_curve_t *ec,
+bip340_privkey_tweak_mul(const wei_curve_t *ec,
                          unsigned char *out,
-                         int *negated,
-                         const unsigned char *pub,
+                         const unsigned char *priv,
                          const unsigned char *tweak);
 
 TORSION_EXTERN int
-schnorr_pubkey_tweak_mul_check(const wei_curve_t *ec,
-                               const unsigned char *pub,
-                               const unsigned char *tweak,
-                               const unsigned char *expect,
-                               int negated);
+bip340_privkey_invert(const wei_curve_t *ec,
+                      unsigned char *out,
+                      const unsigned char *priv);
 
 TORSION_EXTERN int
-schnorr_pubkey_add(const wei_curve_t *ec,
-                   unsigned char *out,
-                   const unsigned char *pub1,
-                   const unsigned char *pub2);
+bip340_pubkey_create(const wei_curve_t *ec,
+                     unsigned char *pub,
+                     const unsigned char *priv);
+
+TORSION_EXTERN void
+bip340_pubkey_from_uniform(const wei_curve_t *ec,
+                           unsigned char *out,
+                           const unsigned char *bytes);
 
 TORSION_EXTERN int
-schnorr_pubkey_combine(const wei_curve_t *ec,
-                       unsigned char *out,
-                       const unsigned char *const *pubs,
-                       size_t len);
+bip340_pubkey_to_uniform(const wei_curve_t *ec,
+                         unsigned char *out,
+                         const unsigned char *pub,
+                         unsigned int hint);
 
 TORSION_EXTERN int
-schnorr_sign(const wei_curve_t *ec,
-             unsigned char *sig,
-             const unsigned char *msg,
-             size_t msg_len,
-             const unsigned char *priv,
-             const unsigned char *aux);
+bip340_pubkey_from_hash(const wei_curve_t *ec,
+                        unsigned char *out,
+                        const unsigned char *bytes);
 
 TORSION_EXTERN int
-schnorr_verify(const wei_curve_t *ec,
-               const unsigned char *msg,
-               size_t msg_len,
-               const unsigned char *sig,
-               const unsigned char *pub);
+bip340_pubkey_to_hash(const wei_curve_t *ec,
+                      unsigned char *out,
+                      const unsigned char *pub,
+                      unsigned int subgroup,
+                      const unsigned char *entropy);
 
 TORSION_EXTERN int
-schnorr_verify_batch(const wei_curve_t *ec,
-                     const unsigned char *const *msgs,
-                     const size_t *msg_lens,
-                     const unsigned char *const *sigs,
-                     const unsigned char *const *pubs,
-                     size_t len,
-                     wei_scratch_t *scratch);
+bip340_pubkey_verify(const wei_curve_t *ec, const unsigned char *pub);
 
 TORSION_EXTERN int
-schnorr_derive(const wei_curve_t *ec,
-               unsigned char *secret,
-               const unsigned char *pub,
-               const unsigned char *priv);
+bip340_pubkey_export(const wei_curve_t *ec,
+                     unsigned char *x_raw,
+                     unsigned char *y_raw,
+                     const unsigned char *pub);
+
+TORSION_EXTERN int
+bip340_pubkey_import(const wei_curve_t *ec,
+                     unsigned char *out,
+                     const unsigned char *x_raw,
+                     size_t x_len,
+                     const unsigned char *y_raw,
+                     size_t y_len);
+
+TORSION_EXTERN int
+bip340_pubkey_tweak_add(const wei_curve_t *ec,
+                        unsigned char *out,
+                        int *negated,
+                        const unsigned char *pub,
+                        const unsigned char *tweak);
+
+TORSION_EXTERN int
+bip340_pubkey_tweak_add_check(const wei_curve_t *ec,
+                              const unsigned char *pub,
+                              const unsigned char *tweak,
+                              const unsigned char *expect,
+                              int negated);
+
+TORSION_EXTERN int
+bip340_pubkey_tweak_mul(const wei_curve_t *ec,
+                        unsigned char *out,
+                        int *negated,
+                        const unsigned char *pub,
+                        const unsigned char *tweak);
+
+TORSION_EXTERN int
+bip340_pubkey_tweak_mul_check(const wei_curve_t *ec,
+                              const unsigned char *pub,
+                              const unsigned char *tweak,
+                              const unsigned char *expect,
+                              int negated);
+
+TORSION_EXTERN int
+bip340_pubkey_add(const wei_curve_t *ec,
+                  unsigned char *out,
+                  const unsigned char *pub1,
+                  const unsigned char *pub2);
+
+TORSION_EXTERN int
+bip340_pubkey_combine(const wei_curve_t *ec,
+                      unsigned char *out,
+                      const unsigned char *const *pubs,
+                      size_t len);
+
+TORSION_EXTERN int
+bip340_sign(const wei_curve_t *ec,
+            unsigned char *sig,
+            const unsigned char *msg,
+            size_t msg_len,
+            const unsigned char *priv,
+            const unsigned char *aux);
+
+TORSION_EXTERN int
+bip340_verify(const wei_curve_t *ec,
+              const unsigned char *msg,
+              size_t msg_len,
+              const unsigned char *sig,
+              const unsigned char *pub);
+
+TORSION_EXTERN int
+bip340_verify_batch(const wei_curve_t *ec,
+                    const unsigned char *const *msgs,
+                    const size_t *msg_lens,
+                    const unsigned char *const *sigs,
+                    const unsigned char *const *pubs,
+                    size_t len,
+                    wei_scratch_t *scratch);
+
+TORSION_EXTERN int
+bip340_derive(const wei_curve_t *ec,
+              unsigned char *secret,
+              const unsigned char *pub,
+              const unsigned char *priv);
 
 /*
  * ECDH
@@ -1334,4 +1337,4 @@ test_ecc_internal(struct hmac_drbg_s *rng);
 }
 #endif
 
-#endif /* _TORSION_ECC_H */
+#endif /* TORSION_ECC_H */
