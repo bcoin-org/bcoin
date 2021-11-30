@@ -4,6 +4,9 @@ const assert = require('assert');
 const bdb = require('bdb');
 const layout = require('../lib/blockchain/layout');
 const FileBlockStore = require('../lib/blockstore/file');
+const Block = require('../lib/primitives/block');
+const {ChainState, ChainFlags} = require('../lib/blockchain/internal/records');
+const ChainEntry = require('../lib/blockchain/chainentry');
 const {resolve} = require('path');
 
 assert(process.argv.length > 2, 'Please pass in a database path.');
@@ -33,14 +36,19 @@ async function getVersion() {
   return data.readUInt32LE(5, true);
 }
 
+function encodeVersion(version) {
+  const buf = Buffer.allocUnsafe(5 + 4);
+  buf.write('chain', 0, 'ascii');
+  buf.writeUInt32LE(version, 5, true);
+  return buf;
+}
+
 async function updateVersion(version) {
   await checkVersion(version - 1);
 
   console.log('Updating version to %d.', version);
 
-  const buf = Buffer.allocUnsafe(5 + 4);
-  buf.write('chain', 0, 'ascii');
-  buf.writeUInt32LE(version, 5, true);
+  const buf = encodeVersion(version);
 
   const parent = db.batch();
   parent.put(layout.V.encode(), buf);
@@ -154,6 +162,100 @@ async function migrateIndexes() {
   await removeKey('addr -> coin', C);
 }
 
+async function getChainState() {
+  const data = await db.get(layout.R.encode());
+
+  if (!data)
+    return null;
+
+  return ChainState.fromRaw(data);
+}
+
+async function getChainFlags() {
+  const data = await db.get(layout.O.encode());
+
+  if (!data)
+    return null;
+
+  return ChainFlags.fromRaw(data);
+}
+
+async function getChainEntryByHash(hash) {
+  const raw = await db.get(layout.e.encode(hash));
+
+  if (!raw)
+    return null;
+
+  return ChainEntry.fromRaw(raw);
+}
+
+async function isMainChain(tip, hash) {
+  if (hash.equals(tip))
+    return true;
+
+  const next = await db.get(layout.n.encode(hash));
+  if (next)
+    return true;
+
+  return false;
+}
+
+async function updateStatsAndVersion(version) {
+  const state = await getChainState();
+  assert(state);
+
+  const flags = await getChainFlags();
+  assert(flags);
+
+  const network = flags.network;
+  const bip30heights = Object.keys(network.bip30);
+
+  const batch = db.batch();
+
+  // Increment the database version.
+  batch.put(layout.V.encode(), encodeVersion(version));
+
+  // If there are duplicate txids for the network,
+  // such as in blocks 91842 and 91880, go through and
+  // make the necessary adjustments.
+  if (bip30heights.length > 0) {
+    const tip = await getChainEntryByHash(state.tip);
+    assert(tip);
+
+    // Only fix the statistics for blocks that have already
+    // been added to the chain.
+    const heights = bip30heights.filter(height => height <= tip.height);
+
+    for (const height of heights) {
+      const hash = network.bip30[height];
+
+      // In the very rare chance that these blocks are
+      // not part of the main chain, skip them as the
+      // adjustment is also not necessary.
+      if (!await isMainChain(state.tip, hash))
+        continue;
+
+      const data = await blockStore.read(hash);
+      const block = Block.fromRaw(data);
+      const coinbase = block.txs[0];
+
+      // The outputs were counted twice however are
+      // only spendable once.
+      for (const output of coinbase.outputs) {
+        if (output.script.isUnspendable())
+          continue;
+
+        // Decrement the count and supply stats.
+        state.spend(output);
+      }
+    }
+
+    batch.put(layout.R.encode(), state.toRaw());
+  }
+
+  return batch.write();
+}
+
 /*
  * Execute
  */
@@ -183,8 +285,14 @@ async function migrateIndexes() {
       await migrateIndexes();
       await updateVersion(6);
       compact = true;
-      break;
     case 6:
+      // Upgrade from version 6 to 7.
+      await checkVersion(6);
+      await blockStore.open();
+      await updateStatsAndVersion(7);
+      await blockStore.close();
+      break;
+    case 7:
       console.log('Already upgraded.');
       break;
     default:
