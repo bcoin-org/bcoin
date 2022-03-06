@@ -177,6 +177,30 @@ describe('RPC', function() {
       const connectionsCnt = await nclient.execute('getconnectioncount', []);
       assert.strictEqual(connectionsCnt, 1);
     });
+
+    it('should rpc setban a peer', async () => {
+      // getting initial connection count
+      let connectionsCnt = await nclient.execute('getconnectioncount', []);
+      assert.strictEqual(connectionsCnt, 1);
+
+      // getting initial banned list
+      let listbanned = await nclient.execute('listbanned', []);
+      assert.strictEqual(listbanned.length, 0);
+
+      // fetching peer info and banning it
+      const info = await nclient.execute('getpeerinfo', []);
+      const banThisPeer = info[0].addr;
+      const result = await nclient.execute('setban', [banThisPeer, 'add']);
+      assert.strictEqual(result, null);
+
+      // checking banned count after banning
+      listbanned = await nclient.execute('listbanned', []);
+      assert.strictEqual(listbanned.length, 1);
+
+      // checking connection count after banning
+      connectionsCnt = await nclient.execute('getconnectioncount', []);
+      assert.strictEqual(connectionsCnt, 0);
+    });
   });
 
   describe('getblock', function () {
