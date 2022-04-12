@@ -24,7 +24,7 @@ Try it in the browser: [https://bcoin.io/browser/](https://bcoin.io/browser/)
 ## Install
 
 ```
-$ git clone git://github.com/bcoin-org/bcoin.git
+$ git clone https://github.com/bcoin-org/bcoin
 $ cd bcoin
 $ npm rebuild
 $ ./bin/bcoin

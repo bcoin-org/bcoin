@@ -36,7 +36,7 @@ gpg --recv-keys "<fingerprint>"
 ### Installing via Git
 
 ``` bash
-$ git clone git://github.com/bcoin-org/bcoin.git
+$ git clone https://github.com/bcoin-org/bcoin
 $ cd bcoin
 ```
 
