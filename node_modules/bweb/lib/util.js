@@ -9,7 +9,11 @@
 const assert = require('bsert');
 const URL = require('url');
 
-exports.parseURL = function parseURL(uri) {
+/*
+ * Util
+ */
+
+function parseURL(uri) {
   assert(typeof uri === 'string');
 
   if (uri.length > 4096)
@@ -87,7 +91,7 @@ exports.parseURL = function parseURL(uri) {
   let query = Object.create(null);
 
   if (data.query)
-    query = exports.parseForm(data.query, 100);
+    query = parseForm(data.query, 100);
 
   return {
     url,
@@ -96,9 +100,9 @@ exports.parseURL = function parseURL(uri) {
     query,
     trailing
   };
-};
+}
 
-exports.parseForm = function parseForm(str, limit) {
+function parseForm(str, limit) {
   assert((limit >>> 0) === limit);
 
   const parts = str.split('&');
@@ -111,6 +115,7 @@ exports.parseForm = function parseForm(str, limit) {
     const index = pair.indexOf('=');
 
     let key, value;
+
     if (index === -1) {
       key = pair;
       value = '';
@@ -133,9 +138,9 @@ exports.parseForm = function parseForm(str, limit) {
   }
 
   return data;
-};
+}
 
-exports.unescape = function unescape(str) {
+function unescape(str) {
   try {
     str = decodeURIComponent(str);
     str = str.replace(/\+/g, ' ');
@@ -144,8 +149,59 @@ exports.unescape = function unescape(str) {
   }
   str = str.replace(/\0/g, '');
   return str;
-};
+}
 
-exports.isAscii = function isAscii(str) {
+function isAscii(str) {
   return typeof str === 'string' && /^[\t\n\r -~]*$/.test(str);
-};
+}
+
+function call(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    const cb = (err, result) => {
+      if (err) {
+        reject(extendError(err));
+        return;
+      }
+      resolve(result);
+    };
+
+    try {
+      fn(...args, cb);
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+function extendError(err) {
+  switch (err.code) {
+    case 'EACCES':
+    case 'EPERM': {
+      err.statusCode = 403;
+      break;
+    }
+    case 'ENOENT':
+    case 'ENAMETOOLONG':
+    case 'ENOTDIR':
+    case 'EISDIR': {
+      err.statusCode = 404;
+      break;
+    }
+    default: {
+      err.statusCode = 500;
+      break;
+    }
+  }
+  return err;
+}
+
+/*
+ * Expose
+ */
+
+exports.parseURL = parseURL;
+exports.parseForm = parseForm;
+exports.unescape = unescape;
+exports.isAscii = isAscii;
+exports.call = call;
+exports.extendError = extendError;

@@ -34,6 +34,7 @@ const binet = exports;
  */
 
 const ZERO_IP = Buffer.from('00000000000000000000000000000000', 'hex');
+const ZERO_IPV4 = Buffer.from('00000000000000000000ffff00000000', 'hex');
 const LOCAL_IP = Buffer.from('00000000000000000000000000000001', 'hex');
 const RFC6052 = Buffer.from('0064ff9b0000000000000000', 'hex');
 const RFC4862 = Buffer.from('fe80000000000000', 'hex');
@@ -210,7 +211,7 @@ binet.write = function write(dst, str, off, size) {
       off += 10;
       dst[off++] = 0xff;
       dst[off++] = 0xff;
-      return off;
+      return off + 4;
     }
 
     if (inet.pton6(str, dst, off) >= 0)
@@ -232,7 +233,18 @@ binet.write = function write(dst, str, off, size) {
 
 binet.writeBW = function writeBW(bw, str, size) {
   assert(bw && typeof bw === 'object');
-  bw.offset = binet.write(bw.data, str, bw.offset, size);
+
+  // StaticWriter
+  if (bw.data) {
+    bw.offset = binet.write(bw.data, str, bw.offset, size);
+    return bw;
+  }
+
+  const buf = Buffer.alloc(size);
+  const off = binet.write(buf, str, 0, size);
+  // these must always match.
+  assert(off === size);
+  bw.writeBytes(buf);
   return bw;
 };
 
@@ -1300,9 +1312,9 @@ binet.getReachability = function getReachability(src, dest) {
   const destNet = binet.getNetwork(dest);
 
   switch (destNet) {
-    case networks.IPV4:
+    case networks.INET4:
       switch (srcNet) {
-        case networks.IPV4:
+        case networks.INET4:
           return IPV4;
         default:
           return DEFAULT;
@@ -1312,7 +1324,7 @@ binet.getReachability = function getReachability(src, dest) {
       switch (srcNet) {
         case networks.TEREDO:
           return TEREDO;
-        case networks.IPV4:
+        case networks.INET4:
           return IPV4;
         case networks.INET6:
           if (binet.isRFC3964(src)
@@ -1328,7 +1340,7 @@ binet.getReachability = function getReachability(src, dest) {
       break;
     case networks.ONION:
       switch (srcNet) {
-        case networks.IPV4:
+        case networks.INET4:
           return IPV4;
         case networks.ONION:
           return PRIVATE;
@@ -1342,7 +1354,7 @@ binet.getReachability = function getReachability(src, dest) {
           return TEREDO;
         case networks.INET6:
           return IPV6_WEAK;
-        case networks.IPV4:
+        case networks.INET4:
           return IPV4;
         default:
           return DEFAULT;
@@ -1354,7 +1366,7 @@ binet.getReachability = function getReachability(src, dest) {
           return TEREDO;
         case networks.INET6:
           return IPV6_WEAK;
-        case networks.IPV4:
+        case networks.INET4:
           return IPV4;
         case networks.ONION:
           return PRIVATE;
@@ -1602,5 +1614,7 @@ binet.ip = binet;
 binet.types = types;
 binet.networks = networks;
 binet.ZERO_IP = ZERO_IP;
+binet.ZERO_IPV6 = ZERO_IP;
+binet.ZERO_IPV4 = ZERO_IPV4;
 binet.onion = onion;
 binet.inet = inet;

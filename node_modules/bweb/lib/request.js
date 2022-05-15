@@ -75,6 +75,7 @@ class Request extends EventEmitter {
 
   parse(url) {
     const uri = parseURL(url);
+
     this.original = uri;
     this.url = uri.url;
     this.pathname = uri.pathname;
@@ -85,6 +86,7 @@ class Request extends EventEmitter {
 
   navigate(url) {
     const uri = parseURL(url);
+
     this.url = uri.url;
     this.pathname = uri.pathname;
     this.path = uri.path;

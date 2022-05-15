@@ -8,45 +8,88 @@
 
 const assert = require('bsert');
 const fs = require('fs');
-const Path = require('path');
+const path = require('path');
+const {call} = require('../util');
+const {resolve, join, sep} = path;
 
 /**
  * Static file middleware.
- * @param {String} prefix
+ * @param {Object|String} options
  * @returns {Function}
  */
 
-function fileServer(prefix) {
+function fileServer(options) {
+  if (typeof options === 'string')
+    options = { prefix: options };
+
+  assert(options && typeof options === 'object');
+
+  let {prefix, useIndex, jail} = options;
+  let jailed = false;
+
+  if (useIndex == null)
+    useIndex = false;
+
+  if (jail == null)
+    jail = false;
+
   assert(typeof prefix === 'string');
+  assert(typeof useIndex === 'boolean');
+  assert(typeof jail === 'boolean');
+
+  prefix = resolve(prefix);
+  prefix = normalize(prefix);
 
   return async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD')
       return;
 
-    const file = Path.join(prefix, req.pathname);
+    if (jail && !jailed) {
+      prefix = await call(fs.realpath, prefix);
+      prefix = normalize(prefix);
+      jailed = true;
+    }
 
+    let file = join(prefix, req.pathname);
     let stat = null;
 
     try {
-      stat = await fsStat(file);
+      stat = await call(fs.stat, file);
     } catch (e) {
       if (e.code === 'ENOENT')
         return;
       throw e;
     }
 
-    if (stat.isDirectory()) {
-      const title = req.pathname;
-      const body = await dir2html(file, title, req.prefix());
-      res.send(200, body, 'html');
-      return;
+    if (!stat.isDirectory() && !stat.isFile()) {
+      const err = new Error('Cannot access file.');
+      err.statusCode = 403;
+      throw err;
     }
 
-    try {
-      await res.sendFile(file);
-    } catch (e) {
-      throw wrapError(e);
+    if (stat.isDirectory()) {
+      const index = join(file, 'index.html');
+
+      if (!useIndex || !await isFile(index)) {
+        if (jail)
+          await ensureJail(file, prefix);
+
+        const title = req.pathname;
+        const body = await dir2html(file, title, req.prefix());
+
+        res.send(200, body, 'html');
+
+        return;
+      }
+
+      file = index;
     }
+
+    if (jail)
+      await ensureJail(file, prefix);
+
+    // eslint-disable-next-line
+    return res.sendFile(file, stat);
   };
 }
 
@@ -54,71 +97,53 @@ function fileServer(prefix) {
  * Helpers
  */
 
-function fsStat(file) {
-  return new Promise((resolve, reject) => {
-    fs.stat(file, (err, result) => {
-      if (err) {
-        reject(wrapError(err));
-        return;
-      }
-      resolve(result);
-    });
-  });
-}
+async function isFile(file) {
+  assert(typeof file === 'string');
 
-function fsReaddir(file) {
-  return new Promise((resolve, reject) => {
-    fs.readdir(file, (err, result) => {
-      if (err) {
-        reject(wrapError(err));
-        return;
-      }
-      resolve(result);
-    });
-  });
-}
+  let stat;
 
-function wrapError(e) {
-  if (!e.code) {
-    const err = new Error('Internal server error.');
-    err.statusCode = 500;
-    return err;
+  try {
+    stat = await call(fs.stat, file);
+  } catch (e) {
+    return false;
   }
 
-  switch (e.code) {
-    case 'ENOENT':
-    case 'ENAMETOOLONG':
-    case 'ENOTDIR':
-    case 'EISDIR': {
-      const err = new Error('File not found.');
-      err.code = e.code;
-      err.syscall = e.syscall;
-      err.statusCode = 404;
-      return err;
-    }
-    case 'EACCES':
-    case 'EPERM': {
-      const err = new Error('Cannot access file.');
-      err.code = e.code;
-      err.syscall = e.syscall;
-      err.statusCode = 403;
-      return err;
-    }
-    case 'EMFILE': {
-      const err = new Error('Too many open files.');
-      err.code = e.code;
-      err.syscall = e.syscall;
-      err.statusCode = 500;
-      return err;
-    }
-    default: {
-      const err = new Error('Cannot access file.');
-      err.code = e.code;
-      err.syscall = e.syscall;
-      err.statusCode = 500;
-      return err;
-    }
+  return stat.isFile();
+}
+
+async function ensureJail(file, prefix) {
+  assert(typeof file === 'string');
+  assert(typeof prefix === 'string');
+
+  if (isValidPath(file, prefix))
+    file = await call(fs.realpath, file);
+
+  if (!isValidPath(file, prefix)) {
+    const err = new Error('Cannot access file.');
+    err.statusCode = 403;
+    throw err;
   }
+}
+
+function isValidPath(file, prefix) {
+  file = normalize(file);
+
+  if (file.includes('\u0000'))
+    return false;
+
+  if (file === prefix)
+    return true;
+
+  return file.startsWith(prefix + sep);
+}
+
+function normalize(file) {
+  file = path.normalize(file);
+
+  if (file.length > 1 && file[file.length - 1] === sep)
+    file = file.slice(0, -1);
+
+  return file;
 }
 
 function escapeHTML(html) {
@@ -147,13 +172,13 @@ async function dir2html(parent, title, prefix) {
   body += '    <ul>\n';
   body += `      <li><a href="${prefix}..">../</a></li>\n`;
 
-  const list = await fsReaddir(parent);
+  const list = await call(fs.readdir, parent);
   const dirs = [];
   const files = [];
 
   for (const file of list) {
-    const path = Path.join(parent, file);
-    const stat = await fsStat(path);
+    const path = join(parent, file);
+    const stat = await call(fs.lstat, path);
 
     if (stat.isDirectory())
       dirs.push(file);
@@ -164,12 +189,14 @@ async function dir2html(parent, title, prefix) {
   for (const file of dirs.sort()) {
     const name = escapeHTML(file);
     const href = `${prefix}${name}`;
+
     body += `      <li><a href="${href}">${name}/</a></li>\n`;
   }
 
   for (const file of files.sort()) {
     const name = escapeHTML(file);
     const href = `${prefix}${name}`;
+
     body += `      <li><a href="${href}">${name}</a></li>\n`;
   }
 
