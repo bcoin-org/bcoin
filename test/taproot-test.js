@@ -12,6 +12,7 @@ const {TaggedHash} = require('../lib/utils/taggedhash');
 const Script = require('../lib/script/script');
 const {digests} = Script;
 const common = require('./util/common');
+const schnorr = require('bcrypto/lib/schnorr');
 
 // Test data from https://github.com/pinheadmz/bitcoin/tree/taproottest-0.21.1
 const taprootTXs = require('./data/taproot_test_vectors.json');
@@ -236,6 +237,45 @@ describe('Taproot', function() {
           const expected = Buffer.from(test.inputs[i].sighash, 'hex');
 
           assert.bufferEqual(expected, actual, null, test.inputs[i].comment);
+        });
+      }
+    }
+  });
+
+  describe('Verify signature (schnorr)', function() {
+    for (const test of getTests()) {
+      for (let i = 0; i < test.tx.inputs.length; i++) {
+        if (test.inputs[i].mode !== 'taproot')
+          continue;
+
+        // Some test vectors wrap witness V1 program in P2SH.
+        // This is NOT taproot, and is therefore "anyone can spend".
+        // These unencumbered spends are valid, but non-standard.
+        // Skip for this test.
+        if (    test.inputs[i].comment.match(/applic/g)
+            && !test.inputs[i].standard)
+          continue;
+
+        // Skip test case with no signature
+        if (test.inputs[i].comment.match(/cleanstack/g))
+          continue;
+
+        // Skip script spends for now
+        if (test.inputs[i].script)
+          continue;
+
+        it(`${test.inputs[i].comment}`, () => {
+          const sighash = Buffer.from(test.inputs[i].sighash, 'hex');
+          const sig = test.tx.inputs[i].witness.items[0];
+
+          // Get pubkey from prevout scriptPubKey (witness program)
+          const utxo = test.prevouts[i];
+          // Skip 8 byte value and 1 byte scriptPubkey length byte (in hex)
+          const script = Script.fromJSON(utxo.slice(18));
+          const program = script.getProgram();
+          const pubkey = program.data;
+
+          assert(schnorr.verify(sighash, sig.slice(0, 64), pubkey));
         });
       }
     }
