@@ -55,6 +55,16 @@ const TABLE = new Int8Array([
  * Presentation to Network
  */
 
+/**
+ * Convert IPv4 network string to network format.
+ * @param {String} src - IP String
+ * @param {Buffer} dst - buffer where to decode to
+ * @param {Number} off - from where to start.
+ * @returns {Number} - number of bits, either imputed classfully or specified
+ *  with /CIDR, or -1 if some failure occurred (check errno).  ENOENT means it
+ *  was not an IPv4 network specification.
+ */
+
 function pton4(src, dst, off) {
   if (dst == null)
     dst = null;
@@ -255,6 +265,16 @@ function pton4(src, dst, off) {
 
   return bits;
 }
+
+/**
+ * Convert IPv6 network string to network format.
+ * @param {String} src - IP String
+ * @param {Buffer} dst - buffer where to decode to
+ * @param {Number} off - from where to start.
+ * @returns {Number} - number of bits, either imputed classfully or specified
+ *  with /CIDR, or -1 if some failure occurred (check errno).  ENOENT means it
+ *  was not an IPv6 network specification.
+ */
 
 function pton6(src, dst, off) {
   if (dst == null)
@@ -590,6 +610,13 @@ function family(str) {
 
   return 0;
 }
+
+/**
+ * IPv4 Mapped - RFC 2765
+ * @param {Buffer} raw
+ * @param {Number} off
+ * @returns {Boolean}
+ */
 
 function mapped(raw, off) {
   if (off == null)

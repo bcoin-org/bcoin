@@ -13,6 +13,7 @@ const EventEmitter = require('events');
 const fs = require('fs');
 const qs = require('querystring');
 const mime = require('./mime');
+const {call} = require('./util');
 
 /*
  * Constants
@@ -71,8 +72,10 @@ class Response extends EventEmitter {
 
   setStatus(code) {
     assert((code & 0xffff) === code, 'Code must be a number.');
+
     this.statusCode = code;
     this.res.statusCode = code;
+
     return this;
   }
 
@@ -83,7 +86,9 @@ class Response extends EventEmitter {
 
   setLength(length) {
     assert(Number.isSafeInteger(length) && length >= 0);
+
     this.setHeader('Content-Length', length.toString(10));
+
     return this;
   }
 
@@ -109,10 +114,13 @@ class Response extends EventEmitter {
 
   read(stream) {
     assert(!this.sent, 'Request already sent.');
+
     stream.pipe(this.res);
+
     stream.once('data', () => {
       this.sent = true;
     });
+
     return this;
   }
 
@@ -123,7 +131,9 @@ class Response extends EventEmitter {
 
   end(data, enc) {
     assert(!this.sent, 'Request already sent.');
+
     this.sent = true;
+
     return this.res.end(data, enc);
   }
 
@@ -171,37 +181,49 @@ class Response extends EventEmitter {
   text(code, msg) {
     if (msg == null)
       return this.send(code, null, 'txt');
+
     assert(typeof msg === 'string');
+
     return this.send(code, msg, 'txt');
   }
 
   buffer(code, msg) {
     if (msg == null)
       return this.send(code, null, 'bin');
+
     assert(Buffer.isBuffer(msg));
+
     return this.send(code, msg, 'bin');
   }
 
   json(code, json) {
     if (json == null)
       return this.send(code, null, 'json');
+
     assert(json && typeof json === 'object');
+
     const msg = JSON.stringify(json, null, 2) + '\n';
+
     return this.send(code, msg, 'json');
   }
 
   form(code, data) {
     if (data == null)
       return this.send(code, null, 'form');
+
     assert(data && typeof data === 'object');
+
     const msg = qs.stringify(data) + '\n';
+
     return this.send(code, msg, 'form');
   }
 
   html(code, msg) {
     if (msg == null)
       return this.send(code, null, 'html');
+
     assert(typeof msg === 'string');
+
     return this.send(code, msg, 'html');
   }
 
@@ -213,11 +235,13 @@ class Response extends EventEmitter {
 
     if (msg == null) {
       this.setLength(0);
+
       try {
         this.end();
       } catch (e) {
         ;
       }
+
       return this;
     }
 
@@ -229,6 +253,7 @@ class Response extends EventEmitter {
       try {
         if (this.req.method !== 'HEAD')
           this.write(msg, 'utf8');
+
         this.end();
       } catch (e) {
         ;
@@ -244,6 +269,7 @@ class Response extends EventEmitter {
     try {
       if (this.req.method !== 'HEAD')
         this.write(msg);
+
       this.end();
     } catch (e) {
       ;
@@ -252,47 +278,42 @@ class Response extends EventEmitter {
     return this;
   }
 
-  sendFile(file) {
+  async sendFile(file, hint) {
+    assert(hint == null || (hint instanceof fs.Stats));
+
+    const stat = hint || (await call(fs.stat, file));
+
     return new Promise((resolve, reject) => {
-      fs.stat(file, (err, stat) => {
-        if (err) {
-          reject(err);
-          return;
-        }
+      try {
         this._sendFile(file, stat, resolve, reject);
-      });
+      } catch (e) {
+        reject(e);
+      }
     });
   }
 
   _sendFile(file, stat, resolve, reject) {
+    if (this.sent)
+      throw new Error('Response already sent.');
+
     if (stat.isDirectory()) {
       const err = new Error('File not found.');
       err.statusCode = 404;
-      reject(err);
-      return;
+      throw err;
     }
 
     if (!stat.isFile()) {
       const err = new Error('Cannot access file.');
       err.statusCode = 403;
-      reject(err);
-      return;
+      throw err;
     }
+
+    const hdr = this.req.headers['content-range'];
+    const options = parseRange(hdr, stat.size);
 
     this.setStatus(200);
     this.setType(mime.file(file));
     this.setLength(stat.size);
-
-    const hdr = this.req.headers['content-range'];
-
-    let options = null;
-
-    try {
-      options = parseRange(hdr, stat.size);
-    } catch (e) {
-      reject(e);
-      return;
-    }
 
     if (this.req.method === 'HEAD') {
       this.end();
@@ -307,14 +328,23 @@ class Response extends EventEmitter {
     this.once('close', () => {
       if (done)
         return;
+
       done = true;
-      stream.destroy();
+
+      try {
+        stream.destroy();
+      } catch (e) {
+        reject(e);
+        return;
+      }
+
       resolve();
     });
 
     this.once('finish', () => {
       if (done)
         return;
+
       done = true;
       resolve();
     });
@@ -322,8 +352,15 @@ class Response extends EventEmitter {
     stream.on('error', (err) => {
       if (done)
         return;
+
       done = true;
-      stream.destroy();
+
+      try {
+        stream.destroy();
+      } catch (e) {
+        ;
+      }
+
       reject(err);
     });
 
@@ -360,21 +397,27 @@ function encodeCookie(key, value, options) {
 
   if (options.domain != null) {
     assert(typeof options.domain === 'string');
+
     if (!fieldRegex.test(options.domain))
       throw new Error('Invalid domain.');
+
     str += `; Domain=${options.domain}`;
   }
 
   if (options.path != null) {
     assert(typeof options.path === 'string');
+
     if (!fieldRegex.test(options.path))
       throw new Error('Invalid path.');
+
     str += `; Path=${options.path}`;
   }
 
   if (options.expires != null) {
     assert(Number.isSafeInteger(options.expires) && options.expires >= 0);
+
     const expires = new Date(options.expires);
+
     str += `; Expires=${expires.toUTCString()}`;
   }
 
@@ -390,6 +433,7 @@ function encodeCookie(key, value, options) {
         str += '; SameSite=Strict';
     } else {
       assert(typeof options.sameSite === 'string');
+
       switch (options.sameSite) {
         case 'strict':
           str += '; SameSite=Strict';

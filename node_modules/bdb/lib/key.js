@@ -103,6 +103,26 @@ const types = {
       return 4;
     }
   },
+  uint64: {
+    min: 0,
+    max: Number.MAX_SAFE_INTEGER,
+    dynamic: false,
+    size(v) {
+      return 8;
+    },
+    read(k, o) {
+      assertLen(o + 8 <= k.length);
+      return readU64BE(k, o);
+    },
+    write(k, v, o) {
+      assertType(Number.isSafeInteger(v) && v >= 0);
+      assertLen(o + 8 <= k.length);
+
+      writeU64BE(k, v, o);
+
+      return 8;
+    }
+  },
   buffer: {
     min: BUFFER_MIN,
     max: BUFFER_MAX,
@@ -583,6 +603,12 @@ function assertType(ok) {
   }
 }
 
+function readU64BE(data, off) {
+  const hi = readU32BE(data, off);
+  const lo = readU32BE(data, off + 4);
+  return hi * 0x100000000 + lo;
+}
+
 function readU32BE(data, off) {
   return (data[off++] * 0x1000000
         + data[off++] * 0x10000
@@ -592,6 +618,14 @@ function readU32BE(data, off) {
 
 function readU16BE(data, off) {
   return data[off++] * 0x100 + data[off];
+}
+
+function writeU64BE(dst, num, off) {
+  const hi = (num * (1 / 0x100000000)) | 0;
+  const lo = num | 0;
+  off = writeU32BE(dst, hi, off);
+  off = writeU32BE(dst, lo, off);
+  return off;
 }
 
 function writeU32BE(dst, num, off) {
