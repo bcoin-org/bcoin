@@ -22,6 +22,7 @@ const node = new FullNode({
   apiKey: 'foo',
   walletAuth: true,
   memory: true,
+  indexFilter: true,
   workers: true,
   workersSize: 2,
   plugins: [require('../lib/wallet/plugin')],
@@ -75,6 +76,16 @@ describe('RPC', function() {
   it('should rpc getblockhash', async () => {
     const info = await nclient.execute('getblockhash', [node.chain.tip.height]);
     assert.strictEqual(util.revHex(node.chain.tip.hash), info);
+  });
+
+  it('should rpc getblockfilter', async () => {
+    const hash = await nclient.execute('getblockhash', [node.chain.tip.height]);
+    const info = await nclient.execute('getblockfilter', [hash, 'BASIC']);
+    const indexer = node.filterIndexers.get('BASIC');
+    const filter = await indexer.getFilter(node.chain.tip.hash);
+    const expected = filter.toJSON();
+
+    assert.strictEqual(expected.filter, info.filter);
   });
 
   describe('Blockchain', function () {
