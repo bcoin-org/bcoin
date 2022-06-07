@@ -1,0 +1,124 @@
+/* eslint-env mocha */
+/* eslint prefer-arrow-callback: "off" */
+
+'use strict';
+
+const assert = require('bsert');
+const MTX = require('../lib/primitives/mtx');
+const Coin = require('../lib/primitives/coin');
+const Output = require('../lib/primitives/output');
+const Script = require('../lib/script/script');
+const schnorr = require('bcrypto/lib/schnorr');
+const random = require('bcrypto/lib/random');
+const {taggedHash} = require('../lib/utils');
+
+// Create a BIP340 Schnorr keypair
+const priv = schnorr.privateKeyGenerate();
+const pub = schnorr.publicKeyCreate(priv);
+
+describe('Taproot Check', function() {
+  describe('Key spend', function() {
+    // Create a pay-to-taproot key-spend UTXO
+    const keyspendUTXO = new Coin();
+    keyspendUTXO.hash = random.randomBytes(32);
+    keyspendUTXO.index = 0;
+    keyspendUTXO.script = Script.fromProgram(1, pub);
+    keyspendUTXO.value = 1e8;
+
+    // Sign 1-in 1-out taproot key-spend MTX
+    function signMTX(mtx) {
+      const hash = mtx.signatureHashTaproot(
+        0,                    // input index
+        keyspendUTXO.value,   // input value
+        0,                    // SIGHASH_ALL
+        [keyspendUTXO],       // coins
+        0xffffffff,           // codeseparator position
+      );
+      const sig = schnorr.sign(hash, priv);
+      mtx.inputs[0].witness.items[0] = sig;
+    }
+
+    it('should have valid signature', () => {
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({value: 1e8 - 10000 }));
+      mtx.addCoin(keyspendUTXO);
+
+      signMTX(mtx);
+      assert(mtx.verify());
+    });
+
+    it('should have invalid signature', () => {
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({value: 1e8 - 10000 }));
+      mtx.addCoin(keyspendUTXO);
+
+      signMTX(mtx);
+
+      // Malleate signature by flipping a bit
+      mtx.inputs[0].witness.items[0][0] ^= 0x01;
+
+      assert.throws(
+        () => mtx.check(),
+        { message: 'TAPROOT_INVALID_SIG' }
+      );
+    });
+  });
+
+  describe('Script spend', function() {
+    // Simple script that requires no signing
+    const script = Script.fromString('OP_1');
+    const tapLeaf = Buffer.from([
+        0xc0,   // leaf version
+        0x01,   // script size
+        0x51    // OP_1
+    ]);
+
+    // Construct tapscript tree (with only one leaf)
+    const k0 = taggedHash.TapLeafHash.digest(tapLeaf);
+    const tapTweak = Buffer.alloc(64);
+    pub.copy(tapTweak, 0);
+    k0.copy(tapTweak, 32);
+    const t = taggedHash.TapTweakHash.digest(tapTweak);
+    const [tweaked, odd] = schnorr.publicKeyTweakSum(pub, t);
+
+    // Construct control block from 1-leaf tree
+    const controlBlock = Buffer.alloc(33);
+    controlBlock[0] = 0xc0 + (odd ? 1 : 0);
+    pub.copy(controlBlock, 1);
+
+    // Create a pay-to-taproot script-spend UTXO
+    const scriptspendUTXO = new Coin();
+    scriptspendUTXO.hash = random.randomBytes(32);
+    scriptspendUTXO.index = 0;
+    scriptspendUTXO.script = Script.fromProgram(1, tweaked);
+    scriptspendUTXO.value = 1e8;
+
+    it('should have valid tapscript', () => {
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({value: 1e8 - 10000 }));
+      mtx.addCoin(scriptspendUTXO);
+
+      mtx.inputs[0].witness.push(script.toRaw());
+      mtx.inputs[0].witness.push(controlBlock);
+
+      mtx.check();
+      assert(mtx.verify());
+    });
+
+    it('should have invalid control block', () => {
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({value: 1e8 - 10000 }));
+      mtx.addCoin(scriptspendUTXO);
+
+      mtx.inputs[0].witness.push(script.toRaw());
+      // Content of invalid control block doesn't matter
+      const invalid = Buffer.alloc(controlBlock.length + 1);
+      mtx.inputs[0].witness.push(invalid);
+
+      assert.throws(
+        () => mtx.check(),
+        { message: 'TAPROOT_WRONG_CONTROL_SIZE' }
+      );
+    });
+  });
+});
