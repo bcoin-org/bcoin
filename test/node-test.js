@@ -602,6 +602,7 @@ describe('Node', function() {
   it('should add transaction to mempool', async () => {
     const mtx = await wallet.createTX({
       rate: 100000,
+      useSelectByValue: false,
       outputs: [{
         value: 100000,
         address: await wallet.receiveAddress()
@@ -627,6 +628,7 @@ describe('Node', function() {
   it('should add lesser transaction to mempool', async () => {
     const mtx = await wallet.createTX({
       rate: 10000,
+      useSelectByValue: false,
       outputs: [{
         value: 50000,
         address: await wallet.receiveAddress()
