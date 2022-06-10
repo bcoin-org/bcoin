@@ -3,7 +3,7 @@
 
 'use strict';
 
-const crypto = require('crypto');
+const crypto = require('bcrypto/lib/random');
 const assert = require('bsert');
 const GCSFilter = require('../lib/golomb/golomb');
 
