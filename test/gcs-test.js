@@ -3,12 +3,11 @@
 
 'use strict';
 
-const crypto = require('bcrypto/lib/random');
+const random = require('bcrypto/lib/random');
 const assert = require('bsert');
-const GCSFilter = require('../lib/golomb/golomb');
+const BasicFilter = require('../lib/golomb/basicFilter');
 
-const key = crypto.randomBytes(16);
-const P = 20;
+const key = random.randomBytes(16);
 
 const contents1 = [
   Buffer.from('Alex', 'ascii'),
@@ -50,31 +49,25 @@ const contents2 = [
   Buffer.from('Queenie', 'ascii')
 ];
 
-let filter1 = null;
-let filter2 = null;
-let filter3 = null;
-let filter4 = null;
-let filter5 = null;
-
 describe('GCS', function() {
+  let filter1 = null;
+  let filter2 = null;
+  let filter3 = null;
+  const basicFilter = new BasicFilter();
+
   it('should test GCS filter build', () => {
-    filter1 = GCSFilter.fromItems(P, key, contents1);
+    filter1 = basicFilter.fromItems(key, contents1);
     assert(filter1);
   });
 
   it('should test GCS filter copy', () => {
-    filter2 = GCSFilter.fromBytes(filter1.n, P, filter1.toBytes());
+    filter2 = basicFilter.fromBytes(filter1.n, filter1.toBytes());
     assert(filter2);
-    filter3 = GCSFilter.fromNBytes(P, filter1.toNBytes());
+    filter3 = basicFilter.fromNBytes(filter1.toNBytes());
     assert(filter3);
-    filter4 = GCSFilter.fromPBytes(filter1.n, filter1.toPBytes());
-    assert(filter4);
-    filter5 = GCSFilter.fromNPBytes(filter1.toNPBytes());
-    assert(filter5);
   });
 
   it('should test GCS filter metadata', () => {
-    assert.strictEqual(filter1.p, P);
     assert.strictEqual(filter1.n, contents1.length);
     assert.strictEqual(filter1.p, filter2.p);
     assert.strictEqual(filter1.n, filter2.n);
@@ -82,12 +75,6 @@ describe('GCS', function() {
     assert.strictEqual(filter1.p, filter3.p);
     assert.strictEqual(filter1.n, filter3.n);
     assert.bufferEqual(filter1.data, filter3.data);
-    assert.strictEqual(filter1.p, filter4.p);
-    assert.strictEqual(filter1.n, filter4.n);
-    assert.bufferEqual(filter1.data, filter4.data);
-    assert.strictEqual(filter1.p, filter5.p);
-    assert.strictEqual(filter1.n, filter5.n);
-    assert.bufferEqual(filter1.data, filter5.data);
   });
 
   it('should test GCS filter match', () => {
