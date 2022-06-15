@@ -107,7 +107,7 @@ describe('HD', function() {
     const fmt = nodejsUtil.format(mne);
     assert(typeof fmt === 'string');
     assert(fmt.includes('Mnemonic'));
-    assert.strictEqual(fmt.split(' ').length, 13);
+    assert.strictEqual(fmt.split(' ').length, 25);
   });
 
   for (const vector of [vector1, vector2]) {
