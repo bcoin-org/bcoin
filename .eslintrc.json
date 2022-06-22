@@ -147,6 +147,21 @@
     "strict": "error",
     "unicode-bom": ["error", "never"],
     "valid-jsdoc": "error",
-    "wrap-iife": ["error", "inside"]
+    "wrap-iife": ["error", "inside"],
+    "space-unary-ops": ["error", {
+      "words": true,
+      "nonwords": false
+    }],
+    "space-infix-ops": ["error", {
+      "int32Hint": false
+    }],
+    "comma-spacing": ["error", {
+      "before": false,
+      "after": true
+    }],
+    "keyword-spacing": ["error",{
+      "before": true,
+      "after": true
+    }]
   }
 }
