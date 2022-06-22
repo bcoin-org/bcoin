@@ -14,7 +14,7 @@ describe('Outpoint', () => {
   let raw1, tx1, out1;
   beforeEach(() => {
     tx1 = common.readTX('tx1').getRaw();
-    raw1 = tx1.slice(5, 5+OUTPOINT_SIZE);
+    raw1 = tx1.slice(5, 5 + OUTPOINT_SIZE);
     out1 = Outpoint.fromRaw(raw1);
   });
 

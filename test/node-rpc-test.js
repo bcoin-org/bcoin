@@ -85,7 +85,7 @@ describe('RPC', function() {
     it('should rpc getchaintips for chain fork', async () => {
       // function to generate blocks
       const generateblocks = async (height, entry) => {
-        for (let i = 0; i <= height; i ++) {
+        for (let i = 0; i <= height; i++) {
           const block = await node.miner.mineBlock(entry);
           entry = await node.chain.add(block);
         }

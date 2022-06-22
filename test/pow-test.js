@@ -80,7 +80,7 @@ describe('Difficulty', function() {
       prev.time = 1269211443 + i * network.pow.targetSpacing;
       prev.bits = 0x207fffff;
       if (i > 0)
-        prev.chainwork = prev.getProof().addn(blocks[i-1].chainwork.toNumber());
+        prev.chainwork = prev.getProof().addn(blocks[i - 1].chainwork.toNumber());
       blocks[i] = prev;
     }
 
