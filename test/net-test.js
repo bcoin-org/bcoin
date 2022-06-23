@@ -782,7 +782,7 @@ describe('Net', function() {
 
         try {
           await peer.handlePacket();
-        } catch(e) {
+        } catch (e) {
           err = e;
         }
 

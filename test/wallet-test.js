@@ -1815,7 +1815,7 @@ describe('Wallet', function() {
 
         const key2 = await wallet.getKey(address);
         assert(key2, `Could not get key for ${address.toString()}` +
-          `, Key: xpub/${type.branch}/${i+1}`);
+          `, Key: xpub/${type.branch}/${i + 1}`);
 
         assert.strictEqual(key2.name, key1.name);
         assert.strictEqual(key2.account, key1.account);
