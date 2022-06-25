@@ -4,6 +4,7 @@
 'use strict';
 
 const assert = require('bsert');
+const bio = require('bufio');
 const MTX = require('../lib/primitives/mtx');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
@@ -11,6 +12,7 @@ const Script = require('../lib/script/script');
 const schnorr = require('bcrypto/lib/schnorr');
 const random = require('bcrypto/lib/random');
 const {taggedHash} = require('../lib/utils');
+const opcodes = Script.opcodes;
 
 // Create a BIP340 Schnorr keypair
 const priv = schnorr.privateKeyGenerate();
@@ -119,6 +121,78 @@ describe('Taproot Check', function() {
         () => mtx.check(),
         { message: 'TAPROOT_WRONG_CONTROL_SIZE' }
       );
+    });
+
+    it('should not match witness program', () => {
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({value: 1e8 - 10000 }));
+      mtx.addCoin(scriptspendUTXO);
+
+      const script = Script.fromString('OP_2');
+
+      mtx.inputs[0].witness.push(script.toRaw());
+      mtx.inputs[0].witness.push(controlBlock);
+
+      assert.throws(
+        () => mtx.check(),
+        { message: 'WITNESS_PROGRAM_MISMATCH' }
+      );
+    });
+
+    it('should have valid tapscript with signature', () => {
+      const script = new Script();
+      script.pushData(pub);
+      script.pushOp(opcodes.OP_CHECKSIG);
+      script.compile();
+
+      const scriptSize = script.getVarSize();
+      let tapLeaf = bio.write(scriptSize + 1);
+      tapLeaf.writeU8(0xc0); // leaf version
+      tapLeaf.writeVarBytes(script.toRaw());
+      tapLeaf = tapLeaf.render();
+
+      // Construct tapscript tree (with only one leaf)
+      const k0 = taggedHash.TapLeafHash.digest(tapLeaf);
+      const tapTweak = Buffer.alloc(64);
+      pub.copy(tapTweak, 0);
+      k0.copy(tapTweak, 32);
+      const t = taggedHash.TapTweakHash.digest(tapTweak);
+      const [tweaked, odd] = schnorr.publicKeyTweakSum(pub, t);
+
+      // Construct control block from 1-leaf tree
+      const controlBlock = Buffer.alloc(33);
+      controlBlock[0] = 0xc0 + (odd ? 1 : 0);
+      pub.copy(controlBlock, 1);
+
+      // Create money for us to spend with this tapscript
+      const utxo = new Coin();
+      utxo.hash = random.randomBytes(32);
+      utxo.index = 0;
+      utxo.script = Script.fromProgram(1, tweaked);
+      utxo.value = 1e8;
+
+      // Spend the UTXO with our tapscript in a new TX
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({value: 1e8 - 10000 }));
+      mtx.addCoin(utxo);
+
+      mtx.inputs[0].witness.push(Buffer.alloc(0));
+      mtx.inputs[0].witness.push(script.toRaw());
+      mtx.inputs[0].witness.push(controlBlock);
+
+      const hash = mtx.signatureHashTaproot(
+        0,                    // input index
+        utxo.value,           // input value
+        0,                    // SIGHASH_ALL
+        [utxo],               // coins
+        0xffffffff,           // codeseparator position
+      );
+      const sig = schnorr.sign(hash, priv);
+
+      mtx.inputs[0].witness.items[0] = sig;
+
+      mtx.check();
+      assert(mtx.verify());
     });
   });
 });
