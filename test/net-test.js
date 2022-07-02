@@ -1241,12 +1241,17 @@ describe('Net', function() {
     });
 
     describe('handleSendCmpct (BIP152)', function() {
-      it('will not set compact mode (already set)', async () => {
+      it('switch compact blocks modes (mode=0) to (mode=1)', async () => {
         const peer = Peer.fromOptions({});
-        const pkt = new packets.SendCmpctPacket(1, 1);
-        peer.compactMode = 2;
+        assert.equal(peer.compactMode, -1);
+
+        const pkt = new packets.SendCmpctPacket(0, 1);
         await peer.handleSendCmpct(pkt);
-        assert.equal(peer.compactMode, 2);
+        assert.equal(peer.compactMode, 0);
+
+        const pkt2 = new packets.SendCmpctPacket(1, 1);
+        await peer.handleSendCmpct(pkt2);
+        assert.equal(peer.compactMode, 1);
       });
 
       it('will set low-bandwidth mode (mode=0)', async () => {
