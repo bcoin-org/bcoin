@@ -777,7 +777,8 @@ describe('Wallet', function() {
 
     await alice.fund(m2, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     await alice.sign(m2);
@@ -832,7 +833,8 @@ describe('Wallet', function() {
     m2.addOutput(await bob.receiveAddress(), 5460);
 
     await alice.fund(m2, {
-      rate: 10000
+      rate: 10000,
+      useSelectEstimate: true
     });
 
     await alice.sign(m2);
@@ -1032,7 +1034,8 @@ describe('Wallet', function() {
 
     await alice.fund(t2, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     await alice.sign(t2);
@@ -1115,7 +1118,8 @@ describe('Wallet', function() {
 
     await wallet.fund(t3, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     // Coinbase
@@ -1134,7 +1138,8 @@ describe('Wallet', function() {
     await wallet.fund(t5, {
       rate: 10000,
       round: true,
-      account: 'foo'
+      account: 'foo',
+      useSelectEstimate: true
     });
 
     currentWallet = wallet;
@@ -1188,7 +1193,8 @@ describe('Wallet', function() {
 
     await wallet.fund(t2, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     // Should fail
@@ -1228,7 +1234,8 @@ describe('Wallet', function() {
     await alice.fund(t2, {
       rate: 10000,
       round: true,
-      subtractFee: true
+      subtractFee: true,
+      useSelectEstimate: true
     });
 
     await alice.sign(t2);
@@ -1258,7 +1265,8 @@ describe('Wallet', function() {
       subtractFee: true,
       rate: 10000,
       round: true,
-      outputs: [{ address: await bob.receiveAddress(), value: 21840 }]
+      outputs: [{ address: await bob.receiveAddress(), value: 21840 }],
+      useSelectEstimate: true
     };
 
     // Create new transaction
@@ -1345,7 +1353,8 @@ describe('Wallet', function() {
       outputs: [{
         address: await bob.receiveAddress(),
         value: total
-      }]
+      }],
+      useSelectEstimate: true
     };
 
     const t3 = await alice.createTX(options);
@@ -1480,7 +1489,8 @@ describe('Wallet', function() {
       outputs: [{
         address: await wallet.receiveAddress(),
         value: 7000
-      }]
+      }],
+      useSelectEstimate: true
     };
 
     // Create new transaction
@@ -2265,7 +2275,7 @@ describe('Wallet', function() {
       for (let i = 0; i < 101; i++)
         await mineBlock();
 
-      await wallet.send({outputs: [{address: waddr, value: 1 * 1e8}]});
+      await wallet.send({outputs: [{address: waddr, value: 1 * 1e8}], useSelectEstimate: true});
       await mineBlock();
 
       await wclient.close();

@@ -605,7 +605,8 @@ describe('Node', function() {
       outputs: [{
         value: 100000,
         address: await wallet.receiveAddress()
-      }]
+      }],
+      useSelectEstimate: true
     });
 
     await wallet.sign(mtx);
@@ -630,7 +631,8 @@ describe('Node', function() {
       outputs: [{
         value: 50000,
         address: await wallet.receiveAddress()
-      }]
+      }],
+      useSelectEstimate: true
     });
 
     await wallet.sign(mtx);

@@ -380,6 +380,7 @@ class MemWallet {
       changeAddress: this.getChange(),
       height: -1,
       rate: options.rate,
+      useSelectEstimate: true,
       maxFee: options.maxFee
     });
   }
