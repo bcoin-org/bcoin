@@ -7,7 +7,9 @@ const assert = require('bsert');
 const FullNode = require('../lib/node/fullnode');
 const NodeClient = require('../lib/client/node');
 const KeyRing = require('../lib/primitives/keyring');
+const Block = require('../lib/primitives/block');
 const util = require('../lib/utils/util');
+const NetAddress = require('../lib/net/netaddress');
 
 const ports = {
   p2p: 49331,
@@ -222,6 +224,98 @@ describe('RPC', function() {
       connectionsCnt = await nclient.execute('getconnectioncount', []);
       assert.strictEqual(connectionsCnt, 0);
     });
+
+    it('should rpc getnodeaddresses', async () => {
+      const newHosts = [
+        {
+          'time': 1655305701,
+          'services': 1033,
+          'host': '102.91.5.101',
+          'port': 38333
+        },
+        {
+          'time': 1655958090,
+          'services': 1033,
+          'host': '197.149.96.171',
+          'port': 38333
+        },
+        {
+          'time': 1655834706,
+          'services': 1033,
+          'host': '190.104.161.74',
+          'port': 38331
+        },
+        {
+          'time': 1655621666,
+          'services': 1033,
+          'host': '151.34.40.226',
+          'port': 38333
+        },
+        {
+          'time': 1655965074,
+          'services': 67109901,
+          'host': '178.128.80.131',
+          'port': 3333
+        },
+        {
+          'time': 1656003055,
+          'services': 1033,
+          'host': '31.14.40.18',
+          'port': 38333
+        },
+        {
+          'time': 1654268543,
+          'services': 1033,
+          'host': '102.89.34.71',
+          'port': 38333
+        },
+        {
+          'time': 1655009945,
+          'services': 1033,
+          'host': '183.90.36.72',
+          'port': 38333
+        },
+        {
+          'time': 1655109959,
+          'services': 1033,
+          'host': '151.46.58.162',
+          'port': 38333
+        },
+        {
+          'time': 1653921720,
+          'services': 1033,
+          'host': '5.24.225.133',
+          'port': 38333
+        }
+      ];
+
+      let addr = NetAddress.fromJSON(newHosts[0]);
+      let isHostAdded = node.pool.hosts.add(addr);
+
+      assert(isHostAdded);
+
+      let hosts = await nclient.execute('getnodeaddresses');
+
+      assert.strictEqual(hosts.length, 1);
+
+      assert.strictEqual(addr.host, hosts[0].host);
+      assert.strictEqual(addr.port, hosts[0].port);
+      assert.strictEqual(addr.services, hosts[0].services);
+      assert.strictEqual(addr.time, hosts[0].time);
+
+      // count=7
+      const newHostsCount = newHosts.length;
+
+      for (let i = 1; i < newHostsCount; i++) {
+        addr = NetAddress.fromJSON(newHosts[i]);
+        isHostAdded = node.pool.hosts.add(addr);
+        assert(isHostAdded);
+      }
+
+      hosts = await nclient.execute('getnodeaddresses', [7]);
+
+      assert.strictEqual(hosts.length, 7);
+    });
   });
 
   describe('getblock', function () {
@@ -243,6 +337,42 @@ describe('RPC', function() {
       assert.strictEqual(util.revHex(node.chain.tip.merkleRoot), info.merkleroot);
       assert.strictEqual(util.revHex(node.chain.tip.hash), info.hash);
       assert.equal(node.chain.tip.version, info.version);
+    });
+
+    it('should rpc getblockbyheight', async () => {
+      // Getting block height of chain tip
+      const blockheight = node.chain.tip.height;
+      const blockHash = node.chain.tip.hash;
+
+      // verbose=0 details=0
+      let blockInfo;
+      blockInfo = await nclient.execute('getblockbyheight', [blockheight, 0, 0]);
+      const block = Block.fromRaw(Buffer.from(blockInfo, 'hex'));
+      assert.bufferEqual(blockHash, block.hash());
+
+      // verbose=1 details=0
+      blockInfo = await nclient.execute('getblockbyheight', [blockheight, 1, 0]);
+      const properties = [
+        'hash', 'confirmations', 'strippedsize',
+        'size', 'weight', 'height', 'version',
+        'versionHex', 'merkleroot', 'coinbase',
+        'tx', 'time', 'mediantime', 'nonce',
+        'bits', 'difficulty', 'chainwork',
+        'nTx', 'previousblockhash', 'nextblockhash'
+      ];
+      for (const property of properties)
+        assert(property in blockInfo);
+
+      assert.strictEqual(typeof blockInfo.tx[0], 'string');
+      assert.strictEqual(util.revHex(blockHash), blockInfo.hash);
+
+      // verbose=1 details=1
+      blockInfo = await nclient.execute('getblockbyheight', [blockheight, 1, 1]);
+      for (const property of properties)
+        assert(property in blockInfo);
+
+      assert.strictEqual(typeof blockInfo.tx[0], 'object');
+      assert.strictEqual(util.revHex(blockHash), blockInfo.hash);
     });
 
     it('should return correct height', async () => {
