@@ -10,6 +10,20 @@
 
 - Added `getnodeaddresses` which returns entries from the hostlist.
 
+### Indexer changes
+
+- Support for multiple compact filters added as per BIP158 specification. To enable the support of multiple filters the data previously in `~/.bcoin/index/filter` has been moved to `~/.bcoin/index/filter/BASIC`.
+- The filter indexer now also stores the filter hashes corresponding to the blockfilters.
+
+#### How to upgrade
+
+To upgrade to the multiple compact filter support we need to move filter data from `~/.bcoin/index/filter` to `~/.bcoin/index/filter/BASIC` and generate filter hashes for the existing filters.
+
+To do this you can run:
+```
+node ./migrate/indexerdb0to1.js /path/to/bcoin/index
+```
+ 
 ## v2.2.0
 
 - Support for bech32m has been added. bcoin can now validate and send BTC to
