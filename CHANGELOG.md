@@ -2,6 +2,14 @@
 
 **Important: Any time you upgrade bcoin, you must execute `npm rebuild` before restarting.**
 
+## unreleased
+
+### Node API changes
+
+#### RPC
+
+- Added `getnodeaddresses` which returns entries from the hostlist.
+
 ## v2.2.0
 
 - Support for bech32m has been added. bcoin can now validate and send BTC to
