@@ -105,6 +105,21 @@ describe('Taproot Check', function() {
 
       mtx.check();
       assert(mtx.verify());
+      assert(mtx.hasStandardWitness(mtx.view));
+    });
+
+    it('should be non-standard with annex', () => {
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({value: 1e8 - 10000 }));
+      mtx.addCoin(scriptspendUTXO);
+
+      mtx.inputs[0].witness.push(script.toRaw());
+      mtx.inputs[0].witness.push(controlBlock);
+      mtx.inputs[0].witness.push(Buffer.from([0x50])); // annex
+
+      mtx.check();
+      assert(mtx.verify());
+      assert(!mtx.hasStandardWitness(mtx.view));
     });
 
     it('should have invalid control block', () => {
