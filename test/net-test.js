@@ -1245,25 +1245,41 @@ describe('Net', function() {
         const peer = Peer.fromOptions({});
         assert.equal(peer.compactMode, -1);
 
-        const pkt = new packets.SendCmpctPacket(0, 1);
+        const pkt = new packets.SendCmpctPacket(0, 2);
         await peer.handleSendCmpct(pkt);
         assert.equal(peer.compactMode, 0);
 
-        const pkt2 = new packets.SendCmpctPacket(1, 1);
+        const pkt2 = new packets.SendCmpctPacket(1, 2);
         await peer.handleSendCmpct(pkt2);
         assert.equal(peer.compactMode, 1);
       });
 
+      it('should ignore duplicate sendcmpct (v2 to v1)', async () => {
+        const peer = Peer.fromOptions({});
+        assert.equal(peer.compactMode, -1);
+        assert.equal(peer.compactWitness, false);
+
+        const pkt = new packets.SendCmpctPacket(0, 2);
+        await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, 0);
+        assert.equal(peer.compactWitness, true);
+
+        const pkt2 = new packets.SendCmpctPacket(0, 1);
+        await peer.handleSendCmpct(pkt2);
+        assert.equal(peer.compactMode, 0);
+        assert.equal(peer.compactWitness, true);
+      });
+
       it('will set low-bandwidth mode (mode=0)', async () => {
         const peer = Peer.fromOptions({});
-        const pkt = new packets.SendCmpctPacket(0, 1);
+        const pkt = new packets.SendCmpctPacket(0, 2);
         await peer.handleSendCmpct(pkt);
         assert.equal(peer.compactMode, 0);
       });
 
       it('will set high-bandwidth mode (mode=1)', async () => {
         const peer = Peer.fromOptions({});
-        const pkt = new packets.SendCmpctPacket(1, 1);
+        const pkt = new packets.SendCmpctPacket(1, 2);
         await peer.handleSendCmpct(pkt);
         assert.equal(peer.compactMode, 1);
       });
@@ -1276,10 +1292,11 @@ describe('Net', function() {
         assert.equal(peer.compactWitness, false);
       });
 
-      it('will set witness=false (version=1)', async () => {
+      it('will ignore witness=false (version=1)', async () => {
         const peer = Peer.fromOptions({});
         const pkt = new packets.SendCmpctPacket(0, 1);
         await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, -1);
         assert.equal(peer.compactWitness, false);
       });
 
@@ -1287,6 +1304,7 @@ describe('Net', function() {
         const peer = Peer.fromOptions({});
         const pkt = new packets.SendCmpctPacket(0, 2);
         await peer.handleSendCmpct(pkt);
+        assert.equal(peer.compactMode, 0);
         assert.equal(peer.compactWitness, true);
       });
 
