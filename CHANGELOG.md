@@ -234,6 +234,7 @@ that have many transactions.
 - A new module for storing block data in files.
 - Use of `buffer-map` for storing hashes
   (see https://github.com/bcoin-org/bcoin/issues/533).
+- Removal of p2p Reject messages
 - Use of `bsert` for assertions.
 - `SIGINT` handling will close the full node, spvnode and wallet.
 - Using the bcoin library in a REPL now has auto-completion by pressing tab.
