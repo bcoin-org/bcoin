@@ -361,13 +361,6 @@ class CLI {
     this.log('Abandoned tx: ' + hash);
   }
 
-  async viewTX() {
-    const raw = this.config.str([0, 'tx']);
-    const tx = await this.wallet.fill(raw);
-
-    this.log(tx);
-  }
-
   async getDetails() {
     const hash = this.config.str(0);
     const details = await this.wallet.getTX(hash);
@@ -585,9 +578,6 @@ class CLI {
       case 'block':
         await this.getWalletBlock();
         break;
-      case 'view':
-        await this.viewTX();
-        break;
       case 'import':
         await this.importKey();
         break;
@@ -646,7 +636,6 @@ class CLI {
         this.log('  $ sign [tx-hex]: Sign transaction.');
         this.log('  $ tx [hash]: View transaction details.');
         this.log('  $ unlock [passphrase] [timeout?]: Unlock wallet.');
-        this.log('  $ view [tx-hex]: Parse and view transaction.');
         this.log('  $ watch [address]: Import an address.');
         this.log('  $ zap [age?]: Zap pending wallet TXs.');
         this.log('  $ rpc [command] [args]: Execute RPC command.'
