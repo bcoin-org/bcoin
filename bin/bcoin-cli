@@ -257,16 +257,16 @@ class CLI {
       default:
         this.log('Unrecognized command.');
         this.log('Commands:');
-        this.log('  $ info: Get server info.');
-        this.log('  $ broadcast [tx-hex]: Broadcast transaction.');
-        this.log('  $ mempool: Get mempool snapshot.');
-        this.log('  $ tx [hash/address]: View transactions.');
-        this.log('  $ coin [hash+index/address]: View coins.');
         this.log('  $ block [hash/height]: View block.');
-        this.log('  $ header [hash/height]: View block header.');
-        this.log('  $ filter [hash/height]: View filter.');
+        this.log('  $ broadcast [tx-hex]: Broadcast transaction.');
+        this.log('  $ coin [hash+index/address]: View coins.');
         this.log('  $ fee [target]: Estimate smart fee.');
+        this.log('  $ filter [hash/height]: View filter.');
+        this.log('  $ header [hash/height]: View block header.');
+        this.log('  $ info: Get server info.');
+        this.log('  $ mempool: Get mempool snapshot.');
         this.log('  $ reset [height/hash]: Reset chain to desired block.');
+        this.log('  $ tx [hash/address]: View transactions.');
         this.log('  $ rpc [command] [args]: Execute RPC command.' +
           ' (`bcoin-cli rpc help` for more)');
         break;
