@@ -50,6 +50,17 @@ describe('Taproot Check', function() {
       assert(mtx.verify());
     });
 
+    it('should not have empty signature', () => {
+      const mtx = new MTX();
+      mtx.addCoin(keyspendUTXO);
+
+      // No witness to sign transaction
+      assert.throws(
+        () => mtx.check(),
+        { message: 'WITNESS_PROGRAM_WITNESS_EMPTY' }
+      );
+    });
+
     it('should have invalid signature', () => {
       const mtx = new MTX();
       mtx.outputs.push(new Output({value: 1e8 - 10000 }));
