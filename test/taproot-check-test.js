@@ -50,7 +50,7 @@ describe('Taproot Check', function() {
       assert(mtx.verify());
     });
 
-    it('should not have empty signature', () => {
+    it('should have empty signature', () => {
       const mtx = new MTX();
       mtx.addCoin(keyspendUTXO);
 
