@@ -19,6 +19,13 @@ const opcodes = Script.opcodes;
 const priv = schnorr.privateKeyGenerate();
 const pub = schnorr.publicKeyCreate(priv);
 
+// Error Messages
+const ERR_EMPTY_WITNESS = { message: 'WITNESS_PROGRAM_WITNESS_EMPTY'};
+const ERR_SIG_SCHNORR = { message: 'TAPROOT_INVALID_SIG' };
+const ERR_CONTROLBLOCK_SIZE = { message: 'TAPROOT_WRONG_CONTROL_SIZE' };
+const ERR_WITNESS_PROGRAM_MISMATCH = { message: 'WITNESS_PROGRAM_MISMATCH' };
+const ERR_STACK_SIZE = { message: /STACK_SIZE/g };
+
 describe('Taproot Check', function() {
   describe('Key spend', function() {
     // Create a pay-to-taproot key-spend UTXO
@@ -50,14 +57,14 @@ describe('Taproot Check', function() {
       assert(mtx.verify());
     });
 
-    it('should not have empty signature', () => {
+    it('should have empty signature', () => {
       const mtx = new MTX();
       mtx.addCoin(keyspendUTXO);
 
       // No witness to sign transaction
       assert.throws(
         () => mtx.check(),
-        { message: 'WITNESS_PROGRAM_WITNESS_EMPTY' }
+        ERR_EMPTY_WITNESS
       );
     });
 
@@ -73,7 +80,7 @@ describe('Taproot Check', function() {
 
       assert.throws(
         () => mtx.check(),
-        { message: 'TAPROOT_INVALID_SIG' }
+        ERR_SIG_SCHNORR
       );
     });
   });
@@ -146,7 +153,7 @@ describe('Taproot Check', function() {
 
       assert.throws(
         () => mtx.check(),
-        { message: 'TAPROOT_WRONG_CONTROL_SIZE' }
+        ERR_CONTROLBLOCK_SIZE
       );
     });
 
@@ -162,7 +169,7 @@ describe('Taproot Check', function() {
 
       assert.throws(
         () => mtx.check(),
-        { message: 'WITNESS_PROGRAM_MISMATCH' }
+        ERR_WITNESS_PROGRAM_MISMATCH
       );
     });
 
@@ -231,7 +238,7 @@ describe('Taproot Check', function() {
         if (NUM >= consensus.MAX_SCRIPT_STACK) {
           assert.throws(
             () => mtx.check(),
-            { message: /STACK_SIZE/g }
+            ERR_STACK_SIZE
           );
         } else {
           // Max script size does not apply to taproot
