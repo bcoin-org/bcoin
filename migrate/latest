@@ -35,6 +35,7 @@ const prefix = argv[2];
 const chain = resolve(prefix, 'chain');
 const spvchain = resolve(prefix, 'spvchain');
 const index = resolve(prefix, 'index');
+const wallet = resolve(prefix, 'wallet');
 
 (async () => {
   if (await fs.exists(chain))
@@ -45,6 +46,9 @@ const index = resolve(prefix, 'index');
 
   if (await fs.exists(index))
     exec(node, resolve(__dirname, 'indexerdb0to1.js'), index);
+
+  if (await fs.exists(wallet))
+    exec(node, resolve(__dirname, 'walletdb7to8.js'), wallet);
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);
