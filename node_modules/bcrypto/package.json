@@ -67,6 +67,7 @@
     "./lib/encoding/base58": "./lib/encoding/base58-browser.js",
     "./lib/encoding/base64": "./lib/encoding/base64-browser.js",
     "./lib/encoding/bech32": "./lib/encoding/bech32-browser.js",
+    "./lib/encoding/bech32m": "./lib/encoding/bech32m-browser.js",
     "./lib/encoding/cash32": "./lib/encoding/cash32-browser.js",
     "./lib/gost94": "./lib/gost94-browser.js",
     "./lib/hash160": "./lib/hash160-browser.js",
