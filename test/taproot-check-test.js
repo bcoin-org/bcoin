@@ -5,6 +5,7 @@
 
 const assert = require('bsert');
 const bio = require('bufio');
+const Address = require('../lib/primitives/address');
 const MTX = require('../lib/primitives/mtx');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
@@ -15,6 +16,12 @@ const random = require('bcrypto/lib/random');
 const {taggedHash} = require('../lib/utils');
 const consensus = require('../lib/protocol/consensus');
 const opcodes = Script.opcodes;
+
+// https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#Test_vectors
+const {
+  scriptPubKey,
+  keyPathSpending
+} = require('./data/bip341-wallet-test-vectors.json');
 
 // Create a BIP340 Schnorr keypair
 const priv = schnorr.privateKeyGenerate();
@@ -329,5 +336,73 @@ describe('Helper Functions', () => {
       Buffer.from('7d06227ec4d4dc84ec46a62481f86cea3466d2479184e5dc17145976bf361aef', 'hex'),
       'multiple levels'
     )
+  });
+
+  describe('BIP341 test vectors', function() {
+    describe('scriptPubKey', function() {
+      // Conform test vectors from BIP341 json file
+      function conformScriptTree (scriptTree) {
+        if (!scriptTree)
+          return [];
+
+        if (Array.isArray(scriptTree))
+          return scriptTree.map(x => conformScriptTree(x));
+
+        return [{
+          script: Script.fromRaw(scriptTree.script, 'hex'),
+          // TODO: should we call it "leafVersion" in taproot.js as well?
+          version: scriptTree.leafVersion
+        }];
+      }
+
+      for (const test of scriptPubKey) {
+        it(test.expected.bip350Address, () => {
+          const {given, intermediary, expected} = test;
+          const tree = conformScriptTree(given.scriptTree);
+
+          // Test taproot tree helper
+          const treeRoot = taprootTreeHelper(tree);
+          // TODO: should taprootTreeHelper() return NULL if scripts.length === 0?
+          if (treeRoot.length === 0)
+            assert.strictEqual(null, intermediary.merkleRoot);
+          else
+            assert.strictEqual(treeRoot.toString('hex'), intermediary.merkleRoot);
+
+          // Test verifyTaprootCommitment()
+          // TODO: should we have a helper function for this?
+          let size;
+          if (treeRoot.length !== 0)
+            size = 64;
+          else
+            size = 32;
+          const tapTweak = bio.write(size);
+          tapTweak.writeBytes(Buffer.from(given.internalPubkey, 'hex'));
+          if (treeRoot.length !== 0)
+            tapTweak.writeBytes(treeRoot);
+          const tweak = taggedHash.TapTweakHash.digest(tapTweak.render());
+          assert.strictEqual(tweak.toString('hex'), intermediary.tweak);
+
+          // Test bcrypto schnorr.publicKeyTweakCheck()
+          if (expected.scriptPathControlBlocks) {
+            for (const cb of expected.scriptPathControlBlocks) {
+              assert(
+                schnorr.publicKeyTweakCheck(
+                  Buffer.from(given.internalPubkey, 'hex'),
+                  Buffer.from(intermediary.tweak, 'hex'),
+                  Buffer.from(intermediary.tweakedPubkey, 'hex'),
+                  Boolean(parseInt(cb.slice(0, 2), 16) & 1)
+                )
+              );
+            }
+          }
+
+          // Test bech32m
+          assert.strictEqual(
+            Address.fromScript(Script.fromRaw(expected.scriptPubKey, 'hex')).toString(),
+            expected.bip350Address
+          );
+        });
+      }
+    });
   });
 });
