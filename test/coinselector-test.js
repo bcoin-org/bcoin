@@ -10,7 +10,6 @@ const random = require('bcrypto/lib/random');
 const WorkerPool = require('../lib/workers/workerpool');
 const WalletDB = require('../lib/wallet/walletdb');
 const Amount = require('../lib/btc/amount');
-const hash256 = require('bcrypto/lib/hash256');
 const data = require('./data/bustabit-2019-2020-tiny-hot-wallet.json');
 const MTX = require('../lib/primitives/mtx');
 const Input = require('../lib/primitives/input');
@@ -200,46 +199,55 @@ describe('Coin Selector', function () {
   });
 });
 
-const workers = new WorkerPool({
-  enabled: true,
-  size: 2
-});
-
-const wdb = new WalletDB({workers});
-
-function fromU32(num) {
-  const data = Buffer.allocUnsafe(4);
-  data.writeUInt32LE(num, 0, true);
-  return data;
-}
-
-function nextBlock(wdb) {
-  return fakeBlock(wdb.state.height + 1);
-}
-
-function fakeBlock(height) {
-  const prev = hash256.digest(fromU32((height - 1) >>> 0));
-  const hash = hash256.digest(fromU32(height >>> 0));
-  const root = hash256.digest(fromU32((height | 0x80000000) >>> 0));
-
-  return {
-    hash: hash,
-    prevBlock: prev,
-    merkleRoot: root,
-    time: 500000000 + (height * (10 * 60)),
-    bits: 0,
-    nonce: 0,
-    height: height
-  };
-}
-
-function dummyInput() {
-  const hash = random.randomBytes(32);
-  return Input.fromOutpoint(new Outpoint(hash, 0));
-}
-
 describe('Integration', function () {
-  this.timeout(1000000);
+  this.timeout(360000);
+
+  const workers = new WorkerPool({
+    enabled: true,
+    size: 2
+  });
+
+  const wdb = new WalletDB({workers});
+
+  function nextBlock(wdb) {
+    return fakeBlock(wdb.state.height + 1);
+  }
+
+  function fakeBlock(height) {
+    const prev = Buffer.allocUnsafe(32);
+    const hash = Buffer.allocUnsafe(32);
+    const root = Buffer.allocUnsafe(32);
+
+    return {
+      hash: hash,
+      prevBlock: prev,
+      merkleRoot: root,
+      time: 500000000 + (height * (10 * 60)),
+      bits: 0,
+      nonce: 0,
+      height: height
+    };
+  }
+
+  function dummyInput() {
+    const hash = random.randomBytes(32);
+    return Input.fromOutpoint(new Outpoint(hash, 0));
+  }
+
+  function getReceiveAddress(wallet) {
+    let addr;
+    switch (Math.floor(Math.random() * 3)) {
+      case 0:
+        addr = wallet.receiveAddress(); // native segwit
+        break;
+      case 1:
+        addr = wallet.receiveAddress(1); // p2pkh
+        break;
+      case 2:
+        addr = wallet.nestedAddress(); // nested segwit
+    }
+    return addr;
+  }
 
   before(async () => {
     await wdb.open();
@@ -249,16 +257,14 @@ describe('Integration', function () {
   let oldBalance, newBalance, oldCoins, newCoins;
 
   after(async () => {
-    console.log('Amount saved in fees :', newBalance - oldBalance);
-    console.log('Coins in UTXO pool using old selection :', oldCoins);
-    console.log('Coins in UTXO pool using new selection :', newCoins);
     await wdb.close();
     await workers.close();
   });
 
   for (const useSelectEstimate of [true, false]) {
-    it('should send transactions using old selection', async () => {
+    it(`should send transactions using ${useSelectEstimate ? 'old' : 'new'} selection`, async () => {
       const alice = await wdb.create();
+      await alice.createAccount({witness: false});
       const bob = await wdb.create();
 
       for (const payment of data) {
@@ -275,7 +281,7 @@ describe('Integration', function () {
           // send to Alice's wallet
           const t1 = new MTX();
           t1.addInput(dummyInput());
-          t1.addOutput(await alice.receiveAddress(), value);
+          t1.addOutput(await getReceiveAddress(alice), value);
           tx = t1.toTX();
         } else {
           // send from Alice's wallet
@@ -302,4 +308,9 @@ describe('Integration', function () {
       }
     });
   }
+
+  it('should prove new selection is better', () => {
+    assert(newCoins * 10 < oldCoins);
+    assert(newBalance - oldBalance > 500000);
+  });
 });
