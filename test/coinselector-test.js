@@ -7,13 +7,16 @@ const assert = require('bsert');
 const {CoinSelector, CoinPointer} = require('../lib/wallet/coinselector');
 const TX = require('../lib/primitives/tx');
 const random = require('bcrypto/lib/random');
-const Address = require('../lib/primitives/address');
-const consensus = require('../lib/protocol/consensus');
-const FullNode = require('../lib/node/fullnode');
-const plugin = require('../lib/wallet/plugin');
-const {testdir, rimraf, forValue} = require('./util/common');
+const WorkerPool = require('../lib/workers/workerpool');
+const WalletDB = require('../lib/wallet/walletdb');
+const Amount = require('../lib/btc/amount');
+const hash256 = require('bcrypto/lib/hash256');
+const data = require('./data/bustabit-2019-2020-tiny-hot-wallet.json');
+const MTX = require('../lib/primitives/mtx');
+const Input = require('../lib/primitives/input');
+const Outpoint = require('../lib/primitives/outpoint');
 
-describe('Coin Selector', function() {
+describe('Coin Selector', function () {
   function build(values) {
     const pointers = [];
     for (let i = 0; i < values.length; i++) {
@@ -30,18 +33,18 @@ describe('Coin Selector', function() {
   const costOfChange = 345; // this is cost of producing and spending a change output
 
   const targetSet1 = [221000, 220000, 215000, 214000, 211000, 208000, 206000, 203000, 201000,
-                      195000, 186000, 178000, 166000, 160000, 155000, 152000, 146000, 139000, 119000,
-                      116000, 110000, 109000, 108000, 106000, 105000, 101000, 98000, 96000, 90000,
-                      85000, 82000, 81000, 80000, 78000, 71000, 67000, 66000, 63000, 55000, 53000,
-                      51000, 45000, 44000, 41000, 38000, 36000, 23000, 19000, 16000, 11000, 6000];
+    195000, 186000, 178000, 166000, 160000, 155000, 152000, 146000, 139000, 119000,
+    116000, 110000, 109000, 108000, 106000, 105000, 101000, 98000, 96000, 90000,
+    85000, 82000, 81000, 80000, 78000, 71000, 67000, 66000, 63000, 55000, 53000,
+    51000, 45000, 44000, 41000, 38000, 36000, 23000, 19000, 16000, 11000, 6000];
 
   const targetSet2 = [150000, 130000, 101000, 50000, 15000, 13000, 5000, 3000];
 
   const targetSet3 = [219000, 217000, 213000, 212000, 211000, 205000, 202000, 201000, 190000,
-                      185000, 183000, 182000, 181000, 170000, 155000, 153000, 152000, 151000, 130000,
-                      120000, 110000, 105000, 103000, 102000, 101000];
+    185000, 183000, 182000, 181000, 170000, 155000, 153000, 152000, 151000, 130000,
+    120000, 110000, 105000, 103000, 102000, 101000];
 
-  describe('Branch and Bound Selection', function() {
+  describe('Branch and Bound Selection', function () {
     // try to select single UTXOs
     for (const value of values) {
       it(`should select target=${value} using Branch and Bound`, () => {
@@ -114,7 +117,7 @@ describe('Coin Selector', function() {
     }
   });
 
-  describe('Lowest Larger Selection', function() {
+  describe('Lowest Larger Selection', function () {
     // try selecting a single UTXO
     for (const value of values) {
       it(`should select target=${value} using Lowest Larger`, () => {
@@ -181,7 +184,7 @@ describe('Coin Selector', function() {
     });
   });
 
-  describe('Single Random Draw Selection', function() {
+  describe('Single Random Draw Selection', function () {
     it('should be able to fund all values in range 1 to 221000 using Single Random Draw', () => {
       for (let target = 1; target <= 221000; target++) {
         const selection = selector.selectSRD(target);
@@ -197,100 +200,106 @@ describe('Coin Selector', function() {
   });
 });
 
+const workers = new WorkerPool({
+  enabled: true,
+  size: 2
+});
+
+const wdb = new WalletDB({workers});
+
+function fromU32(num) {
+  const data = Buffer.allocUnsafe(4);
+  data.writeUInt32LE(num, 0, true);
+  return data;
+}
+
+function nextBlock(wdb) {
+  return fakeBlock(wdb.state.height + 1);
+}
+
+function fakeBlock(height) {
+  const prev = hash256.digest(fromU32((height - 1) >>> 0));
+  const hash = hash256.digest(fromU32(height >>> 0));
+  const root = hash256.digest(fromU32((height | 0x80000000) >>> 0));
+
+  return {
+    hash: hash,
+    prevBlock: prev,
+    merkleRoot: root,
+    time: 500000000 + (height * (10 * 60)),
+    bits: 0,
+    nonce: 0,
+    height: height
+  };
+}
+
+function dummyInput() {
+  const hash = random.randomBytes(32);
+  return Input.fromOutpoint(new Outpoint(hash, 0));
+}
+
 describe('Integration', function () {
-  this.timeout(30000);
-
-  const prefix = testdir('coinselection');
-  const node = new FullNode({
-    prefix,
-    network: 'regtest'
-  });
-  node.use(plugin);
-  const {wdb} = node.plugins.walletdb;
-  let miner, minerAddr;
-  let alice, bob;
-
-  const actualCoinbaseMaturity = consensus.COINBASE_MATURITY;
+  this.timeout(1000000);
 
   before(async () => {
-    consensus.COINBASE_MATURITY = 0;
-    await node.open();
-
-    miner = await wdb.create();
-    minerAddr = await miner.receiveAddress();
-
-    alice = await wdb.create();
-    bob = await wdb.create();
+    await wdb.open();
+    await workers.open();
   });
+
+  let oldBalance, newBalance, oldCoins, newCoins;
 
   after(async () => {
-    await node.close();
-    await rimraf(prefix);
-    consensus.COINBASE_MATURITY = actualCoinbaseMaturity;
+    console.log('Amount saved in fees :', newBalance - oldBalance);
+    console.log('Coins in UTXO pool using old selection :', oldCoins);
+    console.log('Coins in UTXO pool using new selection :', newCoins);
+    await wdb.close();
+    await workers.close();
   });
 
-  it('should fund miner', async () => {
-    const blocks = 1500;
-    await node.rpc.mineBlocks(blocks, minerAddr);
-    await forValue(node.chain, 'height', blocks);
-    await forValue(wdb, 'height', node.chain.height);
-  });
+  for (const useSelectEstimate of [true, false]) {
+    it('should send transactions using old selection', async () => {
+      const alice = await wdb.create();
+      const bob = await wdb.create();
 
-  {
-    let value = 100000;
-    for (let b = 0; b < 10; b++) {
-      it(`should fund test wallet with range of coins: block ${b}`, async () => {
-        // 10 blocks with 100 transactions each
-        // exponentially increasing coin sizes starting at 0.00001 BTC
-        for (let t = 0; t < 100; t++) {
-          let address = await alice.receiveAddress();
-          await miner.send({
+      for (const payment of data) {
+        let value = Amount.value(payment.value);
+        const rate = Amount.value(payment.rate);
+
+        // remove dust outputs
+        if (Math.abs(value) < 500)
+          continue;
+
+        let tx;
+
+        if (value > 0) {
+          // send to Alice's wallet
+          const t1 = new MTX();
+          t1.addInput(dummyInput());
+          t1.addOutput(await alice.receiveAddress(), value);
+          tx = t1.toTX();
+        } else {
+          // send from Alice's wallet
+          const address = await bob.receiveAddress();
+          value = -value;
+          tx = await alice.send({
             outputs: [{value, address}],
-            useSelectEstimate: true
+            rate,
+            useSelectEstimate
           });
-          address = await bob.receiveAddress();
-          await miner.send({
-            outputs: [{value, address}],
-            useSelectEstimate: true
-          });
-          value = parseInt(value * 1.01);
         }
-        await node.rpc.mineBlocks(1, minerAddr);
-        await forValue(wdb, 'height', node.chain.height);
-      });
-    }
-  }
 
-  {
-    const values = [];
-    let v = 10000;
-
-    for (let i = 0; i < 140; i++) {
-      values.push(v);
-      v = parseInt(v * 1.1);
-    }
-    const rate = 10000;
-    for (let i = 0; i < 140; i++) {
-      it(`should comapre old and new coin selectors: ${values[i]} : iteration: ${i + 1}`, async () => {
-        const address = Address.fromProgram(0, random.randomBytes(20));
-
-        const value = values[i];
-        const old = await alice.send({
-          outputs: [{value, address}],
-          useSelectEstimate: true,
-          rate
-        });
-
-        const bnb = await bob.send({
-          outputs: [{value, address}],
-          rate
-        });
-
-        const oldSize = old.getVirtualSize();
-        const newSize = bnb.getVirtualSize();
-
-        assert(oldSize >= newSize || oldSize + 5 > newSize);
-      });
-    }
+        // confirm tx
+        await wdb.addBlock(nextBlock(wdb), [tx]);
+      }
+      // check balance after simulation
+      const balance = await alice.getBalance();
+      if (useSelectEstimate) {
+        oldBalance = balance.unconfirmed;
+        oldCoins = balance.coin;
+      } else {
+        newBalance = balance.unconfirmed;
+        newCoins = balance.coin;
+      }
+    });
   }
 });
