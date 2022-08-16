@@ -19,8 +19,7 @@ const opcodes = Script.opcodes;
 
 // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#Test_vectors
 const {
-  scriptPubKey,
-  keyPathSpending
+  scriptPubKey
 } = require('./data/bip341-wallet-test-vectors.json');
 
 // Create a BIP340 Schnorr keypair
@@ -289,53 +288,53 @@ describe('Helper Functions', () => {
     const f = new Script({ raw: Buffer.from('f') });
     const g = new Script({ raw: Buffer.from('g') });
 
-    assert.bufferEqual( 
+    assert.equal(
       Taproot.taprootTreeHelper([]),
-      Buffer.from([]),
+      null,
       'empty'
-    )
+    );
 
-    assert.bufferEqual(
+    assert.equal(
       Taproot.taprootTreeHelper([new Taproot.TapLeaf(b)]),
-      Buffer.from('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44', 'hex'),
+      'c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44',
       '1 leaf'
-    )
+    );
 
-    assert.bufferEqual(
+    assert.equal(
       Taproot.taprootTreeHelper([new Taproot.TapLeaf(b, 194)]),
-      Buffer.from('06abb1a7f74bbb1030c8385a757352d4bde36743c4ba1eab734c9b8441e10b93', 'hex'),
-      'diff version'
-    )
+      '06abb1a7f74bbb1030c8385a757352d4bde36743c4ba1eab734c9b8441e10b93',
+      'diff leaf version'
+    );
 
-    assert.bufferEqual(
+    assert.equal(
       Taproot.taprootTreeHelper([new Taproot.TapLeaf(c)]),
-      Buffer.from('993e66f0dc536073d5a2c5989267bc8762045303b91c027bf33666565a85f270', 'hex'),
+      '993e66f0dc536073d5a2c5989267bc8762045303b91c027bf33666565a85f270',
       'diff code'
-    )
+    );
 
-    assert.bufferEqual(
+    assert.equal(
       Taproot.taprootTreeHelper([[[[[new Taproot.TapLeaf(b)]]]]]),
-      Buffer.from('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44', 'hex'),
+      'c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44',
       'deep leaf'
-    )
+    );
 
-    assert.bufferEqual(
+    assert.equal(
       Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), new Taproot.TapLeaf(b)]),
-      Buffer.from('12991d5d42735f679bb1a24a4026f4a6e4fbe49612e2b944f26ab93198253912', 'hex'),
+      '12991d5d42735f679bb1a24a4026f4a6e4fbe49612e2b944f26ab93198253912',
       '2 same leaves'
-    )
+    );
 
-    assert.bufferEqual(
+    assert.equal(
       Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), new Taproot.TapLeaf(c)]),
-      Buffer.from('5314984f24ab08113d5790636c6c7fb8a003e60b50e5b600b62e97d04133e4a5', 'hex'),
+      '5314984f24ab08113d5790636c6c7fb8a003e60b50e5b600b62e97d04133e4a5',
       '2 diff leaves'
-    )
+    );
 
-    assert.bufferEqual(
+    assert.equal(
       Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), [new Taproot.TapLeaf(c)], new Taproot.TapLeaf(d), [new Taproot.TapLeaf(f), new Taproot.TapLeaf(g)]]),
-      Buffer.from('7d06227ec4d4dc84ec46a62481f86cea3466d2479184e5dc17145976bf361aef', 'hex'),
+      '7d06227ec4d4dc84ec46a62481f86cea3466d2479184e5dc17145976bf361aef',
       'multiple levels'
-    )
+    );
   });
 
   describe('BIP341 test vectors', function() {
@@ -348,11 +347,9 @@ describe('Helper Functions', () => {
         if (Array.isArray(scriptTree))
           return scriptTree.map(x => conformScriptTree(x));
 
-        return [{
-          script: Script.fromRaw(scriptTree.script, 'hex'),
-          // TODO: should we call it "leafVersion" in taproot.js as well?
-          version: scriptTree.leafVersion
-        }];
+        return [
+          new Taproot.TapLeaf(Script.fromRaw(scriptTree.script, 'hex'), scriptTree.leafVersion)
+        ];
       }
 
       for (const test of scriptPubKey) {
@@ -361,24 +358,20 @@ describe('Helper Functions', () => {
           const tree = conformScriptTree(given.scriptTree);
 
           // Test taproot tree helper
-          const treeRoot = taprootTreeHelper(tree);
-          // TODO: should taprootTreeHelper() return NULL if scripts.length === 0?
-          if (treeRoot.length === 0)
-            assert.strictEqual(null, intermediary.merkleRoot);
-          else
-            assert.strictEqual(treeRoot.toString('hex'), intermediary.merkleRoot);
+          const treeRoot = Taproot.taprootTreeHelper(tree);
+          assert.strictEqual(treeRoot, intermediary.merkleRoot);
 
           // Test verifyTaprootCommitment()
           // TODO: should we have a helper function for this?
           let size;
-          if (treeRoot.length !== 0)
+          if (treeRoot)
             size = 64;
           else
             size = 32;
           const tapTweak = bio.write(size);
           tapTweak.writeBytes(Buffer.from(given.internalPubkey, 'hex'));
-          if (treeRoot.length !== 0)
-            tapTweak.writeBytes(treeRoot);
+          if (treeRoot)
+            tapTweak.writeBytes(Buffer.from(treeRoot, 'hex'));
           const tweak = taggedHash.TapTweakHash.digest(tapTweak.render());
           assert.strictEqual(tweak.toString('hex'), intermediary.tweak);
 
