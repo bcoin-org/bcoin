@@ -22,6 +22,7 @@ const CoinView = require('../lib/coins/coinview');
 const random = require('bcrypto/lib/random');
 const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
+const {filters} = require('../lib/blockstore/common');
 
 // Block test vectors
 const block300025 = common.readBlock('block300025');
@@ -506,7 +507,7 @@ describe('Block', function() {
         view.addOutput(new Outpoint(hash, 0), output);
       }
 
-      const filter = block.toFilter(view);
+      const filter = block.toFilter(view, filters.BASIC);
       assert.strictEqual(filter.toRaw().toString('hex'), json[5]);
 
       const header = filter.header(Buffer.from(json[4], 'hex').reverse());

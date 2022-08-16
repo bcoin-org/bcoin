@@ -34,6 +34,7 @@ const prefix = argv[2];
 
 const chain = resolve(prefix, 'chain');
 const spvchain = resolve(prefix, 'spvchain');
+const index = resolve(prefix, 'index');
 
 (async () => {
   if (await fs.exists(chain))
@@ -41,6 +42,9 @@ const spvchain = resolve(prefix, 'spvchain');
 
   if (await fs.exists(spvchain))
     exec(node, resolve(__dirname, 'chaindb4to6.js'), spvchain);
+
+  if (await fs.exists(index))
+    exec(node, resolve(__dirname, 'indexerdb0to1.js'), index);
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);
