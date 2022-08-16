@@ -9,7 +9,7 @@ const MTX = require('../lib/primitives/mtx');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
 const Script = require('../lib/script/script');
-const { taprootTreeHelper } = require('../lib/script/taproot');
+const Taproot = require('../lib/script/taproot');
 const schnorr = require('bcrypto/lib/schnorr');
 const random = require('bcrypto/lib/random');
 const {taggedHash} = require('../lib/utils');
@@ -271,19 +271,63 @@ describe('Taproot Check', function() {
 
 describe('Helper Functions', () => {
   it('taprootTreeHelper should produce tree root', () => {
+    /*
+      The outputs for the taproot tree helper function are compared against the results
+      produced by the bitcoin core implementation.
+    */
+
     const b = new Script({ raw: Buffer.from('b') });
     const c = new Script({ raw: Buffer.from('c') });
     const d = new Script({ raw: Buffer.from('d') });
     const f = new Script({ raw: Buffer.from('f') });
     const g = new Script({ raw: Buffer.from('g') });
 
-    assert(Buffer.compare(taprootTreeHelper([]), Buffer.from([])) === 0, 'empty');
-    assert(Buffer.compare(taprootTreeHelper([{ script: b }]), Buffer.from([0xc1, 0xb5, 0xbd, 0x5a, 0xf8, 0x73, 0xb3, 0xcf, 0x6e, 0x5a, 0x90, 0xed, 0x7d, 0xfa, 0x3, 0xda, 0x9, 0xad, 0x4c, 0x4f, 0x61, 0xae, 0xdb, 0x43, 0x57, 0xc8, 0x7f, 0x13, 0x24, 0x4d, 0xd, 0x44])) === 0, '1 leaf');
-    assert(Buffer.compare(taprootTreeHelper([{ script: b, version: 194 }]), Buffer.from([0x6, 0xab, 0xb1, 0xa7, 0xf7, 0x4b, 0xbb, 0x10, 0x30, 0xc8, 0x38, 0x5a, 0x75, 0x73, 0x52, 0xd4, 0xbd, 0xe3, 0x67, 0x43, 0xc4, 0xba, 0x1e, 0xab, 0x73, 0x4c, 0x9b, 0x84, 0x41, 0xe1, 0xb, 0x93])) === 0, 'diff version');
-    assert(Buffer.compare(taprootTreeHelper([{ script: c }]), Buffer.from([0x99, 0x3e, 0x66, 0xf0, 0xdc, 0x53, 0x60, 0x73, 0xd5, 0xa2, 0xc5, 0x98, 0x92, 0x67, 0xbc, 0x87, 0x62, 0x4, 0x53, 0x3, 0xb9, 0x1c, 0x2, 0x7b, 0xf3, 0x36, 0x66, 0x56, 0x5a, 0x85, 0xf2, 0x70])) === 0, 'diff code');
-    assert(Buffer.compare(taprootTreeHelper([[[[[{ script: b }]]]]]), Buffer.from([0xc1, 0xb5, 0xbd, 0x5a, 0xf8, 0x73, 0xb3, 0xcf, 0x6e, 0x5a, 0x90, 0xed, 0x7d, 0xfa, 0x3, 0xda, 0x9, 0xad, 0x4c, 0x4f, 0x61, 0xae, 0xdb, 0x43, 0x57, 0xc8, 0x7f, 0x13, 0x24, 0x4d, 0xd, 0x44])) === 0, 'deep leaf');
-    assert(Buffer.compare(taprootTreeHelper([{ script: b }, { script: b }]), Buffer.from([0x12, 0x99, 0x1d, 0x5d, 0x42, 0x73, 0x5f, 0x67, 0x9b, 0xb1, 0xa2, 0x4a, 0x40, 0x26, 0xf4, 0xa6, 0xe4, 0xfb, 0xe4, 0x96, 0x12, 0xe2, 0xb9, 0x44, 0xf2, 0x6a, 0xb9, 0x31, 0x98, 0x25, 0x39, 0x12])) === 0, '2 same leaves');
-    assert(Buffer.compare(taprootTreeHelper([{ script: b }, { script: c }]), Buffer.from([0x53, 0x14, 0x98, 0x4f, 0x24, 0xab, 0x8, 0x11, 0x3d, 0x57, 0x90, 0x63, 0x6c, 0x6c, 0x7f, 0xb8, 0xa0, 0x3, 0xe6, 0xb, 0x50, 0xe5, 0xb6, 0x0, 0xb6, 0x2e, 0x97, 0xd0, 0x41, 0x33, 0xe4, 0xa5])) === 0, '2 diff leaves');
-    assert(Buffer.compare(taprootTreeHelper([{ script: b }, [{ script: c }], { script: d }, [{ script: f }, { script: g }]]), Buffer.from([0x7d, 0x6, 0x22, 0x7e, 0xc4, 0xd4, 0xdc, 0x84, 0xec, 0x46, 0xa6, 0x24, 0x81, 0xf8, 0x6c, 0xea, 0x34, 0x66, 0xd2, 0x47, 0x91, 0x84, 0xe5, 0xdc, 0x17, 0x14, 0x59, 0x76, 0xbf, 0x36, 0x1a, 0xef])) === 0, 'multiple levels');
+    assert.bufferEqual( 
+      Taproot.taprootTreeHelper([]),
+      Buffer.from([]),
+      'empty'
+    )
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b)]),
+      Buffer.from('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44', 'hex'),
+      '1 leaf'
+    )
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b, 194)]),
+      Buffer.from('06abb1a7f74bbb1030c8385a757352d4bde36743c4ba1eab734c9b8441e10b93', 'hex'),
+      'diff version'
+    )
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(c)]),
+      Buffer.from('993e66f0dc536073d5a2c5989267bc8762045303b91c027bf33666565a85f270', 'hex'),
+      'diff code'
+    )
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([[[[[new Taproot.TapLeaf(b)]]]]]),
+      Buffer.from('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44', 'hex'),
+      'deep leaf'
+    )
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), new Taproot.TapLeaf(b)]),
+      Buffer.from('12991d5d42735f679bb1a24a4026f4a6e4fbe49612e2b944f26ab93198253912', 'hex'),
+      '2 same leaves'
+    )
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), new Taproot.TapLeaf(c)]),
+      Buffer.from('5314984f24ab08113d5790636c6c7fb8a003e60b50e5b600b62e97d04133e4a5', 'hex'),
+      '2 diff leaves'
+    )
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), [new Taproot.TapLeaf(c)], new Taproot.TapLeaf(d), [new Taproot.TapLeaf(f), new Taproot.TapLeaf(g)]]),
+      Buffer.from('7d06227ec4d4dc84ec46a62481f86cea3466d2479184e5dc17145976bf361aef', 'hex'),
+      'multiple levels'
+    )
   });
 });
