@@ -244,8 +244,8 @@ describe('Wallet', function() {
   this.timeout(process.browser ? 20000 : 5000);
 
   before(async () => {
-    await wdb.open();
     await workers.open();
+    await wdb.open();
   });
 
   after(async () => {

@@ -250,8 +250,8 @@ describe('Integration', function () {
   }
 
   before(async () => {
-    await wdb.open();
     await workers.open();
+    await wdb.open();
   });
 
   let oldBalance, newBalance, oldCoins, newCoins;
