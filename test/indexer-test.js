@@ -755,8 +755,9 @@ describe('Indexer', function() {
           assert.equal(blocks.length, 150);
 
           for (let i = 0; i < 10; i++) {
-            for (const v of vectors)
-              await wclient.execute('sendtoaddress', [v.addr, v.amount]);
+            for (const v of vectors) {
+              await wclient.execute('sendtoaddress', [v.addr, v.amount, '', '', false, true]);
+            }
 
             const blocks = await nclient.execute(
               'generatetoaddress', [1, coinbase]);
@@ -1016,7 +1017,7 @@ describe('Indexer', function() {
       for (let i = 0; i < 10; i++) {
         for (const v of vectors) {
           const txid = await wclient.execute(
-            'sendtoaddress', [v.addr, v.amount]);
+            'sendtoaddress', [v.addr, v.amount, '', '', false, true]);
 
           confirmed.push(txid);
         }
@@ -1033,7 +1034,7 @@ describe('Indexer', function() {
       for (let i = 0; i < 5; i++) {
         for (const v of vectors) {
           const txid = await wclient.execute(
-            'sendtoaddress', [v.addr, v.amount]);
+            'sendtoaddress', [v.addr, v.amount, '', '', false, true]);
 
           unconfirmed.push(txid);
         }

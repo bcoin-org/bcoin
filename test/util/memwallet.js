@@ -15,6 +15,7 @@ const {BloomFilter} = require('bfilter');
 const KeyRing = require('../../lib/primitives/keyring');
 const Outpoint = require('../../lib/primitives/outpoint');
 const Coin = require('../../lib/primitives/coin');
+const {CoinSelector} = require('../../lib/wallet/coinselector');
 
 class MemWallet {
   constructor(options) {
@@ -380,6 +381,7 @@ class MemWallet {
       changeAddress: this.getChange(),
       height: -1,
       rate: options.rate,
+      useSelectEstimate: true,
       maxFee: options.maxFee
     });
   }
@@ -400,7 +402,7 @@ class MemWallet {
 
     await this.fund(mtx, options);
 
-    assert(mtx.getFee() <= MTX.Selector.MAX_FEE, 'TX exceeds MAX_FEE.');
+    assert(mtx.getFee() <= CoinSelector.MAX_FEE, 'TX exceeds MAX_FEE.');
 
     mtx.sortMembers();
 

@@ -244,8 +244,8 @@ describe('Wallet', function() {
   this.timeout(process.browser ? 20000 : 5000);
 
   before(async () => {
-    await wdb.open();
     await workers.open();
+    await wdb.open();
   });
 
   after(async () => {
@@ -777,7 +777,8 @@ describe('Wallet', function() {
 
     await alice.fund(m2, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     await alice.sign(m2);
@@ -808,6 +809,35 @@ describe('Wallet', function() {
     assert.strictEqual(err.requiredFunds, 25000);
   });
 
+  it('should throw funding error', async () => {
+    const alice = await wdb.create();
+    const bob = await wdb.create();
+
+    // Coinbase
+    const t1 = new MTX();
+    t1.addInput(dummyInput());
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+    t1.addOutput(await alice.receiveAddress(), 5460);
+
+    await wdb.addTX(t1.toTX());
+
+    // Create new transaction
+    const m2 = new MTX();
+    m2.addOutput(await bob.receiveAddress(), 20460);
+
+    await assert.rejects(
+      alice.fund(m2, {useSelectEstimate: true}),
+      {type: 'FundingError'}
+    );
+
+    await assert.rejects(
+      alice.fund(m2, {useSelectEstimate: false}),
+      {type: 'FundingError'}
+    );
+  });
+
   it('should fill tx with inputs with accurate fee', async () => {
     const alice = await wdb.create({
       master: KEY1
@@ -832,7 +862,8 @@ describe('Wallet', function() {
     m2.addOutput(await bob.receiveAddress(), 5460);
 
     await alice.fund(m2, {
-      rate: 10000
+      rate: 10000,
+      useSelectEstimate: true
     });
 
     await alice.sign(m2);
@@ -1032,7 +1063,8 @@ describe('Wallet', function() {
 
     await alice.fund(t2, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     await alice.sign(t2);
@@ -1115,7 +1147,8 @@ describe('Wallet', function() {
 
     await wallet.fund(t3, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     // Coinbase
@@ -1134,7 +1167,8 @@ describe('Wallet', function() {
     await wallet.fund(t5, {
       rate: 10000,
       round: true,
-      account: 'foo'
+      account: 'foo',
+      useSelectEstimate: true
     });
 
     currentWallet = wallet;
@@ -1188,7 +1222,8 @@ describe('Wallet', function() {
 
     await wallet.fund(t2, {
       rate: 10000,
-      round: true
+      round: true,
+      useSelectEstimate: true
     });
 
     // Should fail
@@ -1228,7 +1263,8 @@ describe('Wallet', function() {
     await alice.fund(t2, {
       rate: 10000,
       round: true,
-      subtractFee: true
+      subtractFee: true,
+      useSelectEstimate: true
     });
 
     await alice.sign(t2);
@@ -1258,7 +1294,8 @@ describe('Wallet', function() {
       subtractFee: true,
       rate: 10000,
       round: true,
-      outputs: [{ address: await bob.receiveAddress(), value: 21840 }]
+      outputs: [{ address: await bob.receiveAddress(), value: 21840 }],
+      useSelectEstimate: true
     };
 
     // Create new transaction
@@ -1345,7 +1382,8 @@ describe('Wallet', function() {
       outputs: [{
         address: await bob.receiveAddress(),
         value: total
-      }]
+      }],
+      useSelectEstimate: true
     };
 
     const t3 = await alice.createTX(options);
@@ -1480,7 +1518,8 @@ describe('Wallet', function() {
       outputs: [{
         address: await wallet.receiveAddress(),
         value: 7000
-      }]
+      }],
+      useSelectEstimate: true
     };
 
     // Create new transaction
@@ -2265,7 +2304,7 @@ describe('Wallet', function() {
       for (let i = 0; i < 101; i++)
         await mineBlock();
 
-      await wallet.send({outputs: [{address: waddr, value: 1 * 1e8}]});
+      await wallet.send({outputs: [{address: waddr, value: 1 * 1e8}], useSelectEstimate: true});
       await mineBlock();
 
       await wclient.close();

@@ -144,7 +144,7 @@ describe('Wallet RPC Methods', function() {
   it('should rpc sendtoaddress', async () => {
     await wclient.execute('selectwallet', ['miner']);
 
-    const txid = await wclient.execute('sendtoaddress', [addressHot, 0.1234]);
+    const txid = await wclient.execute('sendtoaddress', [addressHot, 0.1234, '', '', false, true]);
     assert.strictEqual(txid.length, 64);
   });
 
@@ -166,7 +166,7 @@ describe('Wallet RPC Methods', function() {
     const sendTo = {};
     sendTo[addressHot] = 1.0;
     sendTo[addressMiner] = 0.1111;
-    const txid = await wclient.execute('sendmany', ['default', sendTo]);
+    const txid = await wclient.execute('sendmany', ['default', sendTo, 1, '', false, true]);
     assert.strictEqual(txid.length, 64);
   });
 
@@ -181,7 +181,7 @@ describe('Wallet RPC Methods', function() {
     const sendTo = {};
     sendTo[addressHot] = null;
     await assert.rejects(async () => {
-      await wclient.execute('sendmany', ['default', sendTo]);
+      await wclient.execute('sendmany', ['default', sendTo, 1, '', false, true]);
     }, {
       name: 'Error',
       message: 'Invalid amount.'
@@ -564,7 +564,7 @@ describe('Wallet RPC Methods', function() {
       const address = account.receiveAddress;
 
       await wclient.execute('selectwallet', ['miner']);
-      const txid = await wclient.execute('sendtoaddress', [address, 0.01843]);
+      const txid = await wclient.execute('sendtoaddress', [address, 0.01843, '', '', false, true]);
       await wclient.execute('selectwallet', ['import']);
 
       const blocks = await nclient.execute('generatetoaddress', [1, addressMiner]);

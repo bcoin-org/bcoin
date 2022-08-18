@@ -10,7 +10,8 @@ const Script = require('../lib/script/script');
 const Chain = require('../lib/blockchain/chain');
 const WorkerPool = require('../lib/workers/workerpool');
 const Miner = require('../lib/mining/miner');
-const {Selector, MTX} = require('../lib/primitives/mtx');
+const {MTX} = require('../lib/primitives/mtx');
+const {CoinSelector} = require('../lib/wallet/coinselector');
 const MemWallet = require('./util/memwallet');
 const Network = require('../lib/protocol/network');
 const Output = require('../lib/primitives/output');
@@ -822,20 +823,20 @@ describe('Chain', function() {
     const job = await cpu.createJob();
     const outputs = [{ address: wallet.getAddress(), value: 0 }];
 
-    Selector.MAX_FEE = 50 * consensus.COIN;
-    const maxFee = Selector.MAX_FEE;
+    const maxFee = CoinSelector.MAX_FEE;
     const maxMoney = consensus.MAX_MONEY;
+    CoinSelector.MAX_FEE = 50 * consensus.COIN;
 
     try {
       const tx1 = await wallet.send({
         outputs: outputs,
-        hardFee: Selector.MAX_FEE
+        hardFee: CoinSelector.MAX_FEE
       });
       job.pushTX(tx1.toTX());
 
       const tx2 = await wallet.send({
         outputs: outputs,
-        hardFee: Selector.MAX_FEE
+        hardFee: CoinSelector.MAX_FEE
       });
       job.pushTX(tx2.toTX());
 
@@ -845,7 +846,7 @@ describe('Chain', function() {
       assert.strictEqual(await mineBlock(job),
         'bad-txns-accumulated-fee-outofrange');
     } finally {
-      Selector.MAX_FEE = maxFee;
+      CoinSelector.MAX_FEE = maxFee;
       consensus.MAX_MONEY = maxMoney;
     }
   });

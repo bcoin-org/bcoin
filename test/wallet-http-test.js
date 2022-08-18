@@ -202,6 +202,7 @@ for (const witnessOpt of witnessOptions) {
     it('should send a tx', async () => {
       const options = {
         rate: 10000,
+        useSelectEstimate: true,
         outputs: [{
           value: 10000,
           address: addr.toString(node.network)
@@ -316,6 +317,7 @@ for (const witnessOpt of witnessOptions) {
       const tx = await wallet.createTX({
         sign: false,
         template: true,
+        useSelectEstimate: true,
         outputs: [{
           address: change.address,
           value: 20000
