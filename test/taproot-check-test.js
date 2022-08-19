@@ -11,6 +11,7 @@ const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
 const Script = require('../lib/script/script');
 const Taproot = require('../lib/script/taproot');
+const common = require('../lib/script/common');
 const schnorr = require('bcrypto/lib/schnorr');
 const random = require('bcrypto/lib/random');
 const {taggedHash} = require('../lib/utils');
@@ -294,46 +295,52 @@ describe('Helper Functions', () => {
       'empty'
     );
 
-    assert.equal(
-      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b)]),
-      'c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44',
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b, common.LEAF_VERSION_TAPSCRIPT)]),
+      Buffer.from('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44', 'hex'),
       '1 leaf'
     );
 
-    assert.equal(
+    assert.bufferEqual(
       Taproot.taprootTreeHelper([new Taproot.TapLeaf(b, 194)]),
-      '06abb1a7f74bbb1030c8385a757352d4bde36743c4ba1eab734c9b8441e10b93',
+      Buffer.from('06abb1a7f74bbb1030c8385a757352d4bde36743c4ba1eab734c9b8441e10b93', 'hex'),
       'diff leaf version'
     );
 
-    assert.equal(
-      Taproot.taprootTreeHelper([new Taproot.TapLeaf(c)]),
-      '993e66f0dc536073d5a2c5989267bc8762045303b91c027bf33666565a85f270',
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(c, common.LEAF_VERSION_TAPSCRIPT)]),
+      Buffer.from('993e66f0dc536073d5a2c5989267bc8762045303b91c027bf33666565a85f270', 'hex'),
       'diff code'
     );
 
-    assert.equal(
-      Taproot.taprootTreeHelper([[[[[new Taproot.TapLeaf(b)]]]]]),
-      'c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44',
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([[[[[new Taproot.TapLeaf(b, common.LEAF_VERSION_TAPSCRIPT)]]]]]),
+      Buffer.from('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44', 'hex'),
       'deep leaf'
     );
 
-    assert.equal(
-      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), new Taproot.TapLeaf(b)]),
-      '12991d5d42735f679bb1a24a4026f4a6e4fbe49612e2b944f26ab93198253912',
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b, common.LEAF_VERSION_TAPSCRIPT), new Taproot.TapLeaf(b, common.LEAF_VERSION_TAPSCRIPT)]),
+      Buffer.from('12991d5d42735f679bb1a24a4026f4a6e4fbe49612e2b944f26ab93198253912', 'hex'),
       '2 same leaves'
     );
 
-    assert.equal(
-      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), new Taproot.TapLeaf(c)]),
-      '5314984f24ab08113d5790636c6c7fb8a003e60b50e5b600b62e97d04133e4a5',
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b, common.LEAF_VERSION_TAPSCRIPT), new Taproot.TapLeaf(c, common.LEAF_VERSION_TAPSCRIPT)]),
+      Buffer.from('5314984f24ab08113d5790636c6c7fb8a003e60b50e5b600b62e97d04133e4a5', 'hex'),
       '2 diff leaves'
     );
 
-    assert.equal(
-      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b), [new Taproot.TapLeaf(c)], new Taproot.TapLeaf(d), [new Taproot.TapLeaf(f), new Taproot.TapLeaf(g)]]),
-      '7d06227ec4d4dc84ec46a62481f86cea3466d2479184e5dc17145976bf361aef',
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([new Taproot.TapLeaf(b, common.LEAF_VERSION_TAPSCRIPT), [new Taproot.TapLeaf(c, common.LEAF_VERSION_TAPSCRIPT)], new Taproot.TapLeaf(d, common.LEAF_VERSION_TAPSCRIPT), [new Taproot.TapLeaf(f, common.LEAF_VERSION_TAPSCRIPT), new Taproot.TapLeaf(g, common.LEAF_VERSION_TAPSCRIPT)]]),
+      Buffer.from('7d06227ec4d4dc84ec46a62481f86cea3466d2479184e5dc17145976bf361aef', 'hex'),
       'multiple levels'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([[new Taproot.TapLeaf(b, common.LEAF_VERSION_TAPSCRIPT), new Taproot.TapLeaf(c, common.LEAF_VERSION_TAPSCRIPT), new Taproot.TapLeaf(d, common.LEAF_VERSION_TAPSCRIPT)], [new Taproot.TapLeaf(f, common.LEAF_VERSION_TAPSCRIPT), new Taproot.TapLeaf(g, common.LEAF_VERSION_TAPSCRIPT)]]),
+      Buffer.from('eab7f3ca183c40faed41641c972acf02cfaa537e124b2f3806b5323b84386426', 'hex'),
+      'tree structure'
     );
   });
 
@@ -359,20 +366,10 @@ describe('Helper Functions', () => {
 
           // Test taproot tree helper
           const treeRoot = Taproot.taprootTreeHelper(tree);
-          assert.strictEqual(treeRoot, intermediary.merkleRoot);
+          assert.strictEqual(treeRoot? treeRoot.toString('hex'):null, intermediary.merkleRoot);
 
-          // Test verifyTaprootCommitment()
-          // TODO: should we have a helper function for this?
-          let size;
-          if (treeRoot)
-            size = 64;
-          else
-            size = 32;
-          const tapTweak = bio.write(size);
-          tapTweak.writeBytes(Buffer.from(given.internalPubkey, 'hex'));
-          if (treeRoot)
-            tapTweak.writeBytes(Buffer.from(treeRoot, 'hex'));
-          const tweak = taggedHash.TapTweakHash.digest(tapTweak.render());
+          // Test taprootCommitment()
+          const tweak = Taproot.taprootCommitment(Buffer.from(given.internalPubkey, 'hex'), treeRoot);
           assert.strictEqual(tweak.toString('hex'), intermediary.tweak);
 
           // Test bcrypto schnorr.publicKeyTweakCheck()
