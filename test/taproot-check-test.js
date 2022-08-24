@@ -25,6 +25,7 @@ const ERR_SIG_SCHNORR = { message: 'TAPROOT_INVALID_SIG' };
 const ERR_CONTROLBLOCK_SIZE = { message: 'TAPROOT_WRONG_CONTROL_SIZE' };
 const ERR_WITNESS_PROGRAM_MISMATCH = { message: 'WITNESS_PROGRAM_MISMATCH' };
 const ERR_STACK_SIZE = { message: /STACK_SIZE/g };
+const ERR_SIG_SCHNORR_SIZE = {message: 'SCHNORR_SIG_SIZE' };
 
 describe('Taproot Check', function() {
   describe('Key spend', function() {
@@ -65,6 +66,21 @@ describe('Taproot Check', function() {
       assert.throws(
         () => mtx.check(),
         ERR_EMPTY_WITNESS
+      );
+    });
+
+    it('should have invalid schnorr signature size', () => {
+      const mtx = new MTX();
+      mtx.outputs.push(new Output({ value: 1e8 - 10000 }));
+      mtx.addCoin(keyspendUTXO);
+
+      signMTX(mtx);
+
+      mtx.inputs[0].witness.items[0] = mtx.inputs[0].witness.items[0].slice(0, -1);
+
+      assert.throws(
+        () => mtx.check(),
+        ERR_SIG_SCHNORR_SIZE
       );
     });
 
