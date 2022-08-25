@@ -31,7 +31,8 @@ const node = new FullNode({
   env: {
     'BCOIN_WALLET_HTTP_PORT': ports.wallet.toString()
   },
-  listen: true
+  listen: true,
+  publicHost: '123.123.123.123'
 });
 
 const nclient = new NodeClient({
