@@ -26,6 +26,7 @@ const Network = require('../lib/protocol/network');
 const network = Network.get('regtest');
 const {NodeClient, WalletClient} = require('../lib/client');
 const {forValue, testdir, rimraf} = require('./util/common');
+const {services} = require('../lib/net/common');
 
 const ports = {
   p2p: 49331,
@@ -938,6 +939,39 @@ describe('Indexer', function() {
 
         assert.equal(node.txindex, null);
         assert.equal(node.addrindex, null);
+      });
+
+      it('will require filter index for BIP157 (negative)', async () => {
+        let err = null;
+
+        try {
+          new FullNode({
+            prefix: prefix,
+            network: 'regtest',
+            port: ports.p2p,
+            httpPort: ports.node,
+            bip157: true
+          });
+        } catch (e) {
+          err = e;
+        }
+        assert(err);
+        assert.equal(err.message, 'Filter indexer is required for BIP 157');
+      });
+
+      it('will require filter index for BIP157 (positive)', async () => {
+        const node = new FullNode({
+          prefix: prefix,
+          network: 'regtest',
+          port: ports.p2p,
+          httpPort: ports.node,
+          indexFilter: true,
+          bip157: true
+        });
+
+        await node.open();
+        assert(node.pool.options.services & services.NODE_COMPACT_FILTERS);
+        await node.close();
       });
     });
   });

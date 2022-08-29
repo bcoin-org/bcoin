@@ -283,6 +283,161 @@ describe('Net', function() {
       check(pkt);
     });
 
+    it('getCFilters', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'getcfilters');
+        assert.equal(pkt.type, packets.types.GETCFILTERS);
+
+        assert.equal(pkt.startHeight, 12);
+        assert.equal(pkt.stopHash.toString('hex'), 'ab'.repeat(32));
+        assert.equal(pkt.filterType, common.FILTERS.BASIC);
+
+        assert.equal(pkt.getSize(), 37);
+        assert.bufferEqual(pkt.toRaw(), Buffer.from('00' +
+          '0c000000' +
+          'abababababababababababababababababababababababababababababababab',
+          'hex'));
+      };
+
+      let pkt = new packets.GetCFiltersPacket(
+        0,
+        12,
+        Buffer.from('ab'.repeat(32), 'hex')
+      );
+      check(pkt);
+
+      pkt = packets.GetCFiltersPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('getCFHeaders', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'getcfheaders');
+        assert.equal(pkt.type, packets.types.GETCFHEADERS);
+
+        assert.equal(pkt.startHeight, 12);
+        assert.equal(pkt.stopHash.toString('hex'), 'ab'.repeat(32));
+        assert.equal(pkt.filterType, common.FILTERS.BASIC);
+        assert.equal(pkt.getSize(), 37);
+        assert.bufferEqual(pkt.toRaw(), Buffer.from('00' +
+          '0c000000' +
+          'abababababababababababababababababababababababababababababababab',
+          'hex'));
+      };
+
+      let pkt = new packets.GetCFHeadersPacket(
+        0,
+        12,
+        Buffer.from('ab'.repeat(32), 'hex')
+      );
+      check(pkt);
+
+      pkt = packets.GetCFHeadersPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('getCFCheckpt', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'getcfcheckpt');
+        assert.equal(pkt.type, packets.types.GETCFCHECKPT);
+
+        assert.equal(pkt.filterType, common.FILTERS.BASIC);
+        assert.equal(pkt.getSize(), 33);
+        assert.bufferEqual(pkt.toRaw(), Buffer.from('00' +
+          'abababababababababababababababababababababababababababababababab', 'hex'));
+      };
+
+      let pkt = new packets.GetCFCheckptPacket(
+        0,
+        Buffer.from('ab'.repeat(32), 'hex')
+      );
+      check(pkt);
+
+      pkt = packets.GetCFCheckptPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('CFilter', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'cfilter');
+        assert.equal(pkt.type, packets.types.CFILTER);
+
+        assert.equal(pkt.filterType, common.FILTERS.BASIC);
+        assert.equal(pkt.getSize(), 94);
+        assert.bufferEqual(pkt.toRaw(), Buffer.from('00' +
+          'abababababababababababababababababababababababababababababababab' +
+          '3c' +
+          'abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab', 'hex'));
+      };
+
+      let pkt = new packets.CFilterPacket(
+        0,
+        Buffer.from('ab'.repeat(32), 'hex'),
+        Buffer.from('ab'.repeat(60), 'hex')
+      );
+      check(pkt);
+
+      pkt = packets.CFilterPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('CFHeaders', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'cfheaders');
+        assert.equal(pkt.type, packets.types.CFHEADERS);
+
+        assert.equal(pkt.filterType, common.FILTERS.BASIC);
+        assert.equal(pkt.getSize(), 226);
+        assert.bufferEqual(pkt.toRaw(), Buffer.from('00' +
+          'abababababababababababababababababababababababababababababababab' +
+          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' +
+          '05' +
+          'abababababababababababababababababababababababababababababababab' +
+          'abababababababababababababababababababababababababababababababab' +
+          'abababababababababababababababababababababababababababababababab' +
+          'abababababababababababababababababababababababababababababababab' +
+          'abababababababababababababababababababababababababababababababab', 'hex'));
+      };
+
+      let pkt = new packets.CFHeadersPacket(
+        0,
+        Buffer.from('ab'.repeat(32), 'hex'),
+        Buffer.from('aa'.repeat(32), 'hex'),
+        Array(5)
+          .fill(Buffer.from('ab'.repeat(32), 'hex')));
+      check(pkt);
+
+      pkt = packets.CFHeadersPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
+    it('CFCheckpt', () => {
+      const check = (pkt) => {
+        assert.equal(pkt.cmd, 'cfcheckpt');
+        assert.equal(pkt.type, packets.types.CFCHECKPT);
+
+        assert.equal(pkt.filterType, common.FILTERS.BASIC);
+        assert.equal(pkt.getSize(), 162);
+        assert.bufferEqual(pkt.toRaw(), Buffer.from('00' +
+          'abababababababababababababababababababababababababababababababab' +
+          '04' +
+          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' +
+          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' +
+          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' +
+          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'hex'));
+      };
+
+      let pkt = new packets.CFCheckptPacket(
+        0,
+        Buffer.from('ab'.repeat(32), 'hex'),
+        Array(4)
+          .fill(Buffer.from('aa'.repeat(32), 'hex')));
+      check(pkt);
+
+      pkt = packets.CFCheckptPacket.fromRaw(pkt.toRaw());
+      check(pkt);
+    });
+
     it('getblocks', () => {
       const check = (pkt, values) => {
         assert.equal(pkt.cmd, 'getblocks');
