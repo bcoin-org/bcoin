@@ -63,6 +63,7 @@ describe('Wallet RPC Methods', function() {
   // Define an account level hd extended public key to be
   // used to derive addresses throughout the test suite
   let xpub;
+  let xpub2;
 
   let walletHot = null;
   let walletMiner = null;
@@ -79,8 +80,10 @@ describe('Wallet RPC Methods', function() {
     const priv = HDPrivateKey.fromMnemonic(mnemonic);
     const type = network.keyPrefix.coinType;
     const key = priv.derive(44, true).derive(type, true).derive(0, true);
+    const key2 = priv.derive(44, true).derive(type, true).derive(1, true);
 
     xpub = key.toPublic();
+    xpub2 = key2.toPublic();
 
     // Assert that the expected test phrase was
     // read from disk
@@ -316,6 +319,87 @@ describe('Wallet RPC Methods', function() {
       name: 'Error',
       message: 'Block not found.'
     });
+  });
+
+  it('should rpc importpubkey rescan = false', async () => {
+    // creating new watchOnly wallet
+    const accountKey = xpub2.xpubkey(network.type);
+    const response = await wclient.createWallet('watchonly', {
+      watchOnly: true,
+      accountKey: accountKey
+    });
+
+    assert.equal(response.id, 'watchonly');
+    assert.equal(response.watchOnly, true);
+
+    const wallet = await wclient.wallet('hot');
+    const {address, publicKey} = await wallet.createAddress('default');
+
+    await nclient.execute('generatetoaddress', [1, address]);
+
+    const watchOnlyWallet = await wclient.wallet('watchonly');
+
+    let balance;
+    balance = await watchOnlyWallet.getBalance();
+    assert.equal(balance.coin, 0);
+    assert.equal(balance.confirmed, 0);
+
+    // default rescan = false
+    await watchOnlyWallet.importPublic('default', publicKey);
+    balance = await watchOnlyWallet.getBalance();
+    assert.equal(balance.coin, 0);
+    assert.equal(balance.confirmed, 0);
+  });
+
+  it('should rpc rescan watchonly wallet', async () => {
+    await wclient.execute('selectwallet', ['watchonly']);
+    await wclient.execute('rescan', [0]);
+    const balance = await wclient.execute('getbalance',  ['', 1, true]);
+
+    assert.equal(balance, 50);
+
+    // changing wallet to primary for further tests
+    await wclient.execute('selectwallet', ['primary']);
+  });
+
+  it('should not abort rescan if WalletDB is not rescanning.', async () => {
+    await assert.rejects(
+      wclient.execute('abortrescan'),
+      {message: 'WalletDB is not rescanning.'}
+    );
+  });
+
+  it('should rpc abortRescan', async () => {
+    assert.strictEqual(wdb.height, 105);
+    assert.strictEqual(wdb.height, node.chain.height);
+
+    const handler = async (wallet, data, details) => {
+      if (details.height === 51) {
+        await wclient.execute('abortrescan');
+      }
+    };
+
+    wdb.on('confirmed', handler);
+
+    await wclient.execute('rescan', [0]);
+
+    // Can not garuntee where rescan will stop due to async
+    assert(wdb.height > 50);
+    assert(wdb.height < 60);
+    wdb.removeListener('confirmed', handler);
+  });
+
+  it('should not "rollback to the future"', async () => {
+    await assert.rejects(
+      wclient.execute('rescan', [60]),
+      {message: 'WDB: Cannot rollback to the future.'}
+    );
+  });
+
+  it('should rpc rescan and finish rescan after abort', async () => {
+    await wclient.execute('rescan', [40]);
+    assert.strictEqual(wdb.height, 105);
+    assert.strictEqual(wdb.height, node.chain.height);
   });
 
   describe('signmessage', function() {
