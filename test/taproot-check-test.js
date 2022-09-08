@@ -4,16 +4,22 @@
 'use strict';
 
 const assert = require('bsert');
-const bio = require('bufio');
+const Address = require('../lib/primitives/address');
 const MTX = require('../lib/primitives/mtx');
 const Coin = require('../lib/primitives/coin');
 const Output = require('../lib/primitives/output');
 const Script = require('../lib/script/script');
+const Taproot = require('../lib/script/taproot');
+const common = require('../lib/script/common');
 const schnorr = require('bcrypto/lib/schnorr');
 const random = require('bcrypto/lib/random');
-const {taggedHash} = require('../lib/utils');
 const consensus = require('../lib/protocol/consensus');
 const opcodes = Script.opcodes;
+
+// https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#Test_vectors
+const {
+  scriptPubKey
+} = require('./data/bip341-wallet-test-vectors.json');
 
 // Create a BIP340 Schnorr keypair
 const priv = schnorr.privateKeyGenerate();
@@ -104,23 +110,16 @@ describe('Taproot Check', function() {
   describe('Script spend', function() {
     // Simple script that requires no signing
     const script = Script.fromString('OP_1');
-    const tapLeaf = Buffer.from([
-        0xc0,   // leaf version
-        0x01,   // script size
-        0x51    // OP_1
-    ]);
+    const tapLeaf = new Taproot.TapLeaf(script, common.LEAF_VERSION_TAPSCRIPT);
 
     // Construct tapscript tree (with only one leaf)
-    const k0 = taggedHash.TapLeafHash.digest(tapLeaf);
-    const tapTweak = Buffer.alloc(64);
-    pub.copy(tapTweak, 0);
-    k0.copy(tapTweak, 32);
-    const t = taggedHash.TapTweakHash.digest(tapTweak);
+    const k0 = tapLeaf.getLeafHash();
+    const t = Taproot.getTapTweak(pub, k0);
     const [tweaked, odd] = schnorr.publicKeyTweakSum(pub, t);
 
     // Construct control block from 1-leaf tree
     const controlBlock = Buffer.alloc(33);
-    controlBlock[0] = 0xc0 + (odd ? 1 : 0);
+    controlBlock[0] = common.LEAF_VERSION_TAPSCRIPT + (odd ? 1 : 0);
     pub.copy(controlBlock, 1);
 
     // Create a pay-to-taproot script-spend UTXO
@@ -198,20 +197,11 @@ describe('Taproot Check', function() {
         }
         script.pushOp(opcodes.OP_1);
         script.compile();
-        const raw = script.toRaw();
-
-        const scriptSize = script.getVarSize();
-        let tapLeaf = bio.write(scriptSize + 1);
-        tapLeaf.writeU8(0xc0); // leaf version
-        tapLeaf.writeVarBytes(raw);
-        tapLeaf = tapLeaf.render();
 
         // Construct tapscript tree (with only one leaf)
-        const k0 = taggedHash.TapLeafHash.digest(tapLeaf);
-        const tapTweak = Buffer.alloc(64);
-        pub.copy(tapTweak, 0);
-        k0.copy(tapTweak, 32);
-        const t = taggedHash.TapTweakHash.digest(tapTweak);
+        const tapLeaf = new Taproot.TapLeaf(script, common.LEAF_VERSION_TAPSCRIPT);
+        const k0 = tapLeaf.getLeafHash();
+        const t = Taproot.getTapTweak(pub, k0);
         const [tweaked, odd] = schnorr.publicKeyTweakSum(pub, t);
 
         // Construct control block from 1-leaf tree
@@ -258,12 +248,147 @@ describe('Taproot Check', function() {
           );
         } else {
           // Max script size does not apply to taproot
-          assert(raw.length > consensus.MAX_SCRIPT_SIZE);
+          assert(script.getSize() > consensus.MAX_SCRIPT_SIZE);
 
           mtx.check();
           assert(mtx.verify());
         }
       });
     }
+  });
+});
+
+describe('Helper Functions', () => {
+  it('taprootTreeHelper should produce tree root', () => {
+    /*
+      The outputs for the taproot tree helper function are compared against the results
+      produced by the bitcoin core implementation.
+    */
+
+    const b = new Script({ raw: Buffer.from('b') });
+    const c = new Script({ raw: Buffer.from('c') });
+    const d = new Script({ raw: Buffer.from('d') });
+    const f = new Script({ raw: Buffer.from('f') });
+    const g = new Script({ raw: Buffer.from('g') });
+
+    const buf = (hex) => {
+      return Buffer.from(hex, 'hex');
+    };
+
+    const tap = (script, version = common.LEAF_VERSION_TAPSCRIPT) => {
+      return new Taproot.TapLeaf(script, version);
+    };
+
+    assert.equal(
+      Taproot.taprootTreeHelper([]),
+      null,
+      'empty'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([tap(b)]),
+      buf('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44'),
+      '1 leaf'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([tap(b, 194)]),
+      buf('06abb1a7f74bbb1030c8385a757352d4bde36743c4ba1eab734c9b8441e10b93'),
+      'diff leaf version'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([tap(c)]),
+      buf('993e66f0dc536073d5a2c5989267bc8762045303b91c027bf33666565a85f270'),
+      'diff code'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([[[[[tap(b)]]]]]),
+      buf('c1b5bd5af873b3cf6e5a90ed7dfa03da09ad4c4f61aedb4357c87f13244d0d44'),
+      'deep leaf'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([tap(b), tap(b)]),
+      buf('12991d5d42735f679bb1a24a4026f4a6e4fbe49612e2b944f26ab93198253912'),
+      '2 same leaves'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([tap(b), tap(c)]),
+      buf('5314984f24ab08113d5790636c6c7fb8a003e60b50e5b600b62e97d04133e4a5'),
+      '2 diff leaves'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([tap(b), [tap(c)], tap(d), [tap(f), tap(g)]]),
+      buf('7d06227ec4d4dc84ec46a62481f86cea3466d2479184e5dc17145976bf361aef'),
+      'multiple levels'
+    );
+
+    assert.bufferEqual(
+      Taproot.taprootTreeHelper([[tap(b), tap(c), tap(d)], [tap(f), tap(g)]]),
+      buf('eab7f3ca183c40faed41641c972acf02cfaa537e124b2f3806b5323b84386426'),
+      'tree structure'
+    );
+  });
+
+  describe('BIP341 test vectors', function() {
+    describe('scriptPubKey', function() {
+      // Conform test vectors from BIP341 json file
+      function conformScriptTree (scriptTree) {
+        if (!scriptTree)
+          return [];
+
+        if (Array.isArray(scriptTree))
+          return scriptTree.map(x => conformScriptTree(x));
+
+        return [
+          new Taproot.TapLeaf(Script.fromRaw(scriptTree.script, 'hex'), scriptTree.leafVersion)
+        ];
+      }
+
+      for (const test of scriptPubKey) {
+        it(test.expected.bip350Address, () => {
+          const {given, intermediary, expected} = test;
+          const tree = conformScriptTree(given.scriptTree);
+
+          // Test taproot tree helper
+          const treeRoot = Taproot.taprootTreeHelper(tree);
+          assert.strictEqual(
+            treeRoot ? treeRoot.toString('hex') : null,
+            intermediary.merkleRoot
+          );
+
+          // Test getTapTweak
+          const tweak = Taproot.getTapTweak(
+            Buffer.from(given.internalPubkey, 'hex'),
+            treeRoot
+          );
+          assert.strictEqual(tweak.toString('hex'), intermediary.tweak);
+
+          // Test bcrypto schnorr.publicKeyTweakCheck()
+          if (expected.scriptPathControlBlocks) {
+            for (const cb of expected.scriptPathControlBlocks) {
+              assert(
+                schnorr.publicKeyTweakCheck(
+                  Buffer.from(given.internalPubkey, 'hex'),
+                  Buffer.from(intermediary.tweak, 'hex'),
+                  Buffer.from(intermediary.tweakedPubkey, 'hex'),
+                  Boolean(parseInt(cb.slice(0, 2), 16) & 1)
+                )
+              );
+            }
+          }
+
+          // Test bech32m
+          assert.strictEqual(
+            Address.fromScript(Script.fromRaw(expected.scriptPubKey, 'hex')).toString(),
+            expected.bip350Address
+          );
+        });
+      }
+    });
   });
 });
