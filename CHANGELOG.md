@@ -4,6 +4,20 @@
 
 ## unreleased
 
+### Wallet changes
+
+- A new `u` bucket is added to `txdb` that stores only spendable coins indexed by `account` and `value`.
+- A new multi-algorithm coin selection. (Lowest Larger, Branch and Bound, and Single Random Draw)
+
+#### How to upgrade
+
+To upgrade wallet, we need to copy coins from `c` bucket to `u` bucket in `txdb`.
+
+To do this you can run:
+```
+node ./migrate/walletdb7to8.js /path/to/bcoin/wallet
+```
+
 ### Node API changes
 
 #### RPC

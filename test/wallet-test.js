@@ -240,6 +240,39 @@ async function testP2SH(witness, nesting) {
   assert.strictEqual(tx.getFee(view), 10000);
 }
 
+async function compareCoinsAndCredits(wallet) {
+  // compare coins
+  const coins = await wallet.getUnspentCoins();
+  const expectedCoins = await wallet.getCoins();
+
+  assert.strictEqual(coins.length, expectedCoins.length);
+
+  coins.sort((a, b) => (a.hash > b.hash ? 1 : -1));
+  expectedCoins.sort((a, b) => (a.hash > b.hash ? 1 : -1));
+
+  for (let i = 0; i < coins.length; i++) {
+    assert.bufferEqual(coins[i].hash, expectedCoins[i].hash);
+    assert.strictEqual(coins[i].index, expectedCoins[i].index);
+  }
+
+  // compare credits
+  const credits = await wallet.getUnspentCredits();
+  let expectedCredits = await wallet.getCredits();
+
+  // we only care about the credits that are not spent
+  expectedCredits = expectedCredits.filter(c => !c.spent);
+
+  assert.strictEqual(credits.length, expectedCredits.length);
+
+  credits.sort((a, b) => (a.coin.hash > b.coin.hash ? 1 : -1));
+  expectedCredits.sort((a, b) => (a.coin.hash > b.coin.hash ? 1 : -1));
+
+  for (let i = 0; i < credits.length; i++) {
+    assert.bufferEqual(coins[i].hash, expectedCoins[i].hash);
+    assert.strictEqual(coins[i].index, expectedCoins[i].index);
+  }
+}
+
 describe('Wallet', function() {
   this.timeout(process.browser ? 20000 : 5000);
 
@@ -456,6 +489,10 @@ describe('Wallet', function() {
         return wtx.tx.hash().equals(f1.hash());
       }));
     }
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(alice);
+    compareCoinsAndCredits(bob);
   });
 
   it('should cleanup spenders after double-spend', async () => {
@@ -502,6 +539,9 @@ describe('Wallet', function() {
       }, 0);
       assert.strictEqual(total, 56000);
     }
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
   });
 
   it('should handle double-spend (not our input)', async () => {
@@ -525,6 +565,9 @@ describe('Wallet', function() {
     await wdb.addTX(t2.toTX());
     assert.strictEqual(conflict, 1);
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 0);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
   });
 
   it('should handle double-spend (multiple inputs)', async () => {
@@ -555,6 +598,9 @@ describe('Wallet', function() {
 
     assert.strictEqual(conflict, 1);
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
   });
 
   it('should handle double-spend (with block)', async () => {
@@ -586,6 +632,9 @@ describe('Wallet', function() {
     assert.strictEqual(conflict, 1);
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
     assert.strictEqual((await wallet.getBalance()).confirmed, 49000);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
   });
 
   it('should recover from interrupt when removing conflict', async () => {
@@ -645,6 +694,9 @@ describe('Wallet', function() {
     assert.strictEqual((await wallet.getBalance()).unconfirmed, 49000);
     assert.strictEqual((await wallet.getBalance()).confirmed, 49000);
     assert.strictEqual(wdb.height, 2);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
   });
 
   it('should handle more missed txs', async () => {
@@ -755,6 +807,10 @@ describe('Wallet', function() {
       const balance = await bob.getBalance();
       assert.strictEqual(balance.unconfirmed, 10000);
     }
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(alice);
+    compareCoinsAndCredits(bob);
   });
 
   it('should fill tx with inputs', async () => {
@@ -1714,6 +1770,10 @@ describe('Wallet', function() {
     await wdb.addBlock(nextBlock(wdb), [t3.toTX()]);
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(alice);
+    compareCoinsAndCredits(bob);
   });
 
   it('should recover from a missed tx and double spend', async () => {
@@ -1785,6 +1845,10 @@ describe('Wallet', function() {
     await wdb.addBlock(nextBlock(wdb), [t3.toTX()]);
 
     assert.strictEqual((await bob.getBalance()).unconfirmed, 30000);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(alice);
+    compareCoinsAndCredits(bob);
   });
 
   it('should remove a wallet', async () => {
@@ -1912,6 +1976,9 @@ describe('Wallet', function() {
     assert.strictEqual(bal1.confirmed, 0);
     assert.strictEqual(bal1.unconfirmed, 1020304);
 
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
+
     // Import private key into wallet
     assert(!await wallet.hasAddress(addr2));
     await wallet.importKey('default', ring2);
@@ -1931,6 +1998,9 @@ describe('Wallet', function() {
     // Confirm TX with dummy block in txdb
     const details = await wallet.txdb.confirm(wtx, block);
     assert.bufferEqual(details.tx.hash(), hash);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
 
     // Check balance
     const bal2 = await wallet.getBalance();
@@ -1986,6 +2056,9 @@ describe('Wallet', function() {
     // Confirm TX with dummy block in txdb
     await wallet.txdb.confirm(wtx1, block1);
 
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
+
     // Build TX to both addresses, known and unknown
     const mtx2 = new MTX();
     mtx2.addTX(tx1, 0, 99);
@@ -1996,6 +2069,9 @@ describe('Wallet', function() {
 
     // Add unconfirmed TX to txdb (no block provided)
     await wallet.txdb.add(tx2, null);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
 
     // Check
     const bal1 = await wallet.getBalance();
@@ -2023,6 +2099,9 @@ describe('Wallet', function() {
     // Confirm TX with dummy block in txdb
     const details = await wallet.txdb.confirm(wtx2, block2);
     assert.bufferEqual(details.tx.hash(), hash);
+
+    // compare coins in unspent coins with coins in wallet.
+    compareCoinsAndCredits(wallet);
 
     // Check balance
     const bal2 = await wallet.getBalance();
