@@ -105,7 +105,7 @@
     "test-browser": "NODE_BACKEND=js bmocha --reporter spec test/*.js",
     "test-file": "bmocha --reporter spec",
     "test-file-browser": "NODE_BACKEND=js bmocha --reporter spec",
-    "test-ci": "nyc -a -n 'lib/**/*.js' --reporter=lcov --reporter=text npm run test"
+    "test-ci": "BCOIN_RUN_LONG_TESTS=true nyc -a -n 'lib/**/*.js' --reporter=lcov --reporter=text npm run test"
   },
   "browser": {
     "./lib/hd/nfkd": "./lib/hd/nfkd-compat.js",
