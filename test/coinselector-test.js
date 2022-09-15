@@ -200,7 +200,10 @@ describe('Coin Selector', function () {
 });
 
 describe('Integration', function () {
-  this.timeout(360000);
+  if (!process.env.BCOIN_RUN_LONG_TESTS)
+    this.skip();
+
+  this.timeout(0);
 
   const workers = new WorkerPool({
     enabled: true,
