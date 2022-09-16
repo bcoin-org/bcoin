@@ -44,8 +44,7 @@ const wallet = resolve(prefix, 'wallet');
   if (await fs.exists(spvchain))
     exec(node, resolve(__dirname, 'chaindb4to6.js'), spvchain);
 
-  if (await fs.exists(index))
-    exec(node, resolve(__dirname, 'indexerdb0to1.js'), index);
+  exec(node, resolve(__dirname, 'indexerdb0to1.js'), index);
 
   if (await fs.exists(wallet))
     exec(node, resolve(__dirname, 'walletdb7to8.js'), wallet);
