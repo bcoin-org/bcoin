@@ -1357,9 +1357,7 @@ describe('Indexer', function() {
       });
 
       it('should get info', async () => {
-        const info = await nclient.getInfo();
-        const {indexes} = info;
-        const {filter} = indexes;
+        const {indexes: {filter}} = await nclient.getInfo();
 
         assert.strictEqual(Object.keys(filter).length, 1);
 
