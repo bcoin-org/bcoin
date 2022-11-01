@@ -59,6 +59,24 @@ async function updateChainVersion(db, version) {
   await parent.write();
 }
 
+async function updateChainDB(chain) {
+  const chainDB = bdb.create({
+    location: chain,
+    compression: true,
+    cacheSize: 32 << 20,
+    createIfMissing: false
+  });
+
+  await chainDB.open();
+  console.log('Opened %s.', chain);
+
+  const chainVersion = await getVersion(chainDB);
+  if (chainVersion === 6) {
+    await updateChainVersion(chainDB, 7);
+  }
+  await chainDB.close();
+}
+
 async function checkVersion(db, version) {
   console.log('Checking version.');
 
@@ -201,21 +219,16 @@ let count = 0;
 
   // Updating chainDB version to ensure
   // filter indexes are not duplicated.
-  const chainDB = bdb.create({
-    location: path.resolve(process.argv[2], '../chain'),
-    compression: true,
-    cacheSize: 32 << 20,
-    createIfMissing: false
-  });
-
-  console.log('Opened %s.', path.resolve(process.argv[2], '../chain'));
-  await chainDB.open();
-
-  const chainVersion = await getVersion(chainDB);
-  if (chainVersion === 6) {
-    await updateChainVersion(chainDB, 7);
+  const chain = path.resolve(process.argv[2], '../chain');
+  if (await fs.exists(chain)) {
+    await updateChainDB(chain);
   }
-  await chainDB.close();
+
+  // update spvChainDB if it exists
+  const spvchain = path.resolve(process.argv[2], '../spvchain');
+  if (await fs.exists(spvchain)) {
+    await updateChainDB(spvchain);
+  }
 })().then(() => {
   console.log('Migrated %d databases.', count);
   process.exit(0);
