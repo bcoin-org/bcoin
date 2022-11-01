@@ -14,6 +14,7 @@ const Block = require('../lib/primitives/block');
 const Golomb = require('../lib/golomb/golomb');
 const {U64} = require('n64');
 const BasicFilter = require('../lib/golomb/basicFilter');
+const {NodeClient} = require('../lib/client');
 
 class TestFilter extends Golomb {
   constructor() {
@@ -333,5 +334,25 @@ describe('Filter', function() {
       'hex'
     );
     assert.bufferEqual(actual, expected);
+  });
+
+  describe('HTTP', function() {
+    const nclient = new NodeClient({
+      port: node.network.rpcPort
+    });
+
+    it('should get info', async () => {
+      const {indexes: {filter}} = await nclient.getInfo();
+
+      assert.strictEqual(Object.keys(filter).length, 2);
+
+      assert(filter.BASIC);
+      assert(filter.BASIC.enabled);
+      assert.strictEqual(filter.BASIC.height, node.chain.height);
+
+      assert(filter.TEST);
+      assert(filter.TEST.enabled);
+      assert.strictEqual(filter.TEST.height, node.chain.height);
+    });
   });
 });

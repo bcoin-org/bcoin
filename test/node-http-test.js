@@ -79,6 +79,7 @@ describe('Node HTTP', function() {
     assert(typeof info.indexes.tx === 'object');
     assert.equal(info.indexes.addr.enabled, false);
     assert.equal(info.indexes.tx.height, 0);
+    assert.deepStrictEqual(info.indexes.filter, {});
   });
 
   it('should execute an rpc call', async () => {

@@ -996,8 +996,7 @@ describe('Indexer', function() {
     before(async () => {
       this.timeout(120000);
 
-      // Setup a testing node with txindex and addrindex
-      // both enabled.
+      // Setup a testing node with txindex, addrindex and filterindex enabled.
       node = new FullNode({
         network: 'regtest',
         apiKey: 'foo',
@@ -1007,6 +1006,7 @@ describe('Indexer', function() {
         workersSize: 2,
         indexTX: true,
         indexAddress: true,
+        indexFilter: true,
         port: ports.p2p,
         httpPort: ports.node,
         plugins: [require('../lib/wallet/plugin')],
@@ -1354,6 +1354,16 @@ describe('Indexer', function() {
           assert(unconfirmed.includes(all[i].hash));
 
         assert.deepEqual(sanitize(one.concat(two)), sanitize(all));
+      });
+
+      it('should get info', async () => {
+        const {indexes: {filter}} = await nclient.getInfo();
+
+        assert.strictEqual(Object.keys(filter).length, 1);
+
+        assert(filter.BASIC);
+        assert(filter.BASIC.enabled);
+        assert.strictEqual(filter.BASIC.height, node.chain.height);
       });
     }
 
