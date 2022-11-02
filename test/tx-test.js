@@ -14,6 +14,7 @@ const MTX = require('../lib/primitives/mtx');
 const Output = require('../lib/primitives/output');
 const Outpoint = require('../lib/primitives/outpoint');
 const Script = require('../lib/script/script');
+const {digests} = Script;
 const Witness = require('../lib/script/witness');
 const Opcode = require('../lib/script/opcode');
 const Input = require('../lib/primitives/input');
@@ -226,7 +227,7 @@ describe('TX', function() {
       const coin = view.getOutputFor(tx.inputs[0]);
       const flags = Script.flags.VERIFY_P2SH | Script.flags.VERIFY_DERSIG;
       clearCache(tx, noCache);
-      assert(tx.verifyInput(0, coin, flags));
+      assert(tx.verifyInput(0, [coin], flags));
     });
 
     it(`should parse witness tx properly ${suffix}`, () => {
@@ -340,7 +341,13 @@ describe('TX', function() {
 
       it(`should get sighash of ${hash} (${hex}) ${suffix}`, () => {
         const subscript = script.getSubscript(0).removeSeparators();
-        const hash = tx.signatureHash(index, subscript, 0, type, 0);
+        const hash = tx.signatureHash(
+          index,            // index
+          subscript,        // prev
+          0,                // value
+          type,             // sigHash type
+          digests.LEGACY    // sigHash digest type
+        );
         assert.bufferEqual(hash, expected);
       });
     }

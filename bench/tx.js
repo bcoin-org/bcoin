@@ -125,7 +125,7 @@ const tx10 = common.readTX('tx10');
   const end = bench('sighash');
 
   for (let i = 0; i < 1000000; i++)
-    tx.signatureHashV0(0, script, Script.hashType.ALL);
+    tx.signatureHashLegacy(0, script, Script.hashType.ALL);
 
   end(1000000);
 }

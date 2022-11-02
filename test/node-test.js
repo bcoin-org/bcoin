@@ -516,7 +516,7 @@ describe('Node', function() {
         capabilities: ['proposal'],
         mutable: ['time', 'transactions', 'prevblock'],
         version: 536870912,
-        rules: ['csv', '!segwit', 'testdummy'],
+        rules: ['csv', '!segwit', 'taproot', 'testdummy'],
         vbavailable: {},
         vbrequired: 0,
         height: 437,

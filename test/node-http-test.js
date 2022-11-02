@@ -100,7 +100,7 @@ describe('Node HTTP', function() {
       capabilities: ['proposal'],
       mutable: ['time', 'transactions', 'prevblock'],
       version: 536870912,
-      rules: ['!segwit'],
+      rules: ['!segwit', 'taproot'],
       vbavailable: {},
       vbrequired: 0,
       height: 1,
