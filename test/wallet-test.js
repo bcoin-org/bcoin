@@ -1624,6 +1624,125 @@ describe('Wallet', function() {
     assert(wkey);
   });
 
+  // https://github.com/satoshilabs/slips/blob/master/slip-0132.md \
+  // #bitcoin-test-vectors
+  it('should import xpubkey', async () => {
+    const wallet = await wdb.create({
+      id: 'xpubtest',
+      watchOnly: true,
+      accountKey:
+      'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhawA7d4' +
+      'R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr = account.toJSON().receiveAddress;
+    assert.strictEqual(recAddr, '1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA');
+  });
+
+  it('should import ypubkey', async () => {
+    const wallet = await wdb.create({
+      id: 'ypubtest',
+      watchOnly: true,
+      accountKey:
+      'ypub6Ww3ibxVfGzLrAH1PNcjyAWenMTbbAosGNB6VvmSEgytSER9az' +
+      'LDWCxoJwW7Ke7icmizBMXrzBx9979FfaHxHcrArf3zbeJJJUZPf663zsP'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr = account.toJSON().receiveAddress;
+    assert.strictEqual(recAddr, '37VucYSaXLCAsxYyAPfbSi9eh4iEcbShgf');
+  });
+
+  it('should import zpubkey', async () => {
+    const wallet = await wdb.create({
+      id: 'zpubtest',
+      watchOnly: true,
+      accountKey:
+      'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhX' +
+      'NfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr = account.toJSON().receiveAddress;
+    assert.strictEqual(recAddr, 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu');
+  });
+
+  it('should get x/y/zpub wallets by tx', async () => {
+    const xtx = new MTX();
+    xtx.addInput(dummyInput());
+    xtx.addOutput('1LqBGSKuX5yYUonjxT5qGfpUsXKYYWeabA', 50000);
+    const xrecWallet = await wdb.getWalletsByTX(xtx);
+    const xexpectedWallet = await wdb.get('xpubtest');
+    assert(xrecWallet.has(xexpectedWallet.wid));
+
+    const ytx = new MTX();
+    ytx.addInput(dummyInput());
+    ytx.addOutput('37VucYSaXLCAsxYyAPfbSi9eh4iEcbShgf', 50000);
+    const yrecWallet = await wdb.getWalletsByTX(ytx);
+    const yexpectedWallet = await wdb.get('ypubtest');
+    assert(yrecWallet.has(yexpectedWallet.wid));
+
+    const ztx = new MTX();
+    ztx.addInput(dummyInput());
+    ztx.addOutput('bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu', 50000);
+    const zrecWallet = await wdb.getWalletsByTX(ztx);
+    const zexpectedWallet = await wdb.get('zpubtest');
+    assert(zrecWallet.has(zexpectedWallet.wid));
+  });
+
+  // https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki#test-vectors
+  it('should create BIP49 wallet and addresses', async () => {
+    // test vectors provided for testnet only
+    const twdb = new WalletDB({ workers, network: 'testnet' });
+    await twdb.open();
+    const wallet = await twdb.create({
+      id: 'bip49test',
+      mnemonic: 'abandon abandon abandon abandon abandon abandon' +
+        ' abandon abandon abandon abandon abandon about',
+      purpose: 'y'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr = account.toJSON().receiveAddress;
+    assert.strictEqual(recAddr, '2Mww8dCYPUpKHofjgcXcBCEGmniw9CoaiD2');
+    await twdb.close();
+  });
+
+  // https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki#test-vectors
+  it('should import BIP84 zprvkey', async () => {
+    const wallet = await wdb.create({
+      id: 'zprvtest',
+      master: 'zprvAWgYBBk7JR8Gjrh4UJQ2uJdG1r3WNRRfURiABBE3RvMXYSrRJL' +
+        '62XuezvGdPvG6GFBZduosCc1YP5wixPox7zhZLfiUm8aunE96BBa4Kei5'
+    });
+
+    const account = await wallet.getAccount(0);
+    const recAddr1 = account.toJSON().receiveAddress;
+    const changeAddr = account.toJSON().changeAddress;
+    const accountKey = account.toJSON().accountKey;
+    let recAddr2 = await wallet.createReceive(0);
+    recAddr2 = recAddr2.toJSON().address;
+
+    assert.strictEqual(
+      recAddr1,
+      'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu'
+    );
+    assert.strictEqual(
+      changeAddr,
+      'bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el'
+    );
+    assert.strictEqual(
+      accountKey,
+      'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1' +
+      'r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs'
+    );
+    assert.strictEqual(
+      recAddr2,
+      'bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g'
+    );
+  });
+
   it('should import address', async () => {
     const key = KeyRing.generate();
 

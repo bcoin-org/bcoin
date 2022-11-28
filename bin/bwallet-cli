@@ -85,7 +85,8 @@ class CLI {
       watchOnly: !this.config.has('account-key')
         ? this.config.bool('watch-only')
         : true,
-      accountKey: this.config.str('account-key')
+      accountKey: this.config.str('account-key'),
+      purpose: this.config.str('purpose')
     };
 
     const wallet = await this.client.createWallet(id, options);
