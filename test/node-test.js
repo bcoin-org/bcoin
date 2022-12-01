@@ -595,7 +595,9 @@ describe('Node', function() {
       address: addr.toString(node.network),
       scriptPubKey: Script.fromAddress(addr, node.network).toJSON(),
       isscript: false,
-      iswitness: false
+      iswitness: true,
+      witness_version: 0,
+      witness_program: '0'.repeat(40)
     });
   });
 
