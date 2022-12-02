@@ -11,6 +11,7 @@ const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
 const Script = require('../lib/script/script');
 const Address = require('../lib/primitives/address');
+const TX = require('../lib/primitives/tx');
 const mnemonics = require('./data/mnemonic-english.json');
 const {forValue} = require('./util/common');
 
@@ -670,6 +671,31 @@ describe('Wallet RPC Methods', function() {
       await wclient.execute('importprunedfunds', [txraw, txoutproof]);
       balance = await wclient.execute('getbalance');
       assert.equal(balance, 0.01843);
+    });
+  });
+
+  describe('raw TXs', function() {
+    // 0-in, 2-out
+    const rawTX1 =
+      '0100000000024e61bc00000000001976a914fbdd46898a6d70a682cbd34420cc' +
+      'f0b6bb64493788acf67e4929010000001976a9141b002b6fc0f457bf8d092722' +
+      '510fce9f37f0423b88ac00000000';
+
+    let fundedTX1;
+
+    before(async () => {
+      await wclient.execute('selectwallet', ['miner']);
+    });
+
+    it('should fundrawtransaction', async () => {
+      const result = await wclient.execute('fundrawtransaction', [rawTX1]);
+      assert(result.hex.length);
+      assert(result.changepos > 0);
+      assert(result.fee > 0);
+
+      fundedTX1 = TX.fromRaw(result.hex, 'hex');
+      assert.strictEqual(fundedTX1.inputs.length, 1);
+      assert.strictEqual(fundedTX1.outputs.length, 3);
     });
   });
 });
