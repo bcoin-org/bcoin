@@ -9,3 +9,4 @@ coverage/
 yarn.lock
 package-lock.json
 webpack.*.js
+node_modules/
