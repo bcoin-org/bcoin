@@ -532,4 +532,18 @@ describe('RPC', function() {
       });
     });
   });
+
+  describe('utilities', function() {
+    // 0-in, 2-out
+    const rawTX1 =
+      '0100000000024e61bc00000000001976a914fbdd46898a6d70a682cbd34420cc' +
+      'f0b6bb64493788acf67e4929010000001976a9141b002b6fc0f457bf8d092722' +
+      '510fce9f37f0423b88ac00000000';
+
+    it('should decoderawtransaction', async () => {
+      const result = await nclient.execute('decoderawtransaction', [rawTX1]);
+      assert.strictEqual(result.vin.length, 0);
+      assert.strictEqual(result.vout.length, 2);
+    });
+  });
 });
