@@ -210,7 +210,7 @@ function decompressCoin(coin, br) {
 
 /**
  * Skip past a compressed output.
- * @param {BufferWriter} bw
+ * @param {BufferReader} br
  * @returns {Number}
  */
 
