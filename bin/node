@@ -22,6 +22,7 @@ if (process.argv.indexOf('--version') !== -1
 const FullNode = require('../lib/node/fullnode');
 
 const node = new FullNode({
+  network : 'regtest',
   file: true,
   argv: true,
   env: true,
@@ -31,7 +32,9 @@ const node = new FullNode({
   memory: false,
   workers: true,
   listen: true,
-  loader: require
+  loader: require,
+  indexTX: true,
+  indexAddress: true,
 });
 
 // Temporary hack
