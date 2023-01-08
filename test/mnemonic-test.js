@@ -6,14 +6,14 @@
 const assert = require('bsert');
 const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
-const {MIN_ENTROPY} = require("../lib/hd/common");
+const {MIN_ENTROPY} = require('../lib/hd/common');
 
 const tests = {
   english: require('./data/mnemonic-english.json'),
   japanese: require('./data/mnemonic-japanese.json')
 };
 
-const LANGUAGE_ENGLISH = "english";
+const LANGUAGE_ENGLISH = 'english';
 
 describe('Mnemonic', function() {
   for (const language of Object.keys(tests)) {
@@ -100,7 +100,7 @@ describe('Mnemonic', function() {
 
   it('should expect an error from getLanguage() when word is not in any language wordlist', () => {
     assert.throws(() => {
-        Mnemonic.getLanguage("notaword");
+        Mnemonic.getLanguage('notaword');
       },
       Error,
       'Unknown word: notaword');
@@ -118,9 +118,9 @@ describe('Mnemonic', function() {
   it('should expect an error from fromPhrase() when phrase contains a word not in the wordlist', () => {
     const m1 = new Mnemonic();
     const phrase = m1.getPhrase();
-    const phraseArray = phrase.split(" ");
-    phraseArray[1] = "notaword";
-    const phraseWithBadWord = phraseArray.join(" ");
+    const phraseArray = phrase.split(' ');
+    phraseArray[1] = 'notaword';
+    const phraseWithBadWord = phraseArray.join(' ');
 
     assert.throws(() => {
         Mnemonic.fromPhrase(phraseWithBadWord);
@@ -132,9 +132,9 @@ describe('Mnemonic', function() {
   it('should expect an error from fromPhrase() when phrase array is missing a word (for some reason)', () => {
     const m1 = new Mnemonic();
     const phrase = m1.getPhrase();
-    const phraseArray = phrase.split(" ");
+    const phraseArray = phrase.split(' ');
     phraseArray.pop();
-    const phraseWithMissingWord = phraseArray.join(" ");
+    const phraseWithMissingWord = phraseArray.join(' ');
 
     assert.throws(() => {
         Mnemonic.fromPhrase(phraseWithMissingWord);
@@ -164,8 +164,7 @@ describe('Mnemonic', function() {
 
   it('should handle fromOptions correctly when a phrase is passed in', () => {
     const m1 = new Mnemonic();
-    let phrase1 = m1.getPhrase();
-    let phraseAsString = phrase1.toString();
+    let phraseAsString = m1.getPhrase().toString();
 
     const m2 = Mnemonic.fromOptions(phraseAsString);
 
@@ -193,5 +192,4 @@ describe('Mnemonic', function() {
     assert.strictEqual(256, m2.bits);
     assert.strictEqual(null, m2.entropy);
   });
-
 });
