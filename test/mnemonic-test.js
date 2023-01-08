@@ -6,11 +6,14 @@
 const assert = require('bsert');
 const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
+const {MIN_ENTROPY} = require("../lib/hd/common");
 
 const tests = {
   english: require('./data/mnemonic-english.json'),
   japanese: require('./data/mnemonic-japanese.json')
 };
+
+const LANGUAGE_ENGLISH = "english";
 
 describe('Mnemonic', function() {
   for (const language of Object.keys(tests)) {
@@ -64,4 +67,131 @@ describe('Mnemonic', function() {
     assert.strictEqual(m2.language, m1.language);
     assert.bufferEqual(m2.toSeed(), m1.toSeed());
   });
+
+  it('should return true for isMnemonic when passed a Mnemonic object', () => {
+    const m1 = new Mnemonic();
+    assert.strictEqual(Mnemonic.isMnemonic(m1), true);
+  });
+
+  it('should return false for isMnemonic when passed a string', () => {
+    const m1 = new Mnemonic();
+    assert.strictEqual(Mnemonic.isMnemonic(m1.getPhrase()), false);
+  });
+
+  it('should return the phrase from toString', () => {
+    const m1 = new Mnemonic();
+    assert.strictEqual(m1.toString(), m1.getPhrase());
+  });
+
+  it('should handle fromRaw correctly', () => {
+    const m1 = new Mnemonic();
+    const m2 = Mnemonic.fromRaw(m1.toRaw());
+    assert.strictEqual(m1.getPhrase(), m2.getPhrase());
+  });
+
+  it('should handle fromJSON correctly', () => {
+    const m1 = new Mnemonic();
+    const m2 = Mnemonic.fromJSON(m1.toJSON());
+    assert.strictEqual(m1.getPhrase(), m2.getPhrase());
+    assert.strictEqual(m1.language, m2.language);
+    assert.strictEqual(m1.bits, m2.bits);
+    assert.bufferEqual(m1.getEntropy(), m2.getEntropy());
+  });
+
+  it('should expect an error from getLanguage() when word is not in any language wordlist', () => {
+    assert.throws(() => {
+        Mnemonic.getLanguage("notaword");
+      },
+      Error,
+      'Unknown word: notaword');
+  });
+
+  it('should handle fromEntropy correctly', () => {
+    const m1 = new Mnemonic();
+    const m2 = Mnemonic.fromEntropy(m1.getEntropy(), LANGUAGE_ENGLISH);
+    assert.strictEqual(m1.getPhrase(), m2.getPhrase());
+    assert.strictEqual(LANGUAGE_ENGLISH, m2.language);
+    assert.strictEqual(m1.bits, m2.bits);
+    assert.bufferEqual(m1.getEntropy(), m2.getEntropy());
+  });
+
+  it('should expect an error from fromPhrase() when phrase contains a word not in the wordlist', () => {
+    const m1 = new Mnemonic();
+    const phrase = m1.getPhrase();
+    const phraseArray = phrase.split(" ");
+    phraseArray[1] = "notaword";
+    const phraseWithBadWord = phraseArray.join(" ");
+
+    assert.throws(() => {
+        Mnemonic.fromPhrase(phraseWithBadWord);
+      },
+      Error,
+      'Unknown word: notaword');
+  });
+
+  it('should expect an error from fromPhrase() when phrase array is missing a word (for some reason)', () => {
+    const m1 = new Mnemonic();
+    const phrase = m1.getPhrase();
+    const phraseArray = phrase.split(" ");
+    phraseArray.pop();
+    const phraseWithMissingWord = phraseArray.join(" ");
+
+    assert.throws(() => {
+        Mnemonic.fromPhrase(phraseWithMissingWord);
+      },
+      Error,
+      'Invalid checksum');
+  });
+
+  it('should handle destroy correctly', () => {
+    const m1 = new Mnemonic();
+    m1.destroy();
+    assert.strictEqual(m1.phrase, null);
+    assert.strictEqual(m1.language, LANGUAGE_ENGLISH);
+    assert.strictEqual(m1.bits, MIN_ENTROPY);
+    assert.strictEqual(m1.entropy, null);
+  });
+
+  it('should handle destroy correctly when entropy is set', () => {
+    const m1 = new Mnemonic();
+    m1.entropy = Buffer.from('00000000000000000000000000000000', 'hex');
+    m1.destroy();
+    assert.strictEqual(m1.phrase, null);
+    assert.strictEqual(m1.language, LANGUAGE_ENGLISH);
+    assert.strictEqual(m1.bits, MIN_ENTROPY);
+    assert.strictEqual(m1.entropy, null);
+  });
+
+  it('should handle fromOptions correctly when a phrase is passed in', () => {
+    const m1 = new Mnemonic();
+    let phrase1 = m1.getPhrase();
+    let phraseAsString = phrase1.toString();
+
+    const m2 = Mnemonic.fromOptions(phraseAsString);
+
+    assert.strictEqual(m1.phrase, m2.phrase);
+    assert.strictEqual(LANGUAGE_ENGLISH, m2.language);
+    assert.strictEqual(256, m2.bits);
+    assert.strictEqual(32, m2.entropy.length);
+  });
+
+  it('should handle fromOption correctly when options.entropy is set', () => {
+    const entropy = Buffer.from('00000000000000000000000000000000', 'hex');
+    const m2 = Mnemonic.fromOptions({ entropy: entropy});
+
+    assert.strictEqual(null, m2.phrase);
+    assert.strictEqual(LANGUAGE_ENGLISH, m2.language);
+    assert.strictEqual(128, m2.bits);
+    assert.strictEqual(16, m2.entropy.length);
+  });
+
+  it('should handle fromOption correctly when no options are set', () => {
+    const m2 = Mnemonic.fromOptions({ });
+
+    assert.strictEqual(null, m2.phrase);
+    assert.strictEqual(LANGUAGE_ENGLISH, m2.language);
+    assert.strictEqual(256, m2.bits);
+    assert.strictEqual(null, m2.entropy);
+  });
+
 });
