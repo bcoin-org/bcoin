@@ -164,9 +164,7 @@ describe('Mnemonic', function() {
 
   it('should handle fromOptions correctly when a phrase is passed in', () => {
     const m1 = new Mnemonic();
-    let phraseAsString = m1.getPhrase().toString();
-
-    const m2 = Mnemonic.fromOptions(phraseAsString);
+    const m2 = Mnemonic.fromOptions(m1.getPhrase().toString());
 
     assert.strictEqual(m1.phrase, m2.phrase);
     assert.strictEqual(LANGUAGE_ENGLISH, m2.language);
