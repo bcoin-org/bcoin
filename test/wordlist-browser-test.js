@@ -19,7 +19,7 @@ describe('wordlist-browser', function() {
 
     // expect error when language is not found
     assert.throws(() => {
-      wordlistBrowser.get(`not a language`);
-    }, Error, `Unknown language: not a language.`);
+      wordlistBrowser.get('not a language');
+    }, Error, 'Unknown language: not a language.');
   });
 });
