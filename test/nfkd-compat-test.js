@@ -4,7 +4,7 @@
 'use strict';
 
 const assert = require('bsert');
-const nfkd = require('../lib/hd/nfkd-compat')
+const nfkd = require('../lib/hd/nfkd-compat');
 
 describe('NFKD-Compat', function() {
   it('should apply compatibility normalization as expected', () => {
@@ -12,9 +12,9 @@ describe('NFKD-Compat', function() {
     assert.equal(nfkd('\uFB00').localeCompare('\u0066\u0066'), 0);
   });
 
-  it('should apply compatibility normalization as expected when nfkd is passed a string without a defined normalize function', () => {
-    let str = '\uFB00';
-    let func = str.normalize;
+  it('should apply compatibility norm. when nfkd is passed a string if normalize function is undefined', () => {
+    const str = '\uFB00';
+    const func = str.normalize;
     delete String.prototype.normalize;
     // unicode char ﬀ (U+FB00) is normalized to ff (U+0066 U+0066)
     assert.equal(nfkd(str).localeCompare('\u0066\u0066'), 0);
