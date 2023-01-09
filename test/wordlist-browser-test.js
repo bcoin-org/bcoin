@@ -9,6 +9,7 @@ const words = require('../lib/hd/words');
 
 describe('wordlist-browser', function() {
   it('should return the appropriate wordlist', () => {
+    // Check that the wordlist is the same as the one in words.js
     assert.strictEqual(wordlistBrowser.get('simplified chinese'), words.chinese.simplified);
     assert.strictEqual(wordlistBrowser.get('traditional chinese'), words.chinese.traditional);
     assert.strictEqual(wordlistBrowser.get('english'), words.english);
