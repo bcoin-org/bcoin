@@ -8,7 +8,6 @@ const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
 
 describe('HDPrivateKey', function() {
-
   it('should construct the object using options', () => {
     const mnemonic = new Mnemonic();
     const phrase = mnemonic.getPhrase();
@@ -62,7 +61,7 @@ describe('HDPrivateKey', function() {
     const phrase = mnemonic.getPhrase();
     const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
 
-    let val = hdprivatekey.xpubkey('main');
+    const val = hdprivatekey.xpubkey('main');
 
     assert.strictEqual(val.startsWith('xpub'), true);
     assert.strictEqual(val.length, 111);
@@ -81,7 +80,7 @@ describe('HDPrivateKey', function() {
       destroy: () => {
         _calledDestroy = true;
       }
-    }
+    };
 
     hdprivatekey.destroy();
 
@@ -102,7 +101,7 @@ describe('HDPrivateKey', function() {
       destroy: () => {
         _calledDestroy = true;
       }
-    }
+    };
 
     hdprivatekey.destroy(true);
 
