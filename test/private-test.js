@@ -56,4 +56,15 @@ describe('HDPrivateKey', function() {
     assert.strictEqual(hdpk2.privateKey.compare(hdprivatekey.privateKey), 0);
     assert.strictEqual(hdpk2.publicKey.compare(hdprivatekey.publicKey), 0);
   });
+
+  it('should return valid key from xpubkey', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    let val = hdprivatekey.xpubkey('main');
+
+    assert.strictEqual(val.startsWith('xpub'), true);
+    assert.strictEqual(val.length, 111);
+  });
 });
