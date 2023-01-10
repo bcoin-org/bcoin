@@ -116,11 +116,33 @@ describe('HDPrivateKey', function() {
     const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
     const common = require('../lib/hd/common');
 
-    const account = {}
+    const account = {};
     const spy = sinon.spy(common, 'isAccount');
 
     hdprivatekey.isAccount(account);
 
     sinon.assert.calledOnce(spy);
+  });
+
+  it('should return false for isBase58() when first param is not a string', () => {
+    assert.strictEqual(HDPrivateKey.isBase58([], 'main'), false);
+  });
+
+  it('should return false for isBase58() when first param has length less than 4', () => {
+    assert.strictEqual(HDPrivateKey.isBase58('xpu', 'main'), false);
+  });
+
+  it('should return true from isBase58() when data is valid', () => {
+    const Network = require('../lib/protocol/network');
+    const stub = sinon.stub(Network, 'fromPrivate58');
+    assert.strictEqual(HDPrivateKey.isBase58('xpubABC123', 'main'), true);
+    stub.restore();
+  });
+
+  it('should return false from isBase58() if Network.fromPrivate58() throws an error', () => {
+    const Network = require('../lib/protocol/network');
+    const stub = sinon.stub(Network, 'fromPrivate58').throws();
+    assert.strictEqual(HDPrivateKey.isBase58('xpubABC123', 'main'), false);
+    stub.restore();
   });
 });
