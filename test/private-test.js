@@ -145,4 +145,12 @@ describe('HDPrivateKey', function() {
     assert.strictEqual(HDPrivateKey.isBase58('xpubABC123', 'main'), false);
     stub.restore();
   });
+
+  it('should return true from isValidPath() when path is valid', () => {
+    assert.strictEqual(HDPrivateKey.isValidPath('m/0/0'), true);
+  });
+
+  it('should return false from isValidPath() when path is invalid', () => {
+    assert.strictEqual(HDPrivateKey.isValidPath('this_is_not_a_path'), false);
+  });
 });
