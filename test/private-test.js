@@ -32,4 +32,28 @@ describe('HDPrivateKey', function() {
     assert.strictEqual(hdpk2.privateKey.compare(hdprivatekey.privateKey), 0);
     assert.strictEqual(hdpk2.publicKey.compare(hdprivatekey.publicKey), 0);
   });
+
+  it('should instantiate from options', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    const options = {
+      depth: hdprivatekey.depth,
+      parentFingerPrint: hdprivatekey.parentFingerPrint,
+      childIndex: hdprivatekey.childIndex,
+      chainCode: hdprivatekey.chainCode,
+      privateKey: hdprivatekey.privateKey,
+      publicKey: hdprivatekey.publicKey
+    };
+
+    const hdpk2 = HDPrivateKey.fromOptions(options);
+
+    assert.strictEqual(hdpk2.depth, hdprivatekey.depth);
+    assert.strictEqual(hdpk2.parentFingerPrint, hdprivatekey.parentFingerPrint);
+    assert.strictEqual(hdpk2.childIndex, hdprivatekey.childIndex);
+    assert.strictEqual(hdpk2.chainCode, hdprivatekey.chainCode);
+    assert.strictEqual(hdpk2.privateKey.compare(hdprivatekey.privateKey), 0);
+    assert.strictEqual(hdpk2.publicKey.compare(hdprivatekey.publicKey), 0);
+  });
 });
