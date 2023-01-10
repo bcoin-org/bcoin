@@ -6,6 +6,7 @@
 const assert = require('bsert');
 const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
+const sinon = require('sinon');
 
 describe('HDPrivateKey', function() {
   it('should construct the object using options', () => {
@@ -107,5 +108,19 @@ describe('HDPrivateKey', function() {
 
     assert.strictEqual(_calledDestroy, true);
     assert.strictEqual(hdprivatekey._hdPublicKey, null);
+  });
+
+  it('should call common.isAccount as expected', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const common = require('../lib/hd/common');
+
+    const account = {}
+    const spy = sinon.spy(common, 'isAccount');
+
+    hdprivatekey.isAccount(account);
+
+    sinon.assert.calledOnce(spy);
   });
 });
