@@ -67,4 +67,46 @@ describe('HDPrivateKey', function() {
     assert.strictEqual(val.startsWith('xpub'), true);
     assert.strictEqual(val.length, 111);
   });
+
+  it('should not call destroy on the internal hdPublicKey when destroy() is called', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    assert.strictEqual(hdprivatekey._hdPublicKey, null);
+
+    let _calledDestroy = false;
+
+    hdprivatekey._hdPublicKey = {
+      destroy: () => {
+        _calledDestroy = true;
+      }
+    }
+
+    hdprivatekey.destroy();
+
+    assert.strictEqual(_calledDestroy, false);
+    assert.strictEqual(hdprivatekey._hdPublicKey, null);
+  });
+
+  it('should call destroy on the internal hdPublicKey when destroy(true) is called', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    assert.strictEqual(hdprivatekey._hdPublicKey, null);
+
+    let _calledDestroy = false;
+
+    hdprivatekey._hdPublicKey = {
+      destroy: () => {
+        _calledDestroy = true;
+      }
+    }
+
+    hdprivatekey.destroy(true);
+
+    assert.strictEqual(_calledDestroy, true);
+    assert.strictEqual(hdprivatekey._hdPublicKey, null);
+  });
 });
