@@ -153,4 +153,26 @@ describe('HDPrivateKey', function() {
   it('should return false from isValidPath() when path is invalid', () => {
     assert.strictEqual(HDPrivateKey.isValidPath('this_is_not_a_path'), false);
   });
+
+  it('should return false from isRaw() when first param is not a buffer', () => {
+    assert.strictEqual(HDPrivateKey.isRaw([], 'main'), false);
+  });
+
+  it('should return false from isRaw() when first param has length less than 4', () => {
+    assert.strictEqual(HDPrivateKey.isRaw(Buffer.from('xpu'), 'main'), false);
+  });
+
+  it('should return true from isRaw() when data is valid', () => {
+    const Network = require('../lib/protocol/network');
+    const stub = sinon.stub(Network, 'fromPrivate');
+    assert.strictEqual(HDPrivateKey.isRaw(Buffer.from('xpubABC123'), 'main'), true);
+    stub.restore();
+  });
+
+  it('should return false from isRaw() if Network.fromPrivate() throws an error', () => {
+    const Network = require('../lib/protocol/network');
+    const stub = sinon.stub(Network, 'fromPrivate').throws();
+    assert.strictEqual(HDPrivateKey.isRaw(Buffer.from('xpubABC123'), 'main'), false);
+    stub.restore();
+  });
 });
