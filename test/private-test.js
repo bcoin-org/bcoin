@@ -175,4 +175,179 @@ describe('HDPrivateKey', function() {
     assert.strictEqual(HDPrivateKey.isRaw(Buffer.from('xpubABC123'), 'main'), false);
     stub.restore();
   });
+
+  it('should throw assertion error from equals() when first param is not an HDPrivateKey', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    assert.throws(() => {
+      hdprivatekey.equals('not an HDPrivateKey');
+    }, assert.AssertionError);
+  });
+
+  it('should return true from equals() when first param is an HDPrivateKey', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    assert.strictEqual(hdprivatekey.equals(hdprivatekey), true);
+  });
+
+  it('should throw an assertion error from compare() when first param is not an HDPrivateKey', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    assert.throws(() => {
+      hdprivatekey.compare('not an HDPrivateKey');
+    }, assert.AssertionError);
+  });
+
+  it('should return 0 from compare if the passed in key is equal', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2), 0);
+  });
+
+  it('should return a negative value from compare if the passed in key has a depth greater than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    hdprivatekey2.depth = hdprivatekey2.depth + randomNumber;
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a depth less than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    hdprivatekey2.depth = hdprivatekey2.depth - randomNumber;
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a parent fingerprint greater than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    hdprivatekey2.parentFingerPrint = hdprivatekey2.parentFingerPrint + randomNumber;
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a parent fingerprint less than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    hdprivatekey2.parentFingerPrint = hdprivatekey2.parentFingerPrint - randomNumber;
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a child index greater than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    hdprivatekey2.childIndex = hdprivatekey2.childIndex + randomNumber;
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a child index less than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    hdprivatekey2.childIndex = hdprivatekey2.childIndex - randomNumber;
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a chain code greater than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    hdprivatekey.chainCode = {
+      compare: (chainCode) => {
+        return -1;
+      }
+    };
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a chain code less than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    hdprivatekey.chainCode = {
+      compare: (chainCode) => {
+        return 1;
+      }
+    };
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a private key greater than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    hdprivatekey.privateKey = {
+      compare: (key) => {
+        return -1;
+      }
+    };
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a private key less than the original key', () => {
+    const mnemonic = new Mnemonic();
+    const phrase = mnemonic.getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
+    hdprivatekey.privateKey = {
+      compare: (key) => {
+        return 1;
+      }
+    };
+
+    assert.strictEqual(hdprivatekey.compare(hdprivatekey2) > 0, true);
+  });
 });
