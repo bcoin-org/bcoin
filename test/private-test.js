@@ -350,4 +350,27 @@ describe('HDPrivateKey', function() {
 
     assert.strictEqual(hdprivatekey.compare(hdprivatekey2) > 0, true);
   });
+
+  it('should throw an error if seed length * 8 is less than common.MIN_ENTROPY', () => {
+    const common = require('../lib/hd/common');
+    const seed = Buffer.alloc(common.MIN_ENTROPY / 8 - 1);
+
+    try {
+      HDPrivateKey.fromSeed(seed);
+      assert(false, 'Expected an error');
+    } catch (err) {
+      assert(err);
+    }
+  });
+
+  it('should throw an error if seed length * 8 is greater than common.MAX_ENTROPY', () => {
+    const common = require('../lib/hd/common');
+    const seed = Buffer.alloc(common.MAX_ENTROPY / 8 + 1);
+    try {
+      HDPrivateKey.fromSeed(seed);
+      assert(false, 'Expected an error');
+    } catch (err) {
+      assert(err);
+    }
+  });
 });
