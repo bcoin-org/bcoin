@@ -373,4 +373,19 @@ describe('HDPrivateKey', function() {
       assert(err);
     }
   });
+
+  it('should throw an error during fromSeed() if privateKeyVerify returns false', () => {
+    const seed = Buffer.alloc(32);
+    const privateKeyVerify = PrivateKey.prototype.privateKeyVerify;
+    PrivateKey.prototype.privateKeyVerify = () => {
+      return false;
+    };
+    try {
+      HDPrivateKey.fromSeed(seed);
+      assert(false, 'Expected an error');
+    } catch (err) {
+      assert(err);
+    }
+    PrivateKey.prototype.privateKeyVerify = privateKeyVerify;
+  });
 });
