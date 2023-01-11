@@ -449,4 +449,17 @@ describe('HDPrivateKey', function() {
       assert(err);
     }
   });
+
+  it('should recursively call derive() with a higher index if privateKeyTweakAdd throws an exception', () => {
+    const hdprivatekey = new HDPrivateKey();
+    const secp256k1 = require('bcrypto/lib/secp256k1');
+    const stub = sinon.stub(secp256k1, 'privateKeyTweakAdd').throws(new Error('test'));
+    const stub2 = sinon.stub(hdprivatekey, 'derive').callsFake((index) => {
+      return hdprivatekey;
+    });
+    hdprivatekey.derive(0);
+    assert(stub2.calledOnce);
+    stub.restore();
+    stub2.restore();
+  });
 });
