@@ -375,17 +375,78 @@ describe('HDPrivateKey', function() {
   });
 
   it('should throw an error during fromSeed() if privateKeyVerify returns false', () => {
+    const secp256k1 = require('bcrypto/lib/secp256k1');
+    const stub = sinon.stub(secp256k1, 'privateKeyVerify').returns(false);
     const seed = Buffer.alloc(32);
-    const privateKeyVerify = PrivateKey.prototype.privateKeyVerify;
-    PrivateKey.prototype.privateKeyVerify = () => {
-      return false;
-    };
+
     try {
       HDPrivateKey.fromSeed(seed);
       assert(false, 'Expected an error');
     } catch (err) {
       assert(err);
     }
-    PrivateKey.prototype.privateKeyVerify = privateKeyVerify;
+
+    stub.restore();
+  });
+
+  it('should not throw an error during fromSeed() if privateKeyVerify returns true', () => {
+    const secp256k1 = require('bcrypto/lib/secp256k1');
+    const stub = sinon.stub(secp256k1, 'privateKeyVerify').returns(true);
+    const seed = Buffer.alloc(32);
+
+    try {
+      HDPrivateKey.fromSeed(seed);
+    } catch (err) {
+      assert(false, 'Aargh! An error!');
+    }
+
+    stub.restore();
+  });
+
+  it('should return 82 from getSize()', () => {
+    const hdprivatekey = new HDPrivateKey();
+    assert.strictEqual(hdprivatekey.getSize(), 82);
+  });
+
+  it('should return a valid object from the static fromReader method', () => {
+    const hdprivatekey = new HDPrivateKey();
+    const secp256k1 = require('bcrypto/lib/secp256k1');
+    const stub = sinon.stub(secp256k1, 'publicKeyCreate').returns(hdprivatekey._hdPublicKey);
+
+    const br = require('bufio').read(hdprivatekey.toRaw('main'));
+
+    const hdprivatekey2 = HDPrivateKey.fromReader(br, 'main');
+    assert(hdprivatekey2 instanceof HDPrivateKey);
+    stub.restore();
+  });
+
+  it('should return a valid object from the static fromRaw method', () => {
+    const hdprivatekey = new HDPrivateKey();
+    const secp256k1 = require('bcrypto/lib/secp256k1');
+    const stub = sinon.stub(secp256k1, 'publicKeyCreate').returns(hdprivatekey._hdPublicKey);
+    const hdprivatekey2 = HDPrivateKey.fromRaw(hdprivatekey.toRaw('main'), 'main');
+    assert(hdprivatekey2 instanceof HDPrivateKey);
+    stub.restore();
+  });
+
+  it('should throw an error from derive() if index out of range', () => {
+    const hdprivatekey = new HDPrivateKey();
+    try {
+      hdprivatekey.derive(0xFFFFFFFF + 1);
+      assert(false, 'Expected an error');
+    } catch (err) {
+      assert(err);
+    }
+  });
+
+  it('should throw an error from derive() if depth too high', () => {
+    const hdprivatekey = new HDPrivateKey();
+    hdprivatekey.depth = 255;
+    try {
+      hdprivatekey.derive(0);
+      assert(false, 'Expected an error');
+    } catch (err) {
+      assert(err);
+    }
   });
 });
