@@ -120,6 +120,11 @@ describe('HD', function() {
     assert.strictEqual(key.toBase58('main'), master.toPublic().toBase58('main'));
   });
 
+  it('should return a public key from fromJSON when public key JSON is supplied', () => {
+    const key = HD.fromJSON(master.toPublic().toJSON(), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toPublic().toBase58('main'));
+  });
+
   for (const vector of [vector1, vector2]) {
     let master = null;
 
