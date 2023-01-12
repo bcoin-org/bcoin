@@ -400,5 +400,18 @@ describe('public-test', function() {
     assert.strictEqual(publicKey.getSize(), 82);
   });
 
+  it('should return a valid object from the static fromReader method', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
 
+    const br = require('bufio').read(publicKey.toRaw('main'));
+
+    const publicKey2 = HDPublicKey.fromReader(br, 'main');
+    assert(publicKey2 instanceof HDPublicKey);
+    assert.strictEqual(publicKey2.version, publicKey.version);
+    assert.strictEqual(publicKey2.depth, publicKey.depth);
+    assert.strictEqual(publicKey2.parentFingerPrint, publicKey.parentFingerPrint);
+    assert.strictEqual(publicKey2.childIndex, publicKey.childIndex);
+    assert.strictEqual(publicKey2.chainCode.toString('hex'), publicKey.chainCode.toString('hex'));
+    assert.strictEqual(publicKey2.publicKey.toString('hex'), publicKey.publicKey.toString('hex'));
+  });
 });
