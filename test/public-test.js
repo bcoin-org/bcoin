@@ -176,4 +176,26 @@ describe('public-test', function() {
 
     stub.restore();
   });
+
+  it('should return true for isMaster when common.isMaster() returns true', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    const common = require('../lib/hd/common');
+    const stub = sinon.stub(common, 'isMaster').returns(true);
+
+    assert(publicKey.isMaster());
+
+    stub.restore();
+  });
+
+  it('should return false for isMaster when common.isMaster() returns false', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    const common = require('../lib/hd/common');
+    const stub = sinon.stub(common, 'isMaster').returns(false);
+
+    assert(!publicKey.isMaster());
+
+    stub.restore();
+  });
 });
