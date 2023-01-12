@@ -441,7 +441,7 @@ describe('HDPrivateKey', function() {
 
     const secp256k1 = require('bcrypto/lib/secp256k1');
     const stub = sinon.stub(secp256k1, 'privateKeyTweakAdd').throws(new Error('test'));
-    const stub2a = sinon.stub(hdprivatekey, 'derive').withArgs(0).callThrough().withArgs(1).returns(hdprivatekey2);
+    sinon.stub(hdprivatekey, 'derive').withArgs(0).callThrough().withArgs(1).returns(hdprivatekey2);
 
     const hdprivatekey3 = hdprivatekey.derive(0);
     assert(hdprivatekey3.privateKey.compare(hdprivatekey2.privateKey) === 0);
