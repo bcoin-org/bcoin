@@ -394,4 +394,11 @@ describe('public-test', function() {
 
     assert.strictEqual(publicKey.compare(publicKey2) > 0, true);
   });
+
+  it('should return 82 for getSize() for a public key', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+    assert.strictEqual(publicKey.getSize(), 82);
+  });
+
+
 });
