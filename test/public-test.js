@@ -198,4 +198,12 @@ describe('public-test', function() {
 
     stub.restore();
   });
+
+  it('should return true from isValidPath() when path is valid', () => {
+    assert.strictEqual(HDPublicKey.isValidPath('m/0/0'), true);
+  });
+
+  it('should return false from isValidPath() when path is invalid', () => {
+    assert.strictEqual(HDPublicKey.isValidPath('this_is_not_a_path'), false);
+  });
 });
