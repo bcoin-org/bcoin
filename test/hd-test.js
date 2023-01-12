@@ -110,6 +110,16 @@ describe('HD', function() {
     assert.strictEqual(fmt.split(' ').length, 25);
   });
 
+  it('should return a valid HDPrivateKey from fromBase58 function', () => {
+    const key = HD.fromBase58(master.toBase58('main'), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toBase58('main'));
+  });
+
+  it('should return a valid HDPublicKey from fromBase58 function', () => {
+    const key = HD.fromBase58(master.toPublic().toBase58('main'), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toPublic().toBase58('main'));
+  });
+
   for (const vector of [vector1, vector2]) {
     let master = null;
 
