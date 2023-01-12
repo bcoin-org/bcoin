@@ -7,10 +7,11 @@ const assert = require('bsert');
 const Mnemonic = require('../lib/hd/mnemonic');
 const HDPrivateKey = require('../lib/hd/private');
 const HDPublicKey = require('../lib/hd/public');
+const sinon = require('sinon');
 
 describe('public-test', function() {
-  const getOptions = () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
+  const getOptions = (phrase) => {
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase || new Mnemonic().getPhrase());
 
     return {
       depth: hdprivatekey.depth,
@@ -88,4 +89,64 @@ describe('public-test', function() {
     assert.strictEqual(publicKey.publicKey.length, 33);
     assert.strictEqual(publicKey.publicKey.toString('hex'), '000000000000000000000000000000000000000000000000000000000000000000');
   });
+
+  it('should throw an error if derive() is called with an index that is out of range', () => {
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
+
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+
+    assert.throws(() => {
+      publicKey.derive(-1);
+    }, Error);
+  });
+
+  it('should throw an error if derive() is called with an index where index & Common.HARDENED is true', () => {
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
+
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+
+    assert.throws(() => {
+      publicKey.derive(0x80000000);
+    }, Error);
+  });
+
+  it('should throw an error if derive() is called with an index where index & Common.HARDENED is false, but hardened param is true', () => {
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
+
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+
+    assert.throws(() => {
+      publicKey.derive(0, true);
+    }, Error);
+  });
+
+  it('should throw an error if derive() is called with a depth that is too high', () => {
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
+
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+
+    assert.throws(() => {
+      publicKey.depth = 256;
+      publicKey.derive(0, false);
+    }, Error);
+  });
+
+  it('should recursively call derive() with a higher index if privateKeyTweakAdd throws an exception', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+    const publicKey2 = HDPublicKey.fromOptions(getOptions(new Mnemonic().getPhrase()));
+
+    const secp256k1 = require('bcrypto/lib/secp256k1');
+    const stub = sinon.stub(secp256k1, 'publicKeyTweakAdd').throws(new Error('test'));
+    sinon.stub(publicKey, 'derive').withArgs(0).callThrough().withArgs(1).returns(publicKey2);
+
+    const publicKey3 = publicKey.derive(0);
+    assert(publicKey3.compare(publicKey2) === 0);
+
+    stub.restore();
+  });
+
 });
