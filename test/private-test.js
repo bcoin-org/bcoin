@@ -451,15 +451,19 @@ describe('HDPrivateKey', function() {
   });
 
   it('should recursively call derive() with a higher index if privateKeyTweakAdd throws an exception', () => {
-    const hdprivatekey = new HDPrivateKey();
+    let phrase = new Mnemonic().getPhrase();
+    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+
+    phrase = new Mnemonic().getPhrase();
+    const hdprivatekey2 = HDPrivateKey.fromPhrase(phrase);
+
     const secp256k1 = require('bcrypto/lib/secp256k1');
     const stub = sinon.stub(secp256k1, 'privateKeyTweakAdd').throws(new Error('test'));
-    const stub2 = sinon.stub(hdprivatekey, 'derive').callsFake((index) => {
-      return hdprivatekey;
-    });
-    hdprivatekey.derive(0);
-    assert(stub2.calledOnce);
+    const stub2a = sinon.stub(hdprivatekey, 'derive').withArgs(0).callThrough().withArgs(1).returns(hdprivatekey2);
+
+    const hdprivatekey3 = hdprivatekey.derive(0);
+    assert(hdprivatekey3.privateKey.compare(hdprivatekey2.privateKey) === 0);
+
     stub.restore();
-    stub2.restore();
   });
 });
