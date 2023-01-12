@@ -10,9 +10,7 @@ const sinon = require('sinon');
 
 describe('HDPrivateKey', function() {
   it('should construct the object using options', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
 
     const options = {
       depth: hdprivatekey.depth,
@@ -34,9 +32,7 @@ describe('HDPrivateKey', function() {
   });
 
   it('should instantiate from options', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
 
     const options = {
       depth: hdprivatekey.depth,
@@ -58,9 +54,7 @@ describe('HDPrivateKey', function() {
   });
 
   it('should return valid key from xpubkey', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
 
     const val = hdprivatekey.xpubkey('main');
 
@@ -69,9 +63,7 @@ describe('HDPrivateKey', function() {
   });
 
   it('should not call destroy on the internal hdPublicKey when destroy() is called', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
 
     assert.strictEqual(hdprivatekey._hdPublicKey, null);
 
@@ -90,9 +82,7 @@ describe('HDPrivateKey', function() {
   });
 
   it('should call destroy on the internal hdPublicKey when destroy(true) is called', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
 
     assert.strictEqual(hdprivatekey._hdPublicKey, null);
 
@@ -111,9 +101,7 @@ describe('HDPrivateKey', function() {
   });
 
   it('should call common.isAccount as expected', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
     const common = require('../lib/hd/common');
 
     const account = {};
@@ -177,9 +165,7 @@ describe('HDPrivateKey', function() {
   });
 
   it('should throw assertion error from equals() when first param is not an HDPrivateKey', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
 
     assert.throws(() => {
       hdprivatekey.equals('not an HDPrivateKey');
@@ -187,16 +173,12 @@ describe('HDPrivateKey', function() {
   });
 
   it('should return true from equals() when first param is an HDPrivateKey', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
     assert.strictEqual(hdprivatekey.equals(hdprivatekey), true);
   });
 
   it('should throw an assertion error from compare() when first param is not an HDPrivateKey', () => {
-    const mnemonic = new Mnemonic();
-    const phrase = mnemonic.getPhrase();
-    const hdprivatekey = HDPrivateKey.fromPhrase(phrase);
+    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
 
     assert.throws(() => {
       hdprivatekey.compare('not an HDPrivateKey');
