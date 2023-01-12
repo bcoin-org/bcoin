@@ -428,4 +428,96 @@ describe('public-test', function() {
     assert.strictEqual(publicKey2.chainCode.toString('hex'), publicKey.chainCode.toString('hex'));
     assert.strictEqual(publicKey2.publicKey.toString('hex'), publicKey.publicKey.toString('hex'));
   });
+
+  it('should return a valid json object from the toJSON method', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    const json = publicKey.toJSON();
+
+    assert.strictEqual(json.xpubkey, publicKey.xpubkey('main'));
+  });
+
+  it('should create a valid object from the static fromJSON method', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    const json = publicKey.toJSON();
+
+    const publicKey2 = HDPublicKey.fromJSON(json);
+
+    assert(publicKey2 instanceof HDPublicKey);
+    assert.strictEqual(publicKey2.version, publicKey.version);
+    assert.strictEqual(publicKey2.depth, publicKey.depth);
+    assert.strictEqual(publicKey2.parentFingerPrint, publicKey.parentFingerPrint);
+    assert.strictEqual(publicKey2.childIndex, publicKey.childIndex);
+    assert.strictEqual(publicKey2.chainCode.toString('hex'), publicKey.chainCode.toString('hex'));
+    assert.strictEqual(publicKey2.publicKey.toString('hex'), publicKey.publicKey.toString('hex'));
+  });
+
+  it('should return a valid object from the instance fromJSON method', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    const json = publicKey.toJSON();
+
+    const publicKey2 = new HDPublicKey();
+
+    publicKey2.fromJSON(json);
+
+    assert(publicKey2 instanceof HDPublicKey);
+    assert.strictEqual(publicKey2.version, publicKey.version);
+    assert.strictEqual(publicKey2.depth, publicKey.depth);
+    assert.strictEqual(publicKey2.parentFingerPrint, publicKey.parentFingerPrint);
+    assert.strictEqual(publicKey2.childIndex, publicKey.childIndex);
+    assert.strictEqual(publicKey2.chainCode.toString('hex'), publicKey.chainCode.toString('hex'));
+    assert.strictEqual(publicKey2.publicKey.toString('hex'), publicKey.publicKey.toString('hex'));
+  });
+
+  it('should return false from equals() if the depth does not match', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.depth = 1;
+
+    assert.strictEqual(publicKey.equals(publicKey2), false);
+  });
+
+  it('should return false from equals() if the parentFingerPrint does not match', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.parentFingerPrint = 1;
+
+    assert.strictEqual(publicKey.equals(publicKey2), false);
+  });
+
+  it('should return false from equals() if the child index does not match', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.childIndex = 1;
+
+    assert.strictEqual(publicKey.equals(publicKey2), false);
+  });
+
+  it('should return false from equals() if the chain code does not match', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.chainCode = Buffer.alloc(32, 0x01);
+
+    assert.strictEqual(publicKey.equals(publicKey2), false);
+  });
+
+  it('should return false from equals() if the public key does not match', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.publicKey = Buffer.alloc(33, 0x01);
+
+    assert.strictEqual(publicKey.equals(publicKey2), false);
+  });
 });
