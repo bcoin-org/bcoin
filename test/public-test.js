@@ -149,4 +149,31 @@ describe('public-test', function() {
     stub.restore();
   });
 
+  it('should fail assertion if deriveAccount() is called and isAccount() is false', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    // mock common.isAccount() to return false
+    const common = require('../lib/hd/common');
+    const stub = sinon.stub(common, 'isAccount').returns(false);
+
+    assert.throws(() => {
+      publicKey.deriveAccount(1, 2, 3);
+    }, Error);
+
+    stub.restore();
+  });
+
+  it('should not fail assertion if deriveAccount() is called and isAccount() is true', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    // mock common.isAccount() to return true
+    const common = require('../lib/hd/common');
+    const stub = sinon.stub(common, 'isAccount').returns(true);
+
+    assert.doesNotThrow(() => {
+      publicKey.deriveAccount(1, 2, 3);
+    });
+
+    stub.restore();
+  });
 });
