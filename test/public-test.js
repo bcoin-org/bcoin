@@ -228,4 +228,26 @@ describe('public-test', function() {
     assert.strictEqual(HDPublicKey.isRaw(Buffer.from('xpubABC123'), 'main'), false);
     stub.restore();
   });
+
+  it('should return false for isBase58() when first param is not a string', () => {
+    assert.strictEqual(HDPublicKey.isBase58([], 'main'), false);
+  });
+
+  it('should return false for isBase58() when first param has length less than 4', () => {
+    assert.strictEqual(HDPublicKey.isBase58('xpu', 'main'), false);
+  });
+
+  it('should return true from isBase58() when data is valid', () => {
+    const Network = require('../lib/protocol/network');
+    const stub = sinon.stub(Network, 'fromPublic58');
+    assert.strictEqual(HDPublicKey.isBase58('xpubABC123', 'main'), true);
+    stub.restore();
+  });
+
+  it('should return false from isBase58() if Network.fromPrivate58() throws an error', () => {
+    const Network = require('../lib/protocol/network');
+    const stub = sinon.stub(Network, 'fromPublic58').throws();
+    assert.strictEqual(HDPublicKey.isBase58('xpubABC123', 'main'), false);
+    stub.restore();
+  });
 });
