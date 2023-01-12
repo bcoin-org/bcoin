@@ -250,4 +250,148 @@ describe('public-test', function() {
     assert.strictEqual(HDPublicKey.isBase58('xpubABC123', 'main'), false);
     stub.restore();
   });
+
+  it('should throw an assertion error from compare() when first param is not an HDPublicKey', () => {
+    const publicKey = HDPublicKey.fromOptions(getOptions());
+
+    assert.throws(() => {
+      publicKey.compare('not an HDPublicKey');
+    }, assert.AssertionError);
+  });
+
+  it('should return 0 from compare if the passed in key is equal', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    assert.strictEqual(publicKey.compare(publicKey2), 0);
+  });
+
+  it('should return a negative value from compare if the passed in key has a depth greater than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    publicKey2.depth = publicKey2.depth + randomNumber;
+
+    assert.strictEqual(publicKey.compare(publicKey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a depth less than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    publicKey2.depth = publicKey2.depth - randomNumber;
+
+    assert.strictEqual(publicKey.compare(publicKey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a parent fingerprint greater than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    publicKey2.parentFingerPrint = publicKey2.parentFingerPrint + randomNumber;
+
+    assert.strictEqual(publicKey.compare(publicKey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a parent fingerprint less than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    publicKey2.parentFingerPrint = publicKey2.parentFingerPrint - randomNumber;
+
+    assert.strictEqual(publicKey.compare(publicKey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a child index greater than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    publicKey2.childIndex = publicKey2.childIndex + randomNumber;
+
+    assert.strictEqual(publicKey.compare(publicKey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a child index less than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    // Random number from 1 to 10
+    const randomNumber = Math.floor(Math.random() * 10) + 1;
+    publicKey2.childIndex = publicKey2.childIndex - randomNumber;
+
+    assert.strictEqual(publicKey.compare(publicKey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a chain code greater than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.chainCode = {
+      compare: (chainCode) => {
+        return -1;
+      }
+    };
+
+    assert.strictEqual(publicKey.compare(publicKey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a chain code less than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.chainCode = {
+      compare: (chainCode) => {
+        return 1;
+      }
+    };
+
+    assert.strictEqual(publicKey.compare(publicKey2) > 0, true);
+  });
+
+  it('should return a negative value from compare if the passed in key has a private key greater than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.publicKey = {
+      compare: (publicKey) => {
+        return -1;
+      }
+    };
+
+    assert.strictEqual(publicKey.compare(publicKey2) < 0, true);
+  });
+
+  it('should return a positive value from compare if the passed in key has a private key less than the original key', () => {
+    const options = getOptions();
+    const publicKey = HDPublicKey.fromOptions(options);
+    const publicKey2 = HDPublicKey.fromOptions(options);
+
+    publicKey.publicKey = {
+      compare: (publicKey) => {
+        return 1;
+      }
+    };
+
+    assert.strictEqual(publicKey.compare(publicKey2) > 0, true);
+  });
 });
