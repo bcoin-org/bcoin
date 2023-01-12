@@ -141,12 +141,14 @@ describe('public-test', function() {
 
     const secp256k1 = require('bcrypto/lib/secp256k1');
     const stub = sinon.stub(secp256k1, 'publicKeyTweakAdd').throws(new Error('test'));
-    sinon.stub(publicKey, 'derive').withArgs(0).callThrough().withArgs(1).returns(publicKey2);
+    const stub2 = sinon.stub(publicKey, 'derive');
+    stub2.withArgs(0).callThrough().withArgs(1).returns(publicKey2);
 
     const publicKey3 = publicKey.derive(0);
     assert(publicKey3.compare(publicKey2) === 0);
 
     stub.restore();
+    stub2.restore();
   });
 
   it('should fail assertion if deriveAccount() is called and isAccount() is false', () => {
@@ -154,6 +156,10 @@ describe('public-test', function() {
 
     // mock common.isAccount() to return false
     const common = require('../lib/hd/common');
+
+    if (common.isAccount.hasOwnProperty('restore'))
+      common.isAccount.restore();
+
     const stub = sinon.stub(common, 'isAccount').returns(false);
 
     assert.throws(() => {
@@ -168,6 +174,10 @@ describe('public-test', function() {
 
     // mock common.isAccount() to return true
     const common = require('../lib/hd/common');
+
+    if (common.isAccount.hasOwnProperty('restore'))
+      common.isAccount.restore();
+
     const stub = sinon.stub(common, 'isAccount').returns(true);
 
     assert.doesNotThrow(() => {
