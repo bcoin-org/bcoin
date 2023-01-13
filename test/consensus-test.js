@@ -88,4 +88,28 @@ describe('Consensus', function() {
     assert.strictEqual(target.toString(), expected.toString());
   });
 
+  it('should return 0 from toCompact when called with BN(0)', () => {
+    const target = new BN(0);
+    const bits = consensus.toCompact(target);
+    const expected = 0;
+
+    assert.strictEqual(bits, expected);
+  });
+
+  it('should return 16842752 when the byteLength of the passed in value is less than three', () => {
+    const target = new BN(0x00000001);
+    const bits = consensus.toCompact(target);
+    const expected = 16842752;
+
+    assert.strictEqual(bits, expected);
+  });
+
+  it('should return correct value from toCompact when the param is negative and its byteLength is less than three', () => {
+    const target = new BN(-10000n);
+    const bits = consensus.toCompact(target);
+    const expected = 4294957296;
+
+    assert.strictEqual(bits, expected);
+  });
+
 });
