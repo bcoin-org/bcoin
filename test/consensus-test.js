@@ -36,6 +36,39 @@ describe('Consensus', function() {
     assert(consensus.verifyPOW(hash, bits));
   });
 
+  it('should not verify proof-of-work if bits is negative', () => {
+    const bits = 0x1d00ffff * -1;
+
+    const hash = Buffer.from(
+      '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
+      'hex'
+    );
+
+    assert(!consensus.verifyPOW(hash, bits));
+  });
+
+  it('should not verify proof-of-work if bits is zero', () => {
+    const bits = 0;
+
+    const hash = Buffer.from(
+      '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
+      'hex'
+    );
+
+    assert(!consensus.verifyPOW(hash, bits));
+  });
+
+  it('should not verify proof-of-work if bits is too high', () => {
+    const bits = 0x1d00ffff * 2;
+
+    const hash = Buffer.from(
+      '672b3f1bb11a994267ea4171069ba0aa4448a840f38e8f340000000000000000',
+      'hex'
+    );
+
+    assert(!consensus.verifyPOW(hash, bits));
+  });
+
   it('should convert bits to target', () => {
     const bits = 0x1900896c;
     const target = consensus.fromCompact(bits);
@@ -111,5 +144,7 @@ describe('Consensus', function() {
 
     assert.strictEqual(bits, expected);
   });
+
+  it('/ver')
 
 });
