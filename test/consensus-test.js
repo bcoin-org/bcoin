@@ -64,4 +64,28 @@ describe('Consensus', function() {
     assert(consensus.hasBit(0x20000003, 1));
     assert(consensus.hasBit(0x20000003, 0));
   });
+
+  it('should return BN(0) from fromCompact when called with a zero', () => {
+    const target = consensus.fromCompact(0);
+    const bnZero = new BN(0);
+
+    // assert that the return object is correct by type and value
+    assert.strictEqual(target.constructor.name, bnZero.constructor.name);
+    assert.strictEqual(target.toString(), bnZero.toString());
+  });
+
+  it('should return BN(0) from fromCompact when the passed in value right shifted 24 is less than three', () => {
+    const target = consensus.fromCompact(0x01000000);
+    const expected = new BN(0x00000000);
+
+    assert.strictEqual(target.toString(), expected.toString());
+  });
+
+  it('should return the correct value from fromCompact when called with 0x0fffffff', () => {
+    const target = consensus.fromCompact(0x0fffffff);
+    const expected = new BN(-664613918664295422187565936596221952n);
+
+    assert.strictEqual(target.toString(), expected.toString());
+  });
+
 });
