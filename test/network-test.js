@@ -133,4 +133,31 @@ describe('Network', function() {
 
     assert.strictEqual(result, '<Network: regtest>');
   });
+
+  xit('should return the appropriate Network when calling static fromPublic58() ', () => {
+
+    // See Issue #1128
+    // TODO: Write this test for fromPrivate58(), too.
+
+    // get a random type from network.types
+    const networksjs = require('../lib/protocol/networks');
+    const type = networksjs.types[Math.floor(Math.random() * networksjs.types.length)];
+
+    const network = Network.get(type);
+    const result = Network.fromPublic58(network.keyPrefix.xpubkey58);
+
+    assert.strictEqual(result, network);
+  });
+
+  it('should raise an assertion error if fromPublic58() is called with an invalid argument', () => {
+    assert.throws(() => {
+      Network.fromPublic58();
+    }, Error);
+  });
+
+  it('should raise an assertion error if fromPrivate58() is called with an invalid argument', () => {
+    assert.throws(() => {
+      Network.fromPrivate58();
+    }, Error);
+  });
 });
