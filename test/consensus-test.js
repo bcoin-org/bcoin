@@ -144,7 +144,4 @@ describe('Consensus', function() {
 
     assert.strictEqual(bits, expected);
   });
-
-  it('/ver')
-
 });
