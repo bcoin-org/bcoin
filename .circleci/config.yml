@@ -24,6 +24,7 @@ jobs:
       - attach_workspace:
           at: .
       - run: echo 'export PATH=$PREFIX/bin:$PATH' >> $BASH_ENV
+      - run: npm install
       - run:
           name: Tests with coverage
           command: npm run test-ci
