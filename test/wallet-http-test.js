@@ -281,6 +281,39 @@ for (const witnessOpt of witnessOptions) {
       assert.equal(tx.locktime, 0);
     });
 
+    it('should create self-send transaction with HD paths', async () => {
+      const {address} = await wallet.createAddress('default');
+      const tx = await wallet.createTX({
+        paths: true,
+        outputs: [{
+          address,
+          value: 1e4
+        }]
+      });
+
+      assert.ok(tx);
+      assert.ok(tx.inputs);
+
+      for (let i = 0; i < tx.inputs.length; i++) {
+        const path = tx.inputs[i].path;
+
+        assert.ok(typeof path.name === 'string');
+        assert.ok(typeof path.account === 'number');
+        assert.ok(typeof path.change === 'boolean');
+        assert.ok(typeof path.derivation === 'string');
+      }
+
+      // Self send, so all output paths including change should be known
+      for (let i = 0; i < tx.outputs.length; i++) {
+        const path = tx.outputs[i].path;
+
+        assert.ok(typeof path.name === 'string');
+        assert.ok(typeof path.account === 'number');
+        assert.ok(typeof path.change === 'boolean');
+        assert.ok(typeof path.derivation === 'string');
+      }
+    });
+
     it('should create a transaction with HD paths', async () => {
       const tx = await wallet.createTX({
         paths: true,
