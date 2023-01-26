@@ -23,8 +23,6 @@ describe('public-test', function() {
   };
 
   it('should generate from options correctly', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = new HDPublicKey(options);
 
@@ -36,8 +34,6 @@ describe('public-test', function() {
   });
 
   it('should generate when static fromOptions is called', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
 
@@ -49,8 +45,6 @@ describe('public-test', function() {
   });
 
   it('should return this from toPublic', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
     const publicKey2 = publicKey.toPublic();
@@ -59,8 +53,6 @@ describe('public-test', function() {
   });
 
   it('should return null from xprivkey', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
     const xprivkey = publicKey.xprivkey('main');
@@ -69,8 +61,6 @@ describe('public-test', function() {
   });
 
   it('should reset all properties when you call destroy', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
 
@@ -91,8 +81,6 @@ describe('public-test', function() {
   });
 
   it('should throw an error if derive() is called with an index that is out of range', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
 
@@ -102,8 +90,6 @@ describe('public-test', function() {
   });
 
   it('should throw an error if derive() is called with an index where index & Common.HARDENED is true', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
 
@@ -113,8 +99,6 @@ describe('public-test', function() {
   });
 
   it('should throw an error if derive() is called with an index where index & Common.HARDENED is false, but hardened param is true', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
 
@@ -124,8 +108,6 @@ describe('public-test', function() {
   });
 
   it('should throw an error if derive() is called with a depth that is too high', () => {
-    const hdprivatekey = HDPrivateKey.fromPhrase(new Mnemonic().getPhrase());
-
     const options = getOptions();
     const publicKey = HDPublicKey.fromOptions(options);
 
