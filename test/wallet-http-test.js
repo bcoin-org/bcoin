@@ -70,43 +70,6 @@ for (const witnessOpt of witnessOptions) {
       await node.close();
     });
 
-  it('should create a transaction', async () => {
-    const tx = await wallet.createTX({
-      outputs: [{ address: cbAddress, value: 1e4 }]
-    });
-
-    assert.ok(tx);
-    assert.equal(tx.outputs.length, 1 + 1); // send + change
-    assert.equal(tx.locktime, 0);
-  });
-
-  it('should create a transaction with HD paths', async () => {
-    const tx = await wallet.createTX({
-      paths: true,
-      outputs: [{ address: cbAddress, value: 1e4 }]
-    });
-
-    assert.ok(tx);
-    assert.ok(tx.inputs);
-
-    for (let i = 0; i < tx.inputs.length; i++) {
-      const path = tx.inputs[i].path;
-
-      assert.ok(typeof path.name === 'string');
-      assert.ok(typeof path.account === 'number');
-      assert.ok(typeof path.change === 'boolean');
-      assert.ok(typeof path.derivation === 'string');
-    }
-  });
-
-  it('should create a transaction with a locktime', async () => {
-    const locktime = 8e6;
-
-    const tx = await wallet.createTX({
-      locktime: locktime,
-      outputs: [{ address: cbAddress, value: 1e4 }]
-    });
-
     it('should create wallet', async () => {
       const info = await wclient.createWallet(name, {witness: witnessOpt});
       wallets.push(name);
@@ -303,6 +266,55 @@ for (const witnessOpt of witnessOptions) {
       assert.strictEqual(info.accountIndex, 2);
       assert.strictEqual(info.m, 1);
       assert.strictEqual(info.n, 2);
+    });
+
+    it('should create a transaction', async () => {
+      const tx = await wallet.createTX({
+        outputs: [{
+          address: 'bcrt1qfg96832cs0rk8h3fn5dutk6sz4z23x7m8jn2j9',
+          value: 1e4
+        }]
+      });
+
+      assert.ok(tx);
+      assert.equal(tx.outputs.length, 1 + 1); // send + change
+      assert.equal(tx.locktime, 0);
+    });
+
+    it('should create a transaction with HD paths', async () => {
+      const tx = await wallet.createTX({
+        paths: true,
+        outputs: [{
+          address: 'bcrt1qfg96832cs0rk8h3fn5dutk6sz4z23x7m8jn2j9',
+          value: 1e4
+        }]
+      });
+
+      assert.ok(tx);
+      assert.ok(tx.inputs);
+
+      for (let i = 0; i < tx.inputs.length; i++) {
+        const path = tx.inputs[i].path;
+
+        assert.ok(typeof path.name === 'string');
+        assert.ok(typeof path.account === 'number');
+        assert.ok(typeof path.change === 'boolean');
+        assert.ok(typeof path.derivation === 'string');
+      }
+    });
+
+    it('should create a transaction with a locktime', async () => {
+      const locktime = 100000;
+
+      const tx = await wallet.createTX({
+        locktime: locktime,
+        outputs: [{
+          address: 'bcrt1qfg96832cs0rk8h3fn5dutk6sz4z23x7m8jn2j9',
+          value: 1e4
+        }]
+      });
+
+      assert.equal(tx.locktime, locktime);
     });
 
     for (const template of [true, false]) {
