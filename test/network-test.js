@@ -34,7 +34,7 @@ describe('Network', function() {
 
     const stub = sinon.stub(binary, 'search').returns(-1);
 
-    let result = network.byBit(0);
+    const result = network.byBit(0);
 
     assert.strictEqual(result, null);
 
@@ -91,21 +91,21 @@ describe('Network', function() {
   });
 
   it('should not raise an assertion error if ensure() is called with a string and we do not have that network cached, but Network.primary is set', () => {
-    const network_primary = Network.get('regtest');
-    Network.primary = network_primary;
+    const networkPrimary = Network.get('regtest');
+    Network.primary = networkPrimary;
 
     const result = Network.ensure('unknownnetwork');
 
-    assert.strictEqual(result, network_primary);
+    assert.strictEqual(result, networkPrimary);
   });
 
   it('should return Network.primary if it is set and we call ensure() with an object', () => {
-    const network_primary = Network.get('regtest');
-    Network.primary = network_primary;
+    const networkPrimary = Network.get('regtest');
+    Network.primary = networkPrimary;
 
     const result = Network.ensure({});
 
-    assert.strictEqual(result, network_primary);
+    assert.strictEqual(result, networkPrimary);
   });
 
   it('should return the type from toString()', () => {
@@ -135,7 +135,6 @@ describe('Network', function() {
   });
 
   xit('should return the appropriate Network when calling static fromPublic58() ', () => {
-
     // See Issue #1128
     // TODO: Write this test for fromPrivate58(), too.
 
