@@ -117,3 +117,4 @@
     "./lib/bcoin": "./lib/bcoin-browser.js"
   }
 }
+
