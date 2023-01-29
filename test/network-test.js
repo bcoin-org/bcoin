@@ -34,7 +34,7 @@ describe('Network', function() {
 
     const stub = sinon.stub(binary, 'search').returns(-1);
 
-    let result = network.byBit(0);
+    const result = network.byBit(0);
 
     assert.strictEqual(result, null);
 
@@ -95,25 +95,25 @@ describe('Network', function() {
   });
 
   it('should not raise an assertion error if ensure() is called with a string and we do not have that network cached, but Network.primary is set', () => {
-    const network_primary = Network.get('regtest');
+    const networkPrimary = Network.get('regtest');
     const primary = Network.primary;
-    Network.primary = network_primary;
+    Network.primary = networkPrimary;
 
     const result = Network.ensure('unknownnetwork');
 
-    assert.strictEqual(result, network_primary);
+    assert.strictEqual(result, networkPrimary);
 
     Network.primary = primary;
   });
 
   it('should return Network.primary if it is set and we call ensure() with an object', () => {
-    const network_primary = Network.get('regtest');
+    const networkPrimary = Network.get('regtest');
     const primary = Network.primary;
-    Network.primary = network_primary;
+    Network.primary = networkPrimary;
 
     const result = Network.ensure({});
 
-    assert.strictEqual(result, network_primary);
+    assert.strictEqual(result, networkPrimary);
 
     Network.primary = primary;
   });
