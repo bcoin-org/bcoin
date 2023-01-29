@@ -72,6 +72,27 @@ describe('Difficulty', function() {
     assert.strictEqual(chain.retarget(prev, first), 0x1d00e1fd);
   });
 
+  it('should test retarget with a range of inputs', async () => {
+    // Create an array of test cases
+    const testCases = [
+        { prevTime: 1262152739, prevBits: 0x1d00ffff, firstTime: 1261130161, expected: 0x1d00d86a },
+        { prevTime: 1233061996, prevBits: 0x1d00ffff, firstTime: 1231006505, expected: 0x1d00ffff },
+        { prevTime: 1279297671, prevBits: 0x1c05a3f4, firstTime: 1279008237, expected: 0x1c0168fd },
+        { prevTime: 1269211443, prevBits: 0x1c387f6f, firstTime: 1263163443, expected: 0x1d00e1fd },
+    ];
+
+    // Iterate through the test cases and check the output of the retarget function
+    for (const testCase of testCases) {
+        const prev = new ChainEntry();
+        prev.time = testCase.prevTime;
+        prev.bits = testCase.prevBits;
+        prev.height = 32255;
+        const first = new ChainEntry();
+        first.time = testCase.firstTime;
+        assert.strictEqual(chain.retarget(prev, first), testCase.expected);
+    }
+  });
+
   it('should get block proof equivalent time', async () => {
     const blocks = [];
     for (let i = 0; i < 10000; i++) {

@@ -55,4 +55,20 @@ describe('Headers', function() {
     assert(headers.verifyBody());
     assert(headers.verifyPOW());
   });
+  
+  it('should match raw headers from headers', () => {
+    const headers = new Headers();
+    headers.time = 1231469665;
+    headers.bits = 486604799;
+    headers.nonce = 2573394689;
+    headers.version = 1;
+    headers.prevBlock = Buffer.from(
+      '6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000',
+      'hex');
+    headers.merkleRoot = Buffer.from(
+      '982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1cdb606e857233e0e',
+      'hex');
+  
+    assert.bufferEqual(headers.toRaw(), headers1);
+  });
 });

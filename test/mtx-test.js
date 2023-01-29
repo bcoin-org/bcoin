@@ -40,4 +40,54 @@ describe('MTX', function () {
     const mtx2 = MTX.fromRaw(mtx1.toRaw());
     assert.deepStrictEqual(mtx1, mtx2);
   });
+
+  it('should encode and decode mtx with multiple inputs and outputs', () => {
+    const input1 = new Input({
+      prevout: {
+        hash: Buffer.alloc(32),
+        index: 0
+      }
+    });
+    const input2 = new Input({
+      prevout: {
+        hash: Buffer.alloc(32),
+        index: 1
+      }
+    });
+    const output1 = new Output({
+      value: 1e8,
+      address: new Address()
+    });
+    const output2 = new Output({
+      value: 2e8,
+      address: new Address()
+    });
+    const mtx1 = new MTX({
+      inputs: [input1, input2],
+      outputs: [output1, output2]
+    });
+    const mtx2 = MTX.fromRaw(mtx1.toRaw());
+    assert.deepStrictEqual(mtx1, mtx2);
+  });
+  
+  it('should encode and decode mtx with segwit inputs and outputs', () => {
+    const input = new Input({
+      prevout: {
+        hash: Buffer.alloc(32),
+        index: 0
+      },
+      witness: [Buffer.alloc(4)]
+    });
+    const output = new Output({
+      value: 1e8,
+      address: new Address(),
+      script: Buffer.alloc(4)
+    });
+    const mtx1 = new MTX({
+      inputs: [input],
+      outputs: [output]
+    });
+    const mtx2 = MTX.fromRaw(mtx1.toRaw());
+    assert.deepStrictEqual(mtx1, mtx2);
+  });  
 });

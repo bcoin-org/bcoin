@@ -170,4 +170,14 @@ describe('GCS', function () {
     match = filter2.matchAny(key, contents);
     assert(match);
   });
+
+  it('should test toBytes', () => {
+    const filterBytes = filter1.toBytes();
+    assert(filterBytes instanceof Buffer);
+  });
+  
+  it('should test toNBytes', () => {
+    const filterNBytes = filter1.toNBytes();
+    assert(filterNBytes instanceof Buffer);
+  });  
 });
