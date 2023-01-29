@@ -78,7 +78,7 @@ describe('Difficulty', function() {
         { prevTime: 1262152739, prevBits: 0x1d00ffff, firstTime: 1261130161, expected: 0x1d00d86a },
         { prevTime: 1233061996, prevBits: 0x1d00ffff, firstTime: 1231006505, expected: 0x1d00ffff },
         { prevTime: 1279297671, prevBits: 0x1c05a3f4, firstTime: 1279008237, expected: 0x1c0168fd },
-        { prevTime: 1269211443, prevBits: 0x1c387f6f, firstTime: 1263163443, expected: 0x1d00e1fd },
+        { prevTime: 1269211443, prevBits: 0x1c387f6f, firstTime: 1263163443, expected: 0x1d00e1fd }
     ];
 
     // Iterate through the test cases and check the output of the retarget function

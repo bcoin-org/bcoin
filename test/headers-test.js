@@ -55,7 +55,7 @@ describe('Headers', function() {
     assert(headers.verifyBody());
     assert(headers.verifyPOW());
   });
-  
+
   it('should match raw headers from headers', () => {
     const headers = new Headers();
     headers.time = 1231469665;
@@ -68,7 +68,7 @@ describe('Headers', function() {
     headers.merkleRoot = Buffer.from(
       '982051fd1e4ba744bbbe680e1fee14677ba1a3c3540bf7b1cdb606e857233e0e',
       'hex');
-  
+
     assert.bufferEqual(headers.toRaw(), headers1);
   });
 });

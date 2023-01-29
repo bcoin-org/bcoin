@@ -79,7 +79,7 @@ describe('Consensus', function() {
     consensus.getReward(-100, 210000);
     }, /Bad height for reward./);
   });
-  
+
   it('should return false for invalid proof-of-work', () => {
     const bits = 0x1900896c;
     const hash = Buffer.from(

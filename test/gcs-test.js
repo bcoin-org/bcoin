@@ -175,9 +175,9 @@ describe('GCS', function () {
     const filterBytes = filter1.toBytes();
     assert(filterBytes instanceof Buffer);
   });
-  
+
   it('should test toNBytes', () => {
     const filterNBytes = filter1.toNBytes();
     assert(filterNBytes instanceof Buffer);
-  });  
+  });
 });

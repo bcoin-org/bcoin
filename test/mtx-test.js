@@ -69,7 +69,7 @@ describe('MTX', function () {
     const mtx2 = MTX.fromRaw(mtx1.toRaw());
     assert.deepStrictEqual(mtx1, mtx2);
   });
-  
+
   it('should encode and decode mtx with segwit inputs and outputs', () => {
     const input = new Input({
       prevout: {
@@ -89,5 +89,5 @@ describe('MTX', function () {
     });
     const mtx2 = MTX.fromRaw(mtx1.toRaw());
     assert.deepStrictEqual(mtx1, mtx2);
-  });  
+  });
 });
