@@ -34,7 +34,7 @@ describe('Network', function() {
 
     const stub = sinon.stub(binary, 'search').returns(-1);
 
-    const result = network.byBit(0);
+    let result = network.byBit(0);
 
     assert.strictEqual(result, null);
 
@@ -55,20 +55,19 @@ describe('Network', function() {
   });
 
   it('should return Network.primary if ensure() is called with no params', () => {
-    const network = Network.get('regtest');
-    Network.primary = network;
-
     const result = Network.ensure();
-
-    assert.strictEqual(result, network);
+    assert.strictEqual(result, Network.primary);
   });
 
   it('should raise an assertion error if ensure() is called with undefined and Network.primary is undefined', () => {
+    const primary = Network.primary;
     Network.primary = undefined;
 
     assert.throws(() => {
       Network.ensure();
     }, Error);
+
+    Network.primary = primary;
   });
 
   it('should return the network if ensure() is called with a Network object', () => {
@@ -85,27 +84,38 @@ describe('Network', function() {
   });
 
   it('should raise an assertion error if ensure() is called with a string and we do not have that network cached', () => {
+    const primary = Network.primary;
+    Network.primary = undefined;
+
     assert.throws(() => {
       Network.ensure('unknownnetwork');
     }, Error);
+
+    Network.primary = primary;
   });
 
   it('should not raise an assertion error if ensure() is called with a string and we do not have that network cached, but Network.primary is set', () => {
-    const networkPrimary = Network.get('regtest');
-    Network.primary = networkPrimary;
+    const network_primary = Network.get('regtest');
+    const primary = Network.primary;
+    Network.primary = network_primary;
 
     const result = Network.ensure('unknownnetwork');
 
-    assert.strictEqual(result, networkPrimary);
+    assert.strictEqual(result, network_primary);
+
+    Network.primary = primary;
   });
 
   it('should return Network.primary if it is set and we call ensure() with an object', () => {
-    const networkPrimary = Network.get('regtest');
-    Network.primary = networkPrimary;
+    const network_primary = Network.get('regtest');
+    const primary = Network.primary;
+    Network.primary = network_primary;
 
     const result = Network.ensure({});
 
-    assert.strictEqual(result, networkPrimary);
+    assert.strictEqual(result, network_primary);
+
+    Network.primary = primary;
   });
 
   it('should return the type from toString()', () => {
