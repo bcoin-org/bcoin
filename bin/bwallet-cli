@@ -152,7 +152,12 @@ class CLI {
   async getAccount() {
     const acct = this.config.str([0, 'account']);
     const account = await this.wallet.getAccount(acct);
+    this.log(account);
+  }
 
+  async getAccountByIndex() {
+    const index = this.config.uint([0, 'accountIndex']);
+    const account = await this.wallet.getAccountIndex(index);
     this.log(account);
   }
 
@@ -541,6 +546,11 @@ class CLI {
         if (this.argv[0] === 'get')
           this.argv.shift();
         await this.getAccount();
+        break;
+      case 'accountIndex':
+        if (this.argv[0] === 'get') 
+          this.argv.shift();
+        await this.getAccountByIndex();
         break;
       case 'address':
         await this.createAddress();
