@@ -618,6 +618,7 @@ class CLI {
         this.log('  $ abandon [hash]: Abandon a transaction.');
         this.log('  $ account create [account-name]: Create account.');
         this.log('  $ account get [account-name]: Get account details.');
+        this.log('  $ accountIndex get [account-index]: Get account details by index.');
         this.log('  $ account list: List account names.');
         this.log('  $ address: Derive new address.');
         this.log('  $ admin [command]: Admin commands');
