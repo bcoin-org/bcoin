@@ -126,7 +126,7 @@ describe('Mnemonic', function() {
     assert.bufferEqual(m1.getEntropy(), m2.getEntropy());
   });
 
-  it('should expect an error from fromPhrase() when phrase contains a word not in the wordlist', () => {
+  it('should throw when phrase contains unknown word',  () => {
     const m1 = new Mnemonic();
     const phrase = m1.getPhrase();
     const phraseArray = phrase.split(' ');
