@@ -80,7 +80,12 @@ describe('Mnemonic', function() {
 
   it('should return the phrase from toString', () => {
     const m1 = new Mnemonic();
-    assert.strictEqual(m1.toString(), m1.getPhrase());
+    assert.strictEqual(m1.phrase, null);
+    assert.strictEqual(m1.entropy, null);
+    const phrase = m1.getPhrase();
+    assert.notStrictEqual(m1.phrase, null);
+    assert.notStrictEqual(m1.entropy, null);
+    assert.strictEqual(m1.toString(), phrase);
   });
 
   it('should handle fromRaw correctly', () => {
