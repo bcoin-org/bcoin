@@ -96,7 +96,13 @@ describe('Mnemonic', function() {
 
   it('should handle fromJSON correctly', () => {
     const m1 = new Mnemonic();
-    const m2 = Mnemonic.fromJSON(m1.toJSON());
+
+    const json = m1.toJSON();
+    assert.strictEqual(typeof json, 'object');
+    assert.strictEqual(json.entropy, m1.entropy.toString('hex'));
+    assert.strictEqual(json.phrase, m1.phrase);
+
+    const m2 = Mnemonic.fromJSON(json);
     assert.strictEqual(m1.getPhrase(), m2.getPhrase());
     assert.strictEqual(m1.language, m2.language);
     assert.strictEqual(m1.bits, m2.bits);
