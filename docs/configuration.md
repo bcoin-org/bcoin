@@ -65,6 +65,7 @@ database and log file.
 - `cache-size`: Size (in MB) of leveldb cache and write buffer
   (default: 32mb).
 - `spv`: Enable Simplified Payments Verification (SPV) mode
+- `no-wallet`: Run nodes without a wallet.
 
 *Note: The `spv` and `daemon` options can not be entered in `bcoin.conf`.
 They will only work when passed as a launch argument:*
