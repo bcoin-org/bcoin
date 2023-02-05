@@ -12,7 +12,7 @@ describe('NFKD-Compat', function() {
     assert.equal(nfkd('\uFB00').localeCompare('\u0066\u0066'), 0);
   });
 
-  it('should apply compatibility norm. when nfkd is passed a string if normalize function is undefined', () => {
+  it('should apply compatibility norm. when normalize function is undefined', () => {
     const str = '\uFB00';
     const func = str.normalize;
     delete String.prototype.normalize;
