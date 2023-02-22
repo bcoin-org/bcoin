@@ -62,10 +62,10 @@ all code is your original work. `</legalese>`
 See LICENSE for more info.
 
 [purse]: https://purse.io
-[guide]: docs/getting-started.md
+[guide]: https://github.com/bcoin-org/bcoin/blob/master/docs/getting-started.md
 [freenode]: https://freenode.net/
 [irc]: irc://irc.freenode.net/bcoin
-[changelog]: CHANGELOG.md
+[changelog]: https://github.com/bcoin-org/bcoin/blob/master/CHANGELOG.md
 
 [coverage-status-img]: https://codecov.io/gh/bcoin-org/bcoin/badge.svg?branch=master
 [coverage-status-url]: https://codecov.io/gh/bcoin-org/bcoin?branch=master
