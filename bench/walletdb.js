@@ -5,11 +5,16 @@ const random = require('bcrypto/lib/random');
 const WalletDB = require('../lib/wallet/walletdb');
 const MTX = require('../lib/primitives/mtx');
 const Outpoint = require('../lib/primitives/outpoint');
+const crypto=require('crypto')
 
-function dummy() {
-  const hash = random.randomBytes(32);
-  return new Outpoint(hash, 0);
+
+//Outpoint  generation
+async function dummy() {
+  const hash = await crypto.randomBytes(32);
+  const index= Math.floor(Math.random() * 1000);
+  return new Outpoint(hash, index);
 }
+
 
 const walletdb = new WalletDB({
   name: 'wallet-test',
