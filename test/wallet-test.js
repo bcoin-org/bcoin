@@ -362,6 +362,72 @@ describe('Wallet', function() {
     assert(tx.verify());
   });
 
+  it('should recognize P2PKH TX with own address in output', async () => {
+    const wallet = await wdb.create();
+
+    let notified = false;
+    wallet.on('tx', () => {
+      notified = true;
+    });
+
+    const mtx = new MTX();
+    mtx.addInput(dummyInput());
+    mtx.addOutput(await wallet.receiveAddress(), 50000);
+
+    const tx = mtx.toTX();
+    await wdb.addTX(tx);
+
+    const walletSet = new Set();
+    walletSet.add(wallet.wid);
+    assert.deepEqual(await wdb.getWalletsByTX(tx), walletSet);
+
+    assert(notified);
+  });
+
+  it('should recognize multisig TX with own key in output', async () => {
+    const wallet = await wdb.create();
+
+    let notified = false;
+    wallet.on('tx', () => {
+      notified = true;
+    });
+
+    const ourKey = (await wallet.receiveKey()).publicKey;
+    const otherKey = KeyRing.generate().publicKey;
+
+    const mtx = new MTX();
+    mtx.addInput(dummyInput());
+    mtx.addOutput(Script.fromMultisig(2, 2, [ourKey, otherKey]), 50000);
+
+    const tx = mtx.toTX();
+    await wdb.addTX(tx);
+
+    const walletSet = new Set();
+    walletSet.add(wallet.wid);
+    assert.deepEqual(await wdb.getWalletsByTX(tx), walletSet);
+
+    assert(notified);
+  });
+
+  it('should add tx only to interested wallets', async () => {
+    const alice = await wdb.create();
+    const bob = await wdb.create();
+
+    const aliceKey = (await alice.receiveKey()).publicKey;
+    const otherKey = KeyRing.generate().publicKey;
+
+    const mtx = new MTX();
+    mtx.addInput(dummyInput());
+    mtx.addOutput(Script.fromMultisig(2, 2, [aliceKey, otherKey]), 50000);
+
+    const tx = mtx.toTX();
+    await wdb.addTX(tx);
+    const wids = await wdb.getWalletsByTX(tx);
+
+    assert(wids.has(alice.wid));
+    assert(!wids.has(bob.wid));
+  });
+
   it('should handle missed txs', async () => {
     const alice = await wdb.create();
     const bob = await wdb.create();
