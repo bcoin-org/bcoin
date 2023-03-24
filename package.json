@@ -112,6 +112,7 @@
     "./lib/hd/wordlist": "./lib/hd/wordlist-browser.js",
     "./lib/workers/child": "./lib/workers/child-browser.js",
     "./lib/workers/parent": "./lib/workers/parent-browser.js",
-    "./lib/bcoin": "./lib/bcoin-browser.js"
+    "./lib/bcoin": "./lib/bcoin-browser.js",
+    "./lib/blockstore/index.js": "./lib/blockstore/index-browser.js"
   }
 }
