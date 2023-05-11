@@ -140,86 +140,103 @@ describe('Chain Sync Progress', function () {
     assert.strictEqual(chain.db.state.tx, (1 + 100 + 200 + 300));
   });
 
-  describe('New chain', function () {
-    // time never changes
-    util.now = () => {
-      return chain.tip.time;
-    };
+  for (const spv of [false, true]) {
+    describe(`New chain: ${spv ? 'SPV' : 'Full'}`, function () {
+      // time never changes
+      util.now = () => {
+        return chain.tip.time;
+      };
 
-    const newBlocks = new BlockStore({
-      memory: true,
-      network
-    });
+      const newBlocks = new BlockStore({
+        memory: true,
+        network
+      });
 
-    const newChain = new Chain({
-      memory: true,
-      blocks,
-      network
-    });
+      const newChain = new Chain({
+        memory: true,
+        blocks,
+        network,
+        spv
+      });
 
-    before(async () => {
-      await newBlocks.open();
-      await newChain.open();
-    });
+      before(async () => {
+        await newBlocks.open();
+        await newChain.open();
+      });
 
-    after(async () => {
-      await newChain.close();
-      await newBlocks.close();
-    });
+      after(async () => {
+        await newChain.close();
+        await newBlocks.close();
+      });
 
-    it('should sync the first 100 blocks and get progress', async () => {
-      for (let i = 1; i <= 100; i++) {
-        const entry = await chain.getEntry(i);
+      it('should sync the first 100 blocks and get progress', async () => {
+        for (let i = 1; i <= 100; i++) {
+          const entry = await chain.getEntry(i);
+          const block = await chain.getBlock(entry.hash);
+          await newChain.add(block);
+        }
+
+        const percent = parseInt(newChain.getProgress() * 100);
+        // Only 100 out of 600 total txs have been processed
+        // but at this point all we know about the chain is the
+        // hard-coded values. We assume the tx rate of one per ten minutes
+        // continues until the current time, which turns out to be wrong.
+        // The current guess is 100 down out of (we think) 300 total.
+        // Should be the same result for SPV node (1/3 of blocks synced).
+        assert.strictEqual(percent, 33);
+      });
+
+      it('should sync the next 100 blocks and get progress', async () => {
+        for (let i = 101; i <= 200; i++) {
+          const entry = await chain.getEntry(i);
+          const block = await chain.getBlock(entry.hash);
+          await newChain.add(block);
+        }
+
+        const percent = parseInt(newChain.getProgress() * 100);
+
+        if (spv) {
+          // SPV node has synced 2/3 of the blocks, this would be 67% progress
+          // considering it uses the old algorithm.
+          assert.strictEqual(percent, 67);
+        } else {
+          // Even though we have observed the tx rate on chain double
+          // over the last 100 blocks, we continue to use the 1 tx per ten minutes
+          // rate to predict the future from this point forward.
+          // The new guess is 300 down out of (we think) 400 total.
+          assert.strictEqual(percent, 75);
+        }
+      });
+
+      it('should sync the next 99 blocks and approach 100%', async () => {
+        for (let i = 201; i < 300; i++) {
+          const entry = await chain.getEntry(i);
+          const block = await chain.getBlock(entry.hash);
+          await newChain.add(block);
+        }
+
+        const percent = parseInt(newChain.getProgress() * 100);
+
+        if (spv) {
+          // At this point, the SPV node should consider itself fully synced.
+          assert.strictEqual(percent, 100);
+        } else {
+          // As we approach the current time the actual tx count gets closer and
+          // closer to accurate and the amount of future txs we need to predict
+          // drops to almost zero.
+          // The new guess is essentially 599 down out of (we think) 600 total.
+          assert.strictEqual(percent, 99);
+        }
+      });
+
+      it('should sync the last block and reach 100%', async () => {
+        const entry = await chain.getEntry(300);
         const block = await chain.getBlock(entry.hash);
         await newChain.add(block);
-      }
 
-      const percent = parseInt(newChain.getProgress() * 100);
-      // Only 100 out of 600 total txs have been processed
-      // but at this point all we know about the chain is the
-      // hard-coded values. We assume the tx rate of one per ten minutes
-      // continues until the current time, which turns out to be wrong.
-      // The current guess is 100 down out of (we think) 300 total.
-      assert.strictEqual(percent, 33);
+        const percent = parseInt(newChain.getProgress() * 100);
+        assert.strictEqual(percent, 100);
+      });
     });
-
-    it('should sync the next 100 blocks and get progress', async () => {
-      for (let i = 101; i <= 200; i++) {
-        const entry = await chain.getEntry(i);
-        const block = await chain.getBlock(entry.hash);
-        await newChain.add(block);
-      }
-
-      const percent = parseInt(newChain.getProgress() * 100);
-      // Even though we have observed the tx rate on chain double
-      // over the last 100 blocks, we continue to use the 1 tx per ten minutes
-      // rate to predict the future from this point forward.
-      // The new guess is 300 down out of (we think) 400 total.
-      assert.strictEqual(percent, 75);
-    });
-
-    it('should sync the next 99 blocks and approach 100%', async () => {
-      for (let i = 201; i < 300; i++) {
-        const entry = await chain.getEntry(i);
-        const block = await chain.getBlock(entry.hash);
-        await newChain.add(block);
-      }
-
-      const percent = parseInt(newChain.getProgress() * 100);
-      // As we approach the current time the actual tx count gets closer and
-      // closer to accurate and the amount of future txs we need to predict
-      // drops to almost zero.
-      // The new guess is essentially 599 down out of (we think) 600 total.
-      assert.strictEqual(percent, 99);
-    });
-
-    it('should sync the last block and reach 100%', async () => {
-      const entry = await chain.getEntry(300);
-      const block = await chain.getBlock(entry.hash);
-      await newChain.add(block);
-
-      const percent = parseInt(newChain.getProgress() * 100);
-      assert.strictEqual(percent, 100);
-    });
-  });
+  }
 });
