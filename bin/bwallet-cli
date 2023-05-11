@@ -43,6 +43,7 @@ class CLI {
 
     this.client = new WalletClient({
       url: this.config.str('url'),
+      timeout: this.config.uint('timeout'),
       apiKey: this.config.str('api-key'),
       ssl: this.config.bool('ssl'),
       host: this.config.str('http-host'),
