@@ -1,0 +1,37 @@
+#!/usr/bin/env node
+
+'use strict';
+
+console.log('Starting bcoin');
+process.title = 'bcoin';
+const Neutrino = require('../lib/node/neutrino');
+
+// Doubt in db
+const node = new Neutrino({
+  file: true,
+  argv: true,
+  env: true,
+  logFile: true,
+  logConsole: true,
+  logLevel: 'debug',
+  db: 'leveldb',
+  memory: false,
+  persistent: true,
+  workers: true,
+  listen: true,
+  loader: require
+});
+
+(async () => {
+  await node.ensure();
+  await node.open();
+  await node.connect();
+  node.startSync();
+
+  node.on("full", () => {
+    console.log("Full node");
+  });
+})().catch((err) => {
+  console.error(err.stack);
+  process.exit(1);
+});
