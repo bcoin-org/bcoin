@@ -184,6 +184,8 @@ describe('RPC', function() {
       await node.connect();
       await peer.open();
       await peer.connect();
+
+      await new Promise((s) => setTimeout(s, 10))
     });
 
     it('should rpc getpeerinfo with peers', async () => {
