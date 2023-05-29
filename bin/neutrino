@@ -5,6 +5,8 @@
 console.log('Starting bcoin');
 process.title = 'bcoin';
 const Neutrino = require('../lib/node/neutrino');
+const Outpoint = require('../lib/primitives/outpoint');
+const assert = require('assert');
 
 // Doubt in db
 const node = new Neutrino({

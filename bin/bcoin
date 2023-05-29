@@ -43,11 +43,11 @@ for arg in "$@"; do
     --daemon)
       daemon=1
     ;;
-    --spv)
-      cmd='spvnode'
-    ;;
-    --neutrino)
+   --neutrino)
       cmd='neutrino'
+    ;;
+   --spv)
+        cmd='spvnode'
     ;;
   esac
 done
