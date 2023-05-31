@@ -23,7 +23,7 @@ jobs:
         run: npm install --location=global bslint
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint-ci
 
   test-coverage:
     name: Test Coverage
