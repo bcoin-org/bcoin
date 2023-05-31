@@ -181,9 +181,17 @@ describe('RPC', function() {
     });
 
     it('should connect to a peer', async () => {
+      const waitForConnection = new Promise((resolve, reject) => {
+        node.pool.once('peer open', async (peer) => {
+          resolve(peer);
+        });
+      });
+
       await node.connect();
       await peer.open();
       await peer.connect();
+
+      await waitForConnection;
     });
 
     it('should rpc getpeerinfo with peers', async () => {
