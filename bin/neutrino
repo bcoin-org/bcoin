@@ -24,6 +24,11 @@ const node = new Neutrino({
   loader: require
 });
 
+if (!node.config.bool('no-wallet') && !node.has('walletdb')) {
+  const plugin = require('../lib/wallet/plugin');
+  node.use(plugin);
+}
+
 (async () => {
   await node.ensure();
   await node.open();
