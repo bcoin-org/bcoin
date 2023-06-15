@@ -18,9 +18,7 @@ const node = new Neutrino({
   logLevel: 'debug',
   db: 'leveldb',
   memory: false,
-  persistent: true,
   workers: true,
-  listen: true,
   loader: require
 });
 
@@ -41,4 +39,12 @@ if (!node.config.bool('no-wallet') && !node.has('walletdb')) {
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);
+});
+
+process.on('unhandledRejection', (err, promise) => {
+  throw err;
+});
+
+process.on('SIGINT', async () => {
+  await node.close();
 });
