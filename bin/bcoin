@@ -43,8 +43,8 @@ for arg in "$@"; do
     --daemon)
       daemon=1
     ;;
-    --spv)
-      cmd='spvnode'
+   --spv)
+        cmd='spvnode'
     ;;
   esac
 done
