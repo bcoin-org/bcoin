@@ -55,24 +55,25 @@ describe('neutrino', function () {
     await node2.close();
   });
 
+  describe('getheaders', () => {
+    it('should getheaders', async () => {
+      assert.equal(node1.chain.height, node2.chain.height);
+    });
+  });
+
   describe('getcfheaders', () => {
     it('should getcfheaders', async () => {
-        const headerHeight = node1.chain.getCFHeaderHeight();
+        await new Promise(resolve => setTimeout(resolve, 400));
+        const headerHeight = await node1.chain.getCFHeaderHeight();
         assert.equal(headerHeight, node1.chain.height);
     });
   });
 
   describe('getcfilters', () => {
     it('should getcfilters', async () => {
-        const filterHeight = node1.chain.getCFHeaderHeight();
+        await new Promise(resolve => setTimeout(resolve, 400));
+        const filterHeight = await node1.chain.getCFilterHeight();
         assert.equal(filterHeight, node1.chain.height);
-    });
-  });
-
-  describe('getheaders', () => {
-    it('should getheaders', async () => {
-      await mineBlocks(30);
-      assert.equal(node1.chain.height, node2.chain.height);
     });
   });
 });
