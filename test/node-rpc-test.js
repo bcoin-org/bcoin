@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint-disable quotes */
 /* eslint prefer-arrow-callback: "off" */
 
 'use strict';
@@ -10,6 +11,7 @@ const KeyRing = require('../lib/primitives/keyring');
 const Block = require('../lib/primitives/block');
 const util = require('../lib/utils/util');
 const NetAddress = require('../lib/net/netaddress');
+const {createChecksum} = require("../lib/descriptor/common");
 
 const ports = {
   p2p: 49331,
@@ -72,6 +74,104 @@ describe('RPC', function() {
     const info = await nclient.execute('getnetworkinfo', []);
 
     assert.deepEqual(info.localservicenames, ['NETWORK', 'WITNESS']);
+  });
+
+  it('should rpc getdescriptorinfo', async () => {
+    const testcases = [
+      {
+        "input": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))",
+        "descriptor": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))#zlh5y6z5",
+        "checksum": "zlh5y6z5",
+        "isrange": true,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "sh(wsh(pkh(02e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13)))",
+        "descriptor": "sh(wsh(pkh(02e493dbf1c10d80f3581e4904930b1404cc6c13900ee0758474fa94abe8c4cd13)))#2wtr0ej5",
+        "checksum": "2wtr0ej5",
+        "isrange": false,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "sh(wpkh(03fff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556))",
+        "descriptor": "sh(wpkh(03fff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556))#qkrrc7je",
+        "checksum": "qkrrc7je",
+        "isrange": false,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "sh(multi(2,022f01e5e15cca351daff3843fb70f3c2f0a1bdd05e5af888a67784ef3e10a2a01,03acd484e2f0c7f65309ad178a9f559abde09796974c57e714c35f110dfc27ccbe))",
+        "descriptor": "sh(multi(2,022f01e5e15cca351daff3843fb70f3c2f0a1bdd05e5af888a67784ef3e10a2a01,03acd484e2f0c7f65309ad178a9f559abde09796974c57e714c35f110dfc27ccbe))#y9zthqta",
+        "checksum": "y9zthqta",
+        "isrange": false,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "sh(pk(03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd))",
+        "descriptor": "sh(pk(03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd))#s53ls94y",
+        "checksum": "s53ls94y",
+        "isrange": false,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "sh(wsh(multi(1,03f28773c2d975288bc7d1d205c3748651b075fbc6610e58cddeeddf8f19405aa8,03499fdf9e895e719cfd64e67f07d38e3226aa7b63678949e6e49b241a60e823e4,02d7924d4f7d43ea965a465ae3095ff41131e5946f3c85f79e44adbcf8e27e080e)))",
+        "descriptor": "sh(wsh(multi(1,03f28773c2d975288bc7d1d205c3748651b075fbc6610e58cddeeddf8f19405aa8,03499fdf9e895e719cfd64e67f07d38e3226aa7b63678949e6e49b241a60e823e4,02d7924d4f7d43ea965a465ae3095ff41131e5946f3c85f79e44adbcf8e27e080e)))#ks05yr6p",
+        "checksum": "ks05yr6p",
+        "isrange": false,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))",
+        "descriptor": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))#zlh5y6z5",
+        "checksum": "zlh5y6z5",
+        "isrange": true,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "pkh(tpubD6NzVbkrYhZ4WaWSyoBvQwbpLkojyoTZPRsgXELWz3Popb3qkjcJyJUGLnL4qHHoQvao8ESaAstxYSnhyswJ76uZPStJRJCTKvosUCJZL5B/1'/2)",
+        "descriptor": "pkh(tpubD6NzVbkrYhZ4WaWSyoBvQwbpLkojyoTZPRsgXELWz3Popb3qkjcJyJUGLnL4qHHoQvao8ESaAstxYSnhyswJ76uZPStJRJCTKvosUCJZL5B/1'/2)#hvxe7cts",
+        "checksum": "hvxe7cts",
+        "isrange": false,
+        "issolvable": true,
+        "hasprivatekeys": false
+      },
+      {
+        "input": "wsh(wpkh(03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd))",
+        "error": "Invalid descriptor: Can not have wpkh() inside wsh()"
+      },
+      {
+        "input": "wsh(wsh(pk(03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd)))",
+        "error": "Invalid descriptor: Can not have wsh() inside wsh()"
+      },
+      {
+        "input": "wsh(sh(pk(03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd)))",
+        "error": "Invalid descriptor: Can not have sh() inside wsh()"
+      },
+      {
+        "input": "wsh(03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd)",
+        "error": "Invalid descriptor: A valid function is needed inside wsh()"
+      }
+    ];
+
+    for (const test of testcases) {
+      try {
+        const result = await nclient.execute("getdescriptorinfo", [test.input]);
+        assert.deepStrictEqual(result.descriptor, test.descriptor);
+        assert.deepStrictEqual(result.checksum, createChecksum(test.input.split("#")[0]));
+        assert.deepStrictEqual(result.isrange, test.isrange);
+        assert.deepStrictEqual(result.issolvable, test.issolvable);
+        assert.deepStrictEqual(result.hasprivatekeys, test.hasprivatekeys);
+      } catch (e) {
+        assert.strictEqual(e.message, test.error);
+      }
+    }
   });
 
   it('should rpc getblockhash', async () => {
