@@ -43,6 +43,9 @@ for arg in "$@"; do
     --daemon)
       daemon=1
     ;;
+   --neutrino)
+      cmd='neutrino'
+    ;;
    --spv)
         cmd='spvnode'
     ;;
