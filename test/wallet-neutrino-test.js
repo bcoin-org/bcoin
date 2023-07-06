@@ -4,8 +4,10 @@ const FullNode = require('../lib/node/fullnode');
 const Neutrino = require('../lib/node/neutrino');
 const MTX = require('../lib/primitives/mtx');
 const assert = require('bsert');
-const { consensus } = require('../lib/protocol');
 const { forValue } = require('./util/common');
+const BasicFilter = require('../lib/golomb/basicFilter');
+const Script = require('../lib/script/script');
+const Address = require('../lib/primitives/address');
 
 const node1 = new FullNode({
     network: 'regtest',
@@ -36,9 +38,11 @@ const wdb2 = node2.require('walletdb').wdb;
 
 let wallet1 = null;
 let wallet2 = null;
-let cb = null;
+const fwAddresses = [];
+const nwAddresses = [];
 
-async function mineBlock(tx) {
+async function mineBlock(tx, address) {
+  console.log('address', address);
     const job = await miner.createJob();
 
     if (!tx)
@@ -46,9 +50,7 @@ async function mineBlock(tx) {
 
     const spend = new MTX();
     spend.addTX(tx, 0);
-
-    spend.addOutput(await wallet2.receiveAddress(), 25 * 1e8);
-    spend.addOutput(await wallet2.changeAddress(), 5 * 1e8);
+    spend.addOutput(address, 50000);
 
     spend.setLocktime(chain.height);
     await wallet1.sign(spend);
@@ -62,7 +64,6 @@ async function mineBlock(tx) {
 describe('wallet-neutrino', function() {
     it('should open chain and miner', async () => {
         miner.mempool = null;
-        consensus.COINBASE_MATURITY = 0;
         await node1.open();
         await node2.open();
     });
@@ -70,18 +71,42 @@ describe('wallet-neutrino', function() {
     it('should open walletdb', async () => {
         wallet1 = await wdb1.create();
         wallet2 = await wdb2.create();
-        miner.addresses.length = 0;
-        miner.addAddress(await wallet1.receiveAddress());
+    });
+
+    it('should create accounts', async () => {
+      await wallet1.createAccount('fw');
+      await wallet2.createAccount('nw');
+    });
+
+    it('should generate addresses', async () => {
+      miner.addresses.length = 0;
+      for (let i = 0; i < 10; i++) {
+        const key = await wallet1.createReceive(0);
+        const address = key.getAddress().toString(node1.network.type);
+        // console.log(address);
+        fwAddresses.push(address);
+        miner.addAddress(address);
+      }
+      for (let i = 0; i < 10; i++) {
+        const key = await wallet2.createReceive(0);
+        const address = key.getAddress().toString(node2.network.type);
+        nwAddresses.push(address);
+      }
     });
 
     it('should mine 10 blocks', async () => {
-        let n = 10;
-        while (n) {
-            const block = await mineBlock(cb);
-            cb = block.txs[0];
-            await node1.chain.add(block);
-            n--;
+      for (const address of fwAddresses) {
+        for (let i = 0; i < 2; i++) {
+          const block = await mineBlock(null, address);
+          await chain.add(block);
         }
+      }
+      for (const address of nwAddresses) {
+        for (let i = 0; i < 2; i++) {
+          const block = await mineBlock(null, address);
+          await chain.add(block);
+        }
+      }
     });
 
     it('should connect nodes', async () => {
@@ -109,5 +134,25 @@ describe('wallet-neutrino', function() {
         await new Promise(resolve => setTimeout(resolve, 400));
         const filterHeight = await node2.chain.getCFilterHeight();
         assert.equal(filterHeight, node2.chain.height);
+    });
+
+    it('should send filters to wallet', async () => {
+      assert.equal(wdb2.filterHeight, node2.chain.height);
+    });
+
+    it('should match the filters', async () => {
+      const filterIndexer = node2.filterIndexers.get('BASIC');
+      for (let i = 0; i < fwAddresses.length; i++) {
+        const hash = await node2.chain.getHash(i);
+        const filter = await filterIndexer.getFilter(hash);
+        const basicFilter = new BasicFilter();
+        const gcs = basicFilter.fromNBytes(filter.filter);
+        const key = hash.slice(0, 16);
+        const address = Address.fromString(fwAddresses[i], node2.network.type);
+        const script = Script.fromAddress(address);
+        // console.log(address.hash);
+        console.log(script.toRaw());
+        // assert(gcs.match(key, script.));
+      }
     });
 });
