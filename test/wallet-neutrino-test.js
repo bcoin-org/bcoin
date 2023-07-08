@@ -42,7 +42,6 @@ const fwAddresses = [];
 const nwAddresses = [];
 
 async function mineBlock(tx, address) {
-  console.log('address', address);
     const job = await miner.createJob();
 
     if (!tx)
@@ -83,7 +82,6 @@ describe('wallet-neutrino', function() {
       for (let i = 0; i < 10; i++) {
         const key = await wallet1.createReceive(0);
         const address = key.getAddress().toString(node1.network.type);
-        // console.log(address);
         fwAddresses.push(address);
         miner.addAddress(address);
       }
@@ -148,11 +146,9 @@ describe('wallet-neutrino', function() {
         const basicFilter = new BasicFilter();
         const gcs = basicFilter.fromNBytes(filter.filter);
         const key = hash.slice(0, 16);
-        const address = Address.fromString(fwAddresses[i], node2.network.type);
+        const address = Address.fromString(fwAddresses[i], node1.network.type);
         const script = Script.fromAddress(address);
-        // console.log(address.hash);
-        console.log(script.toRaw());
-        // assert(gcs.match(key, script.));
+        assert(gcs.match(key, script.raw));
       }
     });
 });
