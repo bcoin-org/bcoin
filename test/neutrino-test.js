@@ -76,4 +76,18 @@ describe('neutrino', function () {
         assert.equal(filterHeight, node1.chain.height);
     });
   });
+
+  describe('save filters', () => {
+    it('should save filters correctly', async () => {
+      const filterIndexer = node1.filterIndexers.get('BASIC');
+      for (let i = 0; i < node1.chain.height; i++) {
+          const hash = await node1.chain.getHash(i);
+          const filterHeader = await filterIndexer.getFilterHeader(hash);
+          assert(filterHeader);
+          const filter = await filterIndexer.getFilter(hash);
+          assert(filter);
+          assert(filterHeader.equals(filter.header));
+      }
+    });
+  });
 });
