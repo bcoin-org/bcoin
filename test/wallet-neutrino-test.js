@@ -157,4 +157,12 @@ describe('wallet-neutrino', function() {
         assert(gcs.match(key, script.raw));
       }
     });
+
+    it('should getblockfrompeer', async () => {
+      for (let i = 21; i <= node2.chain.height; i++) {
+        const hash = await node2.chain.getHash(i);
+        const block = await node2.chain.getBlock(hash);
+        assert(block);
+      }
+    });
 });
