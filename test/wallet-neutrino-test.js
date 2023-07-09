@@ -84,7 +84,7 @@ describe('wallet-neutrino', function() {
       }
     });
 
-    it('should mine 10 blocks', async () => {
+    it('should mine 40 blocks', async () => {
       for (const address of fwAddresses) {
         const add = parseAddress(address, node1.network);
         await mineBlocks(2, add);
@@ -164,5 +164,10 @@ describe('wallet-neutrino', function() {
         const block = await node2.chain.getBlock(hash);
         assert(block);
       }
+    });
+
+    it('should cleanup', async () => {
+        await node1.close();
+        await node2.close();
     });
 });

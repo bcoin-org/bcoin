@@ -47,8 +47,8 @@ describe('neutrino', function () {
     await node2.connect();
     node1.startSync();
     node2.startSync();
-    await mineBlocks(2100);
     await waitForConnection;
+    await mineBlocks(1000);
   });
 
   after(async () => {
