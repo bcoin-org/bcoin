@@ -5,7 +5,7 @@ const NeutrinoNode = require('../lib/node/neutrino');
 const {forValue} = require('./util/common');
 const assert = require('bsert');
 describe('neutrino', function () {
-  this.timeout(10000);
+  this.timeout(100000);
 
   const node1 = new NeutrinoNode({
     network: 'regtest',
@@ -28,6 +28,7 @@ describe('neutrino', function () {
     while (n) {
       const block = await node2.miner.mineBlock();
       await node2.chain.add(block);
+      await new Promise(resolve => setTimeout(resolve, 20));
       n--;
     }
     await forValue(node1.chain, 'height', node2.chain.height);
@@ -46,7 +47,7 @@ describe('neutrino', function () {
     await node2.connect();
     node1.startSync();
     node2.startSync();
-    await mineBlocks(200);
+    await mineBlocks(2100);
     await waitForConnection;
   });
 
@@ -57,6 +58,7 @@ describe('neutrino', function () {
 
   describe('getheaders', () => {
     it('should getheaders', async () => {
+      await mineBlocks(10);
       assert.equal(node1.chain.height, node2.chain.height);
     });
   });

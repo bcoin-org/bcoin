@@ -2,7 +2,6 @@
 
 const FullNode = require('../lib/node/fullnode');
 const Neutrino = require('../lib/node/neutrino');
-const MTX = require('../lib/primitives/mtx');
 const assert = require('bsert');
 const { forValue } = require('./util/common');
 const BasicFilter = require('../lib/golomb/basicFilter');
@@ -41,23 +40,16 @@ let wallet2 = null;
 const fwAddresses = [];
 const nwAddresses = [];
 
-async function mineBlock(tx, address) {
-    const job = await miner.createJob();
+async function mineBlocks(n, address) {
+  for (let i = 0; i < n; i++) {
+    const block = await miner.mineBlock(null, address);
+    const entry = await chain.add(block);
+    assert(entry);
+  }
+}
 
-    if (!tx)
-        return await job.mineAsync();
-
-    const spend = new MTX();
-    spend.addTX(tx, 0);
-    spend.addOutput(address, 50000);
-
-    spend.setLocktime(chain.height);
-    await wallet1.sign(spend);
-
-    job.addTX(spend.toTX(), spend.view);
-    job.refresh();
-
-    return await job.mineAsync();
+function parseAddress(raw, network) {
+  return Address.fromString(raw, network);
 }
 
 describe('wallet-neutrino', function() {
@@ -83,8 +75,8 @@ describe('wallet-neutrino', function() {
         const key = await wallet1.createReceive(0);
         const address = key.getAddress().toString(node1.network.type);
         fwAddresses.push(address);
-        miner.addAddress(address);
       }
+      miner.addAddress(fwAddresses[0]);
       for (let i = 0; i < 10; i++) {
         const key = await wallet2.createReceive(0);
         const address = key.getAddress().toString(node2.network.type);
@@ -94,16 +86,12 @@ describe('wallet-neutrino', function() {
 
     it('should mine 10 blocks', async () => {
       for (const address of fwAddresses) {
-        for (let i = 0; i < 2; i++) {
-          const block = await mineBlock(null, address);
-          await chain.add(block);
-        }
+        const add = parseAddress(address, node1.network);
+        await mineBlocks(2, add);
       }
       for (const address of nwAddresses) {
-        for (let i = 0; i < 2; i++) {
-          const block = await mineBlock(null, address);
-          await chain.add(block);
-        }
+        const add = parseAddress(address, node2.network);
+        await mineBlocks(2, add);
       }
     });
 
@@ -139,14 +127,32 @@ describe('wallet-neutrino', function() {
     });
 
     it('should match the filters', async () => {
-      const filterIndexer = node2.filterIndexers.get('BASIC');
-      for (let i = 0; i < fwAddresses.length; i++) {
+      let j = 0;
+      for (let i = 1;i <= 20; i++) {
+        const filterIndexer = node2.filterIndexers.get('BASIC');
         const hash = await node2.chain.getHash(i);
         const filter = await filterIndexer.getFilter(hash);
         const basicFilter = new BasicFilter();
         const gcs = basicFilter.fromNBytes(filter.filter);
         const key = hash.slice(0, 16);
-        const address = Address.fromString(fwAddresses[i], node1.network.type);
+        const address = Address.fromString(fwAddresses[j], node1.network.type);
+        if (i % 2 === 0)
+          j++;
+        const script = Script.fromAddress(address);
+        assert(gcs.match(key, script.raw));
+      }
+
+      j = 0;
+      for (let i = 21;i <= node2.chain.height; i++) {
+        const filterIndexer = node2.filterIndexers.get('BASIC');
+        const hash = await node2.chain.getHash(i);
+        const filter = await filterIndexer.getFilter(hash);
+        const basicFilter = new BasicFilter();
+        const gcs = basicFilter.fromNBytes(filter.filter);
+        const key = hash.slice(0, 16);
+        const address = Address.fromString(nwAddresses[j], node2.network.type);
+        if (i % 2 === 0)
+          j++;
         const script = Script.fromAddress(address);
         assert(gcs.match(key, script.raw));
       }
