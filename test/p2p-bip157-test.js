@@ -5,17 +5,21 @@
 
 const assert = require('bsert');
 const FullNode = require('../lib/node/fullnode');
+const NeutrinoNode = require('../lib/node/neutrino');
 const {forValue} = require('./util/common');
+const {MAX_CFILTERS} = require('../lib/net/common');
+const packets = require('../lib/net/packets');
 
 describe('P2P', function () {
-  this.timeout(5000);
+  this.timeout(50000);
 
-  const node1 = new FullNode({
+  const node1 = new NeutrinoNode({
     network: 'regtest',
     memory: true,
     port: 10000,
     httpPort: 20000,
-    only: '127.0.0.1'
+    only: '127.0.0.1',
+    neutrino: true
   });
 
   const node2 = new FullNode({
@@ -40,6 +44,7 @@ describe('P2P', function () {
     while (n) {
       const block = await node2.miner.mineBlock();
       await node2.chain.add(block);
+      await new Promise(resolve => setTimeout(resolve, 20));
       n--;
     }
     await forValue(node1.chain, 'height', node2.chain.height);
@@ -58,7 +63,6 @@ describe('P2P', function () {
     await node2.connect();
     node1.startSync();
     node2.startSync();
-    await mineBlocks(1);
 
     // `peer` is node2, from node1's perspective.
     // So peer.send() sends a packet from node1 to node2,
@@ -72,28 +76,25 @@ describe('P2P', function () {
     await node2.close();
   });
 
-  describe('Compact Blocks', function () {
-    it('should get compact block in low bandwidth mode', async () => {
-      nodePackets.inv = [];
-      nodePackets.cmpctblock = [];
-
-      await mineBlocks(1);
-
-      assert.strictEqual(nodePackets.inv.length, 1);
-      assert.strictEqual(nodePackets.cmpctblock.length, 1);
+  describe('BIP157', function () {
+    before(async () => {
+      // Do not exceed limit, including genesis block
+      await mineBlocks(MAX_CFILTERS - node1.chain.height - 1);
     });
 
-    it('should switch to high bandwidth mode', async () => {
-      nodePackets.inv = [];
-      nodePackets.cmpctblock = [];
+    it('CFCheckpt', async () => {
+      nodePackets.cfcheckpt = [];
 
-      peer.sendCompact(1);
-      node1.pool.options.blockMode = 1;
+      await mineBlocks(2);
 
-      await mineBlocks(1);
+      const pkt = new packets.GetCFCheckptPacket(
+        0,
+        node1.chain.tip.hash
+      );
 
-      assert.strictEqual(nodePackets.inv.length, 0);
-      assert.strictEqual(nodePackets.cmpctblock.length, 1);
+      peer.send(pkt);
+      await forValue(nodePackets.cfcheckpt, 'length', 1);
+      assert.strictEqual(nodePackets.cfcheckpt[0].filterHeaders.length, 1);
     });
   });
 });
