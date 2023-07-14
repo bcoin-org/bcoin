@@ -9,7 +9,8 @@ const HDPrivateKey = require('../lib/hd/private');
 
 const tests = {
   english: require('./data/mnemonic-english.json'),
-  japanese: require('./data/mnemonic-japanese.json')
+  japanese: require('./data/mnemonic-japanese.json'),
+  korean: require('./data/mnemonic-korean.json')
 };
 
 describe('Mnemonic', function() {
