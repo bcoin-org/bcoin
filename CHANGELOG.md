@@ -23,6 +23,7 @@ node ./migrate/walletdb7to8.js /path/to/bcoin/wallet
 #### RPC
 
 - Added `getnodeaddresses` which returns entries from the hostlist.
+- Updated `estimatesmartfee` to return attribute `feerate` (previously `fee`).
 
 ### Indexer changes
 
