@@ -174,6 +174,66 @@ describe('RPC', function() {
     }
   });
 
+  it('should rpc deriveaddresses', async () => {
+    const data = [
+      {
+        "input": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))#zlh5y6z5",
+        "range": [0, "a"],
+        "error": "Range end must be an integer"
+      },
+      {
+        "input": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))#zlh5y6z5",
+        "range": [10, 0],
+        "error": "Range specified as [begin,end] must not have begin after end"
+      },
+      {
+        "input": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))#zlh5y6z5",
+        "range": [-1, 2],
+        "error": "Range should be >= 0"
+      },
+      {
+        "input": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))#zlh5y6z5",
+        "error": "Range must be specified for ranged descriptor"
+      },
+      {
+        "input": "sh(wsh(sortedmulti(2,[e7dd1c50/48'/1'/40'/1']tpubDFh3VaUEs71ZMcVBmscSSnP4f4r6TvnLssu8yXvpj3uMfAehciMYTrgbfu4KCxXb7oSaz4kriuWRZtQVhZR2oA9toob6aELnsYLN94fXQLF/*,[e7dd1c50/48'/1'/20'/1']tpubDFPemvLnpMqE1BPuturDUh46KxsR8wGSQrA6HofYE7fqxpMAKCcoYWHGA46B6zKY4xcQAc1vLFTcqQ9BvsbHZ4UhzqqF5nUeeNBjNivHxPT/*,[aedb3d12/48'/1'/0'/1']tpubDEbuxto5Kftus28NyPddiEev2yUhzZGpkpQdCK732KBge5FJDhaMdhG1iVw3rMJ2qvABkaLR9HxobkeFkmQZ4RqQgN1KJadDjPn9ANBLo8V/*)))#zlh5y6z5",
+        "range": 10,
+        "addresses": [
+          "2MtWBjxiAi4xYNUdtDe2sHkNw5kdAQqZZNb",
+          "2MstQfXgUwTR66bhMrbNU3qDqT6RT4hGHnJ",
+          "2N6QXTyf64KHWddFZ5swjaRmEwk4hEawYuo",
+          "2NCfXGhiA6EjK6o2JSejtzeP5fYkNxP1TQC",
+          "2NCU5HcmKUap923abUPEhGNnTFUf3K2hAYr",
+          "2N6K6jKKeuejPTeiPDbnq1qZsqGhigoApzK",
+          "2N4jy9MPJee7WvH3tfRVE3LeYQxVNhjt2yH",
+          "2NCXTtRLCjwWPeUoRz5qGoKSj84Ci4pbcWy",
+          "2NEwEq98wFu1EcSf5jFexCRZEuGjjeTo265",
+          "2MzcruaPLyHniY1qjJLXLXEuYRd5PJ1o1EW",
+          "2MuY8izcxH5KJfhvc432HQVos483krppmrf"
+        ]
+      },
+      {
+        "input": "pkh(04a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd5b8dec5235a0fa8722476c7709c02559e3aa73aa03918ba2d492eea75abea235)#9907vvwz",
+        "range": [0, 5],
+        "error": "Range should not be specified for un-ranged descriptor"
+      },
+      {
+        "input":"pkh([d34db33f/44h/0h/0h]tpubD6NzVbkrYhZ4WaWSyoBvQwbpLkojyoTZPRsgXELWz3Popb3qkjcJyJUGLnL4qHHoQvao8ESaAstxYSnhyswJ76uZPStJRJCTKvosUCJZL5B/1h/1h/*h)#u5f4r0y7",
+        "range": [1, 5],
+        "error": "Private key not available for hardened derivation."
+      }
+    ];
+
+    for (const test of data) {
+      try {
+        const result = test.range ? await nclient.execute("deriveaddresses", [test.input, test.range]) : await nclient.execute("deriveaddresses", [test.input]);
+        assert.deepStrictEqual(result, test.addresses);
+      } catch (e) {
+        assert.strictEqual(e.message, test.error);
+      }
+    }
+  });
+
   it('should rpc getblockhash', async () => {
     const info = await nclient.execute('getblockhash', [node.chain.tip.height]);
     assert.strictEqual(util.revHex(node.chain.tip.hash), info);
