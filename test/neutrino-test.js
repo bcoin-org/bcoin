@@ -13,6 +13,8 @@ describe('neutrino', function () {
     port: 10000,
     httpPort: 20000,
     neutrino: true,
+    logConsole: true,
+    logLevel: 'debug',
     only: '127.0.0.1'
   });
 

@@ -30,10 +30,6 @@ if (!node.config.bool('no-wallet') && !node.has('walletdb')) {
   await node.open();
   await node.connect();
   node.startSync();
-
-  node.on("full", () => {
-    console.log("Full node");
-  });
 })().catch((err) => {
   console.error(err.stack);
   process.exit(1);

@@ -189,6 +189,16 @@ describe('RPC', function() {
     assert.strictEqual(expected.filter, info.filter);
   });
 
+  it('should rpc getblockfilterheader', async () => {
+    const hash = await nclient.execute('getblockhash', [node.chain.tip.height]);
+    const info = await nclient.execute('getblockfilterheader', [hash, 'BASIC']);
+    const indexer = node.filterIndexers.get('BASIC');
+    const filterHeader = await indexer.getFilterHeader(node.chain.tip.hash);
+    const expected = filterHeader.toJSON();
+
+    assert.deepStrictEqual(expected, info);
+  });
+
   describe('Blockchain', function () {
     it('should rpc getchaintips', async () => {
       const info = await nclient.execute('getchaintips', []);

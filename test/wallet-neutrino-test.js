@@ -54,7 +54,6 @@ function parseAddress(raw, network) {
 
 describe('wallet-neutrino', function() {
     it('should open chain and miner', async () => {
-        miner.mempool = null;
         await node1.open();
         await node2.open();
     });
