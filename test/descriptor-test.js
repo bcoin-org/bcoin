@@ -13,6 +13,7 @@ const assert = require('bsert');
 const parsable = require('./data/descriptors/desc-valid.json');
 const unparsable = require('./data/descriptors/desc-invalid.json');
 const privateKeyDescriptors = require('./data/descriptors/desc-privatekeys.json');
+const validAddresses = require('./data/descriptors/desc-addresses.json');
 const common = require('../lib/descriptor/common');
 const {parse} = require('../lib/descriptor/parser');
 const PKDescriptor = require('../lib/descriptor/type/pk');
@@ -107,5 +108,30 @@ describe('Descriptor', () => {
         e => e.message === error
       );
     });
+  }
+
+  for (const type in validAddresses) {
+    if (validAddresses.hasOwnProperty(type)) {
+      for (const data of validAddresses[type]) {
+        const {input, network, range, error} = data;
+
+        it(`should derive addresses for ${input}`, () => {
+          const desc = parse(input, network);
+          const addresses = [];
+
+          const l = range ? range[0] : 0;
+          const r = range ? range[1] : 0;
+
+          try {
+            for (let i = l; i <= r; i++) {
+              addresses.push(...desc.getAddresses(i));
+            }
+            assert.deepStrictEqual(addresses, data.addresses);
+          } catch (e) {
+            assert.strictEqual(e.message, error);
+          }
+        });
+      }
+    }
   }
 });
