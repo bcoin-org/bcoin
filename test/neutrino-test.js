@@ -1,24 +1,17 @@
 'use strict';
 
+const Network = require('../lib/protocol/network');
 const FullNode = require('../lib/node/fullnode');
 const NeutrinoNode = require('../lib/node/neutrino');
 const {forValue} = require('./util/common');
 const assert = require('bsert');
-describe('neutrino', function () {
-  this.timeout(100000);
 
-  const node1 = new NeutrinoNode({
-    network: 'regtest',
-    memory: true,
-    port: 10000,
-    httpPort: 20000,
-    neutrino: true,
-    logConsole: true,
-    logLevel: 'debug',
-    only: '127.0.0.1'
-  });
+const network = Network.get('regtest');
 
-  const node2 = new FullNode({
+describe('Neutrino', function () {
+  this.timeout(10000);
+
+  const fullNode = new FullNode({
     network: 'regtest',
     memory: true,
     listen: true,
@@ -28,70 +21,128 @@ describe('neutrino', function () {
 
   async function mineBlocks(n) {
     while (n) {
-      const block = await node2.miner.mineBlock();
-      await node2.chain.add(block);
-      await new Promise(resolve => setTimeout(resolve, 20));
+      const block = await fullNode.miner.mineBlock();
+      await fullNode.chain.add(block);
       n--;
     }
-    await forValue(node1.chain, 'height', node2.chain.height);
   }
 
-  before(async function () {
-    const waitForConnection = new Promise((resolve, reject) => {
-      node1.pool.once('peer open', async (peer) => {
-        resolve(peer);
-      });
-    });
-
-    await node1.open();
-    await node2.open();
-    await node1.connect();
-    await node2.connect();
-    node1.startSync();
-    node2.startSync();
-    await waitForConnection;
-    await mineBlocks(1000);
+  before(async () => {
+    await fullNode.open();
+    await fullNode.connect();
+    await mineBlocks(200);
   });
 
   after(async () => {
-    await node1.close();
-    await node2.close();
+    await fullNode.close();
   });
 
-  describe('getheaders', () => {
-    it('should getheaders', async () => {
+  describe('No Checkpoints', function () {
+    const neutrinoNode = new NeutrinoNode({
+      network: 'regtest',
+      memory: true,
+      port: 10000,
+      httpPort: 20000,
+      neutrino: true,
+      only: '127.0.0.1'
+    });
+
+    before(async () => {
+      await neutrinoNode.open();
+      await neutrinoNode.connect();
+      assert.strictEqual(neutrinoNode.chain.height, 0);
+      assert(neutrinoNode.chain.synced);
+    });
+
+    after(async () => {
+      await neutrinoNode.close();
+    });
+
+    it('should initial sync', async () => {
+      neutrinoNode.startSync();
+      await forValue(neutrinoNode.chain, 'height', fullNode.chain.height);
+    });
+
+    it('should get new blocks headers-only', async () => {
       await mineBlocks(10);
-      assert.equal(node1.chain.height, node2.chain.height);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      assert.equal(neutrinoNode.chain.height, fullNode.chain.height);
     });
-  });
 
-  describe('getcfheaders', () => {
     it('should getcfheaders', async () => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        const headerHeight = await node1.chain.getCFHeaderHeight();
-        assert.equal(headerHeight, node1.chain.height);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      const headerHeight = await neutrinoNode.chain.getCFHeaderHeight();
+      assert.equal(headerHeight, neutrinoNode.chain.height);
     });
-  });
 
-  describe('getcfilters', () => {
     it('should getcfilters', async () => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        const filterHeight = await node1.chain.getCFilterHeight();
-        assert.equal(filterHeight, node1.chain.height);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      const filterHeight = await neutrinoNode.chain.getCFilterHeight();
+      assert.equal(filterHeight, neutrinoNode.chain.height);
     });
-  });
 
-  describe('save filters', () => {
     it('should save filters correctly', async () => {
-      const filterIndexer = node1.filterIndexers.get('BASIC');
-      for (let i = 0; i < node1.chain.height; i++) {
-          const hash = await node1.chain.getHash(i);
+      const filterIndexer = neutrinoNode.filterIndexers.get('BASIC');
+      for (let i = 0; i < neutrinoNode.chain.height; i++) {
+          const hash = await neutrinoNode.chain.getHash(i);
           const filterHeader = await filterIndexer.getFilterHeader(hash);
           assert(filterHeader);
           const filter = await filterIndexer.getFilter(hash);
           assert(filter);
           assert(filterHeader.equals(filter.header));
       }
+    });
+  });
+
+  describe('With Checkpoints', function () {
+    const neutrinoNode = new NeutrinoNode({
+      network: 'regtest',
+      memory: true,
+      port: 10000,
+      httpPort: 20000,
+      logConsole: true,
+      logLevel: 'debug',
+      neutrino: true,
+      only: '127.0.0.1'
+    });
+
+    before(async () => {
+      // Set a new checkpoint from live regtrest chain
+      const entry = await fullNode.chain.getEntry(fullNode.chain.tip.height - 20);
+      network.checkpointMap[entry.height] = entry.hash;
+      network.lastCheckpoint = entry.height;
+      network.init();
+
+      await neutrinoNode.open();
+      await neutrinoNode.connect();
+      assert.strictEqual(neutrinoNode.chain.height, 0);
+      assert(!neutrinoNode.chain.synced);
+    });
+
+    after(async () => {
+      await neutrinoNode.close();
+
+      // Restore defaults
+      network.checkpointMap = {};
+      network.lastCheckpoint = 0;
+    });
+
+    it('should initial sync', async () => {
+      let full = false;
+      neutrinoNode.chain.on('full', () => {
+        full = true;
+      });
+
+      neutrinoNode.startSync();
+      await forValue(neutrinoNode.chain, 'height', fullNode.chain.height);
+      assert(full);
+      assert(neutrinoNode.chain.synced);
+    });
+
+    it('should get new blocks headers-only', async () => {
+      await mineBlocks(10);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      assert.equal(neutrinoNode.chain.height, fullNode.chain.height);
     });
   });
 });
