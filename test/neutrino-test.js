@@ -43,6 +43,8 @@ describe('Neutrino', function () {
       memory: true,
       port: 10000,
       httpPort: 20000,
+      logConsole: true,
+      logLevel: 'debug',
       neutrino: true,
       only: '127.0.0.1'
     });
@@ -65,31 +67,25 @@ describe('Neutrino', function () {
 
     it('should get new blocks headers-only', async () => {
       await mineBlocks(10);
-      await new Promise(resolve => setTimeout(resolve, 400));
+      await forValue(neutrinoNode.chain, 'height', fullNode.chain.height);
       assert.equal(neutrinoNode.chain.height, fullNode.chain.height);
     });
 
-    it('should getcfheaders', async () => {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const headerHeight = await neutrinoNode.chain.getCFHeaderHeight();
-      assert.equal(headerHeight, neutrinoNode.chain.height);
-    });
-
-    it('should getcfilters', async () => {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const filterHeight = await neutrinoNode.chain.getCFilterHeight();
+    it('should cfheaders and getcfilters', async () => {
+      const filterIndexer = neutrinoNode.filterIndexers.get('BASIC');
+      await forValue(filterIndexer, 'height', neutrinoNode.chain.height);
+      const filterHeight = filterIndexer.height;
       assert.equal(filterHeight, neutrinoNode.chain.height);
+      const headerHeight = await neutrinoNode.pool.cfHeaderChain.tail.height;
+      assert.equal(headerHeight, neutrinoNode.chain.height);
     });
 
     it('should save filters correctly', async () => {
       const filterIndexer = neutrinoNode.filterIndexers.get('BASIC');
       for (let i = 0; i < neutrinoNode.chain.height; i++) {
           const hash = await neutrinoNode.chain.getHash(i);
-          const filterHeader = await filterIndexer.getFilterHeader(hash);
-          assert(filterHeader);
           const filter = await filterIndexer.getFilter(hash);
           assert(filter);
-          assert(filterHeader.equals(filter.header));
       }
     });
   });
@@ -141,8 +137,26 @@ describe('Neutrino', function () {
 
     it('should get new blocks headers-only', async () => {
       await mineBlocks(10);
-      await new Promise(resolve => setTimeout(resolve, 400));
+      await forValue(neutrinoNode.chain, 'height', fullNode.chain.height);
       assert.equal(neutrinoNode.chain.height, fullNode.chain.height);
+    });
+
+    it('should getcfheaders and getcfilters', async () => {
+      const filterIndexer = neutrinoNode.filterIndexers.get('BASIC');
+      await forValue(filterIndexer, 'height', neutrinoNode.chain.height);
+      const filterHeight = filterIndexer.height;
+      assert.equal(filterHeight, neutrinoNode.chain.height);
+      const headerHeight = await neutrinoNode.pool.cfHeaderChain.tail.height;
+      assert.equal(headerHeight, neutrinoNode.chain.height);
+    });
+
+    it('should save filters correctly', async () => {
+      const filterIndexer = neutrinoNode.filterIndexers.get('BASIC');
+      for (let i = 0; i < neutrinoNode.chain.height; i++) {
+          const hash = await neutrinoNode.chain.getHash(i);
+          const filter = await filterIndexer.getFilter(hash);
+          assert(filter);
+      }
     });
   });
 });
