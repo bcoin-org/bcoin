@@ -43,7 +43,10 @@ for arg in "$@"; do
     --daemon)
       daemon=1
     ;;
-    --spv)
+   --neutrino)
+      cmd='neutrino'
+    ;;
+   --spv)
       cmd='spvnode'
     ;;
   esac
