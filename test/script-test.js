@@ -10,8 +10,9 @@ const Stack = require('../lib/script/stack');
 const Opcode = require('../lib/script/opcode');
 const TX = require('../lib/primitives/tx');
 const consensus = require('../lib/protocol/consensus');
-const {fromFloat} = require('../lib/utils/fixed');
+const {HDPrivateKey} = require('../lib/hd');
 
+const {fromFloat} = require('../lib/utils/fixed');
 // test files: https://github.com/bitcoin/bitcoin/tree/master/src/test/data
 const scripts = require('./data/core-data/script-tests.json');
 
@@ -343,6 +344,47 @@ describe('Script', function() {
 
         assert.ifError(err);
       });
+    }
+  }
+
+  for (const isSorted of [true, false]) {
+    for (const isWitness of [true, false]) {
+      for (let n = 1; n <= 22; n++) {
+        for (let m = 1; m <= n; m++) {
+          it(`should handle script generation for ${n} keys. (${m} of ${n}) (isSorted = ${isSorted}) (isWitness = ${isWitness})`, () => {
+            const keys = [];
+
+            for (let i = 0; i < n; i++) {
+              keys.push(HDPrivateKey.generate().publicKey);
+            }
+
+            let script;
+            let error;
+
+            try {
+              script = Script.fromMultisig(m, n, keys, isSorted, isWitness).toRaw().toString('hex');
+            } catch (e) {
+              error = e;
+            }
+
+            if (n > 20 || (n > 15 && !isWitness)) {
+              assert(error);
+              assert(error.message === (n > 20 ? `${n} keys not allowed in script. Max allowed: 20` : 'Script size is too large'));
+            } else {
+              if (isSorted) {
+                keys.sort((a, b) => a.compare(b));
+              }
+
+              const expectedScript = Opcode.fromInt(m).toRaw().toString('hex') // threshold
+                + keys.map(key => '21' + key.toString('hex')).join('') // keys
+                + Opcode.fromInt(n).toRaw().toString('hex') // number of keys
+                + 'ae'; // OP_CHECKMULTISIG
+
+              assert(script === expectedScript);
+            }
+          });
+        }
+      }
     }
   }
 });

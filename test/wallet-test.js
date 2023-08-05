@@ -1501,6 +1501,46 @@ describe('Wallet', function() {
     });
   }
 
+  for (const witness of [true, false]) {
+    it(`should handle multisig account for keys greater than 15 when witness is ${witness} `, async () => {
+      let wallet;
+      let error;
+
+      try {
+        wallet = await wdb.create({
+          type: 'multisig',
+          m: 15,
+          n: 18,
+          witness
+        });
+      } catch (e) {
+        error = e;
+      }
+
+      if (!witness) {
+        assert(error);
+        assert(error.message === 'n ranges between 1 and 15');
+      } else {
+        const keys = [];
+
+        for (let i = 1; i <= 17; i++) {
+          const xpriv = HD.PrivateKey.generate();
+          let key = xpriv.deriveAccount(44, 0, 0).toPublic();
+          await wallet.addSharedKey(0, key);
+          key = key.derivePath('m/0/0').publicKey;
+          keys.push(key);
+        }
+
+        keys.push((await wallet.receiveKey()).publicKey);
+        const walletReceiveAddress = await wallet.receiveAddress();
+        const script = Script.fromMultisig(15, 18, keys, true, true);
+        const expectedAddress = Script.fromProgram(0, script.sha256()).getAddress();
+
+        assert.deepStrictEqual(expectedAddress, walletReceiveAddress);
+      }
+    });
+  }
+
   it('should get range of txs', async () => {
     const wallet = currentWallet;
     const txs = await wallet.getRange(null, {
