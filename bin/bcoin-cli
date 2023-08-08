@@ -129,6 +129,22 @@ class CLI {
     this.log(filter);
   }
 
+  async getFilterHeader() {
+    let hash = this.config.str(0, '');
+
+    if (hash.length !== 64)
+      hash = parseInt(hash, 10);
+
+    const filterHeader = await this.client.getFilterHeader(hash);
+
+    if (!filterHeader) {
+      this.log('Filter header not found.');
+      return;
+    }
+
+    this.log(filterHeader);
+  }
+
   async estimateFee() {
     const blocks = this.config.uint(0, 1);
 
@@ -246,6 +262,9 @@ class CLI {
       case 'filter':
         await this.getFilter();
         break;
+      case 'filterheader':
+        await this.getFilterHeader();
+        break;
       case 'fee':
         await this.estimateFee();
         break;
@@ -263,6 +282,7 @@ class CLI {
         this.log('  $ coin [hash+index/address]: View coins.');
         this.log('  $ fee [target]: Estimate smart fee.');
         this.log('  $ filter [hash/height]: View filter.');
+        this.log('  $ filterheader [hash/height]: View filter header.');
         this.log('  $ header [hash/height]: View block header.');
         this.log('  $ info: Get server info.');
         this.log('  $ mempool: Get mempool snapshot.');
