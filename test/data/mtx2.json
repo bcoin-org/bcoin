@@ -1,0 +1,41 @@
+{
+  "hash": "8396bd726e9834eeb1f448c55782ddbc6f707fb24da2b69b0ee1aba226fecde0",
+  "witnessHash": "3e16e5feeade314b77738abfd542dcbf6e411b3801c776b82dbb97cf2eba55cb",
+  "fee": 2860,
+  "rate": 20283,
+  "mtime": 1674747979,
+  "version": 1,
+  "inputs": [
+    {
+      "prevout": {
+        "hash": "89a69a1055316c596fb420a5b2684b6f1263df14181479bd23d8c482a511eda3",
+        "index": 0
+      },
+      "script": "",
+      "witness": "024730440220523b1eae328e1ec4c13c782925dec548dfea48b157d30420e97fbad0201e63bf0220657222e89940116275ec6c284a761ebcb39c40cee7dca409eea79d452deb9cb00121029b38fd79f15cda4951135358c19068f8a1dce07fba0f8822b68944db93b38dad",
+      "sequence": 4294967295,
+      "coin": {
+        "version": 1,
+        "height": 1,
+        "value": 5000000000,
+        "script": "00144a0ba3c55883c763de299d1bc5db501544a89bdb",
+        "address": "bcrt1qfg96832cs0rk8h3fn5dutk6sz4z23x7m8jn2j9",
+        "coinbase": true
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "value": 100000000,
+      "script": "0014fe49ed2fc7e3bd0189e2df475c97c00f3adf1704",
+      "address": "bcrt1qley76t78uw7srz0zmar4e97qpuad79cywdem2k"
+    },
+    {
+      "value": 4899997140,
+      "script": "0014969e2f20c15f94dce953bab06a0afc37bf8e9b3c",
+      "address": "bcrt1qj60z7gxpt72de62nh2cx5zhux7lcaxeujkegks"
+    }
+  ],
+  "locktime": 0,
+  "hex": "01000000000101a3ed11a582c4d823bd79141814df63126f4b68b2a520b46f596c3155109aa6890000000000ffffffff0200e1f50500000000160014fe49ed2fc7e3bd0189e2df475c97c00f3adf1704d405102401000000160014969e2f20c15f94dce953bab06a0afc37bf8e9b3c024730440220523b1eae328e1ec4c13c782925dec548dfea48b157d30420e97fbad0201e63bf0220657222e89940116275ec6c284a761ebcb39c40cee7dca409eea79d452deb9cb00121029b38fd79f15cda4951135358c19068f8a1dce07fba0f8822b68944db93b38dad00000000"
+}
