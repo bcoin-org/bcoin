@@ -47,7 +47,7 @@ describe('Wallet RBF', function () {
   it('should not replace missing tx', async () => {
     const dummyHash = Buffer.alloc(32, 0x10);
     assert.rejects(async () => {
-      await alice.bumpTXFee(dummyHash, 1000 /* satoshis per kvB */, null, true);
+      await alice.bumpTXFee(dummyHash, 1000 /* satoshis per kvB */, true, null);
     }, {
       message: 'Transaction not found.'
     });
@@ -57,7 +57,7 @@ describe('Wallet RBF', function () {
     const txs = await alice.getHistory();
     const cb = txs[0];
     assert.rejects(async () => {
-      await alice.bumpTXFee(cb.hash, 1000 /* satoshis per kvB */, null, true);
+      await alice.bumpTXFee(cb.hash, 1000 /* satoshis per kvB */, true, null);
     }, {
       message: 'Transaction is confirmed.'
     });
@@ -78,7 +78,7 @@ describe('Wallet RBF', function () {
     assert(node.mempool.hasEntry(tx.hash()));
 
     assert.rejects(async () => {
-      await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, null, true);
+      await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, true, null);
     }, {
       message: 'Transaction does not signal opt-in replace-by-fee.'
     });
@@ -112,7 +112,7 @@ describe('Wallet RBF', function () {
     assert(node.mempool.hasEntry(tx2.hash()));
 
     assert.rejects(async () => {
-      await alice.bumpTXFee(tx1.hash(), 1000 /* satoshis per kvB */, null, true);
+      await alice.bumpTXFee(tx1.hash(), 1000 /* satoshis per kvB */, true, null);
     }, {
       message: 'Transaction has descendants in the wallet.'
     });
@@ -132,7 +132,7 @@ describe('Wallet RBF', function () {
     await forEvent(node.mempool, 'tx');
     assert(node.mempool.has(tx.hash()));
 
-    const rtx = await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, null, true);
+    const rtx = await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, true, null);
 
     await forEvent(node.mempool, 'tx');
     assert(!node.mempool.hasEntry(tx.hash()));

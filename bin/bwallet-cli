@@ -364,6 +364,17 @@ class CLI {
     this.log('Abandoned tx: ' + hash);
   }
 
+  async bumpTX() {
+    const hash = this.config.str([0, 'hash']);
+    const rate = this.config.uint([1, 'rate']);
+    const sign = this.config.bool([2, 'sign']);
+    const passphrase = this.config.str([3, 'passphrase']);
+
+    const tx = await this.wallet.bumpTX(hash, rate, sign, passphrase);
+
+    this.log(tx);
+  }
+
   async getDetails() {
     const hash = this.config.str(0);
     const details = await this.wallet.getTX(hash);
@@ -605,6 +616,9 @@ class CLI {
       case 'rescan':
         await this.rescan();
         break;
+      case 'bump':
+        await this.bumpTX();
+        break;
       default:
         this.log('Unrecognized command.');
         this.log('Commands:');
@@ -617,6 +631,7 @@ class CLI {
         this.log('  $ balance: Get wallet balance.');
         this.log('  $ block [height]: View wallet block.');
         this.log('  $ blocks: List wallet blocks.');
+        this.log('  $ bump [hash]: Bump TX fee with replacement.');
         this.log('  $ change: Derive new change address.');
         this.log('  $ coins: View wallet coins.');
         this.log('  $ dump [address]: Get wallet key WIF by address.');
