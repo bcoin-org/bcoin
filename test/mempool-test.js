@@ -1281,7 +1281,7 @@ describe('Mempool', function() {
         await mempool.addTX(tx2);
       }, {
         type: 'VerifyError',
-        reason: 'insufficient fee'
+        reason: 'insufficient fee: must not reduce total mempool fee rate'
       });
 
       // Try again with higher fee
@@ -1342,7 +1342,7 @@ describe('Mempool', function() {
         await mempool.addTX(tx2);
       }, {
         type: 'VerifyError',
-        reason: 'insufficient fee'
+        reason: 'insufficient fee: must pay for fees including conflicts'
       });
 
       // Try again with higher fee
