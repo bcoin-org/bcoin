@@ -1362,38 +1362,42 @@ describe('Mempool', function() {
     });
 
     it('should reject replacement including new unconfirmed UTXO', async() => {
+      // {confirmed coin 1}     {confirmed coin 2}
+      //    |     |                      |
+      //    |   tx 1                   tx 2 {output}
+      //    |                                  |
+      //    | +--------------------------------+
+      //    | |
+      //   tx 3 is invalid!
+
       mempool.options.replaceByFee = true;
 
       const coin1 = chaincoins.getCoins()[0];
       const coin2 = chaincoins.getCoins()[1];
 
+      // tx 1 spends a confirmed coin
       const mtx1 = new MTX();
-      const mtx2 = new MTX();
       mtx1.addCoin(coin1);
-      mtx2.addCoin(coin2);
-
       mtx1.inputs[0].sequence = 0xfffffffd;
-
       const addr1 = chaincoins.createReceive().getAddress();
       mtx1.addOutput(addr1, coin1.value - 1000);
+      chaincoins.sign(mtx1);
+      assert(mtx1.verify());
+      const tx1 = mtx1.toTX();
+      assert(tx1.isRBF());
+      await mempool.addTX(tx1);
 
+      // tx 2 spends a different confirmed coin
+      const mtx2 = new MTX();
+      mtx2.addCoin(coin2);
       const addr2 = chaincoins.createReceive().getAddress();
       mtx2.addOutput(addr2, coin2.value - 1000);
-
-      chaincoins.sign(mtx1);
       chaincoins.sign(mtx2);
-
-      assert(mtx1.verify());
       assert(mtx2.verify());
-      const tx1 = mtx1.toTX();
       const tx2 = mtx2.toTX();
-
-      assert(tx1.isRBF());
-
-      await mempool.addTX(tx1);
       await mempool.addTX(tx2);
 
-      // Attempt to replace tx1 and include the unconfirmed output of tx2
+      // Attempt to replace tx 1 and include the unconfirmed output of tx 2
       const mtx3 = new MTX();
       mtx3.addCoin(coin1);
       const coin3 = Coin.fromTX(tx2, 0, -1);
@@ -1483,12 +1487,20 @@ describe('Mempool', function() {
     });
 
     it('should accept replacement spending an unconfirmed output', async () => {
+      // {confirmed coin 1}
+      //     |
+      //   tx 0 {output}
+      //         |   |
+      //       tx 1  |
+      //             |
+      //           tx 2
+
       mempool.options.replaceByFee = true;
 
       const addr1 = chaincoins.createReceive().getAddress();
       const coin0 = chaincoins.getCoins()[0];
 
-      // Generate parent TX
+      // Generate parent tx 0
       const mtx0 = new MTX();
       mtx0.addCoin(coin0);
       mtx0.addOutput(addr1, coin0.value - 200);
@@ -1497,7 +1509,7 @@ describe('Mempool', function() {
       const tx0 = mtx0.toTX();
       await mempool.addTX(tx0);
 
-      // Spend unconfirmed output to replaceable child
+      // Spend unconfirmed output to replaceable child tx 1
       const mtx1 = new MTX();
       const coin1 = Coin.fromTX(tx0, 0, -1);
       mtx1.addCoin(coin1);
@@ -1508,7 +1520,7 @@ describe('Mempool', function() {
       const tx1 = mtx1.toTX();
       await mempool.addTX(tx1);
 
-      // Send replacement
+      // Send replacement tx 2
       const mtx2 = new MTX();
       mtx2.addCoin(coin1);
       mtx2.addOutput(addr1, coin1.value - 400);
@@ -1517,7 +1529,7 @@ describe('Mempool', function() {
       const tx2 = mtx2.toTX();
       await mempool.addTX(tx2);
 
-      // Unconfirmed parent and replacement in mempool together
+      // Unconfirmed parent tx 0 and replacement tx 2 are in mempool together
       assert(mempool.has(tx0.hash()));
       assert(!mempool.has(tx1.hash()));
       assert(mempool.has(tx2.hash()));
@@ -1563,6 +1575,68 @@ describe('Mempool', function() {
         type: 'VerifyError',
         reason: 'bad-txns-inputs-spent'
       });
+    });
+
+    it('should not accept replacement that evicts its own inputs', async () => {
+      // {confirmed coin 1}
+      //     |
+      //   tx 0 {output}
+      //          |   |
+      //          | tx 1 {output}
+      //          |         |
+      //          | +-------+
+      //          | |
+      //         tx 2 is invalid!
+
+      mempool.options.replaceByFee = true;
+
+      const addr1 = chaincoins.createReceive().getAddress();
+      const coin0 = chaincoins.getCoins()[0];
+
+      // Generate tx 0 which spends a confirmed coin
+      const mtx0 = new MTX();
+      mtx0.addCoin(coin0);
+      mtx0.addOutput(addr1, coin0.value - 200);
+      chaincoins.sign(mtx0);
+      assert(mtx0.verify());
+      const tx0 = mtx0.toTX();
+      await mempool.addTX(tx0);
+
+      // Generate tx 1 which spends an output of tx 0
+      const mtx1 = new MTX();
+      const coin1 = Coin.fromTX(tx0, 0, -1);
+      mtx1.addCoin(coin1);
+      mtx1.inputs[0].sequence = 0xfffffffd;
+      mtx1.addOutput(addr1, coin1.value - 200);
+      chaincoins.sign(mtx1);
+      assert(mtx1.verify());
+      const tx1 = mtx1.toTX();
+      await mempool.addTX(tx1);
+
+      // Send tx 2 which attempts to:
+      //   - replace tx 1 by spending an output of tx 0
+      //   - ALSO spend an output of tx 1
+      // This is obviously invalid because if tx 1 is replaced,
+      // its output no longer exists so it can not be spent by tx 2.
+      const mtx2 = new MTX();
+      mtx2.addCoin(coin1);
+      const coin2 = Coin.fromTX(tx1, 0, -1);
+      mtx2.addCoin(coin2);
+      mtx2.addOutput(addr1, coin2.value + coin1.value - 1000);
+      chaincoins.sign(mtx2);
+      assert(mtx2.verify());
+      const tx2 = mtx2.toTX();
+
+      await assert.rejects(async () => {
+        await mempool.addTX(tx2);
+      }, {
+        type: 'VerifyError',
+        reason: 'replacement-adds-unconfirmed'
+      });
+
+      assert(mempool.has(tx0.hash()));
+      assert(mempool.has(tx1.hash()));
+      assert(!mempool.has(tx2.hash()));
     });
   });
 });
