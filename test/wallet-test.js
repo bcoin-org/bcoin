@@ -6,6 +6,7 @@
 const assert = require('bsert');
 const {WalletClient} = require('../lib/client');
 const consensus = require('../lib/protocol/consensus');
+const Network = require('../lib/protocol/network');
 const util = require('../lib/utils/util');
 const hash256 = require('bcrypto/lib/hash256');
 const random = require('bcrypto/lib/random');
@@ -27,6 +28,11 @@ const HDPrivateKey = require('../lib/hd/private');
 const policy = require('../lib/protocol/policy');
 const {forValue} = require('./util/common');
 
+const {
+  Mnemonic,
+  HDPrivateKey
+} = HD;
+
 const KEY1 = 'xprv9s21ZrQH143K3Aj6xQBymM31Zb4BVc7wxqfUhMZrzewdDVCt'
   + 'qUP9iWfcHgJofs25xbaUpCps9GDXj83NiWvQCAkWQhVj5J4CorfnpKX94AZ';
 
@@ -36,6 +42,12 @@ const KEY2 = 'xprv9s21ZrQH143K3mqiSThzPtWAabQ22Pjp3uSNnZ53A5bQ4udp'
 // abandon abandon... about key at m'/44'/0'/0'
 const PUBKEY = 'xpub6BosfCnifzxcFwrSzQiqu2DBVTshkCXacvNsWGYJVVhhaw'
   + 'A7d4R5WSWGFNbi8Aw6ZRc1brxMyWMzG3DSSSSoekkudhUd9yLb6qx39T9nMdj';
+
+const PHRASE1 = 'abandon abandon abandon abandon abandon abandon '
+  + 'abandon abandon abandon abandon abandon about';
+
+const PHRASE2 = 'ability ability ability ability ability ability '
+  + 'ability ability ability ability ability acid';
 
 const workers = new WorkerPool({
   enabled: true,
@@ -1068,6 +1080,166 @@ describe('Wallet', function() {
     assert(fmt.includes('foo'));
     assert(fmt.includes('initialized'));
     assert(fmt.includes('lookahead'));
+  });
+
+  it('should fail w/ watch-only with incorrect depth hd pubkey', async() => {
+    const network = Network.get('main');
+    const mnemonic = Mnemonic.fromPhrase(PHRASE1);
+
+    // m'
+    const priv = HDPrivateKey.fromMnemonic(mnemonic);
+
+    // m'/44'
+    const bip44Key = priv.derive(44, true);
+
+    // m'/44'/0' Oops, wrong one.
+    const bitcoinKey = bip44Key.derive(0, true);
+    const xpub = bitcoinKey.xpubkey(network.type);
+
+    assert.rejects(async () => {
+      await wdb.create({
+        watchOnly: true,
+        accountKey: xpub
+      });
+    }, {
+      name: 'Error',
+      message: 'Expected account key 0.'
+    });
+  });
+
+  it('should fail w/ watch-only with incorrect network', async() => {
+    const network = Network.get('regtest');
+    const mnemonic = Mnemonic.fromPhrase(PHRASE1);
+
+    // m'
+    const priv = HDPrivateKey.fromMnemonic(mnemonic);
+
+    // m'/44'
+    const bip44Key = priv.derive(44, true);
+
+    // m'/44'/0'
+    const bitcoinKey = bip44Key.derive(0, true);
+
+    // m'/44'/0'/0'
+    const accountKey = bitcoinKey.derive(0, true);
+    const xpub = accountKey.xpubkey(network.type);
+
+    assert.rejects(async () => {
+      await wdb.create({
+        watchOnly: true,
+        accountKey: xpub
+      });
+    }, {
+      name: 'Error',
+      message: 'Network mismatch for xpubkey.'
+    });
+  });
+
+  it.skip('should fail w/ watch-only with unrecognized purpose', async() => {
+    const network = Network.get('main');
+    const mnemonic = Mnemonic.fromPhrase(PHRASE1);
+
+    // m'
+    const priv = HDPrivateKey.fromMnemonic(mnemonic);
+
+    // m'/400'
+    const bip44Key = priv.derive(400, true);
+
+    // m'/400'/0'
+    const bitcoinKey = bip44Key.derive(0, true);
+
+    // m'/400'/0'/0'
+    const accountKey = bitcoinKey.derive(0, true);
+    const pub = accountKey.xpubkey(network.type);
+
+    assert.rejects(async () => {
+      await wdb.create({
+        watchOnly: true,
+        accountKey: pub
+      });
+    }, {
+      name: 'Error',
+      message: 'Unrecognized purpose for key.'
+    });
+  });
+
+  it('should fail w/ watch-only with incorrect account hd pubkey', async() => {
+    const network = Network.get('main');
+    const mnemonic = Mnemonic.fromPhrase(PHRASE1);
+
+    // m'
+    const priv = HDPrivateKey.fromMnemonic(mnemonic);
+
+    // m'/44'
+    const bip44Key = priv.derive(44, true);
+
+    // m'/44'/0'
+    const bitcoinKey = bip44Key.derive(0, true);
+
+    // m'/44'/0'/0'
+    const accountKey = bitcoinKey.derive(0, true);
+    const xpub = accountKey.xpubkey(network.type);
+
+    // m'/44'/0'/5' Oops, wrong one.
+    const account5Key = bitcoinKey.derive(5, true);
+    const xpub5 = account5Key.xpubkey(network.type);
+
+    const wallet = await wdb.create({
+      watchOnly: true,
+      accountKey: xpub
+    });
+
+    assert.rejects(async () => {
+      await wallet.createAccount({
+        name: 'foo',
+        accountKey: xpub5
+      });
+    }, {
+      name: 'Error',
+      message: 'Expected account key 1.'
+    });
+  });
+
+  it.skip('should fail w/ watch-only with master key mismatch', async() => {
+    const network = Network.get('main');
+    const mnemonic1 = Mnemonic.fromPhrase(PHRASE1);
+    const mnemonic2 = Mnemonic.fromPhrase(PHRASE2);
+
+    // m'
+    const priv1 = HDPrivateKey.fromMnemonic(mnemonic1);
+    const priv2 = HDPrivateKey.fromMnemonic(mnemonic2);
+
+    // m'/44'
+    const bip44Key1 = priv1.derive(44, true);
+    const bip44Key2 = priv2.derive(44, true);
+
+    // m'/44'/0'
+    const bitcoinKey1 = bip44Key1.derive(0, true);
+    const bitcoinKey2 = bip44Key2.derive(0, true);
+
+    // m'/44'/0'/0'
+    const accountKey1 = bitcoinKey1.derive(0, true);
+    const xpub1 = accountKey1.xpubkey(network.type);
+
+    // m'/44'/0'/0'
+    const accountKey2 = bitcoinKey2.derive(0, true);
+    const xpub2 = accountKey2.xpubkey(network.type);
+
+    const wallet = await wdb.create({
+      watchOnly: true,
+      accountKey: xpub1
+    });
+
+    assert.rejects(async () => {
+      // Oops, wrong one.
+      await wallet.createAccount({
+        name: 'foo',
+        accountKey: xpub2
+      });
+    }, {
+      name: 'Error',
+      message: 'Master key mismatch.'
+    });
   });
 
   it('should fail to create duplicate account', async () => {
