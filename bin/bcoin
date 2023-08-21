@@ -46,6 +46,9 @@ for arg in "$@"; do
     --spv)
       cmd='spvnode'
     ;;
+    --neutrino)
+      cmd='neutrino'
+    ;;
   esac
 done
 
