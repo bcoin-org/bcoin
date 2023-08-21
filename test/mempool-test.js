@@ -1638,5 +1638,64 @@ describe('Mempool', function() {
       assert(mempool.has(tx1.hash()));
       assert(!mempool.has(tx2.hash()));
     });
+
+    it('should not accept replacement that does not evict its own inputs', async () => {
+      // ...because it spends an unconfirmed coin the conflict did not spend.
+
+      // {confirmed coin 1}
+      //     |
+      //   tx 0 {output 0} {output 1}
+      //          |   |         |
+      //        tx 1  +-------+ |
+      //                      | |
+      //                      tx 2 is invalid!
+
+      mempool.options.replaceByFee = true;
+
+      const addr1 = chaincoins.createReceive().getAddress();
+      const coin0 = chaincoins.getCoins()[0];
+
+      // Generate tx 0 which spends a confirmed coin and creates two outputs
+      const mtx0 = new MTX();
+      mtx0.addCoin(coin0);
+      mtx0.addOutput(addr1, parseInt(coin0.value / 2) - 200);
+      mtx0.addOutput(addr1, parseInt(coin0.value / 2) - 200);
+      chaincoins.sign(mtx0);
+      assert(mtx0.verify());
+      const tx0 = mtx0.toTX();
+      await mempool.addTX(tx0);
+
+      // Generate tx 1 which spends output 0 of tx 0
+      const mtx1 = new MTX();
+      const coin1 = Coin.fromTX(tx0, 0, -1);
+      mtx1.addCoin(coin1);
+      mtx1.inputs[0].sequence = 0xfffffffd;
+      mtx1.addOutput(addr1, coin1.value - 200);
+      chaincoins.sign(mtx1);
+      assert(mtx1.verify());
+      const tx1 = mtx1.toTX();
+      await mempool.addTX(tx1);
+
+      // Send tx 2 which spends outputs 0 & 1 of tx 0, replacing tx 1
+      const mtx2 = new MTX();
+      mtx2.addCoin(coin1);
+      const coin2 = Coin.fromTX(tx0, 1, -1);
+      mtx2.addCoin(coin2);
+      mtx2.addOutput(addr1, coin2.value + coin1.value - 1000);
+      chaincoins.sign(mtx2);
+      assert(mtx2.verify());
+      const tx2 = mtx2.toTX();
+
+      await assert.rejects(async () => {
+        await mempool.addTX(tx2);
+      }, {
+        type: 'VerifyError',
+        reason: 'replacement-adds-unconfirmed'
+      });
+
+      assert(mempool.has(tx0.hash()));
+      assert(mempool.has(tx1.hash()));
+      assert(!mempool.has(tx2.hash()));
+    });
   });
 });
