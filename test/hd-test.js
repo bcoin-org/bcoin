@@ -110,6 +110,88 @@ describe('HD', function() {
     assert.strictEqual(fmt.split(' ').length, 25);
   });
 
+  it('should return a valid HDPrivateKey from fromBase58 function', () => {
+    const key = HD.fromBase58(master.toBase58('main'), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toBase58('main'));
+  });
+
+  it('should return a valid HDPublicKey from fromBase58 function', () => {
+    const key = HD.fromBase58(master.toPublic().toBase58('main'), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toPublic().toBase58('main'));
+  });
+
+  it('should return a public key from fromJSON when public key JSON is supplied', () => {
+    const key = HD.fromJSON(master.toPublic().toJSON(), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toPublic().toBase58('main'));
+  });
+
+  it('should return a private key from fromRaw when private key data is supplied', () => {
+    const key = HD.fromRaw(master.toRaw(), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toBase58('main'));
+  });
+
+  it('should return a public key from fromRaw when public key data is supplied', () => {
+    const key = HD.fromRaw(master.toPublic().toRaw(), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toPublic().toBase58('main'));
+  });
+
+  it('should handle the private key case in HD.isBase58', () => {
+    assert.strictEqual(HD.isBase58(master.toBase58('main')), true);
+  });
+
+  it('should handle the public key case in HD.isBase58', () => {
+    assert.strictEqual(HD.isBase58(master.toPublic().toBase58('main')), true);
+  });
+
+  it('should handle the private key case in HD.isRaw', () => {
+    assert.strictEqual(HD.isRaw(master.toRaw()), true);
+  });
+
+  it('should handle the public key case in HD.isRaw', () => {
+    assert.strictEqual(HD.isRaw(master.toPublic().toRaw()), true);
+  });
+
+  it('should handle the private key case in HD.isHD', () => {
+    assert.strictEqual(HD.isHD(master), true);
+  });
+
+  it('should handle the public key case in HD.isHD', () => {
+    assert.strictEqual(HD.isHD(master.toPublic()), true);
+  });
+
+  it('should fail assertion when HD.from is called invalid data', () => {
+    assert.throws(() => {
+      HD.from('invalid', 'main');
+    }, Error);
+  });
+
+  it('should return the passed in parameter when HD.from is called with a valid HD object', () => {
+    const key = HD.from(master, 'main');
+    assert.strictEqual(key, master);
+  });
+
+  it('should return a key from HD.from when the passed in param isBase58', () => {
+    const key = HD.from(master.toBase58('main'), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toBase58('main'));
+  });
+
+  it('should return a key from HD.from when the passed in param isRaw', () => {
+    const key = HD.from(master.toRaw(), 'main');
+    assert.strictEqual(key.toBase58('main'), master.toBase58('main'));
+  });
+
+  it('should return a key from HD.from when the passed in param is mnemonic options', () => {
+    const mne = new HD.Mnemonic();
+    const key = HD.from(mne, 'main');
+    assert.strictEqual(HD.isHD(key), true);
+  });
+
+  it('should throw an error from HD.from when passed in param is not Base58, Raw, Mnemonic, or HD', () => {
+    assert.throws(() => {
+      HD.from('bad options', 'main');
+    }, Error);
+  });
+
   for (const vector of [vector1, vector2]) {
     let master = null;
 
