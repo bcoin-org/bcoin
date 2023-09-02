@@ -48,4 +48,34 @@ describe('Coin', function() {
     assert(fmt.includes('coinbase'));
     assert(fmt.includes('script'));
   });
+
+  it('should throw error for invalid input raw data', () => {
+    let error;
+    try {
+      Coin.fromRaw(Buffer.from([]));
+    } catch (e) {
+      error = e;
+    }
+
+    assert(error instanceof Error);
+    assert.strictEqual(error.message, 'Out of bounds read (offset=0).');
+  });
+
+  it('should return expected txid', () => {
+    const [tx] = tx1.getTX();
+    const coin = Coin.fromTX(tx, 0, 0);
+    assert.strictEqual(coin.txid(), 'ff80fe4937e2de16411c3a2bc534d661dc8b4f8aad75e6fbc4b1ec6060d9ef1c');
+  });
+
+  it('should return expected type', () => {
+    const [tx] = tx1.getTX();
+    const coin = Coin.fromTX(tx, 0, 0);
+    assert.strictEqual(coin.getType(), 'multisig');
+  });
+
+  it('should return expected address', () => {
+    const [tx] = tx1.getTX();
+    const coin = Coin.fromTX(tx, 0, 0);
+    assert.strictEqual(coin.getAddress().toString(), '3KUER9kZ693d5FQgvmr5qNDKnSpP9nXv9v');
+  });
 });

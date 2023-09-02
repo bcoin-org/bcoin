@@ -99,4 +99,32 @@ describe('Coins', function() {
     assert.strictEqual(coins.get(0), null);
     deepCoinsEqual(coins.get(1), reserialize(coins.get(1)));
   });
+
+  it('should spend multiple outputs from a single transaction', () => {
+    const [tx, view] = tx1.getTX();
+
+    view.addTX(tx, 1);
+
+    const hash = tx.hash();
+    const coins = view.get(hash);
+
+    view.spendEntry(new Outpoint(hash, 0));
+    view.spendEntry(new Outpoint(hash, 1));
+
+    assert.strictEqual(coins.get(0).spent, true);
+    assert.strictEqual(coins.get(1).spent, true);
+    assert.strictEqual(view.undo.items.length, 2);
+  });
+
+  it('should handle serialization and deserialization of the coin view', () => {
+    const [tx, view] = tx1.getTX();
+
+    const size = view.getSize(tx);
+    const bw = bio.write(size);
+    const raw = view.toWriter(bw, tx).render();
+    const br = bio.read(raw);
+    const res = CoinView.fromReader(br, tx);
+
+    assert.deepStrictEqual(view, res);
+  });
 });

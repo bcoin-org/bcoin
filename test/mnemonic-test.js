@@ -65,4 +65,22 @@ describe('Mnemonic', function() {
     assert.strictEqual(m2.language, m1.language);
     assert.bufferEqual(m2.toSeed(), m1.toSeed());
   });
+
+  it('should create different seed with different passphrase', () => {
+    const mnemonic = new Mnemonic();
+    const seed1 = mnemonic.toSeed();
+    const seed2 = mnemonic.toSeed('different passphrase');
+    assert.notDeepEqual(seed1, seed2);
+  });
+
+  it('should create a mnemonic in French', () => {
+    const mnemonic = new Mnemonic({language: 'french'});
+    assert.strictEqual(mnemonic.language, 'french');
+  });
+
+  it('should create an HD Private Key from a mnemonic with no passphrase', () => {
+    const mnemonic = new Mnemonic();
+    const key = HDPrivateKey.fromMnemonic(mnemonic);
+    assert.strictEqual(key.depth, 0);
+  });
 });
