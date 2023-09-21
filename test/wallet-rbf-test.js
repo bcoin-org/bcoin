@@ -186,4 +186,35 @@ describe('Wallet RBF', function () {
     });
     await node.rpc.generateToAddress([1, aliceReceive]);
   });
+
+  it('should bump a tx with no change by adding new in/out pair', async () => {
+    const coins = await alice.getCoins();
+    let coin;
+    for (coin of coins) {
+      if (!coin.coinbase)
+        break;
+    }
+    const mtx = new MTX();
+    mtx.addCoin(coin);
+    mtx.addOutput(bobReceive, coin.value - 200);
+    mtx.inputs[0].sequence = 0xfffffffd;
+    await alice.sign(mtx);
+    const tx = mtx.toTX();
+    assert.strictEqual(tx.inputs.length, 1);
+    assert.strictEqual(tx.outputs.length, 1);
+    await alice.wdb.addTX(tx);
+    await alice.wdb.send(tx);
+    await forEvent(node.mempool, 'tx');
+
+    const rtx = await alice.bumpTXFee(tx.hash(), 2000 /* satoshis per kvB */, true, null);
+    assert.strictEqual(rtx.inputs.length, 2);
+    assert.strictEqual(rtx.outputs.length, 2);
+    assert(rtx.getRate() >= 2000 && rtx.getRate() < 3000);
+
+    await forEvent(node.mempool, 'tx');
+    assert(!node.mempool.hasEntry(tx.hash()));
+    assert(node.mempool.hasEntry(rtx.hash()));
+
+    await node.rpc.generateToAddress([1, aliceReceive]);
+  });
 });
