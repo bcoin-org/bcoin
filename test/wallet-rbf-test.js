@@ -166,4 +166,24 @@ describe('Wallet RBF', function () {
     });
     await node.rpc.generateToAddress([1, aliceReceive]);
   });
+
+  it('should not send replacement with too-low fee rate', async () => {
+    const tx = await alice.send({
+      outputs: [{
+        address: bobReceive,
+        value: 1e8
+      }],
+      replaceable: true,
+      rate: 100000
+    });
+    await forEvent(node.mempool, 'tx');
+
+    assert.rejects(async () => {
+      // Try a fee rate below minRelay (1000)
+      await alice.bumpTXFee(tx.hash(), 999 /* satoshis per kvB */, true, null);
+    }, {
+      message: 'Provided fee rate is too low.'
+    });
+    await node.rpc.generateToAddress([1, aliceReceive]);
+  });
 });
