@@ -147,4 +147,23 @@ describe('Wallet RBF', function () {
     bobBal = await bob.getBalance();
     assert.strictEqual(bobBal.confirmed, 1e8);
   });
+
+  it('should not send replacement if original has more than one change address', async () => {
+    const changeAddr = (await alice.createChange()).getAddress('string');
+    const tx = await alice.send({
+      outputs: [{
+        address: changeAddr,
+        value: 1e8
+      }],
+      replaceable: true
+    });
+    await forEvent(node.mempool, 'tx');
+
+    assert.rejects(async () => {
+      await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, true, null);
+    }, {
+      message: 'Found more than one change address.'
+    });
+    await node.rpc.generateToAddress([1, aliceReceive]);
+  });
 });
