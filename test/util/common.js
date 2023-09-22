@@ -123,6 +123,50 @@ common.forValue = async function(obj, key, val, timeout = 30000) {
   });
 };
 
+common.forEvent = async function forEvent(obj, name, count = 1, timeout = 5000) {
+  assert(typeof obj === 'object');
+  assert(typeof name === 'string');
+  assert(typeof count === 'number');
+  assert(typeof timeout === 'number');
+
+  let countdown = count;
+  const events = [];
+
+  return new Promise((resolve, reject) => {
+    let timeoutHandler, listener;
+
+    const cleanup = function cleanup() {
+      clearTimeout(timeoutHandler);
+      obj.removeListener(name, listener);
+    };
+
+    listener = function listener(...args) {
+      events.push({
+        event: name,
+        values: [...args]
+      });
+
+      countdown--;
+      if (countdown === 0) {
+        cleanup();
+        resolve(events);
+        return;
+      }
+    };
+
+    timeoutHandler = setTimeout(() => {
+      cleanup();
+      const msg = `Timeout waiting for event ${name} `
+        + `(received ${count - countdown}/${count})`;
+
+      reject(new Error(msg));
+      return;
+    }, timeout);
+
+    obj.on(name, listener);
+  });
+};
+
 function parseUndo(data) {
   const br = bio.read(data);
   const items = [];
