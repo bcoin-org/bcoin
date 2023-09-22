@@ -182,7 +182,7 @@ describe('Wallet RBF', function () {
       // Try a fee rate below minRelay (1000)
       await alice.bumpTXFee(tx.hash(), 999 /* satoshis per kvB */, true, null);
     }, {
-      message: 'Provided fee rate is too low.'
+      message: 'Fee rate is below minimum.'
     });
     await node.rpc.generateToAddress([1, aliceReceive]);
   });
@@ -214,6 +214,42 @@ describe('Wallet RBF', function () {
     await forEvent(node.mempool, 'tx');
     assert(!node.mempool.hasEntry(tx.hash()));
     assert(node.mempool.hasEntry(rtx.hash()));
+
+    await node.rpc.generateToAddress([1, aliceReceive]);
+  });
+
+  it('should not violate rule 6 signed or unsigned', async () => {
+    const coins = await alice.getCoins();
+    let coin;
+    for (coin of coins) {
+      if (!coin.coinbase)
+        break;
+    }
+    const mtx = new MTX();
+    mtx.addCoin(coin);
+    mtx.addOutput(bobReceive, coin.value - 200);
+    mtx.inputs[0].sequence = 0xfffffffd;
+    await alice.sign(mtx);
+    const tx = mtx.toTX();
+    assert.strictEqual(tx.inputs.length, 1);
+    assert.strictEqual(tx.outputs.length, 1);
+    await alice.wdb.addTX(tx);
+    await alice.wdb.send(tx);
+    await forEvent(node.mempool, 'tx');
+
+    // Do not sign, estimate fee rate
+    await assert.rejects(async () => {
+      await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, false, null);
+    }, {
+      message: /^Provided fee rate of 1000 s\/kvB results in insufficient estimated total fee rate/
+    });
+
+    // Do sign, then check fee rate
+    await assert.rejects(async () => {
+      await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, true, null);
+    }, {
+      message: /^Provided fee rate of 1000 s\/kvB results in insufficient total fee rate/
+    });
 
     await node.rpc.generateToAddress([1, aliceReceive]);
   });
