@@ -253,4 +253,65 @@ describe('Wallet RBF', function () {
 
     await node.rpc.generateToAddress([1, aliceReceive]);
   });
+
+  it('should remove change and pay to fees if below dust', async () => {
+    const coins = await alice.getCoins();
+    let coin;
+    for (coin of coins) {
+      if (!coin.coinbase)
+        break;
+    }
+    const mtx = new MTX();
+    const changeAddr = (await alice.createChange()).getAddress('string');
+    mtx.addCoin(coin);
+    mtx.addOutput(bobReceive, coin.value - 400 - 141); // Bob gets most of it
+
+    mtx.addOutput(changeAddr, 400);   // small change output
+    assert(!mtx.outputs[1].isDust()); // not dust yet but will be after RBF
+    mtx.inputs[0].sequence = 0xfffffffd;
+    await alice.sign(mtx);
+    const tx = mtx.toTX();
+    await alice.wdb.addTX(tx);
+    await alice.wdb.send(tx);
+    await forEvent(node.mempool, 'tx');
+
+    const rtx = await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, true, null);
+
+    assert.strictEqual(rtx.outputs.length, 1); // change output was removed
+
+    await forEvent(node.mempool, 'tx');
+    assert(!node.mempool.hasEntry(tx.hash()));
+    assert(node.mempool.hasEntry(rtx.hash()));
+
+    await node.rpc.generateToAddress([1, aliceReceive]);
+  });
+
+  it('should add inputs if change output is insufficient for RBF', async () => {
+    const coins = await alice.getCoins();
+    let coin;
+    for (coin of coins) {
+      if (!coin.coinbase)
+        break;
+    }
+    const mtx = new MTX();
+    const changeAddr = (await alice.createChange()).getAddress('string');
+    mtx.addCoin(coin);
+    mtx.addOutput(bobReceive, coin.value - 100 - 141); // Bob gets most of it
+    mtx.addOutput(changeAddr, 100);   // change too small to pay for fee bump
+
+    mtx.inputs[0].sequence = 0xfffffffd;
+    await alice.sign(mtx);
+    const tx = mtx.toTX();
+    await alice.wdb.addTX(tx);
+    await alice.wdb.send(tx);
+    await forEvent(node.mempool, 'tx');
+
+    const rtx = await alice.bumpTXFee(tx.hash(), 1000 /* satoshis per kvB */, true, null);
+
+    await forEvent(node.mempool, 'tx');
+    assert(!node.mempool.hasEntry(tx.hash()));
+    assert(node.mempool.hasEntry(rtx.hash()));
+
+    await node.rpc.generateToAddress([1, aliceReceive]);
+  });
 });
