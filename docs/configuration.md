@@ -94,7 +94,7 @@ database and must be passed in consistently.
 ## Mempool options
 
 - `mempool-size`: Max mempool size in MB (default: 100).
-- `replace-by-fee`: Allow replace-by-fee transactions (default: false).
+- `replace-by-fee`: Allow replace-by-fee transactions (default: true).
 - `persistent-mempool`: Save mempool to disk and read into memory on boot
   (default: false).
 
