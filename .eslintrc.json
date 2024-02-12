@@ -43,9 +43,8 @@
       }
     }
   ],
-  "parser": "babel-eslint",
   "parserOptions": {
-    "ecmaVersion": 10,
+    "ecmaVersion": "latest",
     "ecmaFeatures": {
       "globalReturn": true
     },
