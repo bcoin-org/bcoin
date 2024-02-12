@@ -111,7 +111,7 @@ describe('Descriptor', () => {
   }
 
   for (const type in validAddresses) {
-    if (Object.property.hasOwnProperty.call(type)) {
+    if (validAddresses.hasOwnProperty.call(type)) {
       for (const data of validAddresses[type]) {
         const {input, network, range, error} = data;
 
