@@ -62,7 +62,7 @@ function createDescriptorFromOptions(desc, type) {
 
 describe('Descriptor', () => {
   for (const type in parsable) {
-    if (parsable.hasOwnProperty(type)) {
+    if (Object.prototype.hasOwnProperty.call(type)) {
       for (const data of parsable[type]) {
         const {input, descriptor, checksum, isrange, issolvable, hasprivatekeys, requirechecksum, network} = data;
 
@@ -111,7 +111,7 @@ describe('Descriptor', () => {
   }
 
   for (const type in validAddresses) {
-    if (validAddresses.hasOwnProperty(type)) {
+    if (Object.property.hasOwnProperty.call(type)) {
       for (const data of validAddresses[type]) {
         const {input, network, range, error} = data;
 
