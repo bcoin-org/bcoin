@@ -9,3 +9,9 @@ coverage/
 yarn.lock
 package-lock.json
 webpack.*.js
+bcoin-node
+bcoin-spvnode
+bcoin-cli
+bwallet
+bwallet-cli
+bcoin.js
